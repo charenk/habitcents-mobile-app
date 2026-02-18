@@ -36,7 +36,9 @@ export function UpcomingView({ onRecentPress }: UpcomingViewProps) {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <Text style={styles.dateText}>{dateLabel}</Text>
+          <View style={styles.datePill}>
+            <Text style={styles.datePillText}>{dateLabel}</Text>
+          </View>
         </View>
         <View style={styles.segment}>
           <TouchableOpacity onPress={onRecentPress}>
@@ -78,7 +80,7 @@ export function UpcomingView({ onRecentPress }: UpcomingViewProps) {
         </View>
         <View style={{ height: SCREEN_HEIGHT * 0.48 }} />
       </ScrollView>
-      <View style={styles.panelWrap} pointerEvents="box-none">
+      <View style={[styles.panelWrap, { pointerEvents: 'box-none' }]}>
         <UpcomingExpensesPanel items={filteredItems} filter={typeFilter} />
       </View>
     </View>
@@ -93,44 +95,59 @@ function createStyles(theme: ReturnType<typeof useTheme>) {
     },
     header: {
       paddingHorizontal: 20,
-      paddingTop: 12,
-      paddingBottom: 4,
+      paddingTop: 16,
+      paddingBottom: 8,
     },
-    dateText: {
-      fontSize: 14,
-      color: theme.textSecondary,
+    datePill: {
+      alignSelf: 'flex-start',
+      backgroundColor: theme.primaryMuted,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 8,
+    },
+    datePillText: {
+      fontSize: 13,
+      fontWeight: '500',
+      color: theme.primary,
+      lineHeight: 16,
     },
     segment: {
       flexDirection: 'row',
+      alignItems: 'center',
       gap: 24,
+      height: 40,
       paddingHorizontal: 20,
       marginBottom: 12,
     },
     segmentActive: {
       fontSize: 28,
       fontWeight: '700',
+      lineHeight: 34,
       color: theme.primary,
     },
     segmentInactive: {
       fontSize: 28,
-      fontWeight: '400',
+      fontWeight: '700',
+      lineHeight: 34,
       color: theme.textTertiary,
     },
     filtersScroll: {
-      maxHeight: 44,
+      flexGrow: 0,
+      marginBottom: 12,
     },
     filtersRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 10,
+      gap: 8,
       paddingHorizontal: 20,
-      paddingBottom: 12,
     },
     filterChip: {
+      height: 40,
       paddingHorizontal: 14,
-      paddingVertical: 10,
       borderRadius: 10,
       borderWidth: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
     },
     filterChipActive: {
       backgroundColor: theme.chipActiveBg,
@@ -143,6 +160,7 @@ function createStyles(theme: ReturnType<typeof useTheme>) {
     filterChipText: {
       fontSize: 14,
       fontWeight: '500',
+      lineHeight: 18,
     },
     filterChipTextActive: {
       color: theme.chipActiveText,

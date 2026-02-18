@@ -62,6 +62,34 @@ export const darkTheme = {
   danger: '#EF5350',
 } as const;
 
-export type AppTheme = typeof lightTheme;
+export type AppTheme = {
+  primary: string;
+  primaryMuted: string;
+  background: string;
+  surface: string;
+  text: string;
+  textSecondary: string;
+  textTertiary: string;
+  chipActiveBg: string;
+  chipActiveText: string;
+  chipInactiveBg: string;
+  chipInactiveText: string;
+  chipBorder: string;
+  iconBgGreen: string;
+  iconBgYellow: string;
+  iconOrange: string;
+  fabGradientStart: string;
+  fabGradientEnd: string;
+  calendarDow: string;
+  calendarOtherMonth: string;
+  calendarBg: string;
+  calendarCellBg: string;
+  calendarOtherMonthBg: string;
+  primaryDark: string;
+  border: string;
+  white: string;
+  tabIconDefault: string;
+  danger: string;
+};
 
 export type ThemeMode = 'light' | 'dark' | 'system';
