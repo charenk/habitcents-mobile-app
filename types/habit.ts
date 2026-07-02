@@ -39,6 +39,10 @@ export type HabitChangeGoal = {
   longestStreak: number;
   savingsGoal: number;
   actualSavings: number;
+  // Cents banked each time the user logs a successful (skipped) day. Defaults to
+  // the detected per-occurrence average; user-editable. This is what makes the
+  // dollars-saved counter move.
+  skipValue: number;
   milestones: HabitMilestone[];
   lastLogDate?: Date;
 };

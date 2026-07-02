@@ -8,6 +8,7 @@ import {
   saveLessonsProgress,
 } from '@/utils/storage';
 import { detectHabits, mergeHabits } from '@/utils/habitDetection';
+import { applyStreakLog } from '@/utils/streakLog';
 import type { Expense } from '@/types/expense';
 import type {
   DetectedHabit,
@@ -127,6 +128,7 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
       longestStreak: 0,
       savingsGoal: savingsGoal || habit.totalMonthlySpend,
       actualSavings: 0,
+      skipValue: habit.averageAmount,
       milestones: createMilestones(),
     };
 
@@ -157,45 +159,14 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    let newStreak = goal.currentStreak;
-    let longestStreak = goal.longestStreak;
-    let actualSavings = goal.actualSavings;
-
-    if (completed) {
-      // Check if continuing streak
-      const lastLog = goal.lastLogDate ? new Date(goal.lastLogDate) : null;
-      if (lastLog) {
-        lastLog.setHours(0, 0, 0, 0);
-        const dayDiff = Math.floor((today.getTime() - lastLog.getTime()) / (24 * 60 * 60 * 1000));
-        if (dayDiff === 1) {
-          // Consecutive day
-          newStreak++;
-        } else if (dayDiff > 1) {
-          // Streak broken
-          newStreak = 1;
-        }
-        // Same day - no change
-      } else {
-        newStreak = 1;
-      }
-
-      if (newStreak > longestStreak) {
-        longestStreak = newStreak;
-      }
-
-      // Calculate savings if amount provided
-      if (amount !== undefined) {
-        const habit = habits.find(h => h.id === goal.habitId);
-        if (habit) {
-          const expectedSpend = habit.averageAmount;
-          const saved = Math.max(0, expectedSpend - amount);
-          actualSavings += saved;
-        }
-      }
-    } else {
-      // Reset streak
-      newStreak = 0;
-    }
+    const habit = habits.find(h => h.id === goal.habitId);
+    const { currentStreak: newStreak, longestStreak, actualSavings } = applyStreakLog(
+      goal,
+      habit?.averageAmount,
+      completed,
+      today,
+      amount
+    );
 
     // Check milestones
     const updatedMilestones = goal.milestones.map(m => {
