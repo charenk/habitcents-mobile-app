@@ -1,8 +1,10 @@
-# HabitCent - Finance Habit Tracking App
+# HabitCents - Finance Habit Tracking App
+
+> **DIRECTION LOCK (2026-07-02).** The canonical direction lives in the umbrella repo: `../docs/habitcents-goals-v2.md` (North Star), `../docs/habitcents-plan-v2.html` (roadmap P0-x..P6-x with keep/cut/fix verdicts), `../docs/agent-execution-guide.md` (working rules), `../docs/decisions/` (ADRs). Where this file conflicts with those, they win. Key locked facts: name **habitcents**, bundle ID **com.habitcents.app**, scheme **habitcents**, light mode only, repair not rebuild, no network calls in app source, no em dashes in any output. Features marked CUT in the plan (Upcoming tab, mic FAB, budgets, recurring/reminder toggles, widget edit mode, progressive reveals, lessons library) must not be extended; the sections below describing them are historical.
 
 ## Project Overview
 
-HabitCent is an Atomic Habits-inspired personal finance app that helps users track spending, discover spending patterns, and build better financial habits through gamified progression and micro-learning.
+HabitCents is an Atomic Habits-inspired personal finance app that helps users track spending, discover spending patterns, and build better financial habits. Core loop: log a spend in under 10 seconds, detect the leak, break one habit, count the dollars kept.
 
 **Tech Stack:**
 - React Native with Expo SDK 54
@@ -102,14 +104,14 @@ ThemeProvider > CategoriesProvider > ExpensesProvider > HabitsProvider > Reports
 ```
 
 ### Storage Keys
-All AsyncStorage keys prefixed with `@habitcent_`:
-- `@habitcent_expenses`
-- `@habitcent_categories`
-- `@habitcent_habits`
-- `@habitcent_habit_goals`
-- `@habitcent_dashboard`
-- `@habitcent_onboarding_state`
-- `@habitcent_progressive_features`
+All AsyncStorage keys prefixed with `@habitcents_` (renamed from `@habitcent_` in P0-1, commit 7abfd34; all keys live in `utils/storage.ts`):
+- `@habitcents_expenses`
+- `@habitcents_categories`
+- `@habitcents_habits`
+- `@habitcents_habit_goals`
+- `@habitcents_dashboard`
+- `@habitcents_onboarding_state`
+- `@habitcents_progressive_features`
 
 ## Running the App
 
