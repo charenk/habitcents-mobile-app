@@ -157,7 +157,7 @@ export default function HabitDetailScreen() {
             <View style={styles.statDivider} />
             <View style={styles.stat}>
               <Text style={styles.statValue}>{habit.occurrencesPerPeriod}x</Text>
-              <Text style={styles.statLabel}>per {habit.frequency.replace('ly', '')}</Text>
+              <Text style={styles.statLabel}>per {habit.frequency === 'daily' ? 'day' : habit.frequency === 'weekly' ? 'week' : 'month'}</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.stat}>

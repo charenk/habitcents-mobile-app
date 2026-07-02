@@ -70,38 +70,61 @@ function groupByMerchant(expenses: Expense[]): Map<string, Expense[]> {
   return groups;
 }
 
+type FrequencyResult = {
+  frequency: HabitFrequency;
+  // Occurrences per the NAMED period (per day for daily, per week for weekly,
+  // per month for monthly). Display-facing: rendered as "{n}x per {period}".
+  occurrencesPerPeriod: number;
+  // Single canonical rate used for all money math. Deriving monthlySpend from
+  // this one number (instead of a per-frequency multiply) prevents the class of
+  // double-counting bug where a per-month count was multiplied by 30 again.
+  monthlyOccurrences: number;
+};
+
 /**
- * Calculate frequency based on occurrence pattern
+ * Calculate frequency based on occurrence pattern.
  */
-function calculateFrequency(expenses: Expense[]): { frequency: HabitFrequency; occurrencesPerPeriod: number } {
+function calculateFrequency(expenses: Expense[]): FrequencyResult {
   if (expenses.length < 2) {
-    return { frequency: 'monthly', occurrencesPerPeriod: 1 };
+    return { frequency: 'monthly', occurrencesPerPeriod: 1, monthlyOccurrences: 1 };
   }
 
   // Sort by date
   const sorted = [...expenses].sort((a, b) => a.date.getTime() - b.date.getTime());
 
-  // Calculate average gap between occurrences
+  // Average gap between consecutive occurrences, in days.
   let totalGap = 0;
   for (let i = 1; i < sorted.length; i++) {
     totalGap += sorted[i].date.getTime() - sorted[i - 1].date.getTime();
   }
-  const avgGapMs = totalGap / (sorted.length - 1);
-  const avgGapDays = avgGapMs / MS_PER_DAY;
+  const avgGapDays = totalGap / (sorted.length - 1) / MS_PER_DAY;
 
-  // Determine frequency
-  if (avgGapDays <= 2) {
-    // Roughly daily
-    const occurrences = Math.round(30 / avgGapDays);
-    return { frequency: 'daily', occurrencesPerPeriod: Math.min(occurrences, 30) };
-  } else if (avgGapDays <= 10) {
-    // Roughly weekly
-    const occurrences = Math.round(7 / avgGapDays);
-    return { frequency: 'weekly', occurrencesPerPeriod: Math.max(1, occurrences) };
+  // TRADEOFF: floor the gap at 1 day. This guards divide-by-zero from same-day
+  // clusters (all expenses on one date -> avgGapDays 0 -> previously Infinity)
+  // and caps the monthly rate at ~daily. The cost is that genuine multiple-times-
+  // per-day habits are treated as once-daily, which under-estimates rather than
+  // the far worse over-estimation of extrapolating a month from a same-day cluster.
+  const effectiveGapDays = Math.max(avgGapDays, 1);
+  const monthlyOccurrences = 30 / effectiveGapDays;
+
+  if (effectiveGapDays <= 2) {
+    return {
+      frequency: 'daily',
+      occurrencesPerPeriod: Math.max(1, Math.round(1 / effectiveGapDays)),
+      monthlyOccurrences,
+    };
+  } else if (effectiveGapDays <= 10) {
+    return {
+      frequency: 'weekly',
+      occurrencesPerPeriod: Math.max(1, Math.round(7 / effectiveGapDays)),
+      monthlyOccurrences,
+    };
   } else {
-    // Monthly
-    const occurrences = Math.round(30 / avgGapDays);
-    return { frequency: 'monthly', occurrencesPerPeriod: Math.max(1, occurrences) };
+    return {
+      frequency: 'monthly',
+      occurrencesPerPeriod: Math.max(1, Math.round(30 / effectiveGapDays)),
+      monthlyOccurrences,
+    };
   }
 }
 
@@ -294,21 +317,10 @@ export function detectHabits(expenses: Expense[]): DetectedHabit[] {
     // Calculate metrics
     const totalAmount = groupExpenses.reduce((sum, e) => sum + e.amount, 0);
     const avgAmount = Math.round(totalAmount / groupExpenses.length);
-    const { frequency, occurrencesPerPeriod } = calculateFrequency(groupExpenses);
+    const { frequency, occurrencesPerPeriod, monthlyOccurrences } = calculateFrequency(groupExpenses);
 
-    // Normalize to monthly spend
-    let monthlySpend: number;
-    switch (frequency) {
-      case 'daily':
-        monthlySpend = avgAmount * occurrencesPerPeriod * 30;
-        break;
-      case 'weekly':
-        monthlySpend = avgAmount * occurrencesPerPeriod * 4;
-        break;
-      case 'monthly':
-        monthlySpend = avgAmount * occurrencesPerPeriod;
-        break;
-    }
+    // Normalize to monthly spend from the single canonical rate.
+    const monthlySpend = Math.round(avgAmount * monthlyOccurrences);
 
     // Skip low-value habits
     if (monthlySpend < MIN_MONTHLY_SPEND_CENTS) {
