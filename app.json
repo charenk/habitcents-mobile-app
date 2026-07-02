@@ -1,23 +1,23 @@
 {
   "expo": {
-    "name": "HabitCent",
-    "slug": "habitcent",
+    "name": "HabitCents",
+    "slug": "habitcents",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "scheme": "financehabit",
+    "scheme": "habitcents",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.yourname.habitcent"
+      "bundleIdentifier": "com.habitcents.app"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#2563EB"
       },
-      "package": "com.yourname.habitcent"
+      "package": "com.habitcents.app"
     },
     "web": {
       "bundler": "metro",

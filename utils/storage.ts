@@ -7,16 +7,16 @@ import type { DashboardConfig } from '@/types/report';
 import type { OnboardingState, ProgressiveFeatureState } from '@/types/onboarding';
 
 // Storage keys
-const ONBOARDING_KEY = '@habitcent_onboarded';
-const THEME_MODE_KEY = '@habitcent_theme_mode';
-const EXPENSES_KEY = '@habitcent_expenses';
-const CATEGORIES_KEY = '@habitcent_categories';
-const HABITS_KEY = '@habitcent_habits';
-const HABIT_GOALS_KEY = '@habitcent_habit_goals';
-const LESSONS_PROGRESS_KEY = '@habitcent_lessons_progress';
-const DASHBOARD_KEY = '@habitcent_dashboard';
-const ONBOARDING_STATE_KEY = '@habitcent_onboarding_state';
-const PROGRESSIVE_FEATURES_KEY = '@habitcent_progressive_features';
+const ONBOARDING_KEY = '@habitcents_onboarded';
+const THEME_MODE_KEY = '@habitcents_theme_mode';
+const EXPENSES_KEY = '@habitcents_expenses';
+const CATEGORIES_KEY = '@habitcents_categories';
+const HABITS_KEY = '@habitcents_habits';
+const HABIT_GOALS_KEY = '@habitcents_habit_goals';
+const LESSONS_PROGRESS_KEY = '@habitcents_lessons_progress';
+const DASHBOARD_KEY = '@habitcents_dashboard';
+const ONBOARDING_STATE_KEY = '@habitcents_onboarding_state';
+const PROGRESSIVE_FEATURES_KEY = '@habitcents_progressive_features';
 
 /**
  * Check if user has completed onboarding

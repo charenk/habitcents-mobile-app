@@ -36,7 +36,7 @@ export default function WelcomeScreen() {
         </View>
 
         {/* Title */}
-        <Text style={styles.title}>HabitCent</Text>
+        <Text style={styles.title}>HabitCents</Text>
         <Text style={styles.tagline}>
           Build better spending habits,{'\n'}one cent at a time
         </Text>
