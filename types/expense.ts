@@ -4,6 +4,9 @@
 
 export type ExpenseCategory = 'Mortgage' | 'Car' | 'Entertainment' | 'Food' | 'Shopping' | 'Utilities' | 'Healthcare' | 'Transportation' | 'Other';
 
+// How often a recurring expense repeats. Drives the real Upcoming projection.
+export type RecurrenceFrequency = 'weekly' | 'monthly';
+
 export type Expense = {
   id: string;
   title: string;
@@ -15,6 +18,7 @@ export type Expense = {
   date: Date;
   time: string;             // "9:30 AM"
   isRecurring: boolean;
+  recurrence?: RecurrenceFrequency; // set when isRecurring is true
   reminderEnabled: boolean;
   reminderTime?: string;    // "1h before"
   iconVariant: 'yellow' | 'green';
@@ -33,6 +37,7 @@ export type AddExpenseInput = {
   merchant?: string;        // Merchant name for habit detection
   date: Date;
   isRecurring: boolean;
+  recurrence?: RecurrenceFrequency;
   reminderEnabled: boolean;
   reminderTime?: string;
 };
