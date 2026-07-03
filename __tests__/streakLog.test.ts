@@ -1,4 +1,10 @@
-import { applyStreakLog, type StreakLogInput } from '@/utils/streakLog';
+import {
+  applyStreakLog,
+  upsertStreakLog,
+  hasCompletedLogFor,
+  type StreakLogInput,
+} from '@/utils/streakLog';
+import type { StreakDay } from '@/types/habit';
 
 function goal(overrides: Partial<StreakLogInput> = {}): StreakLogInput {
   return {
@@ -79,5 +85,50 @@ describe('applyStreakLog savings accrual', () => {
   it('never banks negative savings when the day overspends the average', () => {
     const r = applyStreakLog(goal(), AVG, true, today, 1000); // spent $10 on a $6 habit
     expect(r.actualSavings).toBe(0);
+  });
+});
+
+describe('upsertStreakLog history', () => {
+  it('appends a real entry for a new day, newest first', () => {
+    const logs = upsertStreakLog([], today, true, 600);
+    expect(logs).toHaveLength(1);
+    expect(logs[0].completed).toBe(true);
+    expect(logs[0].amount).toBe(600);
+  });
+
+  it('does not duplicate an entry when the same day is logged twice', () => {
+    const first = upsertStreakLog([], today, true, 600);
+    const second = upsertStreakLog(first, new Date('2026-07-02T18:00:00'), true, 0);
+    expect(second).toHaveLength(1); // still one entry for that day
+  });
+
+  it('replaces the same day when a completed log is later corrected to missed', () => {
+    const done = upsertStreakLog([], today, true, 600);
+    const missed = upsertStreakLog(done, today, false, 0);
+    expect(missed).toHaveLength(1);
+    expect(missed[0].completed).toBe(false);
+  });
+
+  it('keeps entries sorted newest-first across days', () => {
+    let logs: StreakDay[] = [];
+    logs = upsertStreakLog(logs, twoDaysAgo, true, 600);
+    logs = upsertStreakLog(logs, today, true, 600);
+    logs = upsertStreakLog(logs, yesterday, true, 600);
+    const times = logs.map((d) => d.date.getTime());
+    expect(times).toEqual([...times].sort((a, b) => b - a));
+    expect(logs).toHaveLength(3);
+  });
+
+  it('hasCompletedLogFor reflects only actually-logged completed days (fixes fake "today")', () => {
+    // A goal with a streak but whose last real log was yesterday must NOT report
+    // today as logged (the old fabrication bug hid the Log Today button).
+    const logs = upsertStreakLog([], yesterday, true, 600);
+    expect(hasCompletedLogFor(logs, today)).toBe(false);
+    expect(hasCompletedLogFor(logs, yesterday)).toBe(true);
+  });
+
+  it('hasCompletedLogFor ignores missed days', () => {
+    const logs = upsertStreakLog([], today, false, 0);
+    expect(hasCompletedLogFor(logs, today)).toBe(false);
   });
 });

@@ -132,20 +132,10 @@ export default function HabitsScreen() {
     }
   }, [selectedLesson, completeLesson]);
 
-  // Mock streak days for active habits
+  // Real streak history from the goal's persisted logs.
   const getStreakDays = useCallback((habitId: string): StreakDay[] => {
     const goal = getGoalByHabitId(habitId);
-    if (!goal) return [];
-
-    // Generate mock streak data based on current streak
-    const days: StreakDay[] = [];
-    const today = new Date();
-    for (let i = 0; i < goal.currentStreak; i++) {
-      const date = new Date(today);
-      date.setDate(today.getDate() - i);
-      days.push({ date, completed: true });
-    }
-    return days;
+    return goal?.logs ?? [];
   }, [getGoalByHabitId]);
 
   const renderItem = ({ item, section }: { item: DetectedHabit | MicroLesson; section: HabitSection }) => {

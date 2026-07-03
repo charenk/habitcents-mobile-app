@@ -55,18 +55,8 @@ export default function HabitDetailScreen() {
     return `$${(cents / 100).toFixed(0)}`;
   };
 
-  // Generate streak days from goal
-  const streakDays: StreakDay[] = useMemo(() => {
-    if (!goal) return [];
-    const days: StreakDay[] = [];
-    const today = new Date();
-    for (let i = 0; i < (goal.currentStreak || 0); i++) {
-      const date = new Date(today);
-      date.setDate(today.getDate() - i);
-      days.push({ date, completed: true });
-    }
-    return days;
-  }, [goal]);
+  // Real streak history from the goal's persisted logs.
+  const streakDays: StreakDay[] = useMemo(() => goal?.logs ?? [], [goal]);
 
   const handleStartTracking = async () => {
     await startTrackingHabit(habit.id);

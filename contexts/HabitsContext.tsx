@@ -8,7 +8,7 @@ import {
   saveLessonsProgress,
 } from '@/utils/storage';
 import { detectHabits, mergeHabits } from '@/utils/habitDetection';
-import { applyStreakLog } from '@/utils/streakLog';
+import { applyStreakLog, upsertStreakLog } from '@/utils/streakLog';
 import type { Expense } from '@/types/expense';
 import type {
   DetectedHabit,
@@ -129,6 +129,7 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
       savingsGoal: savingsGoal || habit.totalMonthlySpend,
       actualSavings: 0,
       skipValue: habit.averageAmount,
+      logs: [],
       milestones: createMilestones(),
     };
 
@@ -168,6 +169,11 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
       amount
     );
 
+    // Record today in the real log history (dedupes same-day). The amount saved
+    // this log is the actualSavings delta, so the calendar reflects true days.
+    const savedThisDay = Math.max(0, actualSavings - goal.actualSavings);
+    const updatedLogs = upsertStreakLog(goal.logs ?? [], today, completed, savedThisDay);
+
     // Check milestones
     const updatedMilestones = goal.milestones.map(m => {
       if (!m.reachedAt && newStreak >= m.targetStreak) {
@@ -181,6 +187,7 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
       currentStreak: newStreak,
       longestStreak,
       actualSavings,
+      logs: updatedLogs,
       lastLogDate: today,
       milestones: updatedMilestones,
     };

@@ -43,6 +43,9 @@ export type HabitChangeGoal = {
   // the detected per-occurrence average; user-editable. This is what makes the
   // dollars-saved counter move.
   skipValue: number;
+  // Real per-day log history. Source of truth for the streak calendar and the
+  // "logged today?" check. One entry per calendar day (deduped on write).
+  logs: StreakDay[];
   milestones: HabitMilestone[];
   lastLogDate?: Date;
 };

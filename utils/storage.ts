@@ -187,6 +187,11 @@ export async function getHabitGoals(): Promise<HabitChangeGoal[]> {
       ...g,
       startDate: new Date(g.startDate),
       lastLogDate: g.lastLogDate ? new Date(g.lastLogDate) : undefined,
+      // Reconstruct log dates from ISO strings; default to [] for goals saved
+      // before logs existed.
+      logs: Array.isArray(g.logs)
+        ? g.logs.map((d) => ({ ...d, date: new Date(d.date) }))
+        : [],
       milestones: g.milestones.map((m: HabitMilestone & { reachedAt?: string | Date }) => ({
         ...m,
         reachedAt: m.reachedAt ? new Date(m.reachedAt as string) : undefined,

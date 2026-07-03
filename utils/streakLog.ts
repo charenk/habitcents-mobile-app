@@ -3,6 +3,8 @@
  * HabitsContext so the money-critical path is testable without React/storage.
  */
 
+import type { StreakDay } from '@/types/habit';
+
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 export type StreakLogInput = {
@@ -86,4 +88,29 @@ export function applyStreakLog(
   }
 
   return { currentStreak, longestStreak, actualSavings, isNewDay };
+}
+
+/**
+ * Upsert today's entry into a goal's real log history. One entry per calendar
+ * day: re-logging the same day replaces that day's entry rather than appending
+ * a duplicate. Entries are kept sorted newest-first. This is the source of truth
+ * for the streak calendar and the "already logged today?" check (fixing the old
+ * bug where those were synthesized from currentStreak and always faked "today").
+ */
+export function upsertStreakLog(
+  logs: StreakDay[],
+  today: Date,
+  completed: boolean,
+  amountSaved: number
+): StreakDay[] {
+  const todayMs = atMidnight(today).getTime();
+  const withoutToday = logs.filter((d) => atMidnight(d.date).getTime() !== todayMs);
+  const entry: StreakDay = { date: atMidnight(today), completed, amount: amountSaved };
+  return [entry, ...withoutToday].sort((a, b) => b.date.getTime() - a.date.getTime());
+}
+
+/** True if the log history already contains a completed entry for `day`. */
+export function hasCompletedLogFor(logs: StreakDay[], day: Date): boolean {
+  const dayMs = atMidnight(day).getTime();
+  return logs.some((d) => d.completed && atMidnight(d.date).getTime() === dayMs);
 }
