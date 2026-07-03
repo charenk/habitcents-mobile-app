@@ -11,12 +11,12 @@ export default function WelcomeScreen() {
 
   const handleGetStarted = async () => {
     await setHasOnboarded();
-    router.replace('/(tabs)/finance');
+    router.replace('/(tabs)/expenses');
   };
 
   const handleSkip = async () => {
     await setHasOnboarded();
-    router.replace('/(tabs)/finance');
+    router.replace('/(tabs)/expenses');
   };
 
   return (

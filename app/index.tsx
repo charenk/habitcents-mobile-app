@@ -31,5 +31,5 @@ export default function Index() {
     return <Redirect href="/welcome" />;
   }
 
-  return <Redirect href="/(tabs)/finance" />;
+  return <Redirect href="/(tabs)/expenses" />;
 }
