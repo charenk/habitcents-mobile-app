@@ -17,6 +17,9 @@ import type { Category } from '@/types/category';
 import { EditExpenseModal } from './EditExpenseModal';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+// Collapsed peek keeps the sheet out of the way so the add-expense form (and its
+// Save button) is fully visible by default. Users drag up to browse expenses.
+const SNAP_COLLAPSED = 0.18;
 const SNAP_PARTIAL = 0.55;
 const SNAP_FULL = 0.95;
 
@@ -70,8 +73,8 @@ export function TodayExpensesPanel({
 
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
 
-  const panelHeight = useRef(new Animated.Value(SCREEN_HEIGHT * SNAP_PARTIAL)).current;
-  const lastOffset = useRef(SCREEN_HEIGHT * SNAP_PARTIAL);
+  const panelHeight = useRef(new Animated.Value(SCREEN_HEIGHT * SNAP_COLLAPSED)).current;
+  const lastOffset = useRef(SCREEN_HEIGHT * SNAP_COLLAPSED);
 
   const panResponder = useRef(
     PanResponder.create({
@@ -79,18 +82,31 @@ export function TodayExpensesPanel({
       onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dy) > 5,
       onPanResponderMove: (_, gestureState) => {
         const next = lastOffset.current - gestureState.dy;
-        const partial = SCREEN_HEIGHT * SNAP_PARTIAL;
+        const collapsed = SCREEN_HEIGHT * SNAP_COLLAPSED;
         const full = SCREEN_HEIGHT * SNAP_FULL;
-        const clamped = Math.max(partial, Math.min(full, next));
+        const clamped = Math.max(collapsed, Math.min(full, next));
         panelHeight.setValue(clamped);
       },
       onPanResponderRelease: (_, gestureState) => {
-        const current = lastOffset.current - gestureState.dy;
+        const collapsed = SCREEN_HEIGHT * SNAP_COLLAPSED;
         const partial = SCREEN_HEIGHT * SNAP_PARTIAL;
         const full = SCREEN_HEIGHT * SNAP_FULL;
+        const current = Math.max(collapsed, Math.min(full, lastOffset.current - gestureState.dy));
         const velocity = gestureState.vy;
-        const snapToFull = current > partial + (full - partial) * 0.3 || velocity < -0.5;
-        const target = snapToFull ? full : partial;
+        const snaps = [collapsed, partial, full];
+        let target: number;
+        if (velocity < -0.5) {
+          // Flick up: go to the next-higher snap point.
+          target = snaps.find((s) => s > current + 1) ?? full;
+        } else if (velocity > 0.5) {
+          // Flick down: go to the next-lower snap point.
+          target = [...snaps].reverse().find((s) => s < current - 1) ?? collapsed;
+        } else {
+          // Settle to the nearest snap point.
+          target = snaps.reduce((a, b) =>
+            Math.abs(b - current) < Math.abs(a - current) ? b : a
+          );
+        }
         lastOffset.current = target;
         Animated.spring(panelHeight, {
           toValue: target,
