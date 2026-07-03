@@ -2,6 +2,8 @@ import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTheme, useThemeMode } from '@/contexts/ThemeContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
+import { CURRENCIES } from '@/utils/currency';
 import { clearOnboarding } from '@/utils/storage';
 
 const themeModeLabel: Record<string, string> = {
@@ -14,8 +16,19 @@ export default function SettingsScreen() {
   const router = useRouter();
   const theme = useTheme();
   const { themeMode, setThemeMode } = useThemeMode();
+  const { currency, setCurrency } = useCurrency();
 
   const styles = useMemo(() => createStyles(theme), [theme]);
+
+  const handleCurrencyPress = () => {
+    Alert.alert('Currency', 'Choose your currency', [
+      ...CURRENCIES.map((c) => ({
+        text: `${c.name} (${c.symbol})`,
+        onPress: () => setCurrency(c.code),
+      })),
+      { text: 'Cancel', style: 'cancel' as const },
+    ]);
+  };
 
   const handleAppearancePress = () => {
     Alert.alert(
@@ -58,6 +71,10 @@ export default function SettingsScreen() {
         <TouchableOpacity style={styles.row} onPress={handleAppearancePress}>
           <Text style={styles.rowText}>Appearance</Text>
           <Text style={styles.rowValue}>{themeModeLabel[themeMode]}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.row} onPress={handleCurrencyPress}>
+          <Text style={styles.rowText}>Currency</Text>
+          <Text style={styles.rowValue}>{currency}</Text>
         </TouchableOpacity>
         <View style={styles.row}>
           <Text style={styles.rowText}>Privacy</Text>

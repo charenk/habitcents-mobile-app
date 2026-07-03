@@ -8,6 +8,7 @@ import {
   saveLessonsProgress,
 } from '@/utils/storage';
 import { detectHabits, mergeHabits } from '@/utils/habitDetection';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import { applyStreakLog, upsertStreakLog } from '@/utils/streakLog';
 import { track, bucketCents } from '@/utils/analytics';
 import type { Expense } from '@/types/expense';
@@ -63,6 +64,7 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
   const [goals, setGoals] = useState<HabitChangeGoal[]>([]);
   const [lessonsProgress, setLessonsProgress] = useState<Record<string, Date>>({});
   const [isLoading, setIsLoading] = useState(true);
+  const { currency } = useCurrency();
 
   // Build lessons with completion status
   const lessons: MicroLesson[] = MICRO_LESSONS.map(lesson => ({
@@ -86,7 +88,7 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const refreshHabits = useCallback(async (expenses: Expense[]): Promise<void> => {
-    const detected = detectHabits(expenses);
+    const detected = detectHabits(expenses, currency);
     const merged = mergeHabits(habits, detected);
     setHabits(merged);
     await saveHabits(merged);
@@ -99,7 +101,7 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
     if (after > before) {
       track('detection_shown', { habit_count: after });
     }
-  }, [habits]);
+  }, [habits, currency]);
 
   const startTrackingHabit = useCallback(async (habitId: string): Promise<void> => {
     const updated = habits.map(h =>

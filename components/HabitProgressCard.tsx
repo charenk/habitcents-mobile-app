@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import { StreakCalendar } from './StreakCalendar';
 import type { AppTheme } from '@/constants/theme';
 import type { DetectedHabit, HabitChangeGoal, StreakDay } from '@/types/habit';
@@ -22,11 +23,8 @@ export function HabitProgressCard({
   onLogToday,
 }: HabitProgressCardProps) {
   const theme = useTheme();
+  const { format } = useCurrency();
   const styles = useMemo(() => createStyles(theme), [theme]);
-
-  const formatAmount = (cents: number): string => {
-    return `$${(cents / 100).toFixed(0)}`;
-  };
 
   const savingsProgress = goal.savingsGoal > 0
     ? Math.min(100, Math.round((goal.actualSavings / goal.savingsGoal) * 100))
@@ -35,7 +33,7 @@ export function HabitProgressCard({
   const getGoalTypeLabel = () => {
     switch (goal.targetType) {
       case 'reduce_amount':
-        return `Reduce to ${formatAmount(goal.targetValue || 0)}/month`;
+        return `Reduce to ${format(goal.targetValue ?? 0, { compact: true })}/month`;
       case 'reduce_frequency':
         return `Reduce to ${goal.targetValue}x/week`;
       case 'eliminate':
@@ -91,7 +89,7 @@ export function HabitProgressCard({
         <View style={styles.savingsHeader}>
           <Text style={styles.savingsLabel}>Savings Progress</Text>
           <Text style={styles.savingsAmount}>
-            {formatAmount(goal.actualSavings)} / {formatAmount(goal.savingsGoal)}
+            {format(goal.actualSavings, { compact: true })} / {format(goal.savingsGoal, { compact: true })}
           </Text>
         </View>
         <View style={styles.progressBar}>

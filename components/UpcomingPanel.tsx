@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import type { AppTheme } from '@/constants/theme';
 import { daysUntilLabel, upcomingTotal, type UpcomingItem } from '@/utils/recurring';
 
@@ -10,16 +11,13 @@ type UpcomingPanelProps = {
   windowDays: number;
 };
 
-function formatCents(cents: number): string {
-  return `$${(cents / 100).toFixed(2)}`;
-}
-
 function formatDate(d: Date): string {
   return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 }
 
 export function UpcomingPanel({ items, windowDays }: UpcomingPanelProps) {
   const theme = useTheme();
+  const { format } = useCurrency();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   if (items.length === 0) {
@@ -39,7 +37,7 @@ export function UpcomingPanel({ items, windowDays }: UpcomingPanelProps) {
     <View style={styles.container}>
       <View style={styles.totalCard}>
         <Text style={styles.totalLabel}>NEXT {windowDays} DAYS</Text>
-        <Text style={styles.totalValue}>{formatCents(upcomingTotal(items))}</Text>
+        <Text style={styles.totalValue}>{format(upcomingTotal(items))}</Text>
         <Text style={styles.totalCaption}>{items.length} recurring {items.length === 1 ? 'expense' : 'expenses'}</Text>
       </View>
 
@@ -60,7 +58,7 @@ export function UpcomingPanel({ items, windowDays }: UpcomingPanelProps) {
               </Text>
             </View>
             <View style={styles.cardRight}>
-              <Text style={styles.cardAmount}>{formatCents(item.expense.amount)}</Text>
+              <Text style={styles.cardAmount}>{format(item.expense.amount)}</Text>
               <Text style={styles.cardFreq}>{item.expense.recurrence}</Text>
             </View>
           </View>

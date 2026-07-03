@@ -11,7 +11,7 @@ export type Expense = {
   id: string;
   title: string;
   amount: number;           // Cents (integer)
-  amountDisplay: string;    // "-$5.00"
+  amountDisplay?: string;   // Deprecated: derive at render via useCurrency().format(amount, { signed: true })
   category: ExpenseCategory;
   categoryId?: string;      // Reference to Category.id
   merchant?: string;        // Merchant name for habit detection

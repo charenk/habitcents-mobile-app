@@ -5,6 +5,7 @@
 
 import type { Expense } from '@/types/expense';
 import type { DetectedHabit, HabitTrigger, HabitFrequency, HabitSentiment } from '@/types/habit';
+import { type CurrencyCode, DEFAULT_CURRENCY, formatMoney, scaleThresholdCents } from '@/utils/currency';
 
 type MerchantGroup = {
   merchant: string;
@@ -256,7 +257,8 @@ function calculateTrend(expenses: Expense[]): { trend: 'increasing' | 'decreasin
 function determineSentiment(
   categoryId: string,
   monthlySpend: number,
-  trend: 'increasing' | 'decreasing' | 'stable'
+  trend: 'increasing' | 'decreasing' | 'stable',
+  bigLeakCents: number
 ): HabitSentiment {
   // Essential categories are generally neutral
   const essentialCategories = ['mortgage', 'utilities', 'healthcare', 'transportation'];
@@ -265,7 +267,7 @@ function determineSentiment(
   }
 
   // High discretionary spending that's increasing is potentially bad
-  if (monthlySpend > 10000 && trend === 'increasing') { // $100/month
+  if (monthlySpend > bigLeakCents && trend === 'increasing') {
     return 'bad';
   }
 
@@ -291,7 +293,15 @@ function createHabitName(merchant: string): string {
 /**
  * Main habit detection function
  */
-export function detectHabits(expenses: Expense[]): DetectedHabit[] {
+export function detectHabits(
+  expenses: Expense[],
+  currency: CurrencyCode = DEFAULT_CURRENCY
+): DetectedHabit[] {
+  // Thresholds are authored in USD cents; scale them to the active currency so
+  // detection stays meaningful in high-magnitude currencies (e.g. JPY).
+  const minMonthlySpend = scaleThresholdCents(MIN_MONTHLY_SPEND_CENTS, currency);
+  const bigLeakCents = scaleThresholdCents(10000, currency);
+
   // Step 1: Filter to recent expenses
   const recentExpenses = filterRecentExpenses(expenses);
 
@@ -320,7 +330,7 @@ export function detectHabits(expenses: Expense[]): DetectedHabit[] {
     const monthlySpend = Math.round(avgAmount * monthlyOccurrences);
 
     // Skip low-value habits
-    if (monthlySpend < MIN_MONTHLY_SPEND_CENTS) {
+    if (monthlySpend < minMonthlySpend) {
       continue;
     }
 
@@ -348,16 +358,16 @@ export function detectHabits(expenses: Expense[]): DetectedHabit[] {
 
     // Determine sentiment
     const categoryId = groupExpenses[0].categoryId || groupExpenses[0].category;
-    const sentiment = determineSentiment(categoryId, monthlySpend, trend);
+    const sentiment = determineSentiment(categoryId, monthlySpend, trend, bigLeakCents);
 
-    // Format monthly spend for description
-    const monthlySpendDollars = (monthlySpend / 100).toFixed(0);
+    // Format monthly spend for description in the active currency
+    const monthlySpendLabel = formatMoney(monthlySpend, currency, { compact: true });
     const habitName = createHabitName(merchant);
 
     habits.push({
       id: generateId(),
       name: `${habitName} Spending`,
-      description: `You spend ~$${monthlySpendDollars}/month on ${habitName.toLowerCase()}`,
+      description: `You spend ~${monthlySpendLabel}/month on ${habitName.toLowerCase()}`,
       categoryId,
       merchantPattern: merchant,
       averageAmount: avgAmount,

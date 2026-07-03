@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import type { AppTheme } from '@/constants/theme';
 import type { ReportWidget, TimeRange } from '@/types/report';
 
@@ -82,11 +83,8 @@ type SpendingByCategoryContentProps = {
 
 export function SpendingByCategoryContent({ data, total }: SpendingByCategoryContentProps) {
   const theme = useTheme();
+  const { format } = useCurrency();
   const styles = useMemo(() => createContentStyles(theme), [theme]);
-
-  const formatAmount = (cents: number): string => {
-    return `$${(cents / 100).toFixed(0)}`;
-  };
 
   return (
     <View style={styles.categoryContent}>
@@ -99,7 +97,7 @@ export function SpendingByCategoryContent({ data, total }: SpendingByCategoryCon
               <Text style={styles.barLabelText} numberOfLines={1}>
                 {item.categoryName}
               </Text>
-              <Text style={styles.barValue}>{formatAmount(item.amount)}</Text>
+              <Text style={styles.barValue}>{format(item.amount, { compact: true })}</Text>
             </View>
             <View style={styles.barTrack}>
               <View
@@ -118,7 +116,7 @@ export function SpendingByCategoryContent({ data, total }: SpendingByCategoryCon
 
       <View style={styles.totalRow}>
         <Text style={styles.totalLabel}>Total</Text>
-        <Text style={styles.totalValue}>{formatAmount(total)}</Text>
+        <Text style={styles.totalValue}>{format(total, { compact: true })}</Text>
       </View>
     </View>
   );
@@ -145,10 +143,6 @@ export function SpendingOverTimeContent({ data }: SpendingOverTimeContentProps) 
   }
 
   const maxAmount = Math.max(...data.map(d => d.amount), 1);
-
-  const formatAmount = (cents: number): string => {
-    return `$${Math.round(cents / 100)}`;
-  };
 
   return (
     <View style={styles.timeContent}>
@@ -238,11 +232,8 @@ export function ProjectionContent({
   comparedToLastMonth,
 }: ProjectionContentProps) {
   const theme = useTheme();
+  const { format } = useCurrency();
   const styles = useMemo(() => createContentStyles(theme), [theme]);
-
-  const formatAmount = (cents: number): string => {
-    return `$${(cents / 100).toFixed(0)}`;
-  };
 
   const progress = projectedTotal > 0
     ? Math.round((currentSpent / projectedTotal) * 100)
@@ -254,7 +245,7 @@ export function ProjectionContent({
     <View style={styles.projectionContent}>
       <View style={styles.projectionMain}>
         <View style={styles.projectionAmount}>
-          <Text style={styles.projectionValue}>{formatAmount(projectedTotal)}</Text>
+          <Text style={styles.projectionValue}>{format(projectedTotal, { compact: true })}</Text>
           <Text style={styles.projectionLabel}>projected this month</Text>
         </View>
         <View style={styles.projectionComparison}>
@@ -285,7 +276,7 @@ export function ProjectionContent({
         </View>
         <View style={styles.projectionStats}>
           <Text style={styles.projectionStat}>
-            {formatAmount(currentSpent)} spent
+            {format(currentSpent, { compact: true })} spent
           </Text>
           <Text style={styles.projectionStat}>
             {daysRemaining} days left

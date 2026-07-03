@@ -11,6 +11,7 @@ import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import { useHabits } from '@/contexts/HabitsContext';
 import { StreakCalendar } from '@/components/StreakCalendar';
 import type { AppTheme } from '@/constants/theme';
@@ -21,6 +22,7 @@ export default function HabitDetailScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const theme = useTheme();
+  const { format } = useCurrency();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   const {
@@ -55,10 +57,6 @@ export default function HabitDetailScreen() {
       </View>
     );
   }
-
-  const formatAmount = (cents: number): string => {
-    return `$${(cents / 100).toFixed(0)}`;
-  };
 
   const handleStartTracking = async () => {
     await startTrackingHabit(habit.id);
@@ -143,7 +141,7 @@ export default function HabitDetailScreen() {
         <View style={styles.statsCard}>
           <View style={styles.statRow}>
             <View style={styles.stat}>
-              <Text style={styles.statValue}>{formatAmount(habit.totalMonthlySpend)}</Text>
+              <Text style={styles.statValue}>{format(habit.totalMonthlySpend, { compact: true })}</Text>
               <Text style={styles.statLabel}>per month</Text>
             </View>
             <View style={styles.statDivider} />
@@ -215,10 +213,10 @@ export default function HabitDetailScreen() {
             <View style={styles.savingsCard}>
               <View style={styles.savingsHeader}>
                 <Text style={styles.savingsAmount}>
-                  {formatAmount(goal.actualSavings)}
+                  {format(goal.actualSavings, { compact: true })}
                 </Text>
                 <Text style={styles.savingsGoal}>
-                  of {formatAmount(goal.savingsGoal)} goal
+                  of {format(goal.savingsGoal, { compact: true })} goal
                 </Text>
               </View>
               <View style={styles.savingsBar}>

@@ -4,6 +4,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { initAnalytics, track, flushAnalytics } from '@/utils/analytics';
 import { ThemeProvider, useIsDark } from '@/contexts/ThemeContext';
+import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { CategoriesProvider } from '@/contexts/CategoriesContext';
 import { ExpensesProvider } from '@/contexts/ExpensesContext';
 import { HabitsProvider } from '@/contexts/HabitsContext';
@@ -45,7 +46,8 @@ function AnalyticsLifecycle() {
 export default function RootLayout() {
   return (
     <ThemeProvider>
-      <CategoriesProvider>
+      <CurrencyProvider>
+        <CategoriesProvider>
         <ExpensesProvider>
           <HabitsProvider>
             <ReportsProvider>
@@ -63,7 +65,8 @@ export default function RootLayout() {
             </ReportsProvider>
           </HabitsProvider>
         </ExpensesProvider>
-      </CategoriesProvider>
+        </CategoriesProvider>
+      </CurrencyProvider>
     </ThemeProvider>
   );
 }

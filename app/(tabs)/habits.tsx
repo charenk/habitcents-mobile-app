@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import { useHabits } from '@/contexts/HabitsContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
 import { HabitInsightCard } from '@/components/HabitInsightCard';
@@ -30,6 +31,7 @@ export default function HabitsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const theme = useTheme();
+  const { format } = useCurrency();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedLesson, setSelectedLesson] = useState<MicroLesson | null>(null);
@@ -197,7 +199,6 @@ export default function HabitsScreen() {
   }, 0);
 
   const totalSaved = goals.reduce((sum, g) => sum + (g.actualSavings || 0), 0);
-  const formatSaved = (cents: number) => `$${(cents / 100).toFixed(2)}`;
 
   const isEmpty = sections.length === 0;
 
@@ -222,7 +223,7 @@ export default function HabitsScreen() {
       {activeHabits.length > 0 && (
         <View style={styles.savingsHero}>
           <Text style={styles.savingsLabel}>DOLLARS KEPT</Text>
-          <Text style={styles.savingsValue}>{formatSaved(totalSaved)}</Text>
+          <Text style={styles.savingsValue}>{format(totalSaved)}</Text>
           <Text style={styles.savingsCaption}>from the habits you're breaking</Text>
         </View>
       )}
