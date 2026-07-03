@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
 import { setHasOnboarded } from '@/utils/storage';
+import { strings } from '@/constants/strings';
 
 export default function WelcomeScreen() {
   const router = useRouter();
@@ -22,20 +23,20 @@ export default function WelcomeScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.logo}>HabitCents</Text>
-        <Text style={styles.tagline}>Track your spending{'\n'}with voice or text</Text>
+        <Text style={styles.logo}>{strings.welcome.logo}</Text>
+        <Text style={styles.tagline}>{strings.welcome.tagline}</Text>
         <Text style={styles.description}>
-          See where your money goes with clear insights and easy expense tracking.
+          {strings.welcome.description}
         </Text>
       </View>
 
       <View style={styles.buttonContainer}>
         <TouchableOpacity style={styles.primaryButton} onPress={handleGetStarted}>
-          <Text style={styles.primaryButtonText}>Get Started</Text>
+          <Text style={styles.primaryButtonText}>{strings.welcome.getStarted}</Text>
         </TouchableOpacity>
         
         <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
-          <Text style={styles.skipButtonText}>Skip for now</Text>
+          <Text style={styles.skipButtonText}>{strings.welcome.skipForNow}</Text>
         </TouchableOpacity>
       </View>
     </View>

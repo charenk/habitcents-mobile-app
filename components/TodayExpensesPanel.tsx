@@ -16,6 +16,7 @@ import { useCurrency } from '@/contexts/CurrencyContext';
 import type { Expense, ExpenseSection } from '@/types/expense';
 import type { Category } from '@/types/category';
 import { EditExpenseModal } from './EditExpenseModal';
+import { strings } from '@/constants/strings';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 // Collapsed peek keeps the sheet out of the way so the add-expense form (and its
@@ -51,7 +52,7 @@ function ExpenseCard({
       style={styles.card}
       onPress={() => onPress(item)}
       activeOpacity={0.7}
-      accessibilityLabel={`Edit ${item.title}, ${amountLabel}`}
+      accessibilityLabel={strings.expenses.editAccessibilityLabel(item.title, amountLabel)}
     >
       <View style={[styles.cardIcon, { backgroundColor: iconBg }]}>
         <Ionicons name="cafe-outline" size={24} color={iconColor} />
@@ -141,7 +142,7 @@ export function TodayExpensesPanel({
         contentContainerStyle={styles.chipsContainer}
         style={styles.chipsScroll}
       >
-        {[{ id: 'all', name: 'All' }, ...categories].map((cat) => {
+        {[{ id: 'all', name: strings.expenses.all }, ...categories].map((cat) => {
           const isActive = activeCategoryId === cat.id;
           return (
             <TouchableOpacity

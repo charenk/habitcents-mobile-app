@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useOnboarding } from '@/contexts/OnboardingContext';
 import type { AppTheme } from '@/constants/theme';
+import { strings } from '@/constants/strings';
 
 export default function SuccessScreen() {
   const insets = useSafeAreaInsets();
@@ -83,9 +84,9 @@ export default function SuccessScreen() {
 
         {/* Success text */}
         <Animated.View style={{ opacity: opacityAnim }}>
-          <Text style={styles.title}>You're all set!</Text>
+          <Text style={styles.title}>{strings.onboarding.allSet}</Text>
           <Text style={styles.subtitle}>
-            Your first expense has been saved.{'\n'}Let's start building better habits.
+            {strings.onboarding.successSubtitle}
           </Text>
         </Animated.View>
       </View>

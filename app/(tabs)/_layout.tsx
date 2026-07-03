@@ -1,6 +1,7 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
+import { strings } from '@/constants/strings';
 
 export default function TabLayout() {
   const theme = useTheme();
@@ -32,7 +33,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="expenses"
         options={{
-          title: 'Expenses',
+          title: strings.tabs.expenses,
           headerShown: false,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="wallet-outline" size={size} color={color} />
@@ -42,7 +43,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="reports"
         options={{
-          title: 'Reports',
+          title: strings.tabs.reports,
           headerShown: false,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="bar-chart-outline" size={size} color={color} />
@@ -52,7 +53,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="categories"
         options={{
-          title: 'Categories',
+          title: strings.tabs.categories,
           headerShown: false,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="grid-outline" size={size} color={color} />
@@ -62,7 +63,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="habits"
         options={{
-          title: 'Habits',
+          title: strings.tabs.habits,
           headerShown: false,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="checkmark-circle-outline" size={size} color={color} />

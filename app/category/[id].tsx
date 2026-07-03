@@ -18,6 +18,7 @@ import { AddCategoryModal } from '@/components/AddCategoryModal';
 import type { AppTheme } from '@/constants/theme';
 import type { CategoryIcon } from '@/types/category';
 import type { Expense } from '@/types/expense';
+import { strings } from '@/constants/strings';
 
 export default function CategoryDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -137,7 +138,7 @@ export default function CategoryDetailScreen() {
           </TouchableOpacity>
         </View>
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>Category not found</Text>
+          <Text style={styles.emptyText}>{strings.categoryDetail.notFound}</Text>
         </View>
       </View>
     );
@@ -156,7 +157,7 @@ export default function CategoryDetailScreen() {
           {item.title}
         </Text>
         <Text style={styles.transactionDate}>
-          {item.date.toLocaleDateString()} at {item.time}
+          {strings.categoryDetail.transactionDate(item.date.toLocaleDateString(), item.time)}
         </Text>
       </View>
       <Text style={styles.transactionAmount}>{format(item.amount, { signed: true })}</Text>
@@ -201,7 +202,7 @@ export default function CategoryDetailScreen() {
           <Text style={styles.title}>{category.name}</Text>
           {category.monthlyBudget && (
             <Text style={styles.budgetText}>
-              Budget: {format(category.monthlyBudget)}/month
+              {strings.categoryDetail.budget(format(category.monthlyBudget))}
             </Text>
           )}
         </View>
@@ -210,7 +211,7 @@ export default function CategoryDetailScreen() {
         <View style={styles.summaryCard}>
           <View style={styles.summaryMain}>
             <Text style={styles.summaryAmount}>{format(stats.thisMonth)}</Text>
-            <Text style={styles.summaryLabel}>this month</Text>
+            <Text style={styles.summaryLabel}>{strings.categoryDetail.thisMonth}</Text>
           </View>
           {stats.lastMonth > 0 && (
             <View style={styles.summaryTrend}>
@@ -225,7 +226,7 @@ export default function CategoryDetailScreen() {
                   { color: trendPercentage > 0 ? theme.danger : theme.primary },
                 ]}
               >
-                {Math.abs(trendPercentage)}% vs last month
+                {strings.categoryDetail.vsLastMonth(Math.abs(trendPercentage))}
               </Text>
             </View>
           )}
@@ -235,17 +236,17 @@ export default function CategoryDetailScreen() {
         <View style={styles.statsGrid}>
           <View style={styles.statCard}>
             <Text style={styles.statValue}>{stats.transactionCount}</Text>
-            <Text style={styles.statLabel}>transactions</Text>
+            <Text style={styles.statLabel}>{strings.categoryDetail.transactions}</Text>
           </View>
           <View style={styles.statCard}>
             <Text style={styles.statValue}>{format(stats.avgTransaction)}</Text>
-            <Text style={styles.statLabel}>avg transaction</Text>
+            <Text style={styles.statLabel}>{strings.categoryDetail.avgTransaction}</Text>
           </View>
         </View>
 
         {/* Trend Chart */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>6-Month Trend</Text>
+          <Text style={styles.sectionTitle}>{strings.categoryDetail.sixMonthTrend}</Text>
           <View style={styles.trendCard}>
             <View style={styles.trendChart}>
               {trendData.map((item, index) => (
@@ -269,7 +270,7 @@ export default function CategoryDetailScreen() {
         {/* Top Merchants */}
         {stats.topMerchants.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Top Merchants</Text>
+            <Text style={styles.sectionTitle}>{strings.categoryDetail.topMerchants}</Text>
             <View style={styles.merchantsCard}>
               {stats.topMerchants.map((merchant, index) => (
                 <View key={index} style={styles.merchantRow}>
@@ -281,7 +282,7 @@ export default function CategoryDetailScreen() {
                       {merchant.name}
                     </Text>
                     <Text style={styles.merchantCount}>
-                      {merchant.count} transaction{merchant.count !== 1 ? 's' : ''}
+                      {strings.categoryDetail.transactionCount(merchant.count)}
                     </Text>
                   </View>
                   <Text style={styles.merchantTotal}>{format(merchant.total)}</Text>
@@ -293,7 +294,7 @@ export default function CategoryDetailScreen() {
 
         {/* Recent Transactions */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Recent Transactions</Text>
+          <Text style={styles.sectionTitle}>{strings.categoryDetail.recentTransactions}</Text>
           <View style={styles.transactionsCard}>
             {categoryExpenses.slice(0, 10).map((expense) => (
               <View key={expense.id}>
@@ -301,7 +302,7 @@ export default function CategoryDetailScreen() {
               </View>
             ))}
             {categoryExpenses.length === 0 && (
-              <Text style={styles.noTransactions}>No transactions yet</Text>
+              <Text style={styles.noTransactions}>{strings.categoryDetail.noTransactions}</Text>
             )}
           </View>
         </View>

@@ -13,6 +13,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import type { AppTheme } from '@/constants/theme';
 import type { DetectedHabit } from '@/types/habit';
+import { strings } from '@/constants/strings';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const SWIPE_THRESHOLD = 80;
@@ -126,11 +127,11 @@ export function HabitInsightCard({
       <View style={styles.actionsContainer}>
         <Animated.View style={[styles.actionLeft, { opacity: rightOpacity }]}>
           <Ionicons name="checkmark-circle" size={32} color={theme.primary} />
-          <Text style={[styles.actionText, { color: theme.primary }]}>Track</Text>
+          <Text style={[styles.actionText, { color: theme.primary }]}>{strings.habits.trackAction}</Text>
         </Animated.View>
         <Animated.View style={[styles.actionRight, { opacity: leftOpacity }]}>
           <Ionicons name="close-circle" size={32} color={theme.danger} />
-          <Text style={[styles.actionText, { color: theme.danger }]}>Dismiss</Text>
+          <Text style={[styles.actionText, { color: theme.danger }]}>{strings.habits.dismissAction}</Text>
         </Animated.View>
       </View>
 
@@ -165,14 +166,14 @@ export function HabitInsightCard({
               <Text style={styles.statValue}>
                 {format(habit.totalMonthlySpend, { compact: true })}
               </Text>
-              <Text style={styles.statLabel}>per month</Text>
+              <Text style={styles.statLabel}>{strings.habits.perMonth}</Text>
             </View>
 
             <View style={styles.stat}>
               <Text style={styles.statValue}>
                 {habit.occurrencesPerPeriod}x
               </Text>
-              <Text style={styles.statLabel}>per {habit.frequency === 'daily' ? 'day' : habit.frequency === 'weekly' ? 'week' : 'month'}</Text>
+              <Text style={styles.statLabel}>{strings.habits.perUnit(habit.frequency === 'daily' ? strings.habits.perDay : habit.frequency === 'weekly' ? strings.habits.perWeek : strings.habits.perMonthUnit)}</Text>
             </View>
 
             <View style={styles.stat}>
@@ -207,7 +208,7 @@ export function HabitInsightCard({
 
           <View style={styles.swipeHint}>
             <Ionicons name="swap-horizontal" size={16} color={theme.textTertiary} />
-            <Text style={styles.swipeHintText}>Swipe to track or dismiss</Text>
+            <Text style={styles.swipeHintText}>{strings.habits.swipeHint}</Text>
           </View>
         </TouchableOpacity>
       </Animated.View>

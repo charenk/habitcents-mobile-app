@@ -10,6 +10,7 @@ import { CategoryRow } from '@/components/CategoryRow';
 import { AddCategoryModal } from '@/components/AddCategoryModal';
 import type { AppTheme } from '@/constants/theme';
 import type { Category, CategoryIcon } from '@/types/category';
+import { strings } from '@/constants/strings';
 
 type CategorySection = {
   title: string;
@@ -43,10 +44,10 @@ export default function CategoriesScreen() {
     const result: CategorySection[] = [];
 
     if (defaultCats.length > 0) {
-      result.push({ title: 'Default Categories', data: defaultCats });
+      result.push({ title: strings.categories.defaultCategories, data: defaultCats });
     }
     if (customCats.length > 0) {
-      result.push({ title: 'Custom Categories', data: customCats });
+      result.push({ title: strings.categories.customCategories, data: customCats });
     }
 
     return result;
@@ -73,12 +74,12 @@ export default function CategoriesScreen() {
 
   const handleDeleteCategory = useCallback((category: Category) => {
     Alert.alert(
-      'Delete Category',
-      `Are you sure you want to delete "${category.name}"? Your existing expenses are kept; they'll just no longer show this category.`,
+      strings.categories.deleteTitle,
+      strings.categories.deleteMessage(category.name),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: strings.common.cancel, style: 'cancel' },
         {
-          text: 'Delete',
+          text: strings.common.delete,
           style: 'destructive',
           onPress: async () => {
             await deleteCategory(category.id);
@@ -123,7 +124,7 @@ export default function CategoriesScreen() {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
         <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Loading categories...</Text>
+          <Text style={styles.loadingText}>{strings.categories.loading}</Text>
         </View>
       </View>
     );
@@ -132,7 +133,7 @@ export default function CategoriesScreen() {
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
-        <Text style={styles.title}>Categories</Text>
+        <Text style={styles.title}>{strings.categories.title}</Text>
         <TouchableOpacity
           style={styles.addButton}
           onPress={() => setIsModalVisible(true)}
@@ -152,9 +153,9 @@ export default function CategoriesScreen() {
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Ionicons name="folder-outline" size={48} color={theme.textTertiary} />
-            <Text style={styles.emptyText}>No categories yet</Text>
+            <Text style={styles.emptyText}>{strings.categories.emptyTitle}</Text>
             <Text style={styles.emptySubtext}>
-              Tap the + button to add your first category
+              {strings.categories.emptySubtitle}
             </Text>
           </View>
         }

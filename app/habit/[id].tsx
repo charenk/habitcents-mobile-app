@@ -16,6 +16,7 @@ import { useHabits } from '@/contexts/HabitsContext';
 import { StreakCalendar } from '@/components/StreakCalendar';
 import type { AppTheme } from '@/constants/theme';
 import type { StreakDay } from '@/types/habit';
+import { strings } from '@/constants/strings';
 
 export default function HabitDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -52,7 +53,7 @@ export default function HabitDetailScreen() {
           </TouchableOpacity>
         </View>
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>Habit not found</Text>
+          <Text style={styles.emptyText}>{strings.habitDetail.notFound}</Text>
         </View>
       </View>
     );
@@ -130,7 +131,7 @@ export default function HabitDetailScreen() {
         <View style={styles.headerSection}>
           <View style={[styles.sentimentBadge, { backgroundColor: getSentimentColor() + '20' }]}>
             <Text style={[styles.sentimentText, { color: getSentimentColor() }]}>
-              {habit.sentiment.charAt(0).toUpperCase() + habit.sentiment.slice(1)} Habit
+              {strings.habitDetail.sentimentHabit(habit.sentiment.charAt(0).toUpperCase() + habit.sentiment.slice(1))}
             </Text>
           </View>
           <Text style={styles.title}>{habit.name}</Text>
@@ -142,12 +143,12 @@ export default function HabitDetailScreen() {
           <View style={styles.statRow}>
             <View style={styles.stat}>
               <Text style={styles.statValue}>{format(habit.totalMonthlySpend, { compact: true })}</Text>
-              <Text style={styles.statLabel}>per month</Text>
+              <Text style={styles.statLabel}>{strings.habitDetail.perMonth}</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.stat}>
               <Text style={styles.statValue}>{habit.occurrencesPerPeriod}x</Text>
-              <Text style={styles.statLabel}>per {habit.frequency === 'daily' ? 'day' : habit.frequency === 'weekly' ? 'week' : 'month'}</Text>
+              <Text style={styles.statLabel}>{strings.habitDetail.perUnit(habit.frequency === 'daily' ? strings.habitDetail.perDay : habit.frequency === 'weekly' ? strings.habitDetail.perWeek : strings.habitDetail.perMonthUnit)}</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.stat}>
@@ -165,7 +166,7 @@ export default function HabitDetailScreen() {
         {/* Trigger Analysis */}
         {habit.triggers.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>When Does This Happen?</Text>
+            <Text style={styles.sectionTitle}>{strings.habitDetail.whenDoesThisHappen}</Text>
             <View style={styles.triggersCard}>
               {habit.triggers.map((trigger, index) => (
                 <View key={index} style={styles.triggerRow}>
@@ -185,7 +186,7 @@ export default function HabitDetailScreen() {
                   <View style={styles.triggerContent}>
                     <Text style={styles.triggerDescription}>{trigger.description}</Text>
                     <Text style={styles.triggerConfidence}>
-                      {Math.round(trigger.confidence * 100)}% confidence
+                      {strings.habitDetail.confidence(Math.round(trigger.confidence * 100))}
                     </Text>
                   </View>
                 </View>
@@ -197,7 +198,7 @@ export default function HabitDetailScreen() {
         {/* Streak Section (if tracking) */}
         {goal && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Your Progress</Text>
+            <Text style={styles.sectionTitle}>{strings.habitDetail.yourProgress}</Text>
             <StreakCalendar
               streakDays={streakDays}
               currentStreak={goal.currentStreak}
@@ -209,14 +210,14 @@ export default function HabitDetailScreen() {
         {/* Savings Section (if tracking) */}
         {goal && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Savings Progress</Text>
+            <Text style={styles.sectionTitle}>{strings.habitDetail.savingsProgress}</Text>
             <View style={styles.savingsCard}>
               <View style={styles.savingsHeader}>
                 <Text style={styles.savingsAmount}>
                   {format(goal.actualSavings, { compact: true })}
                 </Text>
                 <Text style={styles.savingsGoal}>
-                  of {format(goal.savingsGoal, { compact: true })} goal
+                  {strings.habitDetail.ofGoal(format(goal.savingsGoal, { compact: true }))}
                 </Text>
               </View>
               <View style={styles.savingsBar}>
@@ -236,7 +237,7 @@ export default function HabitDetailScreen() {
         {/* Milestones (if tracking) */}
         {goal && goal.milestones.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Milestones</Text>
+            <Text style={styles.sectionTitle}>{strings.habitDetail.milestones}</Text>
             <View style={styles.milestonesCard}>
               {goal.milestones.map((milestone) => (
                 <View
@@ -265,7 +266,7 @@ export default function HabitDetailScreen() {
                   <View style={styles.milestoneContent}>
                     <Text style={styles.milestoneName}>{milestone.name}</Text>
                     <Text style={styles.milestoneDescription}>
-                      {milestone.targetStreak} day streak
+                      {strings.habitDetail.dayStreak(milestone.targetStreak)}
                     </Text>
                   </View>
                   {milestone.reachedAt && (
@@ -279,18 +280,18 @@ export default function HabitDetailScreen() {
 
         {/* Suggestions */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Suggestions</Text>
+          <Text style={styles.sectionTitle}>{strings.habitDetail.suggestions}</Text>
           <View style={styles.suggestionsCard}>
             <View style={styles.suggestionRow}>
               <Ionicons name="bulb-outline" size={20} color={theme.iconOrange} />
               <Text style={styles.suggestionText}>
-                Try preparing coffee at home to save on coffee shop visits.
+                {strings.habitDetail.suggestionCoffee}
               </Text>
             </View>
             <View style={styles.suggestionRow}>
               <Ionicons name="time-outline" size={20} color={theme.primary} />
               <Text style={styles.suggestionText}>
-                Set a reminder before your usual spending time.
+                {strings.habitDetail.suggestionReminder}
               </Text>
             </View>
           </View>
@@ -301,7 +302,7 @@ export default function HabitDetailScreen() {
           {!goal && habit.status === 'discovered' && (
             <TouchableOpacity style={styles.primaryButton} onPress={handleStartTracking}>
               <Ionicons name="flag-outline" size={20} color={theme.white} />
-              <Text style={styles.primaryButtonText}>Start Tracking This Habit</Text>
+              <Text style={styles.primaryButtonText}>{strings.habitDetail.startTracking}</Text>
             </TouchableOpacity>
           )}
 
@@ -314,7 +315,7 @@ export default function HabitDetailScreen() {
               >
                 <Ionicons name="checkmark-circle-outline" size={20} color={theme.white} />
                 <Text style={styles.primaryButtonText}>
-                  {isLogging ? 'Logging...' : 'Log Today as Success'}
+                  {isLogging ? strings.habitDetail.logging : strings.habitDetail.logTodayAsSuccess}
                 </Text>
               </TouchableOpacity>
 
@@ -323,7 +324,7 @@ export default function HabitDetailScreen() {
                 onPress={() => handleLogDay(false)}
                 disabled={isLogging}
               >
-                <Text style={styles.secondaryButtonText}>I slipped today</Text>
+                <Text style={styles.secondaryButtonText}>{strings.habitDetail.slippedToday}</Text>
               </TouchableOpacity>
             </>
           )}

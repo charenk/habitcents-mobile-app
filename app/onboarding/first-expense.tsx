@@ -17,12 +17,13 @@ import { useExpenses } from '@/contexts/ExpensesContext';
 import { AmountInput } from '@/components/AmountInput';
 import type { AppTheme } from '@/constants/theme';
 import type { ExpenseCategory } from '@/types/expense';
+import { strings } from '@/constants/strings';
 
 const QUICK_CATEGORIES: { name: ExpenseCategory; icon: keyof typeof Ionicons.glyphMap; color: string }[] = [
-  { name: 'Food', icon: 'fast-food-outline', color: '#66BB6A' },
-  { name: 'Shopping', icon: 'cart-outline', color: '#EC407A' },
-  { name: 'Entertainment', icon: 'film-outline', color: '#42A5F5' },
-  { name: 'Transportation', icon: 'bus-outline', color: '#8D6E63' },
+  { name: strings.onboarding.food, icon: 'fast-food-outline', color: '#66BB6A' },
+  { name: strings.onboarding.shopping, icon: 'cart-outline', color: '#EC407A' },
+  { name: strings.onboarding.entertainment, icon: 'film-outline', color: '#42A5F5' },
+  { name: strings.onboarding.transportation, icon: 'bus-outline', color: '#8D6E63' },
 ];
 
 export default function FirstExpenseScreen() {
@@ -67,7 +68,7 @@ export default function FirstExpenseScreen() {
     >
       <View style={styles.header}>
         <TouchableOpacity onPress={handleSkip}>
-          <Text style={styles.skipText}>Skip</Text>
+          <Text style={styles.skipText}>{strings.onboarding.skip}</Text>
         </TouchableOpacity>
       </View>
 
@@ -76,9 +77,9 @@ export default function FirstExpenseScreen() {
         contentContainerStyle={styles.contentContainer}
         keyboardShouldPersistTaps="handled"
       >
-        <Text style={styles.title}>Add your first expense</Text>
+        <Text style={styles.title}>{strings.onboarding.firstExpenseTitle}</Text>
         <Text style={styles.subtitle}>
-          This only takes a few seconds - try it out!
+          {strings.onboarding.firstExpenseSubtitle}
         </Text>
 
         {/* Amount Input */}
@@ -92,7 +93,7 @@ export default function FirstExpenseScreen() {
 
         {/* Category Selection */}
         <View style={styles.categorySection}>
-          <Text style={styles.categoryLabel}>What was it for?</Text>
+          <Text style={styles.categoryLabel}>{strings.onboarding.whatWasItFor}</Text>
           <View style={styles.categoryGrid}>
             {QUICK_CATEGORIES.map((cat) => (
               <TouchableOpacity
@@ -133,7 +134,7 @@ export default function FirstExpenseScreen() {
           onPress={handleSave}
           disabled={!canSave}
         >
-          <Text style={styles.buttonText}>Save Expense</Text>
+          <Text style={styles.buttonText}>{strings.onboarding.saveExpense}</Text>
           <Ionicons name="checkmark" size={20} color={theme.white} />
         </TouchableOpacity>
       </View>

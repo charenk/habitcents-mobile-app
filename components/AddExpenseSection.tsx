@@ -16,6 +16,7 @@ import { useExpenses } from '@/contexts/ExpensesContext';
 import { AmountInput } from './AmountInput';
 import { RecurrenceField } from './RecurrenceField';
 import type { ExpenseCategory, AddExpenseInput, RecurrenceFrequency } from '@/types/expense';
+import { strings } from '@/constants/strings';
 
 type AddExpenseSectionProps = {
   onSave: (expense: AddExpenseInput) => void;
@@ -149,7 +150,7 @@ export function AddExpenseSection({ onSave, onCancel }: AddExpenseSectionProps) 
             <Ionicons name="storefront-outline" size={20} color={theme.textSecondary} />
             <TextInput
               style={styles.descriptionInput}
-              placeholder="Merchant (e.g. Starbucks)"
+              placeholder={strings.expenses.merchantPlaceholder}
               placeholderTextColor={theme.textTertiary}
               value={merchant}
               onChangeText={setMerchant}
@@ -176,7 +177,7 @@ export function AddExpenseSection({ onSave, onCancel }: AddExpenseSectionProps) 
             <Ionicons name="create-outline" size={20} color={theme.textSecondary} />
             <TextInput
               style={styles.descriptionInput}
-              placeholder="Note (optional)"
+              placeholder={strings.expenses.notePlaceholder}
               placeholderTextColor={theme.textTertiary}
               value={title}
               onChangeText={setTitle}
@@ -188,14 +189,14 @@ export function AddExpenseSection({ onSave, onCancel }: AddExpenseSectionProps) 
 
           <View style={styles.buttonRow}>
             <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
-              <Text style={styles.cancelButtonText}>Cancel</Text>
+              <Text style={styles.cancelButtonText}>{strings.common.cancel}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.saveButton, amount === 0 && styles.saveButtonDisabled]}
               onPress={handleSave}
               disabled={amount === 0}
             >
-              <Text style={styles.saveButtonText}>Save Expense</Text>
+              <Text style={styles.saveButtonText}>{strings.expenses.saveExpense}</Text>
             </TouchableOpacity>
           </View>
         </View>

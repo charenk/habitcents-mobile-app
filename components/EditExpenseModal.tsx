@@ -18,6 +18,7 @@ import { AmountInput } from './AmountInput';
 import { RecurrenceField } from './RecurrenceField';
 import type { AppTheme } from '@/constants/theme';
 import type { Expense, ExpenseCategory, RecurrenceFrequency } from '@/types/expense';
+import { strings } from '@/constants/strings';
 
 type EditExpenseModalProps = {
   visible: boolean;
@@ -91,12 +92,12 @@ export function EditExpenseModal({ visible, expense, onClose }: EditExpenseModal
       >
         <View style={styles.container}>
           <View style={styles.header}>
-            <TouchableOpacity onPress={handleClose} accessibilityLabel="Cancel editing">
-              <Text style={styles.cancelText}>Cancel</Text>
+            <TouchableOpacity onPress={handleClose} accessibilityLabel={strings.editExpenseModal.cancelAccessibilityLabel}>
+              <Text style={styles.cancelText}>{strings.common.cancel}</Text>
             </TouchableOpacity>
-            <Text style={styles.title}>Edit Expense</Text>
-            <TouchableOpacity onPress={handleSave} disabled={amount === 0} accessibilityLabel="Save expense">
-              <Text style={[styles.saveText, amount === 0 && styles.saveTextDisabled]}>Save</Text>
+            <Text style={styles.title}>{strings.editExpenseModal.title}</Text>
+            <TouchableOpacity onPress={handleSave} disabled={amount === 0} accessibilityLabel={strings.editExpenseModal.saveAccessibilityLabel}>
+              <Text style={[styles.saveText, amount === 0 && styles.saveTextDisabled]}>{strings.common.save}</Text>
             </TouchableOpacity>
           </View>
 
@@ -109,7 +110,7 @@ export function EditExpenseModal({ visible, expense, onClose }: EditExpenseModal
               <AmountInput value={amount} onChange={setAmount} />
             </View>
 
-            <Text style={styles.sectionTitle}>Category</Text>
+            <Text style={styles.sectionTitle}>{strings.editExpenseModal.category}</Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -132,28 +133,28 @@ export function EditExpenseModal({ visible, expense, onClose }: EditExpenseModal
               })}
             </ScrollView>
 
-            <Text style={styles.sectionTitle}>Merchant</Text>
+            <Text style={styles.sectionTitle}>{strings.editExpenseModal.merchant}</Text>
             <View style={styles.inputRow}>
               <Ionicons name="storefront-outline" size={20} color={theme.textSecondary} />
               <TextInput
                 style={styles.input}
                 value={merchant}
                 onChangeText={setMerchant}
-                placeholder="Merchant (e.g. Starbucks)"
+                placeholder={strings.editExpenseModal.merchantPlaceholder}
                 placeholderTextColor={theme.textTertiary}
                 maxLength={60}
                 autoCapitalize="words"
               />
             </View>
 
-            <Text style={styles.sectionTitle}>Note</Text>
+            <Text style={styles.sectionTitle}>{strings.editExpenseModal.note}</Text>
             <View style={styles.inputRow}>
               <Ionicons name="create-outline" size={20} color={theme.textSecondary} />
               <TextInput
                 style={styles.input}
                 value={note}
                 onChangeText={setNote}
-                placeholder="Note (optional)"
+                placeholder={strings.editExpenseModal.notePlaceholder}
                 placeholderTextColor={theme.textTertiary}
                 maxLength={100}
               />
@@ -167,24 +168,24 @@ export function EditExpenseModal({ visible, expense, onClose }: EditExpenseModal
                   style={styles.confirmCancel}
                   onPress={() => setConfirmingDelete(false)}
                 >
-                  <Text style={styles.confirmCancelText}>Keep</Text>
+                  <Text style={styles.confirmCancelText}>{strings.common.keep}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.confirmDelete}
                   onPress={handleDelete}
-                  accessibilityLabel="Confirm delete expense"
+                  accessibilityLabel={strings.editExpenseModal.confirmDeleteAccessibilityLabel}
                 >
-                  <Text style={styles.confirmDeleteText}>Delete expense</Text>
+                  <Text style={styles.confirmDeleteText}>{strings.editExpenseModal.deleteExpense}</Text>
                 </TouchableOpacity>
               </View>
             ) : (
               <TouchableOpacity
                 style={styles.deleteButton}
                 onPress={() => setConfirmingDelete(true)}
-                accessibilityLabel="Delete expense"
+                accessibilityLabel={strings.editExpenseModal.deleteAccessibilityLabel}
               >
                 <Ionicons name="trash-outline" size={18} color={theme.danger} />
-                <Text style={styles.deleteText}>Delete expense</Text>
+                <Text style={styles.deleteText}>{strings.editExpenseModal.deleteExpense}</Text>
               </TouchableOpacity>
             )}
 
