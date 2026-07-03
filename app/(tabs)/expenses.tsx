@@ -5,6 +5,8 @@ import {
   StyleSheet,
   TouchableOpacity,
   AppState,
+  ScrollView,
+  Dimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -19,6 +21,10 @@ import { groupExpensesByDate } from '@/data/expensesMock';
 import { computeUpcoming } from '@/utils/recurring';
 
 const UPCOMING_WINDOW_DAYS = 60;
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+// Matches the collapsed sheet peek (SNAP_COLLAPSED in TodayExpensesPanel) plus a
+// buffer, so the form's Save button always scrolls clear of the sheet.
+const FORM_BOTTOM_PADDING = SCREEN_HEIGHT * 0.18 + 32;
 
 function todayLabel(): string {
   return new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -92,8 +98,16 @@ export default function ExpensesScreen() {
 
       {activeView === 'recent' ? (
         <>
-          {/* Add Expense Section (always visible) */}
-          <AddExpenseSection onSave={handleSaveExpense} onCancel={handleCancelExpense} />
+          {/* Add Expense form: scrollable so the Save button is always reachable
+              above the collapsed expenses sheet. */}
+          <ScrollView
+            style={styles.formScroll}
+            contentContainerStyle={styles.formScrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <AddExpenseSection onSave={handleSaveExpense} onCancel={handleCancelExpense} />
+          </ScrollView>
 
           {/* Slidable Expenses Panel */}
           <View style={[styles.panelWrap, { pointerEvents: 'box-none' }]}>
@@ -117,6 +131,12 @@ function createStyles(theme: AppTheme) {
     container: {
       flex: 1,
       backgroundColor: theme.background,
+    },
+    formScroll: {
+      flex: 1,
+    },
+    formScrollContent: {
+      paddingBottom: FORM_BOTTOM_PADDING,
     },
     header: {
       paddingHorizontal: 20,
