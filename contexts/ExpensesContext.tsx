@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState, useCallback, use
 import { getExpenses, saveExpenses } from '@/utils/storage';
 import type { Expense, AddExpenseInput, ExpenseCategory } from '@/types/expense';
 import { formatAmount } from '@/data/expensesMock';
+import { track } from '@/utils/analytics';
 
 function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -90,6 +91,11 @@ export function ExpensesProvider({ children }: { children: React.ReactNode }) {
       loadedRef.current = true;
     }
     await commit([newExpense, ...expensesRef.current]);
+    track('expense_logged', {
+      category: newExpense.category,
+      has_merchant: !!newExpense.merchant,
+      is_recurring: !!newExpense.isRecurring,
+    });
     return newExpense;
   }, [commit]);
 
@@ -106,10 +112,12 @@ export function ExpensesProvider({ children }: { children: React.ReactNode }) {
       return updatedExp;
     });
     await commit(updated);
+    track('expense_edited', { fields_changed: Object.keys(updates).length });
   }, [commit]);
 
   const deleteExpense = useCallback(async (id: string): Promise<void> => {
     await commit(expensesRef.current.filter(exp => exp.id !== id));
+    track('expense_deleted', {});
   }, [commit]);
 
   const getExpenseById = useCallback((id: string): Expense | undefined => {

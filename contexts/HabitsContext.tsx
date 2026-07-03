@@ -9,6 +9,7 @@ import {
 } from '@/utils/storage';
 import { detectHabits, mergeHabits } from '@/utils/habitDetection';
 import { applyStreakLog, upsertStreakLog } from '@/utils/streakLog';
+import { track, bucketCents } from '@/utils/analytics';
 import type { Expense } from '@/types/expense';
 import type {
   DetectedHabit,
@@ -89,6 +90,15 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
     const merged = mergeHabits(habits, detected);
     setHabits(merged);
     await saveHabits(merged);
+
+    // Fire detection_shown only when a new leak surfaces (discovered count grew),
+    // so we measure the aha moment without spamming an event on every log.
+    const isDiscovered = (h: DetectedHabit) => h.status === 'discovered' && !h.dismissedAt;
+    const before = habits.filter(isDiscovered).length;
+    const after = merged.filter(isDiscovered).length;
+    if (after > before) {
+      track('detection_shown', { habit_count: after });
+    }
   }, [habits]);
 
   const startTrackingHabit = useCallback(async (habitId: string): Promise<void> => {
@@ -97,6 +107,9 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
     );
     setHabits(updated);
     await saveHabits(updated);
+    track('habit_tracking_started', {
+      frequency: habits.find(h => h.id === habitId)?.frequency,
+    });
   }, [habits]);
 
   const dismissHabit = useCallback(async (habitId: string): Promise<void> => {
@@ -146,6 +159,7 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
     setHabits(updatedHabits);
     await saveHabits(updatedHabits);
 
+    track('habit_goal_created', { frequency: habit.frequency });
     return newGoal;
   }, [habits, goals]);
 
@@ -202,6 +216,15 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
     );
     setHabits(updatedHabits);
     await saveHabits(updatedHabits);
+
+    track('skip_logged', { completed, saved_bucket: bucketCents(savedThisDay) });
+    // A milestone newly crossed on this log (had no reachedAt before, has one now).
+    const newlyReached = updatedMilestones.find(
+      (m, i) => m.reachedAt && !goal.milestones[i]?.reachedAt
+    );
+    if (newlyReached) {
+      track('milestone_reached', { streak: newlyReached.targetStreak });
+    }
   }, [goals, habits]);
 
   const updateGoal = useCallback(async (
