@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import type { Expense, ExpenseSection } from '@/types/expense';
 import type { Category } from '@/types/category';
 import { EditExpenseModal } from './EditExpenseModal';
@@ -40,6 +41,8 @@ function ExpenseCard({
   onPress: (expense: Expense) => void;
 }) {
   const styles = useMemo(() => createCardStyles(theme), [theme]);
+  const { format } = useCurrency();
+  const amountLabel = format(item.amount, { signed: true });
   const iconBg = item.iconVariant === 'yellow' ? theme.iconBgYellow : theme.iconBgGreen;
   const iconColor = item.iconVariant === 'yellow' ? theme.iconOrange : theme.primary;
 
@@ -48,7 +51,7 @@ function ExpenseCard({
       style={styles.card}
       onPress={() => onPress(item)}
       activeOpacity={0.7}
-      accessibilityLabel={`Edit ${item.title}, ${item.amountDisplay}`}
+      accessibilityLabel={`Edit ${item.title}, ${amountLabel}`}
     >
       <View style={[styles.cardIcon, { backgroundColor: iconBg }]}>
         <Ionicons name="cafe-outline" size={24} color={iconColor} />
@@ -57,7 +60,7 @@ function ExpenseCard({
         <Text style={styles.cardTitle}>{item.title}</Text>
         <Text style={styles.cardTime}>{item.time}</Text>
       </View>
-      <Text style={styles.cardAmount}>{item.amountDisplay}</Text>
+      <Text style={styles.cardAmount}>{amountLabel}</Text>
     </TouchableOpacity>
   );
 }

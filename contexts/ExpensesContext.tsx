@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { getExpenses, saveExpenses } from '@/utils/storage';
 import type { Expense, AddExpenseInput, ExpenseCategory } from '@/types/expense';
-import { formatAmount } from '@/data/expensesMock';
 import { track } from '@/utils/analytics';
 
 function generateId(): string {
@@ -41,7 +40,6 @@ function createExpense(input: AddExpenseInput): Expense {
     id: generateId(),
     title: input.title,
     amount: input.amount,
-    amountDisplay: formatAmount(input.amount),
     category: input.category,
     categoryId: input.categoryId,
     merchant: input.merchant,
@@ -105,11 +103,7 @@ export function ExpensesProvider({ children }: { children: React.ReactNode }) {
   ): Promise<void> => {
     const updated = expensesRef.current.map(exp => {
       if (exp.id !== id) return exp;
-      const updatedExp = { ...exp, ...updates };
-      if (updates.amount !== undefined) {
-        updatedExp.amountDisplay = formatAmount(updates.amount);
-      }
-      return updatedExp;
+      return { ...exp, ...updates };
     });
     await commit(updated);
     track('expense_edited', { fields_changed: Object.keys(updates).length });

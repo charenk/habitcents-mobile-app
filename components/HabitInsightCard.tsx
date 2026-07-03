@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import type { AppTheme } from '@/constants/theme';
 import type { DetectedHabit } from '@/types/habit';
 
@@ -30,6 +31,7 @@ export function HabitInsightCard({
   onPress,
 }: HabitInsightCardProps) {
   const theme = useTheme();
+  const { format } = useCurrency();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const translateX = useRef(new Animated.Value(0)).current;
 
@@ -66,10 +68,6 @@ export function HabitInsightCard({
       },
     })
   ).current;
-
-  const formatAmount = (cents: number): string => {
-    return `$${Math.round(cents / 100)}`;
-  };
 
   const getTrendIcon = () => {
     switch (habit.trend) {
@@ -165,7 +163,7 @@ export function HabitInsightCard({
           <View style={styles.stats}>
             <View style={styles.stat}>
               <Text style={styles.statValue}>
-                {formatAmount(habit.totalMonthlySpend)}
+                {format(habit.totalMonthlySpend, { compact: true })}
               </Text>
               <Text style={styles.statLabel}>per month</Text>
             </View>

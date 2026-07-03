@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import type { AppTheme } from '@/constants/theme';
 import type { Category, CategoryIcon } from '@/types/category';
 
@@ -25,11 +26,8 @@ export function CategoryRow({
   showDelete = false,
 }: CategoryRowProps) {
   const theme = useTheme();
+  const { format } = useCurrency();
   const styles = useMemo(() => createStyles(theme), [theme]);
-
-  const formatAmount = (cents: number): string => {
-    return `$${(cents / 100).toFixed(2)}`;
-  };
 
   const getTrendIcon = () => {
     switch (trend) {
@@ -70,7 +68,7 @@ export function CategoryRow({
       <View style={styles.content}>
         <Text style={styles.name}>{category.name}</Text>
         {totalSpent > 0 && (
-          <Text style={styles.spent}>{formatAmount(totalSpent)} this month</Text>
+          <Text style={styles.spent}>{format(totalSpent)} this month</Text>
         )}
       </View>
 

@@ -11,6 +11,7 @@ import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import { useCategories } from '@/contexts/CategoriesContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
 import { AddCategoryModal } from '@/components/AddCategoryModal';
@@ -23,6 +24,7 @@ export default function CategoryDetailScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const theme = useTheme();
+  const { format } = useCurrency();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
 
@@ -141,10 +143,6 @@ export default function CategoryDetailScreen() {
     );
   }
 
-  const formatAmount = (cents: number): string => {
-    return `$${(cents / 100).toFixed(2)}`;
-  };
-
   const trendPercentage = stats.lastMonth > 0
     ? Math.round(((stats.thisMonth - stats.lastMonth) / stats.lastMonth) * 100)
     : 0;
@@ -161,7 +159,7 @@ export default function CategoryDetailScreen() {
           {item.date.toLocaleDateString()} at {item.time}
         </Text>
       </View>
-      <Text style={styles.transactionAmount}>{item.amountDisplay}</Text>
+      <Text style={styles.transactionAmount}>{format(item.amount, { signed: true })}</Text>
     </View>
   );
 
@@ -203,7 +201,7 @@ export default function CategoryDetailScreen() {
           <Text style={styles.title}>{category.name}</Text>
           {category.monthlyBudget && (
             <Text style={styles.budgetText}>
-              Budget: {formatAmount(category.monthlyBudget)}/month
+              Budget: {format(category.monthlyBudget)}/month
             </Text>
           )}
         </View>
@@ -211,7 +209,7 @@ export default function CategoryDetailScreen() {
         {/* Summary Card */}
         <View style={styles.summaryCard}>
           <View style={styles.summaryMain}>
-            <Text style={styles.summaryAmount}>{formatAmount(stats.thisMonth)}</Text>
+            <Text style={styles.summaryAmount}>{format(stats.thisMonth)}</Text>
             <Text style={styles.summaryLabel}>this month</Text>
           </View>
           {stats.lastMonth > 0 && (
@@ -240,7 +238,7 @@ export default function CategoryDetailScreen() {
             <Text style={styles.statLabel}>transactions</Text>
           </View>
           <View style={styles.statCard}>
-            <Text style={styles.statValue}>{formatAmount(stats.avgTransaction)}</Text>
+            <Text style={styles.statValue}>{format(stats.avgTransaction)}</Text>
             <Text style={styles.statLabel}>avg transaction</Text>
           </View>
         </View>
@@ -286,7 +284,7 @@ export default function CategoryDetailScreen() {
                       {merchant.count} transaction{merchant.count !== 1 ? 's' : ''}
                     </Text>
                   </View>
-                  <Text style={styles.merchantTotal}>{formatAmount(merchant.total)}</Text>
+                  <Text style={styles.merchantTotal}>{format(merchant.total)}</Text>
                 </View>
               ))}
             </View>

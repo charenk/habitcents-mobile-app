@@ -5,10 +5,12 @@ import type { Category } from '@/types/category';
 import type { DetectedHabit, HabitChangeGoal, HabitMilestone } from '@/types/habit';
 import type { DashboardConfig } from '@/types/report';
 import type { OnboardingState, ProgressiveFeatureState } from '@/types/onboarding';
+import { type CurrencyCode, DEFAULT_CURRENCY, isCurrencyCode } from '@/utils/currency';
 
 // Storage keys
 const ONBOARDING_KEY = '@habitcents_onboarded';
 const THEME_MODE_KEY = '@habitcents_theme_mode';
+const CURRENCY_KEY = '@habitcents_currency';
 const EXPENSES_KEY = '@habitcents_expenses';
 const CATEGORIES_KEY = '@habitcents_categories';
 const HABITS_KEY = '@habitcents_habits';
@@ -135,6 +137,31 @@ export async function setThemeMode(mode: ThemeMode): Promise<void> {
     await AsyncStorage.setItem(THEME_MODE_KEY, mode);
   } catch (error) {
     console.error('Error saving theme mode:', error);
+  }
+}
+
+/**
+ * Get persisted currency code (defaults to USD)
+ */
+export async function getCurrency(): Promise<CurrencyCode> {
+  try {
+    const value = await AsyncStorage.getItem(CURRENCY_KEY);
+    if (isCurrencyCode(value)) return value;
+    return DEFAULT_CURRENCY;
+  } catch (error) {
+    console.error('Error reading currency:', error);
+    return DEFAULT_CURRENCY;
+  }
+}
+
+/**
+ * Persist currency code
+ */
+export async function setCurrency(code: CurrencyCode): Promise<void> {
+  try {
+    await AsyncStorage.setItem(CURRENCY_KEY, code);
+  } catch (error) {
+    console.error('Error saving currency:', error);
   }
 }
 
