@@ -1,4 +1,4 @@
-import React, { useRef, useMemo } from 'react';
+import React, { useRef, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -15,6 +15,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import type { Expense, ExpenseSection } from '@/types/expense';
 import type { CategoryFilter } from '@/data/expensesMock';
 import { ALL_CATEGORIES } from '@/data/expensesMock';
+import { EditExpenseModal } from './EditExpenseModal';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const SNAP_PARTIAL = 0.55;
@@ -29,16 +30,23 @@ type TodayExpensesPanelProps = {
 function ExpenseCard({
   item,
   theme,
+  onPress,
 }: {
   item: Expense;
   theme: ReturnType<typeof useTheme>;
+  onPress: (expense: Expense) => void;
 }) {
   const styles = useMemo(() => createCardStyles(theme), [theme]);
   const iconBg = item.iconVariant === 'yellow' ? theme.iconBgYellow : theme.iconBgGreen;
   const iconColor = item.iconVariant === 'yellow' ? theme.iconOrange : theme.primary;
 
   return (
-    <View style={styles.card}>
+    <TouchableOpacity
+      style={styles.card}
+      onPress={() => onPress(item)}
+      activeOpacity={0.7}
+      accessibilityLabel={`Edit ${item.title}, ${item.amountDisplay}`}
+    >
       <View style={[styles.cardIcon, { backgroundColor: iconBg }]}>
         <Ionicons name="cafe-outline" size={24} color={iconColor} />
       </View>
@@ -47,7 +55,7 @@ function ExpenseCard({
         <Text style={styles.cardTime}>{item.time}</Text>
       </View>
       <Text style={styles.cardAmount}>{item.amountDisplay}</Text>
-    </View>
+    </TouchableOpacity>
   );
 }
 
@@ -58,6 +66,8 @@ export function TodayExpensesPanel({
 }: TodayExpensesPanelProps) {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
+
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
 
   const panelHeight = useRef(new Animated.Value(SCREEN_HEIGHT * SNAP_PARTIAL)).current;
   const lastOffset = useRef(SCREEN_HEIGHT * SNAP_PARTIAL);
@@ -92,7 +102,7 @@ export function TodayExpensesPanel({
   ).current;
 
   const renderItem = ({ item }: { item: Expense }) => (
-    <ExpenseCard item={item} theme={theme} />
+    <ExpenseCard item={item} theme={theme} onPress={setEditingExpense} />
   );
 
   const renderSectionHeader = ({ section }: { section: ExpenseSection }) => (
@@ -135,6 +145,12 @@ export function TodayExpensesPanel({
         stickySectionHeadersEnabled={false}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
+      />
+
+      <EditExpenseModal
+        visible={editingExpense !== null}
+        expense={editingExpense}
+        onClose={() => setEditingExpense(null)}
       />
     </Animated.View>
   );
