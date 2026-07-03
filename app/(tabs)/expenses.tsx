@@ -1,9 +1,10 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
+  AppState,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -19,8 +20,9 @@ import { computeUpcoming } from '@/utils/recurring';
 
 const UPCOMING_WINDOW_DAYS = 60;
 
-const now = new Date();
-const dateLabel = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+function todayLabel(): string {
+  return new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
 
 export default function ExpensesScreen() {
   const insets = useSafeAreaInsets();
@@ -28,6 +30,16 @@ export default function ExpensesScreen() {
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [activeCategoryId, setActiveCategoryId] = useState<string>('all');
   const [activeView, setActiveView] = useState<'recent' | 'upcoming'>('recent');
+
+  // Recompute the date pill when the app returns to the foreground, so it never
+  // shows yesterday after being backgrounded overnight (M2).
+  const [dateLabel, setDateLabel] = useState(todayLabel);
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (s) => {
+      if (s === 'active') setDateLabel(todayLabel());
+    });
+    return () => sub.remove();
+  }, []);
 
   const { expenses, addExpense } = useExpenses();
   const { getVisibleCategories } = useCategories();

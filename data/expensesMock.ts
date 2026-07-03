@@ -74,7 +74,11 @@ export function groupExpensesByDate(expenses: Expense[]): ExpenseSection[] {
   });
 
   for (const expense of sorted) {
-    const dateKey = expense.date.toISOString().split('T')[0];
+    // Key by LOCAL calendar day. Using toISOString() (UTC) bucketed evening
+    // expenses west of UTC into "tomorrow", producing duplicate/mislabeled
+    // day sections (H4).
+    const d = expense.date;
+    const dateKey = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
     if (!grouped.has(dateKey)) {
       grouped.set(dateKey, []);
     }

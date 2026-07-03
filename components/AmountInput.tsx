@@ -56,6 +56,7 @@ export function AmountInput({ value, onChange, autoFocus = false }: AmountInputP
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
         caretHidden
+        maxLength={9}
       />
     </TouchableOpacity>
   );
