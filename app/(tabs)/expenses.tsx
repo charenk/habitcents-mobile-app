@@ -3,6 +3,7 @@ import {
   View,
   Text,
   StyleSheet,
+  TouchableOpacity,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -11,8 +12,12 @@ import { useCategories } from '@/contexts/CategoriesContext';
 import type { AppTheme } from '@/constants/theme';
 import { AddExpenseSection } from '@/components/AddExpenseSection';
 import { TodayExpensesPanel } from '@/components/TodayExpensesPanel';
+import { UpcomingPanel } from '@/components/UpcomingPanel';
 import type { AddExpenseInput } from '@/types/expense';
 import { groupExpensesByDate } from '@/data/expensesMock';
+import { computeUpcoming } from '@/utils/recurring';
+
+const UPCOMING_WINDOW_DAYS = 60;
 
 const now = new Date();
 const dateLabel = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -22,6 +27,7 @@ export default function ExpensesScreen() {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [activeCategoryId, setActiveCategoryId] = useState<string>('all');
+  const [activeView, setActiveView] = useState<'recent' | 'upcoming'>('recent');
 
   const { expenses, addExpense } = useExpenses();
   const { getVisibleCategories } = useCategories();
@@ -46,6 +52,11 @@ export default function ExpensesScreen() {
     [filteredExpenses]
   );
 
+  const upcoming = useMemo(
+    () => computeUpcoming(expenses, UPCOMING_WINDOW_DAYS),
+    [expenses]
+  );
+
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       {/* Header */}
@@ -53,21 +64,38 @@ export default function ExpensesScreen() {
         <View style={styles.datePill}>
           <Text style={styles.datePillText}>{dateLabel}</Text>
         </View>
-        <Text style={styles.title}>Expenses</Text>
+        <View style={styles.viewTabs}>
+          <TouchableOpacity onPress={() => setActiveView('recent')}>
+            <Text style={[styles.viewTab, activeView === 'recent' ? styles.viewTabActive : styles.viewTabInactive]}>
+              Recent
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setActiveView('upcoming')}>
+            <Text style={[styles.viewTab, activeView === 'upcoming' ? styles.viewTabActive : styles.viewTabInactive]}>
+              Upcoming
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
-      {/* Add Expense Section (always visible) */}
-      <AddExpenseSection onSave={handleSaveExpense} onCancel={handleCancelExpense} />
+      {activeView === 'recent' ? (
+        <>
+          {/* Add Expense Section (always visible) */}
+          <AddExpenseSection onSave={handleSaveExpense} onCancel={handleCancelExpense} />
 
-      {/* Slidable Expenses Panel */}
-      <View style={[styles.panelWrap, { pointerEvents: 'box-none' }]}>
-        <TodayExpensesPanel
-          sections={sections}
-          categories={categories}
-          activeCategoryId={activeCategoryId}
-          onCategoryChange={setActiveCategoryId}
-        />
-      </View>
+          {/* Slidable Expenses Panel */}
+          <View style={[styles.panelWrap, { pointerEvents: 'box-none' }]}>
+            <TodayExpensesPanel
+              sections={sections}
+              categories={categories}
+              activeCategoryId={activeCategoryId}
+              onCategoryChange={setActiveCategoryId}
+            />
+          </View>
+        </>
+      ) : (
+        <UpcomingPanel items={upcoming} windowDays={UPCOMING_WINDOW_DAYS} />
+      )}
     </View>
   );
 }
@@ -97,11 +125,21 @@ function createStyles(theme: AppTheme) {
       color: theme.primary,
       lineHeight: 16,
     },
-    title: {
+    viewTabs: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 20,
+    },
+    viewTab: {
       fontSize: 28,
       fontWeight: '700',
-      color: theme.text,
       lineHeight: 34,
+    },
+    viewTabActive: {
+      color: theme.primary,
+    },
+    viewTabInactive: {
+      color: theme.textTertiary,
     },
     panelWrap: {
       position: 'absolute',

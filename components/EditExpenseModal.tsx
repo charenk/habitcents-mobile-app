@@ -15,8 +15,9 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useCategories } from '@/contexts/CategoriesContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
 import { AmountInput } from './AmountInput';
+import { RecurrenceField } from './RecurrenceField';
 import type { AppTheme } from '@/constants/theme';
-import type { Expense, ExpenseCategory } from '@/types/expense';
+import type { Expense, ExpenseCategory, RecurrenceFrequency } from '@/types/expense';
 
 type EditExpenseModalProps = {
   visible: boolean;
@@ -36,6 +37,7 @@ export function EditExpenseModal({ visible, expense, onClose }: EditExpenseModal
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [merchant, setMerchant] = useState('');
   const [note, setNote] = useState('');
+  const [recurrence, setRecurrence] = useState<RecurrenceFrequency | null>(null);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   // Re-sync fields whenever a different expense is opened. Without this the
@@ -46,6 +48,7 @@ export function EditExpenseModal({ visible, expense, onClose }: EditExpenseModal
       setCategoryId(expense.categoryId ?? null);
       setMerchant(expense.merchant ?? '');
       setNote(expense.title ?? '');
+      setRecurrence(expense.isRecurring ? expense.recurrence ?? 'monthly' : null);
       setConfirmingDelete(false);
     }
   }, [expense]);
@@ -62,6 +65,8 @@ export function EditExpenseModal({ visible, expense, onClose }: EditExpenseModal
       categoryId: selectedCategory?.id,
       merchant: merchantValue || undefined,
       title: note.trim() || merchantValue || category,
+      isRecurring: recurrence !== null,
+      recurrence: recurrence ?? undefined,
     });
     onClose();
   };
@@ -153,6 +158,8 @@ export function EditExpenseModal({ visible, expense, onClose }: EditExpenseModal
                 maxLength={100}
               />
             </View>
+
+            <RecurrenceField recurrence={recurrence} onChange={setRecurrence} />
 
             {confirmingDelete ? (
               <View style={styles.confirmRow}>

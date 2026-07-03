@@ -47,6 +47,7 @@ function createExpense(input: AddExpenseInput): Expense {
     date: input.date,
     time: formatTime(input.date),
     isRecurring: input.isRecurring,
+    recurrence: input.recurrence,
     reminderEnabled: input.reminderEnabled,
     reminderTime: input.reminderTime,
     iconVariant,

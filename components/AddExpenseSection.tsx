@@ -14,7 +14,8 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useCategories } from '@/contexts/CategoriesContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
 import { AmountInput } from './AmountInput';
-import type { ExpenseCategory, AddExpenseInput } from '@/types/expense';
+import { RecurrenceField } from './RecurrenceField';
+import type { ExpenseCategory, AddExpenseInput, RecurrenceFrequency } from '@/types/expense';
 
 type AddExpenseSectionProps = {
   onSave: (expense: AddExpenseInput) => void;
@@ -33,12 +34,14 @@ export function AddExpenseSection({ onSave, onCancel }: AddExpenseSectionProps) 
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [merchant, setMerchant] = useState('');
   const [title, setTitle] = useState('');
+  const [recurrence, setRecurrence] = useState<RecurrenceFrequency | null>(null);
 
   const resetForm = () => {
     setAmount(0);
     setCategoryId(null);
     setMerchant('');
     setTitle('');
+    setRecurrence(null);
   };
 
   const selectedCategory = categories.find(c => c.id === categoryId) ?? null;
@@ -76,9 +79,9 @@ export function AddExpenseSection({ onSave, onCancel }: AddExpenseSectionProps) 
 
   const expandedHeight = expandAnim.interpolate({
     inputRange: [0, 1],
-    // Fits merchant + optional suggestions + note + buttons. The fixed height is
-    // a known limitation slated for the P2-4 form redesign.
-    outputRange: [0, 240],
+    // Fits merchant + optional suggestions + note + recurrence + buttons. The
+    // fixed height is a known limitation slated for the P2-4 form redesign.
+    outputRange: [0, 340],
   });
 
   const expandedOpacity = expandAnim.interpolate({
@@ -100,7 +103,8 @@ export function AddExpenseSection({ onSave, onCancel }: AddExpenseSectionProps) 
       categoryId: selectedCategory?.id,
       merchant: merchantValue || undefined,
       date: new Date(),
-      isRecurring: false,
+      isRecurring: recurrence !== null,
+      recurrence: recurrence ?? undefined,
       reminderEnabled: false,
     });
 
@@ -179,6 +183,8 @@ export function AddExpenseSection({ onSave, onCancel }: AddExpenseSectionProps) 
               maxLength={100}
             />
           </View>
+
+          <RecurrenceField recurrence={recurrence} onChange={setRecurrence} />
 
           <View style={styles.buttonRow}>
             <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
