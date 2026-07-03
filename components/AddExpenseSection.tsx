@@ -11,28 +11,60 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useCategories } from '@/contexts/CategoriesContext';
+import { useExpenses } from '@/contexts/ExpensesContext';
 import { AmountInput } from './AmountInput';
-import { ToggleRow } from './ToggleRow';
-import type { ExpenseCategory, AddExpenseInput } from '@/types/expense';
-import { EXPENSE_CATEGORIES } from '@/data/expensesMock';
+import { RecurrenceField } from './RecurrenceField';
+import type { ExpenseCategory, AddExpenseInput, RecurrenceFrequency } from '@/types/expense';
 
 type AddExpenseSectionProps = {
   onSave: (expense: AddExpenseInput) => void;
   onCancel: () => void;
 };
 
-const REMINDER_OPTIONS = ['15m before', '30m before', '1h before', '1 day before'];
-
 export function AddExpenseSection({ onSave, onCancel }: AddExpenseSectionProps) {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
+  const { getVisibleCategories } = useCategories();
+  const { expenses } = useExpenses();
+
+  const categories = getVisibleCategories();
 
   const [amount, setAmount] = useState(0);
-  const [category, setCategory] = useState<ExpenseCategory>('Other');
+  const [categoryId, setCategoryId] = useState<string | null>(null);
+  const [merchant, setMerchant] = useState('');
   const [title, setTitle] = useState('');
-  const [isRecurring, setIsRecurring] = useState(false);
-  const [reminderEnabled, setReminderEnabled] = useState(false);
-  const [reminderTime, setReminderTime] = useState('1h before');
+  const [recurrence, setRecurrence] = useState<RecurrenceFrequency | null>(null);
+
+  const resetForm = () => {
+    setAmount(0);
+    setCategoryId(null);
+    setMerchant('');
+    setTitle('');
+    setRecurrence(null);
+  };
+
+  const selectedCategory = categories.find(c => c.id === categoryId) ?? null;
+
+  // Merchant autocomplete: distinct prior merchants matching what's typed.
+  const merchantSuggestions = useMemo(() => {
+    const query = merchant.trim().toLowerCase();
+    if (!query) return [];
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const e of expenses) {
+      const m = e.merchant?.trim();
+      if (!m) continue;
+      const key = m.toLowerCase();
+      if (key === query || seen.has(key)) continue;
+      if (key.startsWith(query)) {
+        seen.add(key);
+        out.push(m);
+      }
+      if (out.length >= 4) break;
+    }
+    return out;
+  }, [merchant, expenses]);
 
   const expandAnim = useRef(new Animated.Value(0)).current;
   const isExpanded = amount > 0;
@@ -47,7 +79,9 @@ export function AddExpenseSection({ onSave, onCancel }: AddExpenseSectionProps) 
 
   const expandedHeight = expandAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, 280],
+    // Fits merchant + optional suggestions + note + recurrence + buttons. The
+    // fixed height is a known limitation slated for the P2-4 form redesign.
+    outputRange: [0, 340],
   });
 
   const expandedOpacity = expandAnim.interpolate({
@@ -58,39 +92,29 @@ export function AddExpenseSection({ onSave, onCancel }: AddExpenseSectionProps) 
   const handleSave = () => {
     if (amount === 0) return;
 
+    const category = (selectedCategory?.name ?? 'Other') as ExpenseCategory;
+    const merchantValue = merchant.trim();
+
     Keyboard.dismiss();
     onSave({
-      title: title.trim() || 'New expense',
+      title: title.trim() || merchantValue || category,
       amount,
       category,
+      categoryId: selectedCategory?.id,
+      merchant: merchantValue || undefined,
       date: new Date(),
-      isRecurring,
-      reminderEnabled,
-      reminderTime: reminderEnabled ? reminderTime : undefined,
+      isRecurring: recurrence !== null,
+      recurrence: recurrence ?? undefined,
+      reminderEnabled: false,
     });
 
-    // Reset form
-    setAmount(0);
-    setCategory('Other');
-    setTitle('');
-    setIsRecurring(false);
-    setReminderEnabled(false);
+    resetForm();
   };
 
   const handleCancel = () => {
     Keyboard.dismiss();
-    setAmount(0);
-    setCategory('Other');
-    setTitle('');
-    setIsRecurring(false);
-    setReminderEnabled(false);
+    resetForm();
     onCancel();
-  };
-
-  const cycleReminderTime = () => {
-    const currentIndex = REMINDER_OPTIONS.indexOf(reminderTime);
-    const nextIndex = (currentIndex + 1) % REMINDER_OPTIONS.length;
-    setReminderTime(REMINDER_OPTIONS[nextIndex]);
   };
 
   return (
@@ -103,16 +127,16 @@ export function AddExpenseSection({ onSave, onCancel }: AddExpenseSectionProps) 
         contentContainerStyle={styles.chipsContainer}
         style={styles.chipsScroll}
       >
-        {EXPENSE_CATEGORIES.map((cat) => {
-          const isActive = category === cat;
+        {categories.map((cat) => {
+          const isActive = categoryId === cat.id;
           return (
             <TouchableOpacity
-              key={cat}
+              key={cat.id}
               style={[styles.chip, isActive ? styles.chipActive : styles.chipInactive]}
-              onPress={() => setCategory(cat)}
+              onPress={() => setCategoryId(cat.id)}
             >
               <Text style={[styles.chipText, isActive ? styles.chipTextActive : styles.chipTextInactive]}>
-                {cat}
+                {cat.name}
               </Text>
             </TouchableOpacity>
           );
@@ -122,31 +146,45 @@ export function AddExpenseSection({ onSave, onCancel }: AddExpenseSectionProps) 
       <Animated.View style={[styles.expandedSection, { height: expandedHeight, opacity: expandedOpacity }]}>
         <View style={styles.expandedContent}>
           <View style={styles.inputRow}>
-            <Ionicons name="create-outline" size={20} color={theme.textSecondary} />
+            <Ionicons name="storefront-outline" size={20} color={theme.textSecondary} />
             <TextInput
               style={styles.descriptionInput}
-              placeholder="Description (optional)"
+              placeholder="Merchant (e.g. Starbucks)"
               placeholderTextColor={theme.textTertiary}
-              value={title}
-              onChangeText={setTitle}
+              value={merchant}
+              onChangeText={setMerchant}
+              maxLength={60}
+              autoCapitalize="words"
             />
           </View>
 
-          <View style={styles.togglesContainer}>
-            <ToggleRow
-              label="Recurring expense"
-              value={isRecurring}
-              onValueChange={setIsRecurring}
-            />
-            <View style={styles.toggleSpacer} />
-            <ToggleRow
-              label="Reminder"
-              value={reminderEnabled}
-              onValueChange={setReminderEnabled}
-              secondaryLabel={reminderTime}
-              onSecondaryPress={cycleReminderTime}
+          {merchantSuggestions.length > 0 && (
+            <View style={styles.suggestionsRow}>
+              {merchantSuggestions.map((s) => (
+                <TouchableOpacity
+                  key={s}
+                  style={styles.suggestionChip}
+                  onPress={() => setMerchant(s)}
+                >
+                  <Text style={styles.suggestionText}>{s}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+
+          <View style={styles.inputRow}>
+            <Ionicons name="create-outline" size={20} color={theme.textSecondary} />
+            <TextInput
+              style={styles.descriptionInput}
+              placeholder="Note (optional)"
+              placeholderTextColor={theme.textTertiary}
+              value={title}
+              onChangeText={setTitle}
+              maxLength={100}
             />
           </View>
+
+          <RecurrenceField recurrence={recurrence} onChange={setRecurrence} />
 
           <View style={styles.buttonRow}>
             <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
@@ -230,11 +268,24 @@ function createStyles(theme: ReturnType<typeof useTheme>) {
       color: theme.text,
       marginLeft: 12,
     },
-    togglesContainer: {
-      marginBottom: 16,
+    suggestionsRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 8,
+      marginTop: -4,
+      marginBottom: 12,
     },
-    toggleSpacer: {
-      height: 8,
+    suggestionChip: {
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 8,
+      backgroundColor: theme.chipInactiveBg,
+      borderWidth: 1,
+      borderColor: theme.chipBorder,
+    },
+    suggestionText: {
+      fontSize: 13,
+      color: theme.textSecondary,
     },
     buttonRow: {
       flexDirection: 'row',

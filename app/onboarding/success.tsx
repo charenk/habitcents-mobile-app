@@ -46,7 +46,7 @@ export default function SuccessScreen() {
     // Navigate after delay
     const timer = setTimeout(async () => {
       await completeOnboarding();
-      router.replace('/(tabs)/finance');
+      router.replace('/(tabs)/expenses');
     }, 2500);
 
     return () => clearTimeout(timer);

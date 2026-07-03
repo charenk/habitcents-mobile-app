@@ -11,18 +11,18 @@ export default function WelcomeScreen() {
 
   const handleGetStarted = async () => {
     await setHasOnboarded();
-    router.replace('/(tabs)/finance');
+    router.replace('/(tabs)/expenses');
   };
 
   const handleSkip = async () => {
     await setHasOnboarded();
-    router.replace('/(tabs)/finance');
+    router.replace('/(tabs)/expenses');
   };
 
   return (
     <View style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.logo}>HabitCent</Text>
+        <Text style={styles.logo}>HabitCents</Text>
         <Text style={styles.tagline}>Track your spending{'\n'}with voice or text</Text>
         <Text style={styles.description}>
           See where your money goes with clear insights and easy expense tracking.

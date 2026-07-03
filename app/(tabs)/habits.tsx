@@ -132,20 +132,10 @@ export default function HabitsScreen() {
     }
   }, [selectedLesson, completeLesson]);
 
-  // Mock streak days for active habits
+  // Real streak history from the goal's persisted logs.
   const getStreakDays = useCallback((habitId: string): StreakDay[] => {
     const goal = getGoalByHabitId(habitId);
-    if (!goal) return [];
-
-    // Generate mock streak data based on current streak
-    const days: StreakDay[] = [];
-    const today = new Date();
-    for (let i = 0; i < goal.currentStreak; i++) {
-      const date = new Date(today);
-      date.setDate(today.getDate() - i);
-      days.push({ date, completed: true });
-    }
-    return days;
+    return goal?.logs ?? [];
   }, [getGoalByHabitId]);
 
   const renderItem = ({ item, section }: { item: DetectedHabit | MicroLesson; section: HabitSection }) => {
@@ -206,6 +196,9 @@ export default function HabitsScreen() {
     return sum + (goal?.currentStreak || 0);
   }, 0);
 
+  const totalSaved = goals.reduce((sum, g) => sum + (g.actualSavings || 0), 0);
+  const formatSaved = (cents: number) => `$${(cents / 100).toFixed(2)}`;
+
   const isEmpty = sections.length === 0;
 
   return (
@@ -225,6 +218,14 @@ export default function HabitsScreen() {
           </View>
         )}
       </View>
+
+      {activeHabits.length > 0 && (
+        <View style={styles.savingsHero}>
+          <Text style={styles.savingsLabel}>DOLLARS KEPT</Text>
+          <Text style={styles.savingsValue}>{formatSaved(totalSaved)}</Text>
+          <Text style={styles.savingsCaption}>from the habits you're breaking</Text>
+        </View>
+      )}
 
       {isLoading ? (
         <View style={styles.loadingContainer}>
@@ -295,6 +296,32 @@ function createStyles(theme: AppTheme) {
       paddingHorizontal: 20,
       paddingTop: 16,
       paddingBottom: 12,
+    },
+    savingsHero: {
+      marginHorizontal: 20,
+      marginBottom: 12,
+      backgroundColor: theme.primary,
+      borderRadius: 20,
+      paddingVertical: 24,
+      paddingHorizontal: 20,
+      alignItems: 'center',
+    },
+    savingsLabel: {
+      fontSize: 12,
+      fontWeight: '700',
+      letterSpacing: 1.5,
+      color: 'rgba(255, 255, 255, 0.8)',
+    },
+    savingsValue: {
+      fontSize: 44,
+      fontWeight: '800',
+      color: '#FFFFFF',
+      marginTop: 4,
+    },
+    savingsCaption: {
+      fontSize: 13,
+      color: 'rgba(255, 255, 255, 0.8)',
+      marginTop: 2,
     },
     headerLeft: {
       flex: 1,

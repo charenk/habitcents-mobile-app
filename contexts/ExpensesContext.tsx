@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { getExpenses, saveExpenses } from '@/utils/storage';
 import type { Expense, AddExpenseInput, ExpenseCategory } from '@/types/expense';
 import { formatAmount } from '@/data/expensesMock';
@@ -47,6 +47,7 @@ function createExpense(input: AddExpenseInput): Expense {
     date: input.date,
     time: formatTime(input.date),
     isRecurring: input.isRecurring,
+    recurrence: input.recurrence,
     reminderEnabled: input.reminderEnabled,
     reminderTime: input.reminderTime,
     iconVariant,
@@ -57,10 +58,24 @@ export function ExpensesProvider({ children }: { children: React.ReactNode }) {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Mutations read/write through this ref (always the latest committed list)
+  // rather than the render closure, so rapid successive edits (double-tap Save,
+  // edit-then-delete) each build on the previous result, not a stale copy.
+  const expensesRef = useRef<Expense[]>([]);
+  const loadedRef = useRef(false);
+
+  const commit = useCallback(async (next: Expense[]): Promise<void> => {
+    expensesRef.current = next;
+    setExpenses(next);
+    await saveExpenses(next);
+  }, []);
+
   useEffect(() => {
     async function loadExpenses() {
       const stored = await getExpenses();
+      expensesRef.current = stored;
       setExpenses(stored);
+      loadedRef.current = true;
       setIsLoading(false);
     }
     loadExpenses();
@@ -68,34 +83,34 @@ export function ExpensesProvider({ children }: { children: React.ReactNode }) {
 
   const addExpense = useCallback(async (input: AddExpenseInput): Promise<Expense> => {
     const newExpense = createExpense(input);
-    const updated = [newExpense, ...expenses];
-    setExpenses(updated);
-    await saveExpenses(updated);
+    // Guard against adding before hydration finished, which would persist a
+    // 1-item array over the user's stored history.
+    if (!loadedRef.current) {
+      expensesRef.current = await getExpenses();
+      loadedRef.current = true;
+    }
+    await commit([newExpense, ...expensesRef.current]);
     return newExpense;
-  }, [expenses]);
+  }, [commit]);
 
   const updateExpense = useCallback(async (
     id: string,
     updates: Partial<Omit<Expense, 'id'>>
   ): Promise<void> => {
-    const updated = expenses.map(exp => {
+    const updated = expensesRef.current.map(exp => {
       if (exp.id !== id) return exp;
       const updatedExp = { ...exp, ...updates };
-      // Recalculate display amount if amount changed
       if (updates.amount !== undefined) {
         updatedExp.amountDisplay = formatAmount(updates.amount);
       }
       return updatedExp;
     });
-    setExpenses(updated);
-    await saveExpenses(updated);
-  }, [expenses]);
+    await commit(updated);
+  }, [commit]);
 
   const deleteExpense = useCallback(async (id: string): Promise<void> => {
-    const updated = expenses.filter(exp => exp.id !== id);
-    setExpenses(updated);
-    await saveExpenses(updated);
-  }, [expenses]);
+    await commit(expensesRef.current.filter(exp => exp.id !== id));
+  }, [commit]);
 
   const getExpenseById = useCallback((id: string): Expense | undefined => {
     return expenses.find(e => e.id === id);
@@ -131,22 +146,26 @@ export function ExpensesProvider({ children }: { children: React.ReactNode }) {
     return expenses.length;
   }, [expenses]);
 
+  const value = useMemo(() => ({
+    expenses,
+    isLoading,
+    addExpense,
+    updateExpense,
+    deleteExpense,
+    getExpenseById,
+    getExpensesByCategory,
+    getExpensesByDateRange,
+    getTotalByCategory,
+    getTotalSpent,
+    getExpenseCount,
+  }), [
+    expenses, isLoading, addExpense, updateExpense, deleteExpense,
+    getExpenseById, getExpensesByCategory, getExpensesByDateRange,
+    getTotalByCategory, getTotalSpent, getExpenseCount,
+  ]);
+
   return (
-    <ExpensesContext.Provider
-      value={{
-        expenses,
-        isLoading,
-        addExpense,
-        updateExpense,
-        deleteExpense,
-        getExpenseById,
-        getExpensesByCategory,
-        getExpensesByDateRange,
-        getTotalByCategory,
-        getTotalSpent,
-        getExpenseCount,
-      }}
-    >
+    <ExpensesContext.Provider value={value}>
       {children}
     </ExpensesContext.Provider>
   );

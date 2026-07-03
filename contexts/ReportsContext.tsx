@@ -228,14 +228,15 @@ export function ReportsProvider({ children }: { children: React.ReactNode }) {
 
       switch (groupFormat) {
         case 'day':
-          key = date.toISOString().split('T')[0];
+          // Local-day key (not UTC) so evening spends land on the right day (H4).
+          key = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
           label = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
           break;
         case 'week':
           // Get week start
           const weekStart = new Date(date);
           weekStart.setDate(date.getDate() - date.getDay());
-          key = weekStart.toISOString().split('T')[0];
+          key = `${weekStart.getFullYear()}-${weekStart.getMonth()}-${weekStart.getDate()}`;
           label = `Week of ${weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
           break;
         case 'month':

@@ -9,9 +9,6 @@ type WidgetCardProps = {
   widget: ReportWidget;
   children: React.ReactNode;
   onTimeRangeChange?: (timeRange: TimeRange) => void;
-  onToggleVisibility?: () => void;
-  isEditing?: boolean;
-  onDragStart?: () => void;
 };
 
 const TIME_RANGE_LABELS: Record<TimeRange, string> = {
@@ -25,9 +22,6 @@ export function WidgetCard({
   widget,
   children,
   onTimeRangeChange,
-  onToggleVisibility,
-  isEditing = false,
-  onDragStart,
 }: WidgetCardProps) {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -35,22 +29,14 @@ export function WidgetCard({
   const timeRanges: TimeRange[] = ['week', 'month', 'quarter', 'year'];
 
   return (
-    <View style={[styles.container, !widget.isVisible && styles.containerHidden]}>
+    <View style={styles.container}>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          {isEditing && (
-            <TouchableOpacity
-              style={styles.dragHandle}
-              onPressIn={onDragStart}
-            >
-              <Ionicons name="menu" size={20} color={theme.textTertiary} />
-            </TouchableOpacity>
-          )}
           <Text style={styles.title}>{widget.title}</Text>
         </View>
 
         <View style={styles.headerRight}>
-          {!isEditing && onTimeRangeChange && (
+          {onTimeRangeChange && (
             <View style={styles.timeRangeSelector}>
               {timeRanges.map((range) => (
                 <TouchableOpacity
@@ -73,34 +59,12 @@ export function WidgetCard({
               ))}
             </View>
           )}
-
-          {isEditing && (
-            <TouchableOpacity
-              style={styles.visibilityButton}
-              onPress={onToggleVisibility}
-            >
-              <Ionicons
-                name={widget.isVisible ? 'eye' : 'eye-off'}
-                size={20}
-                color={widget.isVisible ? theme.primary : theme.textTertiary}
-              />
-            </TouchableOpacity>
-          )}
         </View>
       </View>
 
-      {widget.isVisible && (
-        <View style={styles.content}>
-          {children}
-        </View>
-      )}
-
-      {!widget.isVisible && (
-        <View style={styles.hiddenContent}>
-          <Ionicons name="eye-off-outline" size={24} color={theme.textTertiary} />
-          <Text style={styles.hiddenText}>Hidden</Text>
-        </View>
-      )}
+      <View style={styles.content}>
+        {children}
+      </View>
     </View>
   );
 }

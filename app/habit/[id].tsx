@@ -36,6 +36,11 @@ export default function HabitDetailScreen() {
 
   const [isLogging, setIsLogging] = useState(false);
 
+  // Real streak history from the goal's persisted logs. Declared before the
+  // not-found guard so hook order stays stable if `habit` toggles across
+  // renders (H6: avoids "rendered fewer hooks than expected").
+  const streakDays: StreakDay[] = useMemo(() => goal?.logs ?? [], [goal]);
+
   if (!habit) {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -54,19 +59,6 @@ export default function HabitDetailScreen() {
   const formatAmount = (cents: number): string => {
     return `$${(cents / 100).toFixed(0)}`;
   };
-
-  // Generate streak days from goal
-  const streakDays: StreakDay[] = useMemo(() => {
-    if (!goal) return [];
-    const days: StreakDay[] = [];
-    const today = new Date();
-    for (let i = 0; i < (goal.currentStreak || 0); i++) {
-      const date = new Date(today);
-      date.setDate(today.getDate() - i);
-      days.push({ date, completed: true });
-    }
-    return days;
-  }, [goal]);
 
   const handleStartTracking = async () => {
     await startTrackingHabit(habit.id);
@@ -157,7 +149,7 @@ export default function HabitDetailScreen() {
             <View style={styles.statDivider} />
             <View style={styles.stat}>
               <Text style={styles.statValue}>{habit.occurrencesPerPeriod}x</Text>
-              <Text style={styles.statLabel}>per {habit.frequency.replace('ly', '')}</Text>
+              <Text style={styles.statLabel}>per {habit.frequency === 'daily' ? 'day' : habit.frequency === 'weekly' ? 'week' : 'month'}</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.stat}>

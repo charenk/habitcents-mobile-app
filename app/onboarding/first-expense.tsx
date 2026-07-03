@@ -57,7 +57,7 @@ export default function FirstExpenseScreen() {
   const handleSkip = async () => {
     await skipStep('first_expense');
     await completeOnboarding();
-    router.replace('/(tabs)/finance');
+    router.replace('/(tabs)/expenses');
   };
 
   return (

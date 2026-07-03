@@ -74,7 +74,7 @@ export default function CategoriesScreen() {
   const handleDeleteCategory = useCallback((category: Category) => {
     Alert.alert(
       'Delete Category',
-      `Are you sure you want to delete "${category.name}"? Expenses in this category will be moved to "Other".`,
+      `Are you sure you want to delete "${category.name}"? Your existing expenses are kept; they'll just no longer show this category.`,
       [
         { text: 'Cancel', style: 'cancel' },
         {

@@ -1,0 +1,163 @@
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  AppState,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTheme } from '@/contexts/ThemeContext';
+import { useExpenses } from '@/contexts/ExpensesContext';
+import { useCategories } from '@/contexts/CategoriesContext';
+import type { AppTheme } from '@/constants/theme';
+import { AddExpenseSection } from '@/components/AddExpenseSection';
+import { TodayExpensesPanel } from '@/components/TodayExpensesPanel';
+import { UpcomingPanel } from '@/components/UpcomingPanel';
+import type { AddExpenseInput } from '@/types/expense';
+import { groupExpensesByDate } from '@/data/expensesMock';
+import { computeUpcoming } from '@/utils/recurring';
+
+const UPCOMING_WINDOW_DAYS = 60;
+
+function todayLabel(): string {
+  return new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+export default function ExpensesScreen() {
+  const insets = useSafeAreaInsets();
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
+  const [activeCategoryId, setActiveCategoryId] = useState<string>('all');
+  const [activeView, setActiveView] = useState<'recent' | 'upcoming'>('recent');
+
+  // Recompute the date pill when the app returns to the foreground, so it never
+  // shows yesterday after being backgrounded overnight (M2).
+  const [dateLabel, setDateLabel] = useState(todayLabel);
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (s) => {
+      if (s === 'active') setDateLabel(todayLabel());
+    });
+    return () => sub.remove();
+  }, []);
+
+  const { expenses, addExpense } = useExpenses();
+  const { getVisibleCategories } = useCategories();
+  const categories = getVisibleCategories();
+
+  const handleSaveExpense = useCallback(async (input: AddExpenseInput) => {
+    await addExpense(input);
+  }, [addExpense]);
+
+  const handleCancelExpense = useCallback(() => {
+    // No-op; the form resets itself.
+  }, []);
+
+  const filteredExpenses = useMemo(
+    () => activeCategoryId === 'all'
+      ? expenses
+      : expenses.filter(e => e.categoryId === activeCategoryId),
+    [expenses, activeCategoryId]
+  );
+  const sections = useMemo(
+    () => groupExpensesByDate(filteredExpenses),
+    [filteredExpenses]
+  );
+
+  const upcoming = useMemo(
+    () => computeUpcoming(expenses, UPCOMING_WINDOW_DAYS),
+    [expenses]
+  );
+
+  return (
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      {/* Header */}
+      <View style={styles.header}>
+        <View style={styles.datePill}>
+          <Text style={styles.datePillText}>{dateLabel}</Text>
+        </View>
+        <View style={styles.viewTabs}>
+          <TouchableOpacity onPress={() => setActiveView('recent')}>
+            <Text style={[styles.viewTab, activeView === 'recent' ? styles.viewTabActive : styles.viewTabInactive]}>
+              Recent
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setActiveView('upcoming')}>
+            <Text style={[styles.viewTab, activeView === 'upcoming' ? styles.viewTabActive : styles.viewTabInactive]}>
+              Upcoming
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {activeView === 'recent' ? (
+        <>
+          {/* Add Expense Section (always visible) */}
+          <AddExpenseSection onSave={handleSaveExpense} onCancel={handleCancelExpense} />
+
+          {/* Slidable Expenses Panel */}
+          <View style={[styles.panelWrap, { pointerEvents: 'box-none' }]}>
+            <TodayExpensesPanel
+              sections={sections}
+              categories={categories}
+              activeCategoryId={activeCategoryId}
+              onCategoryChange={setActiveCategoryId}
+            />
+          </View>
+        </>
+      ) : (
+        <UpcomingPanel items={upcoming} windowDays={UPCOMING_WINDOW_DAYS} />
+      )}
+    </View>
+  );
+}
+
+function createStyles(theme: AppTheme) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.background,
+    },
+    header: {
+      paddingHorizontal: 20,
+      paddingTop: 16,
+      paddingBottom: 8,
+    },
+    datePill: {
+      alignSelf: 'flex-start',
+      backgroundColor: theme.primaryMuted,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 8,
+      marginBottom: 8,
+    },
+    datePillText: {
+      fontSize: 13,
+      fontWeight: '500',
+      color: theme.primary,
+      lineHeight: 16,
+    },
+    viewTabs: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 20,
+    },
+    viewTab: {
+      fontSize: 28,
+      fontWeight: '700',
+      lineHeight: 34,
+    },
+    viewTabActive: {
+      color: theme.primary,
+    },
+    viewTabInactive: {
+      color: theme.textTertiary,
+    },
+    panelWrap: {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      bottom: 0,
+    },
+  });
+}

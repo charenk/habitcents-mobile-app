@@ -1,8 +1,12 @@
-# HabitCent - Finance Habit Tracking App
+# HabitCents - Finance Habit Tracking App
+
+> **DIRECTION LOCK (2026-07-02).** The canonical direction lives in the umbrella repo: `../docs/habitcents-goals-v2.md` (North Star), `../docs/habitcents-plan-v2.html` (roadmap P0-x..P6-x with keep/cut/fix verdicts), `../docs/agent-execution-guide.md` (working rules), `../docs/decisions/` (ADRs). Where this file conflicts with those, they win. Key locked facts: name **habitcents**, bundle ID **com.habitcents.app**, scheme **habitcents**, light mode only, repair not rebuild, no network calls in app source, no em dashes in any output.
+>
+> **PHASE 1 COMPLETE (2026-07-02).** Core-loop repair done and browser-verified (P0-1, P0-5, P1-1..P1-7). What now works for real: correct habit-detection math, a live dollars-kept counter, real streak history, merchant-based detection, real categories + merchant field on the add form, expense edit/delete, and a **real Upcoming view** (recurring weekly/monthly expenses → projected next occurrences; brought back as a genuine feature after the initial fake version was cut). Storage is hardened against corruption/data-loss; tests live in `__tests__/` (run `npm test`). STILL CUT / do not re-add as fakes: mic/voice FAB, reminder-time no-ops, budgets, Reports widget edit mode, progressive reveals, lessons library. Notifications/reminders and a calendar for Upcoming are deferred to v1.x (real implementations only). Dev-only demo seeding lives on the `dev/seed-data` branch (flag-gated), never on `main`.
 
 ## Project Overview
 
-HabitCent is an Atomic Habits-inspired personal finance app that helps users track spending, discover spending patterns, and build better financial habits through gamified progression and micro-learning.
+HabitCents is an Atomic Habits-inspired personal finance app that helps users track spending, discover spending patterns, and build better financial habits. Core loop: log a spend in under 10 seconds, detect the leak, break one habit, count the dollars kept.
 
 **Tech Stack:**
 - React Native with Expo SDK 54
@@ -102,14 +106,14 @@ ThemeProvider > CategoriesProvider > ExpensesProvider > HabitsProvider > Reports
 ```
 
 ### Storage Keys
-All AsyncStorage keys prefixed with `@habitcent_`:
-- `@habitcent_expenses`
-- `@habitcent_categories`
-- `@habitcent_habits`
-- `@habitcent_habit_goals`
-- `@habitcent_dashboard`
-- `@habitcent_onboarding_state`
-- `@habitcent_progressive_features`
+All AsyncStorage keys prefixed with `@habitcents_` (renamed from `@habitcent_` in P0-1, commit 7abfd34; all keys live in `utils/storage.ts`):
+- `@habitcents_expenses`
+- `@habitcents_categories`
+- `@habitcents_habits`
+- `@habitcents_habit_goals`
+- `@habitcents_dashboard`
+- `@habitcents_onboarding_state`
+- `@habitcents_progressive_features`
 
 ## Running the App
 

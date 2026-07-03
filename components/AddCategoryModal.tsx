@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -44,6 +44,18 @@ export function AddCategoryModal({
   const [selectedIcon, setSelectedIcon] = useState<CategoryIcon>(initialIcon);
   const [selectedColor, setSelectedColor] = useState(initialColor);
   const [budget, setBudget] = useState(initialBudget?.toString() || '');
+
+  // Re-sync when the modal opens or targets a different category, so editing a
+  // second category no longer shows the first one's values / resets its icon and
+  // color on save (the C4 data-corruption bug).
+  useEffect(() => {
+    if (visible) {
+      setName(initialName);
+      setSelectedIcon(initialIcon);
+      setSelectedColor(initialColor);
+      setBudget(initialBudget?.toString() || '');
+    }
+  }, [visible, initialName, initialIcon, initialColor, initialBudget]);
 
   const handleSave = () => {
     if (!name.trim()) return;

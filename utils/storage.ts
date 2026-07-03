@@ -7,16 +7,76 @@ import type { DashboardConfig } from '@/types/report';
 import type { OnboardingState, ProgressiveFeatureState } from '@/types/onboarding';
 
 // Storage keys
-const ONBOARDING_KEY = '@habitcent_onboarded';
-const THEME_MODE_KEY = '@habitcent_theme_mode';
-const EXPENSES_KEY = '@habitcent_expenses';
-const CATEGORIES_KEY = '@habitcent_categories';
-const HABITS_KEY = '@habitcent_habits';
-const HABIT_GOALS_KEY = '@habitcent_habit_goals';
-const LESSONS_PROGRESS_KEY = '@habitcent_lessons_progress';
-const DASHBOARD_KEY = '@habitcent_dashboard';
-const ONBOARDING_STATE_KEY = '@habitcent_onboarding_state';
-const PROGRESSIVE_FEATURES_KEY = '@habitcent_progressive_features';
+const ONBOARDING_KEY = '@habitcents_onboarded';
+const THEME_MODE_KEY = '@habitcents_theme_mode';
+const EXPENSES_KEY = '@habitcents_expenses';
+const CATEGORIES_KEY = '@habitcents_categories';
+const HABITS_KEY = '@habitcents_habits';
+const HABIT_GOALS_KEY = '@habitcents_habit_goals';
+const LESSONS_PROGRESS_KEY = '@habitcents_lessons_progress';
+const DASHBOARD_KEY = '@habitcents_dashboard';
+const ONBOARDING_STATE_KEY = '@habitcents_onboarding_state';
+const PROGRESSIVE_FEATURES_KEY = '@habitcents_progressive_features';
+
+// =====================
+// SAFE LOAD HELPERS
+// =====================
+
+/**
+ * Preserve unreadable data under a backup key before returning empty, so a
+ * transient corruption can never be silently overwritten by the next save.
+ */
+async function backupCorrupt(key: string, raw: string): Promise<void> {
+  try {
+    await AsyncStorage.setItem(`${key}_corrupt_backup`, raw);
+  } catch {
+    // best effort
+  }
+  console.error(`Corrupt data at ${key}; preserved to ${key}_corrupt_backup`);
+}
+
+/**
+ * Load a persisted array safely. Distinguishes "no data" (returns []) from
+ * "unreadable data" (backs up the raw blob, then returns []). Each record is
+ * run through `revive`; records that revive to null (bad shape / invalid date)
+ * are dropped rather than crashing the whole collection.
+ */
+async function loadArray<T>(key: string, revive: (raw: any) => T | null): Promise<T[]> {
+  try {
+    const value = await AsyncStorage.getItem(key);
+    if (!value) return [];
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(value);
+    } catch {
+      await backupCorrupt(key, value);
+      return [];
+    }
+    if (!Array.isArray(parsed)) {
+      await backupCorrupt(key, value);
+      return [];
+    }
+    const out: T[] = [];
+    for (const raw of parsed) {
+      try {
+        const item = revive(raw);
+        if (item !== null) out.push(item);
+      } catch {
+        // Skip a single malformed record; keep the rest.
+      }
+    }
+    return out;
+  } catch (error) {
+    console.error(`Error reading ${key}:`, error);
+    return [];
+  }
+}
+
+/** Parse a value into a valid Date, or null if unparseable. */
+function toValidDate(value: unknown): Date | null {
+  const d = new Date(value as string);
+  return isNaN(d.getTime()) ? null : d;
+}
 
 /**
  * Check if user has completed onboarding
@@ -82,19 +142,12 @@ export async function setThemeMode(mode: ThemeMode): Promise<void> {
  * Get persisted expenses
  */
 export async function getExpenses(): Promise<Expense[]> {
-  try {
-    const value = await AsyncStorage.getItem(EXPENSES_KEY);
-    if (!value) return [];
-    const parsed = JSON.parse(value);
-    // Restore Date objects from ISO strings
-    return parsed.map((e: Expense & { date: string }) => ({
-      ...e,
-      date: new Date(e.date),
-    }));
-  } catch (error) {
-    console.error('Error reading expenses:', error);
-    return [];
-  }
+  return loadArray<Expense>(EXPENSES_KEY, (raw) => {
+    if (!raw || typeof raw !== 'object' || typeof raw.id !== 'string') return null;
+    const date = toValidDate(raw.date);
+    if (!date) return null; // an invalid date would crash date grouping/formatting
+    return { ...raw, date } as Expense;
+  });
 }
 
 /**
@@ -116,18 +169,10 @@ export async function saveExpenses(expenses: Expense[]): Promise<void> {
  * Get persisted categories
  */
 export async function getCategories(): Promise<Category[]> {
-  try {
-    const value = await AsyncStorage.getItem(CATEGORIES_KEY);
-    if (!value) return [];
-    const parsed = JSON.parse(value);
-    return parsed.map((c: Category & { createdAt: string }) => ({
-      ...c,
-      createdAt: new Date(c.createdAt),
-    }));
-  } catch (error) {
-    console.error('Error reading categories:', error);
-    return [];
-  }
+  return loadArray<Category>(CATEGORIES_KEY, (raw) => {
+    if (!raw || typeof raw !== 'object' || typeof raw.id !== 'string') return null;
+    return { ...raw, createdAt: toValidDate(raw.createdAt) ?? new Date() } as Category;
+  });
 }
 
 /**
@@ -149,19 +194,14 @@ export async function saveCategories(categories: Category[]): Promise<void> {
  * Get persisted detected habits
  */
 export async function getHabits(): Promise<DetectedHabit[]> {
-  try {
-    const value = await AsyncStorage.getItem(HABITS_KEY);
-    if (!value) return [];
-    const parsed = JSON.parse(value);
-    return parsed.map((h: DetectedHabit & { discoveredAt: string; dismissedAt?: string }) => ({
-      ...h,
-      discoveredAt: new Date(h.discoveredAt),
-      dismissedAt: h.dismissedAt ? new Date(h.dismissedAt) : undefined,
-    }));
-  } catch (error) {
-    console.error('Error reading habits:', error);
-    return [];
-  }
+  return loadArray<DetectedHabit>(HABITS_KEY, (raw) => {
+    if (!raw || typeof raw !== 'object' || typeof raw.id !== 'string') return null;
+    return {
+      ...raw,
+      discoveredAt: toValidDate(raw.discoveredAt) ?? new Date(),
+      dismissedAt: raw.dismissedAt ? toValidDate(raw.dismissedAt) ?? undefined : undefined,
+    } as DetectedHabit;
+  });
 }
 
 /**
@@ -179,23 +219,30 @@ export async function saveHabits(habits: DetectedHabit[]): Promise<void> {
  * Get persisted habit goals
  */
 export async function getHabitGoals(): Promise<HabitChangeGoal[]> {
-  try {
-    const value = await AsyncStorage.getItem(HABIT_GOALS_KEY);
-    if (!value) return [];
-    const parsed = JSON.parse(value);
-    return parsed.map((g: HabitChangeGoal & { startDate: string; lastLogDate?: string }) => ({
-      ...g,
-      startDate: new Date(g.startDate),
-      lastLogDate: g.lastLogDate ? new Date(g.lastLogDate) : undefined,
-      milestones: g.milestones.map((m: HabitMilestone & { reachedAt?: string | Date }) => ({
-        ...m,
-        reachedAt: m.reachedAt ? new Date(m.reachedAt as string) : undefined,
-      })),
-    }));
-  } catch (error) {
-    console.error('Error reading habit goals:', error);
-    return [];
-  }
+  return loadArray<HabitChangeGoal>(HABIT_GOALS_KEY, (raw) => {
+    if (!raw || typeof raw !== 'object' || typeof raw.id !== 'string') return null;
+    return {
+      ...raw,
+      startDate: toValidDate(raw.startDate) ?? new Date(),
+      lastLogDate: raw.lastLogDate ? toValidDate(raw.lastLogDate) ?? undefined : undefined,
+      // Reconstruct log dates; drop entries with invalid dates. Default to [] for
+      // goals saved before logs existed.
+      logs: Array.isArray(raw.logs)
+        ? raw.logs
+            .map((d: { date: unknown }) => {
+              const date = toValidDate(d.date);
+              return date ? { ...d, date } : null;
+            })
+            .filter((d: unknown): d is { date: Date } => d !== null)
+        : [],
+      milestones: Array.isArray(raw.milestones)
+        ? raw.milestones.map((m: HabitMilestone & { reachedAt?: string | Date }) => ({
+            ...m,
+            reachedAt: m.reachedAt ? toValidDate(m.reachedAt) ?? undefined : undefined,
+          }))
+        : [],
+    } as HabitChangeGoal;
+  });
 }
 
 /**
