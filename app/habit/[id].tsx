@@ -36,6 +36,11 @@ export default function HabitDetailScreen() {
 
   const [isLogging, setIsLogging] = useState(false);
 
+  // Real streak history from the goal's persisted logs. Declared before the
+  // not-found guard so hook order stays stable if `habit` toggles across
+  // renders (H6: avoids "rendered fewer hooks than expected").
+  const streakDays: StreakDay[] = useMemo(() => goal?.logs ?? [], [goal]);
+
   if (!habit) {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -54,9 +59,6 @@ export default function HabitDetailScreen() {
   const formatAmount = (cents: number): string => {
     return `$${(cents / 100).toFixed(0)}`;
   };
-
-  // Real streak history from the goal's persisted logs.
-  const streakDays: StreakDay[] = useMemo(() => goal?.logs ?? [], [goal]);
 
   const handleStartTracking = async () => {
     await startTrackingHabit(habit.id);
