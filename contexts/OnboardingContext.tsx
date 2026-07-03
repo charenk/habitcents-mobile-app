@@ -13,6 +13,7 @@ import type {
   FeatureReveal,
 } from '@/types/onboarding';
 import { INITIAL_ONBOARDING_STATE, INITIAL_PROGRESSIVE_STATE, FEATURE_REVEALS } from '@/types/onboarding';
+import { track } from '@/utils/analytics';
 
 type OnboardingContextValue = {
   onboardingState: OnboardingState;
@@ -85,6 +86,11 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     const updated = { ...onboardingState, ...updates };
     setOnboardingState(updated);
     await saveOnboardingState(updated);
+
+    if (step === 'welcome') {
+      track('onboarding_started', {});
+    }
+    track('onboarding_step_completed', { step });
   }, [onboardingState]);
 
   const skipStep = useCallback(async (step: OnboardingStep): Promise<void> => {
@@ -104,6 +110,8 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     const updated = { ...onboardingState, ...updates };
     setOnboardingState(updated);
     await saveOnboardingState(updated);
+
+    track('onboarding_step_skipped', { step });
   }, [onboardingState]);
 
   const completeOnboarding = useCallback(async (): Promise<void> => {
@@ -123,6 +131,8 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     };
     setProgressiveState(initialProgressive);
     await saveProgressiveFeatureState(initialProgressive);
+
+    track('onboarding_completed', {});
   }, [onboardingState, progressiveState]);
 
   const resetOnboarding = useCallback(async (): Promise<void> => {
