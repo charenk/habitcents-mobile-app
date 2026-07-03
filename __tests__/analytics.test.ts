@@ -2,6 +2,7 @@ import {
   analyticsEnabled,
   bucketCents,
   bucketCount,
+  debugEnabled,
   sanitizeProps,
   track,
   __setClientForTests,
@@ -9,6 +10,19 @@ import {
 } from '@/utils/analytics';
 
 const KEY = 'EXPO_PUBLIC_POSTHOG_API_KEY';
+const DEBUG = 'EXPO_PUBLIC_ANALYTICS_DEBUG';
+
+// __DEV__ is true under jest-expo, which would turn the debug logger on for every
+// track() call. Force it off for the suite so output stays clean; the dedicated
+// debug describe below opts back in explicitly.
+const originalDebug = process.env[DEBUG];
+beforeAll(() => {
+  process.env[DEBUG] = '0';
+});
+afterAll(() => {
+  if (originalDebug === undefined) delete process.env[DEBUG];
+  else process.env[DEBUG] = originalDebug;
+});
 
 function makeCapturer() {
   const calls: { event: string; props?: Record<string, unknown> }[] = [];
@@ -117,5 +131,52 @@ describe('bucketing (no raw values leave the device)', () => {
     expect(bucketCount(5)).toBe('1-9');
     expect(bucketCount(49)).toBe('10-49');
     expect(bucketCount(1200)).toBe('1000+');
+  });
+});
+
+describe('dev debug logger', () => {
+  let spy: jest.SpyInstance;
+
+  beforeEach(() => {
+    spy = jest.spyOn(console, 'log').mockImplementation(() => {});
+  });
+  afterEach(() => {
+    spy.mockRestore();
+    delete process.env[DEBUG];
+    delete process.env[KEY];
+    __setClientForTests(null);
+  });
+
+  it('respects the force on/off flag', () => {
+    process.env[DEBUG] = '1';
+    expect(debugEnabled()).toBe(true);
+    process.env[DEBUG] = '0';
+    expect(debugEnabled()).toBe(false);
+  });
+
+  it('logs a dry-run line and sends nothing when no key is set', () => {
+    process.env[DEBUG] = '1';
+    track('expense_logged', { category: 'Food', has_merchant: true, is_recurring: false });
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(spy.mock.calls[0][0]).toContain('[analytics:dry-run]');
+    expect(spy.mock.calls[0][0]).toContain('expense_logged');
+  });
+
+  it('logs a sent line and forwards the sanitized payload when a key is set', () => {
+    process.env[DEBUG] = '1';
+    process.env[KEY] = 'phc_test';
+    const { client, calls } = makeCapturer();
+    __setClientForTests(client);
+    track('skip_logged', { completed: true, saved_bucket: bucketCents(1800), amount: 1800 } as never);
+    expect(spy.mock.calls[0][0]).toContain('[analytics:sent]');
+    // The logged payload is the sanitized one, not the caller's raw props.
+    expect(spy.mock.calls[0][1]).toEqual({ completed: true, saved_bucket: '5-20' });
+    expect(calls[0].props).not.toHaveProperty('amount');
+  });
+
+  it('stays silent when the flag forces it off', () => {
+    process.env[DEBUG] = '0';
+    track('app_opened', {});
+    expect(spy).not.toHaveBeenCalled();
   });
 });

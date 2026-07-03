@@ -92,6 +92,48 @@ export function analyticsEnabled(): boolean {
 }
 
 // ---------------------------------------------------------------------------
+// Dev debug logger
+// ---------------------------------------------------------------------------
+//
+// Prints every tracked event (with its final, sanitized payload) to the Metro
+// console so you can confirm wiring without opening the PostHog dashboard. It
+// runs even when analytics are OFF, so you can watch events before you have a
+// key. Lines look like:
+//
+//   [analytics:dry-run] expense_logged { category: 'Food', has_merchant: true, is_recurring: false }
+//   [analytics:sent]     skip_logged   { completed: true, saved_bucket: '5-20' }
+//
+// "dry-run" = logged locally but NOT sent (no key). "sent" = also forwarded to
+// PostHog. Use dry-run to verify events fire and that no PII leaks into props
+// before you ever configure a key.
+//
+// When it is on:
+//   - default ON in development (__DEV__), OFF in production builds.
+//   - force ON:  EXPO_PUBLIC_ANALYTICS_DEBUG=1  (e.g. to log in a preview build)
+//   - force OFF: EXPO_PUBLIC_ANALYTICS_DEBUG=0  (e.g. to quiet the dev console)
+// Env changes need a bundler restart with a cleared cache: `npx expo start -c`.
+
+function isDev(): boolean {
+  return (globalThis as { __DEV__?: boolean }).__DEV__ === true;
+}
+
+export function debugEnabled(): boolean {
+  const flag = process.env.EXPO_PUBLIC_ANALYTICS_DEBUG;
+  if (flag === '1') return true;
+  if (flag === '0') return false;
+  return isDev();
+}
+
+function logAnalyticsEvent(
+  event: string,
+  props: AnalyticsProps | undefined,
+  willSend: boolean
+): void {
+  const tag = willSend ? 'sent' : 'dry-run';
+  console.log(`[analytics:${tag}] ${event}`, props ?? {});
+}
+
+// ---------------------------------------------------------------------------
 // PII defense-in-depth
 // ---------------------------------------------------------------------------
 
@@ -233,8 +275,16 @@ export function track<E extends AnalyticsEventName>(
   event: E,
   props?: AnalyticsEventMap[E]
 ): void {
-  if (!analyticsEnabled()) return;
+  const enabled = analyticsEnabled();
   const safe = sanitizeProps(props as Record<string, unknown> | undefined);
+
+  // Dev visibility: log the exact payload we would send. Runs regardless of
+  // whether a key is configured, so wiring is verifiable before setup.
+  if (debugEnabled()) {
+    logAnalyticsEvent(event, safe, enabled);
+  }
+
+  if (!enabled) return;
   if (client) {
     try {
       client.capture(event, safe);
