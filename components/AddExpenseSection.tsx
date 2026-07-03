@@ -14,15 +14,12 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useCategories } from '@/contexts/CategoriesContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
 import { AmountInput } from './AmountInput';
-import { ToggleRow } from './ToggleRow';
 import type { ExpenseCategory, AddExpenseInput } from '@/types/expense';
 
 type AddExpenseSectionProps = {
   onSave: (expense: AddExpenseInput) => void;
   onCancel: () => void;
 };
-
-const REMINDER_OPTIONS = ['15m before', '30m before', '1h before', '1 day before'];
 
 export function AddExpenseSection({ onSave, onCancel }: AddExpenseSectionProps) {
   const theme = useTheme();
@@ -36,9 +33,13 @@ export function AddExpenseSection({ onSave, onCancel }: AddExpenseSectionProps) 
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [merchant, setMerchant] = useState('');
   const [title, setTitle] = useState('');
-  const [isRecurring, setIsRecurring] = useState(false);
-  const [reminderEnabled, setReminderEnabled] = useState(false);
-  const [reminderTime, setReminderTime] = useState('1h before');
+
+  const resetForm = () => {
+    setAmount(0);
+    setCategoryId(null);
+    setMerchant('');
+    setTitle('');
+  };
 
   const selectedCategory = categories.find(c => c.id === categoryId) ?? null;
 
@@ -75,24 +76,15 @@ export function AddExpenseSection({ onSave, onCancel }: AddExpenseSectionProps) 
 
   const expandedHeight = expandAnim.interpolate({
     inputRange: [0, 1],
-    // Fits merchant + optional suggestions + note + toggles + buttons. The fixed
-    // height is a known limitation slated for the P2-4 form redesign.
-    outputRange: [0, 340],
+    // Fits merchant + optional suggestions + note + buttons. The fixed height is
+    // a known limitation slated for the P2-4 form redesign.
+    outputRange: [0, 240],
   });
 
   const expandedOpacity = expandAnim.interpolate({
     inputRange: [0, 0.5, 1],
     outputRange: [0, 0, 1],
   });
-
-  const resetForm = () => {
-    setAmount(0);
-    setCategoryId(null);
-    setMerchant('');
-    setTitle('');
-    setIsRecurring(false);
-    setReminderEnabled(false);
-  };
 
   const handleSave = () => {
     if (amount === 0) return;
@@ -108,9 +100,8 @@ export function AddExpenseSection({ onSave, onCancel }: AddExpenseSectionProps) 
       categoryId: selectedCategory?.id,
       merchant: merchantValue || undefined,
       date: new Date(),
-      isRecurring,
-      reminderEnabled,
-      reminderTime: reminderEnabled ? reminderTime : undefined,
+      isRecurring: false,
+      reminderEnabled: false,
     });
 
     resetForm();
@@ -120,12 +111,6 @@ export function AddExpenseSection({ onSave, onCancel }: AddExpenseSectionProps) 
     Keyboard.dismiss();
     resetForm();
     onCancel();
-  };
-
-  const cycleReminderTime = () => {
-    const currentIndex = REMINDER_OPTIONS.indexOf(reminderTime);
-    const nextIndex = (currentIndex + 1) % REMINDER_OPTIONS.length;
-    setReminderTime(REMINDER_OPTIONS[nextIndex]);
   };
 
   return (
@@ -192,22 +177,6 @@ export function AddExpenseSection({ onSave, onCancel }: AddExpenseSectionProps) 
               value={title}
               onChangeText={setTitle}
               maxLength={100}
-            />
-          </View>
-
-          <View style={styles.togglesContainer}>
-            <ToggleRow
-              label="Recurring expense"
-              value={isRecurring}
-              onValueChange={setIsRecurring}
-            />
-            <View style={styles.toggleSpacer} />
-            <ToggleRow
-              label="Reminder"
-              value={reminderEnabled}
-              onValueChange={setReminderEnabled}
-              secondaryLabel={reminderTime}
-              onSecondaryPress={cycleReminderTime}
             />
           </View>
 
@@ -311,12 +280,6 @@ function createStyles(theme: ReturnType<typeof useTheme>) {
     suggestionText: {
       fontSize: 13,
       color: theme.textSecondary,
-    },
-    togglesContainer: {
-      marginBottom: 16,
-    },
-    toggleSpacer: {
-      height: 8,
     },
     buttonRow: {
       flexDirection: 'row',
