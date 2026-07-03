@@ -7,15 +7,12 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
+import { useCategories } from '@/contexts/CategoriesContext';
 import type { AppTheme } from '@/constants/theme';
 import { AddExpenseSection } from '@/components/AddExpenseSection';
 import { TodayExpensesPanel } from '@/components/TodayExpensesPanel';
 import type { AddExpenseInput } from '@/types/expense';
-import {
-  groupExpensesByDate,
-  filterExpensesByCategory,
-  type CategoryFilter,
-} from '@/data/expensesMock';
+import { groupExpensesByDate } from '@/data/expensesMock';
 
 const now = new Date();
 const dateLabel = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -24,9 +21,11 @@ export default function ExpensesScreen() {
   const insets = useSafeAreaInsets();
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
-  const [activeCategory, setActiveCategory] = useState<CategoryFilter>('All');
+  const [activeCategoryId, setActiveCategoryId] = useState<string>('all');
 
   const { expenses, addExpense } = useExpenses();
+  const { getVisibleCategories } = useCategories();
+  const categories = getVisibleCategories();
 
   const handleSaveExpense = useCallback(async (input: AddExpenseInput) => {
     await addExpense(input);
@@ -37,8 +36,10 @@ export default function ExpensesScreen() {
   }, []);
 
   const filteredExpenses = useMemo(
-    () => filterExpensesByCategory(expenses, activeCategory),
-    [expenses, activeCategory]
+    () => activeCategoryId === 'all'
+      ? expenses
+      : expenses.filter(e => e.categoryId === activeCategoryId),
+    [expenses, activeCategoryId]
   );
   const sections = useMemo(
     () => groupExpensesByDate(filteredExpenses),
@@ -62,8 +63,9 @@ export default function ExpensesScreen() {
       <View style={[styles.panelWrap, { pointerEvents: 'box-none' }]}>
         <TodayExpensesPanel
           sections={sections}
-          activeCategory={activeCategory}
-          onCategoryChange={setActiveCategory}
+          categories={categories}
+          activeCategoryId={activeCategoryId}
+          onCategoryChange={setActiveCategoryId}
         />
       </View>
     </View>

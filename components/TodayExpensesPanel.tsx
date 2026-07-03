@@ -13,8 +13,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
 import type { Expense, ExpenseSection } from '@/types/expense';
-import type { CategoryFilter } from '@/data/expensesMock';
-import { ALL_CATEGORIES } from '@/data/expensesMock';
+import type { Category } from '@/types/category';
 import { EditExpenseModal } from './EditExpenseModal';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -23,8 +22,9 @@ const SNAP_FULL = 0.95;
 
 type TodayExpensesPanelProps = {
   sections: ExpenseSection[];
-  activeCategory: CategoryFilter;
-  onCategoryChange: (category: CategoryFilter) => void;
+  categories: Category[];
+  activeCategoryId: string;
+  onCategoryChange: (categoryId: string) => void;
 };
 
 function ExpenseCard({
@@ -61,7 +61,8 @@ function ExpenseCard({
 
 export function TodayExpensesPanel({
   sections,
-  activeCategory,
+  categories,
+  activeCategoryId,
   onCategoryChange,
 }: TodayExpensesPanelProps) {
   const theme = useTheme();
@@ -121,16 +122,16 @@ export function TodayExpensesPanel({
         contentContainerStyle={styles.chipsContainer}
         style={styles.chipsScroll}
       >
-        {ALL_CATEGORIES.map((cat) => {
-          const isActive = activeCategory === cat;
+        {[{ id: 'all', name: 'All' }, ...categories].map((cat) => {
+          const isActive = activeCategoryId === cat.id;
           return (
             <TouchableOpacity
-              key={cat}
+              key={cat.id}
               style={[styles.chip, isActive ? styles.chipActive : styles.chipInactive]}
-              onPress={() => onCategoryChange(cat)}
+              onPress={() => onCategoryChange(cat.id)}
             >
               <Text style={[styles.chipText, isActive ? styles.chipTextActive : styles.chipTextInactive]}>
-                {cat}
+                {cat.name}
               </Text>
             </TouchableOpacity>
           );
