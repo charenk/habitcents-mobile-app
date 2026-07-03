@@ -40,27 +40,24 @@ function filterRecentExpenses(expenses: Expense[]): Expense[] {
 }
 
 /**
- * Normalize merchant name for grouping
+ * Normalize a merchant name for grouping. Returns '' when there is no merchant.
  */
-function normalizeMerchant(merchant: string | undefined, title: string): string {
-  if (merchant) {
-    return merchant.toLowerCase().trim();
-  }
-  // Fallback to title normalization
-  return title.toLowerCase()
-    .replace(/[0-9#]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
+function normalizeMerchant(merchant: string | undefined): string {
+  return merchant ? merchant.toLowerCase().trim() : '';
 }
 
 /**
- * Group expenses by merchant pattern
+ * Group expenses by merchant. Expenses without a merchant are excluded: merchant
+ * is the real behavioral signal, and grouping by the freeform title produced
+ * generic false-positive habits like "New Expense Spending" (H5). Detection now
+ * only fires for expenses the user tagged with a merchant.
  */
 function groupByMerchant(expenses: Expense[]): Map<string, Expense[]> {
   const groups = new Map<string, Expense[]>();
 
   for (const expense of expenses) {
-    const key = normalizeMerchant(expense.merchant, expense.title);
+    const key = normalizeMerchant(expense.merchant);
+    if (!key) continue;
     if (!groups.has(key)) {
       groups.set(key, []);
     }

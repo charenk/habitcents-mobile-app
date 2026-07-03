@@ -88,6 +88,17 @@ describe('detectHabits monthly spend math', () => {
     expect(detectHabits(series('Rare', 5000, 5, 3))).toHaveLength(0);
   });
 
+  it('does not fabricate a habit from expenses that have no merchant (H5)', () => {
+    // Five daily expenses with no merchant set: previously these grouped by the
+    // default title into a bogus habit. Now they are ignored by detection.
+    const noMerchant = series('X', 500, 1, 6).map((e) => {
+      e.merchant = undefined;
+      e.title = 'New expense';
+      return e;
+    });
+    expect(detectHabits(noMerchant)).toHaveLength(0);
+  });
+
   it('ignores expenses older than the 90-day window', () => {
     const old = series('Old', 500, 1, 40).map((e) => {
       e.date.setDate(e.date.getDate() - 200);
