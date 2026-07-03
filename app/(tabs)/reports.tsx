@@ -1,7 +1,6 @@
-import React, { useMemo, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useMemo, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useReports } from '@/contexts/ReportsContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
@@ -21,13 +20,10 @@ export default function ReportsScreen() {
   const insets = useSafeAreaInsets();
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
-  const [isEditing, setIsEditing] = useState(false);
 
   const {
     config,
     isLoading,
-    reorderWidgets,
-    toggleWidgetVisibility,
     updateWidgetTimeRange,
     calculateSpendingByCategory,
     calculateSpendingOverTime,
@@ -45,22 +41,6 @@ export default function ReportsScreen() {
   const handleTimeRangeChange = useCallback(async (widgetId: string, timeRange: TimeRange) => {
     await updateWidgetTimeRange(widgetId, timeRange);
   }, [updateWidgetTimeRange]);
-
-  const handleToggleVisibility = useCallback(async (widgetId: string) => {
-    await toggleWidgetVisibility(widgetId);
-  }, [toggleWidgetVisibility]);
-
-  const handleMoveUp = useCallback(async (index: number) => {
-    if (index > 0) {
-      await reorderWidgets(index, index - 1);
-    }
-  }, [reorderWidgets]);
-
-  const handleMoveDown = useCallback(async (index: number) => {
-    if (index < sortedWidgets.length - 1) {
-      await reorderWidgets(index, index + 1);
-    }
-  }, [reorderWidgets, sortedWidgets.length]);
 
   const renderWidgetContent = useCallback((widget: typeof sortedWidgets[0]) => {
     switch (widget.type) {
@@ -132,23 +112,10 @@ export default function ReportsScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.title}>Reports</Text>
-        <TouchableOpacity
-          style={styles.editButton}
-          onPress={() => setIsEditing(!isEditing)}
-        >
-          <Ionicons
-            name={isEditing ? 'checkmark' : 'options-outline'}
-            size={22}
-            color={isEditing ? theme.primary : theme.text}
-          />
-        </TouchableOpacity>
       </View>
 
-      {/* Subtitle with last updated */}
       <View style={styles.subtitleRow}>
-        <Text style={styles.subtitle}>
-          {isEditing ? 'Drag to reorder, tap eye to hide' : 'Your financial insights'}
-        </Text>
+        <Text style={styles.subtitle}>Your financial insights</Text>
       </View>
 
       {/* Widgets */}
@@ -157,58 +124,15 @@ export default function ReportsScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {sortedWidgets.map((widget, index) => (
-          <View key={widget.id}>
-            {isEditing && (
-              <View style={styles.reorderControls}>
-                <TouchableOpacity
-                  style={[styles.reorderButton, index === 0 && styles.reorderButtonDisabled]}
-                  onPress={() => handleMoveUp(index)}
-                  disabled={index === 0}
-                >
-                  <Ionicons
-                    name="chevron-up"
-                    size={20}
-                    color={index === 0 ? theme.textTertiary : theme.text}
-                  />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.reorderButton,
-                    index === sortedWidgets.length - 1 && styles.reorderButtonDisabled,
-                  ]}
-                  onPress={() => handleMoveDown(index)}
-                  disabled={index === sortedWidgets.length - 1}
-                >
-                  <Ionicons
-                    name="chevron-down"
-                    size={20}
-                    color={index === sortedWidgets.length - 1 ? theme.textTertiary : theme.text}
-                  />
-                </TouchableOpacity>
-              </View>
-            )}
-            <WidgetCard
-              widget={widget}
-              onTimeRangeChange={(range) => handleTimeRangeChange(widget.id, range)}
-              onToggleVisibility={() => handleToggleVisibility(widget.id)}
-              isEditing={isEditing}
-            >
-              {renderWidgetContent(widget)}
-            </WidgetCard>
-          </View>
+        {sortedWidgets.filter(w => w.isVisible).map((widget) => (
+          <WidgetCard
+            key={widget.id}
+            widget={widget}
+            onTimeRangeChange={(range) => handleTimeRangeChange(widget.id, range)}
+          >
+            {renderWidgetContent(widget)}
+          </WidgetCard>
         ))}
-
-        {/* Empty state */}
-        {sortedWidgets.filter(w => w.isVisible).length === 0 && !isEditing && (
-          <View style={styles.emptyContainer}>
-            <Ionicons name="bar-chart-outline" size={48} color={theme.textTertiary} />
-            <Text style={styles.emptyTitle}>All widgets hidden</Text>
-            <Text style={styles.emptySubtitle}>
-              Tap the options button to show widgets
-            </Text>
-          </View>
-        )}
       </ScrollView>
     </View>
   );
