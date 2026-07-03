@@ -5,6 +5,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import type { AppTheme } from '@/constants/theme';
 import type { ReportWidget, TimeRange } from '@/types/report';
+import { strings } from '@/constants/strings';
 
 type WidgetCardProps = {
   widget: ReportWidget;
@@ -13,10 +14,10 @@ type WidgetCardProps = {
 };
 
 const TIME_RANGE_LABELS: Record<TimeRange, string> = {
-  week: '7D',
-  month: '30D',
-  quarter: '3M',
-  year: '1Y',
+  week: strings.reports.timeRangeWeek,
+  month: strings.reports.timeRangeMonth,
+  quarter: strings.reports.timeRangeQuarter,
+  year: strings.reports.timeRangeYear,
 };
 
 export function WidgetCard({
@@ -115,7 +116,7 @@ export function SpendingByCategoryContent({ data, total }: SpendingByCategoryCon
       </View>
 
       <View style={styles.totalRow}>
-        <Text style={styles.totalLabel}>Total</Text>
+        <Text style={styles.totalLabel}>{strings.reports.total}</Text>
         <Text style={styles.totalValue}>{format(total, { compact: true })}</Text>
       </View>
     </View>
@@ -137,7 +138,7 @@ export function SpendingOverTimeContent({ data }: SpendingOverTimeContentProps) 
   if (data.length === 0) {
     return (
       <View style={styles.emptyContent}>
-        <Text style={styles.emptyText}>No spending data</Text>
+        <Text style={styles.emptyText}>{strings.reports.noSpendingData}</Text>
       </View>
     );
   }
@@ -195,7 +196,7 @@ export function HabitStreaksContent({ data }: HabitStreaksContentProps) {
   if (data.length === 0) {
     return (
       <View style={styles.emptyContent}>
-        <Text style={styles.emptyText}>No active habits</Text>
+        <Text style={styles.emptyText}>{strings.reports.noActiveHabits}</Text>
       </View>
     );
   }
@@ -246,7 +247,7 @@ export function ProjectionContent({
       <View style={styles.projectionMain}>
         <View style={styles.projectionAmount}>
           <Text style={styles.projectionValue}>{format(projectedTotal, { compact: true })}</Text>
-          <Text style={styles.projectionLabel}>projected this month</Text>
+          <Text style={styles.projectionLabel}>{strings.reports.projectedThisMonth}</Text>
         </View>
         <View style={styles.projectionComparison}>
           <Ionicons
@@ -276,10 +277,10 @@ export function ProjectionContent({
         </View>
         <View style={styles.projectionStats}>
           <Text style={styles.projectionStat}>
-            {format(currentSpent, { compact: true })} spent
+            {strings.reports.spent(format(currentSpent, { compact: true }))}
           </Text>
           <Text style={styles.projectionStat}>
-            {daysRemaining} days left
+            {strings.reports.daysLeft(daysRemaining)}
           </Text>
         </View>
       </View>

@@ -5,6 +5,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import type { AppTheme } from '@/constants/theme';
 import type { Category, CategoryIcon } from '@/types/category';
+import { strings } from '@/constants/strings';
 
 type CategoryRowProps = {
   category: Category;
@@ -68,7 +69,7 @@ export function CategoryRow({
       <View style={styles.content}>
         <Text style={styles.name}>{category.name}</Text>
         {totalSpent > 0 && (
-          <Text style={styles.spent}>{format(totalSpent)} this month</Text>
+          <Text style={styles.spent}>{strings.categories.thisMonthSuffix(format(totalSpent))}</Text>
         )}
       </View>
 

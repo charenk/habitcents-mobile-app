@@ -7,6 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useOnboarding } from '@/contexts/OnboardingContext';
 import type { AppTheme } from '@/constants/theme';
+import { strings } from '@/constants/strings';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -36,24 +37,24 @@ export default function WelcomeScreen() {
         </View>
 
         {/* Title */}
-        <Text style={styles.title}>HabitCents</Text>
+        <Text style={styles.title}>{strings.onboarding.title}</Text>
         <Text style={styles.tagline}>
-          Build better spending habits,{'\n'}one cent at a time
+          {strings.onboarding.tagline}
         </Text>
 
         {/* Features preview */}
         <View style={styles.features}>
           <View style={styles.feature}>
             <Ionicons name="flash" size={24} color={theme.white} />
-            <Text style={styles.featureText}>Track expenses instantly</Text>
+            <Text style={styles.featureText}>{strings.onboarding.featureTrack}</Text>
           </View>
           <View style={styles.feature}>
             <Ionicons name="analytics" size={24} color={theme.white} />
-            <Text style={styles.featureText}>Discover spending patterns</Text>
+            <Text style={styles.featureText}>{strings.onboarding.featureDiscover}</Text>
           </View>
           <View style={styles.feature}>
             <Ionicons name="flame" size={24} color={theme.white} />
-            <Text style={styles.featureText}>Build lasting habits</Text>
+            <Text style={styles.featureText}>{strings.onboarding.featureBuild}</Text>
           </View>
         </View>
       </View>
@@ -61,7 +62,7 @@ export default function WelcomeScreen() {
       {/* CTA Button */}
       <View style={styles.footer}>
         <TouchableOpacity style={styles.button} onPress={handleGetStarted}>
-          <Text style={styles.buttonText}>Get Started</Text>
+          <Text style={styles.buttonText}>{strings.onboarding.getStarted}</Text>
           <Ionicons name="arrow-forward" size={20} color={theme.primary} />
         </TouchableOpacity>
       </View>

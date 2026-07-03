@@ -15,6 +15,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import type { AppTheme } from '@/constants/theme';
 import type { CategoryIcon } from '@/types/category';
 import { ICON_OPTIONS, COLOR_OPTIONS } from '@/types/category';
+import { strings } from '@/constants/strings';
 
 type AddCategoryModalProps = {
   visible: boolean;
@@ -91,14 +92,14 @@ export function AddCategoryModal({
         <View style={styles.container}>
           <View style={styles.header}>
             <TouchableOpacity onPress={handleClose}>
-              <Text style={styles.cancelText}>Cancel</Text>
+              <Text style={styles.cancelText}>{strings.common.cancel}</Text>
             </TouchableOpacity>
             <Text style={styles.title}>
-              {isEditing ? 'Edit Category' : 'New Category'}
+              {isEditing ? strings.addCategoryModal.editCategory : strings.addCategoryModal.newCategory}
             </Text>
             <TouchableOpacity onPress={handleSave} disabled={!name.trim()}>
               <Text style={[styles.saveText, !name.trim() && styles.saveTextDisabled]}>
-                Save
+                {strings.common.save}
               </Text>
             </TouchableOpacity>
           </View>
@@ -118,18 +119,18 @@ export function AddCategoryModal({
                 />
               </View>
               <Text style={styles.previewName}>
-                {name || 'Category Name'}
+                {name || strings.addCategoryModal.categoryNamePreview}
               </Text>
             </View>
 
             {/* Name Input */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Name</Text>
+              <Text style={styles.sectionTitle}>{strings.addCategoryModal.name}</Text>
               <TextInput
                 style={styles.input}
                 value={name}
                 onChangeText={setName}
-                placeholder="Enter category name"
+                placeholder={strings.addCategoryModal.namePlaceholder}
                 placeholderTextColor={theme.textTertiary}
                 maxLength={30}
               />
@@ -137,7 +138,7 @@ export function AddCategoryModal({
 
             {/* Icon Picker */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Icon</Text>
+              <Text style={styles.sectionTitle}>{strings.addCategoryModal.icon}</Text>
               <View style={styles.iconGrid}>
                 {ICON_OPTIONS.map((icon) => (
                   <TouchableOpacity
@@ -161,7 +162,7 @@ export function AddCategoryModal({
 
             {/* Color Picker */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Color</Text>
+              <Text style={styles.sectionTitle}>{strings.addCategoryModal.color}</Text>
               <View style={styles.colorGrid}>
                 {COLOR_OPTIONS.map((color) => (
                   <TouchableOpacity
@@ -183,14 +184,14 @@ export function AddCategoryModal({
 
             {/* Budget Input (Optional) */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Monthly Budget (Optional)</Text>
+              <Text style={styles.sectionTitle}>{strings.addCategoryModal.monthlyBudget}</Text>
               <View style={styles.budgetInputContainer}>
                 <Text style={styles.budgetPrefix}>$</Text>
                 <TextInput
                   style={styles.budgetInput}
                   value={budget}
                   onChangeText={(text) => setBudget(text.replace(/[^0-9]/g, ''))}
-                  placeholder="0"
+                  placeholder={strings.addCategoryModal.budgetPlaceholder}
                   placeholderTextColor={theme.textTertiary}
                   keyboardType="number-pad"
                   maxLength={8}

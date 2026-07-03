@@ -19,6 +19,7 @@ import { UpcomingPanel } from '@/components/UpcomingPanel';
 import type { AddExpenseInput } from '@/types/expense';
 import { groupExpensesByDate } from '@/data/expensesMock';
 import { computeUpcoming } from '@/utils/recurring';
+import { strings } from '@/constants/strings';
 
 const UPCOMING_WINDOW_DAYS = 60;
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -85,12 +86,12 @@ export default function ExpensesScreen() {
         <View style={styles.viewTabs}>
           <TouchableOpacity onPress={() => setActiveView('recent')}>
             <Text style={[styles.viewTab, activeView === 'recent' ? styles.viewTabActive : styles.viewTabInactive]}>
-              Recent
+              {strings.expenses.recent}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={() => setActiveView('upcoming')}>
             <Text style={[styles.viewTab, activeView === 'upcoming' ? styles.viewTabActive : styles.viewTabInactive]}>
-              Upcoming
+              {strings.expenses.upcoming}
             </Text>
           </TouchableOpacity>
         </View>

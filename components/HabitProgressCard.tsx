@@ -6,6 +6,7 @@ import { useCurrency } from '@/contexts/CurrencyContext';
 import { StreakCalendar } from './StreakCalendar';
 import type { AppTheme } from '@/constants/theme';
 import type { DetectedHabit, HabitChangeGoal, StreakDay } from '@/types/habit';
+import { strings } from '@/constants/strings';
 
 type HabitProgressCardProps = {
   habit: DetectedHabit;
@@ -33,15 +34,15 @@ export function HabitProgressCard({
   const getGoalTypeLabel = () => {
     switch (goal.targetType) {
       case 'reduce_amount':
-        return `Reduce to ${format(goal.targetValue ?? 0, { compact: true })}/month`;
+        return strings.habits.reduceToAmount(format(goal.targetValue ?? 0, { compact: true }));
       case 'reduce_frequency':
-        return `Reduce to ${goal.targetValue}x/week`;
+        return strings.habits.reduceToFrequency(goal.targetValue);
       case 'eliminate':
-        return 'Eliminate this habit';
+        return strings.habits.eliminate;
       case 'substitute':
-        return `Replace with ${goal.targetSubstitute}`;
+        return strings.habits.substitute(goal.targetSubstitute);
       default:
-        return 'Track this habit';
+        return strings.habits.trackThisHabit;
     }
   };
 
@@ -73,7 +74,7 @@ export function HabitProgressCard({
         </View>
         <View style={styles.statusBadge}>
           <Ionicons name="pulse" size={14} color={theme.primary} />
-          <Text style={styles.statusText}>Active</Text>
+          <Text style={styles.statusText}>{strings.habits.active}</Text>
         </View>
       </View>
 
@@ -87,7 +88,7 @@ export function HabitProgressCard({
       {/* Savings Progress */}
       <View style={styles.savingsSection}>
         <View style={styles.savingsHeader}>
-          <Text style={styles.savingsLabel}>Savings Progress</Text>
+          <Text style={styles.savingsLabel}>{strings.habits.savingsProgress}</Text>
           <Text style={styles.savingsAmount}>
             {format(goal.actualSavings, { compact: true })} / {format(goal.savingsGoal, { compact: true })}
           </Text>
@@ -122,7 +123,7 @@ export function HabitProgressCard({
       {!hasLoggedToday() && onLogToday && (
         <TouchableOpacity style={styles.logButton} onPress={onLogToday}>
           <Ionicons name="add-circle" size={20} color={theme.white} />
-          <Text style={styles.logButtonText}>Log Today</Text>
+          <Text style={styles.logButtonText}>{strings.habits.logToday}</Text>
         </TouchableOpacity>
       )}
     </TouchableOpacity>

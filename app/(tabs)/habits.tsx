@@ -20,6 +20,7 @@ import { HabitProgressCard } from '@/components/HabitProgressCard';
 import { LessonCard, LessonDetail } from '@/components/LessonCard';
 import type { AppTheme } from '@/constants/theme';
 import type { DetectedHabit, MicroLesson, StreakDay } from '@/types/habit';
+import { strings } from '@/constants/strings';
 
 type HabitSection = {
   title: string;
@@ -77,7 +78,7 @@ export default function HabitsScreen() {
 
     if (discoveredHabits.length > 0) {
       result.push({
-        title: 'Insights',
+        title: strings.habits.sectionInsights,
         type: 'insights',
         data: discoveredHabits,
       });
@@ -85,7 +86,7 @@ export default function HabitsScreen() {
 
     if (activeHabits.length > 0) {
       result.push({
-        title: 'Active Changes',
+        title: strings.habits.sectionActiveChanges,
         type: 'active',
         data: activeHabits,
       });
@@ -93,7 +94,7 @@ export default function HabitsScreen() {
 
     if (pendingLessons.length > 0) {
       result.push({
-        title: 'Learning',
+        title: strings.habits.sectionLearning,
         type: 'learning',
         data: pendingLessons.slice(0, 3),
       });
@@ -187,7 +188,7 @@ export default function HabitsScreen() {
       <Text style={styles.sectionTitle}>{section.title}</Text>
       {section.type === 'insights' && (
         <View style={styles.sectionBadge}>
-          <Text style={styles.sectionBadgeText}>{section.data.length} new</Text>
+          <Text style={styles.sectionBadgeText}>{strings.habits.sectionBadgeNew(section.data.length)}</Text>
         </View>
       )}
     </View>
@@ -207,9 +208,12 @@ export default function HabitsScreen() {
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <Text style={styles.title}>Your Habits</Text>
+          <Text style={styles.title}>{strings.habits.title}</Text>
           <Text style={styles.subtitle}>
-            {activeHabits.length} active{activeStreakTotal > 0 ? ` | ${activeStreakTotal} day streak` : ''}
+            {strings.habits.subtitle(
+              activeHabits.length,
+              activeStreakTotal > 0 ? strings.habits.streakSuffix(activeStreakTotal) : ''
+            )}
           </Text>
         </View>
         {activeStreakTotal > 0 && (
@@ -222,27 +226,27 @@ export default function HabitsScreen() {
 
       {activeHabits.length > 0 && (
         <View style={styles.savingsHero}>
-          <Text style={styles.savingsLabel}>DOLLARS KEPT</Text>
+          <Text style={styles.savingsLabel}>{strings.habits.dollarsKept}</Text>
           <Text style={styles.savingsValue}>{format(totalSaved)}</Text>
-          <Text style={styles.savingsCaption}>from the habits you're breaking</Text>
+          <Text style={styles.savingsCaption}>{strings.habits.dollarsKeptCaption}</Text>
         </View>
       )}
 
       {isLoading ? (
         <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Analyzing your spending patterns...</Text>
+          <Text style={styles.loadingText}>{strings.habits.loading}</Text>
         </View>
       ) : isEmpty ? (
         <View style={styles.emptyContainer}>
           <Ionicons name="analytics-outline" size={64} color={theme.textTertiary} />
-          <Text style={styles.emptyTitle}>No habits detected yet</Text>
+          <Text style={styles.emptyTitle}>{strings.habits.emptyTitle}</Text>
           <Text style={styles.emptySubtitle}>
-            Keep adding expenses and we'll identify your spending patterns automatically.
+            {strings.habits.emptySubtitle}
           </Text>
           <View style={styles.tipCard}>
             <Ionicons name="bulb-outline" size={20} color={theme.iconOrange} />
             <Text style={styles.tipText}>
-              Tip: Add at least 5 expenses at the same merchant to detect a habit.
+              {strings.habits.tip}
             </Text>
           </View>
         </View>

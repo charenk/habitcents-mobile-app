@@ -5,6 +5,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import type { AppTheme } from '@/constants/theme';
 import { daysUntilLabel, upcomingTotal, type UpcomingItem } from '@/utils/recurring';
+import { strings } from '@/constants/strings';
 
 type UpcomingPanelProps = {
   items: UpcomingItem[];
@@ -24,10 +25,9 @@ export function UpcomingPanel({ items, windowDays }: UpcomingPanelProps) {
     return (
       <View style={styles.emptyContainer}>
         <Ionicons name="repeat-outline" size={56} color={theme.textTertiary} />
-        <Text style={styles.emptyTitle}>Nothing upcoming</Text>
+        <Text style={styles.emptyTitle}>{strings.upcoming.emptyTitle}</Text>
         <Text style={styles.emptySubtitle}>
-          Mark an expense as recurring (weekly or monthly) and its next occurrence
-          shows up here.
+          {strings.upcoming.emptySubtitle}
         </Text>
       </View>
     );
@@ -36,9 +36,9 @@ export function UpcomingPanel({ items, windowDays }: UpcomingPanelProps) {
   return (
     <View style={styles.container}>
       <View style={styles.totalCard}>
-        <Text style={styles.totalLabel}>NEXT {windowDays} DAYS</Text>
+        <Text style={styles.totalLabel}>{strings.upcoming.totalLabel(windowDays)}</Text>
         <Text style={styles.totalValue}>{format(upcomingTotal(items))}</Text>
-        <Text style={styles.totalCaption}>{items.length} recurring {items.length === 1 ? 'expense' : 'expenses'}</Text>
+        <Text style={styles.totalCaption}>{strings.upcoming.recurringCount(items.length)}</Text>
       </View>
 
       <FlatList

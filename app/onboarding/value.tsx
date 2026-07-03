@@ -14,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useOnboarding } from '@/contexts/OnboardingContext';
 import type { AppTheme } from '@/constants/theme';
+import { strings } from '@/constants/strings';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -29,22 +30,22 @@ const VALUE_PROPS: ValueProp[] = [
   {
     id: '1',
     icon: 'flash-outline',
-    title: 'Quick Tracking',
-    description: 'Add expenses in seconds. Just enter the amount and category - done!',
+    title: strings.onboarding.quickTrackingTitle,
+    description: strings.onboarding.quickTrackingDescription,
     color: '#FFA726',
   },
   {
     id: '2',
     icon: 'bulb-outline',
-    title: 'Smart Insights',
-    description: 'We automatically detect your spending habits and patterns over time.',
+    title: strings.onboarding.smartInsightsTitle,
+    description: strings.onboarding.smartInsightsDescription,
     color: '#42A5F5',
   },
   {
     id: '3',
     icon: 'trophy-outline',
-    title: 'Build Better Habits',
-    description: 'Set goals, track streaks, and celebrate wins. Small changes add up!',
+    title: strings.onboarding.buildBetterHabitsTitle,
+    description: strings.onboarding.buildBetterHabitsDescription,
     color: '#66BB6A',
   },
 ];
@@ -88,7 +89,7 @@ export default function ValuePropsScreen() {
       {/* Skip button */}
       <View style={styles.header}>
         <TouchableOpacity onPress={handleSkip}>
-          <Text style={styles.skipText}>Skip</Text>
+          <Text style={styles.skipText}>{strings.onboarding.skip}</Text>
         </TouchableOpacity>
       </View>
 
@@ -125,7 +126,7 @@ export default function ValuePropsScreen() {
       <View style={styles.footer}>
         <TouchableOpacity style={styles.button} onPress={handleNext}>
           <Text style={styles.buttonText}>
-            {currentIndex === VALUE_PROPS.length - 1 ? "Let's Go" : 'Next'}
+            {currentIndex === VALUE_PROPS.length - 1 ? strings.onboarding.letsGo : strings.onboarding.next}
           </Text>
           <Ionicons name="arrow-forward" size={20} color={theme.white} />
         </TouchableOpacity>

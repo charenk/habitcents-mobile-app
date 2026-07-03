@@ -15,6 +15,7 @@ import {
 } from '@/components/WidgetCard';
 import type { AppTheme } from '@/constants/theme';
 import type { TimeRange } from '@/types/report';
+import { strings } from '@/constants/strings';
 
 export default function ReportsScreen() {
   const insets = useSafeAreaInsets();
@@ -101,7 +102,7 @@ export default function ReportsScreen() {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
         <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Loading reports...</Text>
+          <Text style={styles.loadingText}>{strings.reports.loading}</Text>
         </View>
       </View>
     );
@@ -111,11 +112,11 @@ export default function ReportsScreen() {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>Reports</Text>
+        <Text style={styles.title}>{strings.reports.title}</Text>
       </View>
 
       <View style={styles.subtitleRow}>
-        <Text style={styles.subtitle}>Your financial insights</Text>
+        <Text style={styles.subtitle}>{strings.reports.subtitle}</Text>
       </View>
 
       {/* Widgets */}
