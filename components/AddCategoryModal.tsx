@@ -12,6 +12,8 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
+import { currencyMeta } from '@/utils/currency';
 import type { AppTheme } from '@/constants/theme';
 import type { CategoryIcon } from '@/types/category';
 import { ICON_OPTIONS, COLOR_OPTIONS } from '@/types/category';
@@ -34,11 +36,13 @@ export function AddCategoryModal({
   onSave,
   initialName = '',
   initialIcon = 'wallet-outline',
-  initialColor = '#7E57C2',
+  initialColor = COLOR_OPTIONS[0],
   initialBudget,
   isEditing = false,
 }: AddCategoryModalProps) {
   const theme = useTheme();
+  const { currency } = useCurrency();
+  const currencySymbol = currencyMeta(currency).symbol;
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   const [name, setName] = useState(initialName);
@@ -69,7 +73,7 @@ export function AddCategoryModal({
   const resetForm = () => {
     setName('');
     setSelectedIcon('wallet-outline');
-    setSelectedColor('#7E57C2');
+    setSelectedColor(COLOR_OPTIONS[0]);
     setBudget('');
   };
 
@@ -175,7 +179,7 @@ export function AddCategoryModal({
                     onPress={() => setSelectedColor(color)}
                   >
                     {selectedColor === color && (
-                      <Ionicons name="checkmark" size={20} color="#FFFFFF" />
+                      <Ionicons name="checkmark" size={20} color={theme.white} />
                     )}
                   </TouchableOpacity>
                 ))}
@@ -186,7 +190,7 @@ export function AddCategoryModal({
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>{strings.addCategoryModal.monthlyBudget}</Text>
               <View style={styles.budgetInputContainer}>
-                <Text style={styles.budgetPrefix}>$</Text>
+                <Text style={styles.budgetPrefix}>{currencySymbol}</Text>
                 <TextInput
                   style={styles.budgetInput}
                   value={budget}
