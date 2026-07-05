@@ -11,6 +11,9 @@ export type IntakeStage = 'idle' | 'picking' | 'scanning' | 'question' | 'done';
 export type IntakeState = {
   stage: IntakeStage;
   fileNames: string[];
+  /** The real in-memory file inputs (name + text), so the results screen can
+   *  re-run the pipeline on a rule correction without re-picking files. */
+  files: ScanFileInput[];
   skippedFileMessages: string[];
   pendingQuestion: ScanQuestion | null;
   result: ScanResult | null;
@@ -28,6 +31,7 @@ export function useLeakScanIntake() {
   const [state, setState] = useState<IntakeState>({
     stage: 'idle',
     fileNames: [],
+    files: [],
     skippedFileMessages: [],
     pendingQuestion: null,
     result: null,
@@ -113,6 +117,7 @@ export function useLeakScanIntake() {
         ...s,
         stage: 'scanning',
         fileNames: files.map((f) => f.fileName),
+        files,
         skippedFileMessages,
       }));
       await runWithRules(files, loadedRules);
@@ -146,6 +151,7 @@ export function useLeakScanIntake() {
     setState({
       stage: 'idle',
       fileNames: [],
+      files: [],
       skippedFileMessages: [],
       pendingQuestion: null,
       result: null,
