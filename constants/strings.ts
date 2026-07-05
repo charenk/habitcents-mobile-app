@@ -417,8 +417,8 @@ export const strings = {
     // Next-month projection (spec 5.5, visual spec 7)
     projectionTitle: 'Next month',
     projectionPlaceholder: 'One full month of data unlocks your projection.',
-    projectionLockedIn: 'Recurring — locked in',
-    projectionRunRate: 'Variable — run rate',
+    projectionLockedIn: 'Recurring: locked in',
+    projectionRunRate: 'Variable: run rate',
     projectionBuffer: '+12% · irregulars & annual renewals',
     threePaymentMonth: (month: string) => `3 payments in ${month}`,
     saveToHabitCents: 'Save to HabitCents',
