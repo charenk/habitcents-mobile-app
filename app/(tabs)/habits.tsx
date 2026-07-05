@@ -63,6 +63,7 @@ export default function HabitsScreen() {
     getGoalByHabitId,
     getHabitById,
     lastMilestone,
+    clearLastMilestone,
     lastCoachMoment,
     clearLastCoachMoment,
     maybeShowDetectionMoment,
@@ -73,10 +74,16 @@ export default function HabitsScreen() {
 
   // Coach Moment (P2-2, acceptance test 2): clear on blur (tab switch away)
   // so returning to an already-answered card does not re-show the same card.
+  // lastMilestone has the identical lifecycle gap (state-lifecycle bug fixed
+  // here alongside the Coach Moments fix it was originally applied for): clear
+  // it the same way so a milestone tint doesn't persist across navigation.
   useFocusEffect(
     useCallback(() => {
-      return () => clearLastCoachMoment();
-    }, [clearLastCoachMoment])
+      return () => {
+        clearLastCoachMoment();
+        clearLastMilestone();
+      };
+    }, [clearLastCoachMoment, clearLastMilestone])
   );
 
   useEffect(() => {

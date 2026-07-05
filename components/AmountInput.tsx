@@ -7,6 +7,8 @@ import {
   StyleSheet,
 } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
+import { currencyMeta } from '@/utils/currency';
 
 type AmountInputProps = {
   value: number; // cents
@@ -16,12 +18,18 @@ type AmountInputProps = {
 
 export function AmountInput({ value, onChange, autoFocus = false }: AmountInputProps) {
   const theme = useTheme();
+  const { currency } = useCurrency();
+  const meta = currencyMeta(currency);
   const styles = useMemo(() => createStyles(theme), [theme]);
   const inputRef = useRef<TextInput>(null);
   const [isFocused, setIsFocused] = useState(false);
 
-  // Format cents to display string "0.00"
-  const displayValue = (value / 100).toFixed(2);
+  // Format cents to a display string with the active currency's decimal
+  // places (0 for JPY, 2 otherwise), never a hardcoded ".00".
+  const safeValue = Number.isFinite(value) ? value : 0;
+  const displayValue = meta.decimals === 0
+    ? String(Math.round(safeValue / 100))
+    : (safeValue / 100).toFixed(meta.decimals);
 
   const handlePress = () => {
     inputRef.current?.focus();
@@ -30,13 +38,16 @@ export function AmountInput({ value, onChange, autoFocus = false }: AmountInputP
   const handleChangeText = (text: string) => {
     // Remove all non-numeric characters
     const digits = text.replace(/[^0-9]/g, '');
-    // Convert to cents (user types raw number, we interpret as cents)
-    const cents = parseInt(digits, 10) || 0;
+    // Convert to cents (user types raw number, we interpret as cents); guard
+    // against an unparseable/empty result so a corrupt amount can never reach
+    // the caller.
+    const parsed = parseInt(digits, 10);
+    const cents = Number.isFinite(parsed) ? parsed : 0;
     onChange(cents);
   };
 
   // For input, we use raw digits without formatting
-  const inputValue = value === 0 ? '' : value.toString();
+  const inputValue = safeValue === 0 ? '' : safeValue.toString();
 
   return (
     <TouchableOpacity
@@ -44,7 +55,7 @@ export function AmountInput({ value, onChange, autoFocus = false }: AmountInputP
       onPress={handlePress}
       activeOpacity={0.8}
     >
-      <Text style={styles.dollarSign}>$</Text>
+      <Text style={styles.dollarSign}>{meta.symbol}</Text>
       <Text style={styles.amount}>{displayValue}</Text>
       <TextInput
         ref={inputRef}
