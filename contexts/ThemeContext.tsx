@@ -1,37 +1,26 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useColorScheme } from 'react-native';
-import { lightTheme, darkTheme } from '@/constants/theme';
-import { getThemeMode, setThemeMode as persistThemeMode } from '@/utils/storage';
-import type { AppTheme, ThemeMode } from '@/constants/theme';
+import React, { createContext, useContext } from 'react';
+import { lightTheme } from '@/constants/theme';
+import type { AppTheme } from '@/constants/theme';
+
+// P2-4 (docs/design-package-phase2/05-p2-4-design-unification.md, section 2):
+// dark mode is removed from the UI for v1. useTheme() now returns lightTheme
+// unconditionally. The dark theme code (constants/theme.ts darkTheme,
+// ThemeMode, getThemeMode/setThemeMode in utils/storage.ts) stays in the
+// codebase, unreferenced, for the documented v1.x revert path (spec section 2):
+// 1. Re-add one Settings row "Appearance" wired to a ThemeMode sheet.
+// 2. Restore this provider to read the stored mode and select darkTheme.
+// 3. Audit dark tokens against the P2-4 color-semantics rules before shipping.
+// 4. No data migration needed; the mode preference key is preserved.
 
 type ThemeContextValue = {
   theme: AppTheme;
-  themeMode: ThemeMode;
-  setThemeMode: (mode: ThemeMode) => Promise<void>;
-  isDark: boolean;
 };
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const systemScheme = useColorScheme();
-  const [themeMode, setThemeModeState] = useState<ThemeMode>('system');
-
-  useEffect(() => {
-    getThemeMode().then((mode) => setThemeModeState(mode));
-  }, []);
-
-  const setThemeMode = async (mode: ThemeMode) => {
-    setThemeModeState(mode);
-    await persistThemeMode(mode);
-  };
-
-  const resolvedScheme = themeMode === 'system' ? systemScheme : themeMode;
-  const isDark = resolvedScheme === 'dark';
-  const theme = isDark ? darkTheme : lightTheme;
-
   return (
-    <ThemeContext.Provider value={{ theme, themeMode, setThemeMode, isDark }}>
+    <ThemeContext.Provider value={{ theme: lightTheme }}>
       {children}
     </ThemeContext.Provider>
   );
@@ -43,14 +32,12 @@ export function useTheme(): AppTheme {
   return ctx.theme;
 }
 
-export function useThemeMode(): Pick<ThemeContextValue, 'themeMode' | 'setThemeMode'> {
-  const ctx = useContext(ThemeContext);
-  if (!ctx) throw new Error('useThemeMode must be used within ThemeProvider');
-  return { themeMode: ctx.themeMode, setThemeMode: ctx.setThemeMode };
-}
-
+/**
+ * Always false for v1 (light mode only). Kept as a stable API so the one
+ * remaining consumer (app/_layout.tsx StatusBarThemed) does not need a
+ * separate code path, and so the v1.x dark revert (see comment above) only
+ * has to change this function's body, not its callers.
+ */
 export function useIsDark(): boolean {
-  const ctx = useContext(ThemeContext);
-  if (!ctx) return false;
-  return ctx.isDark;
+  return false;
 }

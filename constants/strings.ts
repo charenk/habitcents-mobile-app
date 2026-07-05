@@ -263,33 +263,16 @@ export const strings = {
     timeRangeYear: '1Y',
   },
   settings: {
-    account: 'Account',
-    profile: 'Profile',
-    notifications: 'Notifications',
     preferences: 'Preferences',
-    appearance: 'Appearance',
     currency: 'Currency',
-    privacy: 'Privacy',
     about: 'About',
+    privacyPolicy: 'Privacy policy',
     version: 'Version',
     versionValue: '1.0.0',
-    developer: 'Developer',
-    resetOnboarding: 'Reset Onboarding',
-    // Theme mode labels
-    light: 'Light',
-    dark: 'Dark',
-    system: 'System',
     // Currency alert
     currencyAlertTitle: 'Currency',
     currencyAlertMessage: 'Choose your currency',
     currencyOption: (name: string, symbol: string) => `${name} (${symbol})`,
-    // Appearance alert
-    appearanceAlertTitle: 'Appearance',
-    appearanceAlertMessage: 'Choose theme',
-    // Reset onboarding alert
-    onboardingResetTitle: 'Onboarding Reset',
-    onboardingResetMessage: 'Close and reopen the app to see the welcome screen.',
-    restartNow: 'Restart Now',
   },
   addCategoryModal: {
     editCategory: 'Edit Category',
