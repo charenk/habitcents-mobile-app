@@ -56,12 +56,18 @@ export interface AnalyticsEventMap {
   expense_logged: { category: string; has_merchant: boolean; is_recurring: boolean };
   expense_edited: { fields_changed: number };
   expense_deleted: Record<string, never>;
-  // Detection + habits
+  // Detection
   detection_shown: { habit_count: number };
-  habit_tracking_started: { frequency?: string };
-  habit_goal_created: { frequency?: string };
-  skip_logged: { completed: boolean; saved_bucket: string };
-  milestone_reached: { streak: number };
+  // Habit logging v2 (docs/design-package-phase2/01-habit-logging-spec.md
+  // section 6). cadence is 'daily' | 'weekly' | 'monthly'; never amounts,
+  // merchant names, or habit titles.
+  habit_goal_created: { cadence?: string; value_edited: boolean };
+  habit_tracking_started: { cadence?: string; source: 'detection' | 'scan' };
+  skip_logged: { cadence?: string; total_skips_after: number; week_skips: number; backfill: boolean };
+  slip_logged: { cadence?: string; partial: boolean; backfill: boolean };
+  answer_changed: { from: 'skipped' | 'slipped'; to: 'skipped' | 'slipped' };
+  milestone_reached: { milestone: 10 | 30 | 50 | 66 };
+  habit_dismissed: { source: string };
   // Coaching (P2-2)
   coach_moment_shown: { trigger: string; card_id: string };
   // Monetization (P3-1)
