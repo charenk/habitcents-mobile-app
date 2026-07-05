@@ -9,6 +9,7 @@ import {
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { currencyMeta } from '@/utils/currency';
+import { hapticLight } from '@/utils/motion';
 
 type AmountInputProps = {
   value: number; // cents
@@ -73,6 +74,7 @@ export const AmountInput = forwardRef<AmountInputHandle, AmountInputProps>(funct
         style={styles.hiddenInput}
         value={inputValue}
         onChangeText={handleChangeText}
+        onKeyPress={hapticLight}
         keyboardType="number-pad"
         autoFocus={autoFocus}
         onFocus={() => setIsFocused(true)}

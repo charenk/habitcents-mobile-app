@@ -21,7 +21,10 @@ export const strings = {
     upcoming: 'Upcoming',
     merchantPlaceholder: 'Merchant (e.g. Starbucks)',
     notePlaceholder: 'Note (optional)',
-    saveExpense: 'Save Expense',
+    saveExpense: 'Save expense',
+    // Log-save motion (Direction C, spec 05): the button label morphs to this
+    // for a beat right after a successful save, then the form resets.
+    savedConfirmation: 'Saved',
     all: 'All',
     editAccessibilityLabel: (title: string, amountLabel: string) => `Edit ${title}, ${amountLabel}`,
     // Zero-expense empty state (spec 05 section 5.1).
