@@ -36,3 +36,5 @@ export * as scanAnalytics from './analytics';
 // (results 5.3). Lives alongside the pipeline types it consumes; still UI-free.
 export { autoGranularity, buildSpendPulse } from './spendPulse';
 export type { PulseCell, PulseCellState, PulseData, PulseGranularity } from './spendPulse';
+export { buildKpiSummary, buildCategorySummary, weakerTier } from './resultsSummary';
+export type { KpiSummary, CategorySummary } from './resultsSummary';
