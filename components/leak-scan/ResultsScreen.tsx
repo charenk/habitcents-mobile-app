@@ -22,7 +22,7 @@ import {
   buildReviewQueue,
   runScan,
 } from '@/utils/leakScan';
-import { seedLast15Days, recurringToExpenses, undoImport } from '@/utils/leakScan/importWrite';
+import { seedLast15Days, recurringToExpenses } from '@/utils/leakScan/importWrite';
 import type { ScanFileInput } from '@/utils/leakScan';
 import type { GovernClass, HabitCandidate, ScanResult } from '@/utils/leakScan/types';
 import type { ExpenseCategory } from '@/types/expense';
@@ -35,6 +35,7 @@ import {
 } from '@/utils/scanRules';
 import { habitCandidateToDetectedHabit, scanHabitId } from '@/utils/leakScanBridge';
 import { track } from '@/utils/analytics';
+import { FREE_TIER_HABIT_LIMIT } from '@/utils/habitLogging';
 
 type ResultsScreenProps = {
   result: ScanResult;
@@ -64,8 +65,8 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
   const theme = useTheme();
   const { format } = useCurrency();
   const router = useRouter();
-  const { addExpense, updateExpense, deleteExpense, expenses } = useExpenses();
-  const { addScanHabit, startBreakingHabit, dismissHabit, getHabitById } = useHabits();
+  const { addExpense, deleteExpense, expenses } = useExpenses();
+  const { addScanHabit, startBreakingHabit, dismissHabit, getHabitById, getActiveHabits } = useHabits();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   const [result, setResult] = useState(initialResult);
@@ -120,12 +121,26 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
     [rules, rerun]
   );
 
+  /** Govern class only: "Track this leak" opens the identical Decision-1
+   *  pick-one sheet Door 1 uses (visual spec acceptance 6). Nothing is
+   *  created until Start breaking it is tapped on that sheet. */
   const handleTrackLeak = useCallback(
     async (candidate: HabitCandidate) => {
       const habit = habitCandidateToDetectedHabit(candidate, result.coverage?.coveredDays ?? 0);
       await addScanHabit(habit);
       setPickOneCandidate(candidate);
       setPickOneHabit(habit);
+    },
+    [addScanHabit, result.coverage]
+  );
+
+  /** Influence class only: "Monitor" creates a monitor-only habit (discovered
+   *  status, no HabitChangeGoal, no skip loop) -- distinct from Track. */
+  const handleMonitor = useCallback(
+    async (candidate: HabitCandidate) => {
+      const habit = habitCandidateToDetectedHabit(candidate, result.coverage?.coveredDays ?? 0);
+      await addScanHabit(habit);
+      track('scan_habit_tracked', { class: 'influence', cadence_route: 'monitor' });
     },
     [addScanHabit, result.coverage]
   );
@@ -180,14 +195,15 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
   );
 
   const handleUndo = useCallback(async () => {
-    const remaining = undoImport(expenses, result.importId);
+    // undoImport is the pure filter the pipeline exports (acceptance 14); applied
+    // here via per-item deleteExpense calls so ExpensesContext's own persistence
+    // and analytics stay the single write path (no parallel storage write).
     const toDelete = expenses.filter((e) => e.importId === result.importId);
     for (const exp of toDelete) {
       await deleteExpense(exp.id);
     }
     track('scan_undone', {});
     setUndone(true);
-    void remaining;
   }, [expenses, result.importId, deleteExpense]);
 
   const handleBringIn15Days = useCallback(async () => {
@@ -238,7 +254,7 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
                 monthTotalCents={candidate.totalCents}
                 coveredDays={result.coverage?.coveredDays ?? 0}
                 onTrack={() => handleTrackLeak(candidate)}
-                onMonitor={() => handleTrackLeak(candidate)}
+                onMonitor={() => handleMonitor(candidate)}
                 onNotAHabit={() => handleNotAHabit(candidate)}
               />
             ))}
@@ -292,6 +308,7 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
           setPickOneCandidate(null);
         }}
         onStart={handlePickOneStart}
+        freeTierBlocked={getActiveHabits().length >= FREE_TIER_HABIT_LIMIT}
       />
     </View>
   );
