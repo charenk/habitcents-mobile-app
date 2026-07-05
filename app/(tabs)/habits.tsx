@@ -4,12 +4,11 @@ import {
   Text,
   StyleSheet,
   SectionList,
-  Modal,
   RefreshControl,
   TouchableOpacity,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useHabits } from '@/contexts/HabitsContext';
@@ -19,18 +18,19 @@ import { LeakCard } from '@/components/habit-logging/LeakCard';
 import { CheckInCard } from '@/components/habit-logging/CheckInCard';
 import { PickOneSheet } from '@/components/habit-logging/PickOneSheet';
 import { PartialSlipSheet } from '@/components/habit-logging/PartialSlipSheet';
-import { LessonCard, LessonDetail } from '@/components/LessonCard';
+import { CoachMomentSlot } from '@/components/habit-logging/CoachMomentSlot';
 import { atMidnight, dayStateFor, FREE_TIER_HABIT_LIMIT } from '@/utils/habitLogging';
+import { cardText, type CoachMomentCardId } from '@/utils/coachMoments';
 import type { AppTheme } from '@/constants/theme';
-import type { DetectedHabit, HabitChangeGoal, MicroLesson } from '@/types/habit';
+import type { DetectedHabit, HabitChangeGoal } from '@/types/habit';
 import { strings } from '@/constants/strings';
 
 type BreakingItem = { habit: DetectedHabit; goal: HabitChangeGoal };
 
 type HabitSection = {
   title: string;
-  type: 'leaks' | 'breaking' | 'learning';
-  data: (DetectedHabit | BreakingItem | MicroLesson)[];
+  type: 'leaks' | 'breaking';
+  data: (DetectedHabit | BreakingItem)[];
 };
 
 export default function HabitsScreen() {
@@ -39,13 +39,16 @@ export default function HabitsScreen() {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [refreshing, setRefreshing] = useState(false);
-  const [selectedLesson, setSelectedLesson] = useState<MicroLesson | null>(null);
   const [pickOneHabitId, setPickOneHabitId] = useState<string | null>(null);
   const [partialGoalId, setPartialGoalId] = useState<string | null>(null);
+  // DT-1 (P2-2): resolved once, attached to whichever leak is first in the
+  // list at that moment, so the card only ever renders on one LeakCard.
+  const [detectionMoment, setDetectionMoment] = useState<{ habitId: string; cardId: CoachMomentCardId } | null>(null);
+  // FL-1 (P2-2): resolved once, shown on the empty state (see below).
+  const [firstLogCardId, setFirstLogCardId] = useState<CoachMomentCardId | null>(null);
 
   const {
     goals,
-    lessons,
     isLoading,
     refreshHabits,
     dismissHabit,
@@ -55,22 +58,43 @@ export default function HabitsScreen() {
     changeTodayAnswer,
     backfillYesterday,
     savePartialSlip,
-    completeLesson,
     getActiveHabits,
     getDiscoveredHabits,
-    getPendingLessons,
     getGoalByHabitId,
     getHabitById,
     lastMilestone,
+    lastCoachMoment,
+    clearLastCoachMoment,
+    maybeShowDetectionMoment,
+    maybeShowFirstLogMoment,
   } = useHabits();
 
   const { expenses } = useExpenses();
+
+  // Coach Moment (P2-2, acceptance test 2): clear on blur (tab switch away)
+  // so returning to an already-answered card does not re-show the same card.
+  useFocusEffect(
+    useCallback(() => {
+      return () => clearLastCoachMoment();
+    }, [clearLastCoachMoment])
+  );
 
   useEffect(() => {
     if (expenses.length > 0) {
       refreshHabits(expenses);
     }
   }, [expenses.length]);
+
+  // FL-1 (P2-2, spec §3 "First log"): the first expense ever saved, surfaced
+  // on the next Habits-tab visit. maybeShowFirstLogMoment() is idempotent
+  // (null once already shown), so this is safe to re-run every time the
+  // expense count changes.
+  useEffect(() => {
+    if (expenses.length === 0 || firstLogCardId) return;
+    maybeShowFirstLogMoment().then((cardId) => {
+      if (cardId) setFirstLogCardId(cardId);
+    });
+  }, [expenses.length, firstLogCardId, maybeShowFirstLogMoment]);
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -80,7 +104,18 @@ export default function HabitsScreen() {
 
   const discoveredHabits = getDiscoveredHabits();
   const activeHabits = getActiveHabits();
-  const pendingLessons = getPendingLessons();
+
+  // DT-1 (P2-2, spec §3 "Detection"): the first time any leak is surfaced,
+  // ever. maybeShowDetectionMoment() itself is idempotent (returns null once
+  // already shown), so this effect is safe to re-run on every discovered-list
+  // change; it only ever attaches a card once, to the leak on top at the time.
+  useEffect(() => {
+    if (discoveredHabits.length === 0 || detectionMoment) return;
+    const habitId = discoveredHabits[0].id;
+    maybeShowDetectionMoment().then((cardId) => {
+      if (cardId) setDetectionMoment({ habitId, cardId });
+    });
+  }, [discoveredHabits, detectionMoment, maybeShowDetectionMoment]);
 
   const breakingItems: BreakingItem[] = useMemo(() => {
     return activeHabits
@@ -125,16 +160,8 @@ export default function HabitsScreen() {
       });
     }
 
-    if (pendingLessons.length > 0) {
-      result.push({
-        title: strings.habits.sectionLearning,
-        type: 'learning',
-        data: pendingLessons.slice(0, 3),
-      });
-    }
-
     return result;
-  }, [discoveredHabits, sortedBreakingItems, pendingLessons]);
+  }, [discoveredHabits, sortedBreakingItems]);
 
   const handleDismissHabit = useCallback(async (habit: DetectedHabit) => {
     await dismissHabit(habit.id);
@@ -143,17 +170,6 @@ export default function HabitsScreen() {
   const handleHabitPress = useCallback((habitId: string) => {
     router.push(`/habit/${habitId}`);
   }, [router]);
-
-  const handleLessonPress = useCallback((lesson: MicroLesson) => {
-    setSelectedLesson(lesson);
-  }, []);
-
-  const handleCompleteLesson = useCallback(async () => {
-    if (selectedLesson) {
-      await completeLesson(selectedLesson.id);
-      setSelectedLesson(null);
-    }
-  }, [selectedLesson, completeLesson]);
 
   const pickOneHabit = pickOneHabitId ? getHabitById(pickOneHabitId) : null;
   // Free-tier touchpoint (ADR 0007): blocked when there is already an active
@@ -172,7 +188,7 @@ export default function HabitsScreen() {
 
   const isEmpty = sections.length === 0;
 
-  const renderItem = ({ item, section }: { item: DetectedHabit | BreakingItem | MicroLesson; section: HabitSection }) => {
+  const renderItem = ({ item, section }: { item: DetectedHabit | BreakingItem; section: HabitSection }) => {
     if (section.type === 'leaks') {
       const habit = item as DetectedHabit;
       return (
@@ -180,6 +196,7 @@ export default function HabitsScreen() {
           habit={habit}
           onBreak={() => setPickOneHabitId(habit.id)}
           onDismiss={() => handleDismissHabit(habit)}
+          coachMomentCardId={detectionMoment?.habitId === habit.id ? detectionMoment.cardId : null}
         />
       );
     }
@@ -192,6 +209,7 @@ export default function HabitsScreen() {
           habit={habit}
           goal={goal}
           milestoneJustHit={milestoneJustHit}
+          coachMoment={lastCoachMoment}
           onSkip={() => (habit.frequency === 'daily' ? answerToday(goal.id, 'skipped') : answerEvent(goal.id, 'skipped'))}
           onSlip={() => (habit.frequency === 'daily' ? answerToday(goal.id, 'slipped') : answerEvent(goal.id, 'slipped'))}
           onChangeAnswer={() => changeTodayAnswer(goal.id)}
@@ -200,11 +218,6 @@ export default function HabitsScreen() {
           onOpenDetail={() => handleHabitPress(habit.id)}
         />
       );
-    }
-
-    if (section.type === 'learning') {
-      const lesson = item as MicroLesson;
-      return <LessonCard lesson={lesson} onPress={() => handleLessonPress(lesson)} />;
     }
 
     return null;
@@ -240,6 +253,11 @@ export default function HabitsScreen() {
           >
             <Text style={styles.emptyCtaText}>{strings.habitLogging.logAnExpense}</Text>
           </TouchableOpacity>
+          {firstLogCardId && (
+            <View style={styles.emptyCoachMoment}>
+              <CoachMomentSlot text={cardText(firstLogCardId)} />
+            </View>
+          )}
         </View>
       ) : (
         <SectionList
@@ -278,21 +296,6 @@ export default function HabitsScreen() {
           setPartialGoalId(null);
         }}
       />
-
-      <Modal
-        visible={!!selectedLesson}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => setSelectedLesson(null)}
-      >
-        {selectedLesson && (
-          <LessonDetail
-            lesson={selectedLesson}
-            onComplete={handleCompleteLesson}
-            onClose={() => setSelectedLesson(null)}
-          />
-        )}
-      </Modal>
     </View>
   );
 }
@@ -371,6 +374,10 @@ function createStyles(theme: AppTheme) {
       fontSize: 15,
       fontWeight: '600',
       color: theme.white,
+    },
+    emptyCoachMoment: {
+      alignSelf: 'stretch',
+      marginTop: 24,
     },
   });
 }

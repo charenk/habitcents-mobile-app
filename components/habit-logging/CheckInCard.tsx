@@ -12,6 +12,7 @@ import {
   dayStateFor,
   weekStats,
 } from '@/utils/habitLogging';
+import { cardText, isMilestoneCard, type CoachMomentCardId } from '@/utils/coachMoments';
 import type { AppTheme } from '@/constants/theme';
 import type { DetectedHabit, HabitChangeGoal } from '@/types/habit';
 import { strings } from '@/constants/strings';
@@ -20,6 +21,12 @@ type CheckInCardProps = {
   habit: DetectedHabit;
   goal: HabitChangeGoal;
   milestoneJustHit: 10 | 30 | 50 | 66 | null;
+  /**
+   * The Coach Moment selected for this goal's most recent answer, if any
+   * (P2-2 §5: once per triggering event; HabitsContext clears this after a
+   * Change-answer correction or once the next render has no fresh event).
+   */
+  coachMoment?: { goalId: string; cardId: CoachMomentCardId } | null;
   onSkip: () => void;
   onSlip: () => void;
   onChangeAnswer: () => void;
@@ -47,6 +54,7 @@ export function CheckInCard({
   habit,
   goal,
   milestoneJustHit,
+  coachMoment,
   onSkip,
   onSlip,
   onChangeAnswer,
@@ -71,25 +79,24 @@ export function CheckInCard({
   const lastEntry = !isDaily && goal.dayLogs.length > 0 ? goal.dayLogs[goal.dayLogs.length - 1] : null;
   const showEventConfirmation = !isDaily && lastEntry != null && isSameCalendarMinute(lastEntry.date, new Date());
 
+  // Coach Moment (P2-2, spec 01 §4.5): the trigger/dedup engine
+  // (utils/coachMoments.ts, driven from HabitsContext) already decided which
+  // card (if any) applies to this goal's most recent answer; this component
+  // only resolves the card id to its copy and the milestone tint/headline.
   const coach = useMemo(() => {
     if (isDaily && !answered) return null;
     if (!isDaily && !showEventConfirmation) return null;
-    if (milestoneJustHit) {
-      return {
-        text: strings.habitLogging.milestoneCardText,
-        tint: true,
-        headline: strings.habitLogging.milestoneHeadline(goal.totalSkips, chapterCopy(chapterForTotal(milestoneJustHit))),
-      };
-    }
-    const answerState = isDaily ? todayState : lastEntry?.state;
-    if (answerState === 'skipped') {
-      return { text: goal.firstRun ? strings.habitLogging.coachFirstSkip : strings.habitLogging.coachSkip };
-    }
-    if (answerState === 'slipped') {
-      return { text: strings.habitLogging.coachSlip };
-    }
-    return null;
-  }, [isDaily, answered, showEventConfirmation, milestoneJustHit, todayState, lastEntry, goal.firstRun, goal.totalSkips]);
+    if (!coachMoment || coachMoment.goalId !== goal.id) return null;
+
+    const tint = isMilestoneCard(coachMoment.cardId);
+    return {
+      text: cardText(coachMoment.cardId),
+      tint,
+      headline: tint && milestoneJustHit
+        ? strings.habitLogging.milestoneHeadline(goal.totalSkips, chapterCopy(chapterForTotal(milestoneJustHit)))
+        : undefined,
+    };
+  }, [isDaily, answered, showEventConfirmation, coachMoment, goal.id, goal.totalSkips, milestoneJustHit]);
 
   const skipValueLabel = format(goal.skipValue);
 

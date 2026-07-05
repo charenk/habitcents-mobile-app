@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,7 +11,7 @@ import {
   Platform,
   Alert,
 } from 'react-native';
-import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
+import { useLocalSearchParams, useRouter, Stack, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -24,6 +24,7 @@ import { EventHistory } from '@/components/habit-logging/EventHistory';
 import { PickOneSheet } from '@/components/habit-logging/PickOneSheet';
 import { PartialSlipSheet } from '@/components/habit-logging/PartialSlipSheet';
 import { atMidnight, weekStats, FREE_TIER_HABIT_LIMIT } from '@/utils/habitLogging';
+import type { CoachMomentCardId } from '@/utils/coachMoments';
 import type { AppTheme } from '@/constants/theme';
 import type { DetectedHabit, HabitChangeGoal } from '@/types/habit';
 import { strings } from '@/constants/strings';
@@ -48,7 +49,17 @@ export default function HabitDetailScreen() {
     updateSkipValue,
     stopBreakingHabit,
     lastMilestone,
+    lastCoachMoment,
+    clearLastCoachMoment,
   } = useHabits();
+
+  // Coach Moment (P2-2, acceptance test 2): clear on blur so navigating away
+  // and back to an already-answered card does not re-show the same card.
+  useFocusEffect(
+    useCallback(() => {
+      return () => clearLastCoachMoment();
+    }, [clearLastCoachMoment])
+  );
 
   const habit = getHabitById(id || '');
   const goal = getGoalByHabitId(id || '');
@@ -117,6 +128,7 @@ export default function HabitDetailScreen() {
             habit={habit}
             goal={goal}
             milestoneJustHit={lastMilestone?.goalId === goal.id ? lastMilestone.threshold : null}
+            coachMoment={lastCoachMoment}
             onSkip={() => (habit.frequency === 'daily' ? answerToday(goal.id, 'skipped') : answerEvent(goal.id, 'skipped'))}
             onSlip={() => (habit.frequency === 'daily' ? answerToday(goal.id, 'slipped') : answerEvent(goal.id, 'slipped'))}
             onChangeAnswer={() => changeTodayAnswer(goal.id)}
@@ -176,6 +188,7 @@ type HabitDetailBreakingProps = {
   habit: DetectedHabit;
   goal: HabitChangeGoal;
   milestoneJustHit: 10 | 30 | 50 | 66 | null;
+  coachMoment?: { goalId: string; cardId: CoachMomentCardId } | null;
   onSkip: () => void;
   onSlip: () => void;
   onChangeAnswer: () => void;
@@ -195,6 +208,7 @@ function HabitDetailBreaking({
   habit,
   goal,
   milestoneJustHit,
+  coachMoment,
   onSkip,
   onSlip,
   onChangeAnswer,
@@ -218,6 +232,7 @@ function HabitDetailBreaking({
         habit={habit}
         goal={goal}
         milestoneJustHit={milestoneJustHit}
+        coachMoment={coachMoment}
         onSkip={onSkip}
         onSlip={onSlip}
         onChangeAnswer={onChangeAnswer}

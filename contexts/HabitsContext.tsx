@@ -1,11 +1,11 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import {
   getHabits,
   saveHabits,
   getHabitGoals,
   saveHabitGoals,
-  getLessonsProgress,
-  saveLessonsProgress,
+  getCoachMomentState,
+  saveCoachMomentState,
 } from '@/utils/storage';
 import { detectHabits, mergeHabits } from '@/utils/habitDetection';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -17,25 +17,26 @@ import {
   isSameDay,
   milestoneCrossed,
   partialSlipCredit,
+  slipFollowsStreak,
   weekStats,
 } from '@/utils/habitLogging';
+import { selectCheckInMoment, selectDetectionMoment, selectFirstLogMoment, type CoachMomentState, type CoachMomentCardId } from '@/utils/coachMoments';
 import { track } from '@/utils/analytics';
 import type { Expense } from '@/types/expense';
 import type {
   DetectedHabit,
   HabitChangeGoal,
   HabitLogEntry,
-  MicroLesson,
   HabitStatus,
 } from '@/types/habit';
-import { MICRO_LESSONS } from '@/types/habit';
 
 type AnswerState = 'skipped' | 'slipped';
+
+type CoachMomentSlotData = { goalId: string; cardId: CoachMomentCardId } | null;
 
 type HabitsContextValue = {
   habits: DetectedHabit[];
   goals: HabitChangeGoal[];
-  lessons: MicroLesson[];
   isLoading: boolean;
   refreshHabits: (expenses: Expense[]) => Promise<void>;
   dismissHabit: (habitId: string) => Promise<void>;
@@ -64,15 +65,38 @@ type HabitsContextValue = {
   updateSkipValue: (goalId: string, skipValue: number) => Promise<void>;
   /** "Stop breaking this habit" (spec §4.8). History is preserved. */
   stopBreakingHabit: (goalId: string) => Promise<void>;
-  completeLesson: (lessonId: string) => Promise<void>;
   getHabitById: (id: string) => DetectedHabit | undefined;
   getGoalByHabitId: (habitId: string) => HabitChangeGoal | undefined;
   getActiveHabits: () => DetectedHabit[];
   getDiscoveredHabits: () => DetectedHabit[];
-  getCompletedLessons: () => MicroLesson[];
-  getPendingLessons: () => MicroLesson[];
   /** The milestone threshold newly crossed by the most recent answer, if any. */
   lastMilestone: { goalId: string; threshold: 10 | 30 | 50 | 66 } | null;
+  /**
+   * The Coach Moment card selected for the most recent answer on this goal,
+   * if any (P2-2, docs/design-package-phase2/04-p2-2-coach-moments.md). Null
+   * once the goal has been re-rendered without a fresh answer, so the card
+   * only ever shows for the triggering event (spec principle 3).
+   */
+  lastCoachMoment: CoachMomentSlotData;
+  /**
+   * Clears `lastCoachMoment` (spec principle 3, acceptance test 2: a card
+   * shows once per triggering event, not on every re-open of an answered
+   * card). Callers clear this on screen blur so navigating away and back
+   * to an already-answered card does not re-show the same Coach Moment.
+   */
+  clearLastCoachMoment: () => void;
+  /**
+   * DT-1: fires once, ever, the first time any leak is surfaced (spec §3,
+   * "Detection"). Call from the LeakCard mount point; returns the card id to
+   * render, or null if already shown or not eligible.
+   */
+  maybeShowDetectionMoment: () => Promise<CoachMomentCardId | null>;
+  /**
+   * FL-1: fires once, ever, the first expense ever saved (spec §3, "First
+   * log"). Call from the Habits-tab empty state; returns the card id to
+   * render, or null if already shown or not eligible.
+   */
+  maybeShowFirstLogMoment: () => Promise<CoachMomentCardId | null>;
 };
 
 const HabitsContext = createContext<HabitsContextValue | null>(null);
@@ -84,31 +108,95 @@ function generateId(prefix: string): string {
 export function HabitsProvider({ children }: { children: React.ReactNode }) {
   const [habits, setHabits] = useState<DetectedHabit[]>([]);
   const [goals, setGoals] = useState<HabitChangeGoal[]>([]);
-  const [lessonsProgress, setLessonsProgress] = useState<Record<string, Date>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [lastMilestone, setLastMilestone] = useState<HabitsContextValue['lastMilestone']>(null);
+  const [lastCoachMoment, setLastCoachMoment] = useState<CoachMomentSlotData>(null);
   const { currency } = useCurrency();
 
-  // Build lessons with completion status
-  const lessons: MicroLesson[] = MICRO_LESSONS.map(lesson => ({
-    ...lesson,
-    completedAt: lessonsProgress[lesson.id],
-  }));
+  // Coach Moment dedup/rotation state (P2-2): read/written through a ref so
+  // rapid successive answers each build on the latest persisted state rather
+  // than a stale render closure, matching the ExpensesContext commit pattern.
+  const coachStateRef = useRef<CoachMomentState | null>(null);
 
   useEffect(() => {
     async function loadData() {
-      const [storedHabits, storedGoals, storedProgress] = await Promise.all([
+      const [storedHabits, storedGoals, storedCoachState] = await Promise.all([
         getHabits(),
         getHabitGoals(),
-        getLessonsProgress(),
+        getCoachMomentState(),
       ]);
       setHabits(storedHabits);
       setGoals(storedGoals);
-      setLessonsProgress(storedProgress);
+      coachStateRef.current = storedCoachState;
       setIsLoading(false);
     }
     loadData();
   }, []);
+
+  const ensureCoachState = useCallback(async (): Promise<CoachMomentState> => {
+    if (!coachStateRef.current) {
+      coachStateRef.current = await getCoachMomentState();
+    }
+    return coachStateRef.current;
+  }, []);
+
+  /**
+   * Selects and persists the Coach Moment (if any) for a just-recorded
+   * skip/slip answer, firing `coach_moment_shown` (spec §5: no content in the
+   * event). `dayLogsBeforeAnswer` is the day-log history *before* this
+   * answer, since slipFollowsStreak looks at the days before `day`.
+   */
+  const applyCheckInCoachMoment = useCallback(async (
+    goalId: string,
+    answer: AnswerState,
+    day: Date,
+    dayLogsBeforeAnswer: HabitLogEntry[],
+    milestone: 10 | 30 | 50 | 66 | null
+  ): Promise<void> => {
+    const current = await ensureCoachState();
+    const runBreak = answer === 'slipped' ? slipFollowsStreak(dayLogsBeforeAnswer, day) : false;
+    const selection = selectCheckInMoment(current, goalId, answer, { milestone, runBreak });
+    if (!selection) {
+      setLastCoachMoment(null);
+      return;
+    }
+    coachStateRef.current = selection.nextState;
+    await saveCoachMomentState(selection.nextState);
+    setLastCoachMoment({ goalId, cardId: selection.result.cardId });
+    track('coach_moment_shown', { trigger: selection.result.trigger, card_id: selection.result.cardId });
+  }, [ensureCoachState]);
+
+  /**
+   * DT-1 (spec §3, "Detection"): fires once, ever, the first time any leak is
+   * surfaced. Wired at the LeakCard mount point, not detection math itself,
+   * since "surfaced" means shown to the user, not merely detected.
+   */
+  const maybeShowDetectionMoment = useCallback(async (): Promise<CoachMomentCardId | null> => {
+    const current = await ensureCoachState();
+    const selection = selectDetectionMoment(current);
+    if (!selection) return null;
+    coachStateRef.current = selection.nextState;
+    await saveCoachMomentState(selection.nextState);
+    track('coach_moment_shown', { trigger: selection.result.trigger, card_id: selection.result.cardId });
+    return selection.result.cardId;
+  }, [ensureCoachState]);
+
+  /**
+   * FL-1 (spec §3, "First log"): fires once, ever, the first expense ever
+   * saved (onboarding or Expenses). Surfaced on the Habits tab's empty state,
+   * the nearest non-onboarding, non-leak-scan confirmation-adjacent slot: the
+   * empty state already tells the user to keep logging, and FL-1's copy is
+   * literally that encouragement ("do this a few more times...").
+   */
+  const maybeShowFirstLogMoment = useCallback(async (): Promise<CoachMomentCardId | null> => {
+    const current = await ensureCoachState();
+    const selection = selectFirstLogMoment(current);
+    if (!selection) return null;
+    coachStateRef.current = selection.nextState;
+    await saveCoachMomentState(selection.nextState);
+    track('coach_moment_shown', { trigger: selection.result.trigger, card_id: selection.result.cardId });
+    return selection.result.cardId;
+  }, [ensureCoachState]);
 
   const refreshHabits = useCallback(async (expenses: Expense[]): Promise<void> => {
     const detected = detectHabits(expenses, currency);
@@ -252,7 +340,8 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
     } else {
       setLastMilestone(null);
     }
-  }, [goals, habits, persistGoalAndHabit]);
+    await applyCheckInCoachMoment(goalId, state, today, goal.dayLogs, crossed);
+  }, [goals, habits, persistGoalAndHabit, applyCheckInCoachMoment]);
 
   const answerEvent = useCallback(async (goalId: string, state: AnswerState): Promise<void> => {
     const goal = goals.find(g => g.id === goalId);
@@ -300,7 +389,8 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
     } else {
       setLastMilestone(null);
     }
-  }, [goals, habits, persistGoalAndHabit]);
+    await applyCheckInCoachMoment(goalId, state, atMidnight(now), goal.dayLogs, crossed);
+  }, [goals, habits, persistGoalAndHabit, applyCheckInCoachMoment]);
 
   /** "Change answer", today only (spec §4.4): flips today's skip<->slip. */
   const changeTodayAnswer = useCallback(async (goalId: string): Promise<void> => {
@@ -329,6 +419,9 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
     };
     await persistGoalAndHabit(updatedGoal);
     track('answer_changed', { from, to });
+    // A correction is not a fresh triggering event (spec principle 3): clear
+    // any Coach Moment shown for the answer that was just overwritten.
+    setLastCoachMoment(null);
   }, [goals, persistGoalAndHabit]);
 
   /** One-time "missed yesterday" backfill (spec §3.6). */
@@ -374,7 +467,8 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
       track('milestone_reached', { milestone: crossed });
       setLastMilestone({ goalId, threshold: crossed });
     }
-  }, [goals, habits, persistGoalAndHabit]);
+    await applyCheckInCoachMoment(goalId, state, yesterday, goal.dayLogs, crossed);
+  }, [goals, habits, persistGoalAndHabit, applyCheckInCoachMoment]);
 
   /** "Spent less than usual?" partial slip (spec §4.7). Applies to today's slip entry. */
   const savePartialSlip = useCallback(async (goalId: string, amountSpent: number): Promise<void> => {
@@ -415,12 +509,6 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
     await saveHabits(updatedHabits);
   }, [goals, habits]);
 
-  const completeLesson = useCallback(async (lessonId: string): Promise<void> => {
-    const updated = { ...lessonsProgress, [lessonId]: new Date() };
-    setLessonsProgress(updated);
-    await saveLessonsProgress(updated);
-  }, [lessonsProgress]);
-
   const getHabitById = useCallback((id: string): DetectedHabit | undefined => {
     return habits.find(h => h.id === id);
   }, [habits]);
@@ -437,20 +525,11 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
     return habits.filter(h => h.status === 'discovered' && !h.dismissedAt);
   }, [habits]);
 
-  const getCompletedLessons = useCallback((): MicroLesson[] => {
-    return lessons.filter(l => l.completedAt);
-  }, [lessons]);
-
-  const getPendingLessons = useCallback((): MicroLesson[] => {
-    return lessons.filter(l => !l.completedAt);
-  }, [lessons]);
-
   return (
     <HabitsContext.Provider
       value={{
         habits,
         goals,
-        lessons,
         isLoading,
         refreshHabits,
         dismissHabit,
@@ -462,14 +541,15 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
         savePartialSlip,
         updateSkipValue,
         stopBreakingHabit,
-        completeLesson,
         getHabitById,
         getGoalByHabitId,
         getActiveHabits,
         getDiscoveredHabits,
-        getCompletedLessons,
-        getPendingLessons,
         lastMilestone,
+        lastCoachMoment,
+        clearLastCoachMoment: () => setLastCoachMoment(null),
+        maybeShowDetectionMoment,
+        maybeShowFirstLogMoment,
       }}
     >
       {children}

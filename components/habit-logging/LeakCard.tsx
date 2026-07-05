@@ -2,6 +2,8 @@ import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import { CoachMomentSlot } from './CoachMomentSlot';
+import { cardText, type CoachMomentCardId } from '@/utils/coachMoments';
 import type { AppTheme } from '@/constants/theme';
 import type { DetectedHabit } from '@/types/habit';
 import { strings } from '@/constants/strings';
@@ -10,14 +12,23 @@ type LeakCardProps = {
   habit: DetectedHabit;
   onBreak: () => void;
   onDismiss: () => void;
+  /**
+   * DT-1 (P2-2, spec 01 §4.5, §3 "Detection"): fires once, ever, the first
+   * time any leak is surfaced. The parent (Habits tab) resolves this via
+   * `maybeShowDetectionMoment()` for at most one LeakCard in the list, so it
+   * is undefined/null on every other card.
+   */
+  coachMomentCardId?: CoachMomentCardId | null;
 };
 
 /**
  * The leak card in "Leaks found" (spec 01 §3.1, §4.10): unchanged from v1,
  * real Break it / Not this one buttons (never swipe-only, acceptance-adjacent
- * requirement carried from spec 3.1 item 2).
+ * requirement carried from spec 3.1 item 2). Adds the DT-1 Coach Moment slot
+ * (P2-2) below the evidence/buttons, the closest analog to a "confirmation
+ * slot" this surface has: the moment a leak is shown to the user.
  */
-export function LeakCard({ habit, onBreak, onDismiss }: LeakCardProps) {
+export function LeakCard({ habit, onBreak, onDismiss, coachMomentCardId }: LeakCardProps) {
   const theme = useTheme();
   const { format } = useCurrency();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -36,6 +47,7 @@ export function LeakCard({ habit, onBreak, onDismiss }: LeakCardProps) {
           <Text style={styles.secondaryButtonText}>{strings.habitLogging.notThisOne}</Text>
         </TouchableOpacity>
       </View>
+      {coachMomentCardId && <CoachMomentSlot text={cardText(coachMomentCardId)} />}
     </View>
   );
 }
