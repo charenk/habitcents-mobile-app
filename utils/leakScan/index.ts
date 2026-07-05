@@ -40,3 +40,5 @@ export { buildKpiSummary, buildCategorySummary, weakerTier } from './resultsSumm
 export type { KpiSummary, CategorySummary } from './resultsSummary';
 export { buildProjectionSummary } from './projection';
 export type { ProjectionSummary, RunRateItem } from './projection';
+export { buildReviewQueue } from './reviewQueue';
+export type { ReviewQueueItem } from './reviewQueue';
