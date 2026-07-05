@@ -46,9 +46,16 @@ export interface AnalyticsEventMap {
   onboarding_started: Record<string, never>;
   onboarding_step_completed: { step: string };
   onboarding_step_skipped: { step: string };
-  onboarding_completed: Record<string, never>;
-  // Leak audit (Door 1, P2-1)
-  leak_audit_completed: { item_count: number; projected_leak_bucket: string };
+  // --- Onboarding (P2-1, docs/design-package-phase2/02-p2-1-onboarding-leak-audit.md
+  // section 6). Structural only: counts, booleans, step/door names. Never
+  // amounts, chip names, or typed text. ---
+  door_chosen: { door: 'fresh' | 'statements' | 'skip' };
+  audit_subs_done: { selected: number; edited: number; none: boolean };
+  audit_vices_done: { answered: number; skipped: boolean };
+  audit_amount_edited: { step: 'subs' | 'vices'; count: number };
+  leak_revealed: { nSources: number; hasEdits: boolean };
+  first_log_saved: { guided: boolean };
+  onboarding_completed: { door?: 'fresh' | 'statements' | 'skip'; habitStarted: boolean };
   // Import (Door 2, P2-1b)
   import_started: { source?: string };
   import_completed: { row_bucket: string };

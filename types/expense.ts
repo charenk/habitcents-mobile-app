@@ -25,8 +25,11 @@ export type ExpenseCategory =
 export type ExpenseClass = 'spend' | 'transfer' | 'income' | 'cash';
 
 // Where a row originated. 'import' rows come from a Leak Scan session; used so a
-// single-tap undo can remove everything one import wrote (see importId).
-export type ExpenseSource = 'manual' | 'import';
+// single-tap undo can remove everything one import wrote (see importId). 'audit'
+// rows come from the onboarding Leak Audit (P2-1, spec 02 section 5): a
+// selected subscription chip seeds one recurring expense tagged this way, so
+// re-running the audit can match on source + chip id rather than duplicate.
+export type ExpenseSource = 'manual' | 'import' | 'audit';
 
 // How often a recurring expense repeats. Drives the real Upcoming projection.
 // biweekly and annual are import-only cadences surfaced by the Leak Scan
@@ -70,4 +73,7 @@ export type AddExpenseInput = {
   recurrence?: RecurrenceFrequency;
   reminderEnabled: boolean;
   reminderTime?: string;
+  // Defaults to 'manual' when absent (ADR 0006). The onboarding Leak Audit
+  // (P2-1) passes 'audit' when seeding a chip as a recurring expense.
+  source?: ExpenseSource;
 };
