@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="design_doc_mode" content="canvas">
+<title>P2-2 Coach Moments · options</title>
+<style>
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif; color: #212121; }
+  .board-card { position: absolute; background: #fff; border-radius: 14px; padding: 18px 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.22); box-sizing: border-box; }
+  .board-card h1 { font-size: 21px; margin: 0 0 6px; }
+  .board-card h2 { font-size: 16px; margin: 0; }
+  .board-card h3 { font-size: 12.5px; margin: 0 0 10px; color: #757575; text-transform: uppercase; letter-spacing: 0.4px; }
+  .board-card p { font-size: 13px; color: #616161; line-height: 1.5; margin: 6px 0 0; }
+  .row-label { display: flex; align-items: center; gap: 14px; }
+  .rec-pill { background: #2E7D32; color: #fff; font-size: 11px; font-weight: 800; letter-spacing: 0.5px; border-radius: 999px; padding: 5px 12px; flex: none; }
+  .note { width: 250px; border-radius: 4px; padding: 14px 16px; box-shadow: 3px 4px 10px rgba(0,0,0,0.28); }
+  .note h4 { margin: 0 0 6px; font-size: 12px; color: #4e4636; letter-spacing: 0.3px; text-transform: uppercase; }
+  .note ul { margin: 0; padding-left: 15px; font-size: 12px; line-height: 1.5; color: #4e4636; }
+  .pros, .cons { background: #FFF7C2; }
+  .trade { background: #D9F2DD; }
+  .trade h4 { color: #2E5c35; }
+
+  /* check-in card mock (Direction C tokens) */
+  .ci { background:#fff; border:0.5px solid #E5E7EB; border-radius:16px; box-shadow:0 1px 2px rgba(17,24,17,0.05); padding:15px; width:290px; box-sizing:border-box; }
+  .ci .nm { font-size:16px; font-weight:600; }
+  .conf { font-size:14px; font-weight:500; margin:10px 0 0; }
+  .coach { background:#F8F8F8; border-radius:12px; padding:11px 12px; margin-top:10px; display:flex; gap:9px; align-items:flex-start; }
+  .coach .leaf { width:15px; height:15px; flex:none; border-radius:0 50% 50% 50%; background:#B2DFB6; margin-top:1px; }
+  .coach p { font-size:13.5px; color:#616161; line-height:1.45; margin:0; }
+  .coach.ms { background:#E4F1E5; }
+  .ms-head { font-size:13px; font-weight:700; color:#2E7D32; margin:10px 0 0; }
+  .change { font-size:13px; color:#4CAF50; font-weight:600; margin-top:10px; }
+  .toast-bad { background:#212121; color:#fff; border-radius:10px; padding:12px 14px; width:280px; box-sizing:border-box; font-size:13px; box-shadow:0 6px 18px rgba(0,0,0,0.3); }
+</style>
+</head>
+<body>
+
+<div class="board-card" style="left: 40px; top: 40px; width: 1520px;" data-screen-label="Board header">
+  <h1>P2-2 Coach Moments · card treatment + trigger matrix</h1>
+  <p>The card is the product's voice at the moment of action. It mounts in the check-in confirmation slot from 01, not in a lessons tab (the library is removed). Columns: card-treatment options, the milestone (chapter) variant, the trigger matrix, and copy samples. Full spec + all ~20 copies: 04-p2-2-coach-moments.md.</p>
+</div>
+
+<!-- ===== TREATMENT OPTIONS ===== -->
+<div class="board-card row-label" style="left: 40px; top: 210px; width: 430px;" data-screen-label="Treatment label">
+  <div><h2>Card treatment</h2><p>Never a toast, never a modal. A quiet card in the confirmation slot.</p></div>
+  <span class="rec-pill">Chosen: quiet card</span>
+</div>
+
+<div class="board-card" style="left: 40px; top: 320px; width: 330px;" data-screen-label="Option quiet card">
+  <h3>Chosen · quiet card in-slot</h3>
+  <div class="ci">
+    <div style="display:flex; justify-content:space-between;"><span class="nm">Coffee run</span></div>
+    <p class="conf" style="color:#212121;">+$6.00 kept. That's 4 of 5 days this week.</p>
+    <div class="coach"><span class="leaf"></span><p>The urge passes in a few minutes. The money you kept stays all day.</p></div>
+    <p class="change">Change answer</p>
+  </div>
+  <p>Recedes below the confirmation line, above Change answer. Leads with the money, coaches second. Never blocks.</p>
+</div>
+
+<div class="board-card" style="left: 400px; top: 320px; width: 300px;" data-screen-label="Option toast rejected">
+  <h3>Rejected · toast</h3>
+  <div class="toast-bad">The urge passes in a few minutes. <span style="opacity:0.6;">✕</span></div>
+  <p>Floating toast times out before slow readers finish, steals focus, and reads as a system alert, not the product's voice. Rejected per spec ("not a toast, not a modal").</p>
+</div>
+
+<div class="board-card note trade" style="left: 40px; top: 700px; transform: rotate(-1deg); width: 300px;" data-screen-label="Treatment tradeoff">
+  <h4>Why in-slot</h4>
+  <p>Occupying layout (not floating) means the card never covers the primary action and never expires mid-read. It is terminal and calm: no close button, no "next", disappears on next visit.</p>
+</div>
+
+<!-- ===== MILESTONE VARIANT ===== -->
+<div class="board-card row-label" style="left: 730px; top: 210px; width: 340px;" data-screen-label="Milestone label">
+  <div><h2>Milestone (chapter) variant</h2><p>Fires once at 10 / 30 / 50 / 66 total skips.</p></div>
+</div>
+
+<div class="board-card" style="left: 730px; top: 320px; width: 330px;" data-screen-label="Milestone card">
+  <div class="ci">
+    <div style="display:flex; justify-content:space-between;"><span class="nm">Coffee run</span></div>
+    <p class="conf" style="color:#212121;">+$6.00 kept. That's 5 of 5 days this week.</p>
+    <p class="ms-head">30 skips · Cruising</p>
+    <div class="coach ms"><span class="leaf"></span><p>Thirty skips. You're cruising, and the habit is losing its grip. You're becoming someone who decides where money goes.</p></div>
+    <p class="change">Change answer</p>
+  </div>
+  <p>Same slot, #B2DFB6 30% tint, bold headline above. Identity beat. No modal, no confetti.</p>
+</div>
+
+<div class="board-card note pros" style="left: 1070px; top: 320px; transform: rotate(1.2deg);" data-screen-label="Milestone pros">
+  <h4>Why chapters, not confetti</h4>
+  <ul>
+    <li>The v2 arc counts total skips and never moves backward, so crossings are earned, not gamified</li>
+    <li>Identity copy ("someone who decides where money goes") is the strongest behavioral lever we have</li>
+    <li>Reuses the exact slot, so there is one coaching surface, not two</li>
+  </ul>
+</div>
+
+<!-- ===== TRIGGER MATRIX ===== -->
+<div class="board-card row-label" style="left: 730px; top: 700px; width: 340px;" data-screen-label="Matrix label">
+  <div><h2>Trigger matrix</h2><p>Five triggers. Priority: milestone &gt; recovery &gt; first-time &gt; rotation.</p></div>
+</div>
+
+<div class="board-card" style="left: 730px; top: 810px; width: 620px;" data-screen-label="Trigger matrix table">
+  <table style="border-collapse:collapse; width:100%;">
+    <thead><tr>
+      <th style="text-align:left; font-size:10.5px; color:#9E9E9E; text-transform:uppercase; letter-spacing:0.4px; padding:6px 8px;">Trigger</th>
+      <th style="text-align:left; font-size:10.5px; color:#9E9E9E; text-transform:uppercase; letter-spacing:0.4px; padding:6px 8px;">Fires when</th>
+      <th style="text-align:left; font-size:10.5px; color:#9E9E9E; text-transform:uppercase; letter-spacing:0.4px; padding:6px 8px;">Cards</th>
+    </tr></thead>
+    <tbody style="font-size:12px; color:#424242;">
+      <tr><td style="padding:7px 8px; font-weight:700; border-top:1px solid #EEE;">First log</td><td style="padding:7px 8px; border-top:1px solid #EEE;">first expense ever saved</td><td style="padding:7px 8px; border-top:1px solid #EEE;">FL-1</td></tr>
+      <tr><td style="padding:7px 8px; font-weight:700; border-top:1px solid #EEE;">Detection</td><td style="padding:7px 8px; border-top:1px solid #EEE;">a leak first surfaced</td><td style="padding:7px 8px; border-top:1px solid #EEE;">DT-1</td></tr>
+      <tr><td style="padding:7px 8px; font-weight:700; border-top:1px solid #EEE;">Skip</td><td style="padding:7px 8px; border-top:1px solid #EEE;">a skip recorded (first uses SK-0, then rotate)</td><td style="padding:7px 8px; border-top:1px solid #EEE;">SK-0..SK-6</td></tr>
+      <tr><td style="padding:7px 8px; font-weight:700; border-top:1px solid #EEE;">Milestone</td><td style="padding:7px 8px; border-top:1px solid #EEE;">total skips cross 10/30/50/66</td><td style="padding:7px 8px; border-top:1px solid #EEE;">MS-10..MS-66</td></tr>
+      <tr><td style="padding:7px 8px; font-weight:700; border-top:1px solid #EEE;">Broken streak</td><td style="padding:7px 8px; border-top:1px solid #EEE;">slip after 3+ skips (BR-1), else plain slip</td><td style="padding:7px 8px; border-top:1px solid #EEE;">BR-1..BR-4</td></tr>
+    </tbody>
+  </table>
+  <p>17 cards across 5 triggers, room to grow to 20 (SK-7..SK-9). Each shows once per event; each render fires coach_moment_shown {trigger, cardId}, structural only.</p>
+</div>
+
+<!-- ===== SLIP / RECOVERY ===== -->
+<div class="board-card row-label" style="left: 40px; top: 910px; width: 340px;" data-screen-label="Recovery label">
+  <div><h2>Slip = recovery, never scolding</h2></div>
+</div>
+
+<div class="board-card" style="left: 40px; top: 990px; width: 330px;" data-screen-label="Recovery card">
+  <div class="ci">
+    <div style="display:flex; justify-content:space-between;"><span class="nm">Coffee run</span></div>
+    <p class="conf" style="color:#212121;">Logged. Still 3 of 5 days this week. Your $42.50 kept stays yours.</p>
+    <div class="coach"><span class="leaf"></span><p>Missing once is an accident. Missing twice starts a new habit, so tomorrow matters more than today did.</p></div>
+    <p class="change">Change answer</p>
+  </div>
+</div>
+
+<div class="board-card note cons" style="left: 400px; top: 990px; transform: rotate(-1.2deg);" data-screen-label="Recovery rule">
+  <h4>Hard rules on slip cards</h4>
+  <ul>
+    <li>No red, no error icon, no "you failed" language</li>
+    <li>Always restates that kept money stays</li>
+    <li>Frames missing as normal and recoverable (loss-aversion is the reason people stop logging losses)</li>
+  </ul>
+</div>
+
+</body>
+</html>

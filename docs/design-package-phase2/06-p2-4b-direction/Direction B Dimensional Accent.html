@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Direction B · Dimensional accent</title>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+  html, body { margin: 0; background: #ECECEC; font-family: ui-rounded, -apple-system, BlinkMacSystemFont, "SF Pro Rounded", "Helvetica Neue", sans-serif; }
+  #root { display: flex; flex-direction: column; align-items: center; padding: 18px 0 24px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+// Direction B: bolder dimensional-icon accent system. Rounded type, gradient
+// icon tiles with inner highlight, borderless cards on deeper shadows, tinted
+// hero panel. Green stays the only accent.
+const BT = {
+  primary: '#4CAF50', deep: '#388E3C', tint: '#EDF7EE', bg: '#F7F8F7', card: '#FFFFFF',
+  text: '#1B1F1B', sub: '#6E756E', tert: '#9BA29B', border: '#E7EAE7',
+  slipFill: '#ECEFF1', slipInk: '#78909C',
+  shadow: '0 3px 10px rgba(27, 31, 27, 0.07)',
+};
+const fmtB = (c) => '$' + (c / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+// dimensional tile: gradient + inner highlight + soft drop, simple glyph inside
+function TileB({ glyph, size = 34, on = true }) {
+  return (
+    <span style={{
+      width: size, height: size, borderRadius: size * 0.32, flex: 'none',
+      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+      background: on ? 'linear-gradient(180deg, #66BB6A 0%, #43A047 100%)' : 'linear-gradient(180deg, #FCFCFC 0%, #EFEFEF 100%)',
+      boxShadow: on
+        ? 'inset 0 1px 0 rgba(255,255,255,0.45), 0 2px 5px rgba(56,142,60,0.35)'
+        : 'inset 0 1px 0 rgba(255,255,255,0.9), 0 1.5px 4px rgba(0,0,0,0.10)',
+      color: on ? '#fff' : BT.tert, fontSize: size * 0.44, fontWeight: 800,
+    }}>{glyph}</span>
+  );
+}
+
+function PhoneB({ children }) {
+  return (
+    <div style={{ width: 330, height: 700, background: '#111', borderRadius: 44, padding: 10, boxShadow: '0 12px 32px rgba(0,0,0,0.28)', flex: 'none' }}>
+      <div style={{ width: '100%', height: '100%', borderRadius: 35, overflow: 'hidden', background: BT.bg, position: 'relative' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 22px 4px', fontSize: 12.5, fontWeight: 700, color: BT.text }}>
+          <span>9:41</span><span aria-hidden="true">●●●</span>
+        </div>
+        {children}
+        <div style={{ position: 'absolute', bottom: 6, left: '50%', transform: 'translateX(-50%)', width: 110, height: 4.5, borderRadius: 3, background: '#111', opacity: 0.85 }}></div>
+      </div>
+    </div>
+  );
+}
+
+function TabBarB({ active }) {
+  const tabs = [['¤', 'Expenses'], ['≡', 'Reports'], ['▦', 'Categories'], ['✓', 'Habits'], ['◦', 'Settings']];
+  return (
+    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(255,255,255,0.96)', borderTop: `0.5px solid ${BT.border}`, display: 'flex', padding: '8px 0 19px' }}>
+      {tabs.map(([g, label]) => (
+        <div key={label} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+          <TileB glyph={g} size={26} on={label === active} />
+          <span style={{ fontSize: 10, fontWeight: 700, color: label === active ? BT.deep : BT.tert }}>{label}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+const cardB = { background: BT.card, borderRadius: 20, border: 'none', boxShadow: BT.shadow, padding: 17 };
+const btnPrimB = { flex: 1, minHeight: 48, background: 'linear-gradient(180deg, #58B75C 0%, #43A047 100%)', color: '#fff', border: 'none', borderRadius: 14, fontSize: 14.5, fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.35), 0 3px 8px rgba(56,142,60,0.3)' };
+const btnSecB = { flex: 1, minHeight: 48, background: '#fff', color: BT.text, border: `1.5px solid ${BT.border}`, borderRadius: 14, fontSize: 14.5, fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer' };
+
+function WeekStripB({ week }) {
+  const labels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+  return (
+    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 12 }}>
+      {week.map((s, i) => (
+        <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+          <span style={{
+            width: 26, height: 26, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800, boxSizing: 'border-box',
+            ...(s === 'skip' ? { background: 'linear-gradient(180deg, #66BB6A, #43A047)', color: '#fff', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.4), 0 2px 4px rgba(56,142,60,0.3)' }
+              : s === 'slip' ? { background: BT.slipFill, color: BT.slipInk }
+              : s === 'today' ? { border: `2px solid ${BT.primary}`, color: BT.primary }
+              : { border: `1.5px dashed ${BT.border}`, color: 'transparent' }),
+          }}>{s === 'skip' ? '✓' : '·'}</span>
+          <span style={{ fontSize: 9, fontWeight: 800, color: BT.tert }}>{labels[i]}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function CheckInB({ st, onAnswer, onChange }) {
+  const week = ['skip', 'skip', 'slip', 'skip', st.answer || 'today', 'future', 'future'];
+  const skips = week.filter((s) => s === 'skip').length;
+  const answered = week.filter((s) => s === 'skip' || s === 'slip').length;
+  return (
+    <div style={cardB}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <TileB glyph="☕" size={34} />
+        <span style={{ fontSize: 17, fontWeight: 700, color: BT.text }}>Coffee run <span style={{ color: BT.tert, fontWeight: 400 }}>›</span></span>
+      </div>
+      <WeekStripB week={week} />
+      <p style={{ fontSize: 12, color: BT.sub, margin: '9px 0 0', fontWeight: 500 }}><b style={{ color: BT.text }}>{skips} of {answered} days</b> skipped this week</p>
+      {!st.answer ? (
+        <div>
+          <p style={{ fontSize: 15, color: BT.text, margin: '12px 0 10px', fontWeight: 500 }}>Did you skip it today?</p>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button style={btnPrimB} onClick={() => onAnswer('skip')}>Skipped it +$6.00</button>
+            <button style={btnSecB} onClick={() => onAnswer('slip')}>I bought it</button>
+          </div>
+        </div>
+      ) : (
+        <div style={{ marginTop: 12 }}>
+          <p style={{ fontSize: 15, color: BT.text, margin: 0, fontWeight: 600 }}>
+            {st.answer === 'skip' ? `+$6.00 kept. That's ${skips} of ${answered} days this week.` : `Logged. Still ${skips} of ${answered} days this week. Your $42.50 kept stays yours.`}
+          </p>
+          <div style={{ background: BT.tint, borderRadius: 14, padding: '10px 12px', marginTop: 10 }}>
+            <p style={{ fontSize: 13.5, color: BT.sub, margin: 0, lineHeight: 1.45, fontWeight: 500 }}>
+              {st.answer === 'skip' ? 'The urge passes in minutes. The money you kept stays all day.' : 'Missing once is an accident. Missing twice starts a new habit.'}
+            </p>
+          </div>
+          <button style={{ background: 'none', border: 'none', padding: 0, marginTop: 10, color: BT.deep, fontSize: 13.5, fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer' }} onClick={onChange}>Change answer</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function HabitsB({ st, onAnswer, onChange }) {
+  return (
+    <div style={{ padding: '0 14px 90px', height: 'calc(100% - 36px)', overflowY: 'auto', boxSizing: 'border-box' }}>
+      <div style={{ background: BT.tint, borderRadius: 22, textAlign: 'center', padding: '18px 0 14px', margin: '8px 0 0', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.8)' }}>
+        <p style={{ fontSize: 11.5, fontWeight: 800, letterSpacing: 1.2, color: BT.deep, margin: 0 }}>KEPT SO FAR</p>
+        <p style={{ fontSize: 42, fontWeight: 800, letterSpacing: -1.2, color: BT.text, margin: '3px 0 1px', fontVariantNumeric: 'tabular-nums' }}>{fmtB(st.kept)}</p>
+        <p style={{ fontSize: 13.5, color: BT.sub, margin: 0, fontWeight: 500 }}>money you didn't spend</p>
+      </div>
+      <p style={{ fontSize: 12, fontWeight: 800, color: BT.sub, letterSpacing: 0.5, textTransform: 'uppercase', margin: '16px 4px 8px' }}>Breaking now</p>
+      <CheckInB st={st} onAnswer={onAnswer} onChange={onChange} />
+      <p style={{ fontSize: 12, fontWeight: 800, color: BT.sub, letterSpacing: 0.5, textTransform: 'uppercase', margin: '16px 4px 8px' }}>Leaks found</p>
+      <div style={cardB}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <TileB glyph="🍜" size={34} on={false} />
+          <div style={{ flex: 1 }}>
+            <span style={{ fontSize: 17, fontWeight: 700, color: BT.text }}>Lunch out</span>
+            <p style={{ fontSize: 13, color: BT.sub, margin: '2px 0 0', fontWeight: 500 }}>about $96.00 a month · 8 times in 30 days</p>
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+          <button style={btnPrimB}>Break it</button>
+          <button style={btnSecB}>Not this one</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ArcB({ total }) {
+  const pct = Math.min(100, (total / 66) * 100);
+  const chapters = [['Deciding', 0, 10], ['Rhythm', 10, 30], ['Cruising', 30, 50], ['Rewired', 50, 66]];
+  return (
+    <div style={cardB}>
+      <p style={{ fontSize: 15, fontWeight: 700, color: BT.text, margin: '0 0 12px' }}>The long arc</p>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 13 }}>
+        <div style={{ width: 84, height: 84, borderRadius: '50%', flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', background: `conic-gradient(#43A047 0 ${pct}%, ${BT.border} ${pct}% 100%)`, boxShadow: '0 3px 8px rgba(56,142,60,0.18)' }}>
+          <div style={{ width: 63, height: 63, borderRadius: '50%', background: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.06)' }}>
+            <b style={{ fontSize: 18, color: BT.text }}>{total}</b>
+            <span style={{ fontSize: 8.5, color: BT.tert, fontWeight: 800, letterSpacing: 0.5 }}>OF 66</span>
+          </div>
+        </div>
+        <div>
+          <p style={{ fontSize: 14, fontWeight: 700, color: BT.text, margin: 0, lineHeight: 1.4 }}>You're finding your rhythm.</p>
+          <p style={{ fontSize: 12, color: BT.sub, margin: '3px 0 0', lineHeight: 1.4, fontWeight: 500 }}>{total} skips toward the ~66 it takes to rewire a habit. Slips never subtract.</p>
+        </div>
+      </div>
+      <div style={{ display: 'flex', gap: 5, marginTop: 13 }}>
+        {chapters.map(([nm, lo, hi]) => {
+          const fill = total >= hi ? 100 : total <= lo ? 0 : Math.round(((total - lo) / (hi - lo)) * 100);
+          return <span key={nm} style={{ flex: 1, height: 7, borderRadius: 4, background: `linear-gradient(90deg, #43A047 ${fill}%, ${BT.border} ${fill}%)`, boxShadow: 'inset 0 1px 1px rgba(0,0,0,0.05)' }}></span>;
+        })}
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
+        {chapters.map(([nm]) => <span key={nm} style={{ fontSize: 10, color: BT.tert, fontWeight: 700 }}>{nm}</span>)}
+      </div>
+    </div>
+  );
+}
+
+function CalendarB() {
+  const states = ['skip','skip','slip','skip','nolog','skip','skip','skip','slip','skip','skip','skip','skip','skip','skip','nolog','skip','skip'];
+  const cells = [];
+  for (let i = 0; i < 3; i++) cells.push('pad');
+  for (let d = 1; d <= 31; d++) cells.push(d <= 18 ? states[d - 1] : 'out');
+  return (
+    <div style={cardB}>
+      <p style={{ fontSize: 15, fontWeight: 700, color: BT.text, margin: '0 0 10px' }}>July 2026</p>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 5, justifyItems: 'center' }}>
+        {['S','M','T','W','T','F','S'].map((d, i) => <span key={i} style={{ fontSize: 10.5, color: BT.tert, fontWeight: 700 }}>{d}</span>)}
+        {cells.map((s, i) => s === 'pad' || s === 'out'
+          ? <span key={i} style={{ width: 24, height: 24 }}></span>
+          : <span key={i} style={{ width: 24, height: 24, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box',
+              ...(s === 'skip' ? { background: 'linear-gradient(180deg, #66BB6A, #43A047)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.35)' } : s === 'slip' ? { background: BT.slipInk } : { border: `1.5px solid ${BT.border}` }) }}>
+              {s === 'skip' && <span style={{ color: '#fff', fontSize: 10.5, fontWeight: 800 }}>✓</span>}
+            </span>)}
+      </div>
+      <div style={{ display: 'flex', gap: 13, marginTop: 12 }}>
+        {[['Skipped', '#43A047'], ['Slipped', BT.slipInk], ['No log', null]].map(([lb, c]) => (
+          <span key={lb} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11.5, color: BT.sub, fontWeight: 500 }}>
+            <span style={{ width: 11, height: 11, borderRadius: 4, background: c || 'transparent', border: c ? 'none' : `1.5px solid ${BT.border}`, boxSizing: 'border-box' }}></span>{lb}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function DetailB({ st, onAnswer, onChange }) {
+  return (
+    <div style={{ padding: '0 14px 90px', height: 'calc(100% - 36px)', overflowY: 'auto', boxSizing: 'border-box' }}>
+      <p style={{ fontSize: 15, fontWeight: 700, color: BT.deep, margin: '8px 0 10px' }}>‹ Habits</p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <CheckInB st={st} onAnswer={onAnswer} onChange={onChange} />
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+          {[['Kept', fmtB(4250 + (st.answer === 'skip' ? 600 : 0))], ['This week', st.answer ? (st.answer === 'skip' ? '4 of 5' : '3 of 5') : '3 of 4'], ['Total skips', String(st.answer === 'skip' ? 25 : 24)]].map(([lb, v]) => (
+            <div key={lb} style={{ ...cardB, padding: '13px 6px', textAlign: 'center' }}>
+              <p style={{ fontSize: 17, fontWeight: 800, color: BT.text, margin: 0 }}>{v}</p>
+              <p style={{ fontSize: 10.5, color: BT.sub, margin: '2px 0 0', fontWeight: 600 }}>{lb}</p>
+            </div>
+          ))}
+        </div>
+        <ArcB total={st.answer === 'skip' ? 25 : 24} />
+        <CalendarB />
+      </div>
+    </div>
+  );
+}
+
+function LogB() {
+  const [amt, setAmt] = React.useState('6.00');
+  const [cat, setCat] = React.useState('Food');
+  const press = (k) => {
+    setAmt((a) => {
+      const raw = a.replace('.', '').replace(/^0+/, '');
+      if (k === '⌫') { const nr = raw.slice(0, -1) || '0'; return (parseInt(nr, 10) / 100).toFixed(2); }
+      if (raw.length >= 6) return a;
+      return (parseInt(raw + k, 10) / 100).toFixed(2);
+    });
+  };
+  const cats = [['Food', '🍽'], ['Shopping', '🛍'], ['Transport', '🚌'], ['Fun', '🎬']];
+  return (
+    <div style={{ padding: '0 14px 90px', height: 'calc(100% - 36px)', overflowY: 'auto', boxSizing: 'border-box' }}>
+      <p style={{ fontSize: 23, fontWeight: 800, color: BT.text, margin: '10px 2px 2px' }}>Expenses</p>
+      <p style={{ textAlign: 'center', fontSize: 48, fontWeight: 800, letterSpacing: -1.8, color: BT.text, margin: '14px 0 4px', fontVariantNumeric: 'tabular-nums' }}>${amt}</p>
+      <div style={{ display: 'flex', gap: 7, justifyContent: 'center', margin: '10px 0 4px' }}>
+        {cats.map(([c, g]) => (
+          <button key={c} onClick={() => setCat(c)} style={{ background: 'none', border: 'none', padding: 0, fontFamily: 'inherit', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, width: 62 }}>
+            <TileB glyph={g} size={40} on={c === cat} />
+            <span style={{ fontSize: 11, fontWeight: 700, color: c === cat ? BT.deep : BT.tert }}>{c}</span>
+          </button>
+        ))}
+      </div>
+      <input placeholder="Merchant (e.g. Starbucks)" style={{ width: '100%', boxSizing: 'border-box', border: 'none', borderRadius: 14, padding: '12px 14px', fontSize: 14, fontFamily: 'inherit', color: BT.text, margin: '10px 0', background: '#fff', outline: 'none', boxShadow: BT.shadow, fontWeight: 500 }} />
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 7 }}>
+        {['1','2','3','4','5','6','7','8','9','.','0','⌫'].map((k) => (
+          <button key={k} onClick={() => k !== '.' && press(k)} style={{ height: 44, background: '#fff', border: 'none', borderRadius: 12, fontSize: 18, fontWeight: 700, color: BT.text, fontFamily: 'inherit', cursor: 'pointer', boxShadow: BT.shadow }}>{k}</button>
+        ))}
+      </div>
+      <button style={{ ...btnPrimB, width: '100%', marginTop: 10 }}>Save expense</button>
+    </div>
+  );
+}
+
+function SuccessB() {
+  return (
+    <div style={{ padding: '0 18px', height: 'calc(100% - 36px)', overflowY: 'auto', boxSizing: 'border-box' }}>
+      <div style={{ margin: '30px auto 12px', width: 62, display: 'flex', justifyContent: 'center' }}><TileB glyph="✓" size={62} /></div>
+      <p style={{ fontSize: 22, fontWeight: 800, color: BT.text, textAlign: 'center', margin: '0 0 14px' }}>Your leak map is ready</p>
+      <div style={{ background: BT.tint, borderRadius: 22, textAlign: 'center', padding: '18px 16px 14px', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.8)' }}>
+        <p style={{ fontSize: 11, fontWeight: 800, letterSpacing: 1.2, color: BT.deep, margin: 0 }}>KEPT SO FAR</p>
+        <p style={{ fontSize: 36, fontWeight: 800, color: BT.text, margin: '3px 0 1px' }}>$0.00</p>
+        <p style={{ fontSize: 12.5, color: BT.sub, margin: 0, fontWeight: 500 }}>your first skip starts this counter</p>
+      </div>
+      <div style={{ ...cardB, marginTop: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <TileB glyph="☕" size={36} />
+          <div>
+            <p style={{ fontSize: 16, fontWeight: 700, color: BT.text, margin: 0 }}>Coffee run</p>
+            <p style={{ fontSize: 12.5, color: BT.sub, margin: '2px 0 0', fontWeight: 500 }}>about $104.00 a month · your biggest leak</p>
+          </div>
+        </div>
+        <button style={{ ...btnPrimB, width: '100%', minHeight: 44, marginTop: 12 }}>Break it</button>
+      </div>
+      <p style={{ fontSize: 12, color: BT.tert, textAlign: 'center', margin: '14px 0 0', fontWeight: 500 }}>Premium trial available when you're ready. 1 habit free, always.</p>
+    </div>
+  );
+}
+
+function AppB() {
+  const [screen, setScreen] = React.useState('Habits tab');
+  const [st, setSt] = React.useState({ kept: 12750, answer: null });
+  const answer = (kind) => setSt((s) => ({ kept: s.kept + (kind === 'skip' ? 600 : 0), answer: kind }));
+  const change = () => setSt((s) => ({ kept: s.answer === 'skip' ? s.kept - 600 : s.kept, answer: null }));
+  const screens = {
+    'Log form': <div data-screen-label="Log form"><LogB /><TabBarB active="Expenses" /></div>,
+    'Habits tab': <div data-screen-label="Habits tab"><HabitsB st={st} onAnswer={answer} onChange={change} /><TabBarB active="Habits" /></div>,
+    'Habit detail': <div data-screen-label="Habit detail"><DetailB st={st} onAnswer={answer} onChange={change} /><TabBarB active="Habits" /></div>,
+    'Success': <div data-screen-label="Onboarding success"><SuccessB /></div>,
+  };
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
+      <div style={{ display: 'flex', gap: 4, background: '#fff', borderRadius: 10, padding: 4, boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+        {Object.keys(screens).map((s) => (
+          <button key={s} onClick={() => setScreen(s)} style={{
+            border: 'none', borderRadius: 7, padding: '7px 12px', fontSize: 12.5, fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer',
+            background: s === screen ? '#1B1F1B' : 'transparent', color: s === screen ? '#fff' : '#6E756E',
+          }}>{s}</button>
+        ))}
+      </div>
+      <PhoneB>{screens[screen]}</PhoneB>
+      <p style={{ fontSize: 12, color: '#8a8a8a', margin: 0, maxWidth: 330, textAlign: 'center' }}>Direction B · Dimensional accent. Rounded type, gradient icon tiles, borderless cards, tinted hero. Try answering the check-in.</p>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<AppB />);
+</script>
+</body>
+</html>

@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="design_doc_mode" content="canvas">
+<title>P2-1 Onboarding · Door 1 Leak Audit · Design Options</title>
+<link rel="stylesheet" href="onboarding-options.css">
+</head>
+<body>
+
+<!-- ============ HEADER ============ -->
+<div class="board-card hdr" style="left: 40px; top: 40px; width: 1320px;" data-screen-label="Board header">
+  <h1>P2-1 onboarding · Door 1 Leak Audit · 3 input-pattern options</h1>
+  <p>The flow shape is locked (D-10 two doors, 90-second gate, tilde on every projection). What is genuinely open is how users estimate their spending. The shared spine below is identical across options; the three options differ only in the two estimate steps and what they cost in time, precision, and downstream data. Sticky notes carry pros, cons, and the tradeoff. Recommendation at the bottom.</p>
+</div>
+
+<!-- ============ SHARED SPINE ============ -->
+<div class="board-card row-label" style="left: 40px; top: 225px;" data-screen-label="Shared spine label">
+  <div>
+    <h2>Shared spine (same in every option)</h2>
+    <p>Welcome → two-door fork → [estimate steps, see options] → reveal → guided first log → success</p>
+  </div>
+</div>
+
+<div class="board-card" style="left: 40px; top: 310px;" data-screen-label="Welcome">
+  <div class="phone"><div class="screen">
+    <div class="status"><span>9:41</span><span>●●●</span></div>
+    <div class="body">
+      <div class="wordmark"><span class="dot">¢</span><b>HabitCents</b></div>
+      <p class="big-h">Find the spending habit quietly costing you $100 a month</p>
+      <p class="h-sub">Everything stays on your phone. No bank login. No account.</p>
+      <div class="foot">
+        <button class="btn-primary">Find my leak</button>
+        <button class="btn-plain">How it works</button>
+      </div>
+    </div>
+  </div></div>
+  <p class="phone-cap">1 · Welcome</p>
+</div>
+
+<div class="board-card" style="left: 380px; top: 310px;" data-screen-label="Two-door fork">
+  <div class="phone"><div class="screen">
+    <div class="status"><span>9:41</span><span>●●●</span></div>
+    <div class="body">
+      <p class="h-title" style="margin-top: 14px;">How do you want to start?</p>
+      <p class="h-sub">Both stay on this device.</p>
+      <div class="door hot">
+        <span class="tag">About a minute</span>
+        <div class="nm">Start fresh</div>
+        <div class="ds">Tap through what you pay for. We estimate your leak from your answers.</div>
+      </div>
+      <div class="door">
+        <span class="tag" style="color: #757575;">2 to 3 minutes</span>
+        <div class="nm">Bring your statements</div>
+        <div class="ds">Import a bank CSV. We scan it on your phone. Nothing uploads, ever.</div>
+      </div>
+      <div class="foot"><button class="btn-plain">Skip for now</button></div>
+    </div>
+  </div></div>
+  <p class="phone-cap">2 · Two-door fork</p>
+</div>
+
+<div class="board-card" style="left: 720px; top: 310px;" data-screen-label="Guided first log">
+  <div class="phone"><div class="screen">
+    <div class="status"><span>9:41</span><span>●●●</span></div>
+    <div class="body">
+      <div class="coach-hint">One practice log and you're done. Try today's coffee. Amount first.</div>
+      <p class="amt-display">$6.00</p>
+      <div class="cat-row"><span class="on">Food</span><span>Shopping</span><span>Transportation</span><span>Entertainment</span></div>
+      <div class="keypad">
+        <span>1</span><span>2</span><span>3</span>
+        <span>4</span><span>5</span><span>6</span>
+        <span>7</span><span>8</span><span>9</span>
+        <span>.</span><span>0</span><span>⌫</span>
+      </div>
+      <div class="foot"><button class="btn-primary">Save</button></div>
+    </div>
+  </div></div>
+  <p class="phone-cap">5 · Guided first log</p>
+</div>
+
+<div class="board-card" style="left: 1060px; top: 310px;" data-screen-label="Success">
+  <div class="phone"><div class="screen">
+    <div class="status"><span>9:41</span><span>●●●</span></div>
+    <div class="body">
+      <div class="check-big">✓</div>
+      <p class="h-title" style="text-align: center;">Your leak map is ready</p>
+      <div class="kept-hero">
+        <div class="lb">KEPT SO FAR</div>
+        <div class="n">$0.00</div>
+        <div class="c">your first skip starts this counter</div>
+      </div>
+      <div class="leak-card">
+        <div class="nm">Coffee run</div>
+        <div class="ev">about $104 a month · your biggest leak</div>
+        <button class="btn-primary" style="min-height: 38px; font-size: 13px;">Break it</button>
+      </div>
+      <p class="quiet-note">Premium trial available when you're ready. 1 habit free, always.</p>
+    </div>
+  </div></div>
+  <p class="phone-cap">6 · Success, counter primed</p>
+</div>
+
+<!-- ============ OPTION A ============ -->
+<div class="board-card row-label" style="left: 40px; top: 985px;" data-screen-label="Option A label">
+  <div>
+    <h2>Option A · Tap chips + frequency bands</h2>
+    <p>Everything is a tap. Preset values, band midpoints. Zero typing.</p>
+  </div>
+  <span class="rec-pill">Recommended</span>
+</div>
+
+<div class="board-card" style="left: 40px; top: 1075px;" data-screen-label="Option A subscriptions">
+  <div class="phone"><div class="screen">
+    <div class="status"><span>9:41</span><span>●●●</span></div>
+    <div class="body">
+      <p class="step-eyebrow">Step 1 of 2</p>
+      <p class="h-title">What do you pay for monthly?</p>
+      <p class="h-sub">Tap everything you have. Rough is fine, you can edit any amount later.</p>
+      <div class="chip-grid">
+        <div class="chip on"><div class="nm">Video streaming</div><div class="pr">~$12/mo</div></div>
+        <div class="chip on"><div class="nm">Music</div><div class="pr">~$11/mo</div></div>
+        <div class="chip"><div class="nm">Cloud storage</div><div class="pr">~$3/mo</div></div>
+        <div class="chip"><div class="nm">Gaming</div><div class="pr">~$10/mo</div></div>
+        <div class="chip"><div class="nm">News</div><div class="pr">~$8/mo</div></div>
+        <div class="chip"><div class="nm">Fitness</div><div class="pr">~$15/mo</div></div>
+        <div class="chip"><div class="nm">Dating</div><div class="pr">~$20/mo</div></div>
+        <div class="chip"><div class="nm">Something else</div><div class="pr">you set it</div></div>
+      </div>
+      <div class="foot">
+        <p class="running"><b>~$23 a month</b> so far</p>
+        <button class="btn-primary">Continue</button>
+        <button class="btn-plain">I don't pay for subscriptions</button>
+      </div>
+    </div>
+  </div></div>
+  <p class="phone-cap">3a · Subscriptions: tap grid</p>
+</div>
+
+<div class="board-card" style="left: 380px; top: 1075px;" data-screen-label="Option A vices">
+  <div class="phone"><div class="screen">
+    <div class="status"><span>9:41</span><span>●●●</span></div>
+    <div class="body">
+      <p class="step-eyebrow">Step 2 of 2</p>
+      <p class="h-title">The everyday stuff</p>
+      <p class="h-sub">In a typical week, how often?</p>
+      <div class="vice">
+        <div class="nm">Coffee or tea out</div><div class="ea">about $6 each</div>
+        <div class="freq"><span>Never</span><span>1-2</span><span class="on">3-5</span><span>Daily</span></div>
+      </div>
+      <div class="vice">
+        <div class="nm">Food delivery</div><div class="ea">about $18 each</div>
+        <div class="freq"><span>Never</span><span class="on">1-2</span><span>3-5</span><span>Daily</span></div>
+      </div>
+      <div class="vice">
+        <div class="nm">Impulse buys</div><div class="ea">about $15 each</div>
+        <div class="freq"><span class="on">Never</span><span>1-2</span><span>3-5</span><span>Daily</span></div>
+      </div>
+      <div class="foot">
+        <p class="running">adds <b>~$51 a week</b></p>
+        <button class="btn-primary">See my leak</button>
+        <button class="btn-plain">Skip this step</button>
+      </div>
+    </div>
+  </div></div>
+  <p class="phone-cap">4a · Vices: frequency bands</p>
+</div>
+
+<div class="board-card" style="left: 720px; top: 1075px;" data-screen-label="Option A reveal">
+  <div class="phone"><div class="screen">
+    <div class="status"><span>9:41</span><span>●●●</span></div>
+    <div class="body">
+      <p class="reveal-num">~$2,930</p>
+      <p class="reveal-cap">leaking a year. That's about $244 a month.</p>
+      <div class="bk">
+        <div class="r"><i>Coffee or tea out</i><b>~$1,250/yr</b></div>
+        <div class="r"><i>Food delivery</i><b>~$1,400/yr</b></div>
+        <div class="r"><i>Subscriptions</i><b>~$280/yr</b></div>
+      </div>
+      <p class="honest">An estimate from your taps, not a judgment. We'll sharpen it as you log real expenses.</p>
+      <div class="foot">
+        <button class="btn-primary">Plug the biggest leak</button>
+        <button class="btn-plain">Just start logging</button>
+      </div>
+    </div>
+  </div></div>
+  <p class="phone-cap">5a · The reveal</p>
+</div>
+
+<div class="board-card note pros" style="left: 1080px; top: 1075px; transform: rotate(-2deg);" data-screen-label="Option A pros">
+  <h4>Pros</h4>
+  <ul>
+    <li>Fastest of the three: ~10 taps, no keyboard ever appears</li>
+    <li>Running total moves with every tap, the estimate feels alive</li>
+    <li>Bands are honest: imprecise inputs framed as imprecise</li>
+    <li>Chips are 44pt+ targets, best VoiceOver story</li>
+    <li>Each chip seeds one recurring expense at its preset value</li>
+  </ul>
+</div>
+
+<div class="board-card note cons" style="left: 1330px; top: 1095px; transform: rotate(1.5deg);" data-screen-label="Option A cons">
+  <h4>Cons</h4>
+  <ul>
+    <li>Preset prices will be wrong for some users (edit is a tap away, but later)</li>
+    <li>Band midpoints hide the math (3-5 counts as 4)</li>
+    <li>"Something else" still needs a typed amount</li>
+  </ul>
+</div>
+
+<div class="board-card note trade" style="left: 1200px; top: 1330px; transform: rotate(-1deg);" data-screen-label="Option A tradeoff">
+  <h4>Tradeoff</h4>
+  <p>Speed over precision. Right call for a 90-second gate: precision arrives later from real logs, completion does not get a second chance. Best funnel odds of the three.</p>
+</div>
+
+<!-- ============ OPTION B ============ -->
+<div class="board-card row-label" style="left: 40px; top: 1765px;" data-screen-label="Option B label">
+  <div>
+    <h2>Option B · Checklist + steppers</h2>
+    <p>User owns every number. Exact counts, exact amounts.</p>
+  </div>
+</div>
+
+<div class="board-card" style="left: 40px; top: 1855px;" data-screen-label="Option B subscriptions">
+  <div class="phone"><div class="screen">
+    <div class="status"><span>9:41</span><span>●●●</span></div>
+    <div class="body">
+      <p class="step-eyebrow">Step 1 of 2</p>
+      <p class="h-title">Your subscriptions</p>
+      <p class="h-sub">Check what you pay for, then set the real amount.</p>
+      <div class="srow"><span class="ck on"></span><span class="nm">Video streaming</span><span class="step"><span>−</span><b>$12.99</b><span>+</span></span></div>
+      <div class="srow"><span class="ck on"></span><span class="nm">Music</span><span class="step"><span>−</span><b>$10.99</b><span>+</span></span></div>
+      <div class="srow"><span class="ck"></span><span class="nm">Cloud storage</span><span class="step"><span>−</span><b>$2.99</b><span>+</span></span></div>
+      <div class="srow"><span class="ck"></span><span class="nm">Gaming</span><span class="step"><span>−</span><b>$9.99</b><span>+</span></span></div>
+      <div class="srow"><span class="ck"></span><span class="nm">Fitness</span><span class="step"><span>−</span><b>$14.99</b><span>+</span></span></div>
+      <div class="foot">
+        <p class="running"><b>$23.98 a month</b> so far</p>
+        <button class="btn-primary">Continue</button>
+        <button class="btn-plain">None of these</button>
+      </div>
+    </div>
+  </div></div>
+  <p class="phone-cap">3b · Subscriptions: checklist + amount steppers</p>
+</div>
+
+<div class="board-card" style="left: 380px; top: 1855px;" data-screen-label="Option B vices">
+  <div class="phone"><div class="screen">
+    <div class="status"><span>9:41</span><span>●●●</span></div>
+    <div class="body">
+      <p class="step-eyebrow">Step 2 of 2</p>
+      <p class="h-title">The everyday stuff</p>
+      <p class="h-sub">Times per week, and what one usually costs.</p>
+      <div class="vice">
+        <div class="nm">Coffee or tea out</div>
+        <div style="display: flex; gap: 10px; margin-top: 7px;">
+          <span class="step"><span>−</span><b>4 / wk</b><span>+</span></span>
+          <span class="step"><span>−</span><b>$5.75</b><span>+</span></span>
+        </div>
+      </div>
+      <div class="vice">
+        <div class="nm">Food delivery</div>
+        <div style="display: flex; gap: 10px; margin-top: 7px;">
+          <span class="step"><span>−</span><b>2 / wk</b><span>+</span></span>
+          <span class="step"><span>−</span><b>$15.00</b><span>+</span></span>
+        </div>
+      </div>
+      <div class="vice">
+        <div class="nm">Impulse buys</div>
+        <div style="display: flex; gap: 10px; margin-top: 7px;">
+          <span class="step"><span>−</span><b>0 / wk</b><span>+</span></span>
+          <span class="step"><span>−</span><b>$15.00</b><span>+</span></span>
+        </div>
+      </div>
+      <div class="foot">
+        <p class="running">adds <b>$53.00 a week</b></p>
+        <button class="btn-primary">See my leak</button>
+      </div>
+    </div>
+  </div></div>
+  <p class="phone-cap">4b · Vices: two steppers per row</p>
+</div>
+
+<div class="board-card" style="left: 720px; top: 1855px;" data-screen-label="Option B reveal">
+  <div class="phone"><div class="screen">
+    <div class="status"><span>9:41</span><span>●●●</span></div>
+    <div class="body">
+      <p class="reveal-num">~$3,040</p>
+      <p class="reveal-cap">leaking a year, from your exact counts.</p>
+      <div class="bk">
+        <div class="r"><i>Coffee or tea out</i><b>~$1,200/yr</b></div>
+        <div class="r"><i>Food delivery</i><b>~$1,560/yr</b></div>
+        <div class="r"><i>Subscriptions</i><b>~$290/yr</b></div>
+      </div>
+      <p class="honest">Built from the numbers you set. Still an estimate: real logs will sharpen it.</p>
+      <div class="foot">
+        <button class="btn-primary">Plug the biggest leak</button>
+        <button class="btn-plain">Just start logging</button>
+      </div>
+    </div>
+  </div></div>
+  <p class="phone-cap">5b · The reveal</p>
+</div>
+
+<div class="board-card note pros" style="left: 1080px; top: 1855px; transform: rotate(1.8deg);" data-screen-label="Option B pros">
+  <h4>Pros</h4>
+  <ul>
+    <li>Most precise estimate, user owns every number</li>
+    <li>Exact amounts seed recurring expenses perfectly</li>
+    <li>Trust: the reveal is "your numbers", not our presets</li>
+    <li>Steppers are native-iOS familiar</li>
+  </ul>
+</div>
+
+<div class="board-card note cons" style="left: 1330px; top: 1875px; transform: rotate(-1.5deg);" data-screen-label="Option B cons">
+  <h4>Cons</h4>
+  <ul>
+    <li>Slowest: 2 decisions per row, ~25+ taps realistic</li>
+    <li>Steppers are tedious for dollar amounts ($0.25 increments or coarse jumps, both annoy)</li>
+    <li>Reads as a form. The 90-second gate is at real risk</li>
+    <li>Highest mid-flow abandon risk of the three</li>
+  </ul>
+</div>
+
+<div class="board-card note trade" style="left: 1200px; top: 2110px; transform: rotate(1deg);" data-screen-label="Option B tradeoff">
+  <h4>Tradeoff</h4>
+  <p>Precision over speed. Great for spreadsheet-minded users, wrong default for a first-run gate where completion rate is the metric. Worth folding its editable amounts into A as an inline tap-to-edit.</p>
+</div>
+
+<!-- ============ OPTION C ============ -->
+<div class="board-card row-label" style="left: 40px; top: 2545px;" data-screen-label="Option C label">
+  <div>
+    <h2>Option C · One-screen dials</h2>
+    <p>Four sliders, one screen, live total. The whole audit in one gesture set.</p>
+  </div>
+</div>
+
+<div class="board-card" style="left: 40px; top: 2635px;" data-screen-label="Option C dials">
+  <div class="phone"><div class="screen">
+    <div class="status"><span>9:41</span><span>●●●</span></div>
+    <div class="body">
+      <p class="step-eyebrow">One step</p>
+      <p class="h-title">Dial in a typical week</p>
+      <p class="h-sub">Rough is fine. Drag until it feels right.</p>
+      <div class="sl">
+        <div class="top"><span class="nm">Subscriptions <span class="per">/mo</span></span><span class="val">~$25</span></div>
+        <div class="track"><div class="fill" style="width: 25%;"></div><div class="knob" style="left: 23%;"></div></div>
+      </div>
+      <div class="sl">
+        <div class="top"><span class="nm">Coffee or tea out <span class="per">/wk</span></span><span class="val">~$25</span></div>
+        <div class="track"><div class="fill" style="width: 50%;"></div><div class="knob" style="left: 48%;"></div></div>
+      </div>
+      <div class="sl">
+        <div class="top"><span class="nm">Food delivery <span class="per">/wk</span></span><span class="val">~$30</span></div>
+        <div class="track"><div class="fill" style="width: 60%;"></div><div class="knob" style="left: 58%;"></div></div>
+      </div>
+      <div class="sl">
+        <div class="top"><span class="nm">Impulse buys <span class="per">/wk</span></span><span class="val">~$10</span></div>
+        <div class="track"><div class="fill" style="width: 20%;"></div><div class="knob" style="left: 18%;"></div></div>
+      </div>
+      <div class="foot">
+        <p class="running"><b>~$3,680 a year</b> and counting</p>
+        <button class="btn-primary">See my leak</button>
+      </div>
+    </div>
+  </div></div>
+  <p class="phone-cap">3c · The whole audit, one screen</p>
+</div>
+
+<div class="board-card" style="left: 380px; top: 2635px;" data-screen-label="Option C reveal">
+  <div class="phone"><div class="screen">
+    <div class="status"><span>9:41</span><span>●●●</span></div>
+    <div class="body">
+      <p class="reveal-num">~$3,680</p>
+      <p class="reveal-cap">leaking a year. That's about $307 a month.</p>
+      <div class="bk">
+        <div class="r"><i>Food delivery</i><b>~$1,560/yr</b></div>
+        <div class="r"><i>Coffee or tea out</i><b>~$1,300/yr</b></div>
+        <div class="r"><i>Impulse buys</i><b>~$520/yr</b></div>
+        <div class="r"><i>Subscriptions</i><b>~$300/yr</b></div>
+      </div>
+      <p class="honest">Dialed in by feel. Real logs will replace these guesses fast.</p>
+      <div class="foot">
+        <button class="btn-primary">Plug the biggest leak</button>
+        <button class="btn-plain">Just start logging</button>
+      </div>
+    </div>
+  </div></div>
+  <p class="phone-cap">4c · The reveal</p>
+</div>
+
+<div class="board-card note pros" style="left: 740px; top: 2635px; transform: rotate(-1.6deg);" data-screen-label="Option C pros">
+  <h4>Pros</h4>
+  <ul>
+    <li>Fewest screens: the entire audit is one view</li>
+    <li>Live yearly total while dragging is a strong reveal moment</li>
+    <li>Feels playful, least like a form</li>
+  </ul>
+</div>
+
+<div class="board-card note cons" style="left: 990px; top: 2655px; transform: rotate(1.4deg);" data-screen-label="Option C cons">
+  <h4>Cons</h4>
+  <ul>
+    <li>Sliders are the least precise input on a phone</li>
+    <li>Worst a11y of the three: VoiceOver and motor-impairment slider handling is genuinely bad</li>
+    <li>Lumped subscription total seeds nothing: no per-item recurring expenses, weaker leak cards</li>
+    <li>No frequency data, so detection gets no head start</li>
+  </ul>
+</div>
+
+<div class="board-card note trade" style="left: 865px; top: 2930px; transform: rotate(-0.8deg);" data-screen-label="Option C tradeoff">
+  <h4>Tradeoff</h4>
+  <p>Fun over utility. Quickest reveal but the weakest downstream data: nothing itemized to seed recurring expenses, and the worst accessibility story. The live-total-while-dragging moment is worth stealing for A's running total.</p>
+</div>
+
+<!-- ============ RECOMMENDATION ============ -->
+<div class="board-card rec" style="left: 40px; top: 3300px; width: 1320px;" data-screen-label="Recommendation">
+  <h2>Recommendation: Option A, with B's inline amount edit folded in</h2>
+  <p>A is the only option that clears the 90-second gate with margin (~10 taps, no keyboard), keeps every input honest (bands framed as bands, tilde everywhere), seeds one recurring expense per chip, and has the cleanest funnel and VoiceOver story. Fold in the one thing B does better: tapping the price on a selected chip opens an inline edit, so users who know their exact number can set it without slowing anyone else down. Steal C's liveliness: the running total animates with every tap.</p>
+  <ul>
+    <li>Per-step funnel: onboarding_started → door_chosen → audit_subs_done → audit_vices_done → leak_revealed → first_log_saved → onboarding_completed (names map to the pre-declared events in analytics.ts)</li>
+    <li>Skippable at every step, no dead ends: skipping both estimate steps routes to the guided log with the reveal omitted, not a zero</li>
+    <li>Door 2 graceful failure re-enters this flow with anything the scan found pre-selected as chips</li>
+  </ul>
+  <div class="formula">
+    yearly leak = (Σ selected subscriptions monthly value × 12) + (Σ vice band-midpoint × per-item value × 52)<br>
+    band midpoints: 1-2 → 1.5 · 3-5 → 4 · Daily → 7 · Never → 0<br>
+    worked example: subs (12 + 11) × 12 = 276 · coffee 4 × 6 × 52 = 1,248 · delivery 1.5 × 18 × 52 = 1,404 · total 2,928 → displayed "~$2,930 a year" (round to nearest 10, tilde mandatory, "about" in prose)
+  </div>
+</div>
+
+<!-- ============ WORK ITEM 1: HABIT LOGGING (embedded, interactive) ============ -->
+<div class="board-card row-label" style="left: 40px; top: 3695px;" data-screen-label="Habit logging section label">
+  <div>
+    <h2>Work item 1 · Habit logging (Decision 1, approved)</h2>
+    <p>The live interactive prototype, embedded. Tap through it here, or open <b>prototypes/Habit Logging Prototype.html</b> full-screen. Spec: <b>01-habit-logging-spec.md</b>.</p>
+  </div>
+</div>
+
+<div class="board-card" style="left: 40px; top: 3790px; width: 520px; height: 1000px; background: #fff; border: 1px solid #E5E7EB; border-radius: 16px; overflow: hidden;" data-screen-label="Habit logging embedded prototype">
+  <iframe src="Habit Logging Prototype.html" title="Habit logging interactive prototype" style="width: 100%; height: 100%; border: none;"></iframe>
+</div>
+
+<div class="board-card note pros" style="left: 610px; top: 3790px; transform: rotate(-1.5deg);" data-screen-label="Habit logging highlights">
+  <h4>What it covers</h4>
+  <ul>
+    <li>Check-in card: "Did you skip it today?" with both answers always one tap</li>
+    <li>Kept hero with count-up on every skip</li>
+    <li>Pick-one confirmation sheet (Break it on the Lunch out leak)</li>
+    <li>Habit detail: stats, milestones, 3-state calendar with month pager</li>
+    <li>Slip, partial slip, change answer, and yesterday backfill flows</li>
+    <li>Weekly cadence card (Food delivery) with event history</li>
+  </ul>
+</div>
+
+<div class="board-card note trade" style="left: 610px; top: 4130px; transform: rotate(1deg);" data-screen-label="Habit logging status">
+  <h4>Status</h4>
+  <p>Approved as the Decision 1 model: daily question core, ledger-honest slip states, count-up motion. The direction prototypes (work item 3) restyle these same screens per candidate direction; the model itself is settled.</p>
+</div>
+
+<!-- ============ HABIT LOGGING EXPLORATIONS ============ -->
+<div class="board-card hdr" style="left: 40px; top: 4880px; width: 1320px;" data-screen-label="Explorations header">
+  <h1>Habit logging · 3 further explorations</h1>
+  <p>Same settled model underneath (skip/slip, Kept, one-tap honesty). These explore the layer on top: how the interface builds the habit of skipping and takes guilt out of slipping. E1 removes the streak entirely, E2 reframes progress as identity, E3 makes the win physical. Each can be folded into the approved check-in card without changing the data model.</p>
+</div>
+
+<!-- E1 -->
+<div class="board-card row-label" style="left: 40px; top: 5035px;" data-screen-label="E1 label">
+  <div>
+    <h2>E1 · Rhythm, not streak</h2>
+    <p>Kills the streak counter. A week is the unit; guilt has nothing to break.</p>
+  </div>
+  <span class="rec-pill">Recommended</span>
+</div>
+
+<div class="board-card" style="left: 40px; top: 5125px;" data-screen-label="E1 check-in">
+  <div class="phone"><div class="screen">
+    <div class="status"><span>9:41</span><span>●●●</span></div>
+    <div class="body">
+      <div class="kept-hero">
+        <div class="lb">KEPT SO FAR</div>
+        <div class="n">$127.50</div>
+        <div class="c">money you didn't spend</div>
+      </div>
+      <div class="hcard">
+        <div class="hname">Coffee run</div>
+        <div class="week-dots">
+          <span class="wd"><i class="k">✓</i>M</span>
+          <span class="wd"><i class="k">✓</i>T</span>
+          <span class="wd"><i class="s"></i>W</span>
+          <span class="wd"><i class="k">✓</i>T</span>
+          <span class="wd"><i class="t">·</i>F</span>
+          <span class="wd"><i class="n">·</i>S</span>
+          <span class="wd"><i class="n">·</i>S</span>
+        </div>
+        <p class="rhythm-line"><b>3 of 4 days</b> skipped this week · $18 kept</p>
+        <p class="q">Did you skip it today?</p>
+        <div class="two-btn">
+          <button class="yes">Skipped it +$6.00</button>
+          <button class="no">I bought it</button>
+        </div>
+      </div>
+    </div>
+  </div></div>
+  <p class="phone-cap">E1 · Week strip on the card</p>
+</div>
+
+<div class="board-card" style="left: 380px; top: 5125px;" data-screen-label="E1 slip state">
+  <div class="phone"><div class="screen">
+    <div class="status"><span>9:41</span><span>●●●</span></div>
+    <div class="body">
+      <div class="kept-hero">
+        <div class="lb">KEPT SO FAR</div>
+        <div class="n">$127.50</div>
+        <div class="c">money you didn't spend</div>
+      </div>
+      <div class="hcard">
+        <div class="hname">Coffee run</div>
+        <div class="week-dots">
+          <span class="wd"><i class="k">✓</i>M</span>
+          <span class="wd"><i class="k">✓</i>T</span>
+          <span class="wd"><i class="s"></i>W</span>
+          <span class="wd"><i class="k">✓</i>T</span>
+          <span class="wd"><i class="s"></i>F</span>
+          <span class="wd"><i class="n">·</i>S</span>
+          <span class="wd"><i class="n">·</i>S</span>
+        </div>
+        <p class="q" style="margin-bottom: 4px;">Logged. Still <b>3 of 5 days</b> this week, and your $127.50 kept stays yours.</p>
+        <div class="safe-line">A good week doesn't need to be perfect. 4 of 7 beats zero of 7, every time.</div>
+      </div>
+    </div>
+  </div></div>
+  <p class="phone-cap">E1 · After a slip: the week absorbs it</p>
+</div>
+
+<div class="board-card note pros" style="left: 740px; top: 5125px; transform: rotate(-1.8deg);" data-screen-label="E1 pros">
+  <h4>Pros</h4>
+  <ul>
+    <li>Nothing to "break": a slip costs one dot, not a 14-day identity</li>
+    <li>Matches the research: habit formation survives missed days, streaks don't</li>
+    <li>"3 of 4 days" is honest and always recoverable this week</li>
+    <li>Week strip doubles as a mini calendar, less UI than streak + calendar</li>
+  </ul>
+</div>
+
+<div class="board-card note cons" style="left: 990px; top: 5145px; transform: rotate(1.5deg);" data-screen-label="E1 cons">
+  <h4>Cons</h4>
+  <ul>
+    <li>Loses the streak's compulsion loop, the strongest known retention driver</li>
+    <li>Milestones (7, 14, 30, 66 in a row) need reframing to totals</li>
+    <li>Long-timers lose bragging rights ("212 days" means something)</li>
+  </ul>
+</div>
+
+<div class="board-card note trade" style="left: 865px; top: 5390px; transform: rotate(-1deg);" data-screen-label="E1 tradeoff">
+  <h4>Tradeoff</h4>
+  <p>Retention hook vs guilt. Trades the streak's grip for slip-safety. For an app whose promise is "no judgment", the streak was always the contradiction. Milestones become "50 total skips", which still compounds.</p>
+</div>
+
+<!-- E2 -->
+<div class="board-card row-label" style="left: 40px; top: 5860px;" data-screen-label="E2 label">
+  <div>
+    <h2>E2 · Identity arc</h2>
+    <p>Progress is who you're becoming, not how many days in a row.</p>
+  </div>
+</div>
+
+<div class="board-card" style="left: 40px; top: 5950px;" data-screen-label="E2 check-in">
+  <div class="phone"><div class="screen">
+    <div class="status"><span>9:41</span><span>●●●</span></div>
+    <div class="body">
+      <div class="kept-hero">
+        <div class="lb">KEPT SO FAR</div>
+        <div class="n">$127.50</div>
+        <div class="c">money you didn't spend</div>
+      </div>
+      <div class="hcard">
+        <div class="hname">Coffee run</div>
+        <div class="arc-wrap">
+          <div class="ring" style="background: conic-gradient(#4CAF50 0 33%, #E5E7EB 33% 100%);">
+            <div class="inner"><b>22</b><span>OF 66</span></div>
+          </div>
+          <div>
+            <p class="identity-line" style="margin: 0;">You're a third of the way to rewired.</p>
+            <p class="identity-sub">22 skips toward the ~66 it takes to rewrite a habit. Slips don't subtract.</p>
+          </div>
+        </div>
+        <p class="q">Did you skip it today?</p>
+        <div class="two-btn">
+          <button class="yes">Skipped it +$6.00</button>
+          <button class="no">I bought it</button>
+        </div>
+      </div>
+    </div>
+  </div></div>
+  <p class="phone-cap">E2 · 66-skip rewiring ring</p>
+</div>
+
+<div class="board-card" style="left: 380px; top: 5950px;" data-screen-label="E2 chapters">
+  <div class="phone"><div class="screen">
+    <div class="status"><span>9:41</span><span>●●●</span></div>
+    <div class="body">
+      <p class="h-title" style="margin-top: 14px;">Coffee run</p>
+      <p class="h-sub">Chapter 2 of 4 · Finding your rhythm</p>
+      <div class="hcard" style="margin-top: 4px;">
+        <div class="chapter"><span class="done"></span><span class="half"></span><span></span><span></span></div>
+        <div class="chapter-cap"><span>Deciding</span><span>Rhythm</span><span>Cruising</span><span>Rewired</span></div>
+        <p class="q" style="margin-top: 12px;">Chapters advance on total skips: 10, 30, 50, 66. They never move backward. A slip pauses the story, it doesn't tear out pages.</p>
+      </div>
+      <div class="safe-line">After a slip: "Still chapter 2. Still 22 skips. The story continues tomorrow."</div>
+    </div>
+  </div></div>
+  <p class="phone-cap">E2 · Chapters on the detail screen</p>
+</div>
+
+<div class="board-card note pros" style="left: 740px; top: 5950px; transform: rotate(1.6deg);" data-screen-label="E2 pros">
+  <h4>Pros</h4>
+  <ul>
+    <li>Progress only accumulates: structurally guilt-free</li>
+    <li>66-skip arc has a real finish line ("rewired"), streaks never end</li>
+    <li>Identity framing ("you're becoming...") is the strongest habit-change lever in the literature</li>
+    <li>Coach Moments slot in naturally as chapter narration</li>
+  </ul>
+</div>
+
+<div class="board-card note cons" style="left: 990px; top: 5970px; transform: rotate(-1.4deg);" data-screen-label="E2 cons">
+  <h4>Cons</h4>
+  <ul>
+    <li>Abstract: a ring and chapters need explaining, a streak doesn't</li>
+    <li>"Rewired" at 66 is a claim; some habits take longer, copy must hedge</li>
+    <li>Risk of feeling gamified or precious for a money app</li>
+    <li>Daily urgency is weaker: nothing is lost by waiting</li>
+  </ul>
+</div>
+
+<div class="board-card note trade" style="left: 865px; top: 6215px; transform: rotate(0.9deg);" data-screen-label="E2 tradeoff">
+  <h4>Tradeoff</h4>
+  <p>Meaning vs immediacy. Deepest guilt reduction and the best story, but the least daily pull. Works best as the detail-screen layer on top of E1's card, not as the daily interface itself.</p>
+</div>
+
+<!-- E3 -->
+<div class="board-card row-label" style="left: 40px; top: 6680px;" data-screen-label="E3 label">
+  <div>
+    <h2>E3 · The jar</h2>
+    <p>Every skip is a coin you can see. The win is physical, the slip is invisible here.</p>
+  </div>
+</div>
+
+<div class="board-card" style="left: 40px; top: 6770px;" data-screen-label="E3 check-in">
+  <div class="phone"><div class="screen">
+    <div class="status"><span>9:41</span><span>●●●</span></div>
+    <div class="body">
+      <div class="jar-stage">
+        <div class="jar">
+          <div class="fillw" style="height: 42%;"></div>
+          <div class="coins">$127.50</div>
+        </div>
+      </div>
+      <p class="jar-cap">your kept jar · <b>fills with every skip</b></p>
+      <div class="hcard">
+        <div class="hname">Coffee run</div>
+        <p class="q">Did you skip it today?</p>
+        <div class="two-btn">
+          <button class="yes">Skipped it +$6.00</button>
+          <button class="no">I bought it</button>
+        </div>
+      </div>
+    </div>
+  </div></div>
+  <p class="phone-cap">E3 · The jar replaces the number hero</p>
+</div>
+
+<div class="board-card" style="left: 380px; top: 6770px;" data-screen-label="E3 after skip">
+  <div class="phone"><div class="screen">
+    <div class="status"><span>9:41</span><span>●●●</span></div>
+    <div class="body">
+      <div class="jar-stage">
+        <div class="jar">
+          <div class="fillw" style="height: 46%;"></div>
+          <div class="coins">$133.50</div>
+        </div>
+      </div>
+      <p class="jar-cap"><b>+$6.00</b> dropped in · level rises 250ms</p>
+      <div class="hcard">
+        <div class="hname">Coffee run</div>
+        <p class="q" style="margin-bottom: 4px;">+$6.00 kept. The jar only fills. A slip never drains it.</p>
+        <div class="safe-line">Slips are recorded honestly on the calendar, but the jar is win-only by design. What you kept stays kept.</div>
+      </div>
+    </div>
+  </div></div>
+  <p class="phone-cap">E3 · Skip feedback: the level rises</p>
+</div>
+
+<div class="board-card note pros" style="left: 740px; top: 6770px; transform: rotate(-1.4deg);" data-screen-label="E3 pros">
+  <h4>Pros</h4>
+  <ul>
+    <li>Most visceral reward: watching money accumulate beats reading a number</li>
+    <li>Jar is win-only, so the daily surface carries zero guilt by construction</li>
+    <li>Instantly explicable, no onboarding needed</li>
+    <li>Screenshot-shareable, an organic growth surface</li>
+  </ul>
+</div>
+
+<div class="board-card note cons" style="left: 990px; top: 6790px; transform: rotate(1.7deg);" data-screen-label="E3 cons">
+  <h4>Cons</h4>
+  <ul>
+    <li>A jar needs a top: what does "full" mean? Requires a target or it reads arbitrary</li>
+    <li>Illustration-heavy: biggest lift and biggest style risk in the current flat system</li>
+    <li>Hiding slips from the main view risks the C-honesty principle if overdone</li>
+    <li>Scales poorly across multiple habits (one jar each? one shared?)</li>
+  </ul>
+</div>
+
+<div class="board-card note trade" style="left: 865px; top: 7080px; transform: rotate(-0.7deg);" data-screen-label="E3 tradeoff">
+  <h4>Tradeoff</h4>
+  <p>Delight vs honesty and scale. The strongest single moment (coin drops in) but the weakest system: needs a fill target, an illustration language, and a multi-habit answer. Steal the drop-in moment as the Kept hero's count-up flourish rather than adopting the whole jar.</p>
+</div>
+
+<!-- Explorations recommendation -->
+<div class="board-card rec" style="left: 40px; top: 7500px; width: 1320px;" data-screen-label="Explorations recommendation">
+  <h2>Recommendation: E1 card + E2 detail layer, steal E3's moment</h2>
+  <p>Replace the streak chip with E1's week strip on the check-in card: it keeps daily engagement but makes a slip cost one dot instead of an identity. Put E2's 66-skip arc on the detail screen as the long-term narrative (total skips, never subtracting), which also gives milestones a finish line. Fold E3 down to its best moment: the +$6.00 count-up on the Kept hero gets a brief fill-pulse so the win lands physically. This combination addresses guilt at all three time scales: today (two honest buttons, slip absorbed by the week), this week (rhythm, not perfection), and the long arc (progress that only accumulates).</p>
+  <ul>
+    <li>Data model unchanged: skip/slip events, Kept totals, and the 3-state calendar all stay as specced in 01</li>
+    <li>Copy changes: streak strings become "n of m days this week" and "n skips toward rewired"</li>
+    <li>If you want to keep streaks: E1 can carry the streak as a quiet secondary stat on detail only, out of the daily loop</li>
+  </ul>
+</div>
+
+<!-- ============ HABIT LOGGING V2: SYNTHESIS ============ -->
+<div class="board-card row-label" style="left: 40px; top: 7920px;" data-screen-label="V2 synthesis label">
+  <div>
+    <h2>Habit logging v2 · The synthesis, live</h2>
+    <p>E1 card + E2 detail layer + E3's moment, built as an interactive prototype. Tap through it here or open <b>prototypes/Habit Logging Prototype v2.html</b> full-screen.</p>
+  </div>
+  <span class="rec-pill">Preview</span>
+</div>
+
+<div class="board-card" style="left: 40px; top: 8010px; width: 520px; height: 1000px; background: #fff; border: 1px solid #E5E7EB; border-radius: 16px; overflow: hidden;" data-screen-label="V2 embedded prototype">
+  <iframe src="Habit Logging Prototype v2.html" title="Habit logging v2 interactive prototype" style="width: 100%; height: 100%; border: none;"></iframe>
+</div>
+
+<div class="board-card note pros" style="left: 610px; top: 8010px; transform: rotate(-1.2deg);" data-screen-label="V2 changes">
+  <h4>What changed from v1</h4>
+  <ul>
+    <li>Streak chip is gone. Each daily card carries E1's week strip: skips, slips, no-log, today, all seven days at a glance</li>
+    <li>Skip confirms as "that's 3 of 4 days this week", slip confirms as "still 3 of 4 days this week", nothing breaks</li>
+    <li>Detail: milestones row replaced by E2's long arc, a 66-skip ring with chapters (Deciding, Rhythm, Cruising, Rewired) that never move backward</li>
+    <li>Stats row is now Kept, This week, Total skips: no streak, no longest</li>
+    <li>E3's moment: the Kept hero pulses green and scales up as the count-up runs on every skip</li>
+  </ul>
+</div>
+
+<div class="board-card note trade" style="left: 610px; top: 8390px; transform: rotate(0.8deg);" data-screen-label="V2 try list">
+  <h4>Try in the prototype</h4>
+  <ul>
+    <li>Skip Coffee run: hero pulses, week strip fills, "4 of 5 days"</li>
+    <li>Slip instead: the week absorbs it, kept total untouched</li>
+    <li>Open Coffee run detail: the 12-of-66 ring, chapter 2 underway</li>
+    <li>Change answer still works, calendar honesty unchanged</li>
+  </ul>
+</div>
+
+<!-- ============ P2-1 ONBOARDING: FINAL ============ -->
+<div class="board-card row-label" style="left: 40px; top: 9120px;" data-screen-label="Onboarding final label">
+  <div>
+    <h2>P2-1 onboarding · Final</h2>
+    <p>Option A with B's inline edit. Reframed after review: step 1 asks for recognition of auto-pilot charges, not an inventory. Step 2 asks for rhythm, not amounts. The reveal is a hypothesis the app then sharpens with real logs.</p>
+  </div>
+  <span class="rec-pill">Final</span>
+</div>
+
+<div class="board-card" style="left: 40px; top: 9210px;" data-screen-label="Final subscriptions">
+  <div class="phone"><div class="screen">
+    <div class="status"><span>9:41</span><span>●●●</span></div>
+    <div class="body">
+      <p class="step-eyebrow">Step 1 of 2 · about 30 seconds</p>
+      <p class="h-title">Which of these charge you on auto-pilot?</p>
+      <p class="h-sub">Tap the ones that ring a bell, we'll watch them for you. A quick scan, not a full inventory. Tap a price to make it exact.</p>
+      <div class="chip-grid">
+        <div class="chip on"><div class="nm">Video streaming</div><div class="pr pr-edit">$15.49/mo</div></div>
+        <div class="chip on editing">
+          <div class="edit-head"><div class="nm">Music · your real price</div><span class="x">✕</span></div>
+          <div class="edit-row">
+            <div class="edit-field"><span class="cur">$</span><b>10.99</b><span class="caret"></span></div>
+            <span class="ok">Set</span>
+          </div>
+          <p class="edit-cap">Preset was ~$11/mo. Set saves your exact price, ✕ keeps the preset.</p>
+        </div>
+        <div class="chip"><div class="nm">Cloud storage</div><div class="pr">~$3/mo</div></div>
+        <div class="chip"><div class="nm">Gaming</div><div class="pr">~$10/mo</div></div>
+        <div class="chip"><div class="nm">News</div><div class="pr">~$8/mo</div></div>
+        <div class="chip"><div class="nm">Fitness</div><div class="pr">~$15/mo</div></div>
+        <div class="chip"><div class="nm">Dating</div><div class="pr">~$20/mo</div></div>
+        <div class="chip"><div class="nm">Something else</div><div class="pr">you set it</div></div>
+      </div>
+      <div class="foot">
+        <p class="running"><b>$26.48 a month</b> so far</p>
+        <button class="btn-primary">Continue</button>
+        <button class="btn-plain">None of these</button>
+      </div>
+    </div>
+  </div></div>
+  <p class="phone-cap">F1 · Recognition, not inventory. Tap a price and the chip expands into an editor (Music mid-edit)</p>
+</div>
+
+<div class="board-card" style="left: 380px; top: 9210px;" data-screen-label="Final vices">
+  <div class="phone"><div class="screen">
+    <div class="status"><span>9:41</span><span>●●●</span></div>
+    <div class="body">
+      <p class="step-eyebrow">Step 2 of 2 · about 30 seconds</p>
+      <p class="h-title">And the everyday stuff?</p>
+      <p class="h-sub">Roughly how often in a typical week. No amounts to add up. Tap a price if yours differs.</p>
+      <div class="vice">
+        <div class="nm">Coffee or tea out</div><div class="ea pr-edit">$5.75 each</div>
+        <div class="freq"><span>Never</span><span>1-2</span><span class="on">3-5</span><span>Daily</span></div>
+      </div>
+      <div class="vice">
+        <div class="nm">Food delivery</div><div class="ea">about $18 each</div>
+        <div class="freq"><span>Never</span><span class="on">1-2</span><span>3-5</span><span>Daily</span></div>
+      </div>
+      <div class="vice">
+        <div class="nm">Impulse buys</div><div class="ea">about $15 each</div>
+        <div class="freq"><span class="on">Never</span><span>1-2</span><span>3-5</span><span>Daily</span></div>
+      </div>
+      <div class="foot">
+        <p class="running">adds <b>~$50 a week</b></p>
+        <button class="btn-primary">See my leak</button>
+        <button class="btn-plain">Skip this step</button>
+      </div>
+    </div>
+  </div></div>
+  <p class="phone-cap">F2 · Bands, per-item price edited (coffee)</p>
+</div>
+
+<div class="board-card" style="left: 720px; top: 9210px;" data-screen-label="Final reveal">
+  <div class="phone"><div class="screen">
+    <div class="status"><span>9:41</span><span>●●●</span></div>
+    <div class="body">
+      <p class="reveal-num">~$2,930</p>
+      <p class="reveal-cap">leaking a year. That's about $244 a month.</p>
+      <div class="bk">
+        <div class="r"><i>Coffee or tea out</i><b>~$1,200/yr</b></div>
+        <div class="r"><i>Food delivery</i><b>~$1,400/yr</b></div>
+        <div class="r"><i>Subscriptions</i><b>~$320/yr</b></div>
+      </div>
+      <p class="honest">A starting estimate from one minute of taps, not a judgment. Real logs sharpen it from here.</p>
+      <div class="foot">
+        <button class="btn-primary">Plug the biggest leak</button>
+        <button class="btn-plain">Just start logging</button>
+      </div>
+    </div>
+  </div></div>
+  <p class="phone-cap">F3 · The reveal, unchanged</p>
+</div>
+
+<div class="board-card" style="left: 1330px; top: 9210px; width: 300px;" data-screen-label="Final step goals">
+  <h2 style="font-size: 15px; margin: 0 0 8px;">Step goals and the handoff into the app</h2>
+  <ul style="font-size: 12px; color: #424242; line-height: 1.55; margin: 0; padding-left: 16px;">
+    <li><b>Step 1, auto-pilot charges.</b> Goal: recognition of the quiet recurring suspects, never an inventory. Each tap seeds one recurring expense the app watches in Upcoming.</li>
+    <li><b>Step 2, everyday rhythm.</b> Goal: frequency bands for the impulse leaks. This is the behavioral half of the estimate and what detection will test first.</li>
+    <li><b>Reveal, the hypothesis.</b> "~$2,930 a year" is framed as a starting estimate, tilde mandatory. Its biggest line becomes the suggested first habit.</li>
+    <li><b>First log, then landing.</b> One practiced log teaches the daily mechanic. Success lands on the Habits tab: leak candidates listed, Kept at zero, counter primed.</li>
+  </ul>
+  <p style="font-size: 11px; color: #757575; margin: 10px 0 0;">Copy principle: ask what rings a bell, never "enter everything". About 10 taps end to end.</p>
+</div>
+
+<div class="board-card note pros" style="left: 1080px; top: 9210px; transform: rotate(-1.4deg);" data-screen-label="Final behavior rules">
+  <h4>Behavior rules</h4>
+  <ul>
+    <li>Preset prices show a tilde; edited prices drop it and show green underline, signalling "yours"</li>
+    <li>Tapping a price expands the chip to a full-width editor: amount preselected on a numeric keyboard, Set commits, ✕ cancels back to the preset; a caption shows the preset so you can always back out</li>
+    <li>Edited chips seed recurring expenses at the exact value; untouched chips seed at preset</li>
+    <li>Editing never adds a screen or a required step: pure fast-path A if ignored</li>
+    <li>Analytics: audit_amount_edited {step, count} fires per commit, structural only</li>
+  </ul>
+</div>
+
+<div class="board-card note trade" style="left: 1080px; top: 9590px; transform: rotate(1deg);" data-screen-label="Final why">
+  <h4>Why this is final</h4>
+  <p>Keeps A's ~10-tap, no-keyboard fast path for the majority while giving precision-minded users B's exactness exactly where they want it. C's liveliness survives as the animating running total. Spec to follow in 02-p2-1-onboarding-leak-audit.md.</p>
+</div>
+
+</body>
+</html>

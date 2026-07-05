@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="design_doc_mode" content="canvas">
+<title>P2-4b visual direction · comparison board</title>
+<style>
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif; }
+  .board-card { position: absolute; background: #fff; border-radius: 14px; padding: 18px 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.25); box-sizing: border-box; }
+  .board-card h1 { font-size: 21px; margin: 0 0 6px; color: #212121; }
+  .board-card h2 { font-size: 16px; margin: 0; color: #212121; }
+  .board-card p { font-size: 13px; color: #616161; line-height: 1.5; margin: 6px 0 0; }
+  .row-label { display: flex; align-items: center; gap: 14px; width: 500px; }
+  .rec-pill { background: #2E7D32; color: #fff; font-size: 11px; font-weight: 800; letter-spacing: 0.5px; border-radius: 999px; padding: 5px 12px; flex: none; }
+  .note { width: 250px; border-radius: 4px; padding: 14px 16px; box-shadow: 3px 4px 10px rgba(0,0,0,0.3); }
+  .note h4 { margin: 0 0 6px; font-size: 12.5px; color: #4e4636; letter-spacing: 0.3px; text-transform: uppercase; }
+  .note ul { margin: 0; padding-left: 16px; font-size: 12px; line-height: 1.55; color: #4e4636; }
+  .note p { font-size: 12px; line-height: 1.55; color: #37503b; margin: 0; }
+  .pros, .cons { background: #FFF7C2; }
+  .trade { background: #D9F2DD; }
+  .trade h4 { color: #2E5c35; }
+  .frame { position: absolute; background: #ECECEC; border-radius: 14px; box-shadow: 0 2px 10px rgba(0,0,0,0.25); overflow: hidden; }
+  .frame iframe { border: none; width: 100%; height: 100%; }
+  table.cmp { border-collapse: collapse; width: 100%; margin-top: 10px; }
+  table.cmp th, table.cmp td { font-size: 12px; text-align: left; padding: 7px 8px; border-bottom: 1px solid #EEE; color: #424242; vertical-align: top; line-height: 1.4; }
+  table.cmp th { color: #9E9E9E; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.4px; }
+  table.cmp td:first-child { font-weight: 700; color: #212121; white-space: nowrap; }
+</style>
+</head>
+<body>
+
+<!-- header -->
+<div class="board-card" style="left: 40px; top: 40px; width: 1580px;" data-screen-label="Board header">
+  <h1>P2-4b visual direction · 3 candidates, stacked left to right</h1>
+  <p>Each column is a live, tappable prototype applying one direction to the same four screens: log form, Habits tab (v2 check-in card), habit detail (v2 long arc + 3-state calendar), onboarding success. Answer the check-in inside each frame to feel the skip moment. Yellow stickies carry pros and cons, green carries the tradeoff. Comparison matrix and recommendation on the far right. A "Final" column gets appended here once Charen picks.</p>
+</div>
+
+<!-- ============ COLUMN A ============ -->
+<div class="board-card row-label" style="left: 40px; top: 230px;" data-screen-label="Direction A label">
+  <div>
+    <h2>A · Refined native</h2>
+    <p>SF-weight hairline icons, depth via soft shadows on white, current tokens tightened. The quietest possible read.</p>
+  </div>
+</div>
+
+<div class="frame" style="left: 40px; top: 360px; width: 500px; height: 890px;" data-screen-label="Direction A prototype">
+  <iframe src="Direction A Refined Native.html" title="Direction A prototype"></iframe>
+</div>
+
+<div class="board-card note pros" style="left: 40px; top: 1310px; transform: rotate(-1.6deg);" data-screen-label="Direction A pros">
+  <h4>Pros</h4>
+  <ul>
+    <li>Lowest build cost: no icon assets, no new dependencies, mostly a token and shadow sweep</li>
+    <li>Most native read; disappears into iOS the way ADA winners do</li>
+    <li>Ages well; nothing to regret in a year</li>
+    <li>Hairline icon system is one geometric grammar, easy to extend</li>
+  </ul>
+</div>
+
+<div class="board-card note cons" style="left: 310px; top: 1330px; transform: rotate(1.4deg);" data-screen-label="Direction A cons">
+  <h4>Cons</h4>
+  <ul>
+    <li>Risks being forgettable; nothing ownable at the screenshot moment</li>
+    <li>The skip, the product's one emotional beat, renders as quietly as everything else</li>
+    <li>Differentiation carries entirely on copy and the Kept number</li>
+  </ul>
+</div>
+
+<div class="board-card note trade" style="left: 160px; top: 1600px; transform: rotate(-0.8deg);" data-screen-label="Direction A tradeoff">
+  <h4>Tradeoff</h4>
+  <p>Maximum trust and minimum cost, bought with zero memorability. A is the floor every other direction must beat, not the ceiling.</p>
+</div>
+
+<!-- ============ COLUMN B ============ -->
+<div class="board-card row-label" style="left: 580px; top: 230px;" data-screen-label="Direction B label">
+  <div>
+    <h2>B · Dimensional accent</h2>
+    <p>Rounded type, gradient icon tiles with inner highlight, borderless cards on deeper shadows, tinted hero panel.</p>
+  </div>
+</div>
+
+<div class="frame" style="left: 580px; top: 360px; width: 500px; height: 890px;" data-screen-label="Direction B prototype">
+  <iframe src="Direction B Dimensional Accent.html" title="Direction B prototype"></iframe>
+</div>
+
+<div class="board-card note pros" style="left: 580px; top: 1310px; transform: rotate(1.2deg);" data-screen-label="Direction B pros">
+  <h4>Pros</h4>
+  <ul>
+    <li>Most distinctive and ownable; instantly recognizable in a screenshot</li>
+    <li>Warmth suits a money app that forgives slips</li>
+    <li>Tiles give category and habit rows a scannable anchor</li>
+    <li>Tinted hero makes Kept feel like a place, not a row</li>
+  </ul>
+</div>
+
+<div class="board-card note cons" style="left: 850px; top: 1330px; transform: rotate(-1.3deg);" data-screen-label="Direction B cons">
+  <h4>Cons</h4>
+  <ul>
+    <li>Gradient tiles flirt with the exact tropes the calibration warns about; restraint depends on discipline per icon</li>
+    <li>Needs a real icon asset system (custom art per category and habit): highest cost and ongoing maintenance</li>
+    <li>Rounded type + gradients can read "casual game" next to money numbers</li>
+  </ul>
+</div>
+
+<div class="board-card note trade" style="left: 700px; top: 1620px; transform: rotate(0.9deg);" data-screen-label="Direction B tradeoff">
+  <h4>Tradeoff</h4>
+  <p>Memorability bought with asset cost and trope risk. Works only if the tile set gets real custom art; with placeholder glyphs it reads cheap.</p>
+</div>
+
+<!-- ============ COLUMN C ============ -->
+<div class="board-card row-label" style="left: 1120px; top: 230px;" data-screen-label="Direction C label">
+  <div>
+    <h2>C · Native + motion layer</h2>
+    <p>A's visuals untouched. Motion and haptics concentrated on the two money moments: the log save and the skip.</p>
+  </div>
+  <span class="rec-pill">Recommended</span>
+</div>
+
+<div class="frame" style="left: 1120px; top: 360px; width: 500px; height: 890px;" data-screen-label="Direction C prototype">
+  <iframe src="Direction C Motion Layer.html" title="Direction C prototype"></iframe>
+</div>
+
+<div class="board-card note pros" style="left: 1120px; top: 1310px; transform: rotate(-1.2deg);" data-screen-label="Direction C pros">
+  <h4>Pros</h4>
+  <ul>
+    <li>Distinctiveness lives exactly where the product promise lives: the skip visibly becomes money (ring, pulse, count-up, success haptic)</li>
+    <li>Everything else stays as still and native as A, so the moment stands out</li>
+    <li>No icon assets needed; motion is code, not art</li>
+    <li>Honors reduced motion by design</li>
+  </ul>
+</div>
+
+<div class="board-card note cons" style="left: 1390px; top: 1330px; transform: rotate(1.5deg);" data-screen-label="Direction C cons">
+  <h4>Cons</h4>
+  <ul>
+    <li>Motion quality is unforgiving: 20ms of jank reads worse than no motion</li>
+    <li>Static screenshots look identical to A; marketing needs video</li>
+    <li>Adds reanimated + haptics work to the build (medium cost)</li>
+  </ul>
+</div>
+
+<div class="board-card note trade" style="left: 1240px; top: 1620px; transform: rotate(-0.7deg);" data-screen-label="Direction C tradeoff">
+  <h4>Tradeoff</h4>
+  <p>The reward is felt, not seen in stills. You pay in motion engineering polish instead of icon art, and the payoff only lands on device.</p>
+</div>
+
+<!-- ============ COMPARISON + RECOMMENDATION ============ -->
+<div class="board-card" style="left: 1660px; top: 230px; width: 470px;" data-screen-label="Comparison matrix">
+  <h2>Comparison</h2>
+  <table class="cmp">
+    <thead><tr><th></th><th>A · Refined native</th><th>B · Dimensional</th><th>C · A + motion</th></tr></thead>
+    <tbody>
+      <tr><td>Brand statement</td><td>"Calm, honest, invisible craft"</td><td>"Friendly, warm, distinctive"</td><td>"Calm until your money moves"</td></tr>
+      <tr><td>Build cost</td><td>Low: token + shadow sweep</td><td>High: icon asset system + art</td><td>Medium: reanimated + haptics at 2 moments</td></tr>
+      <tr><td>ADA-restraint fit</td><td>Highest</td><td>At risk (gradient tiles)</td><td>High: restraint + purposeful motion</td></tr>
+      <tr><td>Screenshot energy</td><td>Low</td><td>High</td><td>Low still, high in video</td></tr>
+      <tr><td>Maintenance</td><td>Lowest</td><td>Per-icon forever</td><td>Motion QA per release</td></tr>
+      <tr><td>Where it can fail</td><td>Forgettable</td><td>Reads as a game</td><td>Jank kills it</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="board-card" style="left: 1660px; top: 760px; width: 470px;" data-screen-label="Recommendation">
+  <div style="display: flex; align-items: center; gap: 12px;">
+    <h2>Recommendation: C</h2>
+    <span class="rec-pill">Recommended</span>
+  </div>
+  <p>C is A plus a motion layer, so picking C gets A for free. The product's whole thesis is that a skip is a felt win worth real money; C is the only direction that spends its distinctiveness budget on exactly that beat and nowhere else. That is also the honest reading of the ADA calibration: restrained surfaces, purposeful motion.</p>
+  <p><b>If more visual heat is wanted later:</b> adopt B's tile treatment for category icons only, as an accent inside C, once real icon art exists (P0-4). Do not adopt B's gradients on buttons or heroes.</p>
+  <p><b>What the pick unblocks:</b> 05 (unification pass written against the picked tokens), 03 (Leak Scan visuals), 04 (Coach Moments). Downstream specs are token-based and survive any of the three picks.</p>
+  <p style="color: #9E9E9E;">Full write-up: <b>comparison.md</b> in this folder. Interactive files: Direction A / B / C html, tappable standalone.</p>
+</div>
+
+<!-- ============ FINAL ============ -->
+<div class="board-card" style="left: 1660px; top: 1310px; width: 470px; border: 3px solid #2E7D32;" data-screen-label="Final pick">
+  <div style="display: flex; align-items: center; gap: 12px;">
+    <h2>Final · Direction C locked</h2>
+    <span class="rec-pill">Final</span>
+  </div>
+  <p>Picked by Charen, 2026-07-04. The app ships Direction A's refined-native surfaces with the motion and haptics layer concentrated on the log save and the skip. B's tile treatment stays on the shelf as a possible category-icon accent once real icon art exists (P0-4).</p>
+  <p>Now unblocked and written against C's tokens: 05 design unification, 03 Leak Scan visuals, 04 Coach Moments, then the a11y rollup and 08 handoff.</p>
+</div>
+
+</body>
+</html>
