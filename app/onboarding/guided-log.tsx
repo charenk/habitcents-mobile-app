@@ -14,51 +14,67 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useOnboarding } from '@/contexts/OnboardingContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
+import { useCategories } from '@/contexts/CategoriesContext';
 import { AmountInput } from '@/components/AmountInput';
 import type { AppTheme } from '@/constants/theme';
+import type { Category } from '@/types/category';
 import type { ExpenseCategory } from '@/types/expense';
 import { strings } from '@/constants/strings';
+import { track } from '@/utils/analytics';
 
-const QUICK_CATEGORIES: { name: ExpenseCategory; icon: keyof typeof Ionicons.glyphMap; color: string }[] = [
-  { name: strings.onboarding.food, icon: 'fast-food-outline', color: '#66BB6A' },
-  { name: strings.onboarding.shopping, icon: 'cart-outline', color: '#EC407A' },
-  { name: strings.onboarding.entertainment, icon: 'film-outline', color: '#42A5F5' },
-  { name: strings.onboarding.transportation, icon: 'bus-outline', color: '#8D6E63' },
-];
+// The four everyday categories offered on the guided log, taxonomy v2 names
+// (docs/design-context/decisions/0006-category-taxonomy-v2.md). Typed against
+// ExpenseCategory so a category rename can't silently produce an invalid
+// Expense.category at runtime.
+const QUICK_CATEGORY_NAMES: ExpenseCategory[] = ['Food', 'Shopping', 'Entertainment', 'Transportation'];
 
-export default function FirstExpenseScreen() {
+/**
+ * Guided first log (spec 02 section 3.6). The real log form, not a
+ * simulation: saving writes a real expense and fires first_log_saved.
+ * Skippable via "Later"; the success screen still shows either way.
+ */
+export default function OnboardingGuidedLogScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
-  const { completeStep, skipStep, completeOnboarding } = useOnboarding();
+  const { completeStep, skipStep } = useOnboarding();
   const { addExpense } = useExpenses();
+  const { getVisibleCategories } = useCategories();
 
   const [amount, setAmount] = useState(0);
-  const [selectedCategory, setSelectedCategory] = useState<ExpenseCategory | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
 
-  const canSave = amount > 0 && selectedCategory;
+  const quickCategories = useMemo(() => {
+    const all = getVisibleCategories();
+    return QUICK_CATEGORY_NAMES.map((name) => all.find((c) => c.name === name)).filter(
+      (c): c is Category => !!c
+    );
+  }, [getVisibleCategories]);
+
+  const canSave = amount > 0 && !!selectedCategory;
 
   const handleSave = async () => {
-    if (!canSave) return;
+    if (!canSave || !selectedCategory) return;
 
     await addExpense({
-      title: `${selectedCategory} expense`,
+      title: `${selectedCategory.name} expense`,
       amount,
-      category: selectedCategory,
+      category: selectedCategory.name as never,
+      categoryId: selectedCategory.id,
       date: new Date(),
       isRecurring: false,
       reminderEnabled: false,
     });
 
-    await completeStep('first_expense');
+    track('first_log_saved', { guided: true });
+    await completeStep('guided_log');
     router.push('/onboarding/success');
   };
 
-  const handleSkip = async () => {
-    await skipStep('first_expense');
-    await completeOnboarding();
-    router.replace('/(tabs)/expenses');
+  const handleLater = async () => {
+    await skipStep('guided_log');
+    router.push('/onboarding/success');
   };
 
   return (
@@ -67,9 +83,7 @@ export default function FirstExpenseScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <View style={styles.header}>
-        <TouchableOpacity onPress={handleSkip}>
-          <Text style={styles.skipText}>{strings.onboarding.skip}</Text>
-        </TouchableOpacity>
+        <Text style={styles.hint}>{strings.onboarding.guidedLogHint}</Text>
       </View>
 
       <ScrollView
@@ -77,65 +91,51 @@ export default function FirstExpenseScreen() {
         contentContainerStyle={styles.contentContainer}
         keyboardShouldPersistTaps="handled"
       >
-        <Text style={styles.title}>{strings.onboarding.firstExpenseTitle}</Text>
-        <Text style={styles.subtitle}>
-          {strings.onboarding.firstExpenseSubtitle}
-        </Text>
-
-        {/* Amount Input */}
         <View style={styles.amountSection}>
-          <AmountInput
-            value={amount}
-            onChange={setAmount}
-            autoFocus
-          />
+          <AmountInput value={amount} onChange={setAmount} autoFocus />
         </View>
 
-        {/* Category Selection */}
-        <View style={styles.categorySection}>
-          <Text style={styles.categoryLabel}>{strings.onboarding.whatWasItFor}</Text>
-          <View style={styles.categoryGrid}>
-            {QUICK_CATEGORIES.map((cat) => (
-              <TouchableOpacity
-                key={cat.name}
+        <View style={styles.categoryGrid}>
+          {quickCategories.map((cat) => (
+            <TouchableOpacity
+              key={cat.id}
+              style={[
+                styles.categoryChip,
+                selectedCategory?.id === cat.id && styles.categoryChipActive,
+                selectedCategory?.id === cat.id && { borderColor: cat.color },
+              ]}
+              onPress={() => setSelectedCategory(cat)}
+              accessibilityRole="button"
+              accessibilityState={{ selected: selectedCategory?.id === cat.id }}
+            >
+              <View style={[styles.categoryIcon, { backgroundColor: cat.color + '20' }]}>
+                <Ionicons name={cat.icon} size={24} color={cat.color} />
+              </View>
+              <Text
                 style={[
-                  styles.categoryChip,
-                  selectedCategory === cat.name && styles.categoryChipActive,
-                  selectedCategory === cat.name && { borderColor: cat.color },
+                  styles.categoryText,
+                  selectedCategory?.id === cat.id && styles.categoryTextActive,
                 ]}
-                onPress={() => setSelectedCategory(cat.name)}
               >
-                <View
-                  style={[
-                    styles.categoryIcon,
-                    { backgroundColor: cat.color + '20' },
-                  ]}
-                >
-                  <Ionicons name={cat.icon} size={24} color={cat.color} />
-                </View>
-                <Text
-                  style={[
-                    styles.categoryText,
-                    selectedCategory === cat.name && styles.categoryTextActive,
-                  ]}
-                >
-                  {cat.name}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+                {cat.name}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </View>
       </ScrollView>
 
-      {/* Save Button */}
       <View style={[styles.footer, { paddingBottom: insets.bottom + 24 }]}>
         <TouchableOpacity
           style={[styles.button, !canSave && styles.buttonDisabled]}
           onPress={handleSave}
           disabled={!canSave}
+          accessibilityRole="button"
         >
-          <Text style={styles.buttonText}>{strings.onboarding.saveExpense}</Text>
+          <Text style={styles.buttonText}>{strings.expenses.saveExpense}</Text>
           <Ionicons name="checkmark" size={20} color={theme.white} />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={handleLater} accessibilityRole="button" style={styles.plainButton}>
+          <Text style={styles.plainButtonText}>{strings.onboarding.guidedLogLater}</Text>
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
@@ -149,44 +149,26 @@ function createStyles(theme: AppTheme) {
       backgroundColor: theme.background,
     },
     header: {
-      flexDirection: 'row',
-      justifyContent: 'flex-end',
       paddingHorizontal: 20,
       paddingVertical: 16,
     },
-    skipText: {
-      fontSize: 16,
+    hint: {
+      fontSize: 14,
       color: theme.textSecondary,
-      fontWeight: '500',
+      backgroundColor: theme.coachMomentBg,
+      borderRadius: 10,
+      padding: 12,
     },
     content: {
       flex: 1,
     },
     contentContainer: {
       paddingHorizontal: 24,
-      paddingTop: 24,
-    },
-    title: {
-      fontSize: 28,
-      fontWeight: '700',
-      color: theme.text,
-      marginBottom: 8,
-    },
-    subtitle: {
-      fontSize: 16,
-      color: theme.textSecondary,
-      marginBottom: 40,
+      paddingTop: 8,
     },
     amountSection: {
       alignItems: 'center',
-      marginBottom: 48,
-    },
-    categorySection: {},
-    categoryLabel: {
-      fontSize: 15,
-      fontWeight: '600',
-      color: theme.textSecondary,
-      marginBottom: 16,
+      marginBottom: 32,
     },
     categoryGrid: {
       flexDirection: 'row',
@@ -228,6 +210,7 @@ function createStyles(theme: AppTheme) {
       paddingHorizontal: 24,
       paddingTop: 16,
       backgroundColor: theme.background,
+      alignItems: 'center',
     },
     button: {
       flexDirection: 'row',
@@ -237,6 +220,7 @@ function createStyles(theme: AppTheme) {
       paddingVertical: 18,
       borderRadius: 16,
       gap: 8,
+      width: '100%',
     },
     buttonDisabled: {
       opacity: 0.5,
@@ -245,6 +229,16 @@ function createStyles(theme: AppTheme) {
       fontSize: 18,
       fontWeight: '700',
       color: theme.white,
+    },
+    plainButton: {
+      marginTop: 10,
+      minHeight: 44,
+      justifyContent: 'center',
+    },
+    plainButtonText: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: theme.textSecondary,
     },
   });
 }
