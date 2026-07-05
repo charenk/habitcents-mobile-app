@@ -188,7 +188,7 @@ function createStyles(theme: AppTheme) {
       color: theme.primary,
     },
     viewTabInactive: {
-      color: theme.textTertiary,
+      color: theme.textSecondary,
     },
     panelWrap: {
       position: 'absolute',

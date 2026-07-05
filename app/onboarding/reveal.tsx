@@ -231,7 +231,7 @@ function createStyles(theme: AppTheme) {
     },
     honesty: {
       fontSize: 12,
-      color: theme.textTertiary,
+      color: theme.textSecondary,
       textAlign: 'center',
       marginTop: 16,
       lineHeight: 17,
