@@ -180,12 +180,16 @@ export function SpendingOverTimeContent({ data }: SpendingOverTimeContentProps) 
   );
 }
 
-// Habit Streaks Widget Content
+// Habit Streaks Widget Content. Rewired to habit-logging v2 (P2-4 cleanup):
+// the legacy currentStreak/longestStreak fields on HabitChangeGoal are never
+// populated by the v2 skip/slip flow (contexts/HabitsContext.tsx), so a habit
+// tracked entirely through v2 showed an empty/zero badge here. totalSkips is
+// the real, always-current v2 count (never decremented except a same-day
+// correction) and is the right "how much progress" number for this widget.
 type HabitStreaksContentProps = {
   data: Array<{
     habitName: string;
-    currentStreak: number;
-    longestStreak: number;
+    totalSkips: number;
   }>;
 };
 
@@ -209,8 +213,8 @@ export function HabitStreaksContent({ data }: HabitStreaksContentProps) {
             {habit.habitName}
           </Text>
           <View style={styles.streakBadge}>
-            <Ionicons name="flame" size={14} color={theme.iconOrange} />
-            <Text style={styles.streakCount}>{habit.currentStreak}</Text>
+            <Ionicons name="checkmark-circle" size={14} color={theme.primary} />
+            <Text style={styles.streakCount}>{habit.totalSkips}</Text>
           </View>
         </View>
       ))}

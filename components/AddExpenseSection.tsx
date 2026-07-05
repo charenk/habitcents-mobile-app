@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo, useEffect } from 'react';
+import React, { useState, useRef, useMemo, useEffect, forwardRef, useImperativeHandle } from 'react';
 import {
   View,
   Text,
@@ -9,12 +9,14 @@ import {
   ScrollView,
   Keyboard,
 } from 'react-native';
+import Reanimated, { useSharedValue, useAnimatedStyle, withTiming, withSequence } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCategories } from '@/contexts/CategoriesContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
-import { AmountInput } from './AmountInput';
+import { AmountInput, type AmountInputHandle } from './AmountInput';
 import { RecurrenceField } from './RecurrenceField';
+import { useReducedMotion, hapticSuccess } from '@/utils/motion';
 import type { ExpenseCategory, AddExpenseInput, RecurrenceFrequency } from '@/types/expense';
 import { strings } from '@/constants/strings';
 
@@ -23,11 +25,21 @@ type AddExpenseSectionProps = {
   onCancel: () => void;
 };
 
-export function AddExpenseSection({ onSave, onCancel }: AddExpenseSectionProps) {
+export type AddExpenseSectionHandle = {
+  focusAmount: () => void;
+};
+
+export const AddExpenseSection = forwardRef<AddExpenseSectionHandle, AddExpenseSectionProps>(
+  function AddExpenseSection({ onSave, onCancel }, ref) {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const { getVisibleCategories } = useCategories();
   const { expenses } = useExpenses();
+  const amountRef = useRef<AmountInputHandle>(null);
+
+  useImperativeHandle(ref, () => ({
+    focusAmount: () => amountRef.current?.focus(),
+  }));
 
   const categories = getVisibleCategories();
 
@@ -36,6 +48,16 @@ export function AddExpenseSection({ onSave, onCancel }: AddExpenseSectionProps) 
   const [merchant, setMerchant] = useState('');
   const [title, setTitle] = useState('');
   const [recurrence, setRecurrence] = useState<RecurrenceFrequency | null>(null);
+
+  // Log-save motion (Direction C, spec 05): the Save button morphs to a
+  // checkmark for a beat, with a success haptic, before the form resets.
+  // Reduced motion collapses this to an instant label swap with no scale.
+  const reduceMotion = useReducedMotion();
+  const [saved, setSaved] = useState(false);
+  const saveScale = useSharedValue(1);
+  const saveButtonAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: saveScale.value }],
+  }));
 
   const resetForm = () => {
     setAmount(0);
@@ -91,7 +113,7 @@ export function AddExpenseSection({ onSave, onCancel }: AddExpenseSectionProps) 
   });
 
   const handleSave = () => {
-    if (amount === 0) return;
+    if (amount === 0 || saved) return;
 
     const category = (selectedCategory?.name ?? 'Other') as ExpenseCategory;
     const merchantValue = merchant.trim();
@@ -109,7 +131,26 @@ export function AddExpenseSection({ onSave, onCancel }: AddExpenseSectionProps) 
       reminderEnabled: false,
     });
 
-    resetForm();
+    hapticSuccess();
+    setSaved(true);
+    if (reduceMotion) {
+      // Instant fallback: no scale, just the label swap, still visible for
+      // the same beat so the confirmation isn't lost, then reset.
+      setTimeout(() => {
+        setSaved(false);
+        resetForm();
+      }, 500);
+      return;
+    }
+
+    saveScale.value = withSequence(
+      withTiming(1.06, { duration: 120 }),
+      withTiming(1, { duration: 160 })
+    );
+    setTimeout(() => {
+      setSaved(false);
+      resetForm();
+    }, 550);
   };
 
   const handleCancel = () => {
@@ -120,7 +161,7 @@ export function AddExpenseSection({ onSave, onCancel }: AddExpenseSectionProps) 
 
   return (
     <View style={styles.container}>
-      <AmountInput value={amount} onChange={setAmount} />
+      <AmountInput ref={amountRef} value={amount} onChange={setAmount} />
 
       <ScrollView
         horizontal
@@ -191,19 +232,37 @@ export function AddExpenseSection({ onSave, onCancel }: AddExpenseSectionProps) 
             <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
               <Text style={styles.cancelButtonText}>{strings.common.cancel}</Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.saveButton, amount === 0 && styles.saveButtonDisabled]}
-              onPress={handleSave}
-              disabled={amount === 0}
+            <Reanimated.View
+              style={[
+                styles.saveButtonWrap,
+                !reduceMotion && saveButtonAnimatedStyle,
+              ]}
             >
-              <Text style={styles.saveButtonText}>{strings.expenses.saveExpense}</Text>
-            </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.saveButton,
+                  amount === 0 && styles.saveButtonDisabled,
+                  saved && styles.saveButtonSaved,
+                ]}
+                onPress={handleSave}
+                disabled={amount === 0 || saved}
+              >
+                {saved ? (
+                  <View style={styles.saveButtonSavedRow}>
+                    <Ionicons name="checkmark" size={18} color={theme.white} />
+                    <Text style={styles.saveButtonText}>{strings.expenses.savedConfirmation}</Text>
+                  </View>
+                ) : (
+                  <Text style={styles.saveButtonText}>{strings.expenses.saveExpense}</Text>
+                )}
+              </TouchableOpacity>
+            </Reanimated.View>
           </View>
         </View>
       </Animated.View>
     </View>
   );
-}
+});
 
 function createStyles(theme: ReturnType<typeof useTheme>) {
   return StyleSheet.create({
@@ -306,8 +365,10 @@ function createStyles(theme: ReturnType<typeof useTheme>) {
       fontWeight: '600',
       color: theme.textSecondary,
     },
-    saveButton: {
+    saveButtonWrap: {
       flex: 2,
+    },
+    saveButton: {
       paddingVertical: 14,
       borderRadius: 12,
       backgroundColor: theme.primary,
@@ -315,6 +376,14 @@ function createStyles(theme: ReturnType<typeof useTheme>) {
     },
     saveButtonDisabled: {
       opacity: 0.5,
+    },
+    saveButtonSaved: {
+      backgroundColor: theme.primaryDark,
+    },
+    saveButtonSavedRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
     },
     saveButtonText: {
       fontSize: 16,

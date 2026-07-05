@@ -10,6 +10,7 @@ import { ExpensesProvider } from '@/contexts/ExpensesContext';
 import { HabitsProvider } from '@/contexts/HabitsContext';
 import { ReportsProvider } from '@/contexts/ReportsContext';
 import { OnboardingProvider } from '@/contexts/OnboardingContext';
+import { PrivacyOverlay } from '@/components/PrivacyOverlay';
 
 function StatusBarThemed() {
   const isDark = useIsDark();
@@ -61,6 +62,11 @@ export default function RootLayout() {
                   <Stack.Screen name="category" />
                   <Stack.Screen name="leak-scan" />
                 </Stack>
+                {/* Mounted last so it stacks visually above the Stack's screens
+                    (spec 05 section 7): must exist before the iOS app-switcher
+                    snapshot, so it renders unconditionally at the root rather
+                    than per-screen. */}
+                <PrivacyOverlay />
               </OnboardingProvider>
             </ReportsProvider>
           </HabitsProvider>

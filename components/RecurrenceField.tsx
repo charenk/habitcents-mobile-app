@@ -99,7 +99,7 @@ function createStyles(theme: AppTheme) {
       width: 20,
       height: 20,
       borderRadius: 10,
-      backgroundColor: '#FFFFFF',
+      backgroundColor: theme.white,
     },
     knobOn: {
       alignSelf: 'flex-end',

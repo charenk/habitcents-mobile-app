@@ -21,9 +21,16 @@ export const strings = {
     upcoming: 'Upcoming',
     merchantPlaceholder: 'Merchant (e.g. Starbucks)',
     notePlaceholder: 'Note (optional)',
-    saveExpense: 'Save Expense',
+    saveExpense: 'Save expense',
+    // Log-save motion (Direction C, spec 05): the button label morphs to this
+    // for a beat right after a successful save, then the form resets.
+    savedConfirmation: 'Saved',
     all: 'All',
     editAccessibilityLabel: (title: string, amountLabel: string) => `Edit ${title}, ${amountLabel}`,
+    // Zero-expense empty state (spec 05 section 5.1).
+    emptyTitle: 'No expenses yet',
+    emptyBody: 'Log your first in about 10 seconds. Amount first, then tap a category.',
+    emptyCta: 'Add an expense',
   },
   upcoming: {
     emptyTitle: 'Nothing upcoming',
@@ -35,35 +42,13 @@ export const strings = {
   },
   habits: {
     title: 'Your Habits',
-    subtitle: (activeCount: number, streakSuffix: string) => `${activeCount} active${streakSuffix}`,
-    streakSuffix: (streakTotal: number) => ` | ${streakTotal} day streak`,
-    dollarsKept: 'DOLLARS KEPT',
-    dollarsKeptCaption: "from the habits you're breaking",
-    sectionInsights: 'Insights',
-    sectionActiveChanges: 'Active Changes',
     loading: 'Analyzing your spending patterns...',
-    emptyTitle: 'No habits detected yet',
-    emptySubtitle:
-      "Keep adding expenses and we'll identify your spending patterns automatically.",
-    tip: 'Tip: Add at least 5 expenses at the same merchant to detect a habit.',
-    // HabitProgressCard
-    active: 'Active',
-    reduceToAmount: (target: string) => `Reduce to ${target}/month`,
-    reduceToFrequency: (target: number | undefined) => `Reduce to ${target}x/week`,
-    eliminate: 'Eliminate this habit',
-    substitute: (target: string | undefined) => `Replace with ${target}`,
-    trackThisHabit: 'Track this habit',
-    savingsProgress: 'Savings Progress',
-    logToday: 'Log Today',
-    // HabitInsightCard
-    trackAction: 'Track',
-    dismissAction: 'Dismiss',
-    perMonth: 'per month',
-    perDay: 'day',
-    perWeek: 'week',
-    perMonthUnit: 'month',
-    perUnit: (unit: string) => `per ${unit}`,
-    swipeHint: 'Swipe to track or dismiss',
+    // Pre-detection progress state (spec 05 section 5.2): shown on the Habits
+    // tab empty state once logging has started but no leak has been detected
+    // yet.
+    spottingYourLeak: 'Spotting your leak',
+    logsAtSamePlace: (n: number, threshold: number) => `${n} of ${threshold} logs`,
+    logsAtSamePlaceBody: 'Around 4 logs at one merchant is enough to see a pattern. Keep logging.',
   },
   // Habit logging v2 (docs/design-package-phase2/01-habit-logging-spec.md).
   // Vocabulary is load-bearing: skip is the win, slip is neutral and never
@@ -263,33 +248,16 @@ export const strings = {
     timeRangeYear: '1Y',
   },
   settings: {
-    account: 'Account',
-    profile: 'Profile',
-    notifications: 'Notifications',
     preferences: 'Preferences',
-    appearance: 'Appearance',
     currency: 'Currency',
-    privacy: 'Privacy',
     about: 'About',
+    privacyPolicy: 'Privacy policy',
     version: 'Version',
     versionValue: '1.0.0',
-    developer: 'Developer',
-    resetOnboarding: 'Reset Onboarding',
-    // Theme mode labels
-    light: 'Light',
-    dark: 'Dark',
-    system: 'System',
     // Currency alert
     currencyAlertTitle: 'Currency',
     currencyAlertMessage: 'Choose your currency',
     currencyOption: (name: string, symbol: string) => `${name} (${symbol})`,
-    // Appearance alert
-    appearanceAlertTitle: 'Appearance',
-    appearanceAlertMessage: 'Choose theme',
-    // Reset onboarding alert
-    onboardingResetTitle: 'Onboarding Reset',
-    onboardingResetMessage: 'Close and reopen the app to see the welcome screen.',
-    restartNow: 'Restart Now',
   },
   addCategoryModal: {
     editCategory: 'Edit Category',

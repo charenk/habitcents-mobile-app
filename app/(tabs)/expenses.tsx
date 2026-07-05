@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -13,7 +13,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
 import { useCategories } from '@/contexts/CategoriesContext';
 import type { AppTheme } from '@/constants/theme';
-import { AddExpenseSection } from '@/components/AddExpenseSection';
+import { AddExpenseSection, type AddExpenseSectionHandle } from '@/components/AddExpenseSection';
 import { TodayExpensesPanel } from '@/components/TodayExpensesPanel';
 import { UpcomingPanel } from '@/components/UpcomingPanel';
 import type { AddExpenseInput } from '@/types/expense';
@@ -37,6 +37,7 @@ export default function ExpensesScreen() {
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [activeCategoryId, setActiveCategoryId] = useState<string>('all');
   const [activeView, setActiveView] = useState<'recent' | 'upcoming'>('recent');
+  const addExpenseRef = useRef<AddExpenseSectionHandle>(null);
 
   // Recompute the date pill when the app returns to the foreground, so it never
   // shows yesterday after being backgrounded overnight (M2).
@@ -107,7 +108,7 @@ export default function ExpensesScreen() {
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
-            <AddExpenseSection onSave={handleSaveExpense} onCancel={handleCancelExpense} />
+            <AddExpenseSection ref={addExpenseRef} onSave={handleSaveExpense} onCancel={handleCancelExpense} />
           </ScrollView>
 
           {/* Slidable Expenses Panel */}
@@ -117,6 +118,21 @@ export default function ExpensesScreen() {
               categories={categories}
               activeCategoryId={activeCategoryId}
               onCategoryChange={setActiveCategoryId}
+              emptyState={
+                expenses.length === 0 ? (
+                  <View style={styles.emptyContainer}>
+                    <Text style={styles.emptyTitle}>{strings.expenses.emptyTitle}</Text>
+                    <Text style={styles.emptyBody}>{strings.expenses.emptyBody}</Text>
+                    <TouchableOpacity
+                      style={styles.emptyCta}
+                      onPress={() => addExpenseRef.current?.focusAmount()}
+                      accessibilityRole="button"
+                    >
+                      <Text style={styles.emptyCtaText}>{strings.expenses.emptyCta}</Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : null
+              }
             />
           </View>
         </>
@@ -179,6 +195,38 @@ function createStyles(theme: AppTheme) {
       left: 0,
       right: 0,
       bottom: 0,
+    },
+    emptyContainer: {
+      paddingVertical: 28,
+      paddingHorizontal: 32,
+      alignItems: 'center',
+    },
+    emptyTitle: {
+      fontSize: 17,
+      fontWeight: '600',
+      color: theme.text,
+      textAlign: 'center',
+    },
+    emptyBody: {
+      fontSize: 14,
+      color: theme.textSecondary,
+      marginTop: 6,
+      textAlign: 'center',
+      lineHeight: 20,
+    },
+    emptyCta: {
+      marginTop: 16,
+      minHeight: 44,
+      paddingHorizontal: 20,
+      borderRadius: 12,
+      backgroundColor: theme.primary,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    emptyCtaText: {
+      fontSize: 15,
+      fontWeight: '600',
+      color: theme.white,
     },
   });
 }

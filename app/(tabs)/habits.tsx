@@ -21,6 +21,7 @@ import { PartialSlipSheet } from '@/components/habit-logging/PartialSlipSheet';
 import { CoachMomentSlot } from '@/components/habit-logging/CoachMomentSlot';
 import { atMidnight, dayStateFor, FREE_TIER_HABIT_LIMIT } from '@/utils/habitLogging';
 import { cardText, type CoachMomentCardId } from '@/utils/coachMoments';
+import { progressTowardDetection } from '@/utils/habitDetection';
 import type { AppTheme } from '@/constants/theme';
 import type { DetectedHabit, HabitChangeGoal } from '@/types/habit';
 import { strings } from '@/constants/strings';
@@ -63,6 +64,7 @@ export default function HabitsScreen() {
     getGoalByHabitId,
     getHabitById,
     lastMilestone,
+    clearLastMilestone,
     lastCoachMoment,
     clearLastCoachMoment,
     maybeShowDetectionMoment,
@@ -73,10 +75,16 @@ export default function HabitsScreen() {
 
   // Coach Moment (P2-2, acceptance test 2): clear on blur (tab switch away)
   // so returning to an already-answered card does not re-show the same card.
+  // lastMilestone has the identical lifecycle gap (state-lifecycle bug fixed
+  // here alongside the Coach Moments fix it was originally applied for): clear
+  // it the same way so a milestone tint doesn't persist across navigation.
   useFocusEffect(
     useCallback(() => {
-      return () => clearLastCoachMoment();
-    }, [clearLastCoachMoment])
+      return () => {
+        clearLastCoachMoment();
+        clearLastMilestone();
+      };
+    }, [clearLastCoachMoment, clearLastMilestone])
   );
 
   useEffect(() => {
@@ -187,6 +195,14 @@ export default function HabitsScreen() {
   const totalKept = goals.reduce((sum, g) => sum + (g.kept || 0), 0);
 
   const isEmpty = sections.length === 0;
+  // Pre-detection progress state (spec 05 section 5.2): once logging has
+  // started but no leak has been detected yet, the empty state shows real
+  // progress toward the same threshold detectHabits() uses, never a fake
+  // habit card.
+  const detectionProgress = useMemo(
+    () => (isEmpty && expenses.length > 0 ? progressTowardDetection(expenses) : null),
+    [isEmpty, expenses]
+  );
 
   const renderItem = ({ item, section }: { item: DetectedHabit | BreakingItem; section: HabitSection }) => {
     if (section.type === 'leaks') {
@@ -243,15 +259,43 @@ export default function HabitsScreen() {
         </View>
       ) : isEmpty ? (
         <View style={styles.emptyContainer}>
-          <Ionicons name="analytics-outline" size={64} color={theme.textTertiary} />
-          <Text style={styles.emptyTitle}>{strings.habitLogging.emptyLeaksTitle}</Text>
-          <Text style={styles.emptySubtitle}>{strings.habitLogging.emptyLeaksSubtitle}</Text>
+          {detectionProgress ? (
+            <View style={styles.progressCard}>
+              <Text style={styles.progressTitle}>{strings.habits.spottingYourLeak}</Text>
+              <View style={styles.progressMeterTrack}>
+                <View
+                  style={[
+                    styles.progressMeterFill,
+                    { width: `${(detectionProgress.n / detectionProgress.threshold) * 100}%` },
+                  ]}
+                />
+              </View>
+              <Text style={styles.progressCount}>
+                {strings.habits.logsAtSamePlace(detectionProgress.n, detectionProgress.threshold)}
+                <Text style={styles.progressCountSuffix}> at the same place</Text>
+              </Text>
+              <Text style={styles.progressBody}>{strings.habits.logsAtSamePlaceBody}</Text>
+            </View>
+          ) : (
+            <>
+              <Ionicons name="analytics-outline" size={64} color={theme.textTertiary} />
+              <Text style={styles.emptyTitle}>{strings.habitLogging.emptyLeaksTitle}</Text>
+              <Text style={styles.emptySubtitle}>{strings.habitLogging.emptyLeaksSubtitle}</Text>
+            </>
+          )}
           <TouchableOpacity
             style={styles.emptyCta}
             onPress={() => router.push('/(tabs)/expenses')}
             accessibilityRole="button"
           >
             <Text style={styles.emptyCtaText}>{strings.habitLogging.logAnExpense}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.reAuditLink}
+            onPress={() => router.push('/onboarding/welcome')}
+            accessibilityRole="button"
+          >
+            <Text style={styles.reAuditLinkText}>{strings.onboarding.reAuditLink}</Text>
           </TouchableOpacity>
           {firstLogCardId && (
             <View style={styles.emptyCoachMoment}>
@@ -378,6 +422,60 @@ function createStyles(theme: AppTheme) {
     emptyCoachMoment: {
       alignSelf: 'stretch',
       marginTop: 24,
+    },
+    reAuditLink: {
+      marginTop: 14,
+      minHeight: 44,
+      justifyContent: 'center',
+    },
+    reAuditLinkText: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: theme.textSecondary,
+    },
+    progressCard: {
+      alignSelf: 'stretch',
+      backgroundColor: theme.surface,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: theme.border,
+      padding: 20,
+      alignItems: 'flex-start',
+    },
+    progressTitle: {
+      fontSize: 17,
+      fontWeight: '600',
+      color: theme.text,
+    },
+    progressMeterTrack: {
+      alignSelf: 'stretch',
+      height: 6,
+      borderRadius: 3,
+      backgroundColor: theme.border,
+      marginTop: 14,
+      overflow: 'hidden',
+    },
+    progressMeterFill: {
+      height: 6,
+      borderRadius: 3,
+      backgroundColor: theme.primary,
+    },
+    progressCount: {
+      fontSize: 15,
+      fontWeight: '700',
+      color: theme.text,
+      marginTop: 12,
+    },
+    progressCountSuffix: {
+      fontSize: 15,
+      fontWeight: '400',
+      color: theme.textSecondary,
+    },
+    progressBody: {
+      fontSize: 14,
+      color: theme.textSecondary,
+      marginTop: 6,
+      lineHeight: 20,
     },
   });
 }

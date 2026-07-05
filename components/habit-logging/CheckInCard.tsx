@@ -1,5 +1,6 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import Reanimated, { useSharedValue, useAnimatedStyle, withTiming, withSequence } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -13,6 +14,7 @@ import {
   weekStats,
 } from '@/utils/habitLogging';
 import { cardText, isMilestoneCard, type CoachMomentCardId } from '@/utils/coachMoments';
+import { useReducedMotion, hapticSuccess } from '@/utils/motion';
 import type { AppTheme } from '@/constants/theme';
 import type { DetectedHabit, HabitChangeGoal } from '@/types/habit';
 import { strings } from '@/constants/strings';
@@ -43,6 +45,86 @@ function chapterCopy(chapter: ReturnType<typeof chapterForTotal>): string {
     case 'Rewiring': return strings.habitLogging.chapterRewiring;
     case 'Rewired': return strings.habitLogging.chapterRewired;
   }
+}
+
+/**
+ * The skip/slip button pair, shared by the daily and weekly/monthly question
+ * blocks below. Owns the skip motion (Direction C, spec 05; the Motion Layer
+ * prototype): a press spring on the skip button, an expanding ring behind it,
+ * and a success haptic. The Kept hero's own count-up/pulse (KeptHero.tsx) and
+ * the week strip's dot pop (WeekStrip.tsx) fire independently off the
+ * resulting data change, so this component only owns the button-local
+ * motion. Reduced motion collapses the spring and ring to nothing; the
+ * haptic still fires since it is not visual.
+ */
+function SkipSlipButtons({
+  skipLabel,
+  onSkip,
+  onSlip,
+  styles,
+  theme,
+}: {
+  skipLabel: string;
+  onSkip: () => void;
+  onSlip: () => void;
+  styles: ReturnType<typeof createStyles>;
+  theme: AppTheme;
+}) {
+  const reduceMotion = useReducedMotion();
+  const [ringKey, setRingKey] = useState(0);
+  const [ringVisible, setRingVisible] = useState(false);
+  const scale = useSharedValue(1);
+  const ringScale = useSharedValue(0.3);
+  const ringOpacity = useSharedValue(0);
+  const buttonAnimatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  const ringAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: ringScale.value }],
+    opacity: ringOpacity.value,
+  }));
+
+  const handleSkip = () => {
+    hapticSuccess();
+    if (reduceMotion) {
+      onSkip();
+      return;
+    }
+    scale.value = withSequence(
+      withTiming(0.96, { duration: 100 }),
+      withTiming(1, { duration: 140 })
+    );
+    ringScale.value = 0.3;
+    ringOpacity.value = 0.5;
+    setRingKey((k) => k + 1);
+    setRingVisible(true);
+    ringScale.value = withTiming(2.6, { duration: 550 });
+    ringOpacity.value = withTiming(0, { duration: 550 });
+    // Unmount the ring view on the JS side once its animation is done. A
+    // plain timeout (rather than the reanimated callback) keeps this
+    // component's re-render logic entirely on the JS thread, which is
+    // simpler and accurate enough for a purely decorative unmount.
+    setTimeout(() => setRingVisible(false), 560);
+    onSkip();
+  };
+
+  return (
+    <View style={styles.buttonsRow}>
+      <Reanimated.View style={[styles.skipButtonWrap, !reduceMotion && buttonAnimatedStyle]}>
+        {ringVisible && (
+          <Reanimated.View
+            key={ringKey}
+            pointerEvents="none"
+            style={[styles.skipRing, ringAnimatedStyle, { borderColor: theme.primary }]}
+          />
+        )}
+        <TouchableOpacity style={styles.primaryButton} onPress={handleSkip} accessibilityRole="button">
+          <Text style={styles.primaryButtonText}>{skipLabel}</Text>
+        </TouchableOpacity>
+      </Reanimated.View>
+      <TouchableOpacity style={styles.secondaryButton} onPress={onSlip} accessibilityRole="button">
+        <Text style={styles.secondaryButtonText}>{strings.habitLogging.boughtItButton}</Text>
+      </TouchableOpacity>
+    </View>
+  );
 }
 
 /**
@@ -121,14 +203,13 @@ export function CheckInCard({
         <View style={styles.questionBlock}>
           <Text style={styles.question}>{strings.habitLogging.dailyQuestion}</Text>
           {goal.firstRun && <Text style={styles.firstRun}>{strings.habitLogging.firstRunLine}</Text>}
-          <View style={styles.buttonsRow}>
-            <TouchableOpacity style={styles.primaryButton} onPress={onSkip} accessibilityRole="button">
-              <Text style={styles.primaryButtonText}>{strings.habitLogging.skipButton(skipValueLabel)}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.secondaryButton} onPress={onSlip} accessibilityRole="button">
-              <Text style={styles.secondaryButtonText}>{strings.habitLogging.boughtItButton}</Text>
-            </TouchableOpacity>
-          </View>
+          <SkipSlipButtons
+            skipLabel={strings.habitLogging.skipButton(skipValueLabel)}
+            onSkip={onSkip}
+            onSlip={onSlip}
+            styles={styles}
+            theme={theme}
+          />
         </View>
       )}
 
@@ -143,14 +224,13 @@ export function CheckInCard({
             )}
           </View>
           {goal.firstRun && <Text style={styles.firstRun}>{strings.habitLogging.firstRunLine}</Text>}
-          <View style={styles.buttonsRow}>
-            <TouchableOpacity style={styles.primaryButton} onPress={onSkip} accessibilityRole="button">
-              <Text style={styles.primaryButtonText}>{strings.habitLogging.skipOneButton}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.secondaryButton} onPress={onSlip} accessibilityRole="button">
-              <Text style={styles.secondaryButtonText}>{strings.habitLogging.boughtItButton}</Text>
-            </TouchableOpacity>
-          </View>
+          <SkipSlipButtons
+            skipLabel={strings.habitLogging.skipOneButton}
+            onSkip={onSkip}
+            onSlip={onSlip}
+            styles={styles}
+            theme={theme}
+          />
         </View>
       )}
 
@@ -365,8 +445,20 @@ function createStyles(theme: AppTheme) {
       gap: 8,
       marginTop: 10,
     },
-    primaryButton: {
+    skipButtonWrap: {
       flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    skipRing: {
+      position: 'absolute',
+      width: 60,
+      height: 60,
+      borderRadius: 30,
+      borderWidth: 2,
+    },
+    primaryButton: {
+      alignSelf: 'stretch',
       minHeight: 46,
       borderRadius: 12,
       backgroundColor: theme.primary,

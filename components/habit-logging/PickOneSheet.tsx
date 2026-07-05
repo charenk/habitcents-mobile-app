@@ -60,7 +60,8 @@ export function PickOneSheet({
   if (!habit) return null;
 
   const isDaily = habit.frequency === 'daily';
-  const parsedCents = Math.max(0, Math.round(parseFloat(text || '0') * 100));
+  const parsed = parseFloat(text);
+  const parsedCents = Number.isFinite(parsed) ? Math.max(0, Math.round(parsed * 100)) : 0;
   const valueEdited = text !== prefill;
 
   return (

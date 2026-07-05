@@ -291,6 +291,24 @@ function createHabitName(merchant: string): string {
 }
 
 /**
+ * Progress toward the first detection (P2-4, spec 05 section 5.2). Used by
+ * the Habits tab pre-detection empty state ("Spotting your leak, n of 4
+ * logs") so the copy is never a fabricated number: n is the largest
+ * same-merchant group within the same detection window detectHabits() itself
+ * uses, capped at the detection threshold since the UI never needs to show
+ * more than "enough".
+ */
+export function progressTowardDetection(expenses: Expense[]): { n: number; threshold: number } {
+  const recentExpenses = filterRecentExpenses(expenses);
+  const merchantGroups = groupByMerchant(recentExpenses);
+  let maxGroupSize = 0;
+  for (const groupExpenses of merchantGroups.values()) {
+    if (groupExpenses.length > maxGroupSize) maxGroupSize = groupExpenses.length;
+  }
+  return { n: Math.min(maxGroupSize, MIN_OCCURRENCES), threshold: MIN_OCCURRENCES };
+}
+
+/**
  * Main habit detection function
  */
 export function detectHabits(

@@ -178,8 +178,10 @@ function createStyles(theme: AppTheme) {
       color: theme.white,
     },
     quietNote: {
+      // P2-4 spec 05 section 6: readable captions use textSecondary, not
+      // textTertiary (fails WCAG AA on this background).
       fontSize: 12,
-      color: theme.textTertiary,
+      color: theme.textSecondary,
       textAlign: 'center',
       marginTop: 20,
       lineHeight: 17,

@@ -94,3 +94,17 @@ export function daysUntilLabel(daysUntil: number): string {
   if (daysUntil === 1) return 'Tomorrow';
   return `in ${daysUntil} days`;
 }
+
+/**
+ * Pre-coverage guard for the Reports Monthly Projection widget (P2-4, spec
+ * 05 section 5.3): a projection extrapolated from a partial first month is a
+ * fabricated number dressed as a real one. True once at least one full
+ * calendar month has elapsed since the earliest expense (i.e. there is at
+ * least one expense dated before the start of the current calendar month).
+ */
+export function hasFullMonthOfData(expenses: Expense[]): boolean {
+  if (expenses.length === 0) return false;
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  return expenses.some((e) => e.date < monthStart);
+}

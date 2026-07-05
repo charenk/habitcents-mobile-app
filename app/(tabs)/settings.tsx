@@ -1,22 +1,18 @@
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
-import { useRouter } from 'expo-router';
-import { useTheme, useThemeMode } from '@/contexts/ThemeContext';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Linking } from 'react-native';
+import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { CURRENCIES } from '@/utils/currency';
-import { clearOnboarding } from '@/utils/storage';
 import { strings } from '@/constants/strings';
 
-const themeModeLabel: Record<string, string> = {
-  light: strings.settings.light,
-  dark: strings.settings.dark,
-  system: strings.settings.system,
-};
+// P2-4 (docs/design-package-phase2/05-p2-4-design-unification.md, section 3):
+// two sections, three rows. Profile, Notifications, Appearance, the dead
+// Privacy row, and the entire Developer section (including Reset Onboarding)
+// are removed; see the spec for reasoning per row.
+const PRIVACY_POLICY_URL = 'https://habitcents.app/privacy';
 
 export default function SettingsScreen() {
-  const router = useRouter();
   const theme = useTheme();
-  const { themeMode, setThemeMode } = useThemeMode();
   const { currency, setCurrency } = useCurrency();
 
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -31,68 +27,28 @@ export default function SettingsScreen() {
     ]);
   };
 
-  const handleAppearancePress = () => {
-    Alert.alert(
-      strings.settings.appearanceAlertTitle,
-      strings.settings.appearanceAlertMessage,
-      [
-        { text: strings.settings.light, onPress: () => setThemeMode('light') },
-        { text: strings.settings.dark, onPress: () => setThemeMode('dark') },
-        { text: strings.settings.system, onPress: () => setThemeMode('system') },
-        { text: strings.common.cancel, style: 'cancel' as const },
-      ]
-    );
-  };
-
-  const handleResetOnboarding = async () => {
-    await clearOnboarding();
-    Alert.alert(
-      strings.settings.onboardingResetTitle,
-      strings.settings.onboardingResetMessage,
-      [
-        { text: strings.settings.restartNow, onPress: () => router.replace('/') },
-        { text: strings.common.ok },
-      ]
-    );
+  const handlePrivacyPolicyPress = () => {
+    Linking.openURL(PRIVACY_POLICY_URL).catch(() => {});
   };
 
   return (
     <View style={styles.container}>
       <View style={styles.group}>
-        <Text style={styles.groupTitle}>{strings.settings.account}</Text>
-        <View style={styles.row}>
-          <Text style={styles.rowText}>{strings.settings.profile}</Text>
-        </View>
-        <View style={styles.row}>
-          <Text style={styles.rowText}>{strings.settings.notifications}</Text>
-        </View>
-      </View>
-      <View style={styles.group}>
         <Text style={styles.groupTitle}>{strings.settings.preferences}</Text>
-        <TouchableOpacity style={styles.row} onPress={handleAppearancePress}>
-          <Text style={styles.rowText}>{strings.settings.appearance}</Text>
-          <Text style={styles.rowValue}>{themeModeLabel[themeMode]}</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.row} onPress={handleCurrencyPress}>
+        <TouchableOpacity style={styles.row} onPress={handleCurrencyPress} accessibilityRole="button">
           <Text style={styles.rowText}>{strings.settings.currency}</Text>
           <Text style={styles.rowValue}>{currency}</Text>
         </TouchableOpacity>
-        <View style={styles.row}>
-          <Text style={styles.rowText}>{strings.settings.privacy}</Text>
-        </View>
       </View>
       <View style={styles.group}>
         <Text style={styles.groupTitle}>{strings.settings.about}</Text>
+        <TouchableOpacity style={styles.row} onPress={handlePrivacyPolicyPress} accessibilityRole="button">
+          <Text style={styles.rowText}>{strings.settings.privacyPolicy}</Text>
+        </TouchableOpacity>
         <View style={styles.row}>
           <Text style={styles.rowText}>{strings.settings.version}</Text>
           <Text style={styles.rowValue}>{strings.settings.versionValue}</Text>
         </View>
-      </View>
-      <View style={styles.group}>
-        <Text style={styles.groupTitle}>{strings.settings.developer}</Text>
-        <TouchableOpacity style={styles.row} onPress={handleResetOnboarding}>
-          <Text style={styles.dangerText}>{strings.settings.resetOnboarding}</Text>
-        </TouchableOpacity>
       </View>
     </View>
   );
@@ -134,10 +90,6 @@ function createStyles(theme: ReturnType<typeof useTheme>) {
     rowValue: {
       fontSize: 16,
       color: theme.textSecondary,
-    },
-    dangerText: {
-      fontSize: 16,
-      color: theme.danger,
     },
   });
 }

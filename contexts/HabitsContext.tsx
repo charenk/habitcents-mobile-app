@@ -101,6 +101,15 @@ type HabitsContextValue = {
   /** The milestone threshold newly crossed by the most recent answer, if any. */
   lastMilestone: { goalId: string; threshold: 10 | 30 | 50 | 66 } | null;
   /**
+   * Clears `lastMilestone`. Same state-lifecycle gap the Coach Moments build
+   * fixed for `lastCoachMoment` (see `clearLastCoachMoment` below): without
+   * this, a milestone tint/headline shown once persists across tab navigation
+   * because nothing ever resets it, so returning to an already-milestoned
+   * card re-shows a stale milestone. Callers clear this on screen blur via the
+   * same useFocusEffect that already calls clearLastCoachMoment.
+   */
+  clearLastMilestone: () => void;
+  /**
    * The Coach Moment card selected for the most recent answer on this goal,
    * if any (P2-2, docs/design-package-phase2/04-p2-2-coach-moments.md). Null
    * once the goal has been re-rendered without a fresh answer, so the card
@@ -574,6 +583,8 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
     if (crossed) {
       track('milestone_reached', { milestone: crossed });
       setLastMilestone({ goalId, threshold: crossed });
+    } else {
+      setLastMilestone(null);
     }
     await applyCheckInCoachMoment(goalId, state, yesterday, goal.dayLogs, crossed);
   }, [goals, habits, persistGoalAndHabit, applyCheckInCoachMoment]);
@@ -656,6 +667,7 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
         getActiveHabits,
         getDiscoveredHabits,
         lastMilestone,
+        clearLastMilestone: () => setLastMilestone(null),
         lastCoachMoment,
         clearLastCoachMoment: () => setLastCoachMoment(null),
         maybeShowDetectionMoment,

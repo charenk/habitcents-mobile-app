@@ -348,7 +348,7 @@ function createStyles(theme: AppTheme) {
     confirmDeleteText: {
       fontSize: 16,
       fontWeight: '600',
-      color: '#FFFFFF',
+      color: theme.white,
     },
     bottomPadding: {
       height: 40,

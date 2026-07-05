@@ -49,16 +49,23 @@ export default function HabitDetailScreen() {
     updateSkipValue,
     stopBreakingHabit,
     lastMilestone,
+    clearLastMilestone,
     lastCoachMoment,
     clearLastCoachMoment,
   } = useHabits();
 
   // Coach Moment (P2-2, acceptance test 2): clear on blur so navigating away
   // and back to an already-answered card does not re-show the same card.
+  // lastMilestone has the identical lifecycle gap (fixed here alongside the
+  // Coach Moments fix): clear it the same way so a milestone tint doesn't
+  // persist across navigation back to this screen.
   useFocusEffect(
     useCallback(() => {
-      return () => clearLastCoachMoment();
-    }, [clearLastCoachMoment])
+      return () => {
+        clearLastCoachMoment();
+        clearLastMilestone();
+      };
+    }, [clearLastCoachMoment, clearLastMilestone])
   );
 
   const habit = getHabitById(id || '');
@@ -327,7 +334,10 @@ function EditSkipValueSheet({
         <View style={styles.actionsSection}>
           <TouchableOpacity
             style={styles.primaryButton}
-            onPress={() => onSave(Math.max(0, Math.round(parseFloat(text || '0') * 100)))}
+            onPress={() => {
+              const parsed = parseFloat(text);
+              onSave(Number.isFinite(parsed) ? Math.max(0, Math.round(parsed * 100)) : 0);
+            }}
           >
             <Text style={styles.primaryButtonText}>{strings.common.save}</Text>
           </TouchableOpacity>
