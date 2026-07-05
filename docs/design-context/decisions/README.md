@@ -2,6 +2,7 @@
 
 HabitCents product decisions, newest first. Each links to its full record.
 
+- [0008. A11y verification deferred to beta](0008-a11y-verification-deferred-to-beta.md): Phase 2 complete without the on-device VoiceOver pass; the audit runs at Phase 4 TestFlight on final builds, still before store submission
 - [0007. Onboarding final: Door 1 pattern, preset table, free-tier touchpoint](0007-onboarding-final-and-free-tier.md): A chips + B inline edit, recognition framing; per-currency presets; quiet free-tier note with disabled Start
 - [0006. Category taxonomy v2](0006-category-taxonomy-v2.md): 10 spend categories incl. Software & Subscriptions; Transfers/Income/Cash as row classes, never categories; no data migration
 - [0005. Direction C locked; P2-4 unification scope](0005-direction-c-and-unification.md): native tokens + motion at log-save and skip only; dark toggle removed for v1 with revert path; green positive-only
