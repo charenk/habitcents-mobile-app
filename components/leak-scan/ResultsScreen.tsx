@@ -15,6 +15,7 @@ import { ProjectionSection } from './ProjectionSection';
 import { ResultsFooter } from './ResultsFooter';
 import { ReviewQueueSheet } from './ReviewQueueSheet';
 import { CategoryTransactionsSheet } from './CategoryTransactionsSheet';
+import { PulseDayDetailSheet } from './PulseDayDetailSheet';
 import { PickOneSheet } from '@/components/habit-logging/PickOneSheet';
 import {
   buildKpiSummary,
@@ -26,6 +27,7 @@ import {
 import { spendableRows } from '@/utils/leakScan/netting';
 import { seedLast15Days, recurringToExpenses } from '@/utils/leakScan/importWrite';
 import type { ScanFileInput } from '@/utils/leakScan';
+import type { PulseCell } from '@/utils/leakScan/spendPulse';
 import type { GovernClass, HabitCandidate, ScanResult } from '@/utils/leakScan/types';
 import type { ExpenseCategory } from '@/types/expense';
 import {
@@ -77,6 +79,7 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
   const [pickOneHabit, setPickOneHabit] = useState<ReturnType<typeof habitCandidateToDetectedHabit> | null>(null);
   const [pickOneCandidate, setPickOneCandidate] = useState<HabitCandidate | null>(null);
   const [openCategory, setOpenCategory] = useState<ExpenseCategory | null>(null);
+  const [openPulseCell, setOpenPulseCell] = useState<PulseCell | null>(null);
   const [undone, setUndone] = useState(false);
 
   React.useEffect(() => {
@@ -101,6 +104,12 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
     () => (openCategory ? spendableRows(result.rows).filter((r) => r.category === openCategory) : []),
     [openCategory, result.rows]
   );
+  const openPulseCellRows = useMemo(() => {
+    if (!openPulseCell || openPulseCell.state !== 'spend') return [];
+    // Cell key is an ISO day (yyyy-mm-dd), month (yyyy-mm), or year (yyyy);
+    // a rowspend's own dateISO always starts with the cell key at every granularity.
+    return spendableRows(result.rows).filter((r) => r.dateISO.startsWith(openPulseCell.key));
+  }, [openPulseCell, result.rows]);
 
   const habitClassByCategory = useMemo(() => {
     const map = new Map<ExpenseCategory, GovernClass>();
@@ -247,7 +256,7 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
         <CategoryList categories={categories} onCategoryPress={(c) => setOpenCategory(c.category)} />
 
         <View style={styles.spacer} />
-        <SpendPulse result={result} />
+        <SpendPulse result={result} onCellPress={setOpenPulseCell} />
 
         <View style={styles.spacer} />
         {result.habits.length > 0 && (
@@ -311,6 +320,12 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
         rows={openCategoryRows}
         onCorrect={handleCategoryCorrect}
         onClose={() => setOpenCategory(null)}
+      />
+
+      <PulseDayDetailSheet
+        cell={openPulseCell}
+        rows={openPulseCellRows}
+        onClose={() => setOpenPulseCell(null)}
       />
 
       <PickOneSheet
