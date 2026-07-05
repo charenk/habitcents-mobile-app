@@ -6,6 +6,7 @@ import type { DetectedHabit, HabitChangeGoal, HabitMilestone } from '@/types/hab
 import type { DashboardConfig } from '@/types/report';
 import type { OnboardingState, ProgressiveFeatureState } from '@/types/onboarding';
 import { type CurrencyCode, DEFAULT_CURRENCY, isCurrencyCode } from '@/utils/currency';
+import { type CoachMomentState, createInitialCoachMomentState } from '@/utils/coachMoments';
 
 // Storage keys
 const ONBOARDING_KEY = '@habitcents_onboarded';
@@ -15,7 +16,7 @@ const EXPENSES_KEY = '@habitcents_expenses';
 const CATEGORIES_KEY = '@habitcents_categories';
 const HABITS_KEY = '@habitcents_habits';
 const HABIT_GOALS_KEY = '@habitcents_habit_goals';
-const LESSONS_PROGRESS_KEY = '@habitcents_lessons_progress';
+const COACH_MOMENTS_KEY = '@habitcents_coach_moments';
 const DASHBOARD_KEY = '@habitcents_dashboard';
 const ONBOARDING_STATE_KEY = '@habitcents_onboarding_state';
 const PROGRESSIVE_FEATURES_KEY = '@habitcents_progressive_features';
@@ -283,33 +284,44 @@ export async function saveHabitGoals(goals: HabitChangeGoal[]): Promise<void> {
   }
 }
 
+// =====================
+// COACH MOMENTS STORAGE (P2-2, docs/design-package-phase2/04-p2-2-coach-moments.md)
+// =====================
+// Replaces the removed lessons-progress store above: the micro-lessons
+// library (MICRO_LESSONS, the Habits-tab "Learning" section) is deleted per
+// spec 04's removal note: its psychology is redistributed into the Coach
+// Moment card copies, selected by utils/coachMoments.ts.
+
 /**
- * Get lesson progress
+ * Get the persisted Coach Moment dedup/rotation state. Returns a fresh
+ * initial state (all pools at the start, nothing shown yet) if none is
+ * stored or the stored value is unreadable, so a corrupt/missing record
+ * degrades to "show cards from the top" rather than crashing.
  */
-export async function getLessonsProgress(): Promise<Record<string, Date>> {
+export async function getCoachMomentState(): Promise<CoachMomentState> {
   try {
-    const value = await AsyncStorage.getItem(LESSONS_PROGRESS_KEY);
-    if (!value) return {};
+    const value = await AsyncStorage.getItem(COACH_MOMENTS_KEY);
+    if (!value) return createInitialCoachMomentState();
     const parsed = JSON.parse(value);
-    const result: Record<string, Date> = {};
-    for (const [id, dateStr] of Object.entries(parsed)) {
-      result[id] = new Date(dateStr as string);
-    }
-    return result;
+    return {
+      ...createInitialCoachMomentState(),
+      ...parsed,
+      milestonesShownByGoal: parsed.milestonesShownByGoal ?? {},
+    };
   } catch (error) {
-    console.error('Error reading lessons progress:', error);
-    return {};
+    console.error('Error reading coach moment state:', error);
+    return createInitialCoachMomentState();
   }
 }
 
 /**
- * Save lesson progress
+ * Persist the Coach Moment dedup/rotation state.
  */
-export async function saveLessonsProgress(progress: Record<string, Date>): Promise<void> {
+export async function saveCoachMomentState(state: CoachMomentState): Promise<void> {
   try {
-    await AsyncStorage.setItem(LESSONS_PROGRESS_KEY, JSON.stringify(progress));
+    await AsyncStorage.setItem(COACH_MOMENTS_KEY, JSON.stringify(state));
   } catch (error) {
-    console.error('Error saving lessons progress:', error);
+    console.error('Error saving coach moment state:', error);
   }
 }
 
