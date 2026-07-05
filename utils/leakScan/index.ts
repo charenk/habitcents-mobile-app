@@ -31,3 +31,14 @@ export {
 } from './parsers';
 export { rowToExpense, seedLast15Days, recurringToExpenses, undoImport } from './importWrite';
 export * as scanAnalytics from './analytics';
+
+// Results-screen support (build item 3): pure SpendPulse cell derivation
+// (results 5.3). Lives alongside the pipeline types it consumes; still UI-free.
+export { autoGranularity, buildSpendPulse } from './spendPulse';
+export type { PulseCell, PulseCellState, PulseData, PulseGranularity } from './spendPulse';
+export { buildKpiSummary, buildCategorySummary, weakerTier } from './resultsSummary';
+export type { KpiSummary, CategorySummary } from './resultsSummary';
+export { buildProjectionSummary } from './projection';
+export type { ProjectionSummary, RunRateItem } from './projection';
+export { buildReviewQueue } from './reviewQueue';
+export type { ReviewQueueItem } from './reviewQueue';

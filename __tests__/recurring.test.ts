@@ -46,6 +46,34 @@ describe('nextOccurrence', () => {
     // Jun 25 + 7 = Jul 2 == from
     expect(next?.getDate()).toBe(2);
   });
+
+  it('projects a biweekly expense forward in fixed 14-day steps', () => {
+    // Started Jun 4 (14-day cadence): Jun 4 -> Jun 18 -> Jul 2 == from.
+    const next = nextOccurrence(recurring('biweekly', '2026-06-04T00:00:00'), FROM);
+    expect(next?.getTime()).toBe(new Date('2026-07-02T00:00:00').getTime());
+  });
+
+  it('steps a biweekly expense by exactly 14 days each cycle', () => {
+    // Started Jun 20: Jun 20 -> Jul 4 is the first on/after Jul 2.
+    const next = nextOccurrence(recurring('biweekly', '2026-06-20T00:00:00'), FROM);
+    expect(next?.getTime()).toBe(new Date('2026-07-04T00:00:00').getTime());
+  });
+
+  it('projects an annual expense to the same month/day next year', () => {
+    // Started 2025-07-15; annual -> next on/after 2026-07-02 is 2026-07-15.
+    const next = nextOccurrence(recurring('annual', '2025-07-15T00:00:00'), FROM);
+    expect(next?.getFullYear()).toBe(2026);
+    expect(next?.getMonth()).toBe(6); // July (0-indexed)
+    expect(next?.getDate()).toBe(15);
+  });
+
+  it('advances an annual expense by full years when several have elapsed', () => {
+    // Started 2023-01-10; annual steps: 2024, 2025, 2026 -> first on/after Jul 2, 2026.
+    const next = nextOccurrence(recurring('annual', '2023-01-10T00:00:00'), FROM);
+    expect(next?.getFullYear()).toBe(2027);
+    expect(next?.getMonth()).toBe(0);
+    expect(next?.getDate()).toBe(10);
+  });
 });
 
 describe('computeUpcoming', () => {

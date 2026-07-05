@@ -60,6 +60,7 @@ export default function RootLayout() {
                   <Stack.Screen name="onboarding" />
                   <Stack.Screen name="habit" />
                   <Stack.Screen name="category" />
+                  <Stack.Screen name="leak-scan" />
                 </Stack>
               </OnboardingProvider>
             </ReportsProvider>

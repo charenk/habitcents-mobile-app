@@ -7,7 +7,7 @@ import {
   getCoachMomentState,
   saveCoachMomentState,
 } from '@/utils/storage';
-import { detectHabits, mergeHabits } from '@/utils/habitDetection';
+import { detectHabits, findExistingHabit, mergeHabits } from '@/utils/habitDetection';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import {
   atMidnight,
@@ -40,6 +40,15 @@ type HabitsContextValue = {
   isLoading: boolean;
   refreshHabits: (expenses: Expense[]) => Promise<void>;
   dismissHabit: (habitId: string) => Promise<void>;
+  /**
+   * Register a Leak Scan habit candidate as a discovered habit (P2-1b results
+   * screen "Track this leak"). The scan builds a full DetectedHabit from its
+   * HabitCandidate; this merely admits it into habits state (by merchant
+   * pattern, same de-dup rule as detection) so startBreakingHabit can find it
+   * by id immediately afterward. Never demotes a habit already tracking/
+   * changing.
+   */
+  addScanHabit: (habit: DetectedHabit) => Promise<DetectedHabit>;
   /**
    * Pick-one sheet "Start breaking it" (spec 01 §3.1, §4.3). Nothing is
    * created until this is called; cancel on the sheet creates nothing.
@@ -221,6 +230,32 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
     setHabits(updated);
     await saveHabits(updated);
     track('habit_dismissed', { source: 'detection' });
+  }, [habits]);
+
+  /**
+   * Admit a Leak Scan habit candidate into habits state. Reuses the same
+   * merchant-pattern de-dup as detection (mergeHabits/findExistingHabit): a
+   * habit already tracking/changing is returned untouched (never demoted); a
+   * matching discovered habit is refreshed in place; otherwise the candidate
+   * is appended as a new discovered habit.
+   */
+  const addScanHabit = useCallback(async (habit: DetectedHabit): Promise<DetectedHabit> => {
+    const existing = findExistingHabit(habits, habit.merchantPattern || '');
+    if (existing && (existing.status === 'tracking' || existing.status === 'changing')) {
+      return existing;
+    }
+    let result: DetectedHabit;
+    let updated: DetectedHabit[];
+    if (existing) {
+      result = { ...existing, ...habit, id: existing.id, status: existing.status, changeGoal: existing.changeGoal };
+      updated = habits.map(h => (h.id === existing.id ? result : h));
+    } else {
+      result = habit;
+      updated = [...habits, habit];
+    }
+    setHabits(updated);
+    await saveHabits(updated);
+    return result;
   }, [habits]);
 
   /**
@@ -533,6 +568,7 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
         isLoading,
         refreshHabits,
         dismissHabit,
+        addScanHabit,
         startBreakingHabit,
         answerToday,
         answerEvent,

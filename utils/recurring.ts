@@ -25,6 +25,16 @@ function advance(date: Date, frequency: RecurrenceFrequency): Date {
   const next = new Date(date);
   if (frequency === 'weekly') {
     next.setDate(next.getDate() + 7);
+  } else if (frequency === 'biweekly') {
+    // Leak Scan recurrence detector cadence (docs/design-context/leak-scan-spec.md
+    // Stage 9): fixed 14-day step, so a biweekly item can land 3 times in a
+    // calendar month (the projection's 3-payment-month flag).
+    next.setDate(next.getDate() + 14);
+  } else if (frequency === 'annual') {
+    // Leak Scan annual-renewal detection (Stage 9, >=2-occurrence floor). Same
+    // month/day next year; JS rolls Feb 29 -> Mar 1 on non-leap years, which is
+    // acceptable for a projection.
+    next.setFullYear(next.getFullYear() + 1);
   } else {
     // Monthly: same day-of-month next month. JS rolls overflow (e.g. Jan 31 ->
     // Mar 3), which is acceptable for a projection.

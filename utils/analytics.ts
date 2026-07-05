@@ -80,6 +80,45 @@ export interface AnalyticsEventMap {
   paywall_dismissed: { placement: string };
   purchase_completed: { product: string };
   trial_started: { product: string };
+
+  // --- Leak Scan (P2-1b, docs/design-context/leak-scan-spec.md section 8). ---
+  // All structural only: counts, rates, tiers, booleans. Never merchant
+  // strings, amounts, descriptions, or file contents (D-9).
+  scan_started: { n_files: number };
+  scan_file_parsed: {
+    rows: number;
+    skipped: number;
+    confidence_tier: 'solid' | 'likely' | 'needs-review';
+    sign_method: 'balance' | 'type' | 'heuristic';
+    truncation_flag: boolean;
+  };
+  scan_question_shown: { type: 'date-order' | 'sign-confirmation' };
+  scan_completed: {
+    coverage_days: number;
+    n_accounts: number;
+    n_habits_found: number;
+    solid_count: number;
+    likely_count: number;
+    needs_review_count: number;
+  };
+  scan_failed: {
+    n_files: number;
+    encoding_guess: string;
+    delimiter_guess: string;
+    header_found: boolean;
+    date_parse_rate: number;
+    amount_parse_rate: number;
+    sign_confidence: number;
+  };
+  scan_categories_expanded: Record<string, never>;
+  scan_pulse_day_opened: Record<string, never>;
+  scan_habit_tracked: { class: 'govern' | 'influence' | 'fixed'; cadence_route: string };
+  scan_habit_dismissed: { class: 'govern' | 'influence' | 'fixed' };
+  scan_correction: { stage: string; from_tier: 'solid' | 'likely' | 'needs-review' };
+  scan_projection_saved: { n_recurring: number };
+  scan_reminder_intent_set: Record<string, never>;
+  scan_seed15_applied: { rows: number };
+  scan_undone: Record<string, never>;
 }
 
 export type AnalyticsEventName = keyof AnalyticsEventMap;
