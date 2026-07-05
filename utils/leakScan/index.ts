@@ -38,3 +38,5 @@ export { autoGranularity, buildSpendPulse } from './spendPulse';
 export type { PulseCell, PulseCellState, PulseData, PulseGranularity } from './spendPulse';
 export { buildKpiSummary, buildCategorySummary, weakerTier } from './resultsSummary';
 export type { KpiSummary, CategorySummary } from './resultsSummary';
+export { buildProjectionSummary } from './projection';
+export type { ProjectionSummary, RunRateItem } from './projection';
