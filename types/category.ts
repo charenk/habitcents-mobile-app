@@ -43,8 +43,11 @@ export type CategorySpendingSummary = {
   trendPercentage: number;
 };
 
+// Taxonomy v2 (ADR 0006): 10 spend categories. 'Mortgage/Rent' is a display rename
+// of the former 'Mortgage' seed (same icon and color). 'Software & Subscriptions'
+// is the one added category. Existing stored categories keep their persisted names.
 export const DEFAULT_CATEGORIES: Omit<Category, 'id' | 'createdAt'>[] = [
-  { name: 'Mortgage', icon: 'home-outline', color: '#7E57C2', isDefault: true, isHidden: false },
+  { name: 'Mortgage/Rent', icon: 'home-outline', color: '#7E57C2', isDefault: true, isHidden: false },
   { name: 'Car', icon: 'car-outline', color: '#FFA726', isDefault: true, isHidden: false },
   { name: 'Entertainment', icon: 'film-outline', color: '#42A5F5', isDefault: true, isHidden: false },
   { name: 'Food', icon: 'fast-food-outline', color: '#66BB6A', isDefault: true, isHidden: false },
@@ -52,6 +55,7 @@ export const DEFAULT_CATEGORIES: Omit<Category, 'id' | 'createdAt'>[] = [
   { name: 'Utilities', icon: 'flash-outline', color: '#26C6DA', isDefault: true, isHidden: false },
   { name: 'Healthcare', icon: 'medical-outline', color: '#EF5350', isDefault: true, isHidden: false },
   { name: 'Transportation', icon: 'bus-outline', color: '#8D6E63', isDefault: true, isHidden: false },
+  { name: 'Software & Subscriptions', icon: 'card-outline', color: '#26A69A', isDefault: true, isHidden: false },
   { name: 'Other', icon: 'ellipsis-horizontal-outline', color: '#9E9E9E', isDefault: true, isHidden: false },
 ];
 
