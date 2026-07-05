@@ -41,8 +41,6 @@ export const strings = {
     dollarsKeptCaption: "from the habits you're breaking",
     sectionInsights: 'Insights',
     sectionActiveChanges: 'Active Changes',
-    sectionLearning: 'Learning',
-    sectionBadgeNew: (count: number) => `${count} new`,
     loading: 'Analyzing your spending patterns...',
     emptyTitle: 'No habits detected yet',
     emptySubtitle:
@@ -110,12 +108,10 @@ export const strings = {
     backfillBought: 'Bought it',
     backfillYesterdaySkipped: (skipValue: string) => `Yesterday: skipped, +${skipValue} kept.`,
     backfillYesterdaySlipped: 'Yesterday: bought it. Recorded.',
-    // Milestone / coach moment slot (4.5)
+    // Milestone / coach moment slot headline (4.5). Card body text now comes
+    // from the coachMoments section below (P2-2), selected by the trigger
+    // engine in utils/coachMoments.ts.
     milestoneHeadline: (n: number, chapter: string) => `${n} total skips · ${chapter}`,
-    milestoneCardText: 'A new chapter. Progress here only accumulates, slips never subtract.',
-    coachFirstSkip: 'Your counter is running. Every skip is money you decided to keep.',
-    coachSkip: 'The urge passes in minutes. The money you kept stays all day.',
-    coachSlip: 'Missing once is an accident. Missing twice starts a new habit.',
     // Pick-one sheet (4.3)
     pickOneCadenceDaily: 'A daily leak',
     pickOneCadenceWeekly: 'A weekly leak',
@@ -171,6 +167,36 @@ export const strings = {
     emptyLeaksSubtitle: 'Keep logging expenses. Around 4 logs at the same place is enough to spot a pattern.',
     logAnExpense: 'Log an expense',
     keptZeroCaption: 'your first skip starts this counter',
+  },
+  // ---------------------------------------------------------------------
+  // Coach Moments (docs/design-package-phase2/04-p2-2-coach-moments.md).
+  // Additions only: the 17 card copies, verbatim from spec section 4.
+  // Sentence case, no em dashes, product vocabulary (leak/skip/kept/slip).
+  // Never reword; this is the single source of truth for card text.
+  // ---------------------------------------------------------------------
+  coachMoments: {
+    // First log (spec §4, "First log")
+    fl1: "That took about ten seconds. Do this a few more times and we'll show you the habit quietly costing you the most.",
+    // Detection (spec §4, "Detection")
+    dt1: "Here's your leak. You don't have to quit it, just decide, one day at a time, whether it's worth it.",
+    // Skip (spec §4, "Skip")
+    sk0: 'Your counter is running. Every skip from here is money you decided to keep.',
+    sk1: 'The urge passes in a few minutes. The money you kept stays all day.',
+    sk2: "You didn't resist a purchase. You chose where your money goes. That's the whole game.",
+    sk3: "Skipping is easier the second time, and easier again the third. You're wearing a new path.",
+    sk4: 'Small skips add up faster than they feel like they should. Watch the kept number, not the clock.',
+    sk5: 'The habit needed a cue, a routine, and a reward. You just interrupted the routine.',
+    sk6: "Nothing dramatic happened, and that's the point. Boring skips are what breaking a habit actually looks like.",
+    // Milestone / chapter crossings (spec §4, "Milestone")
+    ms10: "Ten skips in. You're finding your rhythm, and this only ever counts up. Slips never subtract from here.",
+    ms30: "Thirty skips. You're cruising, and the habit is losing its grip. You're becoming someone who decides where money goes.",
+    ms50: "Fifty skips. You're almost rewired. What used to be a decision is starting to be automatic.",
+    ms66: "Sixty-six skips. That's the number it takes to rewire a habit. This one doesn't run you anymore.",
+    // Broken streak / slip (spec §4, "Broken streak / slip")
+    br1: 'Missing once is an accident. Missing twice starts a new habit, so tomorrow matters more than today did.',
+    br2: 'Your kept money is still yours. A slip records what happened; it never takes anything back.',
+    br3: "One slip is a data point, not a verdict. The path you've worn is still there tomorrow.",
+    br4: 'Bought it? Noted, no judgment. Making it easy to be honest is how the numbers stay true.',
   },
   habitDetail: {
     notFound: 'Habit not found',

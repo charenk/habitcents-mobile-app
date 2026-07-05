@@ -68,8 +68,13 @@ export interface AnalyticsEventMap {
   answer_changed: { from: 'skipped' | 'slipped'; to: 'skipped' | 'slipped' };
   milestone_reached: { milestone: 10 | 30 | 50 | 66 };
   habit_dismissed: { source: string };
-  // Coaching (P2-2)
-  coach_moment_shown: { trigger: string; card_id: string };
+  // Coaching (P2-2, docs/design-package-phase2/04-p2-2-coach-moments.md
+  // section 5). trigger/card_id are structural identifiers only; no card
+  // content, amounts, merchant, or habit names ever ride in this event.
+  coach_moment_shown: {
+    trigger: 'first_log' | 'detection' | 'skip' | 'milestone' | 'broken_streak';
+    card_id: string;
+  };
   // Monetization (P3-1)
   paywall_shown: { placement: string };
   paywall_dismissed: { placement: string };
