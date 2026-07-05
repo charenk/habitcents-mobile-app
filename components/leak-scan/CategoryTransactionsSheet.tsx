@@ -139,7 +139,7 @@ function createStyles(theme: AppTheme) {
     },
     rowDate: {
       fontSize: 11,
-      color: theme.textTertiary,
+      color: theme.textSecondary,
       marginTop: 2,
     },
     amount: {

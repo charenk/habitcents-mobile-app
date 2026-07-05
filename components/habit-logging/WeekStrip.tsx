@@ -165,7 +165,7 @@ function createStyles(theme: AppTheme) {
     dayLabel: {
       fontSize: 9,
       fontWeight: '700',
-      color: theme.textTertiary,
+      color: theme.textSecondary,
     },
     summary: {
       fontSize: 12,

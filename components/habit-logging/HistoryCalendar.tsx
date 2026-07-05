@@ -170,7 +170,7 @@ function createStyles(theme: AppTheme) {
       textAlign: 'center',
       fontSize: 11,
       fontWeight: '600',
-      color: theme.textTertiary,
+      color: theme.textSecondary,
       marginBottom: 6,
     },
     cellSlot: {
