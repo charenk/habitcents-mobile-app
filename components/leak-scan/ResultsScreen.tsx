@@ -2,7 +2,6 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
-import { useCurrency } from '@/contexts/CurrencyContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
 import { useHabits } from '@/contexts/HabitsContext';
 import type { AppTheme } from '@/constants/theme';
@@ -67,7 +66,6 @@ function monthLabel(dateISO: string): string {
  */
 export function ResultsScreen({ result: initialResult, files }: ResultsScreenProps) {
   const theme = useTheme();
-  const { format } = useCurrency();
   const router = useRouter();
   const { addExpense, deleteExpense, expenses } = useExpenses();
   const { addScanHabit, startBreakingHabit, dismissHabit, getHabitById, getActiveHabits } = useHabits();
