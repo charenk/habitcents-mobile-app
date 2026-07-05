@@ -4,59 +4,68 @@ import {
   Text,
   StyleSheet,
   SectionList,
-  TouchableOpacity,
   Modal,
   RefreshControl,
+  TouchableOpacity,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
-import { useCurrency } from '@/contexts/CurrencyContext';
 import { useHabits } from '@/contexts/HabitsContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
-import { HabitInsightCard } from '@/components/HabitInsightCard';
-import { HabitProgressCard } from '@/components/HabitProgressCard';
+import { KeptHero } from '@/components/habit-logging/KeptHero';
+import { LeakCard } from '@/components/habit-logging/LeakCard';
+import { CheckInCard } from '@/components/habit-logging/CheckInCard';
+import { PickOneSheet } from '@/components/habit-logging/PickOneSheet';
+import { PartialSlipSheet } from '@/components/habit-logging/PartialSlipSheet';
 import { LessonCard, LessonDetail } from '@/components/LessonCard';
+import { atMidnight, dayStateFor, FREE_TIER_HABIT_LIMIT } from '@/utils/habitLogging';
 import type { AppTheme } from '@/constants/theme';
-import type { DetectedHabit, MicroLesson, StreakDay } from '@/types/habit';
+import type { DetectedHabit, HabitChangeGoal, MicroLesson } from '@/types/habit';
 import { strings } from '@/constants/strings';
+
+type BreakingItem = { habit: DetectedHabit; goal: HabitChangeGoal };
 
 type HabitSection = {
   title: string;
-  type: 'insights' | 'active' | 'learning';
-  data: (DetectedHabit | MicroLesson)[];
+  type: 'leaks' | 'breaking' | 'learning';
+  data: (DetectedHabit | BreakingItem | MicroLesson)[];
 };
 
 export default function HabitsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const theme = useTheme();
-  const { format } = useCurrency();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedLesson, setSelectedLesson] = useState<MicroLesson | null>(null);
+  const [pickOneHabitId, setPickOneHabitId] = useState<string | null>(null);
+  const [partialGoalId, setPartialGoalId] = useState<string | null>(null);
 
   const {
-    habits,
     goals,
     lessons,
     isLoading,
     refreshHabits,
-    startTrackingHabit,
     dismissHabit,
-    createGoal,
-    logStreakDay,
+    startBreakingHabit,
+    answerToday,
+    answerEvent,
+    changeTodayAnswer,
+    backfillYesterday,
+    savePartialSlip,
     completeLesson,
     getActiveHabits,
     getDiscoveredHabits,
     getPendingLessons,
     getGoalByHabitId,
+    getHabitById,
+    lastMilestone,
   } = useHabits();
 
   const { expenses } = useExpenses();
 
-  // Refresh habits when expenses change
   useEffect(() => {
     if (expenses.length > 0) {
       refreshHabits(expenses);
@@ -73,22 +82,46 @@ export default function HabitsScreen() {
   const activeHabits = getActiveHabits();
   const pendingLessons = getPendingLessons();
 
+  const breakingItems: BreakingItem[] = useMemo(() => {
+    return activeHabits
+      .map((habit) => {
+        const goal = getGoalByHabitId(habit.id);
+        return goal ? { habit, goal } : null;
+      })
+      .filter((x): x is BreakingItem => x !== null);
+  }, [activeHabits, getGoalByHabitId]);
+
+  // Stacking (spec §4.2): unanswered daily first, then weekly/monthly, then
+  // answered-today cards.
+  const sortedBreakingItems = useMemo(() => {
+    const today = atMidnight(new Date());
+    const rank = (item: BreakingItem): number => {
+      const isDaily = item.habit.frequency === 'daily';
+      if (isDaily) {
+        const answered = dayStateFor(item.goal.dayLogs, today) !== 'no-log';
+        return answered ? 2 : 0;
+      }
+      return 1;
+    };
+    return [...breakingItems].sort((a, b) => rank(a) - rank(b));
+  }, [breakingItems]);
+
   const sections: HabitSection[] = useMemo(() => {
     const result: HabitSection[] = [];
 
     if (discoveredHabits.length > 0) {
       result.push({
-        title: strings.habits.sectionInsights,
-        type: 'insights',
+        title: strings.habitLogging.leaksFoundSection,
+        type: 'leaks',
         data: discoveredHabits,
       });
     }
 
-    if (activeHabits.length > 0) {
+    if (sortedBreakingItems.length > 0) {
       result.push({
-        title: strings.habits.sectionActiveChanges,
-        type: 'active',
-        data: activeHabits,
+        title: strings.habitLogging.breakingNowSection,
+        type: 'breaking',
+        data: sortedBreakingItems,
       });
     }
 
@@ -101,28 +134,15 @@ export default function HabitsScreen() {
     }
 
     return result;
-  }, [discoveredHabits, activeHabits, pendingLessons]);
-
-  const handleTrackHabit = useCallback(async (habit: DetectedHabit) => {
-    await startTrackingHabit(habit.id);
-    // Create a default goal
-    await createGoal(habit.id, 'reduce_amount', Math.round(habit.totalMonthlySpend * 0.8));
-  }, [startTrackingHabit, createGoal]);
+  }, [discoveredHabits, sortedBreakingItems, pendingLessons]);
 
   const handleDismissHabit = useCallback(async (habit: DetectedHabit) => {
     await dismissHabit(habit.id);
   }, [dismissHabit]);
 
-  const handleHabitPress = useCallback((habit: DetectedHabit) => {
-    router.push(`/habit/${habit.id}`);
+  const handleHabitPress = useCallback((habitId: string) => {
+    router.push(`/habit/${habitId}`);
   }, [router]);
-
-  const handleLogToday = useCallback(async (habit: DetectedHabit) => {
-    const goal = getGoalByHabitId(habit.id);
-    if (goal) {
-      await logStreakDay(goal.id, true);
-    }
-  }, [getGoalByHabitId, logStreakDay]);
 
   const handleLessonPress = useCallback((lesson: MicroLesson) => {
     setSelectedLesson(lesson);
@@ -135,49 +155,56 @@ export default function HabitsScreen() {
     }
   }, [selectedLesson, completeLesson]);
 
-  // Real streak history from the goal's persisted logs.
-  const getStreakDays = useCallback((habitId: string): StreakDay[] => {
-    const goal = getGoalByHabitId(habitId);
-    return goal?.logs ?? [];
-  }, [getGoalByHabitId]);
+  const pickOneHabit = pickOneHabitId ? getHabitById(pickOneHabitId) : null;
+  // Free-tier touchpoint (ADR 0007): blocked when there is already an active
+  // habit and this would be a second.
+  const freeTierBlocked = activeHabits.length >= FREE_TIER_HABIT_LIMIT;
 
-  const renderItem = ({ item, section }: { item: DetectedHabit | MicroLesson; section: HabitSection }) => {
-    if (section.type === 'insights') {
+  const handleStart = useCallback(async (skipValue: number, valueEdited: boolean) => {
+    if (!pickOneHabitId) return;
+    await startBreakingHabit(pickOneHabitId, skipValue, valueEdited, 'detection');
+    setPickOneHabitId(null);
+  }, [pickOneHabitId, startBreakingHabit]);
+
+  const partialGoal = partialGoalId ? goals.find((g) => g.id === partialGoalId) ?? null : null;
+
+  const totalKept = goals.reduce((sum, g) => sum + (g.kept || 0), 0);
+
+  const isEmpty = sections.length === 0;
+
+  const renderItem = ({ item, section }: { item: DetectedHabit | BreakingItem | MicroLesson; section: HabitSection }) => {
+    if (section.type === 'leaks') {
       const habit = item as DetectedHabit;
       return (
-        <HabitInsightCard
+        <LeakCard
           habit={habit}
-          onTrack={() => handleTrackHabit(habit)}
+          onBreak={() => setPickOneHabitId(habit.id)}
           onDismiss={() => handleDismissHabit(habit)}
-          onPress={() => handleHabitPress(habit)}
         />
       );
     }
 
-    if (section.type === 'active') {
-      const habit = item as DetectedHabit;
-      const goal = getGoalByHabitId(habit.id);
-      if (!goal) return null;
-
+    if (section.type === 'breaking') {
+      const { habit, goal } = item as BreakingItem;
+      const milestoneJustHit = lastMilestone?.goalId === goal.id ? lastMilestone.threshold : null;
       return (
-        <HabitProgressCard
+        <CheckInCard
           habit={habit}
           goal={goal}
-          streakDays={getStreakDays(habit.id)}
-          onPress={() => handleHabitPress(habit)}
-          onLogToday={() => handleLogToday(habit)}
+          milestoneJustHit={milestoneJustHit}
+          onSkip={() => (habit.frequency === 'daily' ? answerToday(goal.id, 'skipped') : answerEvent(goal.id, 'skipped'))}
+          onSlip={() => (habit.frequency === 'daily' ? answerToday(goal.id, 'slipped') : answerEvent(goal.id, 'slipped'))}
+          onChangeAnswer={() => changeTodayAnswer(goal.id)}
+          onBackfill={(state) => backfillYesterday(goal.id, state)}
+          onOpenPartial={() => setPartialGoalId(goal.id)}
+          onOpenDetail={() => handleHabitPress(habit.id)}
         />
       );
     }
 
     if (section.type === 'learning') {
       const lesson = item as MicroLesson;
-      return (
-        <LessonCard
-          lesson={lesson}
-          onPress={() => handleLessonPress(lesson)}
-        />
-      );
+      return <LessonCard lesson={lesson} onPress={() => handleLessonPress(lesson)} />;
     }
 
     return null;
@@ -186,51 +213,16 @@ export default function HabitsScreen() {
   const renderSectionHeader = ({ section }: { section: HabitSection }) => (
     <View style={styles.sectionHeader}>
       <Text style={styles.sectionTitle}>{section.title}</Text>
-      {section.type === 'insights' && (
-        <View style={styles.sectionBadge}>
-          <Text style={styles.sectionBadgeText}>{strings.habits.sectionBadgeNew(section.data.length)}</Text>
-        </View>
-      )}
     </View>
   );
 
-  const activeStreakTotal = activeHabits.reduce((sum, h) => {
-    const goal = getGoalByHabitId(h.id);
-    return sum + (goal?.currentStreak || 0);
-  }, 0);
-
-  const totalSaved = goals.reduce((sum, g) => sum + (g.actualSavings || 0), 0);
-
-  const isEmpty = sections.length === 0;
-
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      {/* Header */}
       <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <Text style={styles.title}>{strings.habits.title}</Text>
-          <Text style={styles.subtitle}>
-            {strings.habits.subtitle(
-              activeHabits.length,
-              activeStreakTotal > 0 ? strings.habits.streakSuffix(activeStreakTotal) : ''
-            )}
-          </Text>
-        </View>
-        {activeStreakTotal > 0 && (
-          <View style={styles.streakBadge}>
-            <Ionicons name="flame" size={20} color={theme.iconOrange} />
-            <Text style={styles.streakBadgeText}>{activeStreakTotal}</Text>
-          </View>
-        )}
+        <Text style={styles.title}>{strings.habits.title}</Text>
       </View>
 
-      {activeHabits.length > 0 && (
-        <View style={styles.savingsHero}>
-          <Text style={styles.savingsLabel}>{strings.habits.dollarsKept}</Text>
-          <Text style={styles.savingsValue}>{format(totalSaved)}</Text>
-          <Text style={styles.savingsCaption}>{strings.habits.dollarsKeptCaption}</Text>
-        </View>
-      )}
+      <KeptHero cents={totalKept} />
 
       {isLoading ? (
         <View style={styles.loadingContainer}>
@@ -239,37 +231,54 @@ export default function HabitsScreen() {
       ) : isEmpty ? (
         <View style={styles.emptyContainer}>
           <Ionicons name="analytics-outline" size={64} color={theme.textTertiary} />
-          <Text style={styles.emptyTitle}>{strings.habits.emptyTitle}</Text>
-          <Text style={styles.emptySubtitle}>
-            {strings.habits.emptySubtitle}
-          </Text>
-          <View style={styles.tipCard}>
-            <Ionicons name="bulb-outline" size={20} color={theme.iconOrange} />
-            <Text style={styles.tipText}>
-              {strings.habits.tip}
-            </Text>
-          </View>
+          <Text style={styles.emptyTitle}>{strings.habitLogging.emptyLeaksTitle}</Text>
+          <Text style={styles.emptySubtitle}>{strings.habitLogging.emptyLeaksSubtitle}</Text>
+          <TouchableOpacity
+            style={styles.emptyCta}
+            onPress={() => router.push('/(tabs)/expenses')}
+            accessibilityRole="button"
+          >
+            <Text style={styles.emptyCtaText}>{strings.habitLogging.logAnExpense}</Text>
+          </TouchableOpacity>
         </View>
       ) : (
         <SectionList
           sections={sections}
-          keyExtractor={(item) => 'id' in item ? item.id : (item as MicroLesson).id}
+          keyExtractor={(item, index) => {
+            if ('habit' in item) return item.habit.id;
+            return 'id' in item ? item.id : `item-${index}`;
+          }}
           renderItem={renderItem}
           renderSectionHeader={renderSectionHeader}
           contentContainerStyle={styles.listContent}
           stickySectionHeadersEnabled={false}
           showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={handleRefresh}
-              tintColor={theme.primary}
-            />
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={theme.primary} />
           }
         />
       )}
 
-      {/* Lesson Detail Modal */}
+      <PickOneSheet
+        visible={!!pickOneHabit}
+        habit={pickOneHabit ?? null}
+        monthTotal={pickOneHabit?.totalMonthlySpend ?? 0}
+        occurrences={pickOneHabit?.occurrencesPerPeriod ?? 0}
+        freeTierBlocked={freeTierBlocked}
+        onCancel={() => setPickOneHabitId(null)}
+        onStart={handleStart}
+      />
+
+      <PartialSlipSheet
+        visible={!!partialGoal}
+        skipValue={partialGoal?.skipValue ?? 0}
+        onCancel={() => setPartialGoalId(null)}
+        onSave={async (amount) => {
+          if (partialGoalId) await savePartialSlip(partialGoalId, amount);
+          setPartialGoalId(null);
+        }}
+      />
+
       <Modal
         visible={!!selectedLesson}
         animationType="slide"
@@ -295,75 +304,22 @@ function createStyles(theme: AppTheme) {
       backgroundColor: theme.background,
     },
     header: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
       paddingHorizontal: 20,
       paddingTop: 16,
-      paddingBottom: 12,
-    },
-    savingsHero: {
-      marginHorizontal: 20,
-      marginBottom: 12,
-      backgroundColor: theme.primary,
-      borderRadius: 20,
-      paddingVertical: 24,
-      paddingHorizontal: 20,
-      alignItems: 'center',
-    },
-    savingsLabel: {
-      fontSize: 12,
-      fontWeight: '700',
-      letterSpacing: 1.5,
-      color: 'rgba(255, 255, 255, 0.8)',
-    },
-    savingsValue: {
-      fontSize: 44,
-      fontWeight: '800',
-      color: '#FFFFFF',
-      marginTop: 4,
-    },
-    savingsCaption: {
-      fontSize: 13,
-      color: 'rgba(255, 255, 255, 0.8)',
-      marginTop: 2,
-    },
-    headerLeft: {
-      flex: 1,
+      paddingBottom: 4,
     },
     title: {
       fontSize: 28,
       fontWeight: '700',
       color: theme.text,
     },
-    subtitle: {
-      fontSize: 14,
-      color: theme.textSecondary,
-      marginTop: 4,
-    },
-    streakBadge: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: theme.surface,
-      paddingHorizontal: 12,
-      paddingVertical: 8,
-      borderRadius: 20,
-    },
-    streakBadgeText: {
-      fontSize: 16,
-      fontWeight: '700',
-      color: theme.text,
-      marginLeft: 4,
-    },
     listContent: {
       paddingHorizontal: 16,
       paddingBottom: 100,
     },
     sectionHeader: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginTop: 24,
-      marginBottom: 12,
+      marginTop: 20,
+      marginBottom: 10,
       paddingHorizontal: 4,
     },
     sectionTitle: {
@@ -372,18 +328,6 @@ function createStyles(theme: AppTheme) {
       color: theme.textSecondary,
       textTransform: 'uppercase',
       letterSpacing: 0.5,
-    },
-    sectionBadge: {
-      backgroundColor: theme.primary + '20',
-      paddingHorizontal: 8,
-      paddingVertical: 2,
-      borderRadius: 10,
-      marginLeft: 8,
-    },
-    sectionBadgeText: {
-      fontSize: 11,
-      fontWeight: '600',
-      color: theme.primary,
     },
     loadingContainer: {
       flex: 1,
@@ -414,20 +358,19 @@ function createStyles(theme: AppTheme) {
       textAlign: 'center',
       lineHeight: 22,
     },
-    tipCard: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: theme.surface,
-      paddingHorizontal: 16,
-      paddingVertical: 12,
+    emptyCta: {
+      marginTop: 20,
+      minHeight: 46,
+      paddingHorizontal: 20,
       borderRadius: 12,
-      marginTop: 24,
+      backgroundColor: theme.primary,
+      alignItems: 'center',
+      justifyContent: 'center',
     },
-    tipText: {
-      fontSize: 13,
-      color: theme.text,
-      marginLeft: 10,
-      flex: 1,
+    emptyCtaText: {
+      fontSize: 15,
+      fontWeight: '600',
+      color: theme.white,
     },
   });
 }
