@@ -65,10 +65,24 @@ export function HistoryCalendar({ dayLogs, trackingStart, today = new Date(), on
       <View style={styles.headerRow}>
         <Text style={styles.monthLabel}>{MONTH_NAMES[viewMonth]} {viewYear}</Text>
         <View style={styles.navRow}>
-          <TouchableOpacity onPress={goPrev} disabled={!canGoPrev} accessibilityLabel="Previous month">
+          <TouchableOpacity
+            onPress={goPrev}
+            disabled={!canGoPrev}
+            accessibilityRole="button"
+            accessibilityLabel="Previous month"
+            accessibilityState={{ disabled: !canGoPrev }}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          >
             <Ionicons name="chevron-back" size={20} color={canGoPrev ? theme.primary : theme.border} />
           </TouchableOpacity>
-          <TouchableOpacity onPress={goNext} disabled={!canGoNext} accessibilityLabel="Next month">
+          <TouchableOpacity
+            onPress={goNext}
+            disabled={!canGoNext}
+            accessibilityRole="button"
+            accessibilityLabel="Next month"
+            accessibilityState={{ disabled: !canGoNext }}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          >
             <Ionicons name="chevron-forward" size={20} color={canGoNext ? theme.primary : theme.border} />
           </TouchableOpacity>
         </View>
@@ -170,7 +184,7 @@ function createStyles(theme: AppTheme) {
       textAlign: 'center',
       fontSize: 11,
       fontWeight: '600',
-      color: theme.textTertiary,
+      color: theme.textSecondary,
       marginBottom: 6,
     },
     cellSlot: {

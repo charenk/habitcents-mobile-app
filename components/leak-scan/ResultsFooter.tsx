@@ -79,7 +79,7 @@ function createStyles(theme: AppTheme) {
     },
     row: {
       fontSize: 11.5,
-      color: theme.textTertiary,
+      color: theme.textSecondary,
     },
     undo: {
       fontSize: 13,

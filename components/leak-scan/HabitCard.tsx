@@ -179,7 +179,7 @@ function createStyles(theme: AppTheme) {
     rank: {
       fontSize: 13,
       fontWeight: '800',
-      color: theme.textTertiary,
+      color: theme.textSecondary,
     },
     classPill: {
       paddingHorizontal: 10,

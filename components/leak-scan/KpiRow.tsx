@@ -88,8 +88,10 @@ function createStyles(theme: AppTheme) {
       marginTop: 3,
     },
     subtitle: {
+      // Informational metadata (evidence window, covered days), so it uses
+      // textSecondary for the 4.5:1 contrast floor, not textTertiary (spec 09 §1.5).
       fontSize: 10.5,
-      color: theme.textTertiary,
+      color: theme.textSecondary,
       marginTop: 2,
     },
   });

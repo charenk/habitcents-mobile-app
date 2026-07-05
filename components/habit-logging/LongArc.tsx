@@ -223,7 +223,7 @@ function createStyles(theme: AppTheme) {
     ringLabel: {
       fontSize: 9,
       fontWeight: '700',
-      color: theme.textTertiary,
+      color: theme.textSecondary,
       letterSpacing: 0.5,
     },
     textCol: {
@@ -266,7 +266,7 @@ function createStyles(theme: AppTheme) {
     trackLabel: {
       fontSize: 10.5,
       fontWeight: '600',
-      color: theme.textTertiary,
+      color: theme.textSecondary,
     },
   });
 }

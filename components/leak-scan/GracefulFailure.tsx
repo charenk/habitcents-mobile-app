@@ -98,7 +98,7 @@ function createStyles(theme: AppTheme) {
     },
     hint: {
       fontSize: 12,
-      color: theme.textTertiary,
+      color: theme.textSecondary,
       textAlign: 'center',
       marginBottom: 8,
       paddingHorizontal: 8,

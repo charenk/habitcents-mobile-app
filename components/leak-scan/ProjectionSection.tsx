@@ -6,6 +6,7 @@ import type { AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import { TierBadge } from './TierBadge';
 import { categoryDisplayLabel } from '@/utils/leakScanBridge';
+import { remindToggleLabel } from '@/utils/a11y';
 import type { ProjectionSummary } from '@/utils/leakScan/projection';
 import { track } from '@/utils/analytics';
 
@@ -85,6 +86,7 @@ export function ProjectionSection({ summary, onSave }: ProjectionSectionProps) {
                   <Switch
                     value={!!remindBefore[item.merchantStem]}
                     onValueChange={() => toggleRemind(item.merchantStem)}
+                    accessibilityLabel={remindToggleLabel(!!remindBefore[item.merchantStem])}
                   />
                 </View>
               </View>
@@ -140,9 +142,10 @@ function createStyles(theme: AppTheme) {
       marginBottom: 14,
     },
     groupLabel: {
+      // Readable section header, so textSecondary meets the 4.5:1 floor (spec 09 §1.5).
       fontSize: 11,
       fontWeight: '700',
-      color: theme.textTertiary,
+      color: theme.textSecondary,
       textTransform: 'uppercase',
       letterSpacing: 0.4,
       marginBottom: 8,
@@ -164,8 +167,9 @@ function createStyles(theme: AppTheme) {
       color: theme.text,
     },
     itemNext: {
+      // Next payment date is informational, so textSecondary for AA contrast (spec 09 §1.5).
       fontSize: 11,
-      color: theme.textTertiary,
+      color: theme.textSecondary,
       marginTop: 2,
     },
     flagPill: {
@@ -197,8 +201,9 @@ function createStyles(theme: AppTheme) {
       gap: 6,
     },
     remindLabel: {
+      // Toggle label is readable copy, so textSecondary for AA contrast (spec 09 §1.5).
       fontSize: 10.5,
-      color: theme.textTertiary,
+      color: theme.textSecondary,
     },
     buffer: {
       fontSize: 12,

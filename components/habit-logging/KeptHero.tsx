@@ -4,6 +4,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import type { AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
+import { keptHeroLabel } from '@/utils/a11y';
 
 type KeptHeroProps = {
   cents: number;
@@ -80,13 +81,25 @@ export function KeptHero({ cents }: KeptHeroProps) {
 
   const color = tint.interpolate({ inputRange: [0, 1], outputRange: [theme.text, theme.primary] });
 
+  // One utterance, spoken on settle (spec 09 §2, row "Kept hero"): the label is
+  // keyed to the final `cents`, not the per-frame `display`, so VoiceOver
+  // announces the settled value once rather than every count-up frame. Inner
+  // text nodes are hidden from the a11y tree so they are not read separately.
   return (
-    <View style={styles.container}>
-      <Text style={styles.label}>{strings.habitLogging.keptSoFar}</Text>
-      <Animated.Text style={[styles.amount, { color, transform: [{ scale }] }]}>
+    <View
+      style={styles.container}
+      accessible
+      accessibilityRole="text"
+      accessibilityLabel={keptHeroLabel(format(cents))}
+    >
+      <Text style={styles.label} importantForAccessibility="no">{strings.habitLogging.keptSoFar}</Text>
+      <Animated.Text
+        style={[styles.amount, { color, transform: [{ scale }] }]}
+        importantForAccessibility="no"
+      >
         {format(display)}
       </Animated.Text>
-      <Text style={styles.caption}>
+      <Text style={styles.caption} importantForAccessibility="no">
         {cents === 0 ? strings.habitLogging.keptZeroCaption : strings.habitLogging.keptCaption}
       </Text>
     </View>

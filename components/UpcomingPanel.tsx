@@ -86,7 +86,7 @@ function createStyles(theme: AppTheme) {
       fontSize: 12,
       fontWeight: '700',
       letterSpacing: 1.2,
-      color: theme.textTertiary,
+      color: theme.textSecondary,
     },
     totalValue: {
       fontSize: 32,
@@ -143,7 +143,7 @@ function createStyles(theme: AppTheme) {
     },
     cardFreq: {
       fontSize: 12,
-      color: theme.textTertiary,
+      color: theme.textSecondary,
       marginTop: 2,
       textTransform: 'capitalize',
     },
