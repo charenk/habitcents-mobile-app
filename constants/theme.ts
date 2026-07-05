@@ -30,6 +30,14 @@ export const lightTheme = {
   white: '#FFFFFF',
   tabIconDefault: '#9E9E9E',
   danger: '#DC2626',
+  // Habit logging v2 (docs/design-package-phase2/01-habit-logging-spec.md,
+  // section 2). A slip is neutral, never red/danger and never green/primary;
+  // these are its own token family used only for the slip day-state.
+  slip: '#757575',
+  slipWeekFill: '#ECEFF1',
+  slipWeekDot: '#78909C',
+  coachMomentBg: '#F8F8F8',
+  coachMomentMilestoneBg: 'rgba(178, 223, 182, 0.3)',
 } as const;
 
 export const darkTheme = {
@@ -60,6 +68,12 @@ export const darkTheme = {
   white: '#FFFFFF',
   tabIconDefault: '#9E9E9E',
   danger: '#EF5350',
+  // Not part of the v1 build (light mode only); kept for AppTheme parity only.
+  slip: '#9E9E9E',
+  slipWeekFill: '#37474F',
+  slipWeekDot: '#90A4AE',
+  coachMomentBg: '#252525',
+  coachMomentMilestoneBg: 'rgba(46, 125, 50, 0.3)',
 } as const;
 
 export type AppTheme = {
@@ -90,6 +104,11 @@ export type AppTheme = {
   white: string;
   tabIconDefault: string;
   danger: string;
+  slip: string;
+  slipWeekFill: string;
+  slipWeekDot: string;
+  coachMomentBg: string;
+  coachMomentMilestoneBg: string;
 };
 
 export type ThemeMode = 'light' | 'dark' | 'system';

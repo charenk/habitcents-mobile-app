@@ -67,6 +67,111 @@ export const strings = {
     perUnit: (unit: string) => `per ${unit}`,
     swipeHint: 'Swipe to track or dismiss',
   },
+  // Habit logging v2 (docs/design-package-phase2/01-habit-logging-spec.md).
+  // Vocabulary is load-bearing: skip is the win, slip is neutral and never
+  // subtracts from Kept. Never reword to streak/success/completed language.
+  habitLogging: {
+    // Kept hero (4.1)
+    keptSoFar: 'KEPT SO FAR',
+    keptCaption: "money you didn't spend",
+    // Leaks found section + leak card (4.10, unchanged from v1)
+    leaksFoundSection: 'Leaks found',
+    breakingNowSection: 'Breaking now',
+    breakIt: 'Break it',
+    notThisOne: 'Not this one',
+    leakEvidence: (name: string, monthTotal: string, occurrences: number) =>
+      `${name} costs you about ${monthTotal} a month. You bought it ${occurrences} times in the last 30 days.`,
+    // Check-in card (4.2)
+    dailyQuestion: 'Did you skip it today?',
+    weeklyValueLine: (skipValue: string) => `Each skip keeps ${skipValue}.`,
+    skipButton: (skipValue: string) => `Skipped it +${skipValue}`,
+    skipOneButton: 'I skipped one',
+    boughtItButton: 'I bought it',
+    firstRunLine: 'Your first skip starts the counter.',
+    weekSummaryBold: (n: number, m: number) => `${n} of ${m} days`,
+    weekSummarySuffix: (weekKept: string | null) => ` skipped this week${weekKept ? ` · ${weekKept} kept` : ''}`,
+    periodChip: (n: number) => `${n} skip${n === 1 ? '' : 's'} this week`,
+    changeAnswer: 'Change answer',
+    spentLessThanUsual: 'Spent less than usual?',
+    // Confirmation slot (4.4)
+    skipConfirmationDaily: (skipValue: string, n: number, m: number) =>
+      `+${skipValue} kept. That's ${n} of ${m} days this week.`,
+    skipConfirmationFirstEver: (skipValue: string) => `+${skipValue} kept. Your counter is running.`,
+    skipConfirmationWeekly: (skipValue: string, n: number) => `+${skipValue} kept. ${n} skips this week.`,
+    slipConfirmationDaily: (n: number, m: number, keptTotal: string) =>
+      `Logged. Still ${n} of ${m} days this week. Your ${keptTotal} kept stays yours.`,
+    slipConfirmationZero: 'Logged. Tomorrow is a fresh start.',
+    slipConfirmationWeekly: (keptTotal: string) => `Logged. Your ${keptTotal} kept stays yours.`,
+    changeToSlipConfirmation: (skipValue: string) =>
+      `Corrected. Today is a slip, so ${skipValue} came off your kept total. It was never spent money, just today's answer.`,
+    // Backfill (3.6)
+    missedYesterday: 'Missed yesterday? Answer for it:',
+    backfillSkip: 'Skipped it',
+    backfillBought: 'Bought it',
+    backfillYesterdaySkipped: (skipValue: string) => `Yesterday: skipped, +${skipValue} kept.`,
+    backfillYesterdaySlipped: 'Yesterday: bought it. Recorded.',
+    // Milestone / coach moment slot (4.5)
+    milestoneHeadline: (n: number, chapter: string) => `${n} total skips · ${chapter}`,
+    milestoneCardText: 'A new chapter. Progress here only accumulates, slips never subtract.',
+    coachFirstSkip: 'Your counter is running. Every skip is money you decided to keep.',
+    coachSkip: 'The urge passes in minutes. The money you kept stays all day.',
+    coachSlip: 'Missing once is an accident. Missing twice starts a new habit.',
+    // Pick-one sheet (4.3)
+    pickOneCadenceDaily: 'A daily leak',
+    pickOneCadenceWeekly: 'A weekly leak',
+    pickOneCadenceMonthly: 'A monthly leak',
+    pickOneValueLine: 'Each time you skip it, we count the money as kept.',
+    pickOneFieldLabel: 'One skip keeps',
+    pickOneCadenceNoteDaily: "We'll ask each day: did you skip it?",
+    pickOneCadenceNoteEvent: 'Tap I skipped one whenever you skip. No daily check-in.',
+    startBreakingIt: 'Start breaking it',
+    freeTierNote: '1 habit on the free plan',
+    freeTierTrialCta: 'Start a free trial',
+    // Partial slip sheet (4.7)
+    partialSheetTitle: 'How much did it cost?',
+    partialSheetSubtitle: (skipValue: string) =>
+      `You usually spend about ${skipValue}. Anything under that counts as kept.`,
+    partialAmountLabel: 'Amount spent',
+    partialConfirmation: (amount: string, skipValue: string, difference: string) =>
+      `Logged. You spent ${amount} instead of ${skipValue}, so ${difference} counts as kept.`,
+    partialConfirmationFreshStart: 'Logged. Fresh start tomorrow.',
+    // Long arc (4.6)
+    longArcTitle: 'The long arc',
+    arcOf66: (total: number) => `${total}`,
+    arcOf66Label: 'OF 66',
+    arcSupportLine: (total: number) => `${total} skips toward the ~66 it takes to rewire a habit. Slips never subtract.`,
+    chapterDeciding: 'Deciding',
+    chapterRhythm: 'Rhythm',
+    chapterCruising: 'Cruising',
+    chapterRewiring: 'Rewiring',
+    chapterRewired: 'Rewired',
+    identityDeciding: "You're deciding where your money goes.",
+    identityRhythm: "You're finding your rhythm.",
+    identityCruising: "You're cruising. The habit is losing its grip.",
+    identityRewiring: "You're almost rewired.",
+    identityRewired: "Rewired. This habit doesn't run you anymore.",
+    // Detail screen stats row (4.8)
+    statKept: 'Kept',
+    statThisWeek: 'This week',
+    statThisWeekWeekly: (n: number) => `${n} skips`,
+    statTotalSkips: 'Total skips',
+    editSkipValue: (skipValue: string) => `Edit one skip keeps (${skipValue})`,
+    stopBreakingHabit: 'Stop breaking this habit',
+    stopBreakingConfirmTitle: 'Stop breaking this habit?',
+    stopBreakingConfirmMessage: 'Your history is kept. You can start breaking it again any time.',
+    // History calendar (4.9)
+    legendSkipped: 'Skipped',
+    legendSlipped: 'Slipped',
+    legendNoLog: 'No log',
+    eventSkippedOne: (skipValue: string) => `Skipped one · +${skipValue}`,
+    eventBoughtIt: 'Bought it',
+    eventBoughtItPartial: (difference: string) => `Bought it · ${difference} kept`,
+    // Empty states (4.10)
+    emptyLeaksTitle: 'No leaks found yet',
+    emptyLeaksSubtitle: 'Keep logging expenses. Around 4 logs at the same place is enough to spot a pattern.',
+    logAnExpense: 'Log an expense',
+    keptZeroCaption: 'your first skip starts this counter',
+  },
   habitDetail: {
     notFound: 'Habit not found',
     sentimentHabit: (sentiment: string) => `${sentiment} Habit`,

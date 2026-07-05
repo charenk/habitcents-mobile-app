@@ -1,10 +1,14 @@
-import React, { useMemo, useState, useCallback } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Modal,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
   Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
@@ -13,9 +17,15 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useHabits } from '@/contexts/HabitsContext';
-import { StreakCalendar } from '@/components/StreakCalendar';
+import { CheckInCard } from '@/components/habit-logging/CheckInCard';
+import { LongArc } from '@/components/habit-logging/LongArc';
+import { HistoryCalendar } from '@/components/habit-logging/HistoryCalendar';
+import { EventHistory } from '@/components/habit-logging/EventHistory';
+import { PickOneSheet } from '@/components/habit-logging/PickOneSheet';
+import { PartialSlipSheet } from '@/components/habit-logging/PartialSlipSheet';
+import { atMidnight, weekStats, FREE_TIER_HABIT_LIMIT } from '@/utils/habitLogging';
 import type { AppTheme } from '@/constants/theme';
-import type { StreakDay } from '@/types/habit';
+import type { DetectedHabit, HabitChangeGoal } from '@/types/habit';
 import { strings } from '@/constants/strings';
 
 export default function HabitDetailScreen() {
@@ -23,26 +33,29 @@ export default function HabitDetailScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const theme = useTheme();
-  const { format } = useCurrency();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   const {
     getHabitById,
     getGoalByHabitId,
-    createGoal,
-    logStreakDay,
-    startTrackingHabit,
+    getActiveHabits,
+    startBreakingHabit,
+    answerToday,
+    answerEvent,
+    changeTodayAnswer,
+    backfillYesterday,
+    savePartialSlip,
+    updateSkipValue,
+    stopBreakingHabit,
+    lastMilestone,
   } = useHabits();
 
   const habit = getHabitById(id || '');
   const goal = getGoalByHabitId(id || '');
 
-  const [isLogging, setIsLogging] = useState(false);
-
-  // Real streak history from the goal's persisted logs. Declared before the
-  // not-found guard so hook order stays stable if `habit` toggles across
-  // renders (H6: avoids "rendered fewer hooks than expected").
-  const streakDays: StreakDay[] = useMemo(() => goal?.logs ?? [], [goal]);
+  const [pickOneVisible, setPickOneVisible] = useState(false);
+  const [partialVisible, setPartialVisible] = useState(false);
+  const [editSkipVisible, setEditSkipVisible] = useState(false);
 
   if (!habit) {
     return (
@@ -59,54 +72,21 @@ export default function HabitDetailScreen() {
     );
   }
 
-  const handleStartTracking = async () => {
-    await startTrackingHabit(habit.id);
-    await createGoal(
-      habit.id,
-      'reduce_amount',
-      Math.round(habit.totalMonthlySpend * 0.8),
-      habit.totalMonthlySpend
-    );
+  const handleStart = async (skipValue: number, valueEdited: boolean) => {
+    await startBreakingHabit(habit.id, skipValue, valueEdited, 'detection');
+    setPickOneVisible(false);
   };
 
-  const handleLogDay = async (completed: boolean) => {
+  const handleStopBreaking = () => {
     if (!goal) return;
-    setIsLogging(true);
-    await logStreakDay(goal.id, completed);
-    setIsLogging(false);
-  };
-
-  const getSentimentColor = () => {
-    switch (habit.sentiment) {
-      case 'good':
-        return theme.primary;
-      case 'bad':
-        return theme.danger;
-      default:
-        return theme.iconOrange;
-    }
-  };
-
-  const getTrendIcon = () => {
-    switch (habit.trend) {
-      case 'increasing':
-        return 'trending-up';
-      case 'decreasing':
-        return 'trending-down';
-      default:
-        return 'remove';
-    }
-  };
-
-  const getTrendColor = () => {
-    switch (habit.trend) {
-      case 'increasing':
-        return theme.danger;
-      case 'decreasing':
-        return theme.primary;
-      default:
-        return theme.textSecondary;
-    }
+    Alert.alert(
+      strings.habitLogging.stopBreakingConfirmTitle,
+      strings.habitLogging.stopBreakingConfirmMessage,
+      [
+        { text: strings.common.cancel, style: 'cancel' },
+        { text: strings.habitLogging.stopBreakingHabit, style: 'destructive', onPress: () => stopBreakingHabit(goal.id) },
+      ]
+    );
   };
 
   return (
@@ -127,210 +107,221 @@ export default function HabitDetailScreen() {
         style={[styles.container, { paddingTop: insets.top + 44 }]}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* Header */}
         <View style={styles.headerSection}>
-          <View style={[styles.sentimentBadge, { backgroundColor: getSentimentColor() + '20' }]}>
-            <Text style={[styles.sentimentText, { color: getSentimentColor() }]}>
-              {strings.habitDetail.sentimentHabit(habit.sentiment.charAt(0).toUpperCase() + habit.sentiment.slice(1))}
-            </Text>
-          </View>
           <Text style={styles.title}>{habit.name}</Text>
           <Text style={styles.description}>{habit.description}</Text>
         </View>
 
-        {/* Stats Overview */}
-        <View style={styles.statsCard}>
-          <View style={styles.statRow}>
-            <View style={styles.stat}>
-              <Text style={styles.statValue}>{format(habit.totalMonthlySpend, { compact: true })}</Text>
-              <Text style={styles.statLabel}>{strings.habitDetail.perMonth}</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.stat}>
-              <Text style={styles.statValue}>{habit.occurrencesPerPeriod}x</Text>
-              <Text style={styles.statLabel}>{strings.habitDetail.perUnit(habit.frequency === 'daily' ? strings.habitDetail.perDay : habit.frequency === 'weekly' ? strings.habitDetail.perWeek : strings.habitDetail.perMonthUnit)}</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.stat}>
-              <View style={styles.trendRow}>
-                <Ionicons name={getTrendIcon()} size={18} color={getTrendColor()} />
-                <Text style={[styles.statValue, { color: getTrendColor(), marginLeft: 4 }]}>
-                  {habit.trendPercentage}%
-                </Text>
-              </View>
-              <Text style={styles.statLabel}>{habit.trend}</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Trigger Analysis */}
-        {habit.triggers.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{strings.habitDetail.whenDoesThisHappen}</Text>
-            <View style={styles.triggersCard}>
-              {habit.triggers.map((trigger, index) => (
-                <View key={index} style={styles.triggerRow}>
-                  <View style={styles.triggerIcon}>
-                    <Ionicons
-                      name={
-                        trigger.type === 'time'
-                          ? 'time-outline'
-                          : trigger.type === 'location'
-                          ? 'location-outline'
-                          : 'information-circle-outline'
-                      }
-                      size={20}
-                      color={theme.primary}
-                    />
-                  </View>
-                  <View style={styles.triggerContent}>
-                    <Text style={styles.triggerDescription}>{trigger.description}</Text>
-                    <Text style={styles.triggerConfidence}>
-                      {strings.habitDetail.confidence(Math.round(trigger.confidence * 100))}
-                    </Text>
-                  </View>
-                </View>
-              ))}
-            </View>
-          </View>
-        )}
-
-        {/* Streak Section (if tracking) */}
-        {goal && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{strings.habitDetail.yourProgress}</Text>
-            <StreakCalendar
-              streakDays={streakDays}
-              currentStreak={goal.currentStreak}
-              longestStreak={goal.longestStreak}
-            />
-          </View>
-        )}
-
-        {/* Savings Section (if tracking) */}
-        {goal && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{strings.habitDetail.savingsProgress}</Text>
-            <View style={styles.savingsCard}>
-              <View style={styles.savingsHeader}>
-                <Text style={styles.savingsAmount}>
-                  {format(goal.actualSavings, { compact: true })}
-                </Text>
-                <Text style={styles.savingsGoal}>
-                  {strings.habitDetail.ofGoal(format(goal.savingsGoal, { compact: true }))}
-                </Text>
-              </View>
-              <View style={styles.savingsBar}>
-                <View
-                  style={[
-                    styles.savingsBarFill,
-                    {
-                      width: `${Math.min(100, (goal.actualSavings / goal.savingsGoal) * 100)}%`,
-                    },
-                  ]}
-                />
-              </View>
-            </View>
-          </View>
-        )}
-
-        {/* Milestones (if tracking) */}
-        {goal && goal.milestones.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{strings.habitDetail.milestones}</Text>
-            <View style={styles.milestonesCard}>
-              {goal.milestones.map((milestone) => (
-                <View
-                  key={milestone.id}
-                  style={[
-                    styles.milestoneRow,
-                    milestone.reachedAt && styles.milestoneRowCompleted,
-                  ]}
-                >
-                  <View
-                    style={[
-                      styles.milestoneIcon,
-                      milestone.reachedAt && styles.milestoneIconCompleted,
-                    ]}
-                  >
-                    <Ionicons
-                      name={
-                        milestone.reachedAt
-                          ? 'checkmark'
-                          : (milestone.icon as keyof typeof Ionicons.glyphMap)
-                      }
-                      size={16}
-                      color={milestone.reachedAt ? theme.white : theme.textSecondary}
-                    />
-                  </View>
-                  <View style={styles.milestoneContent}>
-                    <Text style={styles.milestoneName}>{milestone.name}</Text>
-                    <Text style={styles.milestoneDescription}>
-                      {strings.habitDetail.dayStreak(milestone.targetStreak)}
-                    </Text>
-                  </View>
-                  {milestone.reachedAt && (
-                    <Ionicons name="checkmark-circle" size={20} color={theme.primary} />
-                  )}
-                </View>
-              ))}
-            </View>
-          </View>
-        )}
-
-        {/* Suggestions */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{strings.habitDetail.suggestions}</Text>
-          <View style={styles.suggestionsCard}>
-            <View style={styles.suggestionRow}>
-              <Ionicons name="bulb-outline" size={20} color={theme.iconOrange} />
-              <Text style={styles.suggestionText}>
-                {strings.habitDetail.suggestionCoffee}
-              </Text>
-            </View>
-            <View style={styles.suggestionRow}>
-              <Ionicons name="time-outline" size={20} color={theme.primary} />
-              <Text style={styles.suggestionText}>
-                {strings.habitDetail.suggestionReminder}
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Actions */}
-        <View style={styles.actionsSection}>
-          {!goal && habit.status === 'discovered' && (
-            <TouchableOpacity style={styles.primaryButton} onPress={handleStartTracking}>
+        {goal ? (
+          <HabitDetailBreaking
+            habit={habit}
+            goal={goal}
+            milestoneJustHit={lastMilestone?.goalId === goal.id ? lastMilestone.threshold : null}
+            onSkip={() => (habit.frequency === 'daily' ? answerToday(goal.id, 'skipped') : answerEvent(goal.id, 'skipped'))}
+            onSlip={() => (habit.frequency === 'daily' ? answerToday(goal.id, 'slipped') : answerEvent(goal.id, 'slipped'))}
+            onChangeAnswer={() => changeTodayAnswer(goal.id)}
+            onBackfill={(state) => backfillYesterday(goal.id, state)}
+            onOpenPartial={() => setPartialVisible(true)}
+            onEditSkipValue={() => setEditSkipVisible(true)}
+            onStopBreaking={handleStopBreaking}
+          />
+        ) : (
+          <View style={styles.actionsSection}>
+            <TouchableOpacity style={styles.primaryButton} onPress={() => setPickOneVisible(true)}>
               <Ionicons name="flag-outline" size={20} color={theme.white} />
               <Text style={styles.primaryButtonText}>{strings.habitDetail.startTracking}</Text>
             </TouchableOpacity>
-          )}
-
-          {goal && (
-            <>
-              <TouchableOpacity
-                style={styles.primaryButton}
-                onPress={() => handleLogDay(true)}
-                disabled={isLogging}
-              >
-                <Ionicons name="checkmark-circle-outline" size={20} color={theme.white} />
-                <Text style={styles.primaryButtonText}>
-                  {isLogging ? strings.habitDetail.logging : strings.habitDetail.logTodayAsSuccess}
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.secondaryButton}
-                onPress={() => handleLogDay(false)}
-                disabled={isLogging}
-              >
-                <Text style={styles.secondaryButtonText}>{strings.habitDetail.slippedToday}</Text>
-              </TouchableOpacity>
-            </>
-          )}
-        </View>
+          </View>
+        )}
       </ScrollView>
+
+      <PickOneSheet
+        visible={pickOneVisible}
+        habit={habit}
+        monthTotal={habit.totalMonthlySpend}
+        occurrences={habit.occurrencesPerPeriod}
+        freeTierBlocked={getActiveHabits().length >= FREE_TIER_HABIT_LIMIT}
+        onCancel={() => setPickOneVisible(false)}
+        onStart={handleStart}
+      />
+
+      {goal && (
+        <PartialSlipSheet
+          visible={partialVisible}
+          skipValue={goal.skipValue}
+          onCancel={() => setPartialVisible(false)}
+          onSave={async (amount) => {
+            await savePartialSlip(goal.id, amount);
+            setPartialVisible(false);
+          }}
+        />
+      )}
+
+      {goal && (
+        <EditSkipValueSheet
+          visible={editSkipVisible}
+          initialValue={goal.skipValue}
+          onCancel={() => setEditSkipVisible(false)}
+          onSave={async (value) => {
+            await updateSkipValue(goal.id, value);
+            setEditSkipVisible(false);
+          }}
+        />
+      )}
     </>
+  );
+}
+
+type HabitDetailBreakingProps = {
+  habit: DetectedHabit;
+  goal: HabitChangeGoal;
+  milestoneJustHit: 10 | 30 | 50 | 66 | null;
+  onSkip: () => void;
+  onSlip: () => void;
+  onChangeAnswer: () => void;
+  onBackfill: (state: 'skipped' | 'slipped') => void;
+  onOpenPartial: () => void;
+  onEditSkipValue: () => void;
+  onStopBreaking: () => void;
+};
+
+/**
+ * The "breaking now" view of the detail screen (spec 01 §4.8): the same
+ * check-in card, then Kept / This week / Total skips, then the long arc, then
+ * history, then the footer actions. No longest-streak stat, no milestone
+ * marker row; the arc replaces both.
+ */
+function HabitDetailBreaking({
+  habit,
+  goal,
+  milestoneJustHit,
+  onSkip,
+  onSlip,
+  onChangeAnswer,
+  onBackfill,
+  onOpenPartial,
+  onEditSkipValue,
+  onStopBreaking,
+}: HabitDetailBreakingProps) {
+  const theme = useTheme();
+  const { format } = useCurrency();
+  const styles = useMemo(() => createStyles(theme), [theme]);
+
+  const isDaily = habit.frequency === 'daily';
+  const today = atMidnight(new Date());
+  const wk = isDaily ? weekStats(goal.dayLogs, today, goal.trackingStart, goal.skipValue) : null;
+  const displayTotal = Math.max(goal.totalSkips, goal.highestMilestoneReached);
+
+  return (
+    <View style={styles.breakingStack}>
+      <CheckInCard
+        habit={habit}
+        goal={goal}
+        milestoneJustHit={milestoneJustHit}
+        onSkip={onSkip}
+        onSlip={onSlip}
+        onChangeAnswer={onChangeAnswer}
+        onBackfill={onBackfill}
+        onOpenPartial={onOpenPartial}
+      />
+
+      <View style={styles.statsRow}>
+        <StatBlock label={strings.habitLogging.statKept} value={format(goal.kept)} />
+        <StatBlock
+          label={strings.habitLogging.statThisWeek}
+          value={isDaily ? `${wk?.skips ?? 0} of ${wk?.answered ?? 0}` : strings.habitLogging.statThisWeekWeekly(periodSkipCount(goal))}
+        />
+        <StatBlock label={strings.habitLogging.statTotalSkips} value={String(goal.totalSkips)} />
+      </View>
+
+      <LongArc displayTotal={displayTotal} />
+
+      {isDaily ? (
+        <HistoryCalendar dayLogs={goal.dayLogs} trackingStart={goal.trackingStart} onSelectToday={onChangeAnswer} />
+      ) : (
+        <EventHistory dayLogs={goal.dayLogs} skipValue={goal.skipValue} />
+      )}
+
+      <View style={styles.footerActions}>
+        <TouchableOpacity style={styles.secondaryButton} onPress={onEditSkipValue}>
+          <Text style={styles.secondaryButtonText}>{strings.habitLogging.editSkipValue(format(goal.skipValue))}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.plainButton} onPress={onStopBreaking}>
+          <Text style={styles.plainButtonText}>{strings.habitLogging.stopBreakingHabit}</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
+
+/** This week's (Mon-Sun) skip events, for the weekly/monthly stat block. */
+function periodSkipCount(goal: HabitChangeGoal): number {
+  const now = new Date();
+  const dow = now.getDay();
+  const diffToMonday = dow === 0 ? -6 : 1 - dow;
+  const monday = atMidnight(new Date(now));
+  monday.setDate(monday.getDate() + diffToMonday);
+  return goal.dayLogs.filter((e) => e.state === 'skipped' && e.date.getTime() >= monday.getTime()).length;
+}
+
+function StatBlock({ label, value }: { label: string; value: string }) {
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
+  return (
+    <View style={styles.statBlock}>
+      <Text style={styles.statValue}>{value}</Text>
+      <Text style={styles.statLabel}>{label}</Text>
+    </View>
+  );
+}
+
+/** "Edit one skip keeps" footer sheet (spec 01 §4.8): single-field amount edit. */
+function EditSkipValueSheet({
+  visible,
+  initialValue,
+  onCancel,
+  onSave,
+}: {
+  visible: boolean;
+  initialValue: number;
+  onCancel: () => void;
+  onSave: (value: number) => void;
+}) {
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
+  const [text, setText] = useState(String((initialValue / 100).toFixed(2)));
+
+  React.useEffect(() => {
+    if (visible) setText(String((initialValue / 100).toFixed(2)));
+  }, [visible, initialValue]);
+
+  return (
+    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onCancel}>
+      <KeyboardAvoidingView style={styles.editSheetContainer} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <View style={styles.grabber} />
+        <Text style={styles.editSheetTitle}>{strings.habitLogging.pickOneFieldLabel}</Text>
+        <View style={styles.inputRow}>
+          <TextInput
+            value={text}
+            onChangeText={setText}
+            keyboardType="decimal-pad"
+            style={styles.input}
+            accessibilityLabel={`${strings.habitLogging.pickOneFieldLabel}, amount`}
+          />
+        </View>
+        <View style={styles.actionsSection}>
+          <TouchableOpacity
+            style={styles.primaryButton}
+            onPress={() => onSave(Math.max(0, Math.round(parseFloat(text || '0') * 100)))}
+          >
+            <Text style={styles.primaryButtonText}>{strings.common.save}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.secondaryButton} onPress={onCancel}>
+            <Text style={styles.secondaryButtonText}>{strings.common.cancel}</Text>
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
+    </Modal>
   );
 }
 
@@ -363,19 +354,7 @@ function createStyles(theme: AppTheme) {
       color: theme.textSecondary,
     },
     headerSection: {
-      marginBottom: 20,
-    },
-    sentimentBadge: {
-      alignSelf: 'flex-start',
-      paddingHorizontal: 12,
-      paddingVertical: 6,
-      borderRadius: 8,
-      marginBottom: 12,
-    },
-    sentimentText: {
-      fontSize: 12,
-      fontWeight: '600',
-      textTransform: 'uppercase',
+      marginBottom: 16,
     },
     title: {
       fontSize: 28,
@@ -388,165 +367,36 @@ function createStyles(theme: AppTheme) {
       color: theme.textSecondary,
       lineHeight: 24,
     },
-    statsCard: {
-      backgroundColor: theme.surface,
-      borderRadius: 16,
-      padding: 20,
-      marginBottom: 24,
+    breakingStack: {
+      gap: 16,
     },
-    statRow: {
+    statsRow: {
       flexDirection: 'row',
-      justifyContent: 'space-between',
+      gap: 8,
     },
-    stat: {
+    statBlock: {
       flex: 1,
+      backgroundColor: theme.surface,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: theme.border,
+      paddingVertical: 12,
+      paddingHorizontal: 8,
       alignItems: 'center',
     },
-    statDivider: {
-      width: 1,
-      backgroundColor: theme.border,
-      marginHorizontal: 12,
-    },
     statValue: {
-      fontSize: 20,
+      fontSize: 18,
       fontWeight: '700',
       color: theme.text,
     },
     statLabel: {
-      fontSize: 12,
+      fontSize: 11,
       color: theme.textSecondary,
-      marginTop: 4,
+      marginTop: 2,
+      textAlign: 'center',
     },
-    trendRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
-    section: {
-      marginBottom: 24,
-    },
-    sectionTitle: {
-      fontSize: 14,
-      fontWeight: '600',
-      color: theme.textSecondary,
-      textTransform: 'uppercase',
-      letterSpacing: 0.5,
-      marginBottom: 12,
-    },
-    triggersCard: {
-      backgroundColor: theme.surface,
-      borderRadius: 16,
-      padding: 16,
-    },
-    triggerRow: {
-      flexDirection: 'row',
-      marginBottom: 12,
-    },
-    triggerIcon: {
-      width: 40,
-      height: 40,
-      borderRadius: 10,
-      backgroundColor: theme.primary + '20',
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginRight: 12,
-    },
-    triggerContent: {
-      flex: 1,
-    },
-    triggerDescription: {
-      fontSize: 15,
-      color: theme.text,
-      marginBottom: 2,
-    },
-    triggerConfidence: {
-      fontSize: 13,
-      color: theme.textSecondary,
-    },
-    savingsCard: {
-      backgroundColor: theme.surface,
-      borderRadius: 16,
-      padding: 20,
-    },
-    savingsHeader: {
-      flexDirection: 'row',
-      alignItems: 'baseline',
-      marginBottom: 12,
-    },
-    savingsAmount: {
-      fontSize: 28,
-      fontWeight: '700',
-      color: theme.primary,
-    },
-    savingsGoal: {
-      fontSize: 15,
-      color: theme.textSecondary,
-      marginLeft: 8,
-    },
-    savingsBar: {
-      height: 10,
-      backgroundColor: theme.background,
-      borderRadius: 5,
-      overflow: 'hidden',
-    },
-    savingsBarFill: {
-      height: '100%',
-      backgroundColor: theme.primary,
-      borderRadius: 5,
-    },
-    milestonesCard: {
-      backgroundColor: theme.surface,
-      borderRadius: 16,
-      padding: 16,
-    },
-    milestoneRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingVertical: 10,
-      borderBottomWidth: 1,
-      borderBottomColor: theme.border,
-    },
-    milestoneRowCompleted: {
-      opacity: 0.7,
-    },
-    milestoneIcon: {
-      width: 32,
-      height: 32,
-      borderRadius: 16,
-      backgroundColor: theme.background,
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginRight: 12,
-    },
-    milestoneIconCompleted: {
-      backgroundColor: theme.primary,
-    },
-    milestoneContent: {
-      flex: 1,
-    },
-    milestoneName: {
-      fontSize: 15,
-      fontWeight: '600',
-      color: theme.text,
-    },
-    milestoneDescription: {
-      fontSize: 13,
-      color: theme.textSecondary,
-    },
-    suggestionsCard: {
-      backgroundColor: theme.surface,
-      borderRadius: 16,
-      padding: 16,
-    },
-    suggestionRow: {
-      flexDirection: 'row',
-      marginBottom: 12,
-    },
-    suggestionText: {
-      flex: 1,
-      fontSize: 14,
-      color: theme.text,
-      marginLeft: 12,
-      lineHeight: 20,
+    footerActions: {
+      gap: 8,
     },
     actionsSection: {
       gap: 12,
@@ -570,10 +420,60 @@ function createStyles(theme: AppTheme) {
       alignItems: 'center',
       justifyContent: 'center',
       paddingVertical: 14,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: theme.border,
     },
     secondaryButtonText: {
       fontSize: 15,
+      color: theme.text,
+      fontWeight: '600',
+    },
+    plainButton: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 12,
+    },
+    plainButtonText: {
+      fontSize: 14,
       color: theme.textSecondary,
+    },
+    editSheetContainer: {
+      flex: 1,
+      backgroundColor: theme.surface,
+      paddingHorizontal: 20,
+      paddingTop: 12,
+      paddingBottom: 28,
+    },
+    grabber: {
+      width: 36,
+      height: 5,
+      borderRadius: 3,
+      backgroundColor: theme.border,
+      alignSelf: 'center',
+      marginBottom: 14,
+    },
+    editSheetTitle: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: theme.textSecondary,
+      marginBottom: 8,
+    },
+    inputRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: theme.border,
+      borderRadius: 12,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      marginBottom: 16,
+    },
+    input: {
+      flex: 1,
+      fontSize: 17,
+      fontWeight: '600',
+      color: theme.text,
     },
   });
 }
