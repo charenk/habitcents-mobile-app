@@ -272,6 +272,7 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
                 onTrack={() => handleTrackLeak(candidate)}
                 onMonitor={() => handleMonitor(candidate)}
                 onNotAHabit={() => handleNotAHabit(candidate)}
+                onWrongDetails={() => setOpenCategory(candidate.category)}
               />
             ))}
           </View>
