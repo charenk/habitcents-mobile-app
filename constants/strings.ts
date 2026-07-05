@@ -354,4 +354,96 @@ export const strings = {
     allSet: "You're all set!",
     successSubtitle: "Your first expense has been saved.\nLet's start building better habits.",
   },
+  // --- Leak Scan (P2-1b). Canonical behavior: docs/design-context/leak-scan-spec.md.
+  // Canonical visuals: docs/design-package-phase2/03-p2-1b-leak-scan-visuals.md.
+  // Vocabulary is load-bearing: tiers are solid/likely/needs review, never a
+  // percentage; leak/skip/kept vocabulary elsewhere is untouched by this screen.
+  leakScan: {
+    // Intake
+    intakeTitle: 'Scan your statement',
+    intakeSubtitle: 'CSV files only. Everything stays on this device.',
+    chooseFiles: 'Choose CSV files',
+    filesChosenCount: (n: number) => `${n} file${n === 1 ? '' : 's'} selected`,
+    startScan: 'Start scan',
+    scanningTitle: 'Reading your file',
+    scanningSubtitle: 'This usually takes a few seconds.',
+    fileTooLarge: (name: string) => `${name} is larger than 10 MB and was skipped.`,
+    tooManyFiles: 'Up to 5 files per scan; the rest were skipped.',
+    // The two permitted questions (spec section 3, 4; visual spec section 11)
+    dateOrderQuestion: 'Is 03/04 March 4th or April 3rd?',
+    dateOrderChipMarch: 'March 4',
+    dateOrderChipApril: 'April 3',
+    signConfirmationQuestion: 'Purchases in this file look like negative numbers, right?',
+    signConfirmationYes: 'Yes',
+    signConfirmationNo: 'No',
+    // Tier badges (visual spec section 2)
+    tierSolid: 'Solid',
+    tierLikely: 'Likely',
+    tierReview: 'Needs review',
+    // KPI row (spec 5.1, visual spec 3)
+    kpiTotalSpent: 'Total spent',
+    kpiPerDay: 'Per day',
+    kpiTransactions: 'Transactions',
+    kpiNetOfTransfers: 'Net of transfers',
+    kpiPurchasesPerDay: (rate: string) => `${rate} purchases/day`,
+    kpiOverCoveredDays: (days: number) => `over ${days} covered days`,
+    kpiEvidenceWindow: (start: string, end: string, accounts: number) =>
+      `${start} to ${end} · ${accounts} account${accounts === 1 ? '' : 's'}`,
+    // Categories (spec 5.2, visual spec 4)
+    categoriesTitle: 'Where it went',
+    viewMore: 'View more',
+    percentOfTotal: (pct: number) => `${pct}% of total`,
+    // SpendPulse (spec 5.3, visual spec 5)
+    pulseGranularityDay: 'Day',
+    pulseGranularityMonth: 'Month',
+    pulseGranularityYear: 'Year',
+    pulseLegendSpend: 'more spent',
+    pulseLegendZero: 'no spend',
+    pulseLegendOutOfCoverage: 'outside your files',
+    pulseCaption: (n: number, covered: number) => `You transacted on ${n} of ${covered} days.`,
+    // Habit cards (spec 5.4, visual spec 6)
+    classGovern: 'Govern',
+    classInfluence: 'Influence',
+    classFixed: 'Fixed',
+    habitStatsRow: (orders: number, days: number, coveredDays: number, monthTotal: string, month: string) =>
+      `${orders} orders · ${days}/${coveredDays} days · ${monthTotal} in ${month}`,
+    yearlyPacePill: (amount: string) => `≈ ${amount}/yr pace`,
+    trackThisLeak: 'Track this leak',
+    monitorHabit: 'Monitor',
+    fixedTipCard: (month: string, amount: string) =>
+      `${month} is a 3-payment month for this loan. Plan for the extra ${amount}.`,
+    notAHabit: 'Not a habit',
+    wrongDetails: 'Wrong details',
+    // Next-month projection (spec 5.5, visual spec 7)
+    projectionTitle: 'Next month',
+    projectionPlaceholder: 'One full month of data unlocks your projection.',
+    projectionLockedIn: 'Recurring — locked in',
+    projectionRunRate: 'Variable — run rate',
+    projectionBuffer: '+12% · irregulars & annual renewals',
+    threePaymentMonth: (month: string) => `3 payments in ${month}`,
+    saveToHabitCents: 'Save to HabitCents',
+    remindDayBefore: 'Remind me the day before',
+    // Footer (spec 5.6, visual spec 8)
+    footerRowsSummary: (read: number, total: number, skipped: number, dupes: number, transfers: number) =>
+      `${read} of ${total} rows read · ${skipped} skipped · ${dupes} merged · ${transfers} netted`,
+    undoImport: 'Undo this import',
+    undoConfirmTitle: 'Undo this import?',
+    undoConfirmMessage: 'This removes everything this import added.',
+    // Post-scan handoff (spec 5 post-scan, visual spec 12)
+    bringIn15Days: 'Bring in your last 15 days',
+    // Merchant review queue (spec 6/7, visual spec 10)
+    reviewQueueTitle: (n: number) => `Quick check: ${n} merchant${n === 1 ? '' : 's'} we weren't sure about`,
+    reviewQueueProgress: (done: number, n: number) => `${done} of ${n}`,
+    reviewQueueDone: 'Done',
+    reviewQueueSkipRest: 'Skip the rest',
+    // Graceful failure (spec 7, visual spec 9)
+    failureTitle: "This one's on us.",
+    failureBody:
+      "We couldn't read this file confidently enough to trust the numbers, and half-right money math is worse than none. Your data is fine; our reader just isn't fluent in this format yet.",
+    failureTryDifferentExport: 'Try a different export',
+    failureTryDifferentExportHint:
+      'Banks usually offer a few download formats. CSV works best; a shorter date range sometimes exports cleaner.',
+    failureStartLeakAudit: 'Start with the 90-second Leak Audit',
+    failureLogByHand: 'Log your first expense by hand',
+  },
 } as const;
