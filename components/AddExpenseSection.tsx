@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo, useEffect } from 'react';
+import React, { useState, useRef, useMemo, useEffect, forwardRef, useImperativeHandle } from 'react';
 import {
   View,
   Text,
@@ -13,7 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCategories } from '@/contexts/CategoriesContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
-import { AmountInput } from './AmountInput';
+import { AmountInput, type AmountInputHandle } from './AmountInput';
 import { RecurrenceField } from './RecurrenceField';
 import type { ExpenseCategory, AddExpenseInput, RecurrenceFrequency } from '@/types/expense';
 import { strings } from '@/constants/strings';
@@ -23,11 +23,21 @@ type AddExpenseSectionProps = {
   onCancel: () => void;
 };
 
-export function AddExpenseSection({ onSave, onCancel }: AddExpenseSectionProps) {
+export type AddExpenseSectionHandle = {
+  focusAmount: () => void;
+};
+
+export const AddExpenseSection = forwardRef<AddExpenseSectionHandle, AddExpenseSectionProps>(
+  function AddExpenseSection({ onSave, onCancel }, ref) {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const { getVisibleCategories } = useCategories();
   const { expenses } = useExpenses();
+  const amountRef = useRef<AmountInputHandle>(null);
+
+  useImperativeHandle(ref, () => ({
+    focusAmount: () => amountRef.current?.focus(),
+  }));
 
   const categories = getVisibleCategories();
 
@@ -120,7 +130,7 @@ export function AddExpenseSection({ onSave, onCancel }: AddExpenseSectionProps) 
 
   return (
     <View style={styles.container}>
-      <AmountInput value={amount} onChange={setAmount} />
+      <AmountInput ref={amountRef} value={amount} onChange={setAmount} />
 
       <ScrollView
         horizontal
@@ -203,7 +213,7 @@ export function AddExpenseSection({ onSave, onCancel }: AddExpenseSectionProps) 
       </Animated.View>
     </View>
   );
-}
+});
 
 function createStyles(theme: ReturnType<typeof useTheme>) {
   return StyleSheet.create({

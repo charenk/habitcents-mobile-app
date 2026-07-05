@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef, useMemo, forwardRef, useImperativeHandle } from 'react';
 import {
   View,
   Text,
@@ -16,13 +16,24 @@ type AmountInputProps = {
   autoFocus?: boolean;
 };
 
-export function AmountInput({ value, onChange, autoFocus = false }: AmountInputProps) {
+export type AmountInputHandle = {
+  focus: () => void;
+};
+
+export const AmountInput = forwardRef<AmountInputHandle, AmountInputProps>(function AmountInput(
+  { value, onChange, autoFocus = false },
+  ref
+) {
   const theme = useTheme();
   const { currency } = useCurrency();
   const meta = currencyMeta(currency);
   const styles = useMemo(() => createStyles(theme), [theme]);
   const inputRef = useRef<TextInput>(null);
   const [isFocused, setIsFocused] = useState(false);
+
+  useImperativeHandle(ref, () => ({
+    focus: () => inputRef.current?.focus(),
+  }));
 
   // Format cents to a display string with the active currency's decimal
   // places (0 for JPY, 2 otherwise), never a hardcoded ".00".
@@ -71,7 +82,7 @@ export function AmountInput({ value, onChange, autoFocus = false }: AmountInputP
       />
     </TouchableOpacity>
   );
-}
+});
 
 function createStyles(theme: ReturnType<typeof useTheme>) {
   return StyleSheet.create({

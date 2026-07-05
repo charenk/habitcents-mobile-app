@@ -24,6 +24,10 @@ export const strings = {
     saveExpense: 'Save Expense',
     all: 'All',
     editAccessibilityLabel: (title: string, amountLabel: string) => `Edit ${title}, ${amountLabel}`,
+    // Zero-expense empty state (spec 05 section 5.1).
+    emptyTitle: 'No expenses yet',
+    emptyBody: 'Log your first in about 10 seconds. Amount first, then tap a category.',
+    emptyCta: 'Add an expense',
   },
   upcoming: {
     emptyTitle: 'Nothing upcoming',

@@ -30,6 +30,10 @@ type TodayExpensesPanelProps = {
   categories: Category[];
   activeCategoryId: string;
   onCategoryChange: (categoryId: string) => void;
+  /** Rendered by the SectionList's ListEmptyComponent when sections is empty
+   * (spec 05 section 5.1: the zero-expense empty state). Null/omitted renders
+   * nothing, matching the prior behavior. */
+  emptyState?: React.ReactNode;
 };
 
 function ExpenseCard({
@@ -71,6 +75,7 @@ export function TodayExpensesPanel({
   categories,
   activeCategoryId,
   onCategoryChange,
+  emptyState,
 }: TodayExpensesPanelProps) {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -166,6 +171,7 @@ export function TodayExpensesPanel({
         stickySectionHeadersEnabled={false}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
+        ListEmptyComponent={emptyState ? () => <>{emptyState}</> : undefined}
       />
 
       <EditExpenseModal
