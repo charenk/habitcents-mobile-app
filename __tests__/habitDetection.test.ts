@@ -1,4 +1,4 @@
-import { detectHabits } from '@/utils/habitDetection';
+import { detectHabits, progressTowardDetection } from '@/utils/habitDetection';
 import type { Expense } from '@/types/expense';
 
 /**
@@ -105,5 +105,36 @@ describe('detectHabits monthly spend math', () => {
       return e;
     });
     expect(detectHabits(old)).toHaveLength(0);
+  });
+});
+
+describe('progressTowardDetection', () => {
+  it('reports 0 of 4 with no expenses', () => {
+    expect(progressTowardDetection([])).toEqual({ n: 0, threshold: 4 });
+  });
+
+  it('reports the largest same-merchant group size below the threshold', () => {
+    const twoLogs = series('Coffee', 500, 1, 2);
+    expect(progressTowardDetection(twoLogs)).toEqual({ n: 2, threshold: 4 });
+  });
+
+  it('caps n at the threshold once detection would already fire', () => {
+    const habits = detectHabits(series('Coffee', 500, 1, 40));
+    expect(habits).toHaveLength(1); // detection did fire
+    expect(progressTowardDetection(series('Coffee', 500, 1, 40))).toEqual({ n: 4, threshold: 4 });
+  });
+
+  it('ignores expenses with no merchant, matching detectHabits (H5)', () => {
+    const noMerchant = series('X', 500, 1, 3).map((e) => {
+      e.merchant = undefined;
+      return e;
+    });
+    expect(progressTowardDetection(noMerchant)).toEqual({ n: 0, threshold: 4 });
+  });
+
+  it('takes the max across merchants, not a sum', () => {
+    const a = series('Coffee', 500, 1, 3);
+    const b = series('Snacks', 300, 1, 1);
+    expect(progressTowardDetection([...a, ...b])).toEqual({ n: 3, threshold: 4 });
   });
 });

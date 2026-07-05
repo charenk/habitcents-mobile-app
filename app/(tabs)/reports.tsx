@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useReports } from '@/contexts/ReportsContext';
+import { hasFullMonthOfData } from '@/utils/recurring';
 import { useExpenses } from '@/contexts/ExpensesContext';
 import { useCategories } from '@/contexts/CategoriesContext';
 import { useHabits } from '@/contexts/HabitsContext';
@@ -73,6 +74,18 @@ export default function ReportsScreen() {
       }
 
       case 'monthly_projection': {
+        // Pre-coverage placeholder (spec 05 section 5.3): before a full
+        // calendar month of data exists, an extrapolated projection is a
+        // fabricated number. Show the honest placeholder instead.
+        if (!hasFullMonthOfData(expenses)) {
+          return (
+            <View style={styles.projectionPlaceholder}>
+              <Text style={styles.projectionPlaceholderText}>
+                {strings.leakScan.projectionPlaceholder}
+              </Text>
+            </View>
+          );
+        }
         const projection = calculateMonthlyProjection(expenses);
         return (
           <ProjectionContent
@@ -221,6 +234,17 @@ function createStyles(theme: AppTheme) {
       color: theme.textSecondary,
       marginTop: 8,
       textAlign: 'center',
+    },
+    projectionPlaceholder: {
+      paddingVertical: 20,
+      paddingHorizontal: 16,
+      alignItems: 'center',
+    },
+    projectionPlaceholderText: {
+      fontSize: 14,
+      color: theme.textSecondary,
+      textAlign: 'center',
+      lineHeight: 20,
     },
   });
 }
