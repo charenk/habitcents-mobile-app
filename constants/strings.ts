@@ -35,35 +35,13 @@ export const strings = {
   },
   habits: {
     title: 'Your Habits',
-    subtitle: (activeCount: number, streakSuffix: string) => `${activeCount} active${streakSuffix}`,
-    streakSuffix: (streakTotal: number) => ` | ${streakTotal} day streak`,
-    dollarsKept: 'DOLLARS KEPT',
-    dollarsKeptCaption: "from the habits you're breaking",
-    sectionInsights: 'Insights',
-    sectionActiveChanges: 'Active Changes',
     loading: 'Analyzing your spending patterns...',
-    emptyTitle: 'No habits detected yet',
-    emptySubtitle:
-      "Keep adding expenses and we'll identify your spending patterns automatically.",
-    tip: 'Tip: Add at least 5 expenses at the same merchant to detect a habit.',
-    // HabitProgressCard
-    active: 'Active',
-    reduceToAmount: (target: string) => `Reduce to ${target}/month`,
-    reduceToFrequency: (target: number | undefined) => `Reduce to ${target}x/week`,
-    eliminate: 'Eliminate this habit',
-    substitute: (target: string | undefined) => `Replace with ${target}`,
-    trackThisHabit: 'Track this habit',
-    savingsProgress: 'Savings Progress',
-    logToday: 'Log Today',
-    // HabitInsightCard
-    trackAction: 'Track',
-    dismissAction: 'Dismiss',
-    perMonth: 'per month',
-    perDay: 'day',
-    perWeek: 'week',
-    perMonthUnit: 'month',
-    perUnit: (unit: string) => `per ${unit}`,
-    swipeHint: 'Swipe to track or dismiss',
+    // Pre-detection progress state (spec 05 section 5.2): shown on the Habits
+    // tab empty state once logging has started but no leak has been detected
+    // yet.
+    spottingYourLeak: 'Spotting your leak',
+    logsAtSamePlace: (n: number, threshold: number) => `${n} of ${threshold} logs`,
+    logsAtSamePlaceBody: 'Around 4 logs at one merchant is enough to see a pattern. Keep logging.',
   },
   // Habit logging v2 (docs/design-package-phase2/01-habit-logging-spec.md).
   // Vocabulary is load-bearing: skip is the win, slip is neutral and never

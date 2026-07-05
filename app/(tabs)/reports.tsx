@@ -66,8 +66,7 @@ export default function ReportsScreen() {
           const goal = getGoalByHabitId(habit.id);
           return {
             habitName: habit.name,
-            currentStreak: goal?.currentStreak || 0,
-            longestStreak: goal?.longestStreak || 0,
+            totalSkips: goal?.totalSkips || 0,
           };
         });
         return <HabitStreaksContent data={data} />;

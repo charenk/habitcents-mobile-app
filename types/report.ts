@@ -74,7 +74,11 @@ export const DEFAULT_WIDGETS: ReportWidget[] = [
   {
     id: 'widget-3',
     type: 'habit_streaks',
-    title: 'Habit Streaks',
+    // Display title only (P2-4 cleanup): the widget now shows v2 total-skip
+    // counts, not consecutive-day streaks, so "Habits kept" matches the
+    // skip/kept vocabulary rather than reintroducing streak-framing language.
+    // The `type` id stays 'habit_streaks' since it is a persisted config key.
+    title: 'Habits kept',
     order: 2,
     isVisible: true,
     timeRange: 'month',
