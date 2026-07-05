@@ -55,7 +55,6 @@ export default function RootLayout() {
                 <AnalyticsLifecycle />
                 <StatusBarThemed />
                 <Stack screenOptions={{ headerShown: false }}>
-                  <Stack.Screen name="welcome" />
                   <Stack.Screen name="(tabs)" />
                   <Stack.Screen name="onboarding" />
                   <Stack.Screen name="habit" />

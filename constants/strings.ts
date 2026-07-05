@@ -316,43 +316,82 @@ export const strings = {
     confirmDeleteAccessibilityLabel: 'Confirm delete expense',
     deleteAccessibilityLabel: 'Delete expense',
   },
-  welcome: {
-    logo: 'HabitCents',
-    tagline: 'Track your spending\nwith voice or text',
-    description: 'See where your money goes with clear insights and easy expense tracking.',
-    getStarted: 'Get Started',
-    skipForNow: 'Skip for now',
-  },
+  // Onboarding (P2-1, docs/design-package-phase2/02-p2-1-onboarding-leak-audit.md).
+  // Two-door fork + Door 1 Leak Audit, the v1 ship gate. Sentence case, no em
+  // dashes; every amount below is a display example only, real amounts always
+  // render via useCurrency().format.
   onboarding: {
-    // welcome.tsx
-    title: 'HabitCents',
-    tagline: 'Build better spending habits,\none cent at a time',
-    featureTrack: 'Track expenses instantly',
-    featureDiscover: 'Discover spending patterns',
-    featureBuild: 'Build lasting habits',
-    getStarted: 'Get Started',
-    // value.tsx
-    quickTrackingTitle: 'Quick Tracking',
-    quickTrackingDescription: 'Add expenses in seconds. Just enter the amount and category - done!',
-    smartInsightsTitle: 'Smart Insights',
-    smartInsightsDescription: 'We automatically detect your spending habits and patterns over time.',
-    buildBetterHabitsTitle: 'Build Better Habits',
-    buildBetterHabitsDescription: 'Set goals, track streaks, and celebrate wins. Small changes add up!',
-    skip: 'Skip',
-    letsGo: "Let's Go",
-    next: 'Next',
-    // first-expense.tsx
-    food: 'Food',
-    shopping: 'Shopping',
-    entertainment: 'Entertainment',
-    transportation: 'Transportation',
-    firstExpenseTitle: 'Add your first expense',
-    firstExpenseSubtitle: 'This only takes a few seconds - try it out!',
-    whatWasItFor: 'What was it for?',
-    saveExpense: 'Save Expense',
-    // success.tsx
-    allSet: "You're all set!",
-    successSubtitle: "Your first expense has been saved.\nLet's start building better habits.",
+    // 3.1 Welcome
+    welcomeHeadline: (amount: string) => `Find the spending habit quietly costing you ${amount} a month`,
+    welcomeSub: 'Everything stays on your phone. No bank login. No account.',
+    findMyLeak: 'Find my leak',
+    howItWorks: 'How it works',
+    howItWorksSheet: "Log expenses in 10 seconds. We spot the habit that leaks the most. Every time you skip it, we count the money you kept.",
+    // 3.2 Two-door fork
+    forkTitle: 'How do you want to start?',
+    forkSub: 'Both stay on this device.',
+    doorFreshTag: 'About a minute',
+    doorFreshName: 'Start fresh',
+    doorFreshDescription: 'Tap through what you pay for. We estimate your leak from your answers.',
+    doorStatementsTag: '2 to 3 minutes',
+    doorStatementsName: 'Bring your statements',
+    doorStatementsDescription: 'Import a bank CSV. We scan it on your phone. Nothing uploads, ever.',
+    skipForNow: 'Skip for now',
+    // 3.3 Step 1: auto-pilot charges
+    step1Eyebrow: 'Step 1 of 2 · about 30 seconds',
+    step1Title: 'Which of these charge you on auto-pilot?',
+    step1Sub: "Tap the ones that ring a bell, we'll watch them for you. A quick scan, not a full inventory. Tap a price to make it exact.",
+    somethingElse: 'Something else',
+    somethingElseYouSetIt: 'you set it',
+    somethingElseNamePlaceholder: 'What is it called?',
+    runningTotalMonth: (total: string) => `${total} a month so far`,
+    continueButton: 'Continue',
+    noneOfThese: 'None of these',
+    editorRealPrice: (chipName: string) => `${chipName} · your real price`,
+    editorPresetCaption: (preset: string) =>
+      `Preset was ${preset}. Set saves your exact price, ✕ keeps the preset.`,
+    editorSet: 'Set',
+    editorCancelLabel: 'Keep the preset price',
+    // 3.4 Step 2: everyday rhythm
+    step2Eyebrow: 'Step 2 of 2 · about 30 seconds',
+    step2Title: 'And the everyday stuff?',
+    step2Sub: 'Roughly how often in a typical week. No amounts to add up. Tap a price if yours differs.',
+    eachAmount: (amount: string) => `about ${amount} each`,
+    bandNever: 'Never',
+    bandOneToTwo: '1-2',
+    bandThreeToFive: '3-5',
+    bandDaily: 'Daily',
+    runningWeekly: (weekly: string) => `adds ${weekly} a week`,
+    seeMyLeak: 'See my leak',
+    skipThisStep: 'Skip this step',
+    // 3.5 The reveal
+    revealYearly: (yearly: string) => `~${yearly}`,
+    revealCaption: (monthly: string) => `leaking a year. That's about ${monthly} a month.`,
+    revealCaptionSubsOnly: (monthly: string) =>
+      `leaking a year from your subscriptions so far. That's about ${monthly} a month.`,
+    breakdownLine: (source: string, amount: string) => `${source} · ~${amount}/yr`,
+    revealHonesty: 'A starting estimate from one minute of taps, not a judgment. Real logs sharpen it from here.',
+    plugBiggestLeak: 'Plug the biggest leak',
+    justStartLogging: 'Just start logging',
+    revealAnnouncement: (yearly: string, monthly: string) =>
+      `About ${yearly} a year leaking, about ${monthly} a month`,
+    // Both-empty edge case (section 8)
+    noNumberYetTitle: "We'll find your leak from your real logs.",
+    noNumberYetSubtitle: 'Around 4 logs at the same place is enough to spot a pattern.',
+    // 3.6 Guided first log
+    guidedLogHint: "One practice log and you're done. Try today's coffee. Amount first.",
+    guidedLogLater: 'Later',
+    // 3.7 Success
+    leakMapReady: 'Your leak map is ready',
+    biggestLeakCaption: (monthTotal: string) => `about ${monthTotal} a month · your biggest leak`,
+    breakIt: 'Break it',
+    trialQuietNote: "1 habit free, always. Premium trial available when you're ready.",
+    continueToHabits: 'Continue',
+    // Re-entry (section 7, Habits empty-state link)
+    reAuditLink: 'Take the 90-second leak audit',
+    // Door 2 graceful-failure re-entry (section 8.6): scan-found chips are
+    // pre-selected at exact values, no tilde, annotated.
+    fromYourStatements: 'from your statements',
   },
   // --- Leak Scan (P2-1b). Canonical behavior: docs/design-context/leak-scan-spec.md.
   // Canonical visuals: docs/design-package-phase2/03-p2-1b-leak-scan-visuals.md.

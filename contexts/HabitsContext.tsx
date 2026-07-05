@@ -60,6 +60,26 @@ type HabitsContextValue = {
     valueEdited: boolean,
     source?: 'detection' | 'scan'
   ) => Promise<HabitChangeGoal>;
+  /**
+   * Onboarding Leak Audit bridge (P2-1, spec 02 §3.5, §5): the audit's biggest
+   * breakdown line has no real transaction history yet, so it cannot come from
+   * detectHabits(). This seeds a `status: 'discovered'` habit directly from the
+   * audit's own evidence (name, per-occurrence average, cadence), giving it the
+   * identical shape a real detection would produce so it flows through
+   * getHabitById / PickOneSheet / startBreakingHabit unmodified. Matching on
+   * `merchantPattern` means re-running the audit updates rather than
+   * duplicates (section 7, "Re-running the audit").
+   */
+  seedDiscoveredHabit: (input: {
+    merchantPattern: string;
+    name: string;
+    description: string;
+    categoryId: string;
+    averageAmount: number;
+    frequency: DetectedHabit['frequency'];
+    occurrencesPerPeriod: number;
+    totalMonthlySpend: number;
+  }) => Promise<DetectedHabit>;
   /** Daily cadence: answer today's check-in question (spec §3.2). */
   answerToday: (goalId: string, state: AnswerState) => Promise<void>;
   /** Weekly/monthly cadence: record one event (spec §3.3). */
@@ -317,6 +337,59 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
     return newGoal;
   }, [habits, goals]);
 
+  const seedDiscoveredHabit = useCallback(async (input: {
+    merchantPattern: string;
+    name: string;
+    description: string;
+    categoryId: string;
+    averageAmount: number;
+    frequency: DetectedHabit['frequency'];
+    occurrencesPerPeriod: number;
+    totalMonthlySpend: number;
+  }): Promise<DetectedHabit> => {
+    const existing = habits.find(h => h.merchantPattern === input.merchantPattern);
+
+    if (existing) {
+      const refreshed: DetectedHabit = {
+        ...existing,
+        name: input.name,
+        description: input.description,
+        categoryId: input.categoryId,
+        averageAmount: input.averageAmount,
+        frequency: input.frequency,
+        occurrencesPerPeriod: input.occurrencesPerPeriod,
+        totalMonthlySpend: input.totalMonthlySpend,
+      };
+      const updatedHabits = habits.map(h => (h.id === existing.id ? refreshed : h));
+      setHabits(updatedHabits);
+      await saveHabits(updatedHabits);
+      return refreshed;
+    }
+
+    const habit: DetectedHabit = {
+      id: generateId('habit'),
+      name: input.name,
+      description: input.description,
+      categoryId: input.categoryId,
+      merchantPattern: input.merchantPattern,
+      averageAmount: input.averageAmount,
+      frequency: input.frequency,
+      occurrencesPerPeriod: input.occurrencesPerPeriod,
+      totalMonthlySpend: input.totalMonthlySpend,
+      trend: 'stable',
+      trendPercentage: 0,
+      triggers: [],
+      status: 'discovered',
+      sentiment: 'bad',
+      discoveredAt: new Date(),
+    };
+
+    const updatedHabits = [...habits, habit];
+    setHabits(updatedHabits);
+    await saveHabits(updatedHabits);
+    return habit;
+  }, [habits]);
+
   const persistGoalAndHabit = useCallback(async (updatedGoal: HabitChangeGoal) => {
     const updatedGoals = goals.map(g => (g.id === updatedGoal.id ? updatedGoal : g));
     setGoals(updatedGoals);
@@ -570,6 +643,7 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
         dismissHabit,
         addScanHabit,
         startBreakingHabit,
+        seedDiscoveredHabit,
         answerToday,
         answerEvent,
         changeTodayAnswer,

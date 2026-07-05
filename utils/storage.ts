@@ -4,7 +4,7 @@ import type { Expense } from '@/types/expense';
 import type { Category } from '@/types/category';
 import type { DetectedHabit, HabitChangeGoal, HabitMilestone } from '@/types/habit';
 import type { DashboardConfig } from '@/types/report';
-import type { OnboardingState, ProgressiveFeatureState } from '@/types/onboarding';
+import type { OnboardingState, ProgressiveFeatureState, AuditAnswers } from '@/types/onboarding';
 import { type CurrencyCode, DEFAULT_CURRENCY, isCurrencyCode } from '@/utils/currency';
 import { type CoachMomentState, createInitialCoachMomentState } from '@/utils/coachMoments';
 
@@ -20,6 +20,8 @@ const COACH_MOMENTS_KEY = '@habitcents_coach_moments';
 const DASHBOARD_KEY = '@habitcents_dashboard';
 const ONBOARDING_STATE_KEY = '@habitcents_onboarding_state';
 const PROGRESSIVE_FEATURES_KEY = '@habitcents_progressive_features';
+// Onboarding Leak Audit answer persistence (P2-1, spec 02 section 7).
+const AUDIT_ANSWERS_KEY = '@habitcents_audit_answers';
 
 // =====================
 // SAFE LOAD HELPERS
@@ -417,5 +419,42 @@ export async function saveProgressiveFeatureState(state: ProgressiveFeatureState
     await AsyncStorage.setItem(PROGRESSIVE_FEATURES_KEY, JSON.stringify(state));
   } catch (error) {
     console.error('Error saving progressive feature state:', error);
+  }
+}
+
+// =====================
+// ONBOARDING LEAK AUDIT ANSWERS (P2-1, spec 02 section 7)
+// =====================
+
+/**
+ * Get persisted Door 1 Leak Audit answers, so abandon-and-reopen resumes at
+ * the first incomplete step with prior answers intact.
+ */
+export async function getAuditAnswers(): Promise<AuditAnswers | null> {
+  try {
+    const value = await AsyncStorage.getItem(AUDIT_ANSWERS_KEY);
+    if (!value) return null;
+    return JSON.parse(value) as AuditAnswers;
+  } catch (error) {
+    console.error('Error reading audit answers:', error);
+    return null;
+  }
+}
+
+/** Persist Door 1 Leak Audit answers. */
+export async function saveAuditAnswers(answers: AuditAnswers): Promise<void> {
+  try {
+    await AsyncStorage.setItem(AUDIT_ANSWERS_KEY, JSON.stringify(answers));
+  } catch (error) {
+    console.error('Error saving audit answers:', error);
+  }
+}
+
+/** Clear Door 1 Leak Audit answers (used when the audit is fully re-completed). */
+export async function clearAuditAnswers(): Promise<void> {
+  try {
+    await AsyncStorage.removeItem(AUDIT_ANSWERS_KEY);
+  } catch (error) {
+    console.error('Error clearing audit answers:', error);
   }
 }

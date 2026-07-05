@@ -1,72 +1,110 @@
-import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import { useOnboarding } from '@/contexts/OnboardingContext';
+import { welcomePositioningCents } from '@/constants/onboardingPresets';
 import type { AppTheme } from '@/constants/theme';
+import type { OnboardingStep } from '@/types/onboarding';
 import { strings } from '@/constants/strings';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+// Resume routing (spec 02 section 7, "Mid-flow abandon and reopen"): welcome
+// is not repeated once the fork has been resolved (doorChosen set). Reopening
+// resumes at the first incomplete input step with prior answers intact.
+const STEP_ROUTE: Partial<Record<OnboardingStep, string>> = {
+  fork: '/onboarding/fork',
+  audit_subs: '/onboarding/audit-subs',
+  audit_vices: '/onboarding/audit-vices',
+  reveal: '/onboarding/reveal',
+  guided_log: '/onboarding/guided-log',
+  success: '/onboarding/success',
+};
 
-export default function WelcomeScreen() {
+/**
+ * Welcome (spec 02 section 3.1). One screen, no pager, no feature carousel, no
+ * voice-input promises. Primary continues to the two-door fork; "How it works"
+ * opens a 3-line sheet.
+ */
+export default function OnboardingWelcomeScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const theme = useTheme();
+  const { format, currency } = useCurrency();
   const styles = useMemo(() => createStyles(theme), [theme]);
-  const { completeStep } = useOnboarding();
+  const { onboardingState, isLoading, completeStep } = useOnboarding();
+  const [howItWorksVisible, setHowItWorksVisible] = useState(false);
 
-  const handleGetStarted = async () => {
+  useEffect(() => {
+    if (isLoading) return;
+    if (!onboardingState.doorChosen || onboardingState.doorChosen === 'skip') return;
+    // Door 2 (statements) owns its own resume state past the fork; the only
+    // thing welcome needs to do is not re-show itself, so route straight back
+    // into that flow rather than falling through to a Door-1 STEP_ROUTE entry.
+    if (onboardingState.doorChosen === 'statements') {
+      router.replace('/leak-scan');
+      return;
+    }
+    const resumeRoute = STEP_ROUTE[onboardingState.currentStep];
+    if (resumeRoute) {
+      router.replace(resumeRoute);
+    }
+  }, [isLoading, onboardingState.doorChosen, onboardingState.currentStep, router]);
+
+  const handleFindMyLeak = async () => {
     await completeStep('welcome');
-    router.push('/onboarding/value');
+    router.push('/onboarding/fork');
   };
 
   return (
-    <LinearGradient
-      colors={[theme.primary, theme.primaryDark]}
-      style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}
-    >
+    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <View style={styles.content}>
-        {/* Logo */}
-        <View style={styles.logoContainer}>
-          <View style={styles.logo}>
-            <Ionicons name="wallet" size={48} color={theme.primary} />
+        <View style={styles.wordmark}>
+          <View style={styles.wordmarkDot}>
+            <Text style={styles.wordmarkDotText}>¢</Text>
           </View>
+          <Text style={styles.wordmarkText}>HabitCents</Text>
         </View>
 
-        {/* Title */}
-        <Text style={styles.title}>{strings.onboarding.title}</Text>
-        <Text style={styles.tagline}>
-          {strings.onboarding.tagline}
+        <Text style={styles.headline}>
+          {strings.onboarding.welcomeHeadline(format(welcomePositioningCents(currency)))}
         </Text>
-
-        {/* Features preview */}
-        <View style={styles.features}>
-          <View style={styles.feature}>
-            <Ionicons name="flash" size={24} color={theme.white} />
-            <Text style={styles.featureText}>{strings.onboarding.featureTrack}</Text>
-          </View>
-          <View style={styles.feature}>
-            <Ionicons name="analytics" size={24} color={theme.white} />
-            <Text style={styles.featureText}>{strings.onboarding.featureDiscover}</Text>
-          </View>
-          <View style={styles.feature}>
-            <Ionicons name="flame" size={24} color={theme.white} />
-            <Text style={styles.featureText}>{strings.onboarding.featureBuild}</Text>
-          </View>
-        </View>
+        <Text style={styles.sub}>{strings.onboarding.welcomeSub}</Text>
       </View>
 
-      {/* CTA Button */}
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.button} onPress={handleGetStarted}>
-          <Text style={styles.buttonText}>{strings.onboarding.getStarted}</Text>
-          <Ionicons name="arrow-forward" size={20} color={theme.primary} />
+        <TouchableOpacity style={styles.primaryButton} onPress={handleFindMyLeak} accessibilityRole="button">
+          <Text style={styles.primaryButtonText}>{strings.onboarding.findMyLeak}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => setHowItWorksVisible(true)}
+          accessibilityRole="button"
+          style={styles.plainButton}
+        >
+          <Text style={styles.plainButtonText}>{strings.onboarding.howItWorks}</Text>
         </TouchableOpacity>
       </View>
-    </LinearGradient>
+
+      <Modal
+        visible={howItWorksVisible}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setHowItWorksVisible(false)}
+      >
+        <View style={[styles.sheet, { paddingBottom: insets.bottom + 24 }]}>
+          <View style={styles.grabber} />
+          <Text style={styles.sheetText}>{strings.onboarding.howItWorksSheet}</Text>
+          <TouchableOpacity
+            style={styles.primaryButton}
+            onPress={() => setHowItWorksVisible(false)}
+            accessibilityRole="button"
+          >
+            <Text style={styles.primaryButtonText}>{strings.common.ok}</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
+    </View>
   );
 }
 
@@ -74,77 +112,99 @@ function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     container: {
       flex: 1,
+      backgroundColor: theme.background,
     },
     content: {
       flex: 1,
-      alignItems: 'center',
       justifyContent: 'center',
-      paddingHorizontal: 32,
+      paddingHorizontal: 28,
     },
-    logoContainer: {
-      marginBottom: 24,
-    },
-    logo: {
-      width: 96,
-      height: 96,
-      borderRadius: 24,
-      backgroundColor: theme.white,
-      alignItems: 'center',
-      justifyContent: 'center',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.2,
-      shadowRadius: 12,
-      elevation: 8,
-    },
-    title: {
-      fontSize: 36,
-      fontWeight: '800',
-      color: theme.white,
-      marginBottom: 12,
-    },
-    tagline: {
-      fontSize: 18,
-      color: 'rgba(255, 255, 255, 0.9)',
-      textAlign: 'center',
-      lineHeight: 26,
-      marginBottom: 48,
-    },
-    features: {
-      width: '100%',
-      gap: 16,
-    },
-    feature: {
+    wordmark: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: 'rgba(255, 255, 255, 0.15)',
-      paddingHorizontal: 20,
-      paddingVertical: 14,
-      borderRadius: 12,
+      gap: 8,
+      marginBottom: 24,
     },
-    featureText: {
-      fontSize: 16,
+    wordmarkDot: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      backgroundColor: theme.primary,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    wordmarkDotText: {
       color: theme.white,
-      marginLeft: 12,
-      fontWeight: '500',
+      fontSize: 18,
+      fontWeight: '800',
+    },
+    wordmarkText: {
+      fontSize: 18,
+      fontWeight: '800',
+      color: theme.text,
+    },
+    headline: {
+      fontSize: 30,
+      fontWeight: '800',
+      color: theme.text,
+      lineHeight: 38,
+      letterSpacing: -0.4,
+      marginBottom: 12,
+    },
+    sub: {
+      fontSize: 15,
+      color: theme.textSecondary,
+      lineHeight: 21,
     },
     footer: {
       paddingHorizontal: 24,
       paddingBottom: 24,
+      alignItems: 'center',
     },
-    button: {
-      flexDirection: 'row',
+    primaryButton: {
+      minHeight: 50,
+      width: '100%',
+      borderRadius: 14,
+      backgroundColor: theme.primary,
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: theme.white,
-      paddingVertical: 18,
-      borderRadius: 16,
-      gap: 8,
     },
-    buttonText: {
-      fontSize: 18,
+    primaryButtonText: {
+      fontSize: 16,
       fontWeight: '700',
-      color: theme.primary,
+      color: theme.white,
+    },
+    plainButton: {
+      marginTop: 14,
+      minHeight: 44,
+      justifyContent: 'center',
+    },
+    plainButtonText: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: theme.textSecondary,
+    },
+    sheet: {
+      flex: 1,
+      backgroundColor: theme.surface,
+      paddingHorizontal: 20,
+      paddingTop: 12,
+      justifyContent: 'flex-end',
+      gap: 16,
+    },
+    grabber: {
+      position: 'absolute',
+      top: 12,
+      alignSelf: 'center',
+      width: 36,
+      height: 5,
+      borderRadius: 3,
+      backgroundColor: theme.border,
+    },
+    sheetText: {
+      fontSize: 16,
+      color: theme.text,
+      lineHeight: 23,
     },
   });
 }

@@ -1,9 +1,12 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import {
   getOnboardingState,
   saveOnboardingState,
   getProgressiveFeatureState,
   saveProgressiveFeatureState,
+  getAuditAnswers,
+  saveAuditAnswers,
+  clearAuditAnswers,
   setHasOnboarded,
 } from '@/utils/storage';
 import type {
@@ -11,19 +14,34 @@ import type {
   OnboardingStep,
   ProgressiveFeatureState,
   FeatureReveal,
+  AuditAnswers,
 } from '@/types/onboarding';
-import { INITIAL_ONBOARDING_STATE, INITIAL_PROGRESSIVE_STATE, FEATURE_REVEALS } from '@/types/onboarding';
+import {
+  INITIAL_ONBOARDING_STATE,
+  INITIAL_PROGRESSIVE_STATE,
+  INITIAL_AUDIT_ANSWERS,
+  FEATURE_REVEALS,
+} from '@/types/onboarding';
 import { track } from '@/utils/analytics';
 
 type OnboardingContextValue = {
   onboardingState: OnboardingState;
   progressiveState: ProgressiveFeatureState;
+  auditAnswers: AuditAnswers;
   isLoading: boolean;
   // Onboarding flow
   completeStep: (step: OnboardingStep) => Promise<void>;
   skipStep: (step: OnboardingStep) => Promise<void>;
   completeOnboarding: () => Promise<void>;
   resetOnboarding: () => Promise<void>;
+  /** door_chosen (spec 02 section 2/6): records the two-door fork tap. */
+  chooseDoor: (door: 'fresh' | 'statements' | 'skip') => Promise<void>;
+  /** Persist Door 1 Leak Audit answers so abandon/reopen resumes correctly (section 7). */
+  saveAudit: (answers: AuditAnswers) => Promise<void>;
+  /** Records that a habit was started via the pick-one sheet during onboarding
+   * (reveal's "Plug the biggest leak" or success's "Break it"), for
+   * onboarding_completed's habitStarted property (section 6). */
+  markHabitStarted: () => Promise<void>;
   // Progressive reveal
   incrementExpenseCount: () => Promise<void>;
   updateDaysActive: () => Promise<void>;
@@ -38,16 +56,38 @@ type OnboardingContextValue = {
 
 const OnboardingContext = createContext<OnboardingContextValue | null>(null);
 
+// Step transitions for the rebuilt P2-1 flow (spec 02 section 2):
+// welcome -> fork -> audit_subs -> audit_vices -> reveal -> guided_log -> success.
+const NEXT_STEP: Partial<Record<OnboardingStep, OnboardingStep>> = {
+  welcome: 'fork',
+  fork: 'audit_subs',
+  audit_subs: 'audit_vices',
+  audit_vices: 'reveal',
+  reveal: 'guided_log',
+  guided_log: 'success',
+};
+
 export function OnboardingProvider({ children }: { children: React.ReactNode }) {
   const [onboardingState, setOnboardingState] = useState<OnboardingState>(INITIAL_ONBOARDING_STATE);
   const [progressiveState, setProgressiveState] = useState<ProgressiveFeatureState>(INITIAL_PROGRESSIVE_STATE);
+  const [auditAnswers, setAuditAnswers] = useState<AuditAnswers>(INITIAL_AUDIT_ANSWERS);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Mirrors onboardingState so back-to-back mutator calls within one handler
+  // (e.g. chooseDoor() immediately followed by completeOnboarding()) each see
+  // the previous call's write, not a stale render-time closure. React state
+  // setters don't update the `onboardingState` variable synchronously, so
+  // without this a same-tick sequence would silently drop the first update
+  // (same pattern as ExpensesContext's expensesRef).
+  const onboardingStateRef = useRef(onboardingState);
+  onboardingStateRef.current = onboardingState;
 
   useEffect(() => {
     async function loadData() {
-      const [storedOnboarding, storedProgressive] = await Promise.all([
+      const [storedOnboarding, storedProgressive, storedAudit] = await Promise.all([
         getOnboardingState(),
         getProgressiveFeatureState(),
+        getAuditAnswers(),
       ]);
 
       if (storedOnboarding) {
@@ -55,6 +95,9 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       }
       if (storedProgressive) {
         setProgressiveState(storedProgressive);
+      }
+      if (storedAudit) {
+        setAuditAnswers(storedAudit);
       }
 
       setIsLoading(false);
@@ -64,26 +107,15 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
 
   const completeStep = useCallback(async (step: OnboardingStep): Promise<void> => {
     const updates: Partial<OnboardingState> = {};
+    const next = NEXT_STEP[step];
+    if (next) updates.currentStep = next;
 
-    switch (step) {
-      case 'welcome':
-        updates.hasSeenWelcome = true;
-        updates.currentStep = 'value_props';
-        break;
-      case 'value_props':
-        updates.hasSeenValueProps = true;
-        updates.currentStep = 'first_expense';
-        break;
-      case 'first_expense':
-        updates.hasAddedFirstExpense = true;
-        updates.currentStep = 'success';
-        break;
-      case 'success':
-        updates.completedAt = new Date();
-        break;
-    }
+    if (step === 'welcome') updates.hasSeenWelcome = true;
+    if (step === 'guided_log') updates.hasAddedFirstExpense = true;
+    if (step === 'success') updates.completedAt = new Date();
 
-    const updated = { ...onboardingState, ...updates };
+    const updated = { ...onboardingStateRef.current, ...updates };
+    onboardingStateRef.current = updated;
     setOnboardingState(updated);
     await saveOnboardingState(updated);
 
@@ -91,37 +123,53 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       track('onboarding_started', {});
     }
     track('onboarding_step_completed', { step });
-  }, [onboardingState]);
+  }, []);
 
   const skipStep = useCallback(async (step: OnboardingStep): Promise<void> => {
     const updates: Partial<OnboardingState> = {
-      skippedSteps: [...onboardingState.skippedSteps, step],
+      skippedSteps: [...onboardingStateRef.current.skippedSteps, step],
     };
+    const next = NEXT_STEP[step];
+    if (next) updates.currentStep = next;
 
-    switch (step) {
-      case 'value_props':
-        updates.currentStep = 'first_expense';
-        break;
-      case 'first_expense':
-        updates.currentStep = 'success';
-        break;
-    }
-
-    const updated = { ...onboardingState, ...updates };
+    const updated = { ...onboardingStateRef.current, ...updates };
+    onboardingStateRef.current = updated;
     setOnboardingState(updated);
     await saveOnboardingState(updated);
 
     track('onboarding_step_skipped', { step });
-  }, [onboardingState]);
+  }, []);
+
+  const chooseDoor = useCallback(async (door: 'fresh' | 'statements' | 'skip'): Promise<void> => {
+    const updated: OnboardingState = { ...onboardingStateRef.current, doorChosen: door };
+    onboardingStateRef.current = updated;
+    setOnboardingState(updated);
+    await saveOnboardingState(updated);
+    track('door_chosen', { door });
+  }, []);
+
+  const saveAudit = useCallback(async (answers: AuditAnswers): Promise<void> => {
+    setAuditAnswers(answers);
+    await saveAuditAnswers(answers);
+  }, []);
+
+  const markHabitStarted = useCallback(async (): Promise<void> => {
+    const updated: OnboardingState = { ...onboardingStateRef.current, habitStarted: true };
+    onboardingStateRef.current = updated;
+    setOnboardingState(updated);
+    await saveOnboardingState(updated);
+  }, []);
 
   const completeOnboarding = useCallback(async (): Promise<void> => {
     const updated: OnboardingState = {
-      ...onboardingState,
+      ...onboardingStateRef.current,
       completedAt: new Date(),
     };
+    onboardingStateRef.current = updated;
     setOnboardingState(updated);
     await saveOnboardingState(updated);
     await setHasOnboarded();
+    await clearAuditAnswers();
 
     // Initialize progressive state
     const initialProgressive: ProgressiveFeatureState = {
@@ -132,12 +180,22 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     setProgressiveState(initialProgressive);
     await saveProgressiveFeatureState(initialProgressive);
 
-    track('onboarding_completed', {});
-  }, [onboardingState, progressiveState]);
+    // onboarding_completed (spec 02 section 6) fires here, not at each call
+    // site, so every path to completing onboarding (skip, or the success
+    // screen's Continue) reports it the same way with no caller convention
+    // to forget.
+    track('onboarding_completed', {
+      door: updated.doorChosen,
+      habitStarted: !!updated.habitStarted,
+    });
+  }, [progressiveState]);
 
   const resetOnboarding = useCallback(async (): Promise<void> => {
+    onboardingStateRef.current = INITIAL_ONBOARDING_STATE;
     setOnboardingState(INITIAL_ONBOARDING_STATE);
     await saveOnboardingState(INITIAL_ONBOARDING_STATE);
+    setAuditAnswers(INITIAL_AUDIT_ANSWERS);
+    await clearAuditAnswers();
   }, []);
 
   const incrementExpenseCount = useCallback(async (): Promise<void> => {
@@ -233,9 +291,13 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       value={{
         onboardingState,
         progressiveState,
+        auditAnswers,
         isLoading,
         completeStep,
         skipStep,
+        chooseDoor,
+        saveAudit,
+        markHabitStarted,
         completeOnboarding,
         resetOnboarding,
         incrementExpenseCount,

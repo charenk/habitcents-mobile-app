@@ -49,6 +49,7 @@ function createExpense(input: AddExpenseInput): Expense {
     recurrence: input.recurrence,
     reminderEnabled: input.reminderEnabled,
     reminderTime: input.reminderTime,
+    source: input.source ?? 'manual',
     iconVariant,
   };
 }

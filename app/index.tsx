@@ -28,7 +28,7 @@ export default function Index() {
   }
 
   if (!hasOnboarded) {
-    return <Redirect href="/welcome" />;
+    return <Redirect href="/onboarding/welcome" />;
   }
 
   return <Redirect href="/(tabs)/expenses" />;
