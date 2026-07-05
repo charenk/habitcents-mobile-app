@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="design_doc_mode" content="canvas">
+<title>P2-1b Leak Scan visuals · options</title>
+<style>
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif; color: #212121; }
+  .board-card { position: absolute; background: #fff; border-radius: 14px; padding: 18px 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.22); box-sizing: border-box; }
+  .board-card h1 { font-size: 21px; margin: 0 0 6px; }
+  .board-card h2 { font-size: 16px; margin: 0; }
+  .board-card h3 { font-size: 13px; margin: 0 0 10px; color: #757575; text-transform: uppercase; letter-spacing: 0.4px; }
+  .board-card p { font-size: 13px; color: #616161; line-height: 1.5; margin: 6px 0 0; }
+  .row-label { display: flex; align-items: center; gap: 14px; }
+  .rec-pill { background: #2E7D32; color: #fff; font-size: 11px; font-weight: 800; letter-spacing: 0.5px; border-radius: 999px; padding: 5px 12px; flex: none; }
+  .note { width: 250px; border-radius: 4px; padding: 14px 16px; box-shadow: 3px 4px 10px rgba(0,0,0,0.28); }
+  .note h4 { margin: 0 0 6px; font-size: 12px; color: #4e4636; letter-spacing: 0.3px; text-transform: uppercase; }
+  .note ul { margin: 0; padding-left: 15px; font-size: 12px; line-height: 1.5; color: #4e4636; }
+  .note p { font-size: 12px; line-height: 1.5; color: #37503b; margin: 0; }
+  .pros, .cons { background: #FFF7C2; }
+  .trade { background: #D9F2DD; }
+  .trade h4 { color: #2E5c35; }
+
+  /* shared component styles (Direction C tokens) */
+  .pill { display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 10px; border-radius: 999px; font-size: 11px; font-weight: 700; box-sizing: border-box; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+  .b-solid { background: #EDF7EE; color: #2E7D32; } .b-solid .dot { background: #2E7D32; }
+  .b-likely { background: #FFF3E0; color: #B26A00; } .b-likely .dot { background: #B26A00; box-shadow: inset -4px 0 0 #FFF3E0; }
+  .b-review { background: #F1F3F5; color: #616161; } .b-review .dot { background: transparent; border: 2px solid #9AA0A6; box-sizing: border-box; }
+
+  .card { background: #fff; border: 0.5px solid #E5E7EB; border-radius: 14px; box-shadow: 0 1px 2px rgba(17,24,17,0.05); padding: 14px; }
+  .amt { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; font-variant-numeric: tabular-nums; }
+  .kpi-lb { font-size: 11px; color: #757575; margin: 3px 0 0; }
+  .kpi-sub { font-size: 10.5px; color: #9E9E9E; margin: 2px 0 0; }
+
+  .pulse-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; }
+  .pc { aspect-ratio: 1; border-radius: 4px; }
+  .hatch { background-image: repeating-linear-gradient(45deg, #D8DCE0 0 1px, transparent 1px 4px); border: 0.5px solid #E9ECEF; }
+  .legend { display: flex; gap: 12px; margin-top: 12px; flex-wrap: wrap; }
+  .legend span { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #616161; }
+  .sw { width: 13px; height: 13px; border-radius: 3px; flex: none; }
+  .btn-g { background: #4CAF50; color: #fff; border: none; border-radius: 11px; padding: 10px 14px; font-size: 13px; font-weight: 700; font-family: inherit; }
+  .btn-n { background: #fff; color: #212121; border: 1px solid #E5E7EB; border-radius: 11px; padding: 10px 14px; font-size: 13px; font-weight: 700; font-family: inherit; }
+</style>
+</head>
+<body>
+
+<div class="board-card" style="left: 40px; top: 40px; width: 1560px;" data-screen-label="Board header">
+  <h1>P2-1b Leak Scan visuals · component options</h1>
+  <p>Behavior is locked by leak-scan-spec.md section 5; only the visual treatment is open. Columns stack left to right: the tier-badge system (the reused primitive), the SpendPulse coverage grid (the load-bearing honesty component), a habit card, and the graceful-failure screen. Options and stickies per component. Full spec: 03-p2-1b-leak-scan-visuals.md.</p>
+</div>
+
+<!-- ===== TIER BADGES ===== -->
+<div class="board-card row-label" style="left: 40px; top: 210px; width: 460px;" data-screen-label="Tier badge label">
+  <div><h2>Tier badges · the reused primitive</h2><p>Solid / likely / needs review. Never a percentage, never color alone.</p></div>
+  <span class="rec-pill">Final</span>
+</div>
+
+<div class="board-card" style="left: 40px; top: 320px; width: 300px;" data-screen-label="Tier badge option 1">
+  <h3>Option 1 · shape + label (chosen)</h3>
+  <div style="display: flex; flex-direction: column; gap: 10px;">
+    <span class="pill b-solid"><span class="dot"></span>Solid</span>
+    <span class="pill b-likely"><span class="dot"></span>Likely</span>
+    <span class="pill b-review"><span class="dot"></span>Needs review</span>
+  </div>
+  <p>Dot shape carries meaning (disc / half / ring) so color is never the sole signal. Muted fills keep confidence-green off the brand-win green.</p>
+</div>
+
+<div class="board-card" style="left: 360px; top: 320px; width: 300px;" data-screen-label="Tier badge option 2">
+  <h3>Option 2 · dot only</h3>
+  <div style="display: flex; gap: 14px; align-items: center;">
+    <span class="dot" style="background:#2E7D32; width:13px; height:13px;"></span>
+    <span class="dot" style="background:#B26A00; width:13px; height:13px;"></span>
+    <span class="dot" style="border:2px solid #9AA0A6; width:13px; height:13px; box-sizing:border-box;"></span>
+  </div>
+  <p>Compact, but fails color-blind and VoiceOver users: meaning lives only in hue. Rejected.</p>
+</div>
+
+<div class="board-card note trade" style="left: 40px; top: 560px; transform: rotate(-1deg); width: 300px;" data-screen-label="Tier badge tradeoff">
+  <h4>Why option 1</h4>
+  <p>Shape + text label is the only treatment that satisfies the spec's "tiers not percentages" and the a11y floor at once. One primitive, reused on KPI cards, category rows, habit cards, and projection lines.</p>
+</div>
+
+<!-- ===== SPENDPULSE ===== -->
+<div class="board-card row-label" style="left: 700px; top: 210px; width: 460px;" data-screen-label="SpendPulse label">
+  <div><h2>SpendPulse · coverage honesty</h2><p>Zero-spend and out-of-coverage MUST look different. Out-of-coverage is hatched.</p></div>
+  <span class="rec-pill">Final</span>
+</div>
+
+<div class="board-card" style="left: 700px; top: 320px; width: 340px;" data-screen-label="SpendPulse chosen">
+  <h3>Chosen · heat ramp + neutral + hatch</h3>
+  <div class="pulse-grid" id="pg"></div>
+  <div class="legend">
+    <span><span class="sw" style="background:#DC2626;"></span>more spent</span>
+    <span><span class="sw" style="background:#F1F3F5;"></span>no spend</span>
+    <span><span class="sw hatch"></span>outside your files</span>
+  </div>
+  <p style="margin-top:10px;">You transacted on 14 of 21 days. Red is a heat ramp (the one sanctioned danger-hue use), neutral is a covered zero-spend day, hatch is no data.</p>
+</div>
+
+<div class="board-card note pros" style="left: 1060px; top: 320px; transform: rotate(1.2deg);" data-screen-label="SpendPulse pros">
+  <h4>Pros</h4>
+  <ul>
+    <li>Three fills are unmistakable: ramp vs flat neutral vs hatch</li>
+    <li>Hatch reads "no data" even at 1-bit / grayscale</li>
+    <li>Shares grid grammar with the habit calendar but never its day-states (different fills + labeled legend)</li>
+  </ul>
+</div>
+
+<div class="board-card note cons" style="left: 1060px; top: 560px; transform: rotate(-1.3deg);" data-screen-label="SpendPulse cons">
+  <h4>Cons / guardrail</h4>
+  <ul>
+    <li>Red ramp must never be misread as a slip: legend label says "more spent", not "bad"</li>
+    <li>Hatch density needs testing at year-view 7×53 micro-scale</li>
+  </ul>
+</div>
+
+<!-- ===== HABIT CARD ===== -->
+<div class="board-card row-label" style="left: 40px; top: 760px; width: 420px;" data-screen-label="Habit card label">
+  <div><h2>Habit card · Govern / Influence / Fixed</h2><p>Only the Govern CTA is green. Monitor neutral. Fixed has no button.</p></div>
+</div>
+
+<div class="board-card" style="left: 40px; top: 870px; width: 340px;" data-screen-label="Habit card Govern">
+  <div class="card">
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+      <span style="font-size:13px; font-weight:800; color:#9E9E9E;">1</span>
+      <span class="pill b-solid" style="background:#EDF7EE; color:#2E7D32;"><span class="dot" style="background:#2E7D32;"></span>Govern</span>
+      <span class="pill b-likely"><span class="dot"></span>Likely</span>
+    </div>
+    <p style="font-size:16px; font-weight:700; margin:0;">Restaurant food</p>
+    <p style="font-size:12px; color:#757575; margin:4px 0 0;">41 orders · 22/30 days · $612.40 in June</p>
+    <p style="font-size:12.5px; color:#616161; margin:8px 0 0; line-height:1.45;">Shawarma spots, Hyderabad cafés, Uber Eats. Restaurant food landed 2 of every 3 days.</p>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px;">
+      <span class="pill b-likely">≈ $7,340/yr pace</span>
+      <button class="btn-g">Track this leak</button>
+    </div>
+  </div>
+  <p style="font-size:12px; color:#616161; margin-top:8px;">Govern: green Track CTA opens the Decision-1 pick-one sheet.</p>
+</div>
+
+<div class="board-card" style="left: 400px; top: 870px; width: 300px;" data-screen-label="Habit card Influence Fixed">
+  <div class="card">
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+      <span style="font-size:13px; font-weight:800; color:#9E9E9E;">2</span>
+      <span class="pill b-review" style="background:#F1F3F5; color:#616161;"><span class="dot"></span>Influence</span>
+    </div>
+    <p style="font-size:16px; font-weight:700; margin:0;">Rideshare</p>
+    <p style="font-size:12px; color:#757575; margin:4px 0 0;">18 trips · $284.10 in June</p>
+    <div style="display:flex; justify-content:flex-end; margin-top:10px;"><button class="btn-n">Monitor</button></div>
+  </div>
+  <div class="card" style="margin-top:10px; background:#FFF9F0; border-color:#FFE0B2;">
+    <span class="pill b-likely" style="margin-bottom:6px;"><span class="dot"></span>Fixed</span>
+    <p style="font-size:14px; font-weight:700; margin:6px 0 0;">Car loan</p>
+    <p style="font-size:12px; color:#616161; margin:5px 0 0; line-height:1.45;">July is a 3-payment month for this loan. Plan for the extra $293.80.</p>
+  </div>
+  <p style="font-size:12px; color:#616161; margin-top:8px;">Influence: neutral Monitor. Fixed: tip card, no CTA.</p>
+</div>
+
+<div class="board-card note trade" style="left: 720px; top: 870px; transform: rotate(-0.8deg); width: 280px;" data-screen-label="Habit card rule">
+  <h4>The green rule holds</h4>
+  <p>Green appears on exactly one CTA (Govern → Track), because it leads to the win. Monitor is neutral, Fixed has no button. Across the whole results screen, green stays "positive action only".</p>
+</div>
+
+<!-- ===== GRACEFUL FAILURE ===== -->
+<div class="board-card row-label" style="left: 1060px; top: 760px; width: 380px;" data-screen-label="Graceful failure label">
+  <div><h2>Graceful failure · "This one's on us"</h2><p>No red, no error icon. Warm, apologetic, three exits.</p></div>
+</div>
+
+<div class="board-card" style="left: 1060px; top: 870px; width: 320px;" data-screen-label="Graceful failure screen">
+  <div class="card" style="padding:20px 18px;">
+    <div style="text-align:center; font-size:26px; font-weight:800; color:#4CAF50;">¢</div>
+    <p style="font-size:18px; font-weight:700; margin:12px 0 0; text-align:center;">This one's on us.</p>
+    <p style="font-size:13px; color:#616161; line-height:1.5; margin:10px 0 0; text-align:center;">We couldn't read this file confidently enough to trust the numbers, and half-right money math is worse than none. Your data is fine; our reader just isn't fluent in this format yet.</p>
+    <div style="display:flex; flex-direction:column; gap:8px; margin-top:16px;">
+      <button class="btn-g" style="width:100%;">Try a different export</button>
+      <button class="btn-n" style="width:100%;">Start with the 90-second leak audit</button>
+      <button class="btn-n" style="width:100%; border:none; color:#757575;">Log your first expense by hand</button>
+    </div>
+  </div>
+  <p style="font-size:12px; color:#616161; margin-top:8px;">Primed re-entry: any confidently-found items pre-select as chips in Door 1.</p>
+</div>
+
+<div class="board-card note pros" style="left: 1400px; top: 870px; transform: rotate(1deg);" data-screen-label="Graceful failure pros">
+  <h4>Why no red</h4>
+  <ul>
+    <li>The failure is ours, not the user's; red would blame them</li>
+    <li>Three ordered exits mean the flow never dead-ends (it degrades into Door 1)</li>
+    <li>Same calm tokens as the rest; only the copy carries the apology</li>
+  </ul>
+</div>
+
+<script>
+  // paint a representative SpendPulse: 3 out-of-coverage rows (hatch), then a heat ramp
+  var pg = document.getElementById('pg');
+  var ramp = ['#F1F3F5','#FDE7E7','#F9C7C7','#F1A0A0','#E56B6B','#DC2626'];
+  for (var i = 0; i < 60; i++) {
+    var c = document.createElement('span');
+    c.className = 'pc';
+    if (i < 7) { c.className += ' hatch'; }
+    else {
+      var lvl = [0,0,1,2,0,3,4,5,1,0,2,4,0,0,3,5,2,1,0,4,3,0,5,2,1,0,3,4,2,0,1,5,3,0,2,4,1,0,3,2,5,1,0,4,2,3,0,1,5,2,3,0,4][i-7] || 0;
+      c.style.background = ramp[lvl];
+    }
+    pg.appendChild(c);
+  }
+</script>
+
+</body>
+</html>

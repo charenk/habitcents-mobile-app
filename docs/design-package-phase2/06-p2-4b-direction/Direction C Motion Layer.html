@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Direction C · Native + motion layer</title>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+  html, body { margin: 0; background: #ECECEC; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif; }
+  #root { display: flex; flex-direction: column; align-items: center; padding: 18px 0 24px; }
+  @keyframes cRing { from { transform: scale(0.3); opacity: 0.5; } to { transform: scale(2.6); opacity: 0; } }
+  @keyframes cPop { 0% { transform: scale(0.4); } 62% { transform: scale(1.18); } 100% { transform: scale(1); } }
+  @keyframes cIn { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes cFade { from { opacity: 0; } to { opacity: 1; } }
+  .c-screen { animation: cFade 200ms ease-out; height: 100%; }
+  .c-pop { animation: cPop 320ms cubic-bezier(0.34, 1.56, 0.64, 1); }
+  .c-confirm { animation: cIn 220ms ease-out; }
+  .c-press { transition: transform 120ms ease-out; }
+  .c-press:active { transform: scale(0.96); }
+  @media (prefers-reduced-motion: reduce) {
+    .c-screen, .c-pop, .c-confirm { animation: none; }
+    .c-press:active { transform: none; }
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+// Direction C: Direction A's refined-native visuals, plus a motion and haptics
+// language concentrated on the two money moments: the log save and the skip.
+// Everything else stays still on purpose.
+const CT = {
+  primary: '#4CAF50', bg: '#F8F8F8', card: '#FFFFFF',
+  text: '#212121', sub: '#757575', tert: '#9E9E9E', border: '#E5E7EB',
+  slipFill: '#ECEFF1', slipInk: '#78909C',
+  shadow: '0 1px 2px rgba(17, 24, 17, 0.05)',
+};
+const fmtC = (c) => '$' + (c / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+function CountUpC({ cents }) {
+  const [disp, setDisp] = React.useState(cents);
+  const prev = React.useRef(cents);
+  React.useEffect(() => {
+    const from = prev.current, to = cents;
+    prev.current = cents;
+    if (from === to) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { setDisp(to); return; }
+    const t0 = performance.now();
+    let raf;
+    const tick = (t) => {
+      const p = Math.min(1, (t - t0) / 250);
+      const e = 1 - Math.pow(1 - p, 3);
+      setDisp(Math.round(from + (to - from) * e));
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [cents]);
+  return <span>{fmtC(disp)}</span>;
+}
+
+function KeptHeroC({ cents }) {
+  const [pulse, setPulse] = React.useState(false);
+  const prev = React.useRef(cents);
+  React.useEffect(() => {
+    if (cents > prev.current) { setPulse(true); const t = setTimeout(() => setPulse(false), 430); prev.current = cents; return () => clearTimeout(t); }
+    prev.current = cents;
+  }, [cents]);
+  return (
+    <div style={{ textAlign: 'center', padding: '14px 0 4px' }}>
+      <p style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: 1.2, color: CT.sub, margin: 0 }}>KEPT SO FAR</p>
+      <p style={{ fontSize: 40, fontWeight: 700, letterSpacing: -1, margin: '3px 0 1px', fontVariantNumeric: 'tabular-nums',
+        color: pulse ? CT.primary : CT.text, transform: pulse ? 'scale(1.06)' : 'scale(1)',
+        transition: 'transform 200ms ease-out, color 200ms ease-out' }}><CountUpC cents={cents} /></p>
+      <p style={{ fontSize: 13.5, color: CT.sub, margin: 0 }}>money you didn't spend</p>
+    </div>
+  );
+}
+
+function IconC({ kind, on }) {
+  const ink = on ? CT.primary : CT.tert;
+  const b = `1.6px solid ${ink}`;
+  if (kind === 'card') return <span style={{ width: 20, height: 15, border: b, borderRadius: 4, display: 'inline-block', position: 'relative' }}><span style={{ position: 'absolute', left: 2, right: 2, top: 3, height: 1.6, background: ink }}></span></span>;
+  if (kind === 'bars') return <span style={{ display: 'inline-flex', gap: 2.5, alignItems: 'flex-end', height: 17 }}>{[8, 14, 11].map((h, i) => <span key={i} style={{ width: 4, height: h, border: b, borderRadius: 2, boxSizing: 'border-box' }}></span>)}</span>;
+  if (kind === 'grid') return <span style={{ display: 'inline-grid', gridTemplateColumns: '1fr 1fr', gap: 2.5 }}>{[0, 1, 2, 3].map((i) => <span key={i} style={{ width: 7, height: 7, border: b, borderRadius: 2, boxSizing: 'border-box' }}></span>)}</span>;
+  if (kind === 'ring') return <span style={{ width: 16, height: 16, border: b, borderRadius: '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: ink, fontSize: 9, fontWeight: 700 }}>✓</span>;
+  if (kind === 'gear') return <span style={{ display: 'inline-flex', flexDirection: 'column', gap: 3, width: 17 }}>{[0, 1, 2].map((i) => <span key={i} style={{ height: 1.6, background: ink, borderRadius: 1, position: 'relative' }}><span style={{ position: 'absolute', left: [2, 9, 5][i], top: -2.2, width: 6, height: 6, borderRadius: '50%', background: '#F8F8F8', border: b, boxSizing: 'border-box' }}></span></span>)}</span>;
+  return null;
+}
+
+function PhoneC({ children }) {
+  return (
+    <div style={{ width: 330, height: 700, background: '#111', borderRadius: 44, padding: 10, boxShadow: '0 12px 32px rgba(0,0,0,0.28)', flex: 'none' }}>
+      <div style={{ width: '100%', height: '100%', borderRadius: 35, overflow: 'hidden', background: CT.bg, position: 'relative' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 22px 4px', fontSize: 12.5, fontWeight: 600, color: CT.text }}>
+          <span>9:41</span><span aria-hidden="true">●●●</span>
+        </div>
+        {children}
+        <div style={{ position: 'absolute', bottom: 6, left: '50%', transform: 'translateX(-50%)', width: 110, height: 4.5, borderRadius: 3, background: '#111', opacity: 0.85 }}></div>
+      </div>
+    </div>
+  );
+}
+
+function TabBarC({ active }) {
+  const tabs = [['card', 'Expenses'], ['bars', 'Reports'], ['grid', 'Categories'], ['ring', 'Habits'], ['gear', 'Settings']];
+  return (
+    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(255,255,255,0.94)', backdropFilter: 'blur(8px)', borderTop: `0.5px solid ${CT.border}`, display: 'flex', padding: '9px 0 20px' }}>
+      {tabs.map(([k, label]) => (
+        <div key={label} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+          <IconC kind={k} on={label === active} />
+          <span style={{ fontSize: 10, fontWeight: 600, color: label === active ? CT.primary : CT.tert }}>{label}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+const cardC = { background: CT.card, borderRadius: 16, border: `0.5px solid ${CT.border}`, boxShadow: CT.shadow, padding: 16 };
+const btnPrimC = { flex: 1, minHeight: 46, background: CT.primary, color: '#fff', border: 'none', borderRadius: 12, fontSize: 14.5, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer', position: 'relative' };
+const btnSecC = { flex: 1, minHeight: 46, background: '#fff', color: CT.text, border: `1px solid ${CT.border}`, borderRadius: 12, fontSize: 14.5, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer' };
+
+function WeekStripC({ week, justAnswered }) {
+  const labels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+  return (
+    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 12 }}>
+      {week.map((s, i) => (
+        <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+          <span className={justAnswered && i === 4 ? 'c-pop' : ''} style={{
+            width: 25, height: 25, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800, boxSizing: 'border-box',
+            ...(s === 'skip' ? { background: CT.primary, color: '#fff' }
+              : s === 'slip' ? { background: CT.slipFill, color: CT.slipInk }
+              : s === 'today' ? { border: `1.5px solid ${CT.primary}`, color: CT.primary }
+              : { border: `1.5px dashed ${CT.border}`, color: 'transparent' }),
+          }}>{s === 'skip' ? '✓' : '·'}</span>
+          <span style={{ fontSize: 9, fontWeight: 700, color: CT.tert }}>{labels[i]}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function CheckInC({ st, onAnswer, onChange }) {
+  const [ring, setRing] = React.useState(false);
+  const week = ['skip', 'skip', 'slip', 'skip', st.answer || 'today', 'future', 'future'];
+  const skips = week.filter((s) => s === 'skip').length;
+  const answered = week.filter((s) => s === 'skip' || s === 'slip').length;
+  const doSkip = () => {
+    setRing(true);
+    setTimeout(() => setRing(false), 600);
+    onAnswer('skip');
+  };
+  return (
+    <div style={{ ...cardC, position: 'relative', overflow: 'visible' }}>
+      {ring && <span aria-hidden="true" style={{ position: 'absolute', left: '25%', bottom: 34, width: 60, height: 60, marginLeft: -30, borderRadius: '50%', border: `2px solid ${CT.primary}`, animation: 'cRing 550ms ease-out forwards', pointerEvents: 'none' }}></span>}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ fontSize: 17, fontWeight: 600, color: CT.text }}>Coffee run <span style={{ color: CT.tert, fontWeight: 400 }}>›</span></span>
+      </div>
+      <WeekStripC week={week} justAnswered={!!st.answer} />
+      <p style={{ fontSize: 12, color: CT.sub, margin: '9px 0 0' }}><b style={{ color: CT.text }}>{skips} of {answered} days</b> skipped this week</p>
+      {!st.answer ? (
+        <div>
+          <p style={{ fontSize: 15, color: CT.text, margin: '12px 0 10px' }}>Did you skip it today?</p>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button className="c-press" style={btnPrimC} onClick={doSkip}>Skipped it +$6.00</button>
+            <button className="c-press" style={btnSecC} onClick={() => onAnswer('slip')}>I bought it</button>
+          </div>
+          <p style={{ fontSize: 10.5, color: CT.tert, margin: '8px 0 0' }}>motion: press spring 120ms · skip fires ring + hero pulse · haptic success</p>
+        </div>
+      ) : (
+        <div className="c-confirm" style={{ marginTop: 12 }}>
+          <p style={{ fontSize: 15, color: CT.text, margin: 0, fontWeight: 500 }}>
+            {st.answer === 'skip' ? `+$6.00 kept. That's ${skips} of ${answered} days this week.` : `Logged. Still ${skips} of ${answered} days this week. Your $42.50 kept stays yours.`}
+          </p>
+          <div style={{ background: CT.bg, borderRadius: 12, padding: '10px 12px', marginTop: 10 }}>
+            <p style={{ fontSize: 13.5, color: CT.sub, margin: 0, lineHeight: 1.45 }}>
+              {st.answer === 'skip' ? 'The urge passes in minutes. The money you kept stays all day.' : 'Missing once is an accident. Missing twice starts a new habit.'}
+            </p>
+          </div>
+          <button style={{ background: 'none', border: 'none', padding: 0, marginTop: 10, color: CT.primary, fontSize: 13.5, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer' }} onClick={onChange}>Change answer</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function HabitsC({ st, onAnswer, onChange }) {
+  return (
+    <div style={{ padding: '0 14px 90px', height: 'calc(100% - 36px)', overflowY: 'auto', boxSizing: 'border-box' }}>
+      <KeptHeroC cents={st.kept} />
+      <p style={{ fontSize: 12, fontWeight: 700, color: CT.sub, letterSpacing: 0.5, textTransform: 'uppercase', margin: '14px 2px 8px' }}>Breaking now</p>
+      <CheckInC st={st} onAnswer={onAnswer} onChange={onChange} />
+      <p style={{ fontSize: 12, fontWeight: 700, color: CT.sub, letterSpacing: 0.5, textTransform: 'uppercase', margin: '16px 2px 8px' }}>Leaks found</p>
+      <div style={cardC}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontSize: 17, fontWeight: 600, color: CT.text }}>Lunch out</span>
+          <span style={{ fontSize: 11, fontWeight: 600, color: CT.sub, background: CT.bg, borderRadius: 999, padding: '3px 9px' }}>daily</span>
+        </div>
+        <p style={{ fontSize: 13.5, color: CT.sub, margin: '5px 0 12px' }}>about $96.00 a month, 8 times in the last 30 days</p>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="c-press" style={btnPrimC}>Break it</button>
+          <button className="c-press" style={btnSecC}>Not this one</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ArcC({ total }) {
+  const pct = Math.min(100, (total / 66) * 100);
+  const chapters = [['Deciding', 0, 10], ['Rhythm', 10, 30], ['Cruising', 30, 50], ['Rewired', 50, 66]];
+  return (
+    <div style={cardC}>
+      <p style={{ fontSize: 15, fontWeight: 600, color: CT.text, margin: '0 0 12px' }}>The long arc</p>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 13 }}>
+        <div style={{ width: 80, height: 80, borderRadius: '50%', flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', background: `conic-gradient(${CT.primary} 0 ${pct}%, ${CT.border} ${pct}% 100%)`, transition: 'background 300ms ease-out' }}>
+          <div style={{ width: 61, height: 61, borderRadius: '50%', background: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+            <b style={{ fontSize: 17, color: CT.text }}>{total}</b>
+            <span style={{ fontSize: 8.5, color: CT.tert, fontWeight: 700, letterSpacing: 0.5 }}>OF 66</span>
+          </div>
+        </div>
+        <div>
+          <p style={{ fontSize: 14, fontWeight: 600, color: CT.text, margin: 0, lineHeight: 1.4 }}>You're finding your rhythm.</p>
+          <p style={{ fontSize: 12, color: CT.sub, margin: '3px 0 0', lineHeight: 1.4 }}>{total} skips toward the ~66 it takes to rewire a habit. Slips never subtract.</p>
+        </div>
+      </div>
+      <div style={{ display: 'flex', gap: 5, marginTop: 13 }}>
+        {chapters.map(([nm, lo, hi]) => {
+          const fill = total >= hi ? 100 : total <= lo ? 0 : Math.round(((total - lo) / (hi - lo)) * 100);
+          return <span key={nm} style={{ flex: 1, height: 5, borderRadius: 3, background: `linear-gradient(90deg, ${CT.primary} ${fill}%, ${CT.border} ${fill}%)` }}></span>;
+        })}
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
+        {chapters.map(([nm]) => <span key={nm} style={{ fontSize: 10, color: CT.tert, fontWeight: 600 }}>{nm}</span>)}
+      </div>
+    </div>
+  );
+}
+
+function CalendarC() {
+  const states = ['skip','skip','slip','skip','nolog','skip','skip','skip','slip','skip','skip','skip','skip','skip','skip','nolog','skip','skip'];
+  const cells = [];
+  for (let i = 0; i < 3; i++) cells.push('pad');
+  for (let d = 1; d <= 31; d++) cells.push(d <= 18 ? states[d - 1] : 'out');
+  return (
+    <div style={cardC}>
+      <p style={{ fontSize: 15, fontWeight: 600, color: CT.text, margin: '0 0 10px' }}>July 2026</p>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 5, justifyItems: 'center' }}>
+        {['S','M','T','W','T','F','S'].map((d, i) => <span key={i} style={{ fontSize: 10.5, color: CT.tert, fontWeight: 600 }}>{d}</span>)}
+        {cells.map((s, i) => s === 'pad' || s === 'out'
+          ? <span key={i} style={{ width: 24, height: 24 }}></span>
+          : <span key={i} style={{ width: 24, height: 24, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box',
+              ...(s === 'skip' ? { background: CT.primary } : s === 'slip' ? { background: CT.sub } : { border: `1.5px solid ${CT.border}` }) }}>
+              {s === 'skip' && <span style={{ color: '#fff', fontSize: 10.5, fontWeight: 700 }}>✓</span>}
+            </span>)}
+      </div>
+      <div style={{ display: 'flex', gap: 13, marginTop: 12 }}>
+        {[['Skipped', CT.primary], ['Slipped', CT.sub], ['No log', null]].map(([lb, c]) => (
+          <span key={lb} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11.5, color: CT.sub }}>
+            <span style={{ width: 11, height: 11, borderRadius: '50%', background: c || 'transparent', border: c ? 'none' : `1.5px solid ${CT.border}`, boxSizing: 'border-box' }}></span>{lb}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function DetailC({ st, onAnswer, onChange }) {
+  return (
+    <div style={{ padding: '0 14px 90px', height: 'calc(100% - 36px)', overflowY: 'auto', boxSizing: 'border-box' }}>
+      <p style={{ fontSize: 15, fontWeight: 600, color: CT.primary, margin: '8px 0 10px' }}>‹ Habits</p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <CheckInC st={st} onAnswer={onAnswer} onChange={onChange} />
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+          {[['Kept', fmtC(4250 + (st.answer === 'skip' ? 600 : 0))], ['This week', st.answer ? (st.answer === 'skip' ? '4 of 5' : '3 of 5') : '3 of 4'], ['Total skips', String(st.answer === 'skip' ? 25 : 24)]].map(([lb, v]) => (
+            <div key={lb} style={{ ...cardC, padding: '12px 6px', textAlign: 'center' }}>
+              <p style={{ fontSize: 17, fontWeight: 700, color: CT.text, margin: 0 }}>{v}</p>
+              <p style={{ fontSize: 10.5, color: CT.sub, margin: '2px 0 0' }}>{lb}</p>
+            </div>
+          ))}
+        </div>
+        <ArcC total={st.answer === 'skip' ? 25 : 24} />
+        <CalendarC />
+      </div>
+    </div>
+  );
+}
+
+function LogC() {
+  const [amt, setAmt] = React.useState('6.00');
+  const [cat, setCat] = React.useState('Food');
+  const [saved, setSaved] = React.useState(false);
+  const press = (k) => {
+    setAmt((a) => {
+      const raw = a.replace('.', '').replace(/^0+/, '');
+      if (k === '⌫') { const nr = raw.slice(0, -1) || '0'; return (parseInt(nr, 10) / 100).toFixed(2); }
+      if (raw.length >= 6) return a;
+      return (parseInt(raw + k, 10) / 100).toFixed(2);
+    });
+  };
+  const save = () => { setSaved(true); setTimeout(() => setSaved(false), 1400); };
+  return (
+    <div style={{ padding: '0 14px 90px', height: 'calc(100% - 36px)', overflowY: 'auto', boxSizing: 'border-box' }}>
+      <p style={{ fontSize: 22, fontWeight: 700, color: CT.text, margin: '10px 2px 2px' }}>Expenses</p>
+      <p style={{ textAlign: 'center', fontSize: 46, fontWeight: 700, letterSpacing: -1.5, color: CT.text, margin: '16px 0 4px', fontVariantNumeric: 'tabular-nums', transition: 'transform 100ms ease-out' }}>${amt}</p>
+      <div style={{ display: 'flex', gap: 6, justifyContent: 'center', flexWrap: 'wrap', margin: '10px 0 4px' }}>
+        {['Food', 'Shopping', 'Transportation', 'Entertainment'].map((c) => (
+          <button key={c} className="c-press" onClick={() => setCat(c)} style={{
+            border: c === cat ? 'none' : `1px solid ${CT.border}`, background: c === cat ? CT.text : '#fff',
+            color: c === cat ? '#fff' : CT.sub, borderRadius: 999, padding: '7px 13px', fontSize: 12.5, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer',
+          }}>{c}</button>
+        ))}
+      </div>
+      <input placeholder="Merchant (e.g. Starbucks)" style={{ width: '100%', boxSizing: 'border-box', border: `1px solid ${CT.border}`, borderRadius: 12, padding: '11px 13px', fontSize: 14, fontFamily: 'inherit', color: CT.text, margin: '8px 0 10px', background: '#fff', outline: 'none' }} />
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 7 }}>
+        {['1','2','3','4','5','6','7','8','9','.','0','⌫'].map((k) => (
+          <button key={k} className="c-press" onClick={() => k !== '.' && press(k)} style={{ height: 44, background: '#fff', border: `0.5px solid ${CT.border}`, borderRadius: 10, fontSize: 18, fontWeight: 600, color: CT.text, fontFamily: 'inherit', cursor: 'pointer', boxShadow: CT.shadow }}>{k}</button>
+        ))}
+      </div>
+      <button className="c-press" onClick={save} style={{ ...btnPrimC, width: '100%', marginTop: 10, background: saved ? '#388E3C' : CT.primary, transition: 'background 200ms' }}>{saved ? '✓ Saved' : 'Save expense'}</button>
+      <p style={{ fontSize: 10.5, color: CT.tert, margin: '8px 0 0', textAlign: 'center' }}>motion: key press 120ms spring · save morphs to ✓ · haptic light on keys, success on save</p>
+    </div>
+  );
+}
+
+function SuccessC() {
+  return (
+    <div style={{ padding: '0 18px', height: 'calc(100% - 36px)', overflowY: 'auto', boxSizing: 'border-box' }}>
+      <div className="c-pop" style={{ width: 56, height: 56, borderRadius: '50%', background: CT.primary, color: '#fff', fontSize: 26, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '34px auto 12px' }}>✓</div>
+      <p className="c-confirm" style={{ fontSize: 21, fontWeight: 700, color: CT.text, textAlign: 'center', margin: '0 0 14px' }}>Your leak map is ready</p>
+      <div className="c-confirm" style={{ ...cardC, textAlign: 'center', padding: '18px 16px' }}>
+        <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.2, color: CT.sub, margin: 0 }}>KEPT SO FAR</p>
+        <p style={{ fontSize: 34, fontWeight: 700, color: CT.text, margin: '3px 0 1px' }}>$0.00</p>
+        <p style={{ fontSize: 12.5, color: CT.sub, margin: 0 }}>your first skip starts this counter</p>
+      </div>
+      <div className="c-confirm" style={{ ...cardC, marginTop: 10 }}>
+        <p style={{ fontSize: 16, fontWeight: 600, color: CT.text, margin: 0 }}>Coffee run</p>
+        <p style={{ fontSize: 13, color: CT.sub, margin: '3px 0 10px' }}>about $104.00 a month · your biggest leak</p>
+        <button className="c-press" style={{ ...btnPrimC, width: '100%', minHeight: 42 }}>Break it</button>
+      </div>
+      <p style={{ fontSize: 12, color: CT.tert, textAlign: 'center', margin: '14px 0 0' }}>Premium trial available when you're ready. 1 habit free, always.</p>
+    </div>
+  );
+}
+
+function AppC() {
+  const [screen, setScreen] = React.useState('Habits tab');
+  const [st, setSt] = React.useState({ kept: 12750, answer: null });
+  const answer = (kind) => setSt((s) => ({ kept: s.kept + (kind === 'skip' ? 600 : 0), answer: kind }));
+  const change = () => setSt((s) => ({ kept: s.answer === 'skip' ? s.kept - 600 : s.kept, answer: null }));
+  const screens = {
+    'Log form': <div className="c-screen" data-screen-label="Log form"><LogC /><TabBarC active="Expenses" /></div>,
+    'Habits tab': <div className="c-screen" data-screen-label="Habits tab"><HabitsC st={st} onAnswer={answer} onChange={change} /><TabBarC active="Habits" /></div>,
+    'Habit detail': <div className="c-screen" data-screen-label="Habit detail"><DetailC st={st} onAnswer={answer} onChange={change} /><TabBarC active="Habits" /></div>,
+    'Success': <div className="c-screen" data-screen-label="Onboarding success"><SuccessC /></div>,
+  };
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
+      <div style={{ display: 'flex', gap: 4, background: '#fff', borderRadius: 10, padding: 4, boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+        {Object.keys(screens).map((s) => (
+          <button key={s} onClick={() => setScreen(s)} style={{
+            border: 'none', borderRadius: 7, padding: '7px 12px', fontSize: 12.5, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer',
+            background: s === screen ? '#212121' : 'transparent', color: s === screen ? '#fff' : '#757575',
+          }}>{s}</button>
+        ))}
+      </div>
+      <PhoneC key={screen}>{screens[screen]}</PhoneC>
+      <p style={{ fontSize: 12, color: '#8a8a8a', margin: 0, maxWidth: 330, textAlign: 'center' }}>Direction C · A's visuals + a motion layer concentrated on the log and skip moments. Tap Skipped it to see the ring, pulse, and count-up. Honors reduced motion.</p>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<AppC />);
+</script>
+</body>
+</html>
