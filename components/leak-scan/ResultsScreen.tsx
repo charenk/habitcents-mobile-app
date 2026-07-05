@@ -14,6 +14,7 @@ import { HabitCard } from './HabitCard';
 import { ProjectionSection } from './ProjectionSection';
 import { ResultsFooter } from './ResultsFooter';
 import { ReviewQueueSheet } from './ReviewQueueSheet';
+import { CategoryTransactionsSheet } from './CategoryTransactionsSheet';
 import { PickOneSheet } from '@/components/habit-logging/PickOneSheet';
 import {
   buildKpiSummary,
@@ -22,6 +23,7 @@ import {
   buildReviewQueue,
   runScan,
 } from '@/utils/leakScan';
+import { spendableRows } from '@/utils/leakScan/netting';
 import { seedLast15Days, recurringToExpenses } from '@/utils/leakScan/importWrite';
 import type { ScanFileInput } from '@/utils/leakScan';
 import type { GovernClass, HabitCandidate, ScanResult } from '@/utils/leakScan/types';
@@ -74,6 +76,7 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
   const [reviewQueueOpen, setReviewQueueOpen] = useState(false);
   const [pickOneHabit, setPickOneHabit] = useState<ReturnType<typeof habitCandidateToDetectedHabit> | null>(null);
   const [pickOneCandidate, setPickOneCandidate] = useState<HabitCandidate | null>(null);
+  const [openCategory, setOpenCategory] = useState<ExpenseCategory | null>(null);
   const [undone, setUndone] = useState(false);
 
   React.useEffect(() => {
@@ -94,6 +97,10 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
   const categories = useMemo(() => buildCategorySummary(result), [result]);
   const reviewQueue = useMemo(() => buildReviewQueue(result.rows), [result]);
   const evidenceWindow = useMemo(() => evidenceWindowLabel(result, kpi.nAccounts), [result, kpi]);
+  const openCategoryRows = useMemo(
+    () => (openCategory ? spendableRows(result.rows).filter((r) => r.category === openCategory) : []),
+    [openCategory, result.rows]
+  );
 
   const habitClassByCategory = useMemo(() => {
     const map = new Map<ExpenseCategory, GovernClass>();
@@ -237,7 +244,7 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
         <KpiRow kpi={kpi} evidenceWindow={evidenceWindow} />
 
         <View style={styles.spacer} />
-        <CategoryList categories={categories} />
+        <CategoryList categories={categories} onCategoryPress={(c) => setOpenCategory(c.category)} />
 
         <View style={styles.spacer} />
         <SpendPulse result={result} />
@@ -296,6 +303,14 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
         items={reviewQueue}
         onCorrect={handleCategoryCorrect}
         onClose={() => setReviewQueueOpen(false)}
+      />
+
+      <CategoryTransactionsSheet
+        visible={!!openCategory}
+        category={openCategory}
+        rows={openCategoryRows}
+        onCorrect={handleCategoryCorrect}
+        onClose={() => setOpenCategory(null)}
       />
 
       <PickOneSheet
