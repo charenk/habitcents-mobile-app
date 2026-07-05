@@ -1,6 +1,6 @@
 # Phase 2 design package: overview
 
-- **Status:** in progress. This file tracks what is done and how the pieces connect.
+- **Status:** complete and handed off (2026-07-04). All decisions answered; recorded as ADRs 0004-0007 in `docs/design-context/decisions/`. Build phase runs from `08-handoff-package.md`.
 - **Scope source:** `habitcents-design-scope-phase2.md` (mission doc)
 
 ## Package map
@@ -15,7 +15,7 @@
 | `04-p2-2-coach-moments.md` | Card component, trigger matrix, ~20 copies + option board | **Done** (Direction C) |
 | `05-p2-4-design-unification.md` | Dark toggle, Settings, empty states, privacy overlay, color rules, sweep checklist | **Done** (Direction C) |
 | `06-p2-4b-direction/` | 3 direction prototypes + comparison board + `comparison.md` | **Done. Direction C locked (Charen, 2026-07-04)** |
-| `07-decisions-needed.md` | Charen-level calls with recommendations | **Started** (taxonomy, dark toggle, direction pick, free tier, onboarding presets) |
+| `07-decisions-needed.md` | Charen-level calls with recommendations | **Done. All 5 answered (Charen, 2026-07-04); ADRs 0004-0007** |
 | `08-handoff-package.md` | Build order, sizes, risks, reading list | **Done** |
 | `09-p2-5-accessibility-matrix.md` | A11y matrix per component + 3 must-pass VoiceOver flows + rollup | **Done** |
 

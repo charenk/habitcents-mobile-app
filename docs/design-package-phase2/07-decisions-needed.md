@@ -24,14 +24,14 @@ Everything in this file is a Charen-level call. Each item has a recommendation a
 **Recommendation:** adopt as proposed.
 **Tradeoff:** 10 chips is one more than today on the log form; ordering by usage keeps the form fast. The alternative (folding subscriptions into Entertainment/Utilities) breaks the Leak Scan's most valuable detection class.
 
-**Answer:** ______
+**Answer:** **Adopted as proposed** (Charen, 2026-07-04). Recorded as ADR 0006.
 
 ## 2. Dark-mode toggle (P2-4)
 
 **Recommendation:** remove the Appearance row for v1. The dark theme code stays in `constants/theme.ts` behind `ThemeMode` so v1.x restores it by re-adding one Settings row (revert path documented in `05-p2-4-design-unification.md`).
 **Tradeoff:** users who set Dark today would be forced to light on update; current user count is effectively zero, so the cost is now, not later.
 
-**Answer:** ______
+**Answer:** **Remove for v1** (Charen, 2026-07-04). Dark theme code stays behind `ThemeMode` with the documented revert path. Recorded as ADR 0005.
 
 ## 3. Visual direction pick (P2-4b)
 
@@ -47,7 +47,7 @@ When a free user taps Break it on a second leak, the sheet shows a quiet "1 habi
 **Recommendation:** quiet note + disabled Start, enabled after removing the first habit or upgrading.
 **Tradeoff:** a hard block risks frustration; a soft "swap which habit you're breaking" flow is friendlier but adds a swap surface to v1 scope.
 
-**Answer:** ______
+**Answer:** **Quiet note + disabled Start** (Charen, 2026-07-04). Start enables after removing the first habit or upgrading; paywall stays Phase 3. Recorded as ADR 0007.
 
 ## 5. Onboarding preset prices and the vice set (P2-1)
 
@@ -55,7 +55,7 @@ The Leak Audit ships a preset table (money/taste call): subscriptions Video stre
 **Recommendation:** adopt as proposed (full spec in `02-p2-1-onboarding-leak-audit.md` sections 3.3 to 3.4).
 **Tradeoff:** any fixed preset is wrong for someone; the inline tap-to-edit covers precision without taxing the fast path. More chips would raise coverage but push past the 90-second gate.
 
-**Answer:** ______
+**Answer:** **Adopted as proposed** (Charen, 2026-07-04). Recorded as ADR 0007.
 
 ## 6. Behavior gaps found while designing (flag, not change)
 
