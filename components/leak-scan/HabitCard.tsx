@@ -10,10 +10,21 @@ import type { HabitCandidate } from '@/utils/leakScan/types';
 type HabitCardProps = {
   rank: number;
   candidate: HabitCandidate;
-  /** Month label + month total for the stats row (spec 5.4). */
+  /** Month label + month total for the stats row (spec 5.4): the most recent
+   *  evidence month, e.g. "$612.40 in June". */
   month: string;
   monthTotalCents: number;
   coveredDays: number;
+  /**
+   * Fixed class only: the upcoming month name and the extra payment amount
+   * for the tip card ("July is a 3-payment month... plan for the extra
+   * {amount}"). This is genuinely a different month/amount than the stats
+   * row (next month's projected extra vs. this evidence month's total), so
+   * it is its own prop pair rather than reusing month/monthTotalCents. Falls
+   * back to the stats-row values when no matching RecurringItem exists.
+   */
+  tipMonth?: string;
+  tipAmountCents?: number;
   onTrack?: () => void;
   onMonitor?: () => void;
   onNotAHabit?: () => void;
@@ -32,6 +43,8 @@ export function HabitCard({
   month,
   monthTotalCents,
   coveredDays,
+  tipMonth,
+  tipAmountCents,
   onTrack,
   onMonitor,
   onNotAHabit,
@@ -70,7 +83,7 @@ export function HabitCard({
         </View>
         <Text style={styles.title}>{candidate.merchantDisplay}</Text>
         <Text style={styles.tipText}>
-          {strings.leakScan.fixedTipCard(month, format(monthTotalCents))}
+          {strings.leakScan.fixedTipCard(tipMonth ?? month, format(tipAmountCents ?? monthTotalCents))}
         </Text>
       </View>
     );

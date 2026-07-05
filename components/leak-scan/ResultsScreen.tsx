@@ -115,15 +115,32 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
     return map;
   }, [result.habits]);
 
+  // Fixed habit cards' tip-card copy ("July is a 3-payment month... plan for
+  // the extra {amount}") needs the matching RecurringItem's next-month data
+  // (interval, nextMonthHits), which HabitCandidate itself does not carry.
+  const recurringByStem = useMemo(() => {
+    const map = new Map<string, (typeof result.recurring)[number]>();
+    for (const r of result.recurring) map.set(r.merchantStem, r);
+    return map;
+  }, [result.recurring]);
+
   const projection = useMemo(
     () => buildProjectionSummary(result.rows, result.recurring, result.coverage?.coveredDays ?? 0, habitClassByCategory),
     [result, habitClassByCategory]
   );
 
-  const nextMonth = useMemo(() => {
+  // Habit-card stats row month (spec 5.4: "{monthTotal} in {month}") is the
+  // most recent evidence month, not next month -- next month is the
+  // projection's own concept (ProjectionSection computes that separately).
+  const evidenceMonthISO = result.coverage?.endISO ?? new Date().toISOString().slice(0, 10);
+  const evidenceMonthLabel = useMemo(() => monthLabel(evidenceMonthISO), [evidenceMonthISO]);
+  // The Fixed tip card's own copy is about NEXT month's extra payment (spec
+  // 5.4's "July is a 3-payment month" example), a different month than the
+  // stats row above.
+  const upcomingMonthLabel = useMemo(() => {
     const d = new Date();
     d.setMonth(d.getMonth() + 1);
-    return d.toISOString().slice(0, 10);
+    return d.toLocaleDateString('en-US', { month: 'long' });
   }, []);
 
   const handleCategoryCorrect = useCallback(
@@ -259,20 +276,31 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
         <View style={styles.spacer} />
         {result.habits.length > 0 && (
           <View>
-            {result.habits.map((candidate, i) => (
-              <HabitCard
-                key={candidate.merchantStem}
-                rank={i + 1}
-                candidate={candidate}
-                month={monthLabel(nextMonth)}
-                monthTotalCents={candidate.totalCents}
-                coveredDays={result.coverage?.coveredDays ?? 0}
-                onTrack={() => handleTrackLeak(candidate)}
-                onMonitor={() => handleMonitor(candidate)}
-                onNotAHabit={() => handleNotAHabit(candidate)}
-                onWrongDetails={() => setOpenCategory(candidate.category)}
-              />
-            ))}
+            {result.habits.map((candidate, i) => {
+              const windowDays = Math.max(result.coverage?.coveredDays ?? 0, 1);
+              const monthTotalCents = Math.round((candidate.totalCents / windowDays) * 30);
+              const recurringMatch = recurringByStem.get(candidate.merchantStem);
+              // Extra-payment amount for a biweekly 3-payment month is the
+              // third occurrence's amount, i.e. the item's own per-payment
+              // amount (nextMonthHits already reflects the 3-hit month).
+              const tipAmountCents = recurringMatch ? recurringMatch.amountCents : undefined;
+              return (
+                <HabitCard
+                  key={candidate.merchantStem}
+                  rank={i + 1}
+                  candidate={candidate}
+                  month={evidenceMonthLabel}
+                  monthTotalCents={monthTotalCents}
+                  coveredDays={result.coverage?.coveredDays ?? 0}
+                  tipMonth={upcomingMonthLabel}
+                  tipAmountCents={tipAmountCents}
+                  onTrack={() => handleTrackLeak(candidate)}
+                  onMonitor={() => handleMonitor(candidate)}
+                  onNotAHabit={() => handleNotAHabit(candidate)}
+                  onWrongDetails={() => setOpenCategory(candidate.category)}
+                />
+              );
+            })}
           </View>
         )}
 
