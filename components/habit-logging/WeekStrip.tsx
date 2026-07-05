@@ -1,9 +1,11 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import Reanimated, { useSharedValue, useAnimatedStyle, withSequence, withTiming } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { weekStrip, weekStats, type WeekDayCell } from '@/utils/habitLogging';
+import { useReducedMotion } from '@/utils/motion';
 import type { AppTheme } from '@/constants/theme';
 import type { HabitLogEntry } from '@/types/habit';
 import { strings } from '@/constants/strings';
@@ -28,6 +30,61 @@ function stateLabel(cell: WeekDayCell): string {
 }
 
 /**
+ * One week-strip dot. Owns the skip motion "week-dot pop" (Direction C, spec
+ * 05): the instant a cell's state becomes 'skipped' (a fresh skip, not just a
+ * re-render), the dot pops in with an overshoot scale. Reduced motion renders
+ * the final state directly with no animation.
+ */
+function WeekDot({
+  cell,
+  label,
+  styles,
+  theme,
+}: {
+  cell: WeekDayCell;
+  label: string;
+  styles: ReturnType<typeof createStyles>;
+  theme: AppTheme;
+}) {
+  const reduceMotion = useReducedMotion();
+  const prevStateRef = useRef(cell.state);
+  const scale = useSharedValue(1);
+  const animatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+
+  useEffect(() => {
+    const justSkipped = prevStateRef.current !== 'skipped' && cell.state === 'skipped';
+    prevStateRef.current = cell.state;
+    if (!justSkipped || reduceMotion) return;
+    scale.value = 0.4;
+    scale.value = withSequence(
+      withTiming(1.18, { duration: 200 }),
+      withTiming(1, { duration: 120 })
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cell.state, reduceMotion]);
+
+  return (
+    <Reanimated.View style={!reduceMotion && animatedStyle}>
+      <View
+        accessible
+        accessibilityLabel={label}
+        style={[
+          styles.dot,
+          cell.state === 'skipped' && styles.dotSkipped,
+          cell.state === 'slipped' && styles.dotSlipped,
+          cell.state === 'no-log' && cell.isToday && !cell.isFuture && !cell.isOutOfRange && styles.dotToday,
+          cell.state === 'no-log' && (!cell.isToday || cell.isFuture || cell.isOutOfRange) && styles.dotNoLog,
+        ]}
+      >
+        {cell.state === 'skipped' && (
+          <Ionicons name="checkmark" size={13} color={theme.white} />
+        )}
+      </View>
+    </Reanimated.View>
+  );
+}
+
+/**
  * The 7-dot Mon-Sun week strip on the daily-cadence check-in card
  * (spec 01 §4.2, §2). Same component renders identically on the Habits tab
  * and the habit detail screen (principle 6).
@@ -48,21 +105,12 @@ export function WeekStrip({ dayLogs, trackingStart, skipValue, today = new Date(
       <View style={styles.row}>
         {cells.map((cell, i) => (
           <View key={i} style={styles.dayColumn}>
-            <View
-              accessible
-              accessibilityLabel={`${DAY_NAMES_FULL[i]}, ${stateLabel(cell)}`}
-              style={[
-                styles.dot,
-                cell.state === 'skipped' && styles.dotSkipped,
-                cell.state === 'slipped' && styles.dotSlipped,
-                cell.state === 'no-log' && cell.isToday && !cell.isFuture && !cell.isOutOfRange && styles.dotToday,
-                cell.state === 'no-log' && (!cell.isToday || cell.isFuture || cell.isOutOfRange) && styles.dotNoLog,
-              ]}
-            >
-              {cell.state === 'skipped' && (
-                <Ionicons name="checkmark" size={13} color={theme.white} />
-              )}
-            </View>
+            <WeekDot
+              cell={cell}
+              label={`${DAY_NAMES_FULL[i]}, ${stateLabel(cell)}`}
+              styles={styles}
+              theme={theme}
+            />
             <Text style={styles.dayLabel}>{DAY_LABELS[i]}</Text>
           </View>
         ))}
