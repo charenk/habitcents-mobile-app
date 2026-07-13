@@ -10,6 +10,10 @@
 >
 > **PHASE 1 COMPLETE (2026-07-02).** Core-loop repair done and browser-verified (P0-1, P0-5, P1-1..P1-7). What now works for real: correct habit-detection math, a live dollars-kept counter, real streak history, merchant-based detection, real categories + merchant field on the add form, expense edit/delete, and a **real Upcoming view** (recurring weekly/monthly expenses → projected next occurrences; brought back as a genuine feature after the initial fake version was cut). Storage is hardened against corruption/data-loss; tests live in `__tests__/` (run `npm test`). STILL CUT / do not re-add as fakes: mic/voice FAB, reminder-time no-ops, budgets, Reports widget edit mode, progressive reveals, lessons library. Notifications/reminders and a calendar for Upcoming are deferred to v1.x (real implementations only). Dev-only demo seeding lives on the `dev/seed-data` branch (flag-gated), never on `main`.
 
+## PR flow (ADR 0012, umbrella repo)
+
+Branch, never main. Fill the PR template (Was/Now, Why, Improvement, Measure, Lane). Lane 1 `auto-merge` = ops/backend/infra with zero user-visible change, CI green, agent merges. Lane 2 `needs-user-test` = anything a user sees or feels, plus always pricing/payments/legal/analytics contracts; attach capture + what-to-test, wait for Charen. Debatable = Lane 2. Full policy: ../docs/decisions/0012-pr-merge-policy.md (habitcents-ops repo).
+
 ## Project Overview
 
 HabitCents is an Atomic Habits-inspired personal finance app that helps users track spending, discover spending patterns, and build better financial habits. Core loop: log a spend in under 10 seconds, detect the leak, break one habit, count the dollars kept.
