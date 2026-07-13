@@ -159,3 +159,17 @@ CASE STUDY MOMENT
 The rollback and the resulting spec-first lock is the process chapter of the build-in-public story: guardrails beat prompts.
 
 ---
+
+---
+
+## 2026-07-13 — Session close: context refresh only, no code
+
+### Session scan
+
+**Scope:** end of session
+**Built this session:** No code. Reviewed project state, corrected a stale status picture, refreshed the mobile-app lifecycle files (primer, agent-memory) that had drifted 10 days behind the actual repo state. Note: since ADR 0010, primary content drafting flows through the Notion Content queue via scribe; this log remains the per-repo scan record.
+**Pillar scores:** P1: None · P2: None · P3: None · P4: None · P5: Weak (stale-context lesson: a resumed agent session confidently reported a 10-day-old project state until it checked the repo; grounding beats memory. Below the bar for a post on its own.)
+
+No strong signals. Next session is the first TestFlight build with Charen (runbook ready): that is a natural P5 moment (solo founder + agent team getting a real app onto a real phone) and likely a P3 moment (EAS/TestFlight pipeline specifics). Capture screenshots of the first install.
+
+---

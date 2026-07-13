@@ -9,14 +9,13 @@ Canonical direction: `CLAUDE.md` (direction lock) → `../docs/habitcents-goals-
 
 Expo / React Native (SDK 54) personal-finance + habits app. Local-only (AsyncStorage, no backend, no Plaid). Repo: `habitcents-mobile-app`. Identity: name `habitcents`, bundle id `com.habitcents.app`, light mode only.
 
-## Current project state (2026-07-04)
+## Current project state (2026-07-13)
 
-- **Status: PHASE 2 IN PROGRESS; PRs #1-#8 all merged to `main`.** Fully working: Phase 1 core loop, **P2-3 analytics** (env-gated anonymous PostHog, device-verified; key in gitignored `.env`), **P2-6 complete** (multi-currency incl. zero-decimal JPY via `useCurrency().format`; all UI strings in `constants/strings.ts`), expenses Save-button fix (collapsible sheet), valid 1024px placeholder icons (build unblocked). 59 unit tests, tsc clean.
-- **Working mode (locked): spec-first.** No code until the item's spec .md lands in `../docs/` + ADR. P2-1b is re-specified as the **Leak Scan** (`../docs/leak-scan-spec.md`, ADR 0003); **no Leak Scan code exists** (a premature start was fully rolled back).
-- **In progress (design track):** Charen runs a GitHub-linked design session against `docs/design-context/habitcents-design-scope-phase2.md` (mirrors of the canonical umbrella docs). Expected output: `docs/design-package-phase2/` covering habit-logging spec, Door 1 Leak Audit, Leak Scan visuals, Coach Moments, P2-4 unification calls, P2-4b direction prototypes, a11y matrix.
-- **Next priority for a build session:** integrate the returned design package (ADRs 0004+, roadmap update), then build in order: habit surfaces, Leak Scan pipeline (branch reserved `task/p2-1b-leak-scan-pipeline`), results screen, onboarding, Coach Moments, P2-4 apply, P2-5 a11y last.
-- **Open decisions (route to Charen):** category taxonomy migration, dark-toggle removal (D-6 says light-only but the toggle still ships), visual-direction pick.
-- **Blocked on Charen:** P0-2 rotate secrets; P0-3 archive stale repos; P0-4 real icon art; the design package itself.
+- **Status: PHASES 0-2 COMPLETE AND SIGNED OFF** (ADR 0008 defers only the on-device VoiceOver audit to Phase 4 beta). Main is green through PR #22: the full Phase 2 surface set ships on Direction C: habit-logging surfaces (week strip, chapters arc, kept hero, 3-state calendar), the Leak Scan (pipeline stages 0-9 + intake + results + rule store), two-door onboarding with the Door 1 Leak Audit, Coach Moments (MICRO_LESSONS removed), the unification pass (motion/haptics on log-save and skip only, privacy overlay, Settings cleanup), the accessibility baseline, and real icon art (P0-4 done).
+- **Phase 3 partial:** P3-4 truth pass + P3-5 leak calculator + P3-3 register backend shipped in the WEBSITE repo (live on Vercel; register in mock mode until `RESEND_API_KEY` lands). Remaining, tracked as bets: P3-1 RevenueCat (BET-004; wires into the already-built free-tier gate in `PickOneSheet` + `FREE_TIER_HABIT_LIMIT`) and P3-2 legal (BET-003).
+- **Phase 4 started:** `eas.json` merged (PR #22, BET-002). First TestFlight build follows ops `docs/testflight-runbook.md`; **waiting only on Charen's Expo login.** This is the next priority task.
+- **Working mode:** the umbrella is the private ops repo `charenk/habitcents-ops`; work flows through the Notion OS (Your court, Decision inbox, Bets, QA intake, Content queue). Merges follow ADR 0012 two-lane (Lane 1 auto-merge CI-green; Lane 2 needs-user-test for anything user-visible plus pricing/payments/legal). Foundation-first: P3/P4 outrank discovery bets until beta-ready.
+- **Blocked on Charen (Your court):** Expo login (gates TestFlight), `habitcents.app` DNS + Resend key (gates live register email), RevenueCat + App Store agreements for BET-004, P0-2 secrets rotation, P0-3 repo archiving.
 - **Branches:** `main` = production (no seed). `dev/seed-data` = flag-gated demo seeding (never merge to main).
 
 ## Recent session history
