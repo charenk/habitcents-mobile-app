@@ -131,7 +131,9 @@ function createStyles(theme: AppTheme) {
       fontSize: 11,
       fontWeight: '800',
       letterSpacing: 1,
-      color: theme.textTertiary,
+      // Informational eyebrow label: textSecondary for the 4.5:1 contrast
+      // floor, not textTertiary (spec 09 section 1.5).
+      color: theme.textSecondary,
       textTransform: 'uppercase',
       marginBottom: 6,
     },

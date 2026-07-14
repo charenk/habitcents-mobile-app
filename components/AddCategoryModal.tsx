@@ -19,6 +19,11 @@ import type { CategoryIcon } from '@/types/category';
 import { ICON_OPTIONS, COLOR_OPTIONS } from '@/types/category';
 import { strings } from '@/constants/strings';
 
+// "home-outline" -> "home icon" (spec 09 §2, icon-grid label).
+function iconOptionLabel(icon: string): string {
+  return `${icon.replace(/-outline$/, '').replace(/-/g, ' ')} icon`;
+}
+
 type AddCategoryModalProps = {
   visible: boolean;
   onClose: () => void;
@@ -95,13 +100,18 @@ export function AddCategoryModal({
       >
         <View style={styles.container}>
           <View style={styles.header}>
-            <TouchableOpacity onPress={handleClose}>
+            <TouchableOpacity onPress={handleClose} accessibilityRole="button">
               <Text style={styles.cancelText}>{strings.common.cancel}</Text>
             </TouchableOpacity>
             <Text style={styles.title}>
               {isEditing ? strings.addCategoryModal.editCategory : strings.addCategoryModal.newCategory}
             </Text>
-            <TouchableOpacity onPress={handleSave} disabled={!name.trim()}>
+            <TouchableOpacity
+              onPress={handleSave}
+              disabled={!name.trim()}
+              accessibilityRole="button"
+              accessibilityState={{ disabled: !name.trim() }}
+            >
               <Text style={[styles.saveText, !name.trim() && styles.saveTextDisabled]}>
                 {strings.common.save}
               </Text>
@@ -153,6 +163,9 @@ export function AddCategoryModal({
                       selectedIcon === icon && { borderColor: selectedColor },
                     ]}
                     onPress={() => setSelectedIcon(icon)}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: selectedIcon === icon }}
+                    accessibilityLabel={iconOptionLabel(icon)}
                   >
                     <Ionicons
                       name={icon as keyof typeof Ionicons.glyphMap}
@@ -168,7 +181,7 @@ export function AddCategoryModal({
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>{strings.addCategoryModal.color}</Text>
               <View style={styles.colorGrid}>
-                {COLOR_OPTIONS.map((color) => (
+                {COLOR_OPTIONS.map((color, index) => (
                   <TouchableOpacity
                     key={color}
                     style={[
@@ -177,6 +190,9 @@ export function AddCategoryModal({
                       selectedColor === color && styles.colorOptionSelected,
                     ]}
                     onPress={() => setSelectedColor(color)}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: selectedColor === color }}
+                    accessibilityLabel={`color option ${index + 1}`}
                   >
                     {selectedColor === color && (
                       <Ionicons name="checkmark" size={20} color={theme.white} />

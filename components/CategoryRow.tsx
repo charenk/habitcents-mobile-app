@@ -52,13 +52,29 @@ export function CategoryRow({
     }
   };
 
+  const showTrend = !!trend && trendPercentage !== undefined && trendPercentage > 0;
+  const trendWord = trend === 'increasing' ? 'up' : trend === 'decreasing' ? 'down' : 'flat';
+  const rowLabel = [
+    category.name,
+    totalSpent > 0 ? strings.categories.thisMonthSuffix(format(totalSpent)) : '',
+    showTrend ? `trending ${trendWord} ${trendPercentage}%` : '',
+  ]
+    .filter(Boolean)
+    .join(', ');
+
   return (
     <TouchableOpacity
       style={styles.container}
       onPress={onPress}
       activeOpacity={0.7}
+      accessibilityRole="button"
+      accessibilityLabel={rowLabel}
     >
-      <View style={[styles.iconContainer, { backgroundColor: category.color + '20' }]}>
+      <View
+        style={[styles.iconContainer, { backgroundColor: category.color + '20' }]}
+        importantForAccessibility="no-hide-descendants"
+        accessibilityElementsHidden
+      >
         <Ionicons
           name={category.icon as keyof typeof Ionicons.glyphMap}
           size={24}
@@ -73,7 +89,7 @@ export function CategoryRow({
         )}
       </View>
 
-      {trend && trendPercentage !== undefined && trendPercentage > 0 && (
+      {showTrend && (
         <View style={styles.trendContainer}>
           <Ionicons
             name={getTrendIcon()}
@@ -91,6 +107,8 @@ export function CategoryRow({
           style={styles.deleteButton}
           onPress={onDelete}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          accessibilityRole="button"
+          accessibilityLabel={`Delete ${category.name}`}
         >
           <Ionicons name="trash-outline" size={20} color={theme.danger} />
         </TouchableOpacity>
@@ -101,6 +119,8 @@ export function CategoryRow({
         size={20}
         color={theme.textTertiary}
         style={styles.chevron}
+        importantForAccessibility="no-hide-descendants"
+        accessibilityElementsHidden
       />
     </TouchableOpacity>
   );

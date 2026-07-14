@@ -278,7 +278,13 @@ export default function HabitsScreen() {
             </View>
           ) : (
             <>
-              <Ionicons name="analytics-outline" size={64} color={theme.textTertiary} />
+              <Ionicons
+                name="analytics-outline"
+                size={64}
+                color={theme.textTertiary}
+                accessibilityElementsHidden
+                importantForAccessibility="no-hide-descendants"
+              />
               <Text style={styles.emptyTitle}>{strings.habitLogging.emptyLeaksTitle}</Text>
               <Text style={styles.emptySubtitle}>{strings.habitLogging.emptyLeaksSubtitle}</Text>
             </>

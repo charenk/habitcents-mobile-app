@@ -63,14 +63,21 @@ export function ReviewQueueSheet({ visible, items, onCorrect, onClose }: ReviewQ
         <ScrollView style={styles.list}>
           {remaining.map((item) => (
             <View key={item.merchantStem} style={styles.itemCard}>
-              <View style={styles.itemHeader}>
-                <Text style={styles.merchantName}>{item.merchantDisplay}</Text>
-                <TierBadge tier="needs-review" />
+              <View
+                accessible
+                accessibilityLabel={`${item.merchantDisplay}, we guessed ${categoryDisplayLabel(
+                  item.guessedCategory
+                )}, ${strings.leakScan.tierReview}`}
+              >
+                <View style={styles.itemHeader}>
+                  <Text style={styles.merchantName}>{item.merchantDisplay}</Text>
+                  <TierBadge tier="needs-review" />
+                </View>
+                <Text style={styles.amount}>{format(item.totalCents)}</Text>
+                <Text style={styles.guessLabel}>
+                  Guessed: {categoryDisplayLabel(item.guessedCategory)}
+                </Text>
               </View>
-              <Text style={styles.amount}>{format(item.totalCents)}</Text>
-              <Text style={styles.guessLabel}>
-                Guessed: {categoryDisplayLabel(item.guessedCategory)}
-              </Text>
               <View style={styles.chipRow}>
                 {CATEGORY_OPTIONS.map((cat) => (
                   <TouchableOpacity
@@ -78,6 +85,7 @@ export function ReviewQueueSheet({ visible, items, onCorrect, onClose }: ReviewQ
                     style={styles.chip}
                     onPress={() => handleCorrect(item, cat)}
                     accessibilityRole="button"
+                    hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
                   >
                     <Text style={styles.chipText}>{categoryDisplayLabel(cat)}</Text>
                   </TouchableOpacity>

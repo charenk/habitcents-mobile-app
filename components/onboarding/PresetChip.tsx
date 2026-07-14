@@ -191,7 +191,10 @@ function createStyles(theme: AppTheme) {
     },
     price: {
       fontSize: 12,
-      color: theme.textTertiary,
+      // Informational price on an unselected chip: textSecondary for the
+      // 4.5:1 contrast floor (spec 09 section 1.5). priceOn/priceEdited
+      // override this when the chip is selected or edited.
+      color: theme.textSecondary,
     },
     priceOn: {
       color: theme.primary,
@@ -277,7 +280,9 @@ function createStyles(theme: AppTheme) {
     },
     editCaption: {
       fontSize: 11,
-      color: theme.textTertiary,
+      // Informational reference caption: textSecondary for the 4.5:1
+      // contrast floor (spec 09 section 1.5).
+      color: theme.textSecondary,
       marginTop: 6,
     },
   });

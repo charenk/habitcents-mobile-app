@@ -3,8 +3,9 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
 import { atMidnight, dayStateFor, isSameDay } from '@/utils/habitLogging';
+import { calendarCellLabel } from '@/utils/a11y';
 import type { AppTheme } from '@/constants/theme';
-import type { HabitLogEntry } from '@/types/habit';
+import type { DayState, HabitLogEntry } from '@/types/habit';
 import { strings } from '@/constants/strings';
 
 const MONTH_NAMES = [
@@ -97,9 +98,9 @@ export function HistoryCalendar({ dayLogs, trackingStart, today = new Date(), on
           const outOfRange = d.getTime() < trackingStartMid.getTime() || d.getTime() > todayMid.getTime();
           const isToday = isSameDay(d, todayMid);
           const state = outOfRange ? null : dayStateFor(dayLogs, d);
-          const label = outOfRange ? '' : `${MONTH_NAMES[viewMonth]} ${d.getDate()}, ${
-            state === 'skipped' ? 'skipped' : state === 'slipped' ? 'slipped' : 'no log'
-          }`;
+          const label = outOfRange
+            ? ''
+            : calendarCellLabel(MONTH_NAMES[viewMonth], d.getDate(), state as DayState);
           return (
             <View key={d.toISOString()} style={styles.cellSlot}>
               <TouchableOpacity
@@ -107,6 +108,7 @@ export function HistoryCalendar({ dayLogs, trackingStart, today = new Date(), on
                 onPress={onSelectToday}
                 accessible={!outOfRange}
                 accessibilityLabel={label || undefined}
+                hitSlop={{ top: 9, bottom: 9, left: 9, right: 9 }}
                 style={[
                   styles.dot,
                   state === 'skipped' && styles.dotSkipped,

@@ -31,7 +31,11 @@ export function PartialSlipSheet({ visible, skipValue, onCancel, onSave }: Parti
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onCancel}>
-      <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        accessibilityViewIsModal
+      >
         <View style={styles.grabber} />
         <Text style={styles.title}>{strings.habitLogging.partialSheetTitle}</Text>
         <Text style={styles.subtitle}>{strings.habitLogging.partialSheetSubtitle(format(skipValue))}</Text>

@@ -66,6 +66,9 @@ export const AmountInput = forwardRef<AmountInputHandle, AmountInputProps>(funct
       style={[styles.container, isFocused && styles.containerFocused]}
       onPress={handlePress}
       activeOpacity={0.8}
+      accessibilityRole="button"
+      accessibilityLabel={`Amount, ${meta.symbol}${displayValue}`}
+      accessibilityHint="Double tap to enter an amount"
     >
       <Text style={styles.dollarSign}>{meta.symbol}</Text>
       <Text style={styles.amount}>{displayValue}</Text>
@@ -81,6 +84,7 @@ export const AmountInput = forwardRef<AmountInputHandle, AmountInputProps>(funct
         onBlur={() => setIsFocused(false)}
         caretHidden
         maxLength={9}
+        accessibilityLabel="Amount in dollars"
       />
     </TouchableOpacity>
   );

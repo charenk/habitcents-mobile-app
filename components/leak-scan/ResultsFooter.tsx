@@ -36,7 +36,11 @@ export function ResultsFooter({ files, duplicatesMerged, transfersNetted, onUndo
         </Text>
       ))}
 
-      <TouchableOpacity onPress={() => setConfirming(true)} accessibilityRole="button">
+      <TouchableOpacity
+        onPress={() => setConfirming(true)}
+        accessibilityRole="button"
+        hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
+      >
         <Text style={styles.undo}>{strings.leakScan.undoImport}</Text>
       </TouchableOpacity>
 
