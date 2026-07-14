@@ -19,7 +19,8 @@ import { CheckInCard } from '@/components/habit-logging/CheckInCard';
 import { PickOneSheet } from '@/components/habit-logging/PickOneSheet';
 import { PartialSlipSheet } from '@/components/habit-logging/PartialSlipSheet';
 import { CoachMomentSlot } from '@/components/habit-logging/CoachMomentSlot';
-import { atMidnight, dayStateFor, FREE_TIER_HABIT_LIMIT } from '@/utils/habitLogging';
+import { atMidnight, dayStateFor, isHabitLimitReached } from '@/utils/habitLogging';
+import { getEntitlement } from '@/utils/purchases';
 import { cardText, type CoachMomentCardId } from '@/utils/coachMoments';
 import { progressTowardDetection } from '@/utils/habitDetection';
 import type { AppTheme } from '@/constants/theme';
@@ -180,9 +181,9 @@ export default function HabitsScreen() {
   }, [router]);
 
   const pickOneHabit = pickOneHabitId ? getHabitById(pickOneHabitId) : null;
-  // Free-tier touchpoint (ADR 0007): blocked when there is already an active
-  // habit and this would be a second.
-  const freeTierBlocked = activeHabits.length >= FREE_TIER_HABIT_LIMIT;
+  // Entitlement touchpoint (ADR 0007, BET-004): blocked once the active-habit
+  // count reaches the current entitlement's ceiling (free = 1, premium = 5).
+  const freeTierBlocked = isHabitLimitReached(activeHabits.length, getEntitlement());
 
   const handleStart = useCallback(async (skipValue: number, valueEdited: boolean) => {
     if (!pickOneHabitId) return;
@@ -329,6 +330,10 @@ export default function HabitsScreen() {
         freeTierBlocked={freeTierBlocked}
         onCancel={() => setPickOneHabitId(null)}
         onStart={handleStart}
+        onStartTrial={() => {
+          setPickOneHabitId(null);
+          router.push('/paywall?placement=habit_gate');
+        }}
       />
 
       <PartialSlipSheet

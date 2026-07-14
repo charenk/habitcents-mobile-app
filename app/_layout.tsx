@@ -61,6 +61,7 @@ export default function RootLayout() {
                   <Stack.Screen name="habit" />
                   <Stack.Screen name="category" />
                   <Stack.Screen name="leak-scan" />
+                  <Stack.Screen name="paywall" options={{ presentation: 'modal' }} />
                 </Stack>
                 {/* Mounted last so it stacks visually above the Stack's screens
                     (spec 05 section 7): must exist before the iOS app-switcher

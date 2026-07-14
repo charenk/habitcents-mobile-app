@@ -23,7 +23,8 @@ import { HistoryCalendar } from '@/components/habit-logging/HistoryCalendar';
 import { EventHistory } from '@/components/habit-logging/EventHistory';
 import { PickOneSheet } from '@/components/habit-logging/PickOneSheet';
 import { PartialSlipSheet } from '@/components/habit-logging/PartialSlipSheet';
-import { atMidnight, weekStats, FREE_TIER_HABIT_LIMIT } from '@/utils/habitLogging';
+import { atMidnight, weekStats, isHabitLimitReached } from '@/utils/habitLogging';
+import { getEntitlement } from '@/utils/purchases';
 import type { CoachMomentCardId } from '@/utils/coachMoments';
 import type { AppTheme } from '@/constants/theme';
 import type { DetectedHabit, HabitChangeGoal } from '@/types/habit';
@@ -159,9 +160,13 @@ export default function HabitDetailScreen() {
         habit={habit}
         monthTotal={habit.totalMonthlySpend}
         occurrences={habit.occurrencesPerPeriod}
-        freeTierBlocked={getActiveHabits().length >= FREE_TIER_HABIT_LIMIT}
+        freeTierBlocked={isHabitLimitReached(getActiveHabits().length, getEntitlement())}
         onCancel={() => setPickOneVisible(false)}
         onStart={handleStart}
+        onStartTrial={() => {
+          setPickOneVisible(false);
+          router.push('/paywall?placement=habit_gate');
+        }}
       />
 
       {goal && (

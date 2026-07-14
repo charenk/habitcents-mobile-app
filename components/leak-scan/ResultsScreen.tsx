@@ -38,7 +38,8 @@ import {
 } from '@/utils/scanRules';
 import { habitCandidateToDetectedHabit, scanHabitId } from '@/utils/leakScanBridge';
 import { track } from '@/utils/analytics';
-import { FREE_TIER_HABIT_LIMIT } from '@/utils/habitLogging';
+import { isHabitLimitReached } from '@/utils/habitLogging';
+import { getEntitlement } from '@/utils/purchases';
 
 type ResultsScreenProps = {
   result: ScanResult;
@@ -365,7 +366,12 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
           setPickOneCandidate(null);
         }}
         onStart={handlePickOneStart}
-        freeTierBlocked={getActiveHabits().length >= FREE_TIER_HABIT_LIMIT}
+        freeTierBlocked={isHabitLimitReached(getActiveHabits().length, getEntitlement())}
+        onStartTrial={() => {
+          setPickOneHabit(null);
+          setPickOneCandidate(null);
+          router.push('/paywall?placement=habit_gate');
+        }}
       />
     </View>
   );
