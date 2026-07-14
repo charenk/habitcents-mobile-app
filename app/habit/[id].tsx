@@ -79,7 +79,12 @@ export default function HabitDetailScreen() {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            accessibilityRole="button"
+            accessibilityLabel="Back"
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
             <Ionicons name="arrow-back" size={24} color={theme.text} />
           </TouchableOpacity>
         </View>
@@ -115,7 +120,13 @@ export default function HabitDetailScreen() {
           headerTitle: '',
           headerTransparent: true,
           headerLeft: () => (
-            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <TouchableOpacity
+              onPress={() => router.back()}
+              style={styles.backButton}
+              accessibilityRole="button"
+              accessibilityLabel="Back"
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
               <Ionicons name="arrow-back" size={24} color={theme.text} />
             </TouchableOpacity>
           ),
@@ -146,7 +157,11 @@ export default function HabitDetailScreen() {
           />
         ) : (
           <View style={styles.actionsSection}>
-            <TouchableOpacity style={styles.primaryButton} onPress={() => setPickOneVisible(true)}>
+            <TouchableOpacity
+              style={styles.primaryButton}
+              onPress={() => setPickOneVisible(true)}
+              accessibilityRole="button"
+            >
               <Ionicons name="flag-outline" size={20} color={theme.white} />
               <Text style={styles.primaryButtonText}>{strings.habitDetail.startTracking}</Text>
             </TouchableOpacity>
@@ -265,10 +280,15 @@ function HabitDetailBreaking({
       )}
 
       <View style={styles.footerActions}>
-        <TouchableOpacity style={styles.secondaryButton} onPress={onEditSkipValue}>
+        <TouchableOpacity style={styles.secondaryButton} onPress={onEditSkipValue} accessibilityRole="button">
           <Text style={styles.secondaryButtonText}>{strings.habitLogging.editSkipValue(format(goal.skipValue))}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.plainButton} onPress={onStopBreaking}>
+        <TouchableOpacity
+          style={styles.plainButton}
+          onPress={onStopBreaking}
+          accessibilityRole="button"
+          hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
+        >
           <Text style={styles.plainButtonText}>{strings.habitLogging.stopBreakingHabit}</Text>
         </TouchableOpacity>
       </View>
@@ -319,7 +339,11 @@ function EditSkipValueSheet({
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onCancel}>
-      <KeyboardAvoidingView style={styles.editSheetContainer} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView
+        style={styles.editSheetContainer}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        accessibilityViewIsModal
+      >
         <View style={styles.grabber} />
         <Text style={styles.editSheetTitle}>{strings.habitLogging.pickOneFieldLabel}</Text>
         <View style={styles.inputRow}>
@@ -338,10 +362,11 @@ function EditSkipValueSheet({
               const parsed = parseFloat(text);
               onSave(Number.isFinite(parsed) ? Math.max(0, Math.round(parsed * 100)) : 0);
             }}
+            accessibilityRole="button"
           >
             <Text style={styles.primaryButtonText}>{strings.common.save}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.secondaryButton} onPress={onCancel}>
+          <TouchableOpacity style={styles.secondaryButton} onPress={onCancel} accessibilityRole="button">
             <Text style={styles.secondaryButtonText}>{strings.common.cancel}</Text>
           </TouchableOpacity>
         </View>

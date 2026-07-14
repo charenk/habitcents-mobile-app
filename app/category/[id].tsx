@@ -133,7 +133,12 @@ export default function CategoryDetailScreen() {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+            accessibilityRole="button"
+            accessibilityLabel="Back"
+          >
             <Ionicons name="arrow-back" size={24} color={theme.text} />
           </TouchableOpacity>
         </View>
@@ -172,7 +177,13 @@ export default function CategoryDetailScreen() {
           headerTitle: '',
           headerTransparent: true,
           headerLeft: () => (
-            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <TouchableOpacity
+              onPress={() => router.back()}
+              style={styles.backButton}
+              hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+              accessibilityRole="button"
+              accessibilityLabel="Back"
+            >
               <Ionicons name="arrow-back" size={24} color={theme.text} />
             </TouchableOpacity>
           ),
@@ -180,6 +191,9 @@ export default function CategoryDetailScreen() {
             <TouchableOpacity
               onPress={() => setIsEditModalVisible(true)}
               style={styles.editButton}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              accessibilityRole="button"
+              accessibilityLabel="Edit category"
             >
               <Ionicons name="pencil" size={20} color={theme.text} />
             </TouchableOpacity>

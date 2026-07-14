@@ -20,6 +20,7 @@ import type { AddExpenseInput } from '@/types/expense';
 import { groupExpensesByDate } from '@/data/expensesMock';
 import { computeUpcoming } from '@/utils/recurring';
 import { strings } from '@/constants/strings';
+import { selectableLabel } from '@/utils/a11y';
 
 const UPCOMING_WINDOW_DAYS = 60;
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -85,12 +86,24 @@ export default function ExpensesScreen() {
           <Text style={styles.datePillText}>{dateLabel}</Text>
         </View>
         <View style={styles.viewTabs}>
-          <TouchableOpacity onPress={() => setActiveView('recent')}>
+          <TouchableOpacity
+            onPress={() => setActiveView('recent')}
+            accessibilityRole="button"
+            accessibilityState={{ selected: activeView === 'recent' }}
+            accessibilityLabel={selectableLabel(strings.expenses.recent, activeView === 'recent')}
+            hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
+          >
             <Text style={[styles.viewTab, activeView === 'recent' ? styles.viewTabActive : styles.viewTabInactive]}>
               {strings.expenses.recent}
             </Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => setActiveView('upcoming')}>
+          <TouchableOpacity
+            onPress={() => setActiveView('upcoming')}
+            accessibilityRole="button"
+            accessibilityState={{ selected: activeView === 'upcoming' }}
+            accessibilityLabel={selectableLabel(strings.expenses.upcoming, activeView === 'upcoming')}
+            hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
+          >
             <Text style={[styles.viewTab, activeView === 'upcoming' ? styles.viewTabActive : styles.viewTabInactive]}>
               {strings.expenses.upcoming}
             </Text>

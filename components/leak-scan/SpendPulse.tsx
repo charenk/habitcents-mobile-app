@@ -8,6 +8,7 @@ import { buildSpendPulse } from '@/utils/leakScan/spendPulse';
 import type { PulseCell, PulseGranularity } from '@/utils/leakScan/spendPulse';
 import type { ScanResult } from '@/utils/leakScan/types';
 import { track } from '@/utils/analytics';
+import { pulseCellLabel } from '@/utils/a11y';
 
 type SpendPulseProps = {
   result: ScanResult;
@@ -62,6 +63,7 @@ export function SpendPulse({ result, onCellPress }: SpendPulseProps) {
               style={[styles.toggleChip, active && styles.toggleChipActive]}
               accessibilityRole="button"
               accessibilityState={{ selected: active }}
+              hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
             >
               <Text style={[styles.toggleChipText, active && styles.toggleChipTextActive]}>{label}</Text>
             </TouchableOpacity>
@@ -77,6 +79,7 @@ export function SpendPulse({ result, onCellPress }: SpendPulseProps) {
             onPress={() => handleCellPress(cell)}
             accessibilityRole="button"
             accessibilityLabel={cellA11yLabel(cell, format)}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
             <PulseCellView cell={cell} theme={theme} />
           </TouchableOpacity>
@@ -97,9 +100,9 @@ export function SpendPulse({ result, onCellPress }: SpendPulseProps) {
 }
 
 function cellA11yLabel(cell: PulseCell, format: (cents: number) => string): string {
-  if (cell.state === 'out-of-coverage') return `${cell.key}, outside your files`;
-  if (cell.state === 'zero-spend') return `${cell.key}, no spend`;
-  return `${cell.key}, ${format(cell.totalCents)} spent`;
+  if (cell.state === 'out-of-coverage') return pulseCellLabel(cell.key, 'outside');
+  if (cell.state === 'zero-spend') return pulseCellLabel(cell.key, 'zero');
+  return pulseCellLabel(cell.key, 'spend', format(cell.totalCents));
 }
 
 function PulseCellView({ cell, theme }: { cell: PulseCell; theme: AppTheme }) {

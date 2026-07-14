@@ -30,10 +30,16 @@ export function ToggleRow({
           trackColor={{ false: theme.chipBorder, true: theme.primaryMuted }}
           thumbColor={value ? theme.primary : theme.surface}
           ios_backgroundColor={theme.chipBorder}
+          accessibilityLabel={label}
         />
       </View>
       {value && secondaryLabel && onSecondaryPress && (
-        <TouchableOpacity style={styles.secondaryRow} onPress={onSecondaryPress}>
+        <TouchableOpacity
+          style={styles.secondaryRow}
+          onPress={onSecondaryPress}
+          accessibilityRole="button"
+          accessibilityLabel={`Reminder time, ${secondaryLabel}`}
+        >
           <Text style={styles.secondaryLabel}>Reminder time</Text>
           <Text style={styles.secondaryValue}>{secondaryLabel}</Text>
         </TouchableOpacity>

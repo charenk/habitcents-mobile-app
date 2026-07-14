@@ -17,6 +17,7 @@ import type { Expense, ExpenseSection } from '@/types/expense';
 import type { Category } from '@/types/category';
 import { EditExpenseModal } from './EditExpenseModal';
 import { strings } from '@/constants/strings';
+import { selectableLabel } from '@/utils/a11y';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 // Collapsed peek keeps the sheet out of the way so the add-expense form (and its
@@ -56,6 +57,7 @@ function ExpenseCard({
       style={styles.card}
       onPress={() => onPress(item)}
       activeOpacity={0.7}
+      accessibilityRole="button"
       accessibilityLabel={strings.expenses.editAccessibilityLabel(item.title, amountLabel)}
     >
       <View style={[styles.cardIcon, { backgroundColor: iconBg }]}>
@@ -154,6 +156,10 @@ export function TodayExpensesPanel({
               key={cat.id}
               style={[styles.chip, isActive ? styles.chipActive : styles.chipInactive]}
               onPress={() => onCategoryChange(cat.id)}
+              accessibilityRole="button"
+              accessibilityState={{ selected: isActive }}
+              accessibilityLabel={selectableLabel(cat.name, isActive)}
+              hitSlop={{ top: 2, bottom: 2 }}
             >
               <Text style={[styles.chipText, isActive ? styles.chipTextActive : styles.chipTextInactive]}>
                 {cat.name}

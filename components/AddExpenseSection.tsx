@@ -19,6 +19,7 @@ import { RecurrenceField } from './RecurrenceField';
 import { useReducedMotion, hapticSuccess } from '@/utils/motion';
 import type { ExpenseCategory, AddExpenseInput, RecurrenceFrequency } from '@/types/expense';
 import { strings } from '@/constants/strings';
+import { selectableLabel } from '@/utils/a11y';
 
 type AddExpenseSectionProps = {
   onSave: (expense: AddExpenseInput) => void;
@@ -176,6 +177,10 @@ export const AddExpenseSection = forwardRef<AddExpenseSectionHandle, AddExpenseS
               key={cat.id}
               style={[styles.chip, isActive ? styles.chipActive : styles.chipInactive]}
               onPress={() => setCategoryId(cat.id)}
+              accessibilityRole="button"
+              accessibilityState={{ selected: isActive }}
+              accessibilityLabel={selectableLabel(cat.name, isActive)}
+              hitSlop={{ top: 2, bottom: 2 }}
             >
               <Text style={[styles.chipText, isActive ? styles.chipTextActive : styles.chipTextInactive]}>
                 {cat.name}
@@ -197,6 +202,7 @@ export const AddExpenseSection = forwardRef<AddExpenseSectionHandle, AddExpenseS
               onChangeText={setMerchant}
               maxLength={60}
               autoCapitalize="words"
+              accessibilityLabel="Merchant"
             />
           </View>
 
@@ -207,6 +213,9 @@ export const AddExpenseSection = forwardRef<AddExpenseSectionHandle, AddExpenseS
                   key={s}
                   style={styles.suggestionChip}
                   onPress={() => setMerchant(s)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Fill merchant, ${s}`}
+                  hitSlop={{ top: 8, bottom: 8 }}
                 >
                   <Text style={styles.suggestionText}>{s}</Text>
                 </TouchableOpacity>
@@ -223,13 +232,18 @@ export const AddExpenseSection = forwardRef<AddExpenseSectionHandle, AddExpenseS
               value={title}
               onChangeText={setTitle}
               maxLength={100}
+              accessibilityLabel="Note"
             />
           </View>
 
           <RecurrenceField recurrence={recurrence} onChange={setRecurrence} />
 
           <View style={styles.buttonRow}>
-            <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={handleCancel}
+              accessibilityRole="button"
+            >
               <Text style={styles.cancelButtonText}>{strings.common.cancel}</Text>
             </TouchableOpacity>
             <Reanimated.View
@@ -246,6 +260,8 @@ export const AddExpenseSection = forwardRef<AddExpenseSectionHandle, AddExpenseS
                 ]}
                 onPress={handleSave}
                 disabled={amount === 0 || saved}
+                accessibilityRole="button"
+                accessibilityState={{ disabled: amount === 0 || saved }}
               >
                 {saved ? (
                   <View style={styles.saveButtonSavedRow}>

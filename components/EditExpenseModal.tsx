@@ -19,6 +19,7 @@ import { RecurrenceField } from './RecurrenceField';
 import type { AppTheme } from '@/constants/theme';
 import type { Expense, ExpenseCategory, RecurrenceFrequency } from '@/types/expense';
 import { strings } from '@/constants/strings';
+import { selectableLabel } from '@/utils/a11y';
 
 type EditExpenseModalProps = {
   visible: boolean;
@@ -92,11 +93,23 @@ export function EditExpenseModal({ visible, expense, onClose }: EditExpenseModal
       >
         <View style={styles.container}>
           <View style={styles.header}>
-            <TouchableOpacity onPress={handleClose} accessibilityLabel={strings.editExpenseModal.cancelAccessibilityLabel}>
+            <TouchableOpacity
+              onPress={handleClose}
+              accessibilityRole="button"
+              accessibilityLabel={strings.editExpenseModal.cancelAccessibilityLabel}
+              hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
+            >
               <Text style={styles.cancelText}>{strings.common.cancel}</Text>
             </TouchableOpacity>
             <Text style={styles.title}>{strings.editExpenseModal.title}</Text>
-            <TouchableOpacity onPress={handleSave} disabled={amount === 0} accessibilityLabel={strings.editExpenseModal.saveAccessibilityLabel}>
+            <TouchableOpacity
+              onPress={handleSave}
+              disabled={amount === 0}
+              accessibilityRole="button"
+              accessibilityState={{ disabled: amount === 0 }}
+              accessibilityLabel={strings.editExpenseModal.saveAccessibilityLabel}
+              hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
+            >
               <Text style={[styles.saveText, amount === 0 && styles.saveTextDisabled]}>{strings.common.save}</Text>
             </TouchableOpacity>
           </View>
@@ -124,6 +137,10 @@ export function EditExpenseModal({ visible, expense, onClose }: EditExpenseModal
                     key={cat.id}
                     style={[styles.chip, isActive ? styles.chipActive : styles.chipInactive]}
                     onPress={() => setCategoryId(cat.id)}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: isActive }}
+                    accessibilityLabel={selectableLabel(cat.name, isActive)}
+                    hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
                   >
                     <Text style={[styles.chipText, isActive ? styles.chipTextActive : styles.chipTextInactive]}>
                       {cat.name}
@@ -135,7 +152,13 @@ export function EditExpenseModal({ visible, expense, onClose }: EditExpenseModal
 
             <Text style={styles.sectionTitle}>{strings.editExpenseModal.merchant}</Text>
             <View style={styles.inputRow}>
-              <Ionicons name="storefront-outline" size={20} color={theme.textSecondary} />
+              <Ionicons
+                name="storefront-outline"
+                size={20}
+                color={theme.textSecondary}
+                accessibilityElementsHidden
+                importantForAccessibility="no-hide-descendants"
+              />
               <TextInput
                 style={styles.input}
                 value={merchant}
@@ -144,12 +167,19 @@ export function EditExpenseModal({ visible, expense, onClose }: EditExpenseModal
                 placeholderTextColor={theme.textTertiary}
                 maxLength={60}
                 autoCapitalize="words"
+                accessibilityLabel={strings.editExpenseModal.merchant}
               />
             </View>
 
             <Text style={styles.sectionTitle}>{strings.editExpenseModal.note}</Text>
             <View style={styles.inputRow}>
-              <Ionicons name="create-outline" size={20} color={theme.textSecondary} />
+              <Ionicons
+                name="create-outline"
+                size={20}
+                color={theme.textSecondary}
+                accessibilityElementsHidden
+                importantForAccessibility="no-hide-descendants"
+              />
               <TextInput
                 style={styles.input}
                 value={note}
@@ -157,6 +187,7 @@ export function EditExpenseModal({ visible, expense, onClose }: EditExpenseModal
                 placeholder={strings.editExpenseModal.notePlaceholder}
                 placeholderTextColor={theme.textTertiary}
                 maxLength={100}
+                accessibilityLabel={strings.editExpenseModal.note}
               />
             </View>
 
@@ -167,12 +198,15 @@ export function EditExpenseModal({ visible, expense, onClose }: EditExpenseModal
                 <TouchableOpacity
                   style={styles.confirmCancel}
                   onPress={() => setConfirmingDelete(false)}
+                  accessibilityRole="button"
+                  accessibilityLabel={strings.common.keep}
                 >
                   <Text style={styles.confirmCancelText}>{strings.common.keep}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.confirmDelete}
                   onPress={handleDelete}
+                  accessibilityRole="button"
                   accessibilityLabel={strings.editExpenseModal.confirmDeleteAccessibilityLabel}
                 >
                   <Text style={styles.confirmDeleteText}>{strings.editExpenseModal.deleteExpense}</Text>
@@ -182,9 +216,16 @@ export function EditExpenseModal({ visible, expense, onClose }: EditExpenseModal
               <TouchableOpacity
                 style={styles.deleteButton}
                 onPress={() => setConfirmingDelete(true)}
+                accessibilityRole="button"
                 accessibilityLabel={strings.editExpenseModal.deleteAccessibilityLabel}
               >
-                <Ionicons name="trash-outline" size={18} color={theme.danger} />
+                <Ionicons
+                  name="trash-outline"
+                  size={18}
+                  color={theme.danger}
+                  accessibilityElementsHidden
+                  importantForAccessibility="no-hide-descendants"
+                />
                 <Text style={styles.deleteText}>{strings.editExpenseModal.deleteExpense}</Text>
               </TouchableOpacity>
             )}

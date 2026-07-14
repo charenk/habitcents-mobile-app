@@ -69,6 +69,7 @@ export function PickOneSheet({
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        accessibilityViewIsModal
       >
         <View style={styles.grabber} />
         <Text style={styles.title}>{habit.name}</Text>
@@ -96,7 +97,7 @@ export function PickOneSheet({
         {freeTierBlocked && (
           <View style={styles.freeTierNote}>
             <Text style={styles.freeTierText}>{strings.habitLogging.freeTierNote}</Text>
-            <TouchableOpacity accessibilityRole="button">
+            <TouchableOpacity accessibilityRole="button" hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}>
               <Text style={styles.freeTierCta}>{strings.habitLogging.freeTierTrialCta}</Text>
             </TouchableOpacity>
           </View>
