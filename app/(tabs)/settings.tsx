@@ -9,7 +9,7 @@ import { strings } from '@/constants/strings';
 // two sections, three rows. Profile, Notifications, Appearance, the dead
 // Privacy row, and the entire Developer section (including Reset Onboarding)
 // are removed; see the spec for reasoning per row.
-const PRIVACY_POLICY_URL = 'https://habitcents.app/privacy';
+const PRIVACY_POLICY_URL = 'https://habitcents.com/privacy';
 
 export default function SettingsScreen() {
   const theme = useTheme();
