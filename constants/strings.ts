@@ -252,12 +252,18 @@ export const strings = {
     currency: 'Currency',
     about: 'About',
     privacyPolicy: 'Privacy policy',
+    termsOfService: 'Terms of service',
+    restorePurchases: 'Restore purchases',
     version: 'Version',
     versionValue: '1.0.0',
     // Currency alert
     currencyAlertTitle: 'Currency',
     currencyAlertMessage: 'Choose your currency',
     currencyOption: (name: string, symbol: string) => `${name} (${symbol})`,
+    // Restore purchases (BET-004, mock mode). No purchases exist to restore yet.
+    restoreAlertTitle: 'Restore purchases',
+    restoreNoneMessage: 'No previous purchases to restore.',
+    restoreDoneMessage: 'Your purchases have been restored.',
   },
   addCategoryModal: {
     editCategory: 'Edit Category',
@@ -354,6 +360,7 @@ export const strings = {
     biggestLeakCaption: (monthTotal: string) => `about ${monthTotal} a month · your biggest leak`,
     breakIt: 'Break it',
     trialQuietNote: "1 habit free, always. Premium trial available when you're ready.",
+    seePremium: 'See what Premium adds',
     continueToHabits: 'Continue',
     // Re-entry (section 7, Habits empty-state link)
     reAuditLink: 'Take the 90-second leak audit',
@@ -452,5 +459,31 @@ export const strings = {
       'Banks usually offer a few download formats. CSV works best; a shorter date range sometimes exports cleaner.',
     failureStartLeakAudit: 'Start with the 90-second Leak Audit',
     failureLogByHand: 'Log your first expense by hand',
+  },
+  // Paywall (BET-004, Phase 3). PLANNED prices, pending Charen's design and
+  // final pricing sign-off. Copy frames prices as not-yet-live.
+  paywall: {
+    title: 'Break more than one habit',
+    subtitle: 'Free keeps 1 habit, always. Premium lets you break up to 5 at once.',
+    plannedBanner: 'Planned pricing. In-app purchases are not live yet, so nothing is charged.',
+    feature1: 'Break up to 5 habits at once',
+    feature2: 'Keep counting every dollar, no caps',
+    feature3: 'Back a solo, privacy-first app',
+    planYearlyName: 'Yearly',
+    planYearlyPrice: '$29.99',
+    planYearlyPeriod: 'per year',
+    planYearlyCaption: 'about $2.50 a month',
+    planYearlyBadge: 'Best value',
+    planMonthlyName: 'Monthly',
+    planMonthlyPrice: '$3.99',
+    planMonthlyPeriod: 'per month',
+    planLifetimeName: 'Lifetime',
+    planLifetimePrice: '$49.99',
+    planLifetimePeriod: 'once',
+    planLifetimeCaption: 'pay once, keep it forever',
+    trialLine: 'Start with a 14-day free trial. Cancel anytime before it ends.',
+    startTrialCta: 'Start free trial',
+    restoreCta: 'Restore purchases',
+    closeLabel: 'Close',
   },
 } as const;

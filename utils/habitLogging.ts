@@ -14,15 +14,33 @@
 
 import type { ChapterName, DayState, HabitLogEntry, MilestoneThreshold } from '@/types/habit';
 import { MILESTONE_THRESHOLDS } from '@/types/habit';
+import type { Entitlement } from '@/utils/purchases';
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 /**
  * Free tier shows 1 active (breaking-now) habit at a time (spec 01 §4.2,
- * ADR 0007). No real paywall exists yet (Phase 3); the pick-one sheet's
- * quiet note and disabled Start are the only touchpoint for now.
+ * ADR 0007). Premium raises the ceiling to 5 (BET-004, Phase 3, prices/limits
+ * pending Charen's sign-off). The gate is entitlement-driven now, not a hard
+ * constant: use habitLimitForEntitlement / isHabitLimitReached at call sites so
+ * a premium user gets the higher limit once real entitlements land.
  */
 export const FREE_TIER_HABIT_LIMIT = 1;
+export const PREMIUM_TIER_HABIT_LIMIT = 5;
+
+/** Active-habit ceiling for an entitlement level. */
+export function habitLimitForEntitlement(entitlement: Entitlement): number {
+  return entitlement === 'premium' ? PREMIUM_TIER_HABIT_LIMIT : FREE_TIER_HABIT_LIMIT;
+}
+
+/**
+ * True when starting one more active habit would exceed the entitlement's
+ * ceiling (free = 1, premium = 5). `activeCount` is the number of habits already
+ * tracking/changing.
+ */
+export function isHabitLimitReached(activeCount: number, entitlement: Entitlement): boolean {
+  return activeCount >= habitLimitForEntitlement(entitlement);
+}
 
 export function atMidnight(d: Date): Date {
   const copy = new Date(d);

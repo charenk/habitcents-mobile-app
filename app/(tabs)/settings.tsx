@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Alert, Linking } from 'react-
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { CURRENCIES } from '@/utils/currency';
+import { restore } from '@/utils/purchases';
 import { strings } from '@/constants/strings';
 import { settingsRowLabel } from '@/utils/a11y';
 
@@ -11,6 +12,7 @@ import { settingsRowLabel } from '@/utils/a11y';
 // Privacy row, and the entire Developer section (including Reset Onboarding)
 // are removed; see the spec for reasoning per row.
 const PRIVACY_POLICY_URL = 'https://habitcents.com/privacy';
+const TERMS_OF_SERVICE_URL = 'https://habitcents.com/terms';
 
 export default function SettingsScreen() {
   const theme = useTheme();
@@ -32,6 +34,21 @@ export default function SettingsScreen() {
     Linking.openURL(PRIVACY_POLICY_URL).catch(() => {});
   };
 
+  const handleTermsPress = () => {
+    Linking.openURL(TERMS_OF_SERVICE_URL).catch(() => {});
+  };
+
+  // Restore purchases (BET-004, mock mode). Runs the mock restore, which resolves
+  // with nothing to restore until real purchases exist, and reports the outcome.
+  const handleRestorePress = async () => {
+    const result = await restore();
+    const message =
+      result.ok && result.entitlement === 'premium'
+        ? strings.settings.restoreDoneMessage
+        : strings.settings.restoreNoneMessage;
+    Alert.alert(strings.settings.restoreAlertTitle, message);
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.group}>
@@ -50,17 +67,34 @@ export default function SettingsScreen() {
         <Text style={styles.groupTitle}>{strings.settings.about}</Text>
         <TouchableOpacity
           style={styles.row}
+          onPress={handleRestorePress}
+          accessibilityRole="button"
+          accessibilityLabel={strings.settings.restorePurchases}
+        >
+          <Text style={styles.rowText}>{strings.settings.restorePurchases}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.row}
           onPress={handlePrivacyPolicyPress}
           accessibilityRole="button"
           accessibilityLabel={strings.settings.privacyPolicy}
         >
           <Text style={styles.rowText}>{strings.settings.privacyPolicy}</Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.row}
+          onPress={handleTermsPress}
+          accessibilityRole="button"
+          accessibilityLabel={strings.settings.termsOfService}
+        >
+          <Text style={styles.rowText}>{strings.settings.termsOfService}</Text>
+        </TouchableOpacity>
         <View
           style={styles.row}
           accessible
           accessibilityLabel={settingsRowLabel(strings.settings.version, strings.settings.versionValue)}
         >
+
           <Text style={styles.rowText}>{strings.settings.version}</Text>
           <Text style={styles.rowValue}>{strings.settings.versionValue}</Text>
         </View>

@@ -97,6 +97,13 @@ export default function OnboardingSuccessScreen() {
         )}
 
         <Text style={styles.quietNote}>{strings.onboarding.trialQuietNote}</Text>
+        <TouchableOpacity
+          onPress={() => router.push('/paywall?placement=onboarding')}
+          accessibilityRole="button"
+          style={styles.premiumLink}
+        >
+          <Text style={styles.premiumLinkText}>{strings.onboarding.seePremium}</Text>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.footer}>
@@ -185,6 +192,17 @@ function createStyles(theme: AppTheme) {
       textAlign: 'center',
       marginTop: 20,
       lineHeight: 17,
+    },
+    premiumLink: {
+      minHeight: 44,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginTop: 4,
+    },
+    premiumLinkText: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: theme.primary,
     },
     footer: {
       paddingHorizontal: 24,

@@ -16,10 +16,15 @@ type PickOneSheetProps = {
   /**
    * Free-tier touchpoint (ADR 0007, spec 01 §5 "Free tier, 2nd habit"): when a
    * free user is breaking a second habit, show a quiet note and disable Start.
-   * The paywall itself and trial purchase flow are Phase 3; this is a
-   * placeholder CTA only.
    */
   freeTierBlocked?: boolean;
+  /**
+   * Opens the paywall from the free-tier trial CTA (BET-004). The parent closes
+   * this sheet and navigates, so the CTA has real behavior instead of the old
+   * no-op. Optional so callers that never block (e.g. onboarding's first habit)
+   * can omit it.
+   */
+  onStartTrial?: () => void;
 };
 
 function cadenceLabel(frequency: HabitFrequency): string {
@@ -41,6 +46,7 @@ export function PickOneSheet({
   onCancel,
   onStart,
   freeTierBlocked = false,
+  onStartTrial,
 }: PickOneSheetProps) {
   const theme = useTheme();
   const { format } = useCurrency();
@@ -97,7 +103,11 @@ export function PickOneSheet({
         {freeTierBlocked && (
           <View style={styles.freeTierNote}>
             <Text style={styles.freeTierText}>{strings.habitLogging.freeTierNote}</Text>
-            <TouchableOpacity accessibilityRole="button" hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}>
+            <TouchableOpacity
+              accessibilityRole="button"
+              onPress={onStartTrial}
+              hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
+            >
               <Text style={styles.freeTierCta}>{strings.habitLogging.freeTierTrialCta}</Text>
             </TouchableOpacity>
           </View>
