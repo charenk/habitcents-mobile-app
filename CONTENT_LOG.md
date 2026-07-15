@@ -290,3 +290,38 @@ CASE STUDY MOMENT
 This session is the clearest example yet of the operating model: a solo founder running a small fleet of role-specialized agents through a two-lane merge policy, shipping foundation work while staying the only human in the loop on anything user-facing.
 
 ---
+
+---
+
+## 2026-07-15 — Brand refresh shipped live + full-state audit + merged the backlog
+
+### Session scan
+
+**Scope:** end of session (long, cross-repo)
+**Built this session:** Wave 0 account handoffs (Resend live, RevenueCat chain to SDK key, App Store Connect record), the blog auto-publish pipeline (ADR 0014), a full-state audit that reconciled Notion/PUNCHLIST/roadmap and caught a real bug, and a brand refresh (favicon, theme-adaptive nav/footer logo, mobile app-icon system) now live on habitcents.com. Merged all 5 open PRs.
+**Pillar scores:** P1: None · P2: Weak · P3: Strong (currentColor theme-adaptive logo) · P4: Strong (mode-matched icons, assets-only restraint) · P5: Strong (audit caught an AI-authored bug)
+
+---
+
+### P3 PLATFORM PATTERN — One SVG, both themes, no JavaScript
+
+**TWITTER POST**
+Needed my logo to work in dark and light mode. The lazy way: ship two files and swap them with JS. The right way for a CSS-variable theme: inline the SVG, set the tile and text to `currentColor`, hardcode only the brand-green mark. One asset. Zero theme-detection code. It flips exactly like the body text does.
+
+VISUAL NOTE: side-by-side of the nav logo in dark vs light theme (already captured this session).
+
+---
+
+### P5 BUILDING WITH AI HONESTLY — The audit caught its own mistake
+
+**TWITTER POST**
+Ran a full state-of-project audit across three repos. It found a Slack signup notification that could never fire: an earlier agent-authored PR added the feature to the library but never forwarded the env var in the API route. Tests passed because they injected the env directly. The lesson: verify the wiring, not just the unit. Fixed in one line.
+
+VISUAL NOTE: NONE (or the one-line diff adding the env forward).
+
+---
+
+CASE STUDY MOMENT
+Shipping a brand refresh across a web app and a mobile app from a single set of designer exports, deriving every icon/favicon variant programmatically (Node + sharp), eyeballing each before commit because the app can't be built locally, then merging a five-PR backlog including a hand-resolved conflict between the payments feature and the accessibility pass.
+
+---
