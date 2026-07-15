@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
 import type { AppTheme } from '@/constants/theme';
 import type { RecurrenceFrequency } from '@/types/expense';
+import { selectableLabel } from '@/utils/a11y';
 
 type RecurrenceFieldProps = {
   recurrence: RecurrenceFrequency | null;
@@ -51,6 +52,10 @@ export function RecurrenceField({ recurrence, onChange }: RecurrenceFieldProps) 
                 key={opt.key}
                 style={[styles.chip, active ? styles.chipActive : styles.chipInactive]}
                 onPress={() => onChange(opt.key)}
+                accessibilityRole="button"
+                accessibilityState={{ selected: active }}
+                accessibilityLabel={selectableLabel(opt.label, active)}
+                hitSlop={{ top: 6, bottom: 6 }}
               >
                 <Text style={[styles.chipText, active ? styles.chipTextActive : styles.chipTextInactive]}>
                   {opt.label}

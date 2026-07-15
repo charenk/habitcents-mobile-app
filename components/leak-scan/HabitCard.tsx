@@ -5,6 +5,7 @@ import { useCurrency } from '@/contexts/CurrencyContext';
 import type { AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import { TierBadge } from './TierBadge';
+import { habitCardLabel } from '@/utils/a11y';
 import type { HabitCandidate } from '@/utils/leakScan/types';
 
 type HabitCardProps = {
@@ -62,6 +63,13 @@ export function HabitCard({
       ? { label: strings.leakScan.classInfluence, bg: theme.classInfluenceBg, ink: theme.classInfluenceInk }
       : { label: strings.leakScan.classFixed, bg: theme.classFixedBg, ink: theme.classFixedInk };
 
+  const tierLabel =
+    candidate.tier === 'solid'
+      ? strings.leakScan.tierSolid
+      : candidate.tier === 'likely'
+      ? strings.leakScan.tierLikely
+      : strings.leakScan.tierReview;
+
   const statsRow = strings.leakScan.habitStatsRow(
     candidate.occurrences,
     candidate.activeDays,
@@ -92,16 +100,23 @@ export function HabitCard({
   return (
     <View style={styles.card}>
       <View style={styles.headerRow}>
-        <Text style={styles.rank}>{rank}</Text>
-        <View style={[styles.classPill, { backgroundColor: classBadge.bg }]}>
-          <Text style={[styles.classPillText, { color: classBadge.ink }]}>{classBadge.label}</Text>
+        <View
+          style={styles.headerBadges}
+          accessible
+          accessibilityLabel={habitCardLabel(rank, classBadge.label, tierLabel)}
+        >
+          <Text style={styles.rank}>{rank}</Text>
+          <View style={[styles.classPill, { backgroundColor: classBadge.bg }]}>
+            <Text style={[styles.classPillText, { color: classBadge.ink }]}>{classBadge.label}</Text>
+          </View>
+          <TierBadge tier={candidate.tier} />
         </View>
-        <TierBadge tier={candidate.tier} />
         <TouchableOpacity
           style={styles.menuButton}
           onPress={() => setMenuOpen((v) => !v)}
           accessibilityRole="button"
           accessibilityLabel="More options"
+          hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
         >
           <Text style={styles.menuDots}>⋯</Text>
         </TouchableOpacity>
@@ -118,11 +133,21 @@ export function HabitCard({
           </Text>
         </View>
         {candidate.governClass === 'govern' ? (
-          <TouchableOpacity style={styles.trackButton} onPress={onTrack} accessibilityRole="button">
+          <TouchableOpacity
+            style={styles.trackButton}
+            onPress={onTrack}
+            accessibilityRole="button"
+            hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
+          >
             <Text style={styles.trackButtonText}>{strings.leakScan.trackThisLeak}</Text>
           </TouchableOpacity>
         ) : (
-          <TouchableOpacity style={styles.monitorButton} onPress={onMonitor} accessibilityRole="button">
+          <TouchableOpacity
+            style={styles.monitorButton}
+            onPress={onMonitor}
+            accessibilityRole="button"
+            hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
+          >
             <Text style={styles.monitorButtonText}>{strings.leakScan.monitorHabit}</Text>
           </TouchableOpacity>
         )}
@@ -137,6 +162,7 @@ export function HabitCard({
               onNotAHabit?.();
             }}
             accessibilityRole="button"
+            hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
           >
             <Text style={styles.menuItemText}>{strings.leakScan.notAHabit}</Text>
           </TouchableOpacity>
@@ -147,6 +173,7 @@ export function HabitCard({
               onWrongDetails?.();
             }}
             accessibilityRole="button"
+            hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
           >
             <Text style={styles.menuItemText}>{strings.leakScan.wrongDetails}</Text>
           </TouchableOpacity>
@@ -175,6 +202,11 @@ function createStyles(theme: AppTheme) {
       alignItems: 'center',
       gap: 8,
       marginBottom: 8,
+    },
+    headerBadges: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
     },
     rank: {
       fontSize: 13,

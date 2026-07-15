@@ -5,6 +5,7 @@ import { useCurrency } from '@/contexts/CurrencyContext';
 import { CURRENCIES } from '@/utils/currency';
 import { restore } from '@/utils/purchases';
 import { strings } from '@/constants/strings';
+import { settingsRowLabel } from '@/utils/a11y';
 
 // P2-4 (docs/design-package-phase2/05-p2-4-design-unification.md, section 3):
 // two sections, three rows. Profile, Notifications, Appearance, the dead
@@ -52,23 +53,48 @@ export default function SettingsScreen() {
     <View style={styles.container}>
       <View style={styles.group}>
         <Text style={styles.groupTitle}>{strings.settings.preferences}</Text>
-        <TouchableOpacity style={styles.row} onPress={handleCurrencyPress} accessibilityRole="button">
+        <TouchableOpacity
+          style={styles.row}
+          onPress={handleCurrencyPress}
+          accessibilityRole="button"
+          accessibilityLabel={settingsRowLabel(strings.settings.currency, currency)}
+        >
           <Text style={styles.rowText}>{strings.settings.currency}</Text>
           <Text style={styles.rowValue}>{currency}</Text>
         </TouchableOpacity>
       </View>
       <View style={styles.group}>
         <Text style={styles.groupTitle}>{strings.settings.about}</Text>
-        <TouchableOpacity style={styles.row} onPress={handleRestorePress} accessibilityRole="button">
+        <TouchableOpacity
+          style={styles.row}
+          onPress={handleRestorePress}
+          accessibilityRole="button"
+          accessibilityLabel={strings.settings.restorePurchases}
+        >
           <Text style={styles.rowText}>{strings.settings.restorePurchases}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.row} onPress={handlePrivacyPolicyPress} accessibilityRole="button">
+        <TouchableOpacity
+          style={styles.row}
+          onPress={handlePrivacyPolicyPress}
+          accessibilityRole="button"
+          accessibilityLabel={strings.settings.privacyPolicy}
+        >
           <Text style={styles.rowText}>{strings.settings.privacyPolicy}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.row} onPress={handleTermsPress} accessibilityRole="button">
+        <TouchableOpacity
+          style={styles.row}
+          onPress={handleTermsPress}
+          accessibilityRole="button"
+          accessibilityLabel={strings.settings.termsOfService}
+        >
           <Text style={styles.rowText}>{strings.settings.termsOfService}</Text>
         </TouchableOpacity>
-        <View style={styles.row}>
+        <View
+          style={styles.row}
+          accessible
+          accessibilityLabel={settingsRowLabel(strings.settings.version, strings.settings.versionValue)}
+        >
+
           <Text style={styles.rowText}>{strings.settings.version}</Text>
           <Text style={styles.rowValue}>{strings.settings.versionValue}</Text>
         </View>

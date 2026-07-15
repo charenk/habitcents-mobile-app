@@ -66,6 +66,7 @@ export function CategoryTransactionsSheet({
                 style={styles.chipButton}
                 onPress={() => setOpenChipFor(openChipFor === row.id ? null : row.id)}
                 accessibilityRole="button"
+                hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
               >
                 <Text style={styles.chipButtonText}>{categoryDisplayLabel(row.category)}</Text>
               </TouchableOpacity>
@@ -80,6 +81,7 @@ export function CategoryTransactionsSheet({
                         setOpenChipFor(null);
                       }}
                       accessibilityRole="button"
+                      hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
                     >
                       <Text style={styles.chipText}>{categoryDisplayLabel(cat)}</Text>
                     </TouchableOpacity>

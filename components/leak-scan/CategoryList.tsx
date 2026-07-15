@@ -67,7 +67,11 @@ export function CategoryList({ categories, onCategoryPress }: CategoryListProps)
         </TouchableOpacity>
       ))}
       {!expanded && categories.length > 3 && (
-        <TouchableOpacity onPress={handleViewMore} accessibilityRole="button">
+        <TouchableOpacity
+          onPress={handleViewMore}
+          accessibilityRole="button"
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+        >
           <Text style={styles.viewMore}>{strings.leakScan.viewMore}</Text>
         </TouchableOpacity>
       )}

@@ -255,12 +255,20 @@ export function CheckInCard({
           )}
 
           <View style={styles.linksRow}>
-            <TouchableOpacity onPress={onChangeAnswer} accessibilityRole="button">
+            <TouchableOpacity
+              onPress={onChangeAnswer}
+              accessibilityRole="button"
+              hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
+            >
               <Text style={styles.linkText}>{strings.habitLogging.changeAnswer}</Text>
             </TouchableOpacity>
             {todayState === 'slipped' &&
               goal.dayLogs.find((e) => atMidnight(e.date).getTime() === today.getTime())?.partialAmount == null && (
-                <TouchableOpacity onPress={onOpenPartial} accessibilityRole="button">
+                <TouchableOpacity
+                  onPress={onOpenPartial}
+                  accessibilityRole="button"
+                  hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
+                >
                   <Text style={styles.linkText}>{strings.habitLogging.spentLessThanUsual}</Text>
                 </TouchableOpacity>
               )}
@@ -274,6 +282,7 @@ export function CheckInCard({
                   style={styles.backfillButton}
                   onPress={() => onBackfill('skipped')}
                   accessibilityRole="button"
+                  hitSlop={{ top: 4, bottom: 4 }}
                 >
                   <Text style={styles.secondaryButtonText}>{strings.habitLogging.backfillSkip}</Text>
                 </TouchableOpacity>
@@ -281,6 +290,7 @@ export function CheckInCard({
                   style={styles.backfillButton}
                   onPress={() => onBackfill('slipped')}
                   accessibilityRole="button"
+                  hitSlop={{ top: 4, bottom: 4 }}
                 >
                   <Text style={styles.secondaryButtonText}>{strings.habitLogging.backfillBought}</Text>
                 </TouchableOpacity>

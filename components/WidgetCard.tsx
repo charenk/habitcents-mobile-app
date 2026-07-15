@@ -6,6 +6,14 @@ import { useCurrency } from '@/contexts/CurrencyContext';
 import type { AppTheme } from '@/constants/theme';
 import type { ReportWidget, TimeRange } from '@/types/report';
 import { strings } from '@/constants/strings';
+import { selectableLabel } from '@/utils/a11y';
+
+const TIME_RANGE_SPOKEN: Record<TimeRange, string> = {
+  week: 'Week',
+  month: 'Month',
+  quarter: 'Quarter',
+  year: 'Year',
+};
 
 type WidgetCardProps = {
   widget: ReportWidget;
@@ -48,6 +56,10 @@ export function WidgetCard({
                     widget.timeRange === range && styles.timeRangeButtonActive,
                   ]}
                   onPress={() => onTimeRangeChange(range)}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: widget.timeRange === range }}
+                  accessibilityLabel={selectableLabel(TIME_RANGE_SPOKEN[range], widget.timeRange === range)}
+                  hitSlop={{ top: 11, bottom: 11 }}
                 >
                   <Text
                     style={[
@@ -456,7 +468,9 @@ function createContentStyles(theme: AppTheme) {
     },
     sparklineLabel: {
       fontSize: 10,
-      color: theme.textTertiary,
+      // Informational axis labels: textSecondary for the 4.5:1 contrast
+      // floor, not textTertiary (spec 09 section 1.5).
+      color: theme.textSecondary,
     },
 
     // Streaks content

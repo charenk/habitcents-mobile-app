@@ -23,7 +23,8 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#16A34A"
+        "monochromeImage": "./assets/adaptive-monochrome.png",
+        "backgroundColor": "#232323"
       },
       "package": "com.habitcents.app"
     },
