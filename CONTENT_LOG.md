@@ -325,3 +325,75 @@ CASE STUDY MOMENT
 Shipping a brand refresh across a web app and a mobile app from a single set of designer exports, deriving every icon/favicon variant programmatically (Node + sharp), eyeballing each before commit because the app can't be built locally, then merging a five-PR backlog including a hand-resolved conflict between the payments feature and the accessibility pass.
 
 ---
+
+---
+
+## 2026-07-24 — Drove the first TestFlight build onto a real iPhone, and found a P0 crash there
+
+### Session scan
+
+**Scope:** end of session
+**Built this session:** Drove BET-002 end to end: bound the EAS project (mobile PR #27), set the build-time env vars, ran the production iOS build and App Store Connect submission, and got HabitCents installed on Charen's phone via TestFlight. On device, the app icons passed (Test A), and tapping the Habits tab surfaced a hard crash that no dev or web run had shown, which blocks the paywall and VoiceOver tests.
+**Pillar scores:** P1: None · P2: None · P3: Strong (EAS/TestFlight gotchas) · P4: Weak (place-labeled guide artifact) · P5: Strong (credential boundary + a self-corrected wrong bug call)
+
+---
+
+### P3 PLATFORM PATTERN — The first TestFlight build, and the gotchas nobody warns you about
+
+**TWITTER POST**
+Shipped my first TestFlight build today. The EAS part was smooth. The confusing part was everything Apple: TestFlight has no login of its own (it uses your App Store account, which is often a different Apple ID than iCloud), internal testers need no redeem code and no review, and "Ready to Submit" does not block internal testing. Once those clicked, the app was on my phone.
+
+VISUAL NOTE: screen recording of the TestFlight home going from empty to HabitCents with an Install button.
+
+---
+
+**TWITTER THREAD**
+Tweet 1: My first TestFlight build is on my phone. The build itself was one EAS command. The hour of confusion was all Apple-side. A field guide for the next person:
+Tweet 2: EAS handles the scary parts for you. First build offers to generate your distribution certificate and provisioning profile. First submit auto-creates an App Store Connect API key (App Manager) and stores it. You never hand-manage a .p8.
+Tweet 3: The "Expo Go is not recommended for production" warning during the build is a red herring. It is a dev-mode heuristic. Your standalone build is fine. Set EAS_BUILD_NO_EXPO_GO_WARNING=true and move on.
+Tweet 4: Why TestFlight said "no invites" even after everything succeeded: TestFlight has no login. It reads your device's App Store Apple ID, which was not the account I enrolled as a tester. Match those two and the build appears. No redeem code needed for internal testers.
+Final tweet: Principle: the tool you are learning is rarely where you are stuck. The build pipeline was easy. The account model underneath it was the real lesson. Read the model, not just the CLI output.
+
+VISUAL NOTE: Tweet 4, a shot of the App Store profile email next to the TestFlight tester email.
+
+---
+
+**LINKEDIN POST**
+Today I got the first build of my app onto a real iPhone through TestFlight.
+
+The build itself was almost anticlimactic: one EAS command, and the cloud did the rest. It even created and stored my signing certificate and my App Store Connect API key so I never had to touch a .p8 file.
+
+The real learning was the layer underneath. I lost the better part of an hour to TestFlight showing "a developer has to invite you" even though every step had succeeded. The cause: TestFlight does not have its own login. It quietly uses whichever Apple ID your App Store is signed into, and that was not the account I had enrolled as a tester. A few other things that are obvious in hindsight: internal testers need no redeem code and no review, and a build marked "Ready to Submit" is still fully testable internally.
+
+The takeaway I keep relearning: when you are blocked, it is usually not the new tool you are learning. It is the model underneath it that nobody drew for you. Read the model.
+
+VISUAL NOTE: the TestFlight home screen with HabitCents installed, or the empty-then-filled before/after.
+
+---
+
+### P5 BUILDING WITH AI HONESTLY — The AI can't type my password, and it caught itself calling a bug that wasn't
+
+**TWITTER POST**
+Two honest moments pairing with an AI on a release today. One: it flat out cannot type my Apple password or sit at an interactive prompt, so we split the work. It ran the deterministic setup, I ran the sign-in, and it coached every prompt. Two: it saw my dark-mode icon, said "this looks like a bug", then opened the actual asset files, and corrected itself: the icon was right. Verify before you alarm.
+
+VISUAL NOTE: the dark-mode app icon next to the source icon-dark.png, showing they match.
+
+---
+
+**LINKEDIN POST**
+Two things happened while I paired with an AI to ship my first mobile build, and both are worth being honest about.
+
+First, the boundary. Parts of an app release are interactive and credential-bearing: signing into Apple, typing a two-factor code. An AI should never type your password, and in a normal terminal it cannot sit at those prompts anyway. So we divided the work deliberately. It ran the deterministic, non-interactive setup and opened the code change. I ran the Apple sign-in in my own terminal. It read my output and told me exactly what to answer next. The division was the design, not a workaround.
+
+Second, the correction. When it saw my dark-mode app icon, it initially flagged it as possibly wrong. Then it did the right thing: it opened the actual icon files that shipped and compared them. The icon was correct. It said so plainly and moved on.
+
+Both moments point at the same standard: an assistant that knows what it must not do, and checks the source before it raises an alarm, is far more useful than one that is confidently wrong or quietly oversteps.
+
+VISUAL NOTE: NONE, or the side-by-side of the on-device dark icon and the source asset.
+
+---
+
+CASE STUDY MOMENT
+On-device testing earned its keep in one tap: the app that passed every unit test and ran clean on web and simulator hard-crashed the moment a real user opened the Habits tab on a fresh install, a release-only failure that only a build on a real phone could surface.
+
+---
