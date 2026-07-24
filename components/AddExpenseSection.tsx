@@ -9,7 +9,7 @@ import {
   ScrollView,
   Keyboard,
 } from 'react-native';
-import Reanimated, { useSharedValue, useAnimatedStyle, withTiming, withSequence } from 'react-native-reanimated';
+import Reanimated, { useSharedValue, useAnimatedStyle, withTiming, withSequence, runOnUI } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCategories } from '@/contexts/CategoriesContext';
@@ -144,10 +144,17 @@ export const AddExpenseSection = forwardRef<AddExpenseSectionHandle, AddExpenseS
       return;
     }
 
-    saveScale.value = withSequence(
-      withTiming(1.06, { duration: 120 }),
-      withTiming(1, { duration: 160 })
-    );
+    // Create the save-button pop on the UI thread. Assigning a withSequence
+    // animation object to a shared value from the JS thread serializes it
+    // across the bridge, which segfaults on the New Architecture (Hermes) in
+    // worklets 0.5.1; a runOnUI worklet keeps it on the UI runtime.
+    runOnUI(() => {
+      'worklet';
+      saveScale.value = withSequence(
+        withTiming(1.06, { duration: 120 }),
+        withTiming(1, { duration: 160 })
+      );
+    })();
     setTimeout(() => {
       setSaved(false);
       resetForm();
