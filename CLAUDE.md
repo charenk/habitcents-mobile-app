@@ -156,7 +156,7 @@ npx tsc --noEmit
 - [x] Onboarding flow
 - [x] Habit detail screen
 - [x] Category detail screen
-- [x] Custom chart components (PieChart, LineChart, ProgressRing)
+- [x] Custom View-based charts (WidgetCard bars and sparkline, LongArc progress ring); older PieChart/LineChart/ProgressRing components were removed
 
 ### Next Steps
 - [ ] Add expense deletion/editing UI
@@ -182,5 +182,5 @@ npx tsc --noEmit
 
 - Amounts stored in cents (integers) internally
 - Dates reconstructed from ISO strings when loading from storage
-- Theme supports both light and dark modes
+- Light mode only (direction lock 2026-07-02); a complete darkTheme is retained unreferenced in constants/theme.ts as the documented v1.x revert path (see contexts/ThemeContext.tsx)
 - No external chart dependencies - all charts are custom Views

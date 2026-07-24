@@ -18,8 +18,6 @@ export const lightTheme = {
   iconBgGreen: '#B2DFB6',
   iconBgYellow: '#FFF3E0',
   iconOrange: '#FFA726',
-  fabGradientStart: '#81C784',
-  fabGradientEnd: '#4DD0E1',
   calendarDow: '#B8860B',
   calendarOtherMonth: '#BDBDBD',
   calendarBg: '#F0F0F0',
@@ -89,8 +87,6 @@ export const darkTheme = {
   iconBgGreen: '#2E7D32',
   iconBgYellow: '#5D4E37',
   iconOrange: '#FFB74D',
-  fabGradientStart: '#388E3C',
-  fabGradientEnd: '#00897B',
   calendarDow: '#FFD54F',
   calendarOtherMonth: '#616161',
   calendarBg: '#252525',
@@ -148,8 +144,6 @@ export type AppTheme = {
   iconBgGreen: string;
   iconBgYellow: string;
   iconOrange: string;
-  fabGradientStart: string;
-  fabGradientEnd: string;
   calendarDow: string;
   calendarOtherMonth: string;
   calendarBg: string;
