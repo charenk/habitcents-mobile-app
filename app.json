@@ -46,6 +46,13 @@
           "backgroundColor": "#F8F8F8"
         }
       ]
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "ea39e317-4798-40fb-919f-30c300aabc27"
+      }
+    },
+    "owner": "charen"
   }
 }
