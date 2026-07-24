@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import Reanimated, { useSharedValue, useAnimatedStyle, withTiming, withSequence } from 'react-native-reanimated';
+import Reanimated, { useSharedValue, useAnimatedStyle, withTiming, withSequence, runOnUI } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -88,16 +88,25 @@ function SkipSlipButtons({
       onSkip();
       return;
     }
-    scale.value = withSequence(
-      withTiming(0.96, { duration: 100 }),
-      withTiming(1, { duration: 140 })
-    );
-    ringScale.value = 0.3;
-    ringOpacity.value = 0.5;
     setRingKey((k) => k + 1);
     setRingVisible(true);
-    ringScale.value = withTiming(2.6, { duration: 550 });
-    ringOpacity.value = withTiming(0, { duration: 550 });
+    // Build the skip animations on the UI thread. Assigning an animation
+    // object (withSequence / withTiming) to a shared value from the JS thread
+    // makes worklets serialize it across the bridge, which segfaults on the
+    // New Architecture (Hermes) in worklets 0.5.1. Creating them inside a
+    // runOnUI worklet keeps every animation object on the UI runtime, so
+    // nothing crosses the bridge and the motion is identical.
+    runOnUI(() => {
+      'worklet';
+      scale.value = withSequence(
+        withTiming(0.96, { duration: 100 }),
+        withTiming(1, { duration: 140 })
+      );
+      ringScale.value = 0.3;
+      ringOpacity.value = 0.5;
+      ringScale.value = withTiming(2.6, { duration: 550 });
+      ringOpacity.value = withTiming(0, { duration: 550 });
+    })();
     // Unmount the ring view on the JS side once its animation is done. A
     // plain timeout (rather than the reanimated callback) keeps this
     // component's re-render logic entirely on the JS thread, which is

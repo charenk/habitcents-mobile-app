@@ -63,10 +63,17 @@ export function KeptHero({ cents }: KeptHeroProps) {
     step();
 
     if (isIncrease) {
+      // Both the scale (transform) and the tint (color) animate the same
+      // Animated.Text. color cannot use the native driver, so scale must stay
+      // on the JS driver too: mixing drivers on one node throws "Attempting to
+      // run JS driven animation on animated node that has been moved to native"
+      // which, in a release build, surfaces as an uncaught NSException and
+      // hard-crashes the app. A one-shot text pulse on the JS driver is
+      // imperceptible here.
       Animated.parallel([
         Animated.sequence([
-          Animated.timing(scale, { toValue: 1.06, duration: 250, useNativeDriver: true }),
-          Animated.timing(scale, { toValue: 1, duration: 200, useNativeDriver: true }),
+          Animated.timing(scale, { toValue: 1.06, duration: 250, useNativeDriver: false }),
+          Animated.timing(scale, { toValue: 1, duration: 200, useNativeDriver: false }),
         ]),
         Animated.sequence([
           Animated.timing(tint, { toValue: 1, duration: 250, useNativeDriver: false }),

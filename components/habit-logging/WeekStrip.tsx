@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import Reanimated, { useSharedValue, useAnimatedStyle, withSequence, withTiming } from 'react-native-reanimated';
+import Reanimated, { useSharedValue, useAnimatedStyle, withSequence, withTiming, runOnUI } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -55,11 +55,18 @@ function WeekDot({
     const justSkipped = prevStateRef.current !== 'skipped' && cell.state === 'skipped';
     prevStateRef.current = cell.state;
     if (!justSkipped || reduceMotion) return;
-    scale.value = 0.4;
-    scale.value = withSequence(
-      withTiming(1.18, { duration: 200 }),
-      withTiming(1, { duration: 120 })
-    );
+    // Create the pop animation on the UI thread. Assigning a withSequence
+    // animation object to a shared value from the JS thread serializes it
+    // across the bridge, which segfaults on the New Architecture (Hermes) in
+    // worklets 0.5.1; a runOnUI worklet keeps it on the UI runtime.
+    runOnUI(() => {
+      'worklet';
+      scale.value = 0.4;
+      scale.value = withSequence(
+        withTiming(1.18, { duration: 200 }),
+        withTiming(1, { duration: 120 })
+      );
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cell.state, reduceMotion]);
 
