@@ -1,5 +1,7 @@
 # HabitCent – Design & Architecture Notes
 
+> **Historical document.** Written during Phase 1; several sections describe behavior that has since changed (dark mode was removed by the 2026-07-02 direction lock, some screens and components were deleted or renamed). Current truth lives in `CLAUDE.md` and `docs/design-package-phase2/`. Corrections below are limited to the theming section.
+
 This document captures the main contextual and design decisions made while building the HabitCent app.
 
 ---
@@ -203,15 +205,14 @@ Files:
 
 ### 5.2 Theme state and modes
 
-- `ThemeMode` = `'light' | 'dark' | 'system'`.
-- `ThemeProvider`:
-  - Reads persisted mode on mount (via `getThemeMode()`).
-  - Uses `useColorScheme()` when mode is `'system'`.
-  - Resolves a boolean `isDark` and sets `theme` to `darkTheme` or `lightTheme` accordingly.
+- `ThemeMode` = `'light' | 'dark' | 'system'` (type retained for the revert path).
+- Since the P2-4 direction lock (2026-07-02) the app is light-only:
+  - `ThemeProvider` hardwires `lightTheme`; no mode is read or persisted at runtime.
+  - `useColorScheme()` is not consulted anywhere.
+  - `darkTheme` remains in `constants/theme.ts` as unreferenced code so dark mode can return as a small v1.x change (see the note at the top of `contexts/ThemeContext.tsx`).
 - Hooks:
-  - `useTheme()` → `AppTheme`.
-  - `useThemeMode()` → `{ themeMode, setThemeMode }`.
-  - `useIsDark()` → `boolean`, used for StatusBar style.
+  - `useTheme()` → `AppTheme` (always the light theme today).
+  - `useIsDark()` → always `false`, used for StatusBar style.
 
 ### 5.3 Persistence + StatusBar
 
@@ -228,7 +229,7 @@ Files:
 
 Rationale:
 
-- Centralises visual decisions and makes it easy to evolve the visual language for both light and dark without touching every component.
+- Centralises visual decisions and makes it easy to evolve the visual language without touching every component (and keeps a future dark mode a token-level change).
 
 ---
 
