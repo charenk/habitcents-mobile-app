@@ -1,6 +1,8 @@
 import React, { useMemo } from 'react';
 import { View, Text, Switch, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
+import { reminderTimeLabel } from '@/utils/a11y';
+import { strings } from '@/constants/strings';
 
 type ToggleRowProps = {
   label: string;
@@ -38,9 +40,9 @@ export function ToggleRow({
           style={styles.secondaryRow}
           onPress={onSecondaryPress}
           accessibilityRole="button"
-          accessibilityLabel={`Reminder time, ${secondaryLabel}`}
+          accessibilityLabel={reminderTimeLabel(secondaryLabel)}
         >
-          <Text style={styles.secondaryLabel}>Reminder time</Text>
+          <Text style={styles.secondaryLabel}>{strings.leakScan.reminderTimeLabel}</Text>
           <Text style={styles.secondaryValue}>{secondaryLabel}</Text>
         </TouchableOpacity>
       )}

@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Switch } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
+import { formatDate } from '@/utils/dates';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import type { AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
@@ -19,7 +20,7 @@ type ProjectionSectionProps = {
 function nextMonthName(): string {
   const d = new Date();
   d.setMonth(d.getMonth() + 1);
-  return d.toLocaleDateString('en-US', { month: 'long' });
+  return formatDate(d, { month: 'long' });
 }
 
 /**

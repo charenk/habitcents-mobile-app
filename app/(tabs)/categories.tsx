@@ -138,7 +138,7 @@ export default function CategoriesScreen() {
           style={styles.addButton}
           onPress={() => setIsModalVisible(true)}
           accessibilityRole="button"
-          accessibilityLabel="Add category"
+          accessibilityLabel={strings.categories.addCategoryLabel}
         >
           <Ionicons name="add" size={24} color={theme.primary} />
         </TouchableOpacity>

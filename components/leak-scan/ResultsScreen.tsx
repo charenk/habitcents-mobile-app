@@ -2,6 +2,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
+import { formatDate } from '@/utils/dates';
 import { useExpenses } from '@/contexts/ExpensesContext';
 import { useHabits } from '@/contexts/HabitsContext';
 import type { AppTheme } from '@/constants/theme';
@@ -48,13 +49,13 @@ type ResultsScreenProps = {
 
 function evidenceWindowLabel(result: ScanResult, nAccounts: number): string {
   if (!result.coverage) return '';
-  const start = new Date(result.coverage.startISO).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  const end = new Date(result.coverage.endISO).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  const start = formatDate(new Date(result.coverage.startISO), { month: 'short', day: 'numeric' });
+  const end = formatDate(new Date(result.coverage.endISO), { month: 'short', day: 'numeric' });
   return strings.leakScan.kpiEvidenceWindow(start, end, nAccounts);
 }
 
 function monthLabel(dateISO: string): string {
-  return new Date(dateISO).toLocaleDateString('en-US', { month: 'long' });
+  return formatDate(new Date(dateISO), { month: 'long' });
 }
 
 /**
@@ -141,7 +142,7 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
   const upcomingMonthLabel = useMemo(() => {
     const d = new Date();
     d.setMonth(d.getMonth() + 1);
-    return d.toLocaleDateString('en-US', { month: 'long' });
+    return formatDate(d, { month: 'long' });
   }, []);
 
   const handleCategoryCorrect = useCallback(

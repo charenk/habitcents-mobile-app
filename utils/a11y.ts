@@ -72,13 +72,30 @@ export function remindToggleLabel(on: boolean): string {
   return `remind me the day before, ${on ? 'on' : 'off'}`;
 }
 
-/** A settings row that carries a value: "{label}, {value}" (spec 09 §2, "Settings"). */
 /** Monthly projection trend (ADA-010): direction must be spoken, never carried by color alone. */
 export function projectionTrendLabel(isUp: boolean, percent: number): string {
   const direction = isUp ? 'up' : 'down';
   return `Spending ${direction} ${percent} percent versus last month`;
 }
 
+/** Hidden amount input on the add-expense form (ADA-009): currency-aware, never "dollars". */
+export function amountInputLabel(currencyName: string): string {
+  return `Amount in ${currencyName}`;
+}
+
+export function fillMerchantLabel(merchant: string): string {
+  return `Fill merchant, ${merchant}`;
+}
+
+export function deleteCategoryLabel(name: string): string {
+  return `Delete ${name}`;
+}
+
+export function reminderTimeLabel(time: string): string {
+  return `Reminder time, ${time}`;
+}
+
+/** A settings row that carries a value: "{label}, {value}" (spec 09 §2, "Settings"). */
 export function settingsRowLabel(label: string, value: string): string {
   return `${label}, ${value}`;
 }

@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
+import { formatDate as formatDateLocalized } from '@/utils/dates';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import type { AppTheme } from '@/constants/theme';
 import { daysUntilLabel, upcomingTotal, type UpcomingItem } from '@/utils/recurring';
@@ -13,7 +14,7 @@ type UpcomingPanelProps = {
 };
 
 function formatDate(d: Date): string {
-  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  return formatDateLocalized(d, { weekday: 'short', month: 'short', day: 'numeric' });
 }
 
 export function UpcomingPanel({ items, windowDays }: UpcomingPanelProps) {

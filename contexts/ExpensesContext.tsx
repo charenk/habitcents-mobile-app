@@ -2,17 +2,15 @@ import React, { createContext, useContext, useEffect, useState, useCallback, use
 import { getExpenses, saveExpenses } from '@/utils/storage';
 import type { Expense, AddExpenseInput, ExpenseCategory } from '@/types/expense';
 import { track } from '@/utils/analytics';
+import { formatTime as formatTimeLocalized } from '@/utils/dates';
 
 function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 }
 
 function formatTime(date: Date): string {
-  return date.toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true,
-  });
+  // Device locale decides 12h vs 24h (ADA-008); do not force hour12.
+  return formatTimeLocalized(date, { hour: 'numeric', minute: '2-digit' });
 }
 
 type ExpensesContextValue = {

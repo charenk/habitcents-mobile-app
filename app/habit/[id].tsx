@@ -83,7 +83,7 @@ export default function HabitDetailScreen() {
           <TouchableOpacity
             onPress={() => router.back()}
             accessibilityRole="button"
-            accessibilityLabel="Back"
+            accessibilityLabel={strings.common.back}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
             <Ionicons name="arrow-back" size={24} color={theme.text} />
@@ -125,7 +125,7 @@ export default function HabitDetailScreen() {
               onPress={() => router.back()}
               style={styles.backButton}
               accessibilityRole="button"
-              accessibilityLabel="Back"
+              accessibilityLabel={strings.common.back}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
               <Ionicons name="arrow-back" size={24} color={theme.text} />
