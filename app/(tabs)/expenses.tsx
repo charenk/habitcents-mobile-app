@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   AppState,
   ScrollView,
-  Dimensions,
+  useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -26,10 +26,6 @@ import { strings } from '@/constants/strings';
 import { selectableLabel } from '@/utils/a11y';
 
 const UPCOMING_WINDOW_DAYS = 60;
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
-// Matches the collapsed sheet peek (SNAP_COLLAPSED in TodayExpensesPanel) plus a
-// buffer, so the form's Save button always scrolls clear of the sheet.
-const FORM_BOTTOM_PADDING = SCREEN_HEIGHT * 0.18 + 32;
 
 function todayLabel(): string {
   return formatDate(new Date(), { month: 'short', day: 'numeric' });
@@ -38,6 +34,11 @@ function todayLabel(): string {
 export default function ExpensesScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  // Matches the collapsed sheet peek (SNAP_COLLAPSED in TodayExpensesPanel) plus a
+  // buffer, so the form's Save button always scrolls clear of the sheet. Live
+  // window height (ADA-021), not a module-scope snapshot.
+  const { height: screenHeight } = useWindowDimensions();
+  const formBottomPadding = screenHeight * 0.18 + 32;
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [activeCategoryId, setActiveCategoryId] = useState<string>('all');
@@ -131,7 +132,7 @@ export default function ExpensesScreen() {
               above the collapsed expenses sheet. */}
           <ScrollView
             style={styles.formScroll}
-            contentContainerStyle={styles.formScrollContent}
+            contentContainerStyle={[styles.formScrollContent, { paddingBottom: formBottomPadding }]}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
@@ -179,9 +180,7 @@ function createStyles(theme: AppTheme) {
     formScroll: {
       flex: 1,
     },
-    formScrollContent: {
-      paddingBottom: FORM_BOTTOM_PADDING,
-    },
+    formScrollContent: {},
     header: {
       paddingHorizontal: 20,
       paddingTop: 16,

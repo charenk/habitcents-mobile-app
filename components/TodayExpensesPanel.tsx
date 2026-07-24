@@ -5,7 +5,7 @@ import {
   StyleSheet,
   Animated,
   PanResponder,
-  Dimensions,
+  useWindowDimensions,
   SectionList,
   ScrollView,
   TouchableOpacity,
@@ -19,7 +19,6 @@ import { EditExpenseModal } from './EditExpenseModal';
 import { strings } from '@/constants/strings';
 import { selectableLabel } from '@/utils/a11y';
 
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 // Collapsed peek keeps the sheet out of the way so the add-expense form (and its
 // Save button) is fully visible by default. Users drag up to browse expenses.
 const SNAP_COLLAPSED = 0.18;
@@ -84,24 +83,27 @@ export function TodayExpensesPanel({
 
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
 
-  const panelHeight = useRef(new Animated.Value(SCREEN_HEIGHT * SNAP_COLLAPSED)).current;
-  const lastOffset = useRef(SCREEN_HEIGHT * SNAP_COLLAPSED);
+  // Live height (ADA-021): the responder is rebuilt if the window resizes, so
+  // snap points track the real window instead of a launch-time snapshot.
+  const { height: screenHeight } = useWindowDimensions();
+  const panelHeight = useRef(new Animated.Value(screenHeight * SNAP_COLLAPSED)).current;
+  const lastOffset = useRef(screenHeight * SNAP_COLLAPSED);
 
-  const panResponder = useRef(
-    PanResponder.create({
+  const panResponder = useMemo(
+    () => PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dy) > 5,
       onPanResponderMove: (_, gestureState) => {
         const next = lastOffset.current - gestureState.dy;
-        const collapsed = SCREEN_HEIGHT * SNAP_COLLAPSED;
-        const full = SCREEN_HEIGHT * SNAP_FULL;
+        const collapsed = screenHeight * SNAP_COLLAPSED;
+        const full = screenHeight * SNAP_FULL;
         const clamped = Math.max(collapsed, Math.min(full, next));
         panelHeight.setValue(clamped);
       },
       onPanResponderRelease: (_, gestureState) => {
-        const collapsed = SCREEN_HEIGHT * SNAP_COLLAPSED;
-        const partial = SCREEN_HEIGHT * SNAP_PARTIAL;
-        const full = SCREEN_HEIGHT * SNAP_FULL;
+        const collapsed = screenHeight * SNAP_COLLAPSED;
+        const partial = screenHeight * SNAP_PARTIAL;
+        const full = screenHeight * SNAP_FULL;
         const current = Math.max(collapsed, Math.min(full, lastOffset.current - gestureState.dy));
         const velocity = gestureState.vy;
         const snaps = [collapsed, partial, full];
@@ -126,8 +128,10 @@ export function TodayExpensesPanel({
           friction: 11,
         }).start();
       },
-    })
-  ).current;
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [screenHeight]
+  );
 
   const renderItem = ({ item }: { item: Expense }) => (
     <ExpenseCard item={item} theme={theme} onPress={setEditingExpense} />
