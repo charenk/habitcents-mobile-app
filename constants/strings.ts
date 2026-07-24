@@ -254,6 +254,7 @@ export const strings = {
     weekOf: (dateLabel: string) => `Week of ${dateLabel}`,
   },
   settings: {
+    title: 'Settings',
     preferences: 'Preferences',
     currency: 'Currency',
     about: 'About',

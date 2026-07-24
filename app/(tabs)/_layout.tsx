@@ -74,6 +74,7 @@ export default function TabLayout() {
         name="settings"
         options={{
           href: null,
+          headerShown: false,
         }}
       />
     </Tabs>

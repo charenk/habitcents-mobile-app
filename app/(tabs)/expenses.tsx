@@ -9,6 +9,8 @@ import {
   Dimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
 import { formatDate } from '@/utils/dates';
 import { useExpenses } from '@/contexts/ExpensesContext';
@@ -35,6 +37,7 @@ function todayLabel(): string {
 
 export default function ExpensesScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [activeCategoryId, setActiveCategoryId] = useState<string>('all');
@@ -83,8 +86,18 @@ export default function ExpensesScreen() {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       {/* Header */}
       <View style={styles.header}>
-        <View style={styles.datePill}>
-          <Text style={styles.datePillText}>{dateLabel}</Text>
+        <View style={styles.headerTopRow}>
+          <View style={styles.datePill}>
+            <Text style={styles.datePillText}>{dateLabel}</Text>
+          </View>
+          <TouchableOpacity
+            style={styles.settingsButton}
+            onPress={() => router.push('/settings')}
+            accessibilityRole="button"
+            accessibilityLabel={strings.settings.title}
+          >
+            <Ionicons name="settings-outline" size={22} color={theme.textSecondary} />
+          </TouchableOpacity>
         </View>
         <View style={styles.viewTabs}>
           <TouchableOpacity
@@ -173,6 +186,21 @@ function createStyles(theme: AppTheme) {
       paddingHorizontal: 20,
       paddingTop: 16,
       paddingBottom: 8,
+    },
+    headerTopRow: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      justifyContent: 'space-between',
+    },
+    // 44pt target (P2-5 rule); negative margins keep the icon optically in the
+    // header corner without shrinking the tappable area.
+    settingsButton: {
+      width: 44,
+      height: 44,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginTop: -10,
+      marginRight: -11,
     },
     datePill: {
       alignSelf: 'flex-start',
