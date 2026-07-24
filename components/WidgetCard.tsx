@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
+import { projectionTrendLabel } from '@/utils/a11y';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import type { AppTheme } from '@/constants/theme';
 import type { ReportWidget, TimeRange } from '@/types/report';
@@ -265,7 +266,11 @@ export function ProjectionContent({
           <Text style={styles.projectionValue}>{format(projectedTotal, { compact: true })}</Text>
           <Text style={styles.projectionLabel}>{strings.reports.projectedThisMonth}</Text>
         </View>
-        <View style={styles.projectionComparison}>
+        <View
+          style={styles.projectionComparison}
+          accessible
+          accessibilityLabel={projectionTrendLabel(isUp, Math.abs(comparedToLastMonth))}
+        >
           <Ionicons
             name={isUp ? 'trending-up' : 'trending-down'}
             size={16}
