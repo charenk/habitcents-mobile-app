@@ -45,7 +45,9 @@ Sequenced from `ADA_AUDIT.md` (2026-07-24, main `2f536a9`). Quick wins first, th
 16. **ADA-024 Rendered a11y tests.** Add RTL render tests asserting accessibility tree for CheckInCard, LeakCard, paywall (roles, labels, states) and a Dynamic Type smoke test at 1.5x.
     - Acceptance: tests fail if a label/role regresses; wired into CI.
 
-## 3. Product decisions (route to Decision inbox, no code until decided)
+## 3. Product decisions — DECIDED 2026-07-24, see ops ADR 0017
+
+All seven were decided by Charen on 2026-07-24 (habitcents-ops docs/decisions/0017-ada-audit-decisions.md): reminders build during beta; full widget + App Intents + Live Activity set on the roadmap post-beta; tokens theme-aware, ship light-only; iPad is a post-launch track (primitives built size-class-aware); SF Symbols migrate with the primitives work; native sheet detents approved to replace now (moves into the structural tier); sequencing is quick wins now, structural steady behind P4. The original open questions below are kept for context only.
 
 17. **ADA-017 Local notifications** (reminder toggles currently schedule nothing). Highest-leverage platform capability for a habit product; also unblocks the intent data already being captured.
 18. **ADA-018 Home-screen presence**: WidgetKit kept-counter widget first (config-plugin or native target), then App Intents ("log a coffee") and a Live Activity candidate (daily check-in). Sequenced after TestFlight stability.
