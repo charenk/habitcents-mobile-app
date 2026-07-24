@@ -8,6 +8,12 @@
     "scheme": "habitcents",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
+    "runtimeVersion": {
+      "policy": "fingerprint"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/ea39e317-4798-40fb-919f-30c300aabc27"
+    },
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.habitcents.app",
