@@ -186,31 +186,31 @@ Statuses: Open, In Progress, Fixed. Severity: P0 blocker, P1 award-blocking and 
 | Id | Gap | Category | Status | Severity | Effort | File |
 |---|---|---|---|---|---|---|
 | ADA-001 | Habits tab P0 crash (mixed drivers + worklet serialization) | Interaction | In Progress | P0 | S | `components/habit-logging/KeptHero.tsx:66-75` |
-| ADA-002 | Settings screen unreachable | Interaction | Open | P1 | S | `app/(tabs)/_layout.tsx:73-78` |
+| ADA-002 | Settings screen unreachable | Interaction | In Progress | P1 | S | `app/(tabs)/_layout.tsx:73-78` |
 | ADA-003 | White on primary green 2.78:1 on every primary CTA | Inclusivity | Open | P1 | M | `constants/theme.ts:6` |
 | ADA-004 | textTertiary 2.68:1, tab inactive icons fail AA | Inclusivity | Open | P1 | M | `constants/theme.ts:11-12` |
 | ADA-005 | Dynamic Type clips: no multiplier caps, fixed-height containers | Inclusivity | Open | P1 | L | `app/(tabs)/_layout.tsx:16-18` + app-wide |
 | ADA-006 | No typography scale (323 literals, 20 sizes, weights top-heavy) | Visuals | Open | P2 | L | `constants/theme.ts` |
 | ADA-007 | No spacing/radius tokens (18 radii) | Visuals | Open | P2 | M | `constants/theme.ts` |
-| ADA-008 | 13 hardcoded en-US date formats in 8 files | Inclusivity | Open | P2 | S | `contexts/ReportsContext.tsx:233-244` et al |
-| ADA-009 | Strings outside strings.ts incl. currency-wrong "Amount in dollars" | Inclusivity | Open | P2 | S | `components/AmountInput.tsx:70,87` |
-| ADA-010 | WidgetCard trend icon unlabeled, color-only meaning | Inclusivity | Open | P2 | S | `components/WidgetCard.tsx:269-273` |
+| ADA-008 | 13 hardcoded en-US date formats in 8 files | Inclusivity | In Progress | P2 | S | `contexts/ReportsContext.tsx:233-244` et al |
+| ADA-009 | Strings outside strings.ts incl. currency-wrong "Amount in dollars" | Inclusivity | In Progress | P2 | S | `components/AmountInput.tsx:70,87` |
+| ADA-010 | WidgetCard trend icon unlabeled, color-only meaning | Inclusivity | In Progress | P2 | S | `components/WidgetCard.tsx:269-273` |
 | ADA-011 | Silent `.catch(() => {})`, no user-facing error states | Interaction | Open | P2 | M | app-wide |
 | ADA-012 | Plain-text loading, no splash-to-hydration bridge | Interaction | Open | P2 | M | `app/index.tsx:21-27` |
 | ADA-013 | Two animation systems (Reanimated + classic Animated) | Visuals | Open | P2 | M | `components/habit-logging/KeptHero.tsx` |
 | ADA-014 | No shared primitives (Button/Card/Sheet), 42 hand-rolled touchables | Visuals | Open | P2 | L | `components/` |
 | ADA-015 | Hand-built sheets vs native detents | Platform | Open | P3 | M | `components/TodayExpensesPanel.tsx:90-142` |
-| ADA-016 | Dead deps/tokens, stale CLAUDE.md and DESIGN.md claims | Visuals | Open | P3 | S | `package.json`, `constants/theme.ts:21-22` |
+| ADA-016 | Dead deps/tokens, stale CLAUDE.md and DESIGN.md claims | Visuals | Fixed | P3 | S | `package.json`, `constants/theme.ts:21-22` |
 | ADA-017 | Reminder toggles schedule nothing (no notifications) | Innovation | Open | P2 | L | `package.json` |
 | ADA-018 | No widget, Live Activity, App Intents, or Siri | Innovation | Open | P2 | L | `ios/HabitCents/HabitCents.entitlements` |
 | ADA-019 | No dark mode `[ratified]` | Platform | Open | P2 | M | `contexts/ThemeContext.tsx` |
 | ADA-020 | No iPad or landscape `[ratified]` | Platform | Open | P2 | L | `app.json` |
-| ADA-021 | Module-scope Dimensions.get, stale after resize | Platform | Open | P3 | S | `app/(tabs)/expenses.tsx:26` |
-| ADA-022 | Hardcoded tab bar height 84 / padding 28 | Platform | Open | P3 | S | `app/(tabs)/_layout.tsx:16-18` |
+| ADA-021 | Module-scope Dimensions.get, stale after resize | Platform | In Progress | P3 | S | `app/(tabs)/expenses.tsx:26` |
+| ADA-022 | Hardcoded tab bar height 84 / padding 28 | Platform | In Progress | P3 | S | `app/(tabs)/_layout.tsx:16-18` |
 | ADA-023 | tierLikelyInk 3.86:1 and calendarDow 3.06:1 under AA | Inclusivity | Open | P2 | S | `constants/theme.ts:23,48` |
-| ADA-024 | No rendered a11y/Dynamic Type test coverage; VoiceOver walk deferred `[ratified]` | Inclusivity | Open | P2 | M | `__tests__/` |
+| ADA-024 | No rendered a11y/Dynamic Type test coverage; VoiceOver walk deferred `[ratified]` | Inclusivity | Fixed | P2 | M | `__tests__/` |
 | ADA-025 | Stock transitions only, no continuity polish | Interaction | Open | P3 | M | `app/_layout.tsx` |
-| ADA-026 | Haptic vocabulary limited to success + light | Interaction | Open | P3 | S | `utils/motion.ts:40-47` |
+| ADA-026 | Haptic vocabulary limited to success + light | Interaction | In Progress | P3 | S | `utils/motion.ts:40-47` |
 | ADA-027 | Milestones and streak wins pass uncelebrated | Delight | Open | P2 | M | habit streak logic |
 | ADA-028 | Ionicons instead of SF Symbols | Platform | Open | P3 | M | `package.json` |
 
@@ -258,4 +258,5 @@ grep -rn "'en-US'" app components contexts utils --include="*.ts*" | wc -l
 
 ## Changelog
 
+- **2026-07-24 (second entry)** — Seven gated items decided by Charen (ops ADR 0017): reminders build during beta (ADA-017), full widget + App Intents + Live Activity set on the roadmap (ADA-018), tokens theme-aware but ship light-only (ADA-019), iPad post-launch track (ADA-020), SF Symbols with the primitives work (ADA-028), native detents approved now (ADA-015, no longer decision-gated), sequencing quick-wins-now / structural-steady. Quick-win batch shipped: ADA-016 and ADA-024 Fixed (PRs #31, #38 merged); ADA-002/008/009/010/021/022/026 In Progress (PRs #33-#37 awaiting Charen's device test).
 - **2026-07-24** — Initial audit at main `2f536a9`. Scores: Interaction 3, Visuals 3, Delight 3, Inclusivity 2, Innovation 2, Platform 2; overall 2.5/5. 28 gaps filed (ADA-001..028), ADA-001 already In Progress via worktree `fix/habits-tab-crash`. Note: Inclusivity landed one point below the pre-verification estimate after contrast computation surfaced the white-on-primary 2.78:1 failure on all primary CTAs.
