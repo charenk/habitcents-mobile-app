@@ -29,6 +29,7 @@ import type { CoachMomentCardId } from '@/utils/coachMoments';
 import type { AppTheme } from '@/constants/theme';
 import type { DetectedHabit, HabitChangeGoal } from '@/types/habit';
 import { strings } from '@/constants/strings';
+import { hapticWarning } from '@/utils/motion';
 
 export default function HabitDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -103,6 +104,7 @@ export default function HabitDetailScreen() {
 
   const handleStopBreaking = () => {
     if (!goal) return;
+    hapticWarning();
     Alert.alert(
       strings.habitLogging.stopBreakingConfirmTitle,
       strings.habitLogging.stopBreakingConfirmMessage,

@@ -17,6 +17,7 @@ import type { Expense, ExpenseSection } from '@/types/expense';
 import type { Category } from '@/types/category';
 import { EditExpenseModal } from './EditExpenseModal';
 import { strings } from '@/constants/strings';
+import { hapticSelection } from '@/utils/motion';
 import { selectableLabel } from '@/utils/a11y';
 
 // Collapsed peek keeps the sheet out of the way so the add-expense form (and its
@@ -159,7 +160,7 @@ export function TodayExpensesPanel({
             <TouchableOpacity
               key={cat.id}
               style={[styles.chip, isActive ? styles.chipActive : styles.chipInactive]}
-              onPress={() => onCategoryChange(cat.id)}
+              onPress={() => { hapticSelection(); onCategoryChange(cat.id); }}
               accessibilityRole="button"
               accessibilityState={{ selected: isActive }}
               accessibilityLabel={selectableLabel(cat.name, isActive)}

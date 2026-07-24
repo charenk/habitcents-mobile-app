@@ -11,6 +11,7 @@ import { AddCategoryModal } from '@/components/AddCategoryModal';
 import type { AppTheme } from '@/constants/theme';
 import type { Category, CategoryIcon } from '@/types/category';
 import { strings } from '@/constants/strings';
+import { hapticWarning } from '@/utils/motion';
 
 type CategorySection = {
   title: string;
@@ -73,6 +74,7 @@ export default function CategoriesScreen() {
   }, []);
 
   const handleDeleteCategory = useCallback((category: Category) => {
+    hapticWarning();
     Alert.alert(
       strings.categories.deleteTitle,
       strings.categories.deleteMessage(category.name),
