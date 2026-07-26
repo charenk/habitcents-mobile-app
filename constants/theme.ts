@@ -3,13 +3,18 @@
  */
 
 export const lightTheme = {
-  primary: '#4CAF50',
+  // Interactive green (ADA-003, palette option A, 2026-07-24): fills, links,
+  // active tints, hero numerals. White-on-primary computes 5.13:1.
+  primary: '#2E7D32',
+  // Decorative celebration green: KeptHero pulse tint and the check-in ring
+  // only. Never behind text, never the sole carrier of state.
+  primaryBright: '#4CAF50',
   primaryMuted: '#B2DFB6',
   background: '#F8F8F8',
   surface: '#FFFFFF',
   text: '#212121',
-  textSecondary: '#757575',
-  textTertiary: '#9E9E9E',
+  textSecondary: '#616161',
+  textTertiary: '#707070',
   chipActiveBg: '#000000',
   chipActiveText: '#FFFFFF',
   chipInactiveBg: '#FFFFFF',
@@ -18,15 +23,15 @@ export const lightTheme = {
   iconBgGreen: '#B2DFB6',
   iconBgYellow: '#FFF3E0',
   iconOrange: '#FFA726',
-  calendarDow: '#B8860B',
+  calendarDow: '#8A6508',
   calendarOtherMonth: '#BDBDBD',
   calendarBg: '#F0F0F0',
   calendarCellBg: '#FFFFFF',
   calendarOtherMonthBg: '#FAFAFA',
-  primaryDark: '#388E3C',
+  primaryDark: '#1B5E20',
   border: '#E5E7EB',
   white: '#FFFFFF',
-  tabIconDefault: '#9E9E9E',
+  tabIconDefault: '#6E6E73',
   danger: '#DC2626',
   // Habit logging v2 (docs/design-package-phase2/01-habit-logging-spec.md,
   // section 2). A slip is neutral, never red/danger and never green/primary;
@@ -43,7 +48,7 @@ export const lightTheme = {
   tierSolidBg: '#EDF7EE',
   tierSolidInk: '#2E7D32',
   tierLikelyBg: '#FFF3E0',
-  tierLikelyInk: '#B26A00',
+  tierLikelyInk: '#8F5600',
   tierReviewBg: '#F1F3F5',
   tierReviewInk: '#616161',
   tierReviewRing: '#9AA0A6',
@@ -73,6 +78,8 @@ export const lightTheme = {
 
 export const darkTheme = {
   primary: '#66BB6A',
+  // Untuned mirror of lightTheme.primaryBright (dark is dead code, ADR 0017).
+  primaryBright: '#66BB6A',
   primaryMuted: '#2E7D32',
   background: '#121212',
   surface: '#1E1E1E',
@@ -130,6 +137,7 @@ export const darkTheme = {
 
 export type AppTheme = {
   primary: string;
+  primaryBright: string;
   primaryMuted: string;
   background: string;
   surface: string;

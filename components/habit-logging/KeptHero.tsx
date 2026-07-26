@@ -86,7 +86,7 @@ export function KeptHero({ cents }: KeptHeroProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cents, reduceMotion]);
 
-  const color = tint.interpolate({ inputRange: [0, 1], outputRange: [theme.text, theme.primary] });
+  const color = tint.interpolate({ inputRange: [0, 1], outputRange: [theme.text, theme.primaryBright] });
 
   // One utterance, spoken on settle (spec 09 §2, row "Kept hero"): the label is
   // keyed to the final `cents`, not the per-frame `display`, so VoiceOver
