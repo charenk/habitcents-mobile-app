@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, Linking } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { CURRENCIES } from '@/utils/currency';
@@ -16,6 +17,7 @@ const TERMS_OF_SERVICE_URL = 'https://habitcents.com/terms';
 
 export default function SettingsScreen() {
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const { currency, setCurrency } = useCurrency();
 
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -50,7 +52,8 @@ export default function SettingsScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top + 16 }]}>
+      <Text style={styles.title}>{strings.settings.title}</Text>
       <View style={styles.group}>
         <Text style={styles.groupTitle}>{strings.settings.preferences}</Text>
         <TouchableOpacity
@@ -109,6 +112,12 @@ function createStyles(theme: ReturnType<typeof useTheme>) {
       flex: 1,
       backgroundColor: theme.background,
       padding: 16,
+    },
+    title: {
+      fontSize: 28,
+      fontWeight: '700',
+      color: theme.text,
+      marginBottom: 16,
     },
     group: {
       marginBottom: 24,
