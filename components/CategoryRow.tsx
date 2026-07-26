@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { deleteCategoryLabel } from '@/utils/a11y';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import type { AppTheme } from '@/constants/theme';
@@ -108,7 +109,7 @@ export function CategoryRow({
           onPress={onDelete}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           accessibilityRole="button"
-          accessibilityLabel={`Delete ${category.name}`}
+          accessibilityLabel={deleteCategoryLabel(category.name)}
         >
           <Ionicons name="trash-outline" size={20} color={theme.danger} />
         </TouchableOpacity>

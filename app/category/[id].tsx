@@ -11,6 +11,7 @@ import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
+import { formatDate } from '@/utils/dates';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useCategories } from '@/contexts/CategoriesContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
@@ -110,7 +111,7 @@ export default function CategoryDetailScreen() {
       const amount = monthExpenses.reduce((sum, e) => sum + e.amount, 0);
 
       months.push({
-        month: monthStart.toLocaleDateString('en-US', { month: 'short' }),
+        month: formatDate(monthStart, { month: 'short' }),
         amount,
       });
     }
@@ -137,7 +138,7 @@ export default function CategoryDetailScreen() {
             onPress={() => router.back()}
             hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
             accessibilityRole="button"
-            accessibilityLabel="Back"
+            accessibilityLabel={strings.common.back}
           >
             <Ionicons name="arrow-back" size={24} color={theme.text} />
           </TouchableOpacity>
@@ -182,7 +183,7 @@ export default function CategoryDetailScreen() {
               style={styles.backButton}
               hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
               accessibilityRole="button"
-              accessibilityLabel="Back"
+              accessibilityLabel={strings.common.back}
             >
               <Ionicons name="arrow-back" size={24} color={theme.text} />
             </TouchableOpacity>

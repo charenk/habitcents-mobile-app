@@ -10,6 +10,8 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { currencyMeta } from '@/utils/currency';
 import { hapticLight } from '@/utils/motion';
+import { amountInputLabel } from '@/utils/a11y';
+import { strings } from '@/constants/strings';
 
 type AmountInputProps = {
   value: number; // cents
@@ -68,7 +70,7 @@ export const AmountInput = forwardRef<AmountInputHandle, AmountInputProps>(funct
       activeOpacity={0.8}
       accessibilityRole="button"
       accessibilityLabel={`Amount, ${meta.symbol}${displayValue}`}
-      accessibilityHint="Double tap to enter an amount"
+      accessibilityHint={strings.expenses.amountHint}
     >
       <Text style={styles.dollarSign}>{meta.symbol}</Text>
       <Text style={styles.amount}>{displayValue}</Text>
@@ -84,7 +86,7 @@ export const AmountInput = forwardRef<AmountInputHandle, AmountInputProps>(funct
         onBlur={() => setIsFocused(false)}
         caretHidden
         maxLength={9}
-        accessibilityLabel="Amount in dollars"
+        accessibilityLabel={amountInputLabel(meta.name)}
       />
     </TouchableOpacity>
   );

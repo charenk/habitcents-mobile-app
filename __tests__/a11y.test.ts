@@ -11,6 +11,10 @@ import {
   remindToggleLabel,
   settingsRowLabel,
   projectionTrendLabel,
+  amountInputLabel,
+  fillMerchantLabel,
+  deleteCategoryLabel,
+  reminderTimeLabel,
 } from '@/utils/a11y';
 
 describe('a11y label builders (spec 09)', () => {
@@ -69,6 +73,17 @@ describe('a11y label builders (spec 09)', () => {
     expect(projectionTrendLabel(false, 5)).toBe('Spending down 5 percent versus last month');
   });
 
+  it('amount input label is currency-aware, never hardcoded to dollars (ADA-009)', () => {
+    expect(amountInputLabel('Japanese Yen')).toBe('Amount in Japanese Yen');
+    expect(amountInputLabel('Euro')).toBe('Amount in Euro');
+  });
+
+  it('merchant, delete, and reminder-time builders compose name and value', () => {
+    expect(fillMerchantLabel('Starbucks')).toBe('Fill merchant, Starbucks');
+    expect(deleteCategoryLabel('Coffee')).toBe('Delete Coffee');
+    expect(reminderTimeLabel('9:00 AM')).toBe('Reminder time, 9:00 AM');
+  });
+
   it('no builder output contains an em dash', () => {
     const samples = [
       keptHeroLabel('$1'),
@@ -83,6 +98,10 @@ describe('a11y label builders (spec 09)', () => {
       remindToggleLabel(true),
       settingsRowLabel('Version', '1.0.0'),
       projectionTrendLabel(true, 12),
+      amountInputLabel('Euro'),
+      fillMerchantLabel('Starbucks'),
+      deleteCategoryLabel('Coffee'),
+      reminderTimeLabel('9:00 AM'),
     ];
     for (const s of samples) expect(s).not.toContain('—');
   });

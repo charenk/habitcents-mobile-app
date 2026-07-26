@@ -8,6 +8,7 @@ export const strings = {
     cancel: 'Cancel',
     delete: 'Delete',
     ok: 'OK',
+    back: 'Back',
     keep: 'Keep',
   },
   tabs: {
@@ -20,6 +21,9 @@ export const strings = {
     recent: 'Recent',
     upcoming: 'Upcoming',
     merchantPlaceholder: 'Merchant (e.g. Starbucks)',
+    merchantFieldLabel: 'Merchant',
+    noteFieldLabel: 'Note',
+    amountHint: 'Double tap to enter an amount',
     notePlaceholder: 'Note (optional)',
     saveExpense: 'Save expense',
     // Log-save motion (Direction C, spec 05): the button label morphs to this
@@ -217,6 +221,7 @@ export const strings = {
     deleteMessage: (name: string) =>
       `Are you sure you want to delete "${name}"? Your existing expenses are kept; they'll just no longer show this category.`,
     thisMonthSuffix: (amount: string) => `${amount} this month`,
+    addCategoryLabel: 'Add category',
   },
   categoryDetail: {
     notFound: 'Category not found',
@@ -246,6 +251,7 @@ export const strings = {
     timeRangeMonth: '30D',
     timeRangeQuarter: '3M',
     timeRangeYear: '1Y',
+    weekOf: (dateLabel: string) => `Week of ${dateLabel}`,
   },
   settings: {
     preferences: 'Preferences',
@@ -283,6 +289,9 @@ export const strings = {
     category: 'Category',
     merchant: 'Merchant',
     merchantPlaceholder: 'Merchant (e.g. Starbucks)',
+    merchantFieldLabel: 'Merchant',
+    noteFieldLabel: 'Note',
+    amountHint: 'Double tap to enter an amount',
     note: 'Note',
     notePlaceholder: 'Note (optional)',
     keep: 'Keep',
@@ -373,6 +382,7 @@ export const strings = {
   // Vocabulary is load-bearing: tiers are solid/likely/needs review, never a
   // percentage; leak/skip/kept vocabulary elsewhere is untouched by this screen.
   leakScan: {
+    reminderTimeLabel: 'Reminder time',
     // Intake
     intakeTitle: 'Scan your statement',
     intakeSubtitle: 'CSV files only. Everything stays on this device.',

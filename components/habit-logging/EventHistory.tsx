@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
+import { formatDate } from '@/utils/dates';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import type { AppTheme } from '@/constants/theme';
 import type { HabitLogEntry } from '@/types/habit';
@@ -12,7 +13,7 @@ type EventHistoryProps = {
 };
 
 function formatEventDate(d: Date): string {
-  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  return formatDate(d, { month: 'short', day: 'numeric' });
 }
 
 /**

@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { getDashboardConfig, saveDashboardConfig } from '@/utils/storage';
+import { strings } from '@/constants/strings';
+import { formatDate } from '@/utils/dates';
 import type {
   DashboardConfig,
   ReportWidget,
@@ -230,18 +232,18 @@ export function ReportsProvider({ children }: { children: React.ReactNode }) {
         case 'day':
           // Local-day key (not UTC) so evening spends land on the right day (H4).
           key = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
-          label = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          label = formatDate(date, { month: 'short', day: 'numeric' });
           break;
         case 'week':
           // Get week start
           const weekStart = new Date(date);
           weekStart.setDate(date.getDate() - date.getDay());
           key = `${weekStart.getFullYear()}-${weekStart.getMonth()}-${weekStart.getDate()}`;
-          label = `Week of ${weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+          label = strings.reports.weekOf(formatDate(weekStart, { month: 'short', day: 'numeric' }));
           break;
         case 'month':
           key = `${date.getFullYear()}-${date.getMonth()}`;
-          label = date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+          label = formatDate(date, { month: 'short', year: '2-digit' });
           break;
       }
 

@@ -17,6 +17,7 @@ import { useExpenses } from '@/contexts/ExpensesContext';
 import { AmountInput, type AmountInputHandle } from './AmountInput';
 import { RecurrenceField } from './RecurrenceField';
 import { useReducedMotion, hapticSuccess } from '@/utils/motion';
+import { fillMerchantLabel } from '@/utils/a11y';
 import type { ExpenseCategory, AddExpenseInput, RecurrenceFrequency } from '@/types/expense';
 import { strings } from '@/constants/strings';
 import { selectableLabel } from '@/utils/a11y';
@@ -209,7 +210,7 @@ export const AddExpenseSection = forwardRef<AddExpenseSectionHandle, AddExpenseS
               onChangeText={setMerchant}
               maxLength={60}
               autoCapitalize="words"
-              accessibilityLabel="Merchant"
+              accessibilityLabel={strings.expenses.merchantFieldLabel}
             />
           </View>
 
@@ -221,7 +222,7 @@ export const AddExpenseSection = forwardRef<AddExpenseSectionHandle, AddExpenseS
                   style={styles.suggestionChip}
                   onPress={() => setMerchant(s)}
                   accessibilityRole="button"
-                  accessibilityLabel={`Fill merchant, ${s}`}
+                  accessibilityLabel={fillMerchantLabel(s)}
                   hitSlop={{ top: 8, bottom: 8 }}
                 >
                   <Text style={styles.suggestionText}>{s}</Text>
@@ -239,7 +240,7 @@ export const AddExpenseSection = forwardRef<AddExpenseSectionHandle, AddExpenseS
               value={title}
               onChangeText={setTitle}
               maxLength={100}
-              accessibilityLabel="Note"
+              accessibilityLabel={strings.expenses.noteFieldLabel}
             />
           </View>
 

@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/contexts/ThemeContext';
+import { formatDate } from '@/utils/dates';
 import { useExpenses } from '@/contexts/ExpensesContext';
 import { useCategories } from '@/contexts/CategoriesContext';
 import type { AppTheme } from '@/constants/theme';
@@ -29,7 +30,7 @@ const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const FORM_BOTTOM_PADDING = SCREEN_HEIGHT * 0.18 + 32;
 
 function todayLabel(): string {
-  return new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return formatDate(new Date(), { month: 'short', day: 'numeric' });
 }
 
 export default function ExpensesScreen() {
