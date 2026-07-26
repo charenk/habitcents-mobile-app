@@ -73,6 +73,12 @@ export function remindToggleLabel(on: boolean): string {
 }
 
 /** A settings row that carries a value: "{label}, {value}" (spec 09 §2, "Settings"). */
+/** Monthly projection trend (ADA-010): direction must be spoken, never carried by color alone. */
+export function projectionTrendLabel(isUp: boolean, percent: number): string {
+  const direction = isUp ? 'up' : 'down';
+  return `Spending ${direction} ${percent} percent versus last month`;
+}
+
 export function settingsRowLabel(label: string, value: string): string {
   return `${label}, ${value}`;
 }

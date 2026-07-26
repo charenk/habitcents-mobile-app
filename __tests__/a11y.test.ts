@@ -10,6 +10,7 @@ import {
   pulseCellLabel,
   remindToggleLabel,
   settingsRowLabel,
+  projectionTrendLabel,
 } from '@/utils/a11y';
 
 describe('a11y label builders (spec 09)', () => {
@@ -63,6 +64,11 @@ describe('a11y label builders (spec 09)', () => {
     expect(settingsRowLabel('Currency', 'US dollar')).toBe('Currency, US dollar');
   });
 
+  it('projection trend speaks direction and magnitude, not color (ADA-010)', () => {
+    expect(projectionTrendLabel(true, 12)).toBe('Spending up 12 percent versus last month');
+    expect(projectionTrendLabel(false, 5)).toBe('Spending down 5 percent versus last month');
+  });
+
   it('no builder output contains an em dash', () => {
     const samples = [
       keptHeroLabel('$1'),
@@ -76,6 +82,7 @@ describe('a11y label builders (spec 09)', () => {
       pulseCellLabel('July 4', 'spend', '$5'),
       remindToggleLabel(true),
       settingsRowLabel('Version', '1.0.0'),
+      projectionTrendLabel(true, 12),
     ];
     for (const s of samples) expect(s).not.toContain('—');
   });
