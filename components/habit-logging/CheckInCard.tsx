@@ -122,7 +122,7 @@ function SkipSlipButtons({
           <Reanimated.View
             key={ringKey}
             pointerEvents="none"
-            style={[styles.skipRing, ringAnimatedStyle, { borderColor: theme.primary }]}
+            style={[styles.skipRing, ringAnimatedStyle, { borderColor: theme.primaryBright }]}
           />
         )}
         <TouchableOpacity style={styles.primaryButton} onPress={handleSkip} accessibilityRole="button">
