@@ -25,6 +25,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
 import type { AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
+import { hapticSelection } from '@/utils/motion';
 import { track } from '@/utils/analytics';
 import {
   purchase,
@@ -163,7 +164,7 @@ export default function PaywallScreen() {
               <TouchableOpacity
                 key={plan.id}
                 style={[styles.planCard, isSelected && styles.planCardSelected]}
-                onPress={() => setSelected(plan.id)}
+                onPress={() => { hapticSelection(); setSelected(plan.id); }}
                 accessibilityRole="radio"
                 accessibilityState={{ selected: isSelected }}
                 accessibilityLabel={`${plan.name}, ${plan.price} ${plan.period}${plan.badge ? `, ${plan.badge}` : ''}`}

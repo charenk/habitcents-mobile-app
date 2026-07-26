@@ -45,3 +45,13 @@ export function hapticSuccess(): void {
 export function hapticLight(): void {
   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
 }
+
+/** Warning haptic before a destructive confirm (delete category, stop tracking). Best effort; never throws. */
+export function hapticWarning(): void {
+  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
+}
+
+/** Selection tick for picker-style choices (plan cards, filter chips). Best effort; never throws. */
+export function hapticSelection(): void {
+  Haptics.selectionAsync().catch(() => {});
+}
