@@ -1,10 +1,16 @@
 import { Tabs } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
 import { strings } from '@/constants/strings';
 
 export default function TabLayout() {
   const theme = useTheme();
+  // Tab bar metrics derive from the device's real bottom inset (ADA-022):
+  // 8 top padding + 48 content + home-indicator inset (min 8 on inset-less
+  // devices), instead of the old fixed height 84 / paddingBottom 28.
+  const insets = useSafeAreaInsets();
+  const tabBarBottomPad = Math.max(insets.bottom, 8);
   return (
     <Tabs
       screenOptions={{
@@ -13,9 +19,9 @@ export default function TabLayout() {
         tabBarStyle: {
           backgroundColor: theme.surface,
           borderTopColor: theme.border,
-          height: 84,
+          height: 56 + tabBarBottomPad,
           paddingTop: 8,
-          paddingBottom: 28,
+          paddingBottom: tabBarBottomPad,
         },
         tabBarLabelStyle: {
           fontSize: 11,
