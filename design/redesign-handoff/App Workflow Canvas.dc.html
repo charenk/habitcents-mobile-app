@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<script type="module" src="https://cdn.jsdelivr.net/npm/ionicons@7.2.2/dist/ionicons/ionicons.esm.js"></script>
+<script nomodule src="https://cdn.jsdelivr.net/npm/ionicons@7.2.2/dist/ionicons/ionicons.js"></script>
+<script src="https://unpkg.com/lucide@0.462.0/dist/umd/lucide.min.js"></script>
+<style>
+body{margin:0;background:#F7F9FC;font-family:'Inter',-apple-system,'Helvetica Neue',Arial,sans-serif;color:#1A1D23;-webkit-font-smoothing:antialiased}
+a{color:#2E7D55;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px}
+a:hover{color:#4CAF82}
+@keyframes hcspin{to{transform:rotate(360deg)}}
+</style>
+</helmet>
+<section id="1b" style="padding:56px 64px 96px;display:flex;flex-direction:column;gap:48px;min-width:fit-content" data-screen-label="Redesign proposal">
+  <div style="display:flex;flex-direction:column;gap:12px;max-width:860px">
+    <div style="display:flex;align-items:center;gap:12px">
+      <span style="background:#4CAF82;color:#fff;font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px">1b</span>
+      <span style="font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#4A5568">Redesign · HabitCents design system</span>
+    </div>
+    <h1 style="margin:0;font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:52px;line-height:1.05;letter-spacing:-0.02em">The app, redesigned from the ground up.</h1>
+    <p style="margin:0;font-size:15px;line-height:1.55;color:#4A5568;max-width:680px">Same product truths (skip is the win, slips never subtract, everything on-device), rebuilt on the design system: editorial serif numbers, sage as punctuation, calm neutrals, emoji category tiles, Lucide icons. Reference: <a href="Current App Reference.dc.html">the current app, end to end</a> (separate page).</p>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px">
+      <div style="flex:0 0 260px;background:#fff;border:1px solid #E8EDF2;border-radius:14px;padding:16px"><div style="font-size:13px;font-weight:700;color:#1A1D23;margin-bottom:4px">1 · Three surfaces, one job each</div><div style="font-size:12.5px;color:#4A5568;line-height:1.5">Today (check in + log), Money (ledger + upcoming), Insights (leaks + reports). Four tabs become three; settings moves behind the gear.</div></div>
+      <div style="flex:0 0 260px;background:#fff;border:1px solid #E8EDF2;border-radius:14px;padding:16px"><div style="font-size:13px;font-weight:700;color:#1A1D23;margin-bottom:4px">2 · The kept number is the face</div><div style="font-size:12.5px;color:#4A5568;line-height:1.5">Serif, tabular, always first. The check-in sits directly under it, so the daily ritual is one glance and one tap.</div></div>
+      <div style="flex:0 0 260px;background:#fff;border:1px solid #E8EDF2;border-radius:14px;padding:16px"><div style="font-size:13px;font-weight:700;color:#1A1D23;margin-bottom:4px">3 · One green, used sparingly</div><div style="font-size:12.5px;color:#4A5568;line-height:1.5">Sage marks the CTA, the kept number, and active states only. Slips stay neutral, lavender carries the habit arc, amber flags upcoming bills.</div></div>
+      <div style="flex:0 0 260px;background:#fff;border:1px solid #E8EDF2;border-radius:14px;padding:16px"><div style="font-size:13px;font-weight:700;color:#1A1D23;margin-bottom:4px">4 · Product grammar from the DS</div><div style="font-size:12.5px;color:#4A5568;line-height:1.5">Emoji category tiles, tabular currency, 10px buttons, 20px cards, hairline borders, soft ink shadows. No gradients except the premium card.</div></div>
+      <div style="flex:0 0 260px;background:#fff;border:1px solid #E8EDF2;border-radius:14px;padding:16px"><div style="font-size:13px;font-weight:700;color:#1A1D23;margin-bottom:4px">5 · Copy leads with the number</div><div style="font-size:12.5px;color:#4A5568;line-height:1.5">Sentence case, plain verbs, no judgment. "Saved." "Logged." "Tomorrow's a fresh start."</div></div>
+    </div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:24px">
+  <div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#2E7D55">Onboarding, redesigned</span><span style="font-size:13.5px;color:#4A5568">Same 90-second audit, editorial confidence. The reveal number gets the serif treatment it deserves.</span></div>
+  <div style="display:flex;gap:24px;align-items:flex-start">
+
+    <div style="display:flex;flex-direction:column;gap:8px;width:390px;flex-shrink:0">
+      <div style="font-family:'Instrument Serif',Georgia,serif;font-size:21px">R1 · Welcome</div>
+      <div style="font-size:12.5px;line-height:1.5;color:#4A5568;min-height:38px">Hero voice from the DS brief. One CTA, one quiet reassurance line.</div>
+      <div style="width:390px;height:844px;background:#F7F9FC;border-radius:28px;border:1px solid #E8EDF2;box-shadow:0 4px 8px rgba(26,29,35,.04),0 16px 32px rgba(26,29,35,.08);overflow:hidden;display:flex;flex-direction:column;position:relative;flex-shrink:0">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 28px 6px"><span style="font-size:15px;font-weight:600;color:#1A1D23">9:41</span><span style="display:flex;gap:6px;align-items:center;font-size:15px;color:#1A1D23"><ion-icon name="cellular"></ion-icon><ion-icon name="wifi"></ion-icon><ion-icon name="battery-full" style="font-size:20px"></ion-icon></span></div>
+        <div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 32px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:28px">
+            <div style="width:34px;height:34px;border-radius:17px;background:#4CAF82;display:flex;align-items:center;justify-content:center;color:#fff"><i data-lucide="sprout" style="width:18px;height:18px"></i></div>
+            <span style="font-size:17px;font-weight:700;color:#1A1D23">HabitCents</span>
+          </div>
+          <div style="font-family:'Instrument Serif',Georgia,serif;font-size:44px;line-height:1.08;letter-spacing:-0.02em;color:#1A1D23;margin-bottom:16px">Your money has a story. Let's read it.</div>
+          <div style="font-size:16px;color:#4A5568;line-height:1.55;margin-bottom:12px">Log a coffee in 10 seconds. We find the habit quietly costing you $100 a month.</div>
+          <div style="font-size:13px;color:#8898AA;line-height:1.5">Everything stays on your phone. No bank login. No account.</div>
+        </div>
+        <div style="padding:0 24px 44px;display:flex;flex-direction:column;align-items:center">
+          <div style="min-height:52px;width:100%;border-radius:10px;background:#4CAF82;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;color:#fff">Find my leak</div>
+          <div style="margin-top:14px;min-height:44px;display:flex;align-items:center;font-size:14px;font-weight:600;color:#4A5568">How it works</div>
+        </div>
+        <div style="position:absolute;bottom:8px;left:128px;width:134px;height:5px;border-radius:3px;background:rgba(26,29,35,.28)"></div>
+      </div>
+    </div>
+
+    <div style="margin-top:452px;display:flex;flex-direction:column;align-items:center;gap:8px;width:104px;flex-shrink:0"><span style="font-size:11px;font-weight:600;color:#4A5568;text-align:center;line-height:1.4">"Find my leak"</span><div style="display:flex;align-items:center"><div style="width:60px;height:2px;background:#8898AA"></div><div style="width:0;height:0;border-top:5px solid transparent;border-bottom:5px solid transparent;border-left:8px solid #8898AA"></div></div></div>
+
+    <div style="display:flex;flex-direction:column;gap:8px;width:390px;flex-shrink:0">
+      <div style="font-family:'Instrument Serif',Georgia,serif;font-size:21px">R2 · Audit, step 1</div>
+      <div style="font-size:12.5px;line-height:1.5;color:#4A5568;min-height:38px">Recognition chips with a check affordance; the running total becomes a serif footer number.</div>
+      <div style="width:390px;height:844px;background:#F7F9FC;border-radius:28px;border:1px solid #E8EDF2;box-shadow:0 4px 8px rgba(26,29,35,.04),0 16px 32px rgba(26,29,35,.08);overflow:hidden;display:flex;flex-direction:column;position:relative;flex-shrink:0">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 28px 6px"><span style="font-size:15px;font-weight:600;color:#1A1D23">9:41</span><span style="display:flex;gap:6px;align-items:center;font-size:15px;color:#1A1D23"><ion-icon name="cellular"></ion-icon><ion-icon name="wifi"></ion-icon><ion-icon name="battery-full" style="font-size:20px"></ion-icon></span></div>
+        <div style="flex:1;padding:20px 24px 0">
+          <div style="font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#4CAF82;margin-bottom:8px">Step 1 of 2 · about 30 seconds</div>
+          <div style="font-family:'Instrument Serif',Georgia,serif;font-size:30px;line-height:1.15;color:#1A1D23;margin-bottom:8px">What charges you on auto-pilot?</div>
+          <div style="font-size:14px;color:#4A5568;line-height:1.5;margin-bottom:20px">Tap the ones that ring a bell. Tap a price to make it exact.</div>
+          <div style="display:flex;flex-wrap:wrap;gap:10px">
+            <div style="width:calc(50% - 5px);box-sizing:border-box;background:#E8F5EE;border:1px solid #4CAF82;border-radius:14px;padding:14px;position:relative"><div style="position:absolute;top:12px;right:12px;color:#2E7D55"><i data-lucide="check" style="width:16px;height:16px"></i></div><div style="font-size:15px;font-weight:600;color:#1A1D23">Video streaming</div><div style="margin-top:4px;font-size:12.5px;font-weight:600;color:#2E7D55;font-variant-numeric:tabular-nums">~$12.00 a month</div></div>
+            <div style="width:calc(50% - 5px);box-sizing:border-box;background:#E8F5EE;border:1px solid #4CAF82;border-radius:14px;padding:14px;position:relative"><div style="position:absolute;top:12px;right:12px;color:#2E7D55"><i data-lucide="check" style="width:16px;height:16px"></i></div><div style="font-size:15px;font-weight:600;color:#1A1D23">Music</div><div style="margin-top:4px;font-size:12.5px;font-weight:600;color:#2E7D55;font-variant-numeric:tabular-nums;text-decoration:underline dotted">$9.99 a month</div></div>
+            <div style="width:calc(50% - 5px);box-sizing:border-box;background:#fff;border:1px solid #E8EDF2;border-radius:14px;padding:14px"><div style="font-size:15px;font-weight:600;color:#1A1D23">Cloud storage</div><div style="margin-top:4px;font-size:12.5px;color:#8898AA;font-variant-numeric:tabular-nums">~$3.00 a month</div></div>
+            <div style="width:calc(50% - 5px);box-sizing:border-box;background:#fff;border:1px solid #E8EDF2;border-radius:14px;padding:14px"><div style="font-size:15px;font-weight:600;color:#1A1D23">Gaming</div><div style="margin-top:4px;font-size:12.5px;color:#8898AA;font-variant-numeric:tabular-nums">~$10.00 a month</div></div>
+            <div style="width:calc(50% - 5px);box-sizing:border-box;background:#fff;border:1px solid #E8EDF2;border-radius:14px;padding:14px"><div style="font-size:15px;font-weight:600;color:#1A1D23">News</div><div style="margin-top:4px;font-size:12.5px;color:#8898AA;font-variant-numeric:tabular-nums">~$8.00 a month</div></div>
+            <div style="width:calc(50% - 5px);box-sizing:border-box;background:#E8F5EE;border:1px solid #4CAF82;border-radius:14px;padding:14px;position:relative"><div style="position:absolute;top:12px;right:12px;color:#2E7D55"><i data-lucide="check" style="width:16px;height:16px"></i></div><div style="font-size:15px;font-weight:600;color:#1A1D23">Fitness</div><div style="margin-top:4px;font-size:12.5px;font-weight:600;color:#2E7D55;font-variant-numeric:tabular-nums">~$15.00 a month</div></div>
+            <div style="width:calc(50% - 5px);box-sizing:border-box;background:#fff;border:1px solid #E8EDF2;border-radius:14px;padding:14px"><div style="font-size:15px;font-weight:600;color:#1A1D23">Dating</div><div style="margin-top:4px;font-size:12.5px;color:#8898AA;font-variant-numeric:tabular-nums">~$20.00 a month</div></div>
+            <div style="width:calc(50% - 5px);box-sizing:border-box;background:#fff;border:1px dashed #D6DEE8;border-radius:14px;padding:14px"><div style="font-size:15px;font-weight:600;color:#4A5568">Something else</div><div style="margin-top:4px;font-size:12.5px;color:#8898AA">you set it</div></div>
+          </div>
+        </div>
+        <div style="border-top:1px solid #E8EDF2;background:#fff;padding:14px 24px 40px">
+          <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:12px"><span style="font-family:'Instrument Serif',Georgia,serif;font-size:26px;color:#1A1D23;font-variant-numeric:tabular-nums">≈ $37</span><span style="font-size:13px;color:#4A5568">a month so far</span></div>
+          <div style="min-height:50px;border-radius:10px;background:#4CAF82;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;color:#fff">Continue</div>
+          <div style="margin-top:8px;min-height:40px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:#4A5568">None of these</div>
+        </div>
+        <div style="position:absolute;bottom:8px;left:128px;width:134px;height:5px;border-radius:3px;background:rgba(26,29,35,.28)"></div>
+      </div>
+    </div>
+
+    <div style="margin-top:452px;display:flex;flex-direction:column;align-items:center;gap:8px;width:104px;flex-shrink:0"><span style="font-size:11px;font-weight:600;color:#4A5568;text-align:center;line-height:1.4">step 2, then the reveal</span><div style="display:flex;align-items:center"><div style="width:60px;height:2px;background:#8898AA"></div><div style="width:0;height:0;border-top:5px solid transparent;border-bottom:5px solid transparent;border-left:8px solid #8898AA"></div></div></div>
+
+    <div style="display:flex;flex-direction:column;gap:8px;width:390px;flex-shrink:0">
+      <div style="font-family:'Instrument Serif',Georgia,serif;font-size:21px">R3 · The reveal</div>
+      <div style="font-size:12.5px;line-height:1.5;color:#4A5568;min-height:38px">The one number the whole flow earns. Serif display, honest tilde, quiet breakdown.</div>
+      <div style="width:390px;height:844px;background:#F7F9FC;border-radius:28px;border:1px solid #E8EDF2;box-shadow:0 4px 8px rgba(26,29,35,.04),0 16px 32px rgba(26,29,35,.08);overflow:hidden;display:flex;flex-direction:column;position:relative;flex-shrink:0">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 28px 6px"><span style="font-size:15px;font-weight:600;color:#1A1D23">9:41</span><span style="display:flex;gap:6px;align-items:center;font-size:15px;color:#1A1D23"><ion-icon name="cellular"></ion-icon><ion-icon name="wifi"></ion-icon><ion-icon name="battery-full" style="font-size:20px"></ion-icon></span></div>
+        <div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 28px">
+          <div style="font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#4CAF82;text-align:center;margin-bottom:12px">Your leak, estimated</div>
+          <div style="font-family:'Instrument Serif',Georgia,serif;font-size:72px;line-height:1.02;letter-spacing:-0.02em;color:#1A1D23;text-align:center;font-variant-numeric:tabular-nums">~$3,120</div>
+          <div style="font-size:15px;color:#4A5568;text-align:center;margin:10px 0 24px">a year. That's about $260 a month.</div>
+          <div style="background:#fff;border:1px solid #E8EDF2;border-radius:20px;padding:4px 20px">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-bottom:1px solid #E8EDF2"><span style="font-size:14px;font-weight:500;color:#1A1D23">Coffee or tea out</span><span style="font-size:14px;font-weight:600;color:#1A1D23;font-variant-numeric:tabular-nums">~$1,248/yr</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-bottom:1px solid #E8EDF2"><span style="font-size:14px;font-weight:500;color:#1A1D23">Food delivery</span><span style="font-size:14px;font-weight:600;color:#1A1D23;font-variant-numeric:tabular-nums">~$1,404/yr</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-bottom:1px solid #E8EDF2"><span style="font-size:14px;font-weight:500;color:#1A1D23">Video streaming</span><span style="font-size:14px;font-weight:600;color:#1A1D23;font-variant-numeric:tabular-nums">~$186/yr</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 0"><span style="font-size:14px;font-weight:500;color:#1A1D23">Fitness</span><span style="font-size:14px;font-weight:600;color:#1A1D23;font-variant-numeric:tabular-nums">~$180/yr</span></div>
+          </div>
+          <div style="font-size:12.5px;color:#8898AA;text-align:center;margin-top:16px;line-height:1.5">A starting estimate from one minute of taps, not a judgment. Real logs sharpen it from here.</div>
+        </div>
+        <div style="padding:0 24px 44px;display:flex;flex-direction:column;align-items:center">
+          <div style="min-height:52px;width:100%;border-radius:10px;background:#4CAF82;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;color:#fff">Plug the biggest leak</div>
+          <div style="margin-top:12px;min-height:44px;display:flex;align-items:center;font-size:14px;font-weight:600;color:#4A5568">Just start logging</div>
+        </div>
+        <div style="position:absolute;bottom:8px;left:128px;width:134px;height:5px;border-radius:3px;background:rgba(26,29,35,.28)"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+  <div style="display:flex;flex-direction:column;gap:24px">
+  <div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#2E7D55">The product, redesigned</span><span style="font-size:13.5px;color:#4A5568">Three tabs. The daily ritual (kept number → check-in → quick log) lives on one screen.</span></div>
+  <div style="display:flex;gap:24px;align-items:flex-start">
+
+    <div style="display:flex;flex-direction:column;gap:8px;width:390px;flex-shrink:0">
+      <div style="font-family:'Instrument Serif',Georgia,serif;font-size:21px">R4 · Today, unanswered</div>
+      <div style="font-size:12.5px;line-height:1.5;color:#4A5568;min-height:38px">Kept hero on a sage-light band, check-in directly beneath, quick log always one tap away.</div>
+      <div style="width:390px;height:844px;background:#F7F9FC;border-radius:28px;border:1px solid #E8EDF2;box-shadow:0 4px 8px rgba(26,29,35,.04),0 16px 32px rgba(26,29,35,.08);overflow:hidden;display:flex;flex-direction:column;position:relative;flex-shrink:0">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 28px 6px"><span style="font-size:15px;font-weight:600;color:#1A1D23">9:41</span><span style="display:flex;gap:6px;align-items:center;font-size:15px;color:#1A1D23"><ion-icon name="cellular"></ion-icon><ion-icon name="wifi"></ion-icon><ion-icon name="battery-full" style="font-size:20px"></ion-icon></span></div>
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;padding:14px 24px 0">
+          <div><div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8898AA;margin-bottom:2px">Thursday, July 24</div><div style="font-family:'Instrument Serif',Georgia,serif;font-size:36px;line-height:1;color:#1A1D23">Today.</div></div>
+          <div style="width:40px;height:40px;border-radius:20px;background:#fff;border:1px solid #E8EDF2;display:flex;align-items:center;justify-content:center;color:#4A5568"><i data-lucide="settings-2" style="width:20px;height:20px"></i></div>
+        </div>
+        <div style="flex:1;padding:16px 20px 0;display:flex;flex-direction:column;gap:12px">
+          <div style="background:#E8F5EE;border-radius:20px;padding:14px;display:flex;flex-direction:column;align-items:center">
+            <div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#2E7D55">Kept so far</div>
+            <div style="font-family:'Instrument Serif',Georgia,serif;font-size:40px;line-height:1.05;color:#1A1D23;font-variant-numeric:tabular-nums;margin-top:2px">$37.50</div>
+            <div style="font-size:13px;color:#4A5568;margin-top:2px">money you didn't spend</div>
+          </div>
+          <div style="background:#fff;border:1px solid #E8EDF2;border-radius:20px;padding:18px">
+            <div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:16px;font-weight:600;color:#1A1D23">Morning coffee</span><i data-lucide="chevron-right" style="width:16px;height:16px;color:#8898AA"></i></div>
+            <div style="display:flex;justify-content:space-between;margin-top:12px">
+              <div style="display:flex;flex-direction:column;align-items:center;gap:3px"><div style="width:26px;height:26px;border-radius:13px;background:#4CAF82;display:flex;align-items:center;justify-content:center;color:#fff"><i data-lucide="check" style="width:13px;height:13px"></i></div><span style="font-size:9px;font-weight:700;color:#8898AA">M</span></div>
+              <div style="display:flex;flex-direction:column;align-items:center;gap:3px"><div style="width:26px;height:26px;border-radius:13px;background:#4CAF82;display:flex;align-items:center;justify-content:center;color:#fff"><i data-lucide="check" style="width:13px;height:13px"></i></div><span style="font-size:9px;font-weight:700;color:#8898AA">T</span></div>
+              <div style="display:flex;flex-direction:column;align-items:center;gap:3px"><div style="width:26px;height:26px;border-radius:13px;background:#E8EDF2"></div><span style="font-size:9px;font-weight:700;color:#8898AA">W</span></div>
+              <div style="display:flex;flex-direction:column;align-items:center;gap:3px"><div style="width:26px;height:26px;border-radius:13px;background:#4CAF82;display:flex;align-items:center;justify-content:center;color:#fff"><i data-lucide="check" style="width:13px;height:13px"></i></div><span style="font-size:9px;font-weight:700;color:#8898AA">T</span></div>
+              <div style="display:flex;flex-direction:column;align-items:center;gap:3px"><div style="width:26px;height:26px;border-radius:13px;background:#fff;border:1.5px solid #4CAF82;box-sizing:border-box"></div><span style="font-size:9px;font-weight:700;color:#8898AA">F</span></div>
+              <div style="display:flex;flex-direction:column;align-items:center;gap:3px"><div style="width:26px;height:26px;border-radius:13px;background:#fff;border:1.5px solid #E8EDF2;box-sizing:border-box"></div><span style="font-size:9px;font-weight:700;color:#8898AA">S</span></div>
+              <div style="display:flex;flex-direction:column;align-items:center;gap:3px"><div style="width:26px;height:26px;border-radius:13px;background:#fff;border:1.5px solid #E8EDF2;box-sizing:border-box"></div><span style="font-size:9px;font-weight:700;color:#8898AA">S</span></div>
+            </div>
+            <div style="font-size:15px;color:#1A1D23;margin-top:10px">Did you skip it today?</div>
+            <div style="display:flex;gap:8px;margin-top:10px">
+              <div style="flex:1.6;min-height:48px;border-radius:10px;background:#4CAF82;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;color:#fff">Skipped it · keeps $6.50</div>
+              <div style="flex:1;min-height:48px;border-radius:10px;background:#fff;border:1px solid #E8EDF2;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;color:#1A1D23">Bought it</div>
+            </div>
+          </div>
+          <div style="background:#fff;border:1px solid #E8EDF2;border-radius:20px;padding:16px 18px">
+            <div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8898AA">Quick log</span><span style="font-size:12.5px;font-weight:600;color:#2E7D55">amount first</span></div>
+            <div style="display:flex;align-items:center;gap:12px;margin-top:10px">
+              <div style="flex:1;display:flex;align-items:baseline;gap:4px;border-bottom:1.5px solid #E8EDF2;padding-bottom:6px"><span style="font-size:20px;color:#8898AA">$</span><span style="font-family:'Instrument Serif',Georgia,serif;font-size:34px;color:#8898AA">0.00</span></div>
+              <div style="width:44px;height:44px;border-radius:10px;background:#4CAF82;display:flex;align-items:center;justify-content:center;color:#fff"><i data-lucide="plus" style="width:22px;height:22px"></i></div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:12px">
+              <div style="width:40px;height:40px;border-radius:12px;background:rgba(255,107,107,.12);display:flex;align-items:center;justify-content:center;font-size:19px">🍕</div>
+              <div style="width:40px;height:40px;border-radius:12px;background:rgba(255,159,67,.12);display:flex;align-items:center;justify-content:center;font-size:19px">🛒</div>
+              <div style="width:40px;height:40px;border-radius:12px;background:rgba(74,144,217,.12);display:flex;align-items:center;justify-content:center;font-size:19px">🚗</div>
+              <div style="width:40px;height:40px;border-radius:12px;background:rgba(245,166,35,.12);display:flex;align-items:center;justify-content:center;font-size:19px">🎬</div>
+              <div style="width:40px;height:40px;border-radius:12px;background:rgba(236,72,153,.12);display:flex;align-items:center;justify-content:center;font-size:19px">🛍</div>
+              <div style="width:40px;height:40px;border-radius:12px;background:#F7F9FC;border:1px dashed #D6DEE8;display:flex;align-items:center;justify-content:center;color:#8898AA"><i data-lucide="ellipsis" style="width:18px;height:18px"></i></div>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8898AA;margin:0 4px 6px">Logged today · $20.70</div>
+            <div style="background:#fff;border:1px solid #E8EDF2;border-radius:14px;padding:4px 16px">
+              <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #E8EDF2"><div style="width:36px;height:36px;border-radius:10px;background:rgba(255,107,107,.12);display:flex;align-items:center;justify-content:center;font-size:17px">🍕</div><div style="flex:1"><div style="font-size:15px;font-weight:600;color:#1A1D23">Starbucks</div><div style="font-size:12px;color:#8898AA">8:12 am</div></div><span style="font-size:15px;font-weight:600;color:#1A1D23;font-variant-numeric:tabular-nums">−$6.50</span></div>
+              <div style="display:flex;align-items:center;gap:12px;padding:10px 0"><div style="width:36px;height:36px;border-radius:10px;background:rgba(255,107,107,.12);display:flex;align-items:center;justify-content:center;font-size:17px">🍕</div><div style="flex:1"><div style="font-size:15px;font-weight:600;color:#1A1D23">Lunch bowl</div><div style="font-size:12px;color:#8898AA">12:41 pm</div></div><span style="font-size:15px;font-weight:600;color:#1A1D23;font-variant-numeric:tabular-nums">−$14.20</span></div>
+            </div>
+          </div>
+        </div>
+        <div style="height:84px;background:#fff;border-top:1px solid #E8EDF2;display:flex;padding:10px 0 28px">
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;color:#4CAF82"><i data-lucide="sun" style="width:22px;height:22px"></i><span style="font-size:11px;font-weight:600">Today</span></div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;color:#8898AA"><i data-lucide="wallet" style="width:22px;height:22px"></i><span style="font-size:11px;font-weight:600">Money</span></div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;color:#8898AA"><i data-lucide="trending-up" style="width:22px;height:22px"></i><span style="font-size:11px;font-weight:600">Insights</span></div>
+        </div>
+        <div style="position:absolute;bottom:8px;left:128px;width:134px;height:5px;border-radius:3px;background:rgba(26,29,35,.28)"></div>
+      </div>
+    </div>
+
+    <div style="margin-top:452px;display:flex;flex-direction:column;align-items:center;gap:8px;width:104px;flex-shrink:0"><span style="font-size:11px;font-weight:600;color:#4A5568;text-align:center;line-height:1.4">"Skipped it"</span><div style="display:flex;align-items:center"><div style="width:60px;height:2px;background:#8898AA"></div><div style="width:0;height:0;border-top:5px solid transparent;border-bottom:5px solid transparent;border-left:8px solid #8898AA"></div></div></div>
+
+    <div style="display:flex;flex-direction:column;gap:16px;width:390px;flex-shrink:0">
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-family:'Instrument Serif',Georgia,serif;font-size:21px">R5 · Check-in, answered</div>
+        <div style="font-size:12.5px;line-height:1.5;color:#4A5568">Confirmation leads with the number; the coach line sits in a quiet sage-light slot. Card crop.</div>
+        <div style="width:390px;background:#F7F9FC;border-radius:20px;border:1px solid #E8EDF2;box-shadow:0 4px 8px rgba(26,29,35,.04);padding:16px;flex-shrink:0">
+          <div style="background:#fff;border:1px solid #E8EDF2;border-radius:20px;padding:18px">
+            <div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:16px;font-weight:600;color:#1A1D23">Morning coffee</span><i data-lucide="chevron-right" style="width:16px;height:16px;color:#8898AA"></i></div>
+            <div style="display:flex;align-items:center;gap:12px;margin-top:14px">
+              <div style="width:40px;height:40px;border-radius:20px;background:#4CAF82;display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0"><i data-lucide="check" style="width:20px;height:20px"></i></div>
+              <div><div style="font-size:16px;font-weight:600;color:#1A1D23;font-variant-numeric:tabular-nums">+$6.50 kept.</div><div style="font-size:13px;color:#4A5568;margin-top:1px">That's 4 of 5 days this week.</div></div>
+            </div>
+            <div style="display:flex;align-items:flex-start;gap:8px;background:#E8F5EE;border-radius:12px;padding:12px;margin-top:14px;color:#2E7D55"><i data-lucide="sprout" style="width:14px;height:14px;margin-top:3px;flex-shrink:0"></i><span style="flex:1;font-size:13.5px;color:#1A1D23;line-height:1.5">Skipping is easier the second time, and easier again the third. You're wearing a new path.</span></div>
+            <div style="display:flex;gap:16px;margin-top:12px"><span style="font-size:13.5px;font-weight:600;color:#4A5568">Change answer</span></div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-family:'Instrument Serif',Georgia,serif;font-size:21px">R6 · Log sheet</div>
+        <div style="font-size:12.5px;line-height:1.5;color:#4A5568">Tapping quick log opens the full sheet: serif amount, emoji categories, merchant, done.</div>
+        <div style="width:390px;background:#fff;border-radius:20px;border:1px solid #E8EDF2;box-shadow:0 4px 8px rgba(26,29,35,.04),0 16px 32px rgba(26,29,35,.08);padding:12px 24px 28px;flex-shrink:0">
+          <div style="width:36px;height:5px;border-radius:3px;background:#E8EDF2;margin:0 auto 18px"></div>
+          <div style="display:flex;align-items:baseline;justify-content:center;gap:6px"><span style="font-size:26px;color:#8898AA">$</span><span style="font-family:'Instrument Serif',Georgia,serif;font-size:60px;color:#1A1D23;font-variant-numeric:tabular-nums">6.50</span></div>
+          <div style="display:flex;gap:8px;justify-content:center;margin-top:16px">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px"><div style="width:48px;height:48px;border-radius:14px;background:rgba(255,107,107,.12);border:1.5px solid #FF6B6B;display:flex;align-items:center;justify-content:center;font-size:22px">🍕</div><span style="font-size:11px;font-weight:600;color:#1A1D23">Food</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px"><div style="width:48px;height:48px;border-radius:14px;background:rgba(255,159,67,.12);border:1.5px solid transparent;display:flex;align-items:center;justify-content:center;font-size:22px">🛒</div><span style="font-size:11px;font-weight:500;color:#4A5568">Groceries</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px"><div style="width:48px;height:48px;border-radius:14px;background:rgba(74,144,217,.12);border:1.5px solid transparent;display:flex;align-items:center;justify-content:center;font-size:22px">🚗</div><span style="font-size:11px;font-weight:500;color:#4A5568">Transport</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px"><div style="width:48px;height:48px;border-radius:14px;background:rgba(245,166,35,.12);border:1.5px solid transparent;display:flex;align-items:center;justify-content:center;font-size:22px">🎬</div><span style="font-size:11px;font-weight:500;color:#4A5568">Fun</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px"><div style="width:48px;height:48px;border-radius:14px;background:rgba(6,182,212,.12);border:1.5px solid transparent;display:flex;align-items:center;justify-content:center;font-size:22px">📱</div><span style="font-size:11px;font-weight:500;color:#4A5568">Subs</span></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;border:1px solid #E8EDF2;border-radius:10px;padding:12px 14px;margin-top:18px;color:#8898AA"><i data-lucide="store" style="width:18px;height:18px"></i><span style="font-size:15px;color:#1A1D23">Starbucks</span></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 2px">
+            <div style="display:flex;align-items:center;gap:10px;color:#4A5568"><i data-lucide="repeat" style="width:18px;height:18px"></i><span style="font-size:14px;color:#1A1D23">Repeats monthly</span></div>
+            <div style="width:44px;height:26px;border-radius:13px;background:#E8EDF2;padding:3px"><div style="width:20px;height:20px;border-radius:10px;background:#fff;box-shadow:0 1px 2px rgba(26,29,35,.12)"></div></div>
+          </div>
+          <div style="min-height:50px;border-radius:10px;background:#4CAF82;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;color:#fff;margin-top:6px">Save expense</div>
+          <div style="font-size:12px;color:#8898AA;text-align:center;margin-top:10px">Saves in one tap. Confirmation just says "Logged."</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:8px;width:390px;flex-shrink:0">
+      <div style="font-family:'Instrument Serif',Georgia,serif;font-size:21px">R7 · Money</div>
+      <div style="font-size:12.5px;line-height:1.5;color:#4A5568;min-height:38px">Ledger + upcoming merge. Amber marks the bills ahead; the list stays an honest, tabular record.</div>
+      <div style="width:390px;height:844px;background:#F7F9FC;border-radius:28px;border:1px solid #E8EDF2;box-shadow:0 4px 8px rgba(26,29,35,.04),0 16px 32px rgba(26,29,35,.08);overflow:hidden;display:flex;flex-direction:column;position:relative;flex-shrink:0">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 28px 6px"><span style="font-size:15px;font-weight:600;color:#1A1D23">9:41</span><span style="display:flex;gap:6px;align-items:center;font-size:15px;color:#1A1D23"><ion-icon name="cellular"></ion-icon><ion-icon name="wifi"></ion-icon><ion-icon name="battery-full" style="font-size:20px"></ion-icon></span></div>
+        <div style="padding:14px 24px 0"><div style="font-family:'Instrument Serif',Georgia,serif;font-size:36px;line-height:1;color:#1A1D23">Money.</div></div>
+        <div style="padding:14px 20px 0">
+          <div style="display:flex;background:#E8EDF2;border-radius:999px;padding:3px">
+            <div style="flex:1;padding:8px 0;border-radius:999px;background:#fff;box-shadow:0 1px 2px rgba(26,29,35,.06);text-align:center;font-size:13.5px;font-weight:600;color:#1A1D23">Spent</div>
+            <div style="flex:1;padding:8px 0;border-radius:999px;text-align:center;font-size:13.5px;font-weight:600;color:#4A5568">Upcoming</div>
+          </div>
+        </div>
+        <div style="flex:1;padding:14px 20px 0">
+          <div style="background:#fff;border:1px solid #E8EDF2;border-radius:20px;padding:16px 18px;display:flex;align-items:center;gap:12px">
+            <div style="width:10px;height:10px;border-radius:5px;background:#F5A623;flex-shrink:0"></div>
+            <div style="flex:1"><div style="font-size:14px;font-weight:600;color:#1A1D23">Next 60 days</div><div style="font-size:12.5px;color:#4A5568;margin-top:1px">4 recurring · rent lands Aug 1</div></div>
+            <span style="font-family:'Instrument Serif',Georgia,serif;font-size:24px;color:#1A1D23;font-variant-numeric:tabular-nums">$3,780</span>
+          </div>
+          <div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8898AA;margin:16px 4px 8px">Today · $20.70</div>
+          <div style="background:#fff;border:1px solid #E8EDF2;border-radius:14px;padding:4px 16px">
+            <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #E8EDF2"><div style="width:36px;height:36px;border-radius:10px;background:rgba(255,107,107,.12);display:flex;align-items:center;justify-content:center;font-size:17px">🍕</div><div style="flex:1"><div style="font-size:15px;font-weight:600;color:#1A1D23">Starbucks</div><div style="font-size:12px;color:#8898AA">8:12 am</div></div><span style="font-size:15px;font-weight:600;color:#1A1D23;font-variant-numeric:tabular-nums">−$6.50</span></div>
+            <div style="display:flex;align-items:center;gap:12px;padding:10px 0"><div style="width:36px;height:36px;border-radius:10px;background:rgba(255,107,107,.12);display:flex;align-items:center;justify-content:center;font-size:17px">🍕</div><div style="flex:1"><div style="font-size:15px;font-weight:600;color:#1A1D23">Lunch bowl</div><div style="font-size:12px;color:#8898AA">12:41 pm</div></div><span style="font-size:15px;font-weight:600;color:#1A1D23;font-variant-numeric:tabular-nums">−$14.20</span></div>
+          </div>
+          <div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8898AA;margin:16px 4px 8px">Yesterday · $59.30</div>
+          <div style="background:#fff;border:1px solid #E8EDF2;border-radius:14px;padding:4px 16px">
+            <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #E8EDF2"><div style="width:36px;height:36px;border-radius:10px;background:rgba(255,159,67,.12);display:flex;align-items:center;justify-content:center;font-size:17px">🛒</div><div style="flex:1"><div style="font-size:15px;font-weight:600;color:#1A1D23">Safeway</div><div style="font-size:12px;color:#8898AA">6:03 pm</div></div><span style="font-size:15px;font-weight:600;color:#1A1D23;font-variant-numeric:tabular-nums">−$52.80</span></div>
+            <div style="display:flex;align-items:center;gap:12px;padding:10px 0"><div style="width:36px;height:36px;border-radius:10px;background:rgba(255,107,107,.12);display:flex;align-items:center;justify-content:center;font-size:17px">🍕</div><div style="flex:1"><div style="font-size:15px;font-weight:600;color:#1A1D23">Starbucks</div><div style="font-size:12px;color:#8898AA">8:24 am</div></div><span style="font-size:15px;font-weight:600;color:#1A1D23;font-variant-numeric:tabular-nums">−$6.50</span></div>
+          </div>
+        </div>
+        <div style="height:84px;background:#fff;border-top:1px solid #E8EDF2;display:flex;padding:10px 0 28px">
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;color:#8898AA"><i data-lucide="sun" style="width:22px;height:22px"></i><span style="font-size:11px;font-weight:600">Today</span></div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;color:#4CAF82"><i data-lucide="wallet" style="width:22px;height:22px"></i><span style="font-size:11px;font-weight:600">Money</span></div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;color:#8898AA"><i data-lucide="trending-up" style="width:22px;height:22px"></i><span style="font-size:11px;font-weight:600">Insights</span></div>
+        </div>
+        <div style="position:absolute;bottom:8px;left:128px;width:134px;height:5px;border-radius:3px;background:rgba(26,29,35,.28)"></div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:8px;width:390px;flex-shrink:0">
+      <div style="font-family:'Instrument Serif',Georgia,serif;font-size:21px">R8 · Insights</div>
+      <div style="font-size:12.5px;line-height:1.5;color:#4A5568;min-height:38px">Leak map first (it's the product's point), then category bars and the month's pace. Spend bars stay neutral; green stays reserved for kept.</div>
+      <div style="width:390px;height:844px;background:#F7F9FC;border-radius:28px;border:1px solid #E8EDF2;box-shadow:0 4px 8px rgba(26,29,35,.04),0 16px 32px rgba(26,29,35,.08);overflow:hidden;display:flex;flex-direction:column;position:relative;flex-shrink:0">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 28px 6px"><span style="font-size:15px;font-weight:600;color:#1A1D23">9:41</span><span style="display:flex;gap:6px;align-items:center;font-size:15px;color:#1A1D23"><ion-icon name="cellular"></ion-icon><ion-icon name="wifi"></ion-icon><ion-icon name="battery-full" style="font-size:20px"></ion-icon></span></div>
+        <div style="padding:14px 24px 0"><div style="font-family:'Instrument Serif',Georgia,serif;font-size:36px;line-height:1;color:#1A1D23">Insights.</div></div>
+        <div style="flex:1;padding:16px 20px 0;display:flex;flex-direction:column;gap:12px">
+          <div style="background:#fff;border:1px solid #E8EDF2;border-radius:20px;padding:18px">
+            <div style="font-size:15px;font-weight:600;color:#1A1D23;margin-bottom:12px">Your leaks</div>
+            <div style="display:flex;align-items:center;gap:12px;padding-bottom:12px;border-bottom:1px solid #E8EDF2">
+              <div style="width:36px;height:36px;border-radius:10px;background:rgba(255,107,107,.12);display:flex;align-items:center;justify-content:center;font-size:17px">🍕</div>
+              <div style="flex:1"><div style="font-size:14.5px;font-weight:600;color:#1A1D23">Morning coffee</div><div style="font-size:12.5px;color:#4A5568">$86 a month · 14 buys</div></div>
+              <div style="padding:0 14px;min-height:38px;border-radius:10px;background:#4CAF82;display:flex;align-items:center;font-size:13px;font-weight:600;color:#fff">Break it</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;padding-top:12px">
+              <div style="width:36px;height:36px;border-radius:10px;background:rgba(255,107,107,.12);display:flex;align-items:center;justify-content:center;font-size:17px">🍕</div>
+              <div style="flex:1"><div style="font-size:14.5px;font-weight:600;color:#1A1D23">Food delivery</div><div style="font-size:12.5px;color:#4A5568">$117 a month · 6 orders</div></div>
+              <div style="padding:0 14px;min-height:38px;border-radius:10px;background:#fff;border:1px solid #E8EDF2;display:flex;align-items:center;font-size:13px;font-weight:600;color:#1A1D23">Watch</div>
+            </div>
+          </div>
+          <div style="background:#fff;border:1px solid #E8EDF2;border-radius:20px;padding:18px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><span style="font-size:15px;font-weight:600;color:#1A1D23">Where it went</span><span style="font-size:12px;font-weight:600;color:#4A5568">30 days</span></div>
+            <div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:13px;color:#1A1D23">🍕 Food</span><span style="font-size:13px;font-weight:600;color:#1A1D23;font-variant-numeric:tabular-nums">$486</span></div><div style="height:6px;border-radius:3px;background:#F7F9FC;overflow:hidden"><div style="height:6px;background:#8898AA;width:100%"></div></div></div>
+            <div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:13px;color:#1A1D23">🏠 Housing</span><span style="font-size:13px;font-weight:600;color:#1A1D23;font-variant-numeric:tabular-nums">$412</span></div><div style="height:6px;border-radius:3px;background:#F7F9FC;overflow:hidden"><div style="height:6px;background:#8898AA;width:85%"></div></div></div>
+            <div><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:13px;color:#1A1D23">🛍 Shopping</span><span style="font-size:13px;font-weight:600;color:#1A1D23;font-variant-numeric:tabular-nums">$238</span></div><div style="height:6px;border-radius:3px;background:#F7F9FC;overflow:hidden"><div style="height:6px;background:#8898AA;width:49%"></div></div></div>
+          </div>
+          <div style="background:#fff;border:1px solid #E8EDF2;border-radius:20px;padding:18px">
+            <div style="font-size:15px;font-weight:600;color:#1A1D23">July pace</div>
+            <div style="display:flex;align-items:baseline;gap:8px;margin-top:6px"><span style="font-family:'Instrument Serif',Georgia,serif;font-size:32px;color:#1A1D23;font-variant-numeric:tabular-nums">$1,480</span><span style="font-size:13px;color:#4A5568">projected · 7 days left</span></div>
+            <div style="height:8px;border-radius:4px;background:#F7F9FC;overflow:hidden;margin-top:10px"><div style="height:8px;background:#4CAF82;width:78%"></div></div>
+            <div style="display:flex;justify-content:space-between;margin-top:6px"><span style="font-size:12px;color:#4A5568">$1,282 spent</span><span style="font-size:12px;color:#4A5568">$80 under June</span></div>
+          </div>
+        </div>
+        <div style="height:84px;background:#fff;border-top:1px solid #E8EDF2;display:flex;padding:10px 0 28px">
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;color:#8898AA"><i data-lucide="sun" style="width:22px;height:22px"></i><span style="font-size:11px;font-weight:600">Today</span></div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;color:#8898AA"><i data-lucide="wallet" style="width:22px;height:22px"></i><span style="font-size:11px;font-weight:600">Money</span></div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;color:#4CAF82"><i data-lucide="trending-up" style="width:22px;height:22px"></i><span style="font-size:11px;font-weight:600">Insights</span></div>
+        </div>
+        <div style="position:absolute;bottom:8px;left:128px;width:134px;height:5px;border-radius:3px;background:rgba(26,29,35,.28)"></div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:8px;width:390px;flex-shrink:0">
+      <div style="font-family:'Instrument Serif',Georgia,serif;font-size:21px">R9 · Habit detail</div>
+      <div style="font-size:12.5px;line-height:1.5;color:#4A5568;min-height:38px">Lavender carries the 66-skip arc (the DS's habit hue). The calendar keeps sage for skips, neutral for slips.</div>
+      <div style="width:390px;height:844px;background:#F7F9FC;border-radius:28px;border:1px solid #E8EDF2;box-shadow:0 4px 8px rgba(26,29,35,.04),0 16px 32px rgba(26,29,35,.08);overflow:hidden;display:flex;flex-direction:column;position:relative;flex-shrink:0">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 28px 6px"><span style="font-size:15px;font-weight:600;color:#1A1D23">9:41</span><span style="display:flex;gap:6px;align-items:center;font-size:15px;color:#1A1D23"><ion-icon name="cellular"></ion-icon><ion-icon name="wifi"></ion-icon><ion-icon name="battery-full" style="font-size:20px"></ion-icon></span></div>
+        <div style="padding:12px 24px 0;color:#1A1D23"><i data-lucide="arrow-left" style="width:22px;height:22px"></i></div>
+        <div style="flex:1;padding:12px 20px 0;display:flex;flex-direction:column;gap:12px">
+          <div style="padding:0 4px">
+            <div style="font-family:'Instrument Serif',Georgia,serif;font-size:32px;line-height:1.1;color:#1A1D23">Morning coffee.</div>
+            <div style="font-size:14px;color:#4A5568;margin-top:4px">Starbucks, about 14 times a month.</div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <div style="flex:1;background:#E8F5EE;border-radius:14px;padding:14px 8px;display:flex;flex-direction:column;align-items:center"><span style="font-family:'Instrument Serif',Georgia,serif;font-size:22px;color:#1A1D23;font-variant-numeric:tabular-nums">$37.50</span><span style="font-size:11px;color:#2E7D55;margin-top:2px">kept</span></div>
+            <div style="flex:1;background:#fff;border:1px solid #E8EDF2;border-radius:14px;padding:14px 8px;display:flex;flex-direction:column;align-items:center"><span style="font-family:'Instrument Serif',Georgia,serif;font-size:22px;color:#1A1D23">4 of 5</span><span style="font-size:11px;color:#4A5568;margin-top:2px">this week</span></div>
+            <div style="flex:1;background:#fff;border:1px solid #E8EDF2;border-radius:14px;padding:14px 8px;display:flex;flex-direction:column;align-items:center"><span style="font-family:'Instrument Serif',Georgia,serif;font-size:22px;color:#1A1D23">23</span><span style="font-size:11px;color:#4A5568;margin-top:2px">total skips</span></div>
+          </div>
+          <div style="background:#fff;border:1px solid #E8EDF2;border-radius:20px;padding:18px">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span style="font-size:15px;font-weight:600;color:#1A1D23">The long arc</span>
+              <span style="padding:3px 10px;border-radius:999px;background:rgba(142,124,243,.14);font-size:11.5px;font-weight:700;color:#8E7CF3">23 of 66 · Rhythm</span>
+            </div>
+            <div style="font-family:'Instrument Serif',Georgia,serif;font-style:italic;font-size:18px;color:#1A1D23;margin-top:10px">You're finding your rhythm.</div>
+            <div style="font-size:12.5px;color:#4A5568;margin-top:4px;line-height:1.5">23 skips toward the ~66 it takes to rewire a habit. Slips never subtract.</div>
+            <div style="display:flex;gap:4px;margin-top:14px">
+              <div style="flex:10;height:6px;border-radius:3px;background:#8E7CF3"></div>
+              <div style="flex:20;height:6px;border-radius:3px;background:linear-gradient(to right,#8E7CF3 65%,#E8EDF2 65%)"></div>
+              <div style="flex:20;height:6px;border-radius:3px;background:#E8EDF2"></div>
+              <div style="flex:16;height:6px;border-radius:3px;background:#E8EDF2"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-top:5px">
+              <span style="font-size:10.5px;font-weight:600;color:#8898AA">Deciding</span><span style="font-size:10.5px;font-weight:600;color:#8898AA">Rhythm</span><span style="font-size:10.5px;font-weight:600;color:#8898AA">Cruising</span><span style="font-size:10.5px;font-weight:600;color:#8898AA">Rewired</span>
+            </div>
+          </div>
+          <div style="background:#fff;border:1px solid #E8EDF2;border-radius:20px;padding:18px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><span style="font-size:15px;font-weight:600;color:#1A1D23">July</span><span style="display:flex;gap:12px;color:#4A5568"><i data-lucide="chevron-left" style="width:18px;height:18px"></i><i data-lucide="chevron-right" style="width:18px;height:18px;color:#D6DEE8"></i></span></div>
+            <div style="display:flex;flex-wrap:wrap;row-gap:8px">
+              <span style="width:14.28%;display:flex;justify-content:center"><span style="width:22px;height:22px;border-radius:11px;background:#4CAF82"></span></span>
+              <span style="width:14.28%;display:flex;justify-content:center"><span style="width:22px;height:22px;border-radius:11px;background:#4CAF82"></span></span>
+              <span style="width:14.28%;display:flex;justify-content:center"><span style="width:22px;height:22px;border-radius:11px;background:#E8EDF2"></span></span>
+              <span style="width:14.28%;display:flex;justify-content:center"><span style="width:22px;height:22px;border-radius:11px;background:#4CAF82"></span></span>
+              <span style="width:14.28%;display:flex;justify-content:center"><span style="width:22px;height:22px;border-radius:11px;background:#4CAF82"></span></span>
+              <span style="width:14.28%;display:flex;justify-content:center"><span style="width:22px;height:22px;border-radius:11px;background:#4CAF82"></span></span>
+              <span style="width:14.28%;display:flex;justify-content:center"><span style="width:22px;height:22px;border-radius:11px;background:#E8EDF2"></span></span>
+              <span style="width:14.28%;display:flex;justify-content:center"><span style="width:22px;height:22px;border-radius:11px;background:#4CAF82"></span></span>
+              <span style="width:14.28%;display:flex;justify-content:center"><span style="width:22px;height:22px;border-radius:11px;background:#4CAF82"></span></span>
+              <span style="width:14.28%;display:flex;justify-content:center"><span style="width:22px;height:22px;border-radius:11px;background:#4CAF82"></span></span>
+              <span style="width:14.28%;display:flex;justify-content:center"><span style="width:22px;height:22px;border-radius:11px;background:#E8EDF2"></span></span>
+              <span style="width:14.28%;display:flex;justify-content:center"><span style="width:22px;height:22px;border-radius:11px;background:#4CAF82"></span></span>
+              <span style="width:14.28%;display:flex;justify-content:center"><span style="width:22px;height:22px;border-radius:11px;background:#4CAF82"></span></span>
+              <span style="width:14.28%;display:flex;justify-content:center"><span style="width:22px;height:22px;border-radius:11px;border:1.5px solid #4CAF82;box-sizing:border-box;background:#fff"></span></span>
+            </div>
+            <div style="display:flex;gap:14px;margin-top:14px">
+              <span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:5px;background:#4CAF82"></span><span style="font-size:12px;color:#4A5568">skipped</span></span>
+              <span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:5px;background:#E8EDF2"></span><span style="font-size:12px;color:#4A5568">slipped</span></span>
+              <span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:5px;border:1.5px solid #D6DEE8;box-sizing:border-box"></span><span style="font-size:12px;color:#4A5568">no log</span></span>
+            </div>
+          </div>
+        </div>
+        <div style="padding:12px 20px 40px;display:flex;flex-direction:column;gap:8px">
+          <div style="min-height:46px;border-radius:10px;border:1px solid #E8EDF2;background:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:#1A1D23">Edit one skip keeps ($6.50)</div>
+        </div>
+        <div style="position:absolute;bottom:8px;left:128px;width:134px;height:5px;border-radius:3px;background:rgba(26,29,35,.28)"></div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:8px;width:390px;flex-shrink:0">
+      <div style="font-family:'Instrument Serif',Georgia,serif;font-size:21px">R10 · Premium</div>
+      <div style="font-size:12.5px;line-height:1.5;color:#4A5568;min-height:38px">The one sanctioned gradient (lavender → sage), on the upsell card only. Everything else stays calm.</div>
+      <div style="width:390px;height:844px;background:#F7F9FC;border-radius:28px;border:1px solid #E8EDF2;box-shadow:0 4px 8px rgba(26,29,35,.04),0 16px 32px rgba(26,29,35,.08);overflow:hidden;display:flex;flex-direction:column;position:relative;flex-shrink:0">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 28px 6px"><span style="font-size:15px;font-weight:600;color:#1A1D23">9:41</span><span style="display:flex;gap:6px;align-items:center;font-size:15px;color:#1A1D23"><ion-icon name="cellular"></ion-icon><ion-icon name="wifi"></ion-icon><ion-icon name="battery-full" style="font-size:20px"></ion-icon></span></div>
+        <div style="display:flex;justify-content:flex-end;padding:4px 16px 0;color:#4A5568"><div style="width:40px;height:40px;display:flex;align-items:center;justify-content:center"><i data-lucide="x" style="width:22px;height:22px"></i></div></div>
+        <div style="flex:1;padding:0 24px">
+          <div style="background:linear-gradient(135deg,#8E7CF3,#4CAF82);border-radius:20px;padding:18px;color:#fff">
+            <div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;opacity:.85">Premium</div>
+            <div style="font-family:'Instrument Serif',Georgia,serif;font-size:30px;line-height:1.1;margin-top:6px">Break more than one habit</div>
+            <div style="font-size:14px;line-height:1.5;margin-top:8px;opacity:.92">Free keeps 1 habit, always. Premium lets you break up to 5 at once.</div>
+          </div>
+          <div style="margin-top:12px;display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;align-items:center;gap:10px;color:#2E7D55"><i data-lucide="check" style="width:18px;height:18px"></i><span style="font-size:14.5px;color:#1A1D23">Break up to 5 habits at once</span></div>
+            <div style="display:flex;align-items:center;gap:10px;color:#2E7D55"><i data-lucide="check" style="width:18px;height:18px"></i><span style="font-size:14.5px;color:#1A1D23">Keep counting every dollar, no caps</span></div>
+            <div style="display:flex;align-items:center;gap:10px;color:#2E7D55"><i data-lucide="check" style="width:18px;height:18px"></i><span style="font-size:14.5px;color:#1A1D23">Back a solo, privacy-first app</span></div>
+          </div>
+          <div style="margin-top:12px;display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;align-items:center;border:1.5px solid #4CAF82;background:#E8F5EE;border-radius:14px;padding:14px 16px">
+              <div style="flex:1"><div style="display:flex;align-items:center;gap:8px"><span style="font-size:15px;font-weight:600;color:#1A1D23">Yearly</span><span style="background:#4CAF82;border-radius:999px;padding:2px 8px;font-size:10.5px;font-weight:700;color:#fff">Best value</span></div><div style="font-size:12.5px;color:#4A5568;margin-top:2px">about $2.50 a month</div></div>
+              <div style="display:flex;flex-direction:column;align-items:flex-end"><span style="font-size:16px;font-weight:600;color:#1A1D23;font-variant-numeric:tabular-nums">$29.99</span><span style="font-size:11.5px;color:#4A5568">per year</span></div>
+            </div>
+            <div style="display:flex;align-items:center;border:1px solid #E8EDF2;background:#fff;border-radius:14px;padding:14px 16px">
+              <div style="flex:1"><span style="font-size:15px;font-weight:600;color:#1A1D23">Monthly</span></div>
+              <div style="display:flex;flex-direction:column;align-items:flex-end"><span style="font-size:16px;font-weight:600;color:#1A1D23;font-variant-numeric:tabular-nums">$3.99</span><span style="font-size:11.5px;color:#4A5568">per month</span></div>
+            </div>
+            <div style="display:flex;align-items:center;border:1px solid #E8EDF2;background:#fff;border-radius:14px;padding:14px 16px">
+              <div style="flex:1"><div><span style="font-size:15px;font-weight:600;color:#1A1D23">Lifetime</span></div><div style="font-size:12.5px;color:#4A5568;margin-top:2px">pay once, keep it forever</div></div>
+              <div style="display:flex;flex-direction:column;align-items:flex-end"><span style="font-size:16px;font-weight:600;color:#1A1D23;font-variant-numeric:tabular-nums">$49.99</span><span style="font-size:11.5px;color:#4A5568">once</span></div>
+            </div>
+          </div>
+          <div style="font-size:12px;color:#8898AA;margin-top:12px;line-height:1.5">Planned pricing. In-app purchases are not live yet, so nothing is charged.</div>
+        </div>
+        <div style="padding:12px 24px 40px;border-top:1px solid #E8EDF2;background:#fff">
+          <div style="font-size:12.5px;color:#4A5568;text-align:center;margin-bottom:10px">Start with a 14-day free trial. Cancel anytime before it ends.</div>
+          <div style="min-height:52px;border-radius:10px;background:#4CAF82;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;color:#fff">Start free trial</div>
+          <div style="min-height:40px;display:flex;align-items:center;justify-content:center;margin-top:4px;font-size:13.5px;font-weight:600;color:#2E7D55">Stay on free plan</div>
+        </div>
+        <div style="position:absolute;bottom:8px;left:128px;width:134px;height:5px;border-radius:3px;background:rgba(26,29,35,.28)"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+  <div style="display:flex;flex-direction:column;gap:24px">
+  <div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#2E7D55">States and edges, redesigned</span><span style="font-size:13.5px;color:#4A5568">Slips, the pre-detection state, the pick-one moment, Door 2, settings and the milestone crossing.</span></div>
+  <div style="display:flex;gap:24px;align-items:flex-start">
+
+    <div style="display:flex;flex-direction:column;gap:8px;width:390px;flex-shrink:0">
+      <div style="font-family:'Instrument Serif',Georgia,serif;font-size:21px">R11 · Today, before the first leak</div>
+      <div style="font-size:12.5px;line-height:1.5;color:#4A5568;min-height:38px">Kept at zero, honest detection progress instead of a fake habit card, quick log ready.</div>
+      <div style="width:390px;height:844px;background:#F7F9FC;border-radius:28px;border:1px solid #E8EDF2;box-shadow:0 4px 8px rgba(26,29,35,.04),0 16px 32px rgba(26,29,35,.08);overflow:hidden;display:flex;flex-direction:column;position:relative;flex-shrink:0">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 28px 6px"><span style="font-size:15px;font-weight:600;color:#1A1D23">9:41</span><span style="display:flex;gap:6px;align-items:center;font-size:15px;color:#1A1D23"><ion-icon name="cellular"></ion-icon><ion-icon name="wifi"></ion-icon><ion-icon name="battery-full" style="font-size:20px"></ion-icon></span></div>
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;padding:14px 24px 0">
+          <div><div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8898AA;margin-bottom:2px">Thursday, July 24</div><div style="font-family:'Instrument Serif',Georgia,serif;font-size:36px;line-height:1;color:#1A1D23">Today.</div></div>
+          <div style="width:40px;height:40px;border-radius:20px;background:#fff;border:1px solid #E8EDF2;display:flex;align-items:center;justify-content:center;color:#4A5568"><i data-lucide="settings-2" style="width:20px;height:20px"></i></div>
+        </div>
+        <div style="flex:1;padding:16px 20px 0;display:flex;flex-direction:column;gap:12px">
+          <div style="background:#E8F5EE;border-radius:20px;padding:14px;display:flex;flex-direction:column;align-items:center">
+            <div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#2E7D55">Kept so far</div>
+            <div style="font-family:'Instrument Serif',Georgia,serif;font-size:44px;line-height:1.05;color:#1A1D23;font-variant-numeric:tabular-nums;margin-top:2px">$0.00</div>
+            <div style="font-size:13px;color:#4A5568;margin-top:2px">your first skip starts this counter</div>
+          </div>
+          <div style="background:#fff;border:1px solid #E8EDF2;border-radius:20px;padding:18px">
+            <div style="font-size:16px;font-weight:600;color:#1A1D23">Spotting your leak</div>
+            <div style="height:6px;border-radius:3px;background:#E8EDF2;margin-top:12px;overflow:hidden"><div style="height:6px;border-radius:3px;background:#4CAF82;width:50%"></div></div>
+            <div style="font-size:14px;font-weight:600;color:#1A1D23;margin-top:10px">2 of 4 logs<span style="font-weight:400;color:#4A5568"> at the same place</span></div>
+            <div style="font-size:13px;color:#4A5568;margin-top:4px;line-height:1.5">Around 4 logs at one merchant is enough to see a pattern. Keep logging.</div>
+          </div>
+          <div style="background:#fff;border:1px solid #E8EDF2;border-radius:20px;padding:16px 18px">
+            <div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8898AA">Quick log</span><span style="font-size:12.5px;font-weight:600;color:#2E7D55">amount first</span></div>
+            <div style="display:flex;align-items:center;gap:12px;margin-top:10px">
+              <div style="flex:1;display:flex;align-items:baseline;gap:4px;border-bottom:1.5px solid #E8EDF2;padding-bottom:6px"><span style="font-size:20px;color:#8898AA">$</span><span style="font-family:'Instrument Serif',Georgia,serif;font-size:34px;color:#8898AA">0.00</span></div>
+              <div style="width:44px;height:44px;border-radius:10px;background:#4CAF82;display:flex;align-items:center;justify-content:center;color:#fff"><i data-lucide="plus" style="width:22px;height:22px"></i></div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:12px">
+              <div style="width:40px;height:40px;border-radius:12px;background:rgba(255,107,107,.12);display:flex;align-items:center;justify-content:center;font-size:19px">🍕</div>
+              <div style="width:40px;height:40px;border-radius:12px;background:rgba(255,159,67,.12);display:flex;align-items:center;justify-content:center;font-size:19px">🛒</div>
+              <div style="width:40px;height:40px;border-radius:12px;background:rgba(74,144,217,.12);display:flex;align-items:center;justify-content:center;font-size:19px">🚗</div>
+              <div style="width:40px;height:40px;border-radius:12px;background:rgba(245,166,35,.12);display:flex;align-items:center;justify-content:center;font-size:19px">🎬</div>
+              <div style="width:40px;height:40px;border-radius:12px;background:rgba(236,72,153,.12);display:flex;align-items:center;justify-content:center;font-size:19px">🛍</div>
+              <div style="width:40px;height:40px;border-radius:12px;background:#F7F9FC;border:1px dashed #D6DEE8;display:flex;align-items:center;justify-content:center;color:#8898AA"><i data-lucide="ellipsis" style="width:18px;height:18px"></i></div>
+            </div>
+          </div>
+          <div style="font-size:13px;color:#8898AA;text-align:center;padding:6px 24px;line-height:1.5">Nothing logged yet today. Amount first, then tap a category.</div>
+          <div style="display:flex;justify-content:center"><span style="font-size:13px;font-weight:600;color:#4A5568">Take the 90-second leak audit</span></div>
+        </div>
+        <div style="height:84px;background:#fff;border-top:1px solid #E8EDF2;display:flex;padding:10px 0 28px">
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;color:#4CAF82"><i data-lucide="sun" style="width:22px;height:22px"></i><span style="font-size:11px;font-weight:600">Today</span></div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;color:#8898AA"><i data-lucide="wallet" style="width:22px;height:22px"></i><span style="font-size:11px;font-weight:600">Money</span></div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;color:#8898AA"><i data-lucide="trending-up" style="width:22px;height:22px"></i><span style="font-size:11px;font-weight:600">Insights</span></div>
+        </div>
+        <div style="position:absolute;bottom:8px;left:128px;width:134px;height:5px;border-radius:3px;background:rgba(26,29,35,.28)"></div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:16px;width:390px;flex-shrink:0">
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-family:'Instrument Serif',Georgia,serif;font-size:21px">R12 · Slip + backfill</div>
+        <div style="font-size:12.5px;line-height:1.5;color:#4A5568">A slip stays neutral: no red, kept total untouched. Partial-slip link and the one-time yesterday backfill.</div>
+        <div style="width:390px;background:#F7F9FC;border-radius:20px;border:1px solid #E8EDF2;box-shadow:0 4px 8px rgba(26,29,35,.04);padding:16px;flex-shrink:0">
+          <div style="background:#fff;border:1px solid #E8EDF2;border-radius:20px;padding:18px">
+            <div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:16px;font-weight:600;color:#1A1D23">Morning coffee</span><i data-lucide="chevron-right" style="width:16px;height:16px;color:#8898AA"></i></div>
+            <div style="display:flex;align-items:center;gap:12px;margin-top:14px">
+              <div style="width:40px;height:40px;border-radius:20px;background:#E8EDF2;display:flex;align-items:center;justify-content:center;color:#4A5568;flex-shrink:0"><i data-lucide="minus" style="width:20px;height:20px"></i></div>
+              <div><div style="font-size:16px;font-weight:600;color:#1A1D23">Logged.</div><div style="font-size:13px;color:#4A5568;margin-top:1px">Still 3 of 5 days this week. Your $37.50 kept stays yours.</div></div>
+            </div>
+            <div style="display:flex;align-items:flex-start;gap:8px;background:#F7F9FC;border-radius:12px;padding:12px;margin-top:14px;color:#4A5568"><i data-lucide="sprout" style="width:14px;height:14px;margin-top:3px;flex-shrink:0"></i><span style="flex:1;font-size:13.5px;color:#1A1D23;line-height:1.5">Bought it? Noted, no judgment. Making it easy to be honest is how the numbers stay true.</span></div>
+            <div style="display:flex;gap:16px;margin-top:12px"><span style="font-size:13.5px;font-weight:600;color:#4A5568">Change answer</span><span style="font-size:13.5px;font-weight:600;color:#4A5568">Spent less than usual?</span></div>
+            <div style="border-top:1px solid #E8EDF2;margin-top:14px;padding-top:12px">
+              <div style="font-size:12.5px;color:#4A5568;margin-bottom:8px">Missed yesterday? Answer for it:</div>
+              <div style="display:flex;gap:8px">
+                <div style="flex:1;min-height:40px;border-radius:10px;background:#fff;border:1px solid #E8EDF2;display:flex;align-items:center;justify-content:center;font-size:13.5px;font-weight:600;color:#1A1D23">Skipped it</div>
+                <div style="flex:1;min-height:40px;border-radius:10px;background:#fff;border:1px solid #E8EDF2;display:flex;align-items:center;justify-content:center;font-size:13.5px;font-weight:600;color:#1A1D23">Bought it</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-family:'Instrument Serif',Georgia,serif;font-size:21px">R13 · Milestone crossing</div>
+        <div style="font-size:12.5px;line-height:1.5;color:#4A5568">Chapter crossings borrow the habit hue: lavender-tinted coach slot, arc pill updates. Still no confetti.</div>
+        <div style="width:390px;background:#F7F9FC;border-radius:20px;border:1px solid #E8EDF2;box-shadow:0 4px 8px rgba(26,29,35,.04);padding:16px;flex-shrink:0">
+          <div style="background:#fff;border:1px solid #E8EDF2;border-radius:20px;padding:18px">
+            <div style="display:flex;align-items:center;gap:12px">
+              <div style="width:40px;height:40px;border-radius:20px;background:#4CAF82;display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0"><i data-lucide="check" style="width:20px;height:20px"></i></div>
+              <div><div style="font-size:16px;font-weight:600;color:#1A1D23;font-variant-numeric:tabular-nums">+$6.50 kept.</div><div style="font-size:13px;color:#4A5568;margin-top:1px">That's 3 of 3 days this week.</div></div>
+            </div>
+            <div style="margin-top:14px"><span style="padding:3px 10px;border-radius:999px;background:rgba(142,124,243,.14);font-size:11.5px;font-weight:700;color:#8E7CF3">10 total skips · Rhythm</span></div>
+            <div style="display:flex;align-items:flex-start;gap:8px;background:rgba(142,124,243,.10);border-radius:12px;padding:12px;margin-top:10px;color:#8E7CF3"><i data-lucide="sprout" style="width:14px;height:14px;margin-top:3px;flex-shrink:0"></i><span style="flex:1;font-size:13.5px;color:#1A1D23;line-height:1.5">Ten skips in. You're finding your rhythm, and this only ever counts up. Slips never subtract from here.</span></div>
+            <div style="display:flex;gap:16px;margin-top:12px"><span style="font-size:13.5px;font-weight:600;color:#4A5568">Change answer</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:16px;width:390px;flex-shrink:0">
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-family:'Instrument Serif',Georgia,serif;font-size:21px">R14 · Pick-one sheet</div>
+        <div style="font-size:12.5px;line-height:1.5;color:#4A5568">Opened by "Break it". Nothing is created until the primary tap; the free-tier note stays quiet.</div>
+        <div style="width:390px;background:#fff;border-radius:20px;border:1px solid #E8EDF2;box-shadow:0 4px 8px rgba(26,29,35,.04),0 16px 32px rgba(26,29,35,.08);padding:12px 24px 28px;flex-shrink:0">
+          <div style="width:36px;height:5px;border-radius:3px;background:#E8EDF2;margin:0 auto 18px"></div>
+          <div style="font-family:'Instrument Serif',Georgia,serif;font-size:28px;color:#1A1D23">Morning coffee.</div>
+          <div style="font-size:13px;color:#4A5568;margin:4px 0 14px">a daily leak</div>
+          <div style="font-size:14.5px;color:#1A1D23;line-height:1.55;margin-bottom:8px">$86.00 a month. You bought it 14 times in the last 30 days.</div>
+          <div style="font-size:14.5px;color:#4A5568;line-height:1.55;margin-bottom:16px">Each time you skip it, we count the money as kept.</div>
+          <div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8898AA;margin-bottom:6px">One skip keeps</div>
+          <div style="display:flex;align-items:baseline;gap:4px;border-bottom:1.5px solid #4CAF82;padding-bottom:6px;margin-bottom:10px"><span style="font-size:18px;color:#8898AA">$</span><span style="font-family:'Instrument Serif',Georgia,serif;font-size:32px;color:#1A1D23;font-variant-numeric:tabular-nums">6.50</span></div>
+          <div style="font-size:13px;color:#4A5568;margin-bottom:16px">We'll ask each day: did you skip it?</div>
+          <div style="background:#F7F9FC;border-radius:12px;padding:12px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;color:#4A5568">1 habit on the free plan</span><span style="font-size:13px;font-weight:600;color:#2E7D55">Start a free trial</span></div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="min-height:50px;border-radius:10px;background:#4CAF82;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;color:#fff">Start breaking it</div>
+            <div style="min-height:44px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:#4A5568">Not this one</div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-family:'Instrument Serif',Georgia,serif;font-size:21px">R15 · Settings sheet</div>
+        <div style="font-size:12.5px;line-height:1.5;color:#4A5568">Behind the gear on Today. Two groups, nothing more.</div>
+        <div style="width:390px;background:#F7F9FC;border-radius:20px;border:1px solid #E8EDF2;box-shadow:0 4px 8px rgba(26,29,35,.04),0 16px 32px rgba(26,29,35,.08);padding:12px 20px 24px;flex-shrink:0">
+          <div style="width:36px;height:5px;border-radius:3px;background:#D6DEE8;margin:0 auto 14px"></div>
+          <div style="font-family:'Instrument Serif',Georgia,serif;font-size:24px;color:#1A1D23;margin-bottom:14px">Settings.</div>
+          <div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8898AA;margin:0 4px 8px">Preferences</div>
+          <div style="background:#fff;border:1px solid #E8EDF2;border-radius:14px;overflow:hidden;margin-bottom:16px">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 16px"><span style="font-size:15px;color:#1A1D23">Currency</span><span style="font-size:15px;color:#4A5568">USD</span></div>
+          </div>
+          <div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8898AA;margin:0 4px 8px">About</div>
+          <div style="background:#fff;border:1px solid #E8EDF2;border-radius:14px;overflow:hidden">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 16px;border-bottom:1px solid #E8EDF2"><span style="font-size:15px;color:#1A1D23">Restore purchases</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 16px;border-bottom:1px solid #E8EDF2"><span style="font-size:15px;color:#1A1D23">Privacy policy</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 16px;border-bottom:1px solid #E8EDF2"><span style="font-size:15px;color:#1A1D23">Terms of service</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 16px"><span style="font-size:15px;color:#1A1D23">Version</span><span style="font-size:15px;color:#4A5568">1.0.0</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:8px;width:390px;flex-shrink:0">
+      <div style="font-family:'Instrument Serif',Georgia,serif;font-size:21px">R16 · Door 2, scan results</div>
+      <div style="font-size:12.5px;line-height:1.5;color:#4A5568;min-height:38px">Statement scan on DS grammar: serif KPIs, tier pills keep their shape+label rule, spend bars stay neutral, only the top leak's CTA is green.</div>
+      <div style="width:390px;height:844px;background:#F7F9FC;border-radius:28px;border:1px solid #E8EDF2;box-shadow:0 4px 8px rgba(26,29,35,.04),0 16px 32px rgba(26,29,35,.08);overflow:hidden;display:flex;flex-direction:column;position:relative;flex-shrink:0">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 28px 6px"><span style="font-size:15px;font-weight:600;color:#1A1D23">9:41</span><span style="display:flex;gap:6px;align-items:center;font-size:15px;color:#1A1D23"><ion-icon name="cellular"></ion-icon><ion-icon name="wifi"></ion-icon><ion-icon name="battery-full" style="font-size:20px"></ion-icon></span></div>
+        <div style="padding:14px 24px 0"><div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8898AA;margin-bottom:2px">May 1 to Jun 30 · 2 accounts</div><div style="font-family:'Instrument Serif',Georgia,serif;font-size:32px;line-height:1.05;color:#1A1D23">Your statements, read.</div></div>
+        <div style="flex:1;padding:14px 20px 0;display:flex;flex-direction:column;gap:12px">
+          <div style="display:flex;gap:8px">
+            <div style="flex:1.3;background:#fff;border:1px solid #E8EDF2;border-radius:14px;padding:12px"><div style="font-family:'Instrument Serif',Georgia,serif;font-size:24px;color:#1A1D23;font-variant-numeric:tabular-nums">$2,841</div><div style="font-size:11px;color:#4A5568;margin-top:2px">total spent</div><span style="display:inline-flex;align-items:center;gap:5px;margin-top:6px;height:20px;padding:0 8px;border-radius:999px;background:#E8F5EE"><span style="width:8px;height:8px;border-radius:4px;background:#2E7D55"></span><span style="font-size:10.5px;font-weight:700;color:#2E7D55">Solid</span></span></div>
+            <div style="flex:1;background:#fff;border:1px solid #E8EDF2;border-radius:14px;padding:12px"><div style="font-family:'Instrument Serif',Georgia,serif;font-size:24px;color:#1A1D23;font-variant-numeric:tabular-nums">$46.58</div><div style="font-size:11px;color:#4A5568;margin-top:2px">per day, 61 days</div></div>
+            <div style="flex:.9;background:#fff;border:1px solid #E8EDF2;border-radius:14px;padding:12px"><div style="font-family:'Instrument Serif',Georgia,serif;font-size:24px;color:#1A1D23;font-variant-numeric:tabular-nums">214</div><div style="font-size:11px;color:#4A5568;margin-top:2px">transactions</div></div>
+          </div>
+          <div style="background:#fff;border:1px solid #E8EDF2;border-radius:20px;padding:18px">
+            <div style="font-size:15px;font-weight:600;color:#1A1D23;margin-bottom:12px">Your leaks, ranked</div>
+            <div style="display:flex;align-items:center;gap:12px;padding-bottom:12px;border-bottom:1px solid #E8EDF2">
+              <div style="width:36px;height:36px;border-radius:10px;background:rgba(255,107,107,.12);display:flex;align-items:center;justify-content:center;font-size:17px">🍕</div>
+              <div style="flex:1"><div style="display:flex;align-items:center;gap:6px"><span style="font-size:14.5px;font-weight:600;color:#1A1D23">Starbucks</span><span style="padding:2px 8px;border-radius:999px;background:#E8F5EE;font-size:10.5px;font-weight:700;color:#2E7D55">Solid</span></div><div style="font-size:12.5px;color:#4A5568;margin-top:1px">27 orders · ≈ $2,140/yr pace</div></div>
+              <div style="padding:0 14px;min-height:38px;border-radius:10px;background:#4CAF82;display:flex;align-items:center;font-size:13px;font-weight:600;color:#fff">Break it</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #E8EDF2">
+              <div style="width:36px;height:36px;border-radius:10px;background:rgba(255,159,67,.12);display:flex;align-items:center;justify-content:center;font-size:17px">🛒</div>
+              <div style="flex:1"><div style="display:flex;align-items:center;gap:6px"><span style="font-size:14.5px;font-weight:600;color:#1A1D23">Grocery runs</span><span style="padding:2px 8px;border-radius:999px;background:#FFF3E0;font-size:10.5px;font-weight:700;color:#B26A00">Likely</span></div><div style="font-size:12.5px;color:#4A5568;margin-top:1px">14 orders · ≈ $5,060/yr pace</div></div>
+              <div style="padding:0 14px;min-height:38px;border-radius:10px;background:#fff;border:1px solid #E8EDF2;display:flex;align-items:center;font-size:13px;font-weight:600;color:#1A1D23">Watch</div>
+            </div>
+            <div style="display:flex;align-items:flex-start;gap:10px;padding-top:12px">
+              <div style="width:36px;height:36px;border-radius:10px;background:rgba(74,144,217,.12);display:flex;align-items:center;justify-content:center;font-size:17px">🚗</div>
+              <div style="flex:1"><div style="display:flex;align-items:center;gap:6px"><span style="font-size:14.5px;font-weight:600;color:#1A1D23">Car loan</span><span style="padding:2px 8px;border-radius:999px;background:#F1F3F5;font-size:10.5px;font-weight:700;color:#616161">Fixed</span></div><div style="font-size:12.5px;color:#4A5568;margin-top:1px;line-height:1.45">August is a 3-payment month. Plan for the extra $214.00.</div></div>
+            </div>
+          </div>
+          <div style="background:#fff;border:1px solid #E8EDF2;border-radius:20px;padding:18px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><span style="font-size:15px;font-weight:600;color:#1A1D23">Where it went</span><span style="font-size:12px;font-weight:600;color:#4A5568">61 days</span></div>
+            <div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:13px;color:#1A1D23">🍕 Food</span><span style="font-size:13px;font-weight:600;color:#1A1D23;font-variant-numeric:tabular-nums">$894 · 31%</span></div><div style="height:6px;border-radius:3px;background:#F7F9FC;overflow:hidden"><div style="height:6px;background:#8898AA;width:100%"></div></div></div>
+            <div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:13px;color:#1A1D23">🛍 Shopping</span><span style="font-size:13px;font-weight:600;color:#1A1D23;font-variant-numeric:tabular-nums">$612 · 22%</span></div><div style="height:6px;border-radius:3px;background:#F7F9FC;overflow:hidden"><div style="height:6px;background:#8898AA;width:71%"></div></div></div>
+            <div><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:13px;color:#1A1D23">🚗 Transport</span><span style="font-size:13px;font-weight:600;color:#1A1D23;font-variant-numeric:tabular-nums">$418 · 15%</span></div><div style="height:6px;border-radius:3px;background:#F7F9FC;overflow:hidden"><div style="height:6px;background:#8898AA;width:48%"></div></div></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:0 4px"><span style="font-size:12px;color:#8898AA">982 of 1,004 rows read · nothing uploaded</span><span style="font-size:12.5px;font-weight:600;color:#F05A5A">Undo import</span></div>
+        </div>
+        <div style="padding:12px 20px 40px"><div style="min-height:50px;border-radius:10px;background:#4CAF82;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;color:#fff">Bring in your last 15 days</div></div>
+        <div style="position:absolute;bottom:8px;left:128px;width:134px;height:5px;border-radius:3px;background:rgba(26,29,35,.28)"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div style="display:flex;flex-direction:column;gap:24px">
+  <div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#2E7D55">Onboarding, completed</span><span style="font-size:13.5px;color:#4A5568">The remaining Door 1 screens: how it works, the fork, step 2, the guided first log, success.</span></div>
+  <div style="display:flex;gap:24px;align-items:flex-start">
+
+    <div style="display:flex;flex-direction:column;gap:16px;width:390px;flex-shrink:0">
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-family:'Instrument Serif',Georgia,serif;font-size:21px">R17 · How it works</div>
+        <div style="font-size:12.5px;line-height:1.5;color:#4A5568">Three facts, three icons, one dismiss. Sheet crop.</div>
+        <div style="width:390px;background:#fff;border-radius:20px;border:1px solid #E8EDF2;box-shadow:0 4px 8px rgba(26,29,35,.04),0 16px 32px rgba(26,29,35,.08);padding:12px 24px 28px;flex-shrink:0">
+          <div style="width:36px;height:5px;border-radius:3px;background:#E8EDF2;margin:0 auto 18px"></div>
+          <div style="font-family:'Instrument Serif',Georgia,serif;font-size:28px;color:#1A1D23;margin-bottom:18px">How it works.</div>
+          <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:22px">
+            <div style="display:flex;gap:12px;align-items:flex-start"><div style="width:36px;height:36px;border-radius:10px;background:#E8F5EE;display:flex;align-items:center;justify-content:center;color:#2E7D55;flex-shrink:0"><i data-lucide="timer" style="width:18px;height:18px"></i></div><span style="font-size:15px;color:#1A1D23;line-height:1.5;padding-top:6px">Log expenses in 10 seconds.</span></div>
+            <div style="display:flex;gap:12px;align-items:flex-start"><div style="width:36px;height:36px;border-radius:10px;background:#E8F5EE;display:flex;align-items:center;justify-content:center;color:#2E7D55;flex-shrink:0"><i data-lucide="search" style="width:18px;height:18px"></i></div><span style="font-size:15px;color:#1A1D23;line-height:1.5;padding-top:6px">We spot the habit that leaks the most.</span></div>
+            <div style="display:flex;gap:12px;align-items:flex-start"><div style="width:36px;height:36px;border-radius:10px;background:#E8F5EE;display:flex;align-items:center;justify-content:center;color:#2E7D55;flex-shrink:0"><i data-lucide="piggy-bank" style="width:18px;height:18px"></i></div><span style="font-size:15px;color:#1A1D23;line-height:1.5;padding-top:6px">Every time you skip it, we count the money you kept.</span></div>
+          </div>
+          <div style="min-height:50px;border-radius:10px;background:#4CAF82;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;color:#fff">OK</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-family:'Instrument Serif',Georgia,serif;font-size:21px">R18 · Two-door fork</div>
+        <div style="font-size:12.5px;line-height:1.5;color:#4A5568">Door 1 carries the tint; Door 2 leads to the scan (R16). Crop.</div>
+        <div style="width:390px;background:#F7F9FC;border-radius:20px;border:1px solid #E8EDF2;box-shadow:0 4px 8px rgba(26,29,35,.04);padding:24px;flex-shrink:0">
+          <div style="font-family:'Instrument Serif',Georgia,serif;font-size:30px;line-height:1.15;color:#1A1D23;margin-bottom:6px">How do you want to start?</div>
+          <div style="font-size:14px;color:#4A5568;margin-bottom:18px">Both stay on this device.</div>
+          <div style="background:#E8F5EE;border:1px solid #4CAF82;border-radius:20px;padding:18px;margin-bottom:12px">
+            <div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#2E7D55;margin-bottom:6px">About a minute</div>
+            <div style="font-size:17px;font-weight:600;color:#1A1D23;margin-bottom:4px">Start fresh</div>
+            <div style="font-size:14px;color:#4A5568;line-height:1.5">Tap through what you pay for. We estimate your leak from your answers.</div>
+          </div>
+          <div style="background:#fff;border:1px solid #E8EDF2;border-radius:20px;padding:18px;margin-bottom:16px">
+            <div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8898AA;margin-bottom:6px">2 to 3 minutes</div>
+            <div style="font-size:17px;font-weight:600;color:#1A1D23;margin-bottom:4px">Bring your statements</div>
+            <div style="font-size:14px;color:#4A5568;line-height:1.5">Import a bank CSV. We scan it on your phone. Nothing uploads, ever.</div>
+          </div>
+          <div style="display:flex;justify-content:center"><span style="font-size:14px;font-weight:600;color:#4A5568">Skip for now</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:8px;width:390px;flex-shrink:0">
+      <div style="font-family:'Instrument Serif',Georgia,serif;font-size:21px">R19 · Audit, step 2</div>
+      <div style="font-size:12.5px;line-height:1.5;color:#4A5568;min-height:38px">Frequency bands as quiet segments; only the chosen band takes sage. The weekly add gets the serif footer.</div>
+      <div style="width:390px;height:844px;background:#F7F9FC;border-radius:28px;border:1px solid #E8EDF2;box-shadow:0 4px 8px rgba(26,29,35,.04),0 16px 32px rgba(26,29,35,.08);overflow:hidden;display:flex;flex-direction:column;position:relative;flex-shrink:0">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 28px 6px"><span style="font-size:15px;font-weight:600;color:#1A1D23">9:41</span><span style="display:flex;gap:6px;align-items:center;font-size:15px;color:#1A1D23"><ion-icon name="cellular"></ion-icon><ion-icon name="wifi"></ion-icon><ion-icon name="battery-full" style="font-size:20px"></ion-icon></span></div>
+        <div style="flex:1;padding:20px 24px 0">
+          <div style="font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#4CAF82;margin-bottom:8px">Step 2 of 2 · about 30 seconds</div>
+          <div style="font-family:'Instrument Serif',Georgia,serif;font-size:30px;line-height:1.15;color:#1A1D23;margin-bottom:8px">And the everyday stuff?</div>
+          <div style="font-size:14px;color:#4A5568;line-height:1.5;margin-bottom:20px">Roughly how often in a typical week. Tap a price if yours differs.</div>
+          <div style="background:#fff;border:1px solid #E8EDF2;border-radius:20px;padding:16px;margin-bottom:12px">
+            <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:15px;font-weight:600;color:#1A1D23">Coffee or tea out</span><span style="font-size:12.5px;color:#8898AA;font-variant-numeric:tabular-nums">about $6.00 each</span></div>
+            <div style="display:flex;gap:6px;margin-top:12px">
+              <div style="flex:1;min-height:42px;border:1px solid #E8EDF2;border-radius:10px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#4A5568">Never</div>
+              <div style="flex:1;min-height:42px;border:1px solid #E8EDF2;border-radius:10px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#4A5568">1-2</div>
+              <div style="flex:1;min-height:42px;border:1px solid #4CAF82;border-radius:10px;background:#4CAF82;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#fff">3-5</div>
+              <div style="flex:1;min-height:42px;border:1px solid #E8EDF2;border-radius:10px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#4A5568">Daily</div>
+            </div>
+          </div>
+          <div style="background:#fff;border:1px solid #E8EDF2;border-radius:20px;padding:16px;margin-bottom:12px">
+            <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:15px;font-weight:600;color:#1A1D23">Food delivery</span><span style="font-size:12.5px;font-weight:600;color:#2E7D55;font-variant-numeric:tabular-nums;text-decoration:underline dotted">$22.00</span></div>
+            <div style="display:flex;gap:6px;margin-top:12px">
+              <div style="flex:1;min-height:42px;border:1px solid #E8EDF2;border-radius:10px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#4A5568">Never</div>
+              <div style="flex:1;min-height:42px;border:1px solid #4CAF82;border-radius:10px;background:#4CAF82;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#fff">1-2</div>
+              <div style="flex:1;min-height:42px;border:1px solid #E8EDF2;border-radius:10px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#4A5568">3-5</div>
+              <div style="flex:1;min-height:42px;border:1px solid #E8EDF2;border-radius:10px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#4A5568">Daily</div>
+            </div>
+          </div>
+          <div style="background:#fff;border:1px solid #E8EDF2;border-radius:20px;padding:16px">
+            <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:15px;font-weight:600;color:#1A1D23">Impulse buys</span><span style="font-size:12.5px;color:#8898AA;font-variant-numeric:tabular-nums">about $15.00 each</span></div>
+            <div style="display:flex;gap:6px;margin-top:12px">
+              <div style="flex:1;min-height:42px;border:1px solid #E8EDF2;border-radius:10px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#4A5568">Never</div>
+              <div style="flex:1;min-height:42px;border:1px solid #E8EDF2;border-radius:10px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#4A5568">1-2</div>
+              <div style="flex:1;min-height:42px;border:1px solid #E8EDF2;border-radius:10px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#4A5568">3-5</div>
+              <div style="flex:1;min-height:42px;border:1px solid #E8EDF2;border-radius:10px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#4A5568">Daily</div>
+            </div>
+          </div>
+        </div>
+        <div style="border-top:1px solid #E8EDF2;background:#fff;padding:14px 24px 40px">
+          <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:12px"><span style="font-family:'Instrument Serif',Georgia,serif;font-size:26px;color:#1A1D23;font-variant-numeric:tabular-nums">+ $57</span><span style="font-size:13px;color:#4A5568">a week</span></div>
+          <div style="min-height:50px;border-radius:10px;background:#4CAF82;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;color:#fff">See my leak</div>
+          <div style="margin-top:8px;min-height:40px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:#4A5568">Skip this step</div>
+        </div>
+        <div style="position:absolute;bottom:8px;left:128px;width:134px;height:5px;border-radius:3px;background:rgba(26,29,35,.28)"></div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:8px;width:390px;flex-shrink:0">
+      <div style="font-family:'Instrument Serif',Georgia,serif;font-size:21px">R20 · Guided first log</div>
+      <div style="font-size:12.5px;line-height:1.5;color:#4A5568;min-height:38px">The real log form, coached. One serif amount, four emoji categories, one save.</div>
+      <div style="width:390px;height:844px;background:#F7F9FC;border-radius:28px;border:1px solid #E8EDF2;box-shadow:0 4px 8px rgba(26,29,35,.04),0 16px 32px rgba(26,29,35,.08);overflow:hidden;display:flex;flex-direction:column;position:relative;flex-shrink:0">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 28px 6px"><span style="font-size:15px;font-weight:600;color:#1A1D23">9:41</span><span style="display:flex;gap:6px;align-items:center;font-size:15px;color:#1A1D23"><ion-icon name="cellular"></ion-icon><ion-icon name="wifi"></ion-icon><ion-icon name="battery-full" style="font-size:20px"></ion-icon></span></div>
+        <div style="padding:16px 20px 0">
+          <div style="display:flex;align-items:flex-start;gap:8px;background:#E8F5EE;border-radius:12px;padding:12px;color:#2E7D55"><i data-lucide="sprout" style="width:14px;height:14px;margin-top:3px;flex-shrink:0"></i><span style="flex:1;font-size:13.5px;color:#1A1D23;line-height:1.5">One practice log and you're done. Try today's coffee. Amount first.</span></div>
+        </div>
+        <div style="flex:1;padding:28px 24px 0">
+          <div style="display:flex;align-items:baseline;justify-content:center;gap:6px;margin-bottom:28px"><span style="font-size:26px;color:#8898AA">$</span><span style="font-family:'Instrument Serif',Georgia,serif;font-size:64px;color:#1A1D23;font-variant-numeric:tabular-nums">6.50</span></div>
+          <div style="display:flex;flex-wrap:wrap;gap:10px">
+            <div style="width:calc(50% - 5px);box-sizing:border-box;display:flex;align-items:center;gap:12px;background:#E8F5EE;border:1px solid #4CAF82;border-radius:14px;padding:12px 14px"><div style="width:40px;height:40px;border-radius:12px;background:rgba(255,107,107,.12);display:flex;align-items:center;justify-content:center;font-size:19px">🍕</div><span style="font-size:15px;font-weight:600;color:#1A1D23">Food</span></div>
+            <div style="width:calc(50% - 5px);box-sizing:border-box;display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #E8EDF2;border-radius:14px;padding:12px 14px"><div style="width:40px;height:40px;border-radius:12px;background:rgba(236,72,153,.12);display:flex;align-items:center;justify-content:center;font-size:19px">🛍</div><span style="font-size:15px;font-weight:500;color:#1A1D23">Shopping</span></div>
+            <div style="width:calc(50% - 5px);box-sizing:border-box;display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #E8EDF2;border-radius:14px;padding:12px 14px"><div style="width:40px;height:40px;border-radius:12px;background:rgba(245,166,35,.12);display:flex;align-items:center;justify-content:center;font-size:19px">🎬</div><span style="font-size:15px;font-weight:500;color:#1A1D23">Entertainment</span></div>
+            <div style="width:calc(50% - 5px);box-sizing:border-box;display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #E8EDF2;border-radius:14px;padding:12px 14px"><div style="width:40px;height:40px;border-radius:12px;background:rgba(74,144,217,.12);display:flex;align-items:center;justify-content:center;font-size:19px">🚗</div><span style="font-size:15px;font-weight:500;color:#1A1D23">Transport</span></div>
+          </div>
+        </div>
+        <div style="padding:0 24px 44px;display:flex;flex-direction:column;align-items:center">
+          <div style="min-height:52px;width:100%;border-radius:10px;background:#4CAF82;display:flex;align-items:center;justify-content:center;gap:8px;font-size:16px;font-weight:600;color:#fff"><span>Save expense</span><i data-lucide="check" style="width:18px;height:18px"></i></div>
+          <div style="margin-top:12px;min-height:44px;display:flex;align-items:center;font-size:14px;font-weight:600;color:#4A5568">Later</div>
+        </div>
+        <div style="position:absolute;bottom:8px;left:128px;width:134px;height:5px;border-radius:3px;background:rgba(26,29,35,.28)"></div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:8px;width:390px;flex-shrink:0">
+      <div style="font-family:'Instrument Serif',Georgia,serif;font-size:21px">R21 · Success</div>
+      <div style="font-size:12.5px;line-height:1.5;color:#4A5568;min-height:38px">Kept primed at zero, the biggest leak ready to break, premium as one quiet line.</div>
+      <div style="width:390px;height:844px;background:#F7F9FC;border-radius:28px;border:1px solid #E8EDF2;box-shadow:0 4px 8px rgba(26,29,35,.04),0 16px 32px rgba(26,29,35,.08);overflow:hidden;display:flex;flex-direction:column;position:relative;flex-shrink:0">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 28px 6px"><span style="font-size:15px;font-weight:600;color:#1A1D23">9:41</span><span style="display:flex;gap:6px;align-items:center;font-size:15px;color:#1A1D23"><ion-icon name="cellular"></ion-icon><ion-icon name="wifi"></ion-icon><ion-icon name="battery-full" style="font-size:20px"></ion-icon></span></div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;padding:32px 24px 0">
+          <div style="width:72px;height:72px;border-radius:36px;background:#4CAF82;display:flex;align-items:center;justify-content:center;color:#fff;margin-bottom:18px"><i data-lucide="check" style="width:36px;height:36px"></i></div>
+          <div style="font-family:'Instrument Serif',Georgia,serif;font-size:34px;line-height:1.1;color:#1A1D23;text-align:center;margin-bottom:20px">Your leak map is ready.</div>
+          <div style="align-self:stretch;background:#E8F5EE;border-radius:20px;padding:16px;display:flex;flex-direction:column;align-items:center;margin-bottom:14px">
+            <div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#2E7D55">Kept so far</div>
+            <div style="font-family:'Instrument Serif',Georgia,serif;font-size:44px;line-height:1.05;color:#1A1D23;font-variant-numeric:tabular-nums;margin-top:2px">$0.00</div>
+            <div style="font-size:13px;color:#4A5568;margin-top:2px">your first skip starts this counter</div>
+          </div>
+          <div style="align-self:stretch;background:#fff;border:1px solid #E8EDF2;border-radius:20px;padding:16px">
+            <div style="display:flex;align-items:center;gap:12px">
+              <div style="width:40px;height:40px;border-radius:12px;background:rgba(255,107,107,.12);display:flex;align-items:center;justify-content:center;font-size:19px">🍕</div>
+              <div style="flex:1"><div style="font-size:15px;font-weight:600;color:#1A1D23">Food delivery</div><div style="font-size:12.5px;color:#4A5568;margin-top:1px">about $117.00 a month · your biggest leak</div></div>
+            </div>
+            <div style="min-height:46px;border-radius:10px;background:#4CAF82;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;color:#fff;margin-top:14px">Break it</div>
+          </div>
+          <div style="font-size:12.5px;color:#8898AA;text-align:center;margin-top:18px;line-height:1.5">1 habit free, always. Premium trial available when you're ready.</div>
+          <div style="min-height:40px;display:flex;align-items:center;font-size:13.5px;font-weight:600;color:#2E7D55">See what Premium adds</div>
+        </div>
+        <div style="padding:0 24px 44px"><div style="min-height:52px;border-radius:10px;background:#4CAF82;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;color:#fff">Continue</div></div>
+        <div style="position:absolute;bottom:8px;left:128px;width:134px;height:5px;border-radius:3px;background:rgba(26,29,35,.28)"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+<div style="display:flex;flex-direction:column;gap:24px">
+  <div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#2E7D55">Money edges + remaining sheets</span><span style="font-size:13.5px;color:#4A5568">Upcoming view, edit expense, partial slip, skip-value edit, scan intake and the graceful failure.</span></div>
+  <div style="display:flex;gap:24px;align-items:flex-start">
+
+    <div style="display:flex;flex-direction:column;gap:8px;width:390px;flex-shrink:0">
+      <div style="font-family:'Instrument Serif',Georgia,serif;font-size:21px">R22 · Money, upcoming</div>
+      <div style="font-size:12.5px;line-height:1.5;color:#4A5568;min-height:38px">The second segment: serif window total, then each bill with days-until and an amber flag for the 3-payment month.</div>
+      <div style="width:390px;height:844px;background:#F7F9FC;border-radius:28px;border:1px solid #E8EDF2;box-shadow:0 4px 8px rgba(26,29,35,.04),0 16px 32px rgba(26,29,35,.08);overflow:hidden;display:flex;flex-direction:column;position:relative;flex-shrink:0">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 28px 6px"><span style="font-size:15px;font-weight:600;color:#1A1D23">9:41</span><span style="display:flex;gap:6px;align-items:center;font-size:15px;color:#1A1D23"><ion-icon name="cellular"></ion-icon><ion-icon name="wifi"></ion-icon><ion-icon name="battery-full" style="font-size:20px"></ion-icon></span></div>
+        <div style="padding:14px 24px 0"><div style="font-family:'Instrument Serif',Georgia,serif;font-size:36px;line-height:1;color:#1A1D23">Money.</div></div>
+        <div style="padding:14px 20px 0">
+          <div style="display:flex;background:#E8EDF2;border-radius:999px;padding:3px">
+            <div style="flex:1;padding:8px 0;border-radius:999px;text-align:center;font-size:13.5px;font-weight:600;color:#4A5568">Spent</div>
+            <div style="flex:1;padding:8px 0;border-radius:999px;background:#fff;box-shadow:0 1px 2px rgba(26,29,35,.06);text-align:center;font-size:13.5px;font-weight:600;color:#1A1D23">Upcoming</div>
+          </div>
+        </div>
+        <div style="flex:1;padding:14px 20px 0">
+          <div style="background:#fff;border:1px solid #E8EDF2;border-radius:20px;padding:18px;display:flex;flex-direction:column;align-items:center">
+            <div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8898AA">Next 60 days</div>
+            <div style="font-family:'Instrument Serif',Georgia,serif;font-size:40px;line-height:1.1;color:#1A1D23;font-variant-numeric:tabular-nums;margin-top:2px">$3,779.98</div>
+            <div style="font-size:13px;color:#4A5568;margin-top:2px">4 recurring expenses</div>
+          </div>
+          <div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8898AA;margin:16px 4px 8px">August</div>
+          <div style="background:#fff;border:1px solid #E8EDF2;border-radius:14px;padding:4px 16px">
+            <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #E8EDF2">
+              <div style="width:36px;height:36px;border-radius:10px;background:rgba(142,124,243,.12);display:flex;align-items:center;justify-content:center;font-size:17px">🏠</div>
+              <div style="flex:1"><div style="font-size:15px;font-weight:600;color:#1A1D23">Rent</div><div style="font-size:12px;color:#8898AA">Sat, Aug 1 · in 7 days</div></div>
+              <div style="display:flex;flex-direction:column;align-items:flex-end"><span style="font-size:15px;font-weight:600;color:#1A1D23;font-variant-numeric:tabular-nums">$1,650.00</span><span style="font-size:11.5px;color:#8898AA">monthly</span></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #E8EDF2">
+              <div style="width:36px;height:36px;border-radius:10px;background:rgba(6,182,212,.12);display:flex;align-items:center;justify-content:center;font-size:17px">📱</div>
+              <div style="flex:1"><div style="font-size:15px;font-weight:600;color:#1A1D23">Video streaming</div><div style="font-size:12px;color:#8898AA">Mon, Aug 3 · in 9 days</div></div>
+              <div style="display:flex;flex-direction:column;align-items:flex-end"><span style="font-size:15px;font-weight:600;color:#1A1D23;font-variant-numeric:tabular-nums">$15.49</span><span style="font-size:11.5px;color:#8898AA">monthly</span></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;padding:12px 0">
+              <div style="width:36px;height:36px;border-radius:10px;background:rgba(74,144,217,.12);display:flex;align-items:center;justify-content:center;font-size:17px">🚗</div>
+              <div style="flex:1"><div style="display:flex;align-items:center;gap:6px"><span style="font-size:15px;font-weight:600;color:#1A1D23">Car loan</span><span style="padding:2px 8px;border-radius:999px;background:rgba(245,166,35,.14);font-size:10.5px;font-weight:700;color:#B26A00">3 payments</span></div><div style="font-size:12px;color:#8898AA">Fri, Aug 7 · in 13 days</div></div>
+              <div style="display:flex;flex-direction:column;align-items:flex-end"><span style="font-size:15px;font-weight:600;color:#1A1D23;font-variant-numeric:tabular-nums">$214.00</span><span style="font-size:11.5px;color:#8898AA">biweekly</span></div>
+            </div>
+          </div>
+          <div style="font-size:12.5px;color:#8898AA;text-align:center;margin-top:16px;line-height:1.5">Mark an expense as repeating and its next date shows up here.</div>
+        </div>
+        <div style="height:84px;background:#fff;border-top:1px solid #E8EDF2;display:flex;padding:10px 0 28px">
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;color:#8898AA"><i data-lucide="sun" style="width:22px;height:22px"></i><span style="font-size:11px;font-weight:600">Today</span></div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;color:#4CAF82"><i data-lucide="wallet" style="width:22px;height:22px"></i><span style="font-size:11px;font-weight:600">Money</span></div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;color:#8898AA"><i data-lucide="trending-up" style="width:22px;height:22px"></i><span style="font-size:11px;font-weight:600">Insights</span></div>
+        </div>
+        <div style="position:absolute;bottom:8px;left:128px;width:134px;height:5px;border-radius:3px;background:rgba(26,29,35,.28)"></div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:16px;width:390px;flex-shrink:0">
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-family:'Instrument Serif',Georgia,serif;font-size:21px">R23 · Edit expense</div>
+        <div style="font-size:12.5px;line-height:1.5;color:#4A5568">Same grammar as the log sheet; delete is plain coral text with descriptive confirm copy.</div>
+        <div style="width:390px;background:#fff;border-radius:20px;border:1px solid #E8EDF2;box-shadow:0 4px 8px rgba(26,29,35,.04),0 16px 32px rgba(26,29,35,.08);padding:12px 24px 24px;flex-shrink:0">
+          <div style="width:36px;height:5px;border-radius:3px;background:#E8EDF2;margin:0 auto 14px"></div>
+          <div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8898AA;text-align:center;margin-bottom:6px">Edit expense</div>
+          <div style="display:flex;align-items:baseline;justify-content:center;gap:6px"><span style="font-size:24px;color:#8898AA">$</span><span style="font-family:'Instrument Serif',Georgia,serif;font-size:54px;color:#1A1D23;font-variant-numeric:tabular-nums">6.50</span></div>
+          <div style="display:flex;gap:8px;justify-content:center;margin-top:14px">
+            <div style="width:44px;height:44px;border-radius:12px;background:rgba(255,107,107,.12);border:1.5px solid #FF6B6B;display:flex;align-items:center;justify-content:center;font-size:20px">🍕</div>
+            <div style="width:44px;height:44px;border-radius:12px;background:rgba(255,159,67,.12);border:1.5px solid transparent;display:flex;align-items:center;justify-content:center;font-size:20px">🛒</div>
+            <div style="width:44px;height:44px;border-radius:12px;background:rgba(74,144,217,.12);border:1.5px solid transparent;display:flex;align-items:center;justify-content:center;font-size:20px">🚗</div>
+            <div style="width:44px;height:44px;border-radius:12px;background:rgba(245,166,35,.12);border:1.5px solid transparent;display:flex;align-items:center;justify-content:center;font-size:20px">🎬</div>
+            <div style="width:44px;height:44px;border-radius:12px;background:rgba(236,72,153,.12);border:1.5px solid transparent;display:flex;align-items:center;justify-content:center;font-size:20px">🛍</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;border:1px solid #E8EDF2;border-radius:10px;padding:12px 14px;margin-top:16px;color:#8898AA"><i data-lucide="store" style="width:18px;height:18px"></i><span style="font-size:15px;color:#1A1D23">Starbucks</span></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 2px">
+            <div style="display:flex;align-items:center;gap:10px;color:#4A5568"><i data-lucide="repeat" style="width:18px;height:18px"></i><span style="font-size:14px;color:#1A1D23">Repeats monthly</span></div>
+            <div style="width:44px;height:26px;border-radius:13px;background:#4CAF82;padding:3px;display:flex;justify-content:flex-end"><div style="width:20px;height:20px;border-radius:10px;background:#fff"></div></div>
+          </div>
+          <div style="min-height:50px;border-radius:10px;background:#4CAF82;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;color:#fff;margin-top:4px">Save changes</div>
+          <div style="min-height:44px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:#F05A5A;margin-top:2px">Delete expense</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-family:'Instrument Serif',Georgia,serif;font-size:21px">R24 · Partial slip</div>
+        <div style="font-size:12.5px;line-height:1.5;color:#4A5568">The day stays a slip; anything under the usual spend counts as kept.</div>
+        <div style="width:390px;background:#fff;border-radius:20px;border:1px solid #E8EDF2;box-shadow:0 4px 8px rgba(26,29,35,.04),0 16px 32px rgba(26,29,35,.08);padding:12px 24px 24px;flex-shrink:0">
+          <div style="width:36px;height:5px;border-radius:3px;background:#E8EDF2;margin:0 auto 14px"></div>
+          <div style="font-family:'Instrument Serif',Georgia,serif;font-size:26px;color:#1A1D23;margin-bottom:8px">How much did it cost?</div>
+          <div style="font-size:14px;color:#4A5568;line-height:1.5;margin-bottom:16px">You usually spend about $6.50. Anything under that counts as kept.</div>
+          <div style="display:flex;align-items:baseline;gap:4px;border-bottom:1.5px solid #4CAF82;padding-bottom:6px;margin-bottom:18px"><span style="font-size:18px;color:#8898AA">$</span><span style="font-family:'Instrument Serif',Georgia,serif;font-size:32px;color:#1A1D23;font-variant-numeric:tabular-nums">3.25</span></div>
+          <div style="min-height:50px;border-radius:10px;background:#4CAF82;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;color:#fff">Save</div>
+          <div style="min-height:44px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:#4A5568;margin-top:2px">Keep it as answered</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-family:'Instrument Serif',Georgia,serif;font-size:21px">R25 · Edit skip value + stop</div>
+        <div style="font-size:12.5px;line-height:1.5;color:#4A5568">Single-field edit; stopping keeps the history and says so.</div>
+        <div style="width:390px;background:#fff;border-radius:20px;border:1px solid #E8EDF2;box-shadow:0 4px 8px rgba(26,29,35,.04),0 16px 32px rgba(26,29,35,.08);padding:12px 24px 24px;flex-shrink:0;margin-bottom:12px">
+          <div style="width:36px;height:5px;border-radius:3px;background:#E8EDF2;margin:0 auto 14px"></div>
+          <div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8898AA;margin-bottom:8px">One skip keeps</div>
+          <div style="display:flex;align-items:baseline;gap:4px;border-bottom:1.5px solid #4CAF82;padding-bottom:6px;margin-bottom:18px"><span style="font-size:18px;color:#8898AA">$</span><span style="font-family:'Instrument Serif',Georgia,serif;font-size:32px;color:#1A1D23;font-variant-numeric:tabular-nums">6.50</span></div>
+          <div style="min-height:50px;border-radius:10px;background:#4CAF82;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;color:#fff">Save</div>
+        </div>
+        <div style="width:390px;background:#F7F9FC;border-radius:20px;border:1px solid #E8EDF2;box-shadow:0 4px 8px rgba(26,29,35,.04);padding:24px;display:flex;justify-content:center;flex-shrink:0">
+          <div style="width:300px;background:#fff;border-radius:20px;box-shadow:0 4px 8px rgba(26,29,35,.04),0 16px 32px rgba(26,29,35,.08);padding:20px">
+            <div style="font-family:'Instrument Serif',Georgia,serif;font-size:22px;color:#1A1D23">Stop breaking this habit?</div>
+            <div style="font-size:13.5px;color:#4A5568;line-height:1.5;margin-top:6px">Your history is kept. You can start breaking it again any time.</div>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-top:16px">
+              <div style="min-height:44px;border-radius:10px;background:#F05A5A;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:#fff">Stop breaking it</div>
+              <div style="min-height:44px;border-radius:10px;border:1px solid #E8EDF2;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:#1A1D23">Keep going</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:16px;width:390px;flex-shrink:0">
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-family:'Instrument Serif',Georgia,serif;font-size:21px">R26 · Scan intake + question</div>
+        <div style="font-size:12.5px;line-height:1.5;color:#4A5568">Door 2 entry: file chips, one CTA, and the at-most-two questions as plain chip cards.</div>
+        <div style="width:390px;background:#F7F9FC;border-radius:20px;border:1px solid #E8EDF2;box-shadow:0 4px 8px rgba(26,29,35,.04);padding:28px 24px;flex-shrink:0">
+          <div style="font-family:'Instrument Serif',Georgia,serif;font-size:30px;line-height:1.15;color:#1A1D23;text-align:center">Scan your statement.</div>
+          <div style="font-size:14px;color:#4A5568;text-align:center;margin:8px 0 18px">CSV files only. Everything stays on this device.</div>
+          <div style="display:flex;gap:8px;justify-content:center;margin-bottom:16px">
+            <span style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;background:#fff;border:1px solid #E8EDF2;color:#4A5568"><i data-lucide="file-text" style="width:14px;height:14px"></i><span style="font-size:12.5px;font-weight:600;color:#1A1D23">checking-jun.csv</span></span>
+            <span style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;background:#fff;border:1px solid #E8EDF2;color:#4A5568"><i data-lucide="file-text" style="width:14px;height:14px"></i><span style="font-size:12.5px;font-weight:600;color:#1A1D23">card-jun.csv</span></span>
+          </div>
+          <div style="min-height:50px;border-radius:10px;background:#4CAF82;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;color:#fff;margin-bottom:18px">Start scan</div>
+          <div style="background:#fff;border:1px solid #E8EDF2;border-radius:14px;padding:16px">
+            <div style="font-size:14.5px;color:#1A1D23;line-height:1.5;margin-bottom:12px">Is 03/04 March 4th or April 3rd?</div>
+            <div style="display:flex;gap:10px">
+              <div style="flex:1;min-height:44px;border-radius:10px;border:1px solid #E8EDF2;background:#F7F9FC;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:#1A1D23">March 4</div>
+              <div style="flex:1;min-height:44px;border-radius:10px;border:1px solid #E8EDF2;background:#F7F9FC;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:#1A1D23">April 3</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-family:'Instrument Serif',Georgia,serif;font-size:21px">R27 · Graceful failure</div>
+        <div style="font-size:12.5px;line-height:1.5;color:#4A5568">No red, no error icon. The apology carries the warmth; three ordered exits back into Door 1.</div>
+        <div style="width:390px;background:#F7F9FC;border-radius:20px;border:1px solid #E8EDF2;box-shadow:0 4px 8px rgba(26,29,35,.04);padding:32px 24px;flex-shrink:0">
+          <div style="display:flex;justify-content:center;margin-bottom:14px"><div style="width:44px;height:44px;border-radius:22px;background:#E8F5EE;display:flex;align-items:center;justify-content:center;color:#2E7D55"><i data-lucide="sprout" style="width:22px;height:22px"></i></div></div>
+          <div style="font-family:'Instrument Serif',Georgia,serif;font-size:28px;color:#1A1D23;text-align:center;margin-bottom:10px">This one's on us.</div>
+          <div style="font-size:14px;color:#4A5568;text-align:center;line-height:1.55;margin-bottom:20px">We couldn't read this file confidently enough to trust the numbers, and half-right money math is worse than none. Your data is fine; our reader just isn't fluent in this format yet.</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="min-height:48px;border-radius:10px;background:#4CAF82;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;color:#fff">Try a different export</div>
+            <div style="font-size:12px;color:#8898AA;text-align:center;line-height:1.5;padding:0 8px;margin-bottom:6px">Banks usually offer a few download formats. CSV works best; a shorter date range sometimes exports cleaner.</div>
+            <div style="min-height:48px;border-radius:10px;border:1px solid #E8EDF2;background:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;color:#1A1D23">Start with the 90-second leak audit</div>
+            <div style="min-height:44px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:#4A5568">Log your first expense by hand</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</section>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  componentDidMount() {
+    const run = () => { if (window.lucide) window.lucide.createIcons(); };
+    run();
+    this._iconTimer = setInterval(run, 700);
+    setTimeout(() => clearInterval(this._iconTimer), 6000);
+  }
+  componentWillUnmount() { clearInterval(this._iconTimer); }
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

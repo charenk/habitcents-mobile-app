@@ -2,7 +2,7 @@ import React, { useMemo, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, SectionList, TouchableOpacity, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/ui/Icon';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCategories } from '@/contexts/CategoriesContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
@@ -142,7 +142,7 @@ export default function CategoriesScreen() {
           accessibilityRole="button"
           accessibilityLabel={strings.categories.addCategoryLabel}
         >
-          <Ionicons name="add" size={24} color={theme.primary} />
+          <Icon name="Plus" size={24} color={theme.primary} />
         </TouchableOpacity>
       </View>
 
@@ -156,7 +156,7 @@ export default function CategoriesScreen() {
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Ionicons name="folder-outline" size={48} color={theme.textTertiary} />
+            <Icon name="Folder" size={48} color={theme.textTertiary} />
             <Text style={styles.emptyText}>{strings.categories.emptyTitle}</Text>
             <Text style={styles.emptySubtext}>
               {strings.categories.emptySubtitle}

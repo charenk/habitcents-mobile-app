@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/ui/Icon';
 import { useTheme } from '@/contexts/ThemeContext';
 import { formatDate } from '@/utils/dates';
 import { useExpenses } from '@/contexts/ExpensesContext';
@@ -97,7 +97,7 @@ export default function ExpensesScreen() {
             accessibilityRole="button"
             accessibilityLabel={strings.settings.title}
           >
-            <Ionicons name="settings-outline" size={22} color={theme.textSecondary} />
+            <Icon name="Settings2" size={22} color={theme.textSecondary} />
           </TouchableOpacity>
         </View>
         <View style={styles.viewTabs}>

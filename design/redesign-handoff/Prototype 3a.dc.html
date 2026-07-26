@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<script type="module" src="https://cdn.jsdelivr.net/npm/ionicons@7.2.2/dist/ionicons/ionicons.esm.js"></script>
+<script src="https://unpkg.com/lucide@0.462.0/dist/umd/lucide.min.js"></script>
+<style>
+body{margin:0;min-width:fit-content;background:#F7F9FC;font-family:'Inter',-apple-system,'Helvetica Neue',Arial,sans-serif;color:#1A1D23;-webkit-font-smoothing:antialiased}
+*{scrollbar-width:none}
+*::-webkit-scrollbar{display:none}
+a{color:#2E7D55;text-decoration:underline;text-underline-offset:3px}
+a:hover{color:#4CAF82}
+@keyframes hcToast{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes hcSheet{from{transform:translateY(40px);opacity:.6}to{transform:translateY(0);opacity:1}}
+@keyframes hcspin{to{transform:rotate(360deg)}}
+</style>
+</helmet>
+<div style="width:390px;height:844px;background:#F7F9FC;border-radius:28px;border:1px solid #E8EDF2;box-shadow:0 4px 8px rgba(26,29,35,.04),0 24px 48px rgba(26,29,35,.12);overflow:hidden;display:flex;flex-direction:column;position:relative;flex-shrink:0" data-screen-label="Prototype 3a phone">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 28px 6px;flex-shrink:0"><span style="font-size:15px;font-weight:600;color:#1A1D23">9:41</span><span style="display:flex;gap:6px;align-items:center;font-size:15px;color:#1A1D23"><ion-icon name="cellular"></ion-icon><ion-icon name="wifi"></ion-icon><ion-icon name="battery-full" style="font-size:20px"></ion-icon></span></div>
+
+    <!-- ===== ONBOARDING ===== -->
+    <sc-if value="{{ obWelcome }}" hint-placeholder-val="{{ true }}">
+      <div style="flex:1;display:flex;flex-direction:column;min-height:0">
+        <div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 32px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:28px"><div style="width:34px;height:34px;border-radius:17px;background:#4CAF82;display:flex;align-items:center;justify-content:center;color:#fff"><i data-lucide="sprout" style="width:18px;height:18px"></i></div><span style="font-size:17px;font-weight:700;color:#1A1D23">HabitCents</span></div>
+          <div style="font-family:'Instrument Serif',Georgia,serif;font-size:44px;line-height:1.08;letter-spacing:-0.02em;color:#1A1D23;margin-bottom:16px">Your money has a story. Let's read it.</div>
+          <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:16px">
+            <div style="display:flex;gap:12px;align-items:center"><div style="width:32px;height:32px;border-radius:9px;background:#E8F5EE;display:flex;align-items:center;justify-content:center;color:#2E7D55;flex-shrink:0"><i data-lucide="timer" style="width:16px;height:16px"></i></div><span style="font-size:15px;color:#1A1D23">Log expenses in 10 seconds.</span></div>
+            <div style="display:flex;gap:12px;align-items:center"><div style="width:32px;height:32px;border-radius:9px;background:#E8F5EE;display:flex;align-items:center;justify-content:center;color:#2E7D55;flex-shrink:0"><i data-lucide="pie-chart" style="width:16px;height:16px"></i></div><span style="font-size:15px;color:#1A1D23">See where your money goes.</span></div>
+            <div style="display:flex;gap:12px;align-items:center"><div style="width:32px;height:32px;border-radius:9px;background:#E8F5EE;display:flex;align-items:center;justify-content:center;color:#2E7D55;flex-shrink:0"><i data-lucide="sprout" style="width:16px;height:16px"></i></div><span style="font-size:15px;color:#1A1D23">Break the habit that costs you most.</span></div>
+          </div>
+          <div style="font-size:13px;color:#8898AA;line-height:1.5">Everything stays on your phone. No bank login. No account.</div>
+        </div>
+        <div style="padding:0 24px 44px;display:flex;flex-direction:column;align-items:center">
+          <div onClick="{{ goIntent }}" style="min-height:52px;width:100%;border-radius:10px;background:#4CAF82;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;color:#fff;cursor:pointer">Get started</div>
+          <div onClick="{{ openHow }}" style="margin-top:14px;min-height:44px;display:flex;align-items:center;font-size:14px;font-weight:600;color:#4A5568;cursor:pointer">How it works</div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ obIntent }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:1;display:flex;flex-direction:column;min-height:0;padding:20px 24px 0">
+        <div style="font-family:'Instrument Serif',Georgia,serif;font-size:30px;line-height:1.15;color:#1A1D23;margin-bottom:6px">What brings you here?</div>
+        <div style="font-size:14px;color:#4A5568;margin-bottom:18px">Pick one. You can do all three later.</div>
+        <div onClick="{{ goGuided }}" style="background:#fff;border:1px solid #E8EDF2;border-radius:20px;padding:16px 18px;margin-bottom:12px;cursor:pointer;display:flex;gap:14px;align-items:flex-start">
+          <div style="width:40px;height:40px;border-radius:12px;background:#E8F5EE;display:flex;align-items:center;justify-content:center;color:#2E7D55;flex-shrink:0;margin-top:2px"><i data-lucide="timer" style="width:20px;height:20px"></i></div>
+          <div style="flex:1"><div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8898AA;margin-bottom:3px">10 seconds to start</div><div style="font-size:16px;font-weight:600;color:#1A1D23;margin-bottom:3px">Just track my spending</div><div style="font-size:13.5px;color:#4A5568;line-height:1.5">Amount first, one tap per expense. Patterns show up on their own.</div></div>
+          <i data-lucide="chevron-right" style="width:16px;height:16px;color:#8898AA;margin-top:14px"></i>
+        </div>
+        <div onClick="{{ startScan }}" style="background:#fff;border:1px solid #E8EDF2;border-radius:20px;padding:16px 18px;margin-bottom:12px;cursor:pointer;display:flex;gap:14px;align-items:flex-start">
+          <div style="width:40px;height:40px;border-radius:12px;background:#E8F5EE;display:flex;align-items:center;justify-content:center;color:#2E7D55;flex-shrink:0;margin-top:2px"><i data-lucide="pie-chart" style="width:20px;height:20px"></i></div>
+          <div style="flex:1"><div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8898AA;margin-bottom:3px">2 to 3 minutes</div><div style="font-size:16px;font-weight:600;color:#1A1D23;margin-bottom:3px">See where it all goes</div><div style="font-size:13.5px;color:#4A5568;line-height:1.5">Scan a bank statement on your phone. Nothing uploads, ever.</div></div>
+          <i data-lucide="chevron-right" style="width:16px;height:16px;color:#8898AA;margin-top:14px"></i>
+        </div>
+        <div onClick="{{ goSubs }}" style="background:#fff;border:1px solid #E8EDF2;border-radius:20px;padding:16px 18px;margin-bottom:12px;cursor:pointer;display:flex;gap:14px;align-items:flex-start">
+          <div style="width:40px;height:40px;border-radius:12px;background:#E8F5EE;display:flex;align-items:center;justify-content:center;color:#2E7D55;flex-shrink:0;margin-top:2px"><i data-lucide="sprout" style="width:20px;height:20px"></i></div>
+          <div style="flex:1"><div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8898AA;margin-bottom:3px">About a minute</div><div style="font-size:16px;font-weight:600;color:#1A1D23;margin-bottom:3px">Break an expensive habit</div><div style="font-size:13.5px;color:#4A5568;line-height:1.5">A 90-second audit finds the leak quietly costing you the most.</div></div>
+          <i data-lucide="chevron-right" style="width:16px;height:16px;color:#8898AA;margin-top:14px"></i>
+        </div>
+        <div style="margin-top:auto;padding-bottom:40px;display:flex;justify-content:center"><span onClick="{{ skipToApp }}" style="font-size:14px;font-weight:600;color:#4A5568;cursor:pointer;min-height:44px;display:flex;align-items:center">Skip for now</span></div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ obScanIntake }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:1;display:flex;flex-direction:column;min-height:0;justify-content:center;padding:0 24px">
+        <div style="font-family:'Instrument Serif',Georgia,serif;font-size:30px;line-height:1.15;color:#1A1D23;text-align:center">Scan your statement.</div>
+        <div style="font-size:14px;color:#4A5568;text-align:center;margin:8px 0 18px">CSV files only. Everything stays on this device.</div>
+        <div style="display:flex;gap:8px;justify-content:center;margin-bottom:16px">
+          <span style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;background:#fff;border:1px solid #E8EDF2;color:#4A5568"><i data-lucide="file-text" style="width:14px;height:14px"></i><span style="font-size:12.5px;font-weight:600;color:#1A1D23">checking-jun.csv</span></span>
+          <span style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;background:#fff;border:1px solid #E8EDF2;color:#4A5568"><i data-lucide="file-text" style="width:14px;height:14px"></i><span style="font-size:12.5px;font-weight:600;color:#1A1D23">card-jun.csv</span></span>
+        </div>
+        <div onClick="{{ scanRun }}" style="min-height:50px;border-radius:10px;background:#4CAF82;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;color:#fff;cursor:pointer">Start scan</div>
+        <div onClick="{{ goIntent }}" style="min-height:44px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:#4A5568;cursor:pointer;margin-top:6px">Back</div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ obScanning }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px">
+        <div style="width:36px;height:36px;border-radius:50%;border:3.5px solid #E8EDF2;border-top-color:#4CAF82;animation:hcspin 1s linear infinite"></div>
+        <div style="font-size:16px;font-weight:600;color:#1A1D23;margin-top:16px">Reading your files</div>
+        <div style="font-size:13px;color:#8898AA;margin-top:4px">On this device. Usually a few seconds.</div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ obScanResults }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:1;display:flex;flex-direction:column;min-height:0">
+        <div style="padding:8px 24px 0;flex-shrink:0"><div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8898AA;margin-bottom:2px">May 1 to Jun 30 · 2 accounts</div><div style="font-family:'Instrument Serif',Georgia,serif;font-size:28px;line-height:1.05;color:#1A1D23">Your statements, read.</div></div>
+        <div style="flex:1;overflow-y:auto;padding:12px 20px 12px;display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;gap:8px">
+            <div style="flex:1.2;background:#fff;border:1px solid #E8EDF2;border-radius:14px;padding:12px"><div style="font-family:'Instrument Serif',Georgia,serif;font-size:22px;color:#1A1D23;font-variant-numeric:tabular-nums">$2,841</div><div style="font-size:11px;color:#4A5568;margin-top:2px">total spent</div></div>
+            <div style="flex:1;background:#fff;border:1px solid #E8EDF2;border-radius:14px;padding:12px"><div style="font-family:'Instrument Serif',Georgia,serif;font-size:22px;color:#1A1D23;font-variant-numeric:tabular-nums">$46.58</div><div style="font-size:11px;color:#4A5568;margin-top:2px">per day</div></div>
+            <div style="flex:.9;background:#fff;border:1px solid #E8EDF2;border-radius:14px;padding:12px"><div style="font-family:'Instrument Serif',Georgia,serif;font-size:22px;color:#1A1D23;font-variant-numeric:tabular-nums">214</div><div style="font-size:11px;color:#4A5568;margin-top:2px">purchases</div></div>
+          </div>
+          <div style="background:#fff;border:1px solid #E8EDF2;border-radius:20px;padding:16px">
+            <div style="font-size:15px;font-weight:600;color:#1A1D23;margin-bottom:10px">Where it went</div>
+            <div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:13px;color:#1A1D23">🍕 Food</span><span style="font-size:13px;font-weight:600;color:#1A1D23;font-variant-numeric:tabular-nums">$894 · 31%</span></div><div style="height:6px;border-radius:3px;background:#F7F9FC;overflow:hidden"><div style="height:6px;background:#8898AA;width:100%"></div></div></div>
+            <div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:13px;color:#1A1D23">🛍 Shopping</span><span style="font-size:13px;font-weight:600;color:#1A1D23;font-variant-numeric:tabular-nums">$612 · 22%</span></div><div style="height:6px;border-radius:3px;background:#F7F9FC;overflow:hidden"><div style="height:6px;background:#8898AA;width:71%"></div></div></div>
+            <div><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:13px;color:#1A1D23">🚗 Transport</span><span style="font-size:13px;font-weight:600;color:#1A1D23;font-variant-numeric:tabular-nums">$418 · 15%</span></div><div style="height:6px;border-radius:3px;background:#F7F9FC;overflow:hidden"><div style="height:6px;background:#8898AA;width:48%"></div></div></div>
+          </div>
+          <div style="background:#fff;border:1px solid #E8EDF2;border-radius:20px;padding:16px">
+            <div style="font-size:15px;font-weight:600;color:#1A1D23;margin-bottom:10px">Your leaks, ranked</div>
+            <div style="display:flex;align-items:center;gap:12px;padding-bottom:12px;border-bottom:1px solid #F1F4F8">
+              <div style="width:36px;height:36px;border-radius:10px;background:rgba(255,107,107,.12);display:flex;align-items:center;justify-content:center;font-size:17px">🍕</div>
+              <div style="flex:1"><div style="font-size:14.5px;font-weight:600;color:#1A1D23">Starbucks</div><div style="font-size:12.5px;color:#4A5568">27 orders · ≈ $2,140/yr pace</div></div>
+              <div onClick="{{ scanBreak }}" style="padding:0 14px;min-height:38px;border-radius:10px;background:#4CAF82;display:flex;align-items:center;font-size:13px;font-weight:600;color:#fff;cursor:pointer">Break it</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;padding-top:12px">
+              <div style="width:36px;height:36px;border-radius:10px;background:rgba(255,159,67,.12);display:flex;align-items:center;justify-content:center;font-size:17px">🛒</div>
+              <div style="flex:1"><div style="font-size:14.5px;font-weight:600;color:#1A1D23">Grocery runs</div><div style="font-size:12.5px;color:#4A5568">14 orders · ≈ $5,060/yr pace</div></div>
+              <div onClick="{{ watchLeak }}" style="padding:0 14px;min-height:38px;border-radius:10px;background:#fff;border:1px solid #E8EDF2;display:flex;align-items:center;font-size:13px;font-weight:600;color:#1A1D23;cursor:pointer">Watch</div>
+            </div>
+          </div>
+          <div style="font-size:12px;color:#8898AA;text-align:center">982 of 1,004 rows read · nothing uploaded</div>
+        </div>
+        <div style="padding:10px 20px 40px;flex-shrink:0"><div onClick="{{ finishScan }}" style="min-height:50px;border-radius:10px;background:#4CAF82;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;color:#fff;cursor:pointer">Continue to the app</div></div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ obSubs }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:1;display:flex;flex-direction:column;min-height:0">
+        <div style="flex:1;overflow-y:auto;padding:16px 24px 0">
+          <div style="font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#4CAF82;margin-bottom:8px">Step 1 of 2 · about 30 seconds</div>
+          <div style="font-family:'Instrument Serif',Georgia,serif;font-size:28px;line-height:1.15;color:#1A1D23;margin-bottom:8px">What charges you on auto-pilot?</div>
+          <div style="font-size:14px;color:#4A5568;line-height:1.5;margin-bottom:16px">Tap the ones that ring a bell.</div>
+          <div style="display:flex;flex-wrap:wrap;gap:10px">
+            <sc-for list="{{ subChips }}" as="c" hint-placeholder-count="8">
+              <div onClick="{{ c.toggle }}" style="width:calc(50% - 5px);box-sizing:border-box;background:{{ c.bg }};border:1px solid {{ c.bd }};border-radius:14px;padding:14px;position:relative;cursor:pointer">
+                <sc-if value="{{ c.sel }}"><div style="position:absolute;top:12px;right:12px;color:#2E7D55"><i data-lucide="check" style="width:16px;height:16px"></i></div></sc-if>
+                <div style="font-size:15px;font-weight:600;color:#1A1D23">{{ c.name }}</div>
+                <div style="margin-top:4px;font-size:12.5px;font-weight:500;color:{{ c.priceColor }};font-variant-numeric:tabular-nums">{{ c.price }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        <div style="border-top:1px solid #E8EDF2;background:#fff;padding:14px 24px 40px;flex-shrink:0">
+          <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:12px"><span style="font-family:'Instrument Serif',Georgia,serif;font-size:26px;color:#1A1D23;font-variant-numeric:tabular-nums">{{ subsTotal }}</span><span style="font-size:13px;color:#4A5568">a month so far</span></div>
+          <div onClick="{{ goVices }}" style="min-height:50px;border-radius:10px;background:#4CAF82;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;color:#fff;cursor:pointer">Continue</div>
+          <div onClick="{{ noneSubs }}" style="margin-top:8px;min-height:40px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:#4A5568;cursor:pointer">None of these</div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ obVices }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:1;display:flex;flex-direction:column;min-height:0">
+        <div style="flex:1;overflow-y:auto;padding:16px 24px 0">
+          <div style="font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#4CAF82;margin-bottom:8px">Step 2 of 2 · about 30 seconds</div>
+          <div style="font-family:'Instrument Serif',Georgia,serif;font-size:28px;line-height:1.15;color:#1A1D23;margin-bottom:8px">And the everyday stuff?</div>
+          <div style="font-size:14px;color:#4A5568;line-height:1.5;margin-bottom:16px">Roughly how often in a typical week.</div>
+          <sc-for list="{{ viceRows }}" as="v" hint-placeholder-count="3">
+            <div style="background:#fff;border:1px solid #E8EDF2;border-radius:20px;padding:16px;margin-bottom:12px">
+              <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:15px;font-weight:600;color:#1A1D23">{{ v.name }}</span><span style="font-size:12.5px;color:#8898AA;font-variant-numeric:tabular-nums">about {{ v.each }} each</span></div>
+              <div style="display:flex;gap:6px;margin-top:12px">
+                <sc-for list="{{ v.bands }}" as="b" hint-placeholder-count="4">
+                  <div onClick="{{ b.pick }}" style="flex:1;min-height:42px;border:1px solid {{ b.bd }};border-radius:10px;background:{{ b.bg }};display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:{{ b.fg }};cursor:pointer">{{ b.label }}</div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="border-top:1px solid #E8EDF2;background:#fff;padding:14px 24px 40px;flex-shrink:0">
+          <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:12px"><span style="font-family:'Instrument Serif',Georgia,serif;font-size:26px;color:#1A1D23;font-variant-numeric:tabular-nums">{{ vicesTotal }}</span><span style="font-size:13px;color:#4A5568">a week</span></div>
+          <div onClick="{{ goReveal }}" style="min-height:50px;border-radius:10px;background:#4CAF82;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;color:#fff;cursor:pointer">See my leak</div>
+          <div onClick="{{ goReveal }}" style="margin-top:8px;min-height:40px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:#4A5568;cursor:pointer">Skip this step</div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ obReveal }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:1;display:flex;flex-direction:column;min-height:0">
+        <sc-if value="{{ revealEmpty }}">
+          <div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 32px">
+            <div style="font-family:'Instrument Serif',Georgia,serif;font-size:32px;line-height:1.15;color:#1A1D23;text-align:center;margin-bottom:10px">We'll find your leak from your real logs.</div>
+            <div style="font-size:15px;color:#4A5568;text-align:center;line-height:1.55">Around 4 logs at the same place is enough to spot a pattern.</div>
+          </div>
+          <div style="padding:0 24px 44px"><div onClick="{{ goGuided }}" style="min-height:52px;border-radius:10px;background:#4CAF82;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;color:#fff;cursor:pointer">Just start logging</div></div>
+        </sc-if>
+        <sc-if value="{{ revealHasNumber }}">
+          <div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 28px;overflow-y:auto">
+            <div style="font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#4CAF82;text-align:center;margin-bottom:12px">Your leak, estimated</div>
+            <div style="font-family:'Instrument Serif',Georgia,serif;font-size:64px;line-height:1.02;letter-spacing:-0.02em;color:#1A1D23;text-align:center;font-variant-numeric:tabular-nums">{{ revealYearly }}</div>
+            <div style="font-size:15px;color:#4A5568;text-align:center;margin:10px 0 20px">a year. That's about {{ revealMonthly }} a month.</div>
+            <div style="background:#fff;border:1px solid #E8EDF2;border-radius:20px;padding:4px 20px">
+              <sc-for list="{{ revealRows }}" as="r" hint-placeholder-count="4">
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid #F1F4F8"><span style="font-size:14px;font-weight:500;color:#1A1D23">{{ r.name }}</span><span style="font-size:14px;font-weight:600;color:#1A1D23;font-variant-numeric:tabular-nums">{{ r.yr }}</span></div>
+              </sc-for>
+            </div>
+            <div style="font-size:12.5px;color:#8898AA;text-align:center;margin-top:14px;line-height:1.5">A starting estimate, not a judgment. Real logs sharpen it from here.</div>
+          </div>
+          <div style="padding:12px 24px 44px;display:flex;flex-direction:column;align-items:center;flex-shrink:0">
+            <div onClick="{{ goGuided }}" style="min-height:52px;width:100%;border-radius:10px;background:#4CAF82;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;color:#fff;cursor:pointer">Plug the biggest leak</div>
+            <div onClick="{{ skipToApp }}" style="margin-top:12px;min-height:44px;display:flex;align-items:center;font-size:14px;font-weight:600;color:#4A5568;cursor:pointer">Just start logging</div>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ obGuided }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:1;display:flex;flex-direction:column;min-height:0">
+        <div style="padding:12px 20px 0;flex-shrink:0">
+          <div style="display:flex;align-items:flex-start;gap:8px;background:#E8F5EE;border-radius:12px;padding:12px;color:#2E7D55"><i data-lucide="sprout" style="width:14px;height:14px;margin-top:3px;flex-shrink:0"></i><span style="flex:1;font-size:13.5px;color:#1A1D23;line-height:1.5">One practice log and you're done. Try today's coffee. Amount first.</span></div>
+        </div>
+        <div style="flex:1;padding:16px 24px 0;display:flex;flex-direction:column;min-height:0">
+          <div style="display:flex;align-items:baseline;justify-content:center;gap:6px;border-bottom:1.5px solid #4CAF82;padding-bottom:8px;margin:0 20px"><span style="font-size:24px;color:#8898AA">$</span><span style="font-family:'Instrument Serif',Georgia,serif;font-size:52px;color:{{ kpColor }};font-variant-numeric:tabular-nums">{{ kpDisp }}</span></div>
+          <div style="display:flex;gap:8px;justify-content:center;margin-top:14px">
+            <sc-for list="{{ catPick }}" as="c" hint-placeholder-count="5">
+              <div onClick="{{ c.pick }}" style="display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer"><div style="width:46px;height:46px;border-radius:14px;background:{{ c.tint }};border:1.5px solid {{ c.bd }};display:flex;align-items:center;justify-content:center;font-size:21px">{{ c.emoji }}</div><span style="font-size:10.5px;font-weight:600;color:#4A5568">{{ c.short }}</span></div>
+            </sc-for>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;justify-content:center">
+            <sc-for list="{{ kpKeys }}" as="k" hint-placeholder-count="12">
+              <div onClick="{{ k.press }}" style="width:calc(33.3% - 6px);box-sizing:border-box;min-height:52px;border-radius:12px;background:#fff;border:1px solid #E8EDF2;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:600;color:#1A1D23;cursor:pointer">{{ k.label }}</div>
+            </sc-for>
+          </div>
+        </div>
+        <div style="padding:10px 24px 40px;display:flex;flex-direction:column;align-items:center;flex-shrink:0">
+          <div onClick="{{ guidedSave }}" style="min-height:52px;width:100%;border-radius:10px;background:#4CAF82;display:flex;align-items:center;justify-content:center;gap:8px;font-size:16px;font-weight:600;color:#fff;cursor:pointer"><span>Save expense</span><i data-lucide="check" style="width:18px;height:18px"></i></div>
+          <div onClick="{{ goSuccess }}" style="margin-top:10px;min-height:40px;display:flex;align-items:center;font-size:14px;font-weight:600;color:#4A5568;cursor:pointer">Later</div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ obSuccess }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:1;display:flex;flex-direction:column;min-height:0">
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;padding:28px 24px 0;overflow-y:auto">
+          <div style="width:64px;height:64px;border-radius:32px;background:#4CAF82;display:flex;align-items:center;justify-content:center;color:#fff;margin-bottom:16px"><i data-lucide="check" style="width:32px;height:32px"></i></div>
+          <div style="font-family:'Instrument Serif',Georgia,serif;font-size:32px;line-height:1.1;color:#1A1D23;text-align:center;margin-bottom:18px">Your leak map is ready.</div>
+          <div style="align-self:stretch;background:#E8F5EE;border-radius:20px;padding:14px;display:flex;flex-direction:column;align-items:center;margin-bottom:12px">
+            <div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#2E7D55">Kept so far</div>
+            <div style="font-family:'Instrument Serif',Georgia,serif;font-size:40px;line-height:1.05;color:#1A1D23;font-variant-numeric:tabular-nums;margin-top:2px">$0.00</div>
+            <div style="font-size:13px;color:#4A5568;margin-top:2px">your first skip starts this counter</div>
+          </div>
+          <div style="align-self:stretch;background:#fff;border:1px solid #E8EDF2;border-radius:20px;padding:16px">
+            <div style="display:flex;align-items:center;gap:12px">
+              <div style="width:40px;height:40px;border-radius:12px;background:rgba(255,107,107,.12);display:flex;align-items:center;justify-content:center;font-size:19px">🍕</div>
+              <div style="flex:1"><div style="font-size:15px;font-weight:600;color:#1A1D23">Morning coffee</div><div style="font-size:12.5px;color:#4A5568;margin-top:1px">about $86.00 a month · your biggest leak</div></div>
+            </div>
+            <div onClick="{{ successBreak }}" style="min-height:46px;border-radius:10px;background:#4CAF82;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;color:#fff;margin-top:14px;cursor:pointer">Break it</div>
+          </div>
+          <div style="font-size:12.5px;color:#8898AA;text-align:center;margin-top:14px;line-height:1.5">1 habit free, always. Premium trial available when you're ready.</div>
+        </div>
+        <div style="padding:12px 24px 44px;flex-shrink:0"><div onClick="{{ finishOb }}" style="min-height:52px;border-radius:10px;background:#4CAF82;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;color:#fff;cursor:pointer">Continue</div></div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ tToday }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:1;display:flex;flex-direction:column;min-height:0">
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;padding:8px 24px 0;flex-shrink:0">
+          <div><div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8898AA;margin-bottom:2px">Thursday, July 24</div><div style="font-family:'Instrument Serif',Georgia,serif;font-size:34px;line-height:1;color:#1A1D23">Today.</div></div>
+          <div onClick="{{ openSettings }}" style="width:40px;height:40px;border-radius:20px;background:#fff;border:1px solid #E8EDF2;display:flex;align-items:center;justify-content:center;color:#4A5568;cursor:pointer"><i data-lucide="settings-2" style="width:20px;height:20px"></i></div>
+        </div>
+        <div style="flex:1;overflow-y:auto;padding:14px 20px 12px;display:flex;flex-direction:column;gap:12px">
+          <div style="background:#E8F5EE;border-radius:20px;padding:14px;display:flex;flex-direction:column;align-items:center">
+            <div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#2E7D55">Kept so far</div>
+            <div style="font-family:'Instrument Serif',Georgia,serif;font-size:40px;line-height:1.05;color:#1A1D23;font-variant-numeric:tabular-nums;margin-top:2px">{{ keptDisp }}</div>
+            <div style="font-size:13px;color:#4A5568;margin-top:2px">money you didn't spend</div>
+          </div>
+          <sc-if value="{{ ciNone }}">
+            <div style="background:#fff;border:1px solid #E8EDF2;border-radius:20px;padding:18px">
+              <div onClick="{{ openHabit }}" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer"><span style="font-size:16px;font-weight:600;color:#1A1D23">Morning coffee</span><i data-lucide="chevron-right" style="width:16px;height:16px;color:#8898AA"></i></div>
+              <div style="display:flex;justify-content:space-between;margin-top:12px">
+                <sc-for list="{{ dots }}" as="d" hint-placeholder-count="7">
+                  <div style="display:flex;flex-direction:column;align-items:center;gap:3px"><div style="width:26px;height:26px;border-radius:13px;background:{{ d.bg }};border:{{ d.bd }};box-sizing:border-box;display:flex;align-items:center;justify-content:center;color:#fff"><sc-if value="{{ d.icon }}"><i data-lucide="check" style="width:13px;height:13px"></i></sc-if></div><span style="font-size:9px;font-weight:700;color:#8898AA">{{ d.label }}</span></div>
+                </sc-for>
+              </div>
+              <div style="font-size:12px;color:#4A5568;margin-top:8px"><span style="font-weight:700;color:#1A1D23">{{ weekLine }}</span> skipped this week · {{ weekKept }}</div>
+              <div style="font-size:15px;color:#1A1D23;margin-top:10px">Did you skip it today?</div>
+              <div style="display:flex;gap:8px;margin-top:10px">
+                <div onClick="{{ doSkip }}" style="flex:1.6;min-height:48px;border-radius:10px;background:#4CAF82;display:flex;align-items:center;justify-content:center;font-size:14.5px;font-weight:600;color:#fff;cursor:pointer">{{ skipBtn }}</div>
+                <div onClick="{{ doSlip }}" style="flex:1;min-height:48px;border-radius:10px;background:#fff;border:1px solid #E8EDF2;display:flex;align-items:center;justify-content:center;font-size:14.5px;font-weight:600;color:#1A1D23;cursor:pointer">Bought it</div>
+              </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ ciSkip }}">
+            <div style="background:#fff;border:1px solid #E8EDF2;border-radius:20px;padding:18px">
+              <div onClick="{{ openHabit }}" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer"><span style="font-size:16px;font-weight:600;color:#1A1D23">Morning coffee</span><i data-lucide="chevron-right" style="width:16px;height:16px;color:#8898AA"></i></div>
+              <div style="display:flex;align-items:center;gap:12px;margin-top:14px">
+                <div style="width:40px;height:40px;border-radius:20px;background:#4CAF82;display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0"><i data-lucide="check" style="width:20px;height:20px"></i></div>
+                <div><div style="font-size:16px;font-weight:600;color:#1A1D23;font-variant-numeric:tabular-nums">+{{ perSkipDisp }} kept.</div><div style="font-size:13px;color:#4A5568;margin-top:1px">That's {{ weekLine }} this week.</div></div>
+              </div>
+              <div style="display:flex;align-items:flex-start;gap:8px;background:#E8F5EE;border-radius:12px;padding:12px;margin-top:14px;color:#2E7D55"><i data-lucide="sprout" style="width:14px;height:14px;margin-top:3px;flex-shrink:0"></i><span style="flex:1;font-size:13.5px;color:#1A1D23;line-height:1.5">Skipping is easier the second time, and easier again the third. You're wearing a new path.</span></div>
+              <div style="display:flex;gap:16px;margin-top:12px"><span onClick="{{ changeAnswer }}" style="font-size:13.5px;font-weight:600;color:#4A5568;cursor:pointer">Change answer</span></div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ ciSlip }}">
+            <div style="background:#fff;border:1px solid #E8EDF2;border-radius:20px;padding:18px">
+              <div onClick="{{ openHabit }}" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer"><span style="font-size:16px;font-weight:600;color:#1A1D23">Morning coffee</span><i data-lucide="chevron-right" style="width:16px;height:16px;color:#8898AA"></i></div>
+              <div style="display:flex;align-items:center;gap:12px;margin-top:14px">
+                <div style="width:40px;height:40px;border-radius:20px;background:#E8EDF2;display:flex;align-items:center;justify-content:center;color:#4A5568;flex-shrink:0"><i data-lucide="minus" style="width:20px;height:20px"></i></div>
+                <div><div style="font-size:16px;font-weight:600;color:#1A1D23">Logged.</div><div style="font-size:13px;color:#4A5568;margin-top:1px">Still {{ weekLine }} this week. Your kept stays yours.</div></div>
+              </div>
+              <div style="display:flex;align-items:flex-start;gap:8px;background:#F7F9FC;border-radius:12px;padding:12px;margin-top:14px;color:#4A5568"><i data-lucide="sprout" style="width:14px;height:14px;margin-top:3px;flex-shrink:0"></i><span style="flex:1;font-size:13.5px;color:#1A1D23;line-height:1.5">Bought it? Noted, no judgment. Making it easy to be honest is how the numbers stay true.</span></div>
+              <div style="display:flex;gap:16px;margin-top:12px"><span onClick="{{ changeAnswer }}" style="font-size:13.5px;font-weight:600;color:#4A5568;cursor:pointer">Change answer</span><span onClick="{{ openPartial }}" style="font-size:13.5px;font-weight:600;color:#4A5568;cursor:pointer">Spent less than usual?</span></div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ showBackfill }}">
+            <div style="background:#fff;border:1px solid #E8EDF2;border-radius:14px;padding:14px 16px">
+              <div style="font-size:12.5px;color:#4A5568;margin-bottom:8px">Missed yesterday? Answer for it:</div>
+              <div style="display:flex;gap:8px">
+                <div onClick="{{ doBackfillSkip }}" style="flex:1;min-height:40px;border-radius:10px;background:#fff;border:1px solid #E8EDF2;display:flex;align-items:center;justify-content:center;font-size:13.5px;font-weight:600;color:#1A1D23;cursor:pointer">Skipped it</div>
+                <div onClick="{{ doBackfillSlip }}" style="flex:1;min-height:40px;border-radius:10px;background:#fff;border:1px solid #E8EDF2;display:flex;align-items:center;justify-content:center;font-size:13.5px;font-weight:600;color:#1A1D23;cursor:pointer">Bought it</div>
+              </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ h1Gone }}">
+            <div style="background:#fff;border:1px solid #E8EDF2;border-radius:20px;padding:18px">
+              <div style="display:flex;align-items:center;gap:12px">
+                <div style="width:40px;height:40px;border-radius:12px;background:rgba(255,107,107,.12);display:flex;align-items:center;justify-content:center;font-size:19px">🍕</div>
+                <div style="flex:1"><div style="font-size:15px;font-weight:600;color:#1A1D23">Morning coffee</div><div style="font-size:12.5px;color:#4A5568;margin-top:1px">$86 a month · not being broken right now</div></div>
+              </div>
+              <div onClick="{{ openPo1 }}" style="min-height:44px;border-radius:10px;background:#4CAF82;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:#fff;margin-top:12px;cursor:pointer">Break it again</div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ h2On }}">
+            <div style="background:#fff;border:1px solid #E8EDF2;border-radius:20px;padding:18px">
+              <div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:16px;font-weight:600;color:#1A1D23">Food delivery</span><span style="padding:2px 8px;border-radius:999px;background:rgba(142,124,243,.14);font-size:10.5px;font-weight:700;color:#8E7CF3">weekly</span></div>
+              <div style="font-size:13px;color:#4A5568;margin-top:6px">No daily check-in. Tap whenever you skip an order.</div>
+              <div onClick="{{ h2Skip }}" style="min-height:46px;border-radius:10px;background:#4CAF82;display:flex;align-items:center;justify-content:center;font-size:14.5px;font-weight:600;color:#fff;margin-top:12px;cursor:pointer">I skipped one · keeps $22.00</div>
+            </div>
+          </sc-if>
+          <div style="background:#fff;border:1px solid #E8EDF2;border-radius:20px;padding:16px 18px">
+            <div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8898AA">Quick log</span><span style="font-size:12.5px;font-weight:600;color:#2E7D55">amount first</span></div>
+            <div onClick="{{ openLog }}" style="display:flex;align-items:center;gap:12px;margin-top:10px;cursor:pointer">
+              <div style="flex:1;display:flex;align-items:baseline;gap:4px;border-bottom:1.5px solid #E8EDF2;padding-bottom:6px"><span style="font-size:20px;color:#8898AA">$</span><span style="font-family:'Instrument Serif',Georgia,serif;font-size:32px;color:#8898AA">0.00</span></div>
+              <div style="width:44px;height:44px;border-radius:10px;background:#4CAF82;display:flex;align-items:center;justify-content:center;color:#fff"><i data-lucide="plus" style="width:22px;height:22px"></i></div>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8898AA;margin:0 4px 6px">Logged today</div>
+            <sc-for list="{{ groups }}" as="g" hint-placeholder-count="1">
+              <sc-if value="{{ g.isToday }}">
+                <div style="background:#fff;border:1px solid #E8EDF2;border-radius:14px;padding:4px 16px">
+                  <sc-for list="{{ g.items }}" as="e" hint-placeholder-count="2">
+                    <div onClick="{{ e.open }}" style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #F1F4F8;cursor:pointer">
+                      <div style="width:36px;height:36px;border-radius:10px;background:{{ e.tint }};display:flex;align-items:center;justify-content:center;font-size:17px">{{ e.emoji }}</div>
+                      <div style="flex:1"><div style="font-size:15px;font-weight:600;color:#1A1D23">{{ e.name }}</div><div style="font-size:12px;color:#8898AA">{{ e.time }}</div></div>
+                      <span style="font-size:15px;font-weight:600;color:#1A1D23;font-variant-numeric:tabular-nums">{{ e.amtStr }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </sc-if>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ tMoney }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:1;display:flex;flex-direction:column;min-height:0">
+        <div style="padding:8px 24px 0;flex-shrink:0"><div style="font-family:'Instrument Serif',Georgia,serif;font-size:34px;line-height:1;color:#1A1D23">Money.</div></div>
+        <div style="padding:12px 20px 0;flex-shrink:0">
+          <div style="display:flex;background:#E8EDF2;border-radius:999px;padding:3px">
+            <div onClick="{{ pickSpent }}" style="flex:1;padding:8px 0;border-radius:999px;background:{{ spentBg1 }};box-shadow:{{ spentSh1 }};text-align:center;font-size:13.5px;font-weight:600;color:#1A1D23;cursor:pointer">Spent</div>
+            <div onClick="{{ pickUpcoming }}" style="flex:1;padding:8px 0;border-radius:999px;background:{{ spentBg2 }};box-shadow:{{ spentSh2 }};text-align:center;font-size:13.5px;font-weight:600;color:#1A1D23;cursor:pointer">Upcoming</div>
+          </div>
+        </div>
+        <div style="flex:1;overflow-y:auto;padding:12px 20px 12px">
+          <sc-if value="{{ segSpent }}">
+            <sc-for list="{{ groups }}" as="g" hint-placeholder-count="2">
+              <div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8898AA;margin:10px 4px 6px">{{ g.label }} · {{ g.total }}</div>
+              <div style="background:#fff;border:1px solid #E8EDF2;border-radius:14px;padding:4px 16px">
+                <sc-for list="{{ g.items }}" as="e" hint-placeholder-count="2">
+                  <div onClick="{{ e.open }}" style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #F1F4F8;cursor:pointer">
+                    <div style="width:36px;height:36px;border-radius:10px;background:{{ e.tint }};display:flex;align-items:center;justify-content:center;font-size:17px">{{ e.emoji }}</div>
+                    <div style="flex:1"><div style="font-size:15px;font-weight:600;color:#1A1D23">{{ e.name }}</div><div style="font-size:12px;color:#8898AA">{{ e.time }}</div></div>
+                    <span style="font-size:15px;font-weight:600;color:#1A1D23;font-variant-numeric:tabular-nums">{{ e.amtStr }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-for>
+            <div style="font-size:12px;color:#8898AA;text-align:center;margin-top:14px">Tap a row to edit or delete it.</div>
+          </sc-if>
+          <sc-if value="{{ segUpcoming }}">
+            <div style="background:#fff;border:1px solid #E8EDF2;border-radius:20px;padding:18px;display:flex;flex-direction:column;align-items:center">
+              <div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8898AA">Next 60 days</div>
+              <div style="font-family:'Instrument Serif',Georgia,serif;font-size:36px;line-height:1.1;color:#1A1D23;font-variant-numeric:tabular-nums;margin-top:2px">{{ upcTotal }}</div>
+              <div style="font-size:13px;color:#4A5568;margin-top:2px">{{ upcCount }}</div>
+            </div>
+            <div onClick="{{ openAddUp }}" style="display:flex;align-items:center;justify-content:center;gap:8px;min-height:48px;border:1.5px dashed #D6DEE8;border-radius:14px;background:#fff;margin-top:12px;color:#2E7D55;cursor:pointer"><i data-lucide="plus" style="width:18px;height:18px"></i><span style="font-size:14px;font-weight:600">Add an upcoming expense</span></div>
+            <div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8898AA;margin:14px 4px 6px">Scheduled</div>
+            <div style="background:#fff;border:1px solid #E8EDF2;border-radius:14px;padding:4px 16px">
+              <sc-for list="{{ upcomingList }}" as="u" hint-placeholder-count="3">
+                <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #F1F4F8">
+                  <div style="width:36px;height:36px;border-radius:10px;background:{{ u.tint }};display:flex;align-items:center;justify-content:center;font-size:17px">{{ u.emoji }}</div>
+                  <div style="flex:1"><div style="display:flex;align-items:center;gap:6px"><span style="font-size:15px;font-weight:600;color:#1A1D23">{{ u.name }}</span><sc-if value="{{ u.hasTag }}"><span style="padding:2px 8px;border-radius:999px;background:rgba(245,166,35,.14);font-size:10.5px;font-weight:700;color:#B26A00">{{ u.tag }}</span></sc-if></div><div style="font-size:12px;color:#8898AA">{{ u.sub }}</div></div>
+                  <span style="font-size:15px;font-weight:600;color:#1A1D23;font-variant-numeric:tabular-nums">{{ u.amtStr }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ tInsights }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:1;display:flex;flex-direction:column;min-height:0">
+        <div style="padding:8px 24px 0;flex-shrink:0"><div style="font-family:'Instrument Serif',Georgia,serif;font-size:34px;line-height:1;color:#1A1D23">Insights.</div></div>
+        <div style="flex:1;overflow-y:auto;padding:14px 20px 12px;display:flex;flex-direction:column;gap:12px">
+          <div style="background:#fff;border:1px solid #E8EDF2;border-radius:20px;padding:18px">
+            <div style="font-size:15px;font-weight:600;color:#1A1D23;margin-bottom:12px">Your leaks</div>
+            <div style="display:flex;align-items:center;gap:12px;padding-bottom:12px;border-bottom:1px solid #F1F4F8">
+              <div style="width:36px;height:36px;border-radius:10px;background:rgba(255,107,107,.12);display:flex;align-items:center;justify-content:center;font-size:17px">🍕</div>
+              <div style="flex:1"><div style="font-size:14.5px;font-weight:600;color:#1A1D23">Morning coffee</div><div style="font-size:12.5px;color:#4A5568">$86 a month · 14 buys</div></div>
+              <sc-if value="{{ h1Gone }}"><div onClick="{{ openPo1 }}" style="padding:0 14px;min-height:38px;border-radius:10px;background:#4CAF82;display:flex;align-items:center;font-size:13px;font-weight:600;color:#fff;cursor:pointer">Break it</div></sc-if>
+              <sc-if value="{{ ciNone }}"><div onClick="{{ openHabit }}" style="padding:0 14px;min-height:38px;border-radius:10px;background:#E8F5EE;display:flex;align-items:center;font-size:13px;font-weight:600;color:#2E7D55;cursor:pointer">Breaking</div></sc-if>
+              <sc-if value="{{ answered }}"><div onClick="{{ openHabit }}" style="padding:0 14px;min-height:38px;border-radius:10px;background:#E8F5EE;display:flex;align-items:center;font-size:13px;font-weight:600;color:#2E7D55;cursor:pointer">Breaking</div></sc-if>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;padding-top:12px">
+              <div style="width:36px;height:36px;border-radius:10px;background:rgba(255,107,107,.12);display:flex;align-items:center;justify-content:center;font-size:17px">🍕</div>
+              <div style="flex:1"><div style="font-size:14.5px;font-weight:600;color:#1A1D23">Food delivery</div><div style="font-size:12.5px;color:#4A5568">$117 a month · 6 orders</div></div>
+              <sc-if value="{{ h2On }}"><span style="padding:0 14px;min-height:38px;border-radius:10px;background:#E8F5EE;display:flex;align-items:center;font-size:13px;font-weight:600;color:#2E7D55">Breaking</span></sc-if>
+              <sc-if value="{{ h2Off }}"><div onClick="{{ openPo2 }}" style="padding:0 14px;min-height:38px;border-radius:10px;background:#4CAF82;display:flex;align-items:center;font-size:13px;font-weight:600;color:#fff;cursor:pointer">Break it</div></sc-if>
+            </div>
+          </div>
+          <div style="background:#fff;border:1px solid #E8EDF2;border-radius:20px;padding:18px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><span style="font-size:15px;font-weight:600;color:#1A1D23">Where it went</span><span style="font-size:12px;font-weight:600;color:#4A5568">this week</span></div>
+            <sc-for list="{{ bars }}" as="b" hint-placeholder-count="3">
+              <div style="margin-bottom:10px">
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:13px;color:#1A1D23">{{ b.label }}</span><span style="font-size:13px;font-weight:600;color:#1A1D23;font-variant-numeric:tabular-nums">{{ b.amt }}</span></div>
+                <div style="height:6px;border-radius:3px;background:#F7F9FC;overflow:hidden"><div style="height:6px;background:#8898AA;width:{{ b.pct }}"></div></div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="background:#fff;border:1px solid #E8EDF2;border-radius:20px;padding:18px">
+            <div style="font-size:15px;font-weight:600;color:#1A1D23">July pace</div>
+            <div style="display:flex;align-items:baseline;gap:8px;margin-top:6px"><span style="font-family:'Instrument Serif',Georgia,serif;font-size:30px;color:#1A1D23;font-variant-numeric:tabular-nums">{{ julyPace }}</span><span style="font-size:13px;color:#4A5568">projected · 7 days left</span></div>
+            <div style="height:8px;border-radius:4px;background:#F7F9FC;overflow:hidden;margin-top:10px"><div style="height:8px;background:#4CAF82;width:78%"></div></div>
+            <div style="display:flex;justify-content:space-between;margin-top:6px"><span style="font-size:12px;color:#4A5568">{{ spentSum }} spent</span><span style="font-size:12px;color:#4A5568">$80 under June</span></div>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ vHabit }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:1;display:flex;flex-direction:column;min-height:0">
+        <div onClick="{{ closeHabit }}" style="padding:8px 24px 0;color:#1A1D23;cursor:pointer;flex-shrink:0"><i data-lucide="arrow-left" style="width:22px;height:22px"></i></div>
+        <div style="flex:1;overflow-y:auto;padding:10px 20px 12px;display:flex;flex-direction:column;gap:12px">
+          <div style="padding:0 4px">
+            <div style="font-family:'Instrument Serif',Georgia,serif;font-size:30px;line-height:1.1;color:#1A1D23">Morning coffee.</div>
+            <div style="font-size:14px;color:#4A5568;margin-top:4px">Starbucks, about 14 times a month.</div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <div style="flex:1;background:#E8F5EE;border-radius:14px;padding:14px 8px;display:flex;flex-direction:column;align-items:center"><span style="font-family:'Instrument Serif',Georgia,serif;font-size:20px;color:#1A1D23;font-variant-numeric:tabular-nums">{{ keptDisp }}</span><span style="font-size:11px;color:#2E7D55;margin-top:2px">kept</span></div>
+            <div style="flex:1;background:#fff;border:1px solid #E8EDF2;border-radius:14px;padding:14px 8px;display:flex;flex-direction:column;align-items:center"><span style="font-family:'Instrument Serif',Georgia,serif;font-size:20px;color:#1A1D23">{{ weekLine }}</span><span style="font-size:11px;color:#4A5568;margin-top:2px">this week</span></div>
+            <div style="flex:1;background:#fff;border:1px solid #E8EDF2;border-radius:14px;padding:14px 8px;display:flex;flex-direction:column;align-items:center"><span style="font-family:'Instrument Serif',Georgia,serif;font-size:20px;color:#1A1D23">{{ skipsDisp }}</span><span style="font-size:11px;color:#4A5568;margin-top:2px">total skips</span></div>
+          </div>
+          <div style="background:#fff;border:1px solid #E8EDF2;border-radius:20px;padding:18px">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span style="font-size:15px;font-weight:600;color:#1A1D23">The long arc</span>
+              <span style="padding:3px 10px;border-radius:999px;background:rgba(142,124,243,.14);font-size:11.5px;font-weight:700;color:#8E7CF3">{{ arcLine }}</span>
+            </div>
+            <div style="font-family:'Instrument Serif',Georgia,serif;font-style:italic;font-size:18px;color:#1A1D23;margin-top:10px">You're finding your rhythm.</div>
+            <div style="font-size:12.5px;color:#4A5568;margin-top:4px;line-height:1.5">{{ skipsDisp }} skips toward the ~66 it takes to rewire a habit. Slips never subtract.</div>
+            <div style="height:6px;border-radius:3px;background:#E8EDF2;overflow:hidden;margin-top:14px"><div style="height:6px;background:#8E7CF3;width:{{ arcPct }}"></div></div>
+            <div style="display:flex;justify-content:space-between;margin-top:5px">
+              <span style="font-size:10.5px;font-weight:600;color:#8898AA">Deciding</span><span style="font-size:10.5px;font-weight:600;color:#8898AA">Rhythm</span><span style="font-size:10.5px;font-weight:600;color:#8898AA">Cruising</span><span style="font-size:10.5px;font-weight:600;color:#8898AA">Rewired</span>
+            </div>
+          </div>
+          <div style="background:#fff;border:1px solid #E8EDF2;border-radius:20px;padding:18px">
+            <div style="display:flex;justify-content:space-between;margin-bottom:12px">
+              <sc-for list="{{ dots }}" as="d" hint-placeholder-count="7">
+                <div style="display:flex;flex-direction:column;align-items:center;gap:3px"><div style="width:26px;height:26px;border-radius:13px;background:{{ d.bg }};border:{{ d.bd }};box-sizing:border-box;display:flex;align-items:center;justify-content:center;color:#fff"><sc-if value="{{ d.icon }}"><i data-lucide="check" style="width:13px;height:13px"></i></sc-if></div><span style="font-size:9px;font-weight:700;color:#8898AA">{{ d.label }}</span></div>
+              </sc-for>
+            </div>
+            <div style="display:flex;gap:14px">
+              <span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:5px;background:#4CAF82"></span><span style="font-size:12px;color:#4A5568">skipped</span></span>
+              <span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:5px;background:#E8EDF2"></span><span style="font-size:12px;color:#4A5568">slipped</span></span>
+              <span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:5px;border:1.5px solid #D6DEE8;box-sizing:border-box"></span><span style="font-size:12px;color:#4A5568">no log</span></span>
+            </div>
+          </div>
+          <div onClick="{{ openSkipVal }}" style="min-height:46px;border-radius:10px;border:1px solid #E8EDF2;background:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:#1A1D23;cursor:pointer">Edit one skip keeps ({{ perSkipDisp }})</div>
+          <div onClick="{{ openStop }}" style="min-height:44px;display:flex;align-items:center;justify-content:center;font-size:14px;color:#4A5568;cursor:pointer">Stop breaking this habit</div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ inApp }}" hint-placeholder-val="{{ false }}">
+      <sc-if value="{{ notHabitView }}">
+        <div style="height:84px;background:#fff;border-top:1px solid #E8EDF2;display:flex;padding:10px 0 28px;flex-shrink:0">
+          <div onClick="{{ goToday }}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;color:{{ cToday }};cursor:pointer"><i data-lucide="sun" style="width:22px;height:22px"></i><span style="font-size:11px;font-weight:600">Today</span></div>
+          <div onClick="{{ goMoney }}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;color:{{ cMoney }};cursor:pointer"><i data-lucide="wallet" style="width:22px;height:22px"></i><span style="font-size:11px;font-weight:600">Money</span></div>
+          <div onClick="{{ goInsights }}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;color:{{ cInsights }};cursor:pointer"><i data-lucide="trending-up" style="width:22px;height:22px"></i><span style="font-size:11px;font-weight:600">Insights</span></div>
+        </div>
+      </sc-if>
+    </sc-if>
+
+    <sc-if value="{{ anySheet }}" hint-placeholder-val="{{ false }}">
+      <div onClick="{{ closeSheet }}" style="position:absolute;inset:0;background:rgba(26,29,35,.4);z-index:40"></div>
+      <div style="position:absolute;left:0;right:0;bottom:0;z-index:50;background:#fff;border-radius:20px 20px 0 0;box-shadow:0 -8px 32px rgba(26,29,35,.16);animation:hcSheet .22s cubic-bezier(0.22,1,0.36,1);max-height:88%;overflow-y:auto">
+        <div style="width:36px;height:5px;border-radius:3px;background:#E8EDF2;margin:12px auto 0"></div>
+
+        <sc-if value="{{ shHow }}">
+          <div style="padding:14px 24px 40px">
+            <div style="font-family:'Instrument Serif',Georgia,serif;font-size:26px;color:#1A1D23;margin-bottom:16px">How it works.</div>
+            <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:20px">
+              <div style="display:flex;gap:12px;align-items:center"><div style="width:36px;height:36px;border-radius:10px;background:#E8F5EE;display:flex;align-items:center;justify-content:center;color:#2E7D55;flex-shrink:0"><i data-lucide="timer" style="width:18px;height:18px"></i></div><span style="font-size:15px;color:#1A1D23;line-height:1.5">Log expenses in 10 seconds.</span></div>
+              <div style="display:flex;gap:12px;align-items:center"><div style="width:36px;height:36px;border-radius:10px;background:#E8F5EE;display:flex;align-items:center;justify-content:center;color:#2E7D55;flex-shrink:0"><i data-lucide="search" style="width:18px;height:18px"></i></div><span style="font-size:15px;color:#1A1D23;line-height:1.5">We spot the habit that leaks the most.</span></div>
+              <div style="display:flex;gap:12px;align-items:center"><div style="width:36px;height:36px;border-radius:10px;background:#E8F5EE;display:flex;align-items:center;justify-content:center;color:#2E7D55;flex-shrink:0"><i data-lucide="piggy-bank" style="width:18px;height:18px"></i></div><span style="font-size:15px;color:#1A1D23;line-height:1.5">Every time you skip it, we count the money you kept.</span></div>
+            </div>
+            <div onClick="{{ closeSheet }}" style="min-height:50px;border-radius:10px;background:#4CAF82;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;color:#fff;cursor:pointer">OK</div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ shLog }}">
+          <div style="padding:10px 24px 32px">
+            <div style="display:flex;align-items:baseline;justify-content:center;gap:6px;border-bottom:1.5px solid #4CAF82;padding-bottom:8px;margin:0 30px"><span style="font-size:22px;color:#8898AA">$</span><span style="font-family:'Instrument Serif',Georgia,serif;font-size:46px;color:{{ kpColor }};font-variant-numeric:tabular-nums">{{ kpDisp }}</span></div>
+            <div style="display:flex;gap:8px;justify-content:center;margin-top:12px">
+              <sc-for list="{{ catPick }}" as="c" hint-placeholder-count="5">
+                <div onClick="{{ c.pick }}" style="display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer"><div style="width:44px;height:44px;border-radius:13px;background:{{ c.tint }};border:1.5px solid {{ c.bd }};display:flex;align-items:center;justify-content:center;font-size:20px">{{ c.emoji }}</div><span style="font-size:10.5px;font-weight:600;color:#4A5568">{{ c.short }}</span></div>
+              </sc-for>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px">
+              <sc-for list="{{ kpKeys }}" as="k" hint-placeholder-count="12">
+                <div onClick="{{ k.press }}" style="width:calc(33.3% - 6px);box-sizing:border-box;min-height:48px;border-radius:12px;background:#F7F9FC;border:1px solid #E8EDF2;display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:600;color:#1A1D23;cursor:pointer">{{ k.label }}</div>
+              </sc-for>
+            </div>
+            <div onClick="{{ logSave }}" style="min-height:50px;border-radius:10px;background:#4CAF82;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;color:#fff;margin-top:12px;cursor:pointer">Save expense</div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ shEdit }}">
+          <div style="padding:10px 24px 32px">
+            <div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8898AA;text-align:center;margin-bottom:4px">Edit expense</div>
+            <div style="display:flex;align-items:baseline;justify-content:center;gap:6px;border-bottom:1.5px solid #4CAF82;padding-bottom:8px;margin:0 30px"><span style="font-size:22px;color:#8898AA">$</span><span style="font-family:'Instrument Serif',Georgia,serif;font-size:46px;color:{{ kpColor }};font-variant-numeric:tabular-nums">{{ kpDisp }}</span></div>
+            <div style="display:flex;gap:8px;justify-content:center;margin-top:12px">
+              <sc-for list="{{ catPick }}" as="c" hint-placeholder-count="5">
+                <div onClick="{{ c.pick }}" style="display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer"><div style="width:44px;height:44px;border-radius:13px;background:{{ c.tint }};border:1.5px solid {{ c.bd }};display:flex;align-items:center;justify-content:center;font-size:20px">{{ c.emoji }}</div><span style="font-size:10.5px;font-weight:600;color:#4A5568">{{ c.short }}</span></div>
+              </sc-for>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px">
+              <sc-for list="{{ kpKeys }}" as="k" hint-placeholder-count="12">
+                <div onClick="{{ k.press }}" style="width:calc(33.3% - 6px);box-sizing:border-box;min-height:48px;border-radius:12px;background:#F7F9FC;border:1px solid #E8EDF2;display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:600;color:#1A1D23;cursor:pointer">{{ k.label }}</div>
+              </sc-for>
+            </div>
+            <div onClick="{{ editSave }}" style="min-height:50px;border-radius:10px;background:#4CAF82;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;color:#fff;margin-top:12px;cursor:pointer">Save changes</div>
+            <div onClick="{{ del }}" style="min-height:44px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:#F05A5A;cursor:pointer">Delete expense</div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ shPartial }}">
+          <div style="padding:14px 24px 36px">
+            <div style="font-family:'Instrument Serif',Georgia,serif;font-size:24px;color:#1A1D23;margin-bottom:6px">How much did it cost?</div>
+            <div style="font-size:13.5px;color:#4A5568;line-height:1.5;margin-bottom:14px">You usually spend about {{ perSkipDisp }}. Anything under that counts as kept.</div>
+            <div style="display:flex;align-items:baseline;gap:4px;border-bottom:1.5px solid #4CAF82;padding-bottom:6px;margin-bottom:12px"><span style="font-size:18px;color:#8898AA">$</span><span style="font-family:'Instrument Serif',Georgia,serif;font-size:30px;color:{{ kpColor }};font-variant-numeric:tabular-nums">{{ kpDisp }}</span></div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+              <sc-for list="{{ kpKeys }}" as="k" hint-placeholder-count="12">
+                <div onClick="{{ k.press }}" style="width:calc(33.3% - 6px);box-sizing:border-box;min-height:46px;border-radius:12px;background:#F7F9FC;border:1px solid #E8EDF2;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:600;color:#1A1D23;cursor:pointer">{{ k.label }}</div>
+              </sc-for>
+            </div>
+            <div onClick="{{ partialSave }}" style="min-height:50px;border-radius:10px;background:#4CAF82;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;color:#fff;cursor:pointer">Save</div>
+            <div onClick="{{ closeSheet }}" style="min-height:44px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:#4A5568;cursor:pointer">Keep it as answered</div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ shSkipVal }}">
+          <div style="padding:14px 24px 36px">
+            <div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8898AA;margin-bottom:8px">One skip keeps</div>
+            <div style="display:flex;align-items:baseline;gap:4px;border-bottom:1.5px solid #4CAF82;padding-bottom:6px;margin-bottom:12px"><span style="font-size:18px;color:#8898AA">$</span><span style="font-family:'Instrument Serif',Georgia,serif;font-size:30px;color:{{ kpColor }};font-variant-numeric:tabular-nums">{{ kpDisp }}</span></div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+              <sc-for list="{{ kpKeys }}" as="k" hint-placeholder-count="12">
+                <div onClick="{{ k.press }}" style="width:calc(33.3% - 6px);box-sizing:border-box;min-height:46px;border-radius:12px;background:#F7F9FC;border:1px solid #E8EDF2;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:600;color:#1A1D23;cursor:pointer">{{ k.label }}</div>
+              </sc-for>
+            </div>
+            <div onClick="{{ skipValSave }}" style="min-height:50px;border-radius:10px;background:#4CAF82;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;color:#fff;cursor:pointer">Save</div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ shPickone }}">
+          <div style="padding:14px 24px 36px">
+            <div style="font-family:'Instrument Serif',Georgia,serif;font-size:26px;color:#1A1D23">{{ poTitle }}</div>
+            <div style="font-size:13px;color:#4A5568;margin:4px 0 12px">{{ poSub }}</div>
+            <div style="font-size:14px;color:#1A1D23;line-height:1.55;margin-bottom:6px">{{ poLine }}</div>
+            <div style="font-size:14px;color:#4A5568;line-height:1.55;margin-bottom:14px">Each time you skip it, we count the money as kept.</div>
+            <div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8898AA;margin-bottom:6px">One skip keeps</div>
+            <div style="display:flex;align-items:baseline;gap:4px;border-bottom:1.5px solid #4CAF82;padding-bottom:6px;margin-bottom:14px"><span style="font-size:18px;color:#8898AA">$</span><span style="font-family:'Instrument Serif',Georgia,serif;font-size:30px;color:#1A1D23;font-variant-numeric:tabular-nums">{{ poKeeps }}</span></div>
+            <sc-if value="{{ poGated }}">
+              <div style="background:#F7F9FC;border-radius:12px;padding:12px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;color:#4A5568">1 habit on the free plan</span><span onClick="{{ openPremium }}" style="font-size:13px;font-weight:600;color:#2E7D55;cursor:pointer">Start a free trial</span></div>
+              <div style="min-height:50px;border-radius:10px;background:#E8EDF2;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;color:#fff">Start breaking it</div>
+            </sc-if>
+            <sc-if value="{{ poReady }}">
+              <div onClick="{{ poStart }}" style="min-height:50px;border-radius:10px;background:#4CAF82;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;color:#fff;cursor:pointer">Start breaking it</div>
+            </sc-if>
+            <div onClick="{{ closeSheet }}" style="min-height:44px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:#4A5568;cursor:pointer">Not this one</div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ shPremium }}">
+          <div style="padding:14px 24px 36px">
+            <div style="background:linear-gradient(135deg,#8E7CF3,#4CAF82);border-radius:16px;padding:16px;color:#fff;margin-bottom:14px">
+              <div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;opacity:.85">Premium</div>
+              <div style="font-family:'Instrument Serif',Georgia,serif;font-size:24px;line-height:1.15;margin-top:4px">Break more than one habit</div>
+              <div style="font-size:13px;line-height:1.5;margin-top:6px;opacity:.92">Free keeps 1 habit, always. Premium lets you break up to 5 at once.</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px">
+              <div onClick="{{ pickYr }}" style="display:flex;align-items:center;border:{{ yrBd }};background:{{ yrBg }};border-radius:14px;padding:12px 14px;cursor:pointer">
+                <div style="flex:1"><div style="display:flex;align-items:center;gap:8px"><span style="font-size:14.5px;font-weight:600;color:#1A1D23">Yearly</span><span style="background:#4CAF82;border-radius:999px;padding:2px 8px;font-size:10px;font-weight:700;color:#fff">Best value</span></div><div style="font-size:12px;color:#4A5568;margin-top:1px">about $2.50 a month</div></div>
+                <div style="display:flex;flex-direction:column;align-items:flex-end"><span style="font-size:15px;font-weight:600;color:#1A1D23;font-variant-numeric:tabular-nums">$29.99</span><span style="font-size:11px;color:#4A5568">per year</span></div>
+              </div>
+              <div onClick="{{ pickMo }}" style="display:flex;align-items:center;border:{{ moBd }};background:{{ moBg }};border-radius:14px;padding:12px 14px;cursor:pointer">
+                <div style="flex:1"><span style="font-size:14.5px;font-weight:600;color:#1A1D23">Monthly</span></div>
+                <div style="display:flex;flex-direction:column;align-items:flex-end"><span style="font-size:15px;font-weight:600;color:#1A1D23;font-variant-numeric:tabular-nums">$3.99</span><span style="font-size:11px;color:#4A5568">per month</span></div>
+              </div>
+              <div onClick="{{ pickLife }}" style="display:flex;align-items:center;border:{{ lifeBd }};background:{{ lifeBg }};border-radius:14px;padding:12px 14px;cursor:pointer">
+                <div style="flex:1"><div><span style="font-size:14.5px;font-weight:600;color:#1A1D23">Lifetime</span></div><div style="font-size:12px;color:#4A5568;margin-top:1px">pay once, keep it forever</div></div>
+                <div style="display:flex;flex-direction:column;align-items:flex-end"><span style="font-size:15px;font-weight:600;color:#1A1D23;font-variant-numeric:tabular-nums">$49.99</span><span style="font-size:11px;color:#4A5568">once</span></div>
+              </div>
+            </div>
+            <div style="font-size:11.5px;color:#8898AA;margin-bottom:12px;line-height:1.5">Planned pricing. Nothing is charged in this prototype.</div>
+            <div onClick="{{ startTrial }}" style="min-height:50px;border-radius:10px;background:#4CAF82;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;color:#fff;cursor:pointer">Start free trial</div>
+            <div onClick="{{ closeSheet }}" style="min-height:44px;display:flex;align-items:center;justify-content:center;font-size:13.5px;font-weight:600;color:#2E7D55;cursor:pointer">Stay on free plan</div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ shSettings }}">
+          <div style="padding:14px 20px 36px">
+            <div style="font-family:'Instrument Serif',Georgia,serif;font-size:24px;color:#1A1D23;margin-bottom:4px">Settings.</div>
+            <div style="font-size:12.5px;color:#8898AA;margin-bottom:14px">{{ planLabel }}</div>
+            <div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8898AA;margin:0 4px 8px">Preferences</div>
+            <div style="background:#F7F9FC;border:1px solid #E8EDF2;border-radius:14px;overflow:hidden;margin-bottom:14px">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 16px;border-bottom:1px solid #E8EDF2"><span style="font-size:15px;color:#1A1D23">Currency</span><span style="font-size:15px;color:#4A5568">USD</span></div>
+              <div onClick="{{ openPremium }}" style="display:flex;justify-content:space-between;align-items:center;padding:13px 16px;cursor:pointer"><span style="font-size:15px;color:#1A1D23">Premium</span><span style="font-size:13.5px;font-weight:600;color:#2E7D55">See plans</span></div>
+            </div>
+            <div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8898AA;margin:0 4px 8px">Prototype</div>
+            <div style="background:#F7F9FC;border:1px solid #E8EDF2;border-radius:14px;overflow:hidden;margin-bottom:14px">
+              <div onClick="{{ replayOb }}" style="display:flex;justify-content:space-between;align-items:center;padding:13px 16px;border-bottom:1px solid #E8EDF2;cursor:pointer"><span style="font-size:15px;color:#1A1D23">Replay onboarding</span><i data-lucide="chevron-right" style="width:16px;height:16px;color:#8898AA"></i></div>
+              <div onClick="{{ resetProto }}" style="display:flex;justify-content:space-between;align-items:center;padding:13px 16px;cursor:pointer"><span style="font-size:15px;color:#1A1D23">Reset prototype data</span><i data-lucide="rotate-ccw" style="width:16px;height:16px;color:#8898AA"></i></div>
+            </div>
+            <div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8898AA;margin:0 4px 8px">About</div>
+            <div style="background:#F7F9FC;border:1px solid #E8EDF2;border-radius:14px;overflow:hidden">
+              <div onClick="{{ restore }}" style="display:flex;justify-content:space-between;align-items:center;padding:13px 16px;border-bottom:1px solid #E8EDF2;cursor:pointer"><span style="font-size:15px;color:#1A1D23">Restore purchases</span></div>
+              <div onClick="{{ signOut }}" style="display:flex;justify-content:space-between;align-items:center;padding:13px 16px;border-bottom:1px solid #E8EDF2;cursor:pointer"><span style="font-size:15px;color:#F05A5A">Sign out</span><span style="font-size:12px;color:#8898AA">data stays on this device</span></div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 16px"><span style="font-size:15px;color:#1A1D23">Version</span><span style="font-size:15px;color:#4A5568">2.0 proto</span></div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ shAddUp }}">
+          <div style="padding:14px 24px 36px">
+            <div style="font-family:'Instrument Serif',Georgia,serif;font-size:24px;color:#1A1D23;margin-bottom:12px">Add upcoming.</div>
+            <div style="display:flex;align-items:baseline;gap:4px;border-bottom:1.5px solid #4CAF82;padding-bottom:6px;margin-bottom:10px"><span style="font-size:18px;color:#8898AA">$</span><span style="font-family:'Instrument Serif',Georgia,serif;font-size:30px;color:{{ kpColor }};font-variant-numeric:tabular-nums">{{ kpDisp }}</span></div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px">
+              <sc-for list="{{ kpKeys }}" as="k" hint-placeholder-count="12">
+                <div onClick="{{ k.press }}" style="width:calc(33.3% - 4px);box-sizing:border-box;min-height:40px;border-radius:10px;background:#F7F9FC;border:1px solid #E8EDF2;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:600;color:#1A1D23;cursor:pointer">{{ k.label }}</div>
+              </sc-for>
+            </div>
+            <div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8898AA;margin-bottom:6px">What is it?</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px">
+              <sc-for list="{{ upNameChips }}" as="c" hint-placeholder-count="6">
+                <div onClick="{{ c.pick }}" style="min-height:36px;padding:0 14px;border-radius:999px;background:{{ c.bg }};border:1px solid {{ c.bd }};display:flex;align-items:center;font-size:13px;font-weight:600;color:{{ c.fg }};cursor:pointer">{{ c.label }}</div>
+              </sc-for>
+            </div>
+            <div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8898AA;margin-bottom:6px">Schedule</div>
+            <div style="display:flex;gap:6px;margin-bottom:10px">
+              <sc-for list="{{ upTypeChips }}" as="c" hint-placeholder-count="2">
+                <div onClick="{{ c.pick }}" style="flex:1;min-height:40px;border-radius:10px;background:{{ c.bg }};border:1px solid {{ c.bd }};display:flex;align-items:center;justify-content:center;font-size:13.5px;font-weight:600;color:{{ c.fg }};cursor:pointer">{{ c.label }}</div>
+              </sc-for>
+            </div>
+            <sc-if value="{{ upShowOnce }}">
+              <div style="font-size:12px;color:#4A5568;margin-bottom:6px">When?</div>
+              <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">
+                <sc-for list="{{ upOnceChips }}" as="c" hint-placeholder-count="4">
+                  <div onClick="{{ c.pick }}" style="min-height:36px;padding:0 14px;border-radius:999px;background:{{ c.bg }};border:1px solid {{ c.bd }};display:flex;align-items:center;font-size:13px;font-weight:600;color:{{ c.fg }};cursor:pointer">{{ c.label }}</div>
+                </sc-for>
+              </div>
+            </sc-if>
+            <sc-if value="{{ upShowFreq }}">
+              <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">
+                <sc-for list="{{ upFreqChips }}" as="c" hint-placeholder-count="4">
+                  <div onClick="{{ c.pick }}" style="min-height:36px;padding:0 14px;border-radius:999px;background:{{ c.bg }};border:1px solid {{ c.bd }};display:flex;align-items:center;font-size:13px;font-weight:600;color:{{ c.fg }};cursor:pointer">{{ c.label }}</div>
+                </sc-for>
+              </div>
+            </sc-if>
+            <sc-if value="{{ upShowDays }}">
+              <div style="font-size:12px;color:#4A5568;margin-bottom:6px">On which day?</div>
+              <div style="display:flex;gap:4px;margin-bottom:10px">
+                <sc-for list="{{ upDayChips }}" as="c" hint-placeholder-count="7">
+                  <div onClick="{{ c.pick }}" style="flex:1;min-height:36px;border-radius:10px;background:{{ c.bg }};border:1px solid {{ c.bd }};display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:600;color:{{ c.fg }};cursor:pointer">{{ c.label }}</div>
+                </sc-for>
+              </div>
+            </sc-if>
+            <sc-if value="{{ upShowBi }}">
+              <div style="font-size:12px;color:#4A5568;margin-bottom:6px">Starting</div>
+              <div style="display:flex;gap:6px;margin-bottom:10px">
+                <sc-for list="{{ upBiChips }}" as="c" hint-placeholder-count="2">
+                  <div onClick="{{ c.pick }}" style="flex:1;min-height:36px;border-radius:10px;background:{{ c.bg }};border:1px solid {{ c.bd }};display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:{{ c.fg }};cursor:pointer">{{ c.label }}</div>
+                </sc-for>
+              </div>
+            </sc-if>
+            <sc-if value="{{ upShowMonth }}">
+              <div style="font-size:12px;color:#4A5568;margin-bottom:6px">On the</div>
+              <div style="display:flex;gap:6px;margin-bottom:10px">
+                <sc-for list="{{ upMonthChips }}" as="c" hint-placeholder-count="4">
+                  <div onClick="{{ c.pick }}" style="flex:1;min-height:36px;border-radius:10px;background:{{ c.bg }};border:1px solid {{ c.bd }};display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:600;color:{{ c.fg }};cursor:pointer">{{ c.label }}</div>
+                </sc-for>
+              </div>
+            </sc-if>
+            <sc-if value="{{ upShowCustom }}">
+              <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:10px">
+                <div onClick="{{ upDecN }}" style="width:40px;height:40px;border-radius:10px;border:1px solid #E8EDF2;background:#F7F9FC;display:flex;align-items:center;justify-content:center;color:#1A1D23;cursor:pointer"><i data-lucide="minus" style="width:16px;height:16px"></i></div>
+                <span style="font-size:15px;font-weight:600;color:#1A1D23;font-variant-numeric:tabular-nums">{{ upNDisp }}</span>
+                <div onClick="{{ upIncN }}" style="width:40px;height:40px;border-radius:10px;border:1px solid #E8EDF2;background:#F7F9FC;display:flex;align-items:center;justify-content:center;color:#1A1D23;cursor:pointer"><i data-lucide="plus" style="width:16px;height:16px"></i></div>
+              </div>
+            </sc-if>
+            <div onClick="{{ upSave }}" style="min-height:50px;border-radius:10px;background:#4CAF82;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;color:#fff;cursor:pointer;margin-top:4px">Add to upcoming</div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ shStop }}">
+          <div style="padding:14px 24px 36px">
+            <div style="font-family:'Instrument Serif',Georgia,serif;font-size:24px;color:#1A1D23">Stop breaking this habit?</div>
+            <div style="font-size:13.5px;color:#4A5568;line-height:1.5;margin-top:6px;margin-bottom:16px">Your history is kept. You can start breaking it again any time.</div>
+            <div onClick="{{ stopHabit }}" style="min-height:48px;border-radius:10px;background:#F05A5A;display:flex;align-items:center;justify-content:center;font-size:14.5px;font-weight:600;color:#fff;cursor:pointer">Stop breaking it</div>
+            <div onClick="{{ closeSheet }}" style="min-height:44px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:#1A1D23;cursor:pointer">Keep going</div>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ toastOn }}" hint-placeholder-val="{{ false }}">
+      <div style="position:absolute;left:20px;right:20px;bottom:110px;z-index:90;display:flex;justify-content:center;pointer-events:none">
+        <div style="display:flex;align-items:center;gap:14px;background:#1A1D23;color:#fff;border-radius:12px;padding:12px 18px;box-shadow:0 8px 24px rgba(26,29,35,.3);animation:hcToast .22s cubic-bezier(0.22,1,0.36,1);pointer-events:auto">
+          <span style="font-size:13.5px;font-weight:600">{{ toastMsg }}</span>
+          <sc-if value="{{ toastUndo }}"><span onClick="{{ undoDel }}" style="font-size:13.5px;font-weight:700;color:#7FD4A8;cursor:pointer">Undo</span></sc-if>
+        </div>
+      </div>
+    </sc-if>
+
+    <div style="position:absolute;bottom:8px;left:128px;width:134px;height:5px;border-radius:3px;background:rgba(26,29,35,.28);z-index:95"></div>
+  </div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:420,&quot;height&quot;:900},&quot;startInApp&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;toastSeconds&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:2.6,&quot;min&quot;:1,&quot;max&quot;:6,&quot;step&quot;:0.5,&quot;unit&quot;:&quot;s&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Prototype&quot;}}">
+const CATS = [
+  {id:'food',emoji:'🍕',name:'Food',short:'Food',rgb:'255,107,107'},
+  {id:'groceries',emoji:'🛒',name:'Groceries',short:'Grocery',rgb:'255,159,67'},
+  {id:'transport',emoji:'🚗',name:'Transport',short:'Transport',rgb:'74,144,217'},
+  {id:'fun',emoji:'🎬',name:'Entertainment',short:'Fun',rgb:'245,166,35'},
+  {id:'shopping',emoji:'🛍',name:'Shopping',short:'Shop',rgb:'236,72,153'},
+  {id:'subs',emoji:'📱',name:'Subscriptions',short:'Subs',rgb:'6,182,212'},
+];
+const SUBS = [
+  {id:'streaming',name:'Video streaming',price:12},{id:'music',name:'Music',price:9.99},
+  {id:'cloud',name:'Cloud storage',price:3},{id:'gaming',name:'Gaming',price:10},
+  {id:'news',name:'News',price:8},{id:'fitness',name:'Fitness',price:15},
+  {id:'dating',name:'Dating',price:20},{id:'other',name:'Something else',price:15},
+];
+const VICES = [
+  {id:'coffee',name:'Coffee or tea out',each:6},
+  {id:'delivery',name:'Food delivery',each:22},
+  {id:'impulse',name:'Impulse buys',each:15},
+];
+const DAYS=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const DAYFULL=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+const UPNAMES=[{n:'Rent',e:'🏠',rgb:'142,124,243'},{n:'Internet',e:'📡',rgb:'6,182,212'},{n:'Phone',e:'📱',rgb:'6,182,212'},{n:'Gym',e:'🏋️',rgb:'245,166,35'},{n:'Insurance',e:'🛡️',rgb:'74,144,217'},{n:'Utilities',e:'💡',rgb:'255,159,67'}];
+const BANDS = ['Never','1-2','3-5','Daily'];
+const MULT = [0,1.5,4,7];
+const $ = n => '$' + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+const $0 = n => '$' + Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g,',');
+const seed = () => ({
+  ob:'welcome', tab:'today', sheet:null, habitView:false, moneySeg:'spent',
+  keypad:'', logCat:'food', editId:null, logRepeat:false,
+  subs:{streaming:true,fitness:true}, vices:{coffee:2,delivery:1,impulse:-1},
+  today:null, backfillDone:false, partialDone:false,
+  kept:37.5, skips:23, weekSkips:3, perSkip:6.5,
+  h1:true, h1Name:'Morning coffee', h2:false, skips2:0, premium:false, plan:'yr', poT:'coffee',
+  expenses:[
+    {id:1,name:'Starbucks',cat:'food',amt:6.5,time:'8:12 am',day:'Today'},
+    {id:2,name:'Lunch bowl',cat:'food',amt:14.2,time:'12:41 pm',day:'Today'},
+    {id:3,name:'Safeway',cat:'groceries',amt:52.8,time:'6:03 pm',day:'Yesterday'},
+    {id:4,name:'Starbucks',cat:'food',amt:6.5,time:'8:24 am',day:'Yesterday'},
+    {id:5,name:'Netflix',cat:'subs',amt:15.49,time:'9:00 am',day:'Yesterday'},
+  ],
+  nextId:6, deleted:null, toast:null,
+  upcoming:[
+    {id:'u1',name:'Rent',emoji:'🏠',rgb:'142,124,243',amt:1650,sub:'Monthly · 1st · next Aug 1',tag:null},
+    {id:'u2',name:'Video streaming',emoji:'📱',rgb:'6,182,212',amt:15.49,sub:'Monthly · 3rd · next Aug 3',tag:null},
+    {id:'u3',name:'Car loan',emoji:'🚗',rgb:'74,144,217',amt:214,sub:'Bi-weekly · Friday · next Aug 7',tag:'3 payments in Aug'},
+  ], nextUid:4,
+  upName:'Rent', upType:'rep', upFreq:'monthly', upDay:4, upBiStart:'this', upMonth:'1st', upN:10, upOnce:'Tomorrow',
+});
+class Component extends DCLogic {
+  state = Object.assign({phase:null}, seed());
+  componentDidMount(){ this.icons(); }
+  componentDidUpdate(){ this.icons(); }
+  icons(){ if (window.lucide) window.lucide.createIcons(); }
+  toast(msg, undo){
+    clearTimeout(this._tt);
+    this.setState({toast:{msg, undo:!!undo}});
+    this._tt = setTimeout(()=>this.setState({toast:null}), Math.round((this.props.toastSeconds ?? 2.6)*1000));
+  }
+  set(p){ return ()=>this.setState(p); }
+  key(k){
+    let v = this.state.keypad;
+    if (k==='del') v = v.slice(0,-1);
+    else if (k==='.') { if (!v.includes('.')) v = (v||'0')+'.'; }
+    else { if (v.includes('.') && v.split('.')[1].length>=2) return; if (v.replace('.','').length>=6) return; v = (v==='0'?'':v)+k; }
+    this.setState({keypad:v});
+  }
+  amt(){ return parseFloat(this.state.keypad)||0; }
+  renderVals(){
+    const s = this.state, st = p=>this.set(p);
+    const cat = id => CATS.find(c=>c.id===id)||CATS[0];
+    const tint = c => 'rgba('+c.rgb+',.12)';
+    // onboarding computed
+    const subsSum = SUBS.reduce((a,c)=>a+(s.subs[c.id]?c.price:0),0);
+    const vicesWeek = VICES.reduce((a,v)=>a+(s.vices[v.id]>=0?v.each*MULT[s.vices[v.id]]:0),0);
+    const yearly = subsSum*12+vicesWeek*52;
+    const revealRows = [
+      ...VICES.filter(v=>s.vices[v.id]>0).map(v=>({name:v.name, val:v.each*MULT[s.vices[v.id]]*52})),
+      ...SUBS.filter(c=>s.subs[c.id]).map(c=>({name:c.name, val:c.price*12})),
+    ].sort((a,b)=>b.val-a.val).slice(0,5).map(r=>({name:r.name, yr:'~'+$0(r.val)+'/yr'}));
+    // week dots
+    const base = ['skip','skip','slip','skip'];
+    const labels = ['M','T','W','T','F','S','S'];
+    const dots = labels.map((l,i)=>{
+      let bg='#fff', bd='1.5px solid #E8EDF2', ic=false;
+      if (i<4){ if(base[i]==='skip'){bg='#4CAF82';bd='none';ic=true;} else {bg='#E8EDF2';bd='none';} }
+      else if (i===4){ if(s.today==='skip'){bg='#4CAF82';bd='none';ic=true;} else if(s.today==='slip'){bg='#E8EDF2';bd='none';} else {bd='1.5px solid #4CAF82';} }
+      return {label:l, bg, bd, icon:ic};
+    });
+    const weekSkips = 3+(s.today==='skip'?1:0), weekDays = 4+(s.today?1:0);
+    // money groups
+    const groups = ['Today','Yesterday'].map(d=>{
+      const items = s.expenses.filter(e=>e.day===d).map(e=>({
+        ...e, emoji:cat(e.cat).emoji, tint:tint(cat(e.cat)), amtStr:'−'+$(e.amt),
+        open:()=>this.setState({sheet:'edit', editId:e.id, keypad:String(e.amt), logCat:e.cat}),
+      }));
+      return {label:d, items, total:$(items.reduce((a,e)=>a+e.amt,0)), has:items.length>0};
+    }).filter(g=>g.has);
+    // insights
+    const totals = {};
+    s.expenses.forEach(e=>{ totals[e.cat]=(totals[e.cat]||0)+e.amt; });
+    const maxT = Math.max(1,...Object.values(totals));
+    const bars = Object.entries(totals).sort((a,b)=>b[1]-a[1]).map(([id,v])=>({
+      label:cat(id).emoji+' '+cat(id).name, amt:$0(v), pct:Math.round(v/maxT*100)+'%',
+    }));
+    const spentSum = s.expenses.reduce((a,e)=>a+e.amt,0);
+    // keypad
+    const kpKeys = ['1','2','3','4','5','6','7','8','9','.','0','del'].map(k=>({
+      label:k==='del'?'⌫':k, press:()=>this.key(k),
+    }));
+    const catPick = CATS.slice(0,5).map(c=>({
+      ...c, tint:tint(c), bd:s.logCat===c.id?'#'+({food:'FF6B6B',groceries:'FF9F43',transport:'4A90D9',fun:'F5A623',shopping:'EC4899'}[c.id]||'4CAF82'):'transparent',
+      pick:()=>this.setState({logCat:c.id}),
+    }));
+    // pick-one
+    const po = s.poT==='delivery'
+      ? {title:'Food delivery.', sub:'a weekly leak', line:'$117.00 a month. You ordered 6 times in the last 30 days.', keeps:'22.00', gated:!s.premium}
+      : {title:'Morning coffee.', sub:'a daily leak', line:'$86.00 a month. You bought it 14 times in the last 30 days.', keeps:'6.50', gated:false};
+    const doSkip = ()=>{ this.setState({today:'skip', kept:s.kept+s.perSkip, skips:s.skips+1}); this.toast('+'+$(s.perSkip)+' kept. '+(weekSkips+1)+' of '+(s.today?weekDays:weekDays+1)+' days this week.'); };
+    const doSlip = ()=>{ this.setState({today:'slip'}); this.toast('Logged. Your kept stays yours.'); };
+    const changeAnswer = ()=>{ const p={today:null}; if(s.today==='skip'){p.kept=s.kept-s.perSkip;p.skips=s.skips-1;} this.setState(p); };
+    const logSave = ()=>{
+      const a=this.amt(); if(!a){ this.toast('Enter an amount first.'); return; }
+      const e={id:s.nextId,name:cat(s.logCat).name,cat:s.logCat,amt:a,time:'now',day:'Today'};
+      this.setState({expenses:[e,...s.expenses],nextId:s.nextId+1,sheet:null,keypad:''});
+      this.toast('Logged.');
+    };
+    const editSave = ()=>{
+      const a=this.amt(); if(!a){ this.toast('Enter an amount first.'); return; }
+      this.setState({expenses:s.expenses.map(e=>e.id===s.editId?{...e,amt:a,cat:s.logCat}:e),sheet:null});
+      this.toast('Saved.');
+    };
+    const del = ()=>{
+      const idx=s.expenses.findIndex(e=>e.id===s.editId);
+      this.setState({deleted:{item:s.expenses[idx],idx},expenses:s.expenses.filter(e=>e.id!==s.editId),sheet:null});
+      this.toast('Deleted.',true);
+    };
+    const ph = s.phase || (this.props.startInApp ? 'app' : 'ob');
+    const chip = sel => sel?{bg:'#4CAF82',bd:'#4CAF82',fg:'#fff'}:{bg:'#fff',bd:'#E8EDF2',fg:'#4A5568'};
+    const upSave = ()=>{
+      const a=this.amt(); if(!a){this.toast('Enter an amount first.');return;}
+      const nm=UPNAMES.find(x=>x.n===s.upName)||UPNAMES[0];
+      let sub='One time · '+s.upOnce;
+      if(s.upType==='rep'){
+        if(s.upFreq==='weekly') sub='Every '+DAYFULL[s.upDay];
+        else if(s.upFreq==='biweekly') sub='Every other '+DAYFULL[s.upDay]+(s.upBiStart==='next'?' · from next week':'');
+        else if(s.upFreq==='monthly') sub='Monthly · '+(s.upMonth==='Last day'?'last day of the month':s.upMonth);
+        else sub='Every '+s.upN+' days';
+      }
+      this.setState({upcoming:[...s.upcoming,{id:'u'+s.nextUid,name:s.upName,emoji:nm.e,rgb:nm.rgb,amt:a,sub,tag:null}],nextUid:s.nextUid+1,sheet:null});
+      this.toast('Added to upcoming.');
+    };
+    return {
+      // phases
+      obWelcome: ph==='ob'&&s.ob==='welcome', obIntent: ph==='ob'&&s.ob==='intent',
+      obScanIntake: ph==='ob'&&s.ob==='scanIntake', obScanning: ph==='ob'&&s.ob==='scanning', obScanResults: ph==='ob'&&s.ob==='scanResults',
+      obSubs: ph==='ob'&&s.ob==='subs', obVices: ph==='ob'&&s.ob==='vices',
+      obReveal: ph==='ob'&&s.ob==='reveal', obGuided: ph==='ob'&&s.ob==='guided',
+      obSuccess: ph==='ob'&&s.ob==='success',
+      inApp: ph==='app', showTabs: ph==='app'&&!s.habitView&&!s.sheet,
+      tToday: ph==='app'&&!s.habitView&&s.tab==='today',
+      tMoney: ph==='app'&&!s.habitView&&s.tab==='money',
+      tInsights: ph==='app'&&!s.habitView&&s.tab==='insights',
+      vHabit: ph==='app'&&s.habitView,
+      goIntent: st({ob:'intent'}), openHow: st({sheet:'how'}), goSubs: st({ob:'subs'}),
+      startScan: st({ob:'scanIntake'}),
+      scanRun: ()=>{ this.setState({ob:'scanning'}); setTimeout(()=>this.setState({ob:'scanResults'}),1400); },
+      finishScan: ()=>{ this.setState({phase:'app',tab:'today'}); this.toast('Saved to HabitCents.'); },
+      scanBreak: ()=>this.setState({phase:'app',tab:'today',poT:'coffee',sheet:'pickone'}),
+      watchLeak: ()=>this.toast('Watching grocery runs.'),
+      goVices: st({ob:'vices'}), noneSubs: ()=>this.setState({subs:{},ob:'vices'}),
+      goReveal: st({ob:'reveal'}), goGuided: ()=>this.setState({ob:'guided',keypad:'6.50',logCat:'food'}),
+      goSuccess: st({ob:'success'}),
+      guidedSave: ()=>{ const a=this.amt(); if(!a){this.toast('Enter an amount first.');return;} const e={id:s.nextId,name:'Starbucks',cat:s.logCat,amt:a,time:'now',day:'Today'}; this.setState({expenses:[e,...s.expenses],nextId:s.nextId+1,ob:'success'}); this.toast('Logged. Nice, that took ten seconds.'); },
+      successBreak: ()=>this.setState({poT:'coffee',sheet:'pickone',phase:'app',tab:'today'}),
+      finishOb: st({phase:'app',tab:'today'}), skipToApp: st({phase:'app',tab:'today'}),
+      door2Toast: ()=>this.toast('Door 2 lives on the static canvas for now.'),
+      subChips: SUBS.map(c=>({name:c.name, sel:!!s.subs[c.id],
+        price: c.id==='other'?'you set it':'~'+$(c.price)+' a month',
+        bg: s.subs[c.id]?'#E8F5EE':'#fff', bd: s.subs[c.id]?'#4CAF82':'#E8EDF2',
+        priceColor: s.subs[c.id]?'#2E7D55':'#8898AA',
+        toggle:()=>this.setState({subs:{...s.subs,[c.id]:!s.subs[c.id]}}),
+      })),
+      subsTotal:'≈ '+$0(subsSum),
+      viceRows: VICES.map(v=>({name:v.name, each:$(v.each),
+        bands: BANDS.map((b,i)=>({label:b,
+          bg:s.vices[v.id]===i?'#4CAF82':'#fff', bd:s.vices[v.id]===i?'#4CAF82':'#E8EDF2', fg:s.vices[v.id]===i?'#fff':'#4A5568',
+          pick:()=>this.setState({vices:{...s.vices,[v.id]:s.vices[v.id]===i?-1:i}}),
+        })),
+      })),
+      vicesTotal:'+ '+$0(vicesWeek),
+      revealEmpty: yearly===0, revealHasNumber: yearly>0,
+      revealYearly:'~'+$0(yearly), revealMonthly:$0(yearly/12), revealRows,
+      // shared
+      kpDisp: s.keypad||'0', kpColor: s.keypad?'#1A1D23':'#8898AA', kpKeys, catPick,
+      keptDisp:$(s.kept), skipsDisp:String(s.skips),
+      dots, weekLine: weekSkips+' of '+weekDays+' days', weekKept:$(weekSkips*s.perSkip)+' kept',
+      ciNone: s.h1&&!s.today, ciSkip: s.h1&&s.today==='skip', ciSlip: s.h1&&s.today==='slip',
+      h1Gone: !s.h1, h2On: s.h2, answered: s.h1&&!!s.today, showBackfill: s.h1&&!!s.today&&!s.backfillDone,
+      skipBtn:'Skipped it · keeps '+$(s.perSkip), perSkipDisp:$(s.perSkip),
+      doSkip, doSlip, changeAnswer,
+      doBackfillSkip: ()=>{ this.setState({backfillDone:true,kept:s.kept+s.perSkip,skips:s.skips+1}); this.toast('Yesterday counted. +'+$(s.perSkip)+' kept.'); },
+      doBackfillSlip: ()=>{ this.setState({backfillDone:true}); this.toast('Yesterday noted.'); },
+      openPartial: ()=>this.setState({sheet:'partial',keypad:''}),
+      partialSave: ()=>{ const a=this.amt(); const back=Math.max(0,s.perSkip-a); this.setState({sheet:null,partialDone:true,kept:s.kept+back}); this.toast(back>0?'+'+$(back)+' kept back.':'Noted.'); },
+      h2Skip: ()=>{ this.setState({skips2:s.skips2+1,kept:s.kept+22}); this.toast('+$22.00 kept. Skip 1 counted.'); },
+      // tabs + nav
+      goToday: st({tab:'today'}), goMoney: st({tab:'money'}), goInsights: st({tab:'insights'}),
+      cToday: s.tab==='today'?'#4CAF82':'#8898AA', cMoney: s.tab==='money'?'#4CAF82':'#8898AA', cInsights: s.tab==='insights'?'#4CAF82':'#8898AA',
+      openHabit: st({habitView:true}), closeHabit: st({habitView:false}),
+      segSpent: s.moneySeg==='spent', segUpcoming: s.moneySeg==='upcoming',
+      pickSpent: st({moneySeg:'spent'}), pickUpcoming: st({moneySeg:'upcoming'}),
+      spentBg1: s.moneySeg==='spent'?'#fff':'transparent', spentBg2: s.moneySeg==='upcoming'?'#fff':'transparent',
+      spentSh1: s.moneySeg==='spent'?'0 1px 2px rgba(26,29,35,.06)':'none', spentSh2: s.moneySeg==='upcoming'?'0 1px 2px rgba(26,29,35,.06)':'none',
+      groups: groups.map(g=>({...g,isToday:g.label==='Today'})), bars, spentSum:$0(spentSum), julyPace:$0(spentSum*2.2),
+      h2Off: !s.h2, notHabitView: !s.habitView,
+      // sheets
+      anySheet: !!s.sheet, closeSheet: st({sheet:null}),
+      shHow: s.sheet==='how', shLog: s.sheet==='log', shEdit: s.sheet==='edit',
+      shPartial: s.sheet==='partial', shSkipVal: s.sheet==='skipval', shPickone: s.sheet==='pickone',
+      shPremium: s.sheet==='premium', shSettings: s.sheet==='settings', shStop: s.sheet==='stop',
+      openLog: ()=>this.setState({sheet:'log',keypad:'',logCat:'food'}),
+      openSettings: st({sheet:'settings'}), openSkipVal: ()=>this.setState({sheet:'skipval',keypad:String(s.perSkip)}),
+      openStop: st({sheet:'stop'}),
+      logSave, editSave, del,
+      undoDel: ()=>{ if(!s.deleted) return; const arr=[...s.expenses]; arr.splice(s.deleted.idx,0,s.deleted.item); this.setState({expenses:arr,deleted:null,toast:null}); this.toast('Restored.'); },
+      skipValSave: ()=>{ const a=this.amt(); if(!a){this.toast('Enter an amount first.');return;} this.setState({perSkip:a,sheet:null}); this.toast('Saved. One skip keeps '+$(a)+'.'); },
+      poTitle:po.title, poSub:po.sub, poLine:po.line, poKeeps:po.keeps, poGated:po.gated, poReady:!po.gated,
+      openPo1: ()=>this.setState({poT:'coffee',sheet:'pickone'}),
+      openPo2: ()=>this.setState({poT:'delivery',sheet:'pickone'}),
+      poStart: ()=>{ if(po.gated){this.toast('Free plan keeps 1 habit. Start a trial to add more.');return;} if(s.poT==='delivery'){this.setState({h2:true,sheet:null});this.toast('Breaking food delivery. Tap "I skipped one" when you do.');} else {this.setState({h1:true,sheet:null,today:null});this.toast('Breaking morning coffee. We\'ll ask each day.');} },
+      openPremium: st({sheet:'premium'}),
+      planYr: s.plan==='yr', planMo: s.plan==='mo', planLife: s.plan==='life',
+      pickYr: st({plan:'yr'}), pickMo: st({plan:'mo'}), pickLife: st({plan:'life'}),
+      yrBd: s.plan==='yr'?'1.5px solid #4CAF82':'1px solid #E8EDF2', yrBg: s.plan==='yr'?'#E8F5EE':'#fff',
+      moBd: s.plan==='mo'?'1.5px solid #4CAF82':'1px solid #E8EDF2', moBg: s.plan==='mo'?'#E8F5EE':'#fff',
+      lifeBd: s.plan==='life'?'1.5px solid #4CAF82':'1px solid #E8EDF2', lifeBg: s.plan==='life'?'#E8F5EE':'#fff',
+      startTrial: ()=>{ this.setState({premium:true,sheet:s.poT==='delivery'?'pickone':null}); this.toast('Trial started. 14 days free.'); },
+      stopHabit: ()=>{ this.setState({h1:false,habitView:false,sheet:null}); this.toast('Stopped. Your history is kept.'); },
+      replayOb: ()=>this.setState({phase:'ob',ob:'welcome',sheet:null}),
+      resetProto: ()=>{ this.setState(Object.assign({phase:'app'},seed())); this.toast('Prototype reset.'); },
+      restore: ()=>this.toast('Nothing to restore yet.'),
+      isPremium: s.premium, planLabel: s.premium?'Premium trial · 14 days left':'Free plan · 1 habit',
+      arcPct: Math.min(100,Math.round(s.skips/66*100))+'%', arcChapter: s.skips<10?'Deciding':s.skips<30?'Rhythm':s.skips<50?'Cruising':'Rewired',
+      arcLine: s.skips+' of 66 · '+(s.skips<10?'Deciding':s.skips<30?'Rhythm':s.skips<50?'Cruising':'Rewired'),
+      keptH1:$(s.kept>37.5?37.5+ (s.kept-37.5):s.kept),
+      upcomingList: s.upcoming.map(u=>({...u,tint:'rgba('+u.rgb+',.12)',amtStr:$(u.amt),hasTag:!!u.tag})),
+      upcTotal:$(s.upcoming.reduce((a,u)=>a+u.amt,0)), upcCount:s.upcoming.length+' scheduled',
+      openAddUp: ()=>this.setState({sheet:'addup',keypad:''}), shAddUp: s.sheet==='addup',
+      upNameChips: UPNAMES.map(x=>({label:x.n,...chip(s.upName===x.n),pick:()=>this.setState({upName:x.n})})),
+      upTypeChips: [['One-time','once'],['Repeats','rep']].map(p=>({label:p[0],...chip(s.upType===p[1]),pick:()=>this.setState({upType:p[1]})})),
+      upFreqChips: [['Weekly','weekly'],['Bi-weekly','biweekly'],['Monthly','monthly'],['Custom','custom']].map(p=>({label:p[0],...chip(s.upFreq===p[1]),pick:()=>this.setState({upFreq:p[1]})})),
+      upDayChips: DAYS.map((d,i)=>({label:d,...chip(s.upDay===i),pick:()=>this.setState({upDay:i})})),
+      upBiChips: [['This week','this'],['Next week','next']].map(p=>({label:p[0],...chip(s.upBiStart===p[1]),pick:()=>this.setState({upBiStart:p[1]})})),
+      upMonthChips: ['1st','15th','30th','Last day'].map(m=>({label:m,...chip(s.upMonth===m),pick:()=>this.setState({upMonth:m})})),
+      upOnceChips: ['Tomorrow','Next week','Aug 1','Aug 15'].map(o=>({label:o,...chip(s.upOnce===o),pick:()=>this.setState({upOnce:o})})),
+      upShowFreq: s.upType==='rep', upShowDays: s.upType==='rep'&&(s.upFreq==='weekly'||s.upFreq==='biweekly'),
+      upShowBi: s.upType==='rep'&&s.upFreq==='biweekly', upShowMonth: s.upType==='rep'&&s.upFreq==='monthly',
+      upShowCustom: s.upType==='rep'&&s.upFreq==='custom', upShowOnce: s.upType==='once',
+      upNDisp:'Every '+s.upN+' days', upIncN: ()=>this.setState({upN:Math.min(90,s.upN+1)}), upDecN: ()=>this.setState({upN:Math.max(2,s.upN-1)}),
+      upSave,
+      signOut: ()=>{ this.setState(Object.assign({phase:'ob'},seed())); this.toast('Signed out. Your data stays on this device.'); },
+      showFlowNotesOn: this.props.showFlowNotes ?? true,
+      toastOn: !!s.toast, toastMsg: s.toast?s.toast.msg:'', toastUndo: !!(s.toast&&s.toast.undo),
+    };
+  }
+}
+</script>
+</body>
+</html>

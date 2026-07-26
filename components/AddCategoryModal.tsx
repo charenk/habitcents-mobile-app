@@ -10,7 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon, CATEGORY_ICON_MAP } from '@/components/ui/Icon';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { currencyMeta } from '@/utils/currency';
@@ -126,8 +126,8 @@ export function AddCategoryModal({
             {/* Preview */}
             <View style={styles.previewContainer}>
               <View style={[styles.previewIcon, { backgroundColor: selectedColor + '20' }]}>
-                <Ionicons
-                  name={selectedIcon as keyof typeof Ionicons.glyphMap}
+                <Icon
+                  name={CATEGORY_ICON_MAP[selectedIcon]}
                   size={32}
                   color={selectedColor}
                 />
@@ -167,8 +167,8 @@ export function AddCategoryModal({
                     accessibilityState={{ selected: selectedIcon === icon }}
                     accessibilityLabel={iconOptionLabel(icon)}
                   >
-                    <Ionicons
-                      name={icon as keyof typeof Ionicons.glyphMap}
+                    <Icon
+                      name={CATEGORY_ICON_MAP[icon]}
                       size={24}
                       color={selectedIcon === icon ? selectedColor : theme.textSecondary}
                     />
@@ -195,7 +195,7 @@ export function AddCategoryModal({
                     accessibilityLabel={`color option ${index + 1}`}
                   >
                     {selectedColor === color && (
-                      <Ionicons name="checkmark" size={20} color={theme.white} />
+                      <Icon name="Check" size={20} color={theme.white} />
                     )}
                   </TouchableOpacity>
                 ))}

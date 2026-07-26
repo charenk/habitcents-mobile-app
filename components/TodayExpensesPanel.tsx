@@ -10,7 +10,7 @@ import {
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/ui/Icon';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import type { Expense, ExpenseSection } from '@/types/expense';
@@ -61,7 +61,7 @@ function ExpenseCard({
       accessibilityLabel={strings.expenses.editAccessibilityLabel(item.title, amountLabel)}
     >
       <View style={[styles.cardIcon, { backgroundColor: iconBg }]}>
-        <Ionicons name="cafe-outline" size={24} color={iconColor} />
+        <Icon name="Coffee" size={24} color={iconColor} />
       </View>
       <View style={styles.cardContent}>
         <Text style={styles.cardTitle}>{item.title}</Text>

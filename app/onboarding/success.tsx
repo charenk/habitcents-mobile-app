@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/ui/Icon';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useOnboarding } from '@/contexts/OnboardingContext';
@@ -76,7 +76,7 @@ export default function OnboardingSuccessScreen() {
     <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <View style={styles.content}>
         <View style={styles.checkCircle}>
-          <Ionicons name="checkmark" size={48} color={theme.white} />
+          <Icon name="Check" size={48} color={theme.white} />
         </View>
         <Text style={styles.title}>{strings.onboarding.leakMapReady}</Text>
 

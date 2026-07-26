@@ -1,6 +1,6 @@
 import { Tabs } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/ui/Icon';
 import { useTheme } from '@/contexts/ThemeContext';
 import { strings } from '@/constants/strings';
 
@@ -42,7 +42,7 @@ export default function TabLayout() {
           title: strings.tabs.expenses,
           headerShown: false,
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="wallet-outline" size={size} color={color} />
+            <Icon name="Wallet" size={size} color={color} />
           ),
         }}
       />
@@ -52,7 +52,7 @@ export default function TabLayout() {
           title: strings.tabs.reports,
           headerShown: false,
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="bar-chart-outline" size={size} color={color} />
+            <Icon name="ChartColumn" size={size} color={color} />
           ),
         }}
       />
@@ -62,7 +62,7 @@ export default function TabLayout() {
           title: strings.tabs.categories,
           headerShown: false,
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="grid-outline" size={size} color={color} />
+            <Icon name="LayoutGrid" size={size} color={color} />
           ),
         }}
       />
@@ -72,7 +72,7 @@ export default function TabLayout() {
           title: strings.tabs.habits,
           headerShown: false,
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="checkmark-circle-outline" size={size} color={color} />
+            <Icon name="CircleCheck" size={size} color={color} />
           ),
         }}
       />

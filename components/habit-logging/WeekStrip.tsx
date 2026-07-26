@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Reanimated, { useSharedValue, useAnimatedStyle, withSequence, withTiming, runOnUI } from 'react-native-reanimated';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/ui/Icon';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { weekStrip, weekStats, type WeekDayCell } from '@/utils/habitLogging';
@@ -84,7 +84,7 @@ function WeekDot({
         ]}
       >
         {cell.state === 'skipped' && (
-          <Ionicons name="checkmark" size={13} color={theme.white} />
+          <Icon name="Check" size={13} color={theme.white} />
         )}
       </View>
     </Reanimated.View>

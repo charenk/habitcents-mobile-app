@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/ui/Icon';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useHabits } from '@/contexts/HabitsContext';
@@ -87,7 +87,7 @@ export default function HabitDetailScreen() {
             accessibilityLabel={strings.common.back}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Ionicons name="arrow-back" size={24} color={theme.text} />
+            <Icon name="ArrowLeft" size={24} color={theme.text} />
           </TouchableOpacity>
         </View>
         <View style={styles.emptyContainer}>
@@ -130,7 +130,7 @@ export default function HabitDetailScreen() {
               accessibilityLabel={strings.common.back}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <Ionicons name="arrow-back" size={24} color={theme.text} />
+              <Icon name="ArrowLeft" size={24} color={theme.text} />
             </TouchableOpacity>
           ),
         }}
@@ -165,7 +165,7 @@ export default function HabitDetailScreen() {
               onPress={() => setPickOneVisible(true)}
               accessibilityRole="button"
             >
-              <Ionicons name="flag-outline" size={20} color={theme.white} />
+              <Icon name="Flag" size={20} color={theme.white} />
               <Text style={styles.primaryButtonText}>{strings.habitDetail.startTracking}</Text>
             </TouchableOpacity>
           </View>

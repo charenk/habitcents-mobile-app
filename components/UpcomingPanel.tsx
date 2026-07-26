@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, FlatList } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/ui/Icon';
 import { useTheme } from '@/contexts/ThemeContext';
 import { formatDate as formatDateLocalized } from '@/utils/dates';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -25,7 +25,7 @@ export function UpcomingPanel({ items, windowDays }: UpcomingPanelProps) {
   if (items.length === 0) {
     return (
       <View style={styles.emptyContainer}>
-        <Ionicons name="repeat-outline" size={56} color={theme.textTertiary} />
+        <Icon name="Repeat" size={56} color={theme.textTertiary} />
         <Text style={styles.emptyTitle}>{strings.upcoming.emptyTitle}</Text>
         <Text style={styles.emptySubtitle}>
           {strings.upcoming.emptySubtitle}
@@ -50,7 +50,7 @@ export function UpcomingPanel({ items, windowDays }: UpcomingPanelProps) {
         renderItem={({ item }) => (
           <View style={styles.card}>
             <View style={styles.cardIcon}>
-              <Ionicons name="repeat" size={20} color={theme.primary} />
+              <Icon name="Repeat" size={20} color={theme.primary} />
             </View>
             <View style={styles.cardContent}>
               <Text style={styles.cardTitle}>{item.expense.merchant || item.expense.title}</Text>

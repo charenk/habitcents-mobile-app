@@ -1,11 +1,11 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon, CATEGORY_ICON_MAP, type IconName } from '@/components/ui/Icon';
 import { deleteCategoryLabel } from '@/utils/a11y';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import type { AppTheme } from '@/constants/theme';
-import type { Category, CategoryIcon } from '@/types/category';
+import type { Category } from '@/types/category';
 import { strings } from '@/constants/strings';
 
 type CategoryRowProps = {
@@ -31,14 +31,14 @@ export function CategoryRow({
   const { format } = useCurrency();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
-  const getTrendIcon = () => {
+  const getTrendIcon = (): IconName => {
     switch (trend) {
       case 'increasing':
-        return 'trending-up';
+        return 'TrendingUp';
       case 'decreasing':
-        return 'trending-down';
+        return 'TrendingDown';
       default:
-        return 'remove';
+        return 'Minus';
     }
   };
 
@@ -76,8 +76,8 @@ export function CategoryRow({
         importantForAccessibility="no-hide-descendants"
         accessibilityElementsHidden
       >
-        <Ionicons
-          name={category.icon as keyof typeof Ionicons.glyphMap}
+        <Icon
+          name={CATEGORY_ICON_MAP[category.icon]}
           size={24}
           color={category.color}
         />
@@ -92,7 +92,7 @@ export function CategoryRow({
 
       {showTrend && (
         <View style={styles.trendContainer}>
-          <Ionicons
+          <Icon
             name={getTrendIcon()}
             size={16}
             color={getTrendColor()}
@@ -111,12 +111,12 @@ export function CategoryRow({
           accessibilityRole="button"
           accessibilityLabel={deleteCategoryLabel(category.name)}
         >
-          <Ionicons name="trash-outline" size={20} color={theme.danger} />
+          <Icon name="Trash2" size={20} color={theme.danger} />
         </TouchableOpacity>
       )}
 
-      <Ionicons
-        name="chevron-forward"
+      <Icon
+        name="ChevronRight"
         size={20}
         color={theme.textTertiary}
         style={styles.chevron}

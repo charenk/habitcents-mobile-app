@@ -21,7 +21,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/ui/Icon';
 import { useTheme } from '@/contexts/ThemeContext';
 import type { AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
@@ -137,7 +137,7 @@ export default function PaywallScreen() {
           accessibilityLabel={strings.paywall.closeLabel}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <Ionicons name="close" size={26} color={theme.textSecondary} />
+          <Icon name="X" size={26} color={theme.textSecondary} />
         </TouchableOpacity>
       </View>
 
@@ -151,7 +151,7 @@ export default function PaywallScreen() {
         <View style={styles.features}>
           {features.map((line) => (
             <View style={styles.featureRow} key={line}>
-              <Ionicons name="checkmark-circle" size={20} color={theme.primary} />
+              <Icon name="CircleCheck" size={20} color={theme.primary} />
               <Text style={styles.featureText}>{line}</Text>
             </View>
           ))}
@@ -170,8 +170,8 @@ export default function PaywallScreen() {
                 accessibilityLabel={`${plan.name}, ${plan.price} ${plan.period}${plan.badge ? `, ${plan.badge}` : ''}`}
               >
                 <View style={styles.planRadioColumn}>
-                  <Ionicons
-                    name={isSelected ? 'radio-button-on' : 'radio-button-off'}
+                  <Icon
+                    name={isSelected ? 'CircleDot' : 'Circle'}
                     size={22}
                     color={isSelected ? theme.primary : theme.border}
                   />
@@ -197,7 +197,7 @@ export default function PaywallScreen() {
         </View>
 
         <View style={styles.plannedBanner}>
-          <Ionicons name="information-circle-outline" size={16} color={theme.textSecondary} />
+          <Icon name="Info" size={16} color={theme.textSecondary} />
           <Text style={styles.plannedBannerText}>{strings.paywall.plannedBanner}</Text>
         </View>
       </ScrollView>

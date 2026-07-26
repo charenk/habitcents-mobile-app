@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/ui/Icon';
 import { useTheme } from '@/contexts/ThemeContext';
 import { projectionTrendLabel } from '@/utils/a11y';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -226,7 +226,7 @@ export function HabitStreaksContent({ data }: HabitStreaksContentProps) {
             {habit.habitName}
           </Text>
           <View style={styles.streakBadge}>
-            <Ionicons name="checkmark-circle" size={14} color={theme.primary} />
+            <Icon name="CircleCheck" size={14} color={theme.primary} />
             <Text style={styles.streakCount}>{habit.totalSkips}</Text>
           </View>
         </View>
@@ -271,8 +271,8 @@ export function ProjectionContent({
           accessible
           accessibilityLabel={projectionTrendLabel(isUp, Math.abs(comparedToLastMonth))}
         >
-          <Ionicons
-            name={isUp ? 'trending-up' : 'trending-down'}
+          <Icon
+            name={isUp ? 'TrendingUp' : 'TrendingDown'}
             size={16}
             color={isUp ? theme.danger : theme.primary}
           />

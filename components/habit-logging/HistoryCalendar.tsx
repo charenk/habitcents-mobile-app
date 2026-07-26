@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/ui/Icon';
 import { useTheme } from '@/contexts/ThemeContext';
 import { atMidnight, dayStateFor, isSameDay } from '@/utils/habitLogging';
 import { calendarCellLabel } from '@/utils/a11y';
@@ -74,7 +74,7 @@ export function HistoryCalendar({ dayLogs, trackingStart, today = new Date(), on
             accessibilityState={{ disabled: !canGoPrev }}
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           >
-            <Ionicons name="chevron-back" size={20} color={canGoPrev ? theme.primary : theme.border} />
+            <Icon name="ChevronLeft" size={20} color={canGoPrev ? theme.primary : theme.border} />
           </TouchableOpacity>
           <TouchableOpacity
             onPress={goNext}
@@ -84,7 +84,7 @@ export function HistoryCalendar({ dayLogs, trackingStart, today = new Date(), on
             accessibilityState={{ disabled: !canGoNext }}
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           >
-            <Ionicons name="chevron-forward" size={20} color={canGoNext ? theme.primary : theme.border} />
+            <Icon name="ChevronRight" size={20} color={canGoNext ? theme.primary : theme.border} />
           </TouchableOpacity>
         </View>
       </View>
@@ -116,7 +116,7 @@ export function HistoryCalendar({ dayLogs, trackingStart, today = new Date(), on
                   state === 'no-log' && styles.dotNoLog,
                 ]}
               >
-                {state === 'skipped' && <Ionicons name="checkmark" size={12} color={theme.white} />}
+                {state === 'skipped' && <Icon name="Check" size={12} color={theme.white} />}
               </TouchableOpacity>
             </View>
           );

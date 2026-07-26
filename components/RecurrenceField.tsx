@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/ui/Icon';
 import { useTheme } from '@/contexts/ThemeContext';
 import type { AppTheme } from '@/constants/theme';
 import type { RecurrenceFrequency } from '@/types/expense';
@@ -35,7 +35,7 @@ export function RecurrenceField({ recurrence, onChange }: RecurrenceFieldProps) 
         accessibilityLabel="Recurring expense"
       >
         <View style={styles.labelWrap}>
-          <Ionicons name="repeat-outline" size={20} color={theme.textSecondary} />
+          <Icon name="Repeat" size={20} color={theme.textSecondary} />
           <Text style={styles.label}>Recurring expense</Text>
         </View>
         <View style={[styles.switch, isOn && styles.switchOn]}>
