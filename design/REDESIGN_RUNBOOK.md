@@ -25,7 +25,7 @@ Ground-up visual redesign: one sage green + calm neutrals, Instrument Serif + In
 
 | Step | Branch | Status |
 |---|---|---|
-| 01 tokens + foundations | `redesign/01-tokens` | in review (PR open, awaiting Charen) |
+| 01 tokens + foundations | `redesign/01-tokens` | in review (PR #42, awaiting Charen); tsc + 329 tests green, sim-verified |
 | 02 navigation (3 tabs, settings sheet, categories route) | `redesign/02-navigation` | not started |
 | 03 intent-first onboarding (3a variant) | `redesign/03-onboarding` | not started |
 | 04 screens (Today/Money/Insights/detail/sheets/paywall + recurrence model) | `redesign/04-screens` | not started |
