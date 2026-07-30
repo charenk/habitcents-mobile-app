@@ -50,7 +50,7 @@ export default function OnboardingGuidedLogScreen() {
   // path has always used, so the write below is byte-for-byte the old one.
   const [amountValue, setAmountValue] = useState('');
   const amount = keypadValueToCents(amountValue);
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [pickedCategory, setPickedCategory] = useState<Category | null>(null);
 
   const quickCategories = useMemo(() => {
     const all = getVisibleCategories();
@@ -58,6 +58,11 @@ export default function OnboardingGuidedLogScreen() {
       (c): c is Category => !!c
     );
   }, [getVisibleCategories]);
+
+  // Food comes preselected (spec 03 path A) so the practice log really is one
+  // amount and one tap. Deriving it beats an effect: no first-render flash.
+  const selectedCategory = pickedCategory ?? quickCategories[0] ?? null;
+  const setSelectedCategory = setPickedCategory;
 
   const canSave = amount > 0 && !!selectedCategory;
 
@@ -122,7 +127,12 @@ export default function OnboardingGuidedLogScreen() {
                 accessibilityState={{ selected }}
               >
                 <EmojiTile emoji={categoryEmoji(cat.name)} size={44} color={identity} />
-                <Text style={[styles.categoryText, selected ? styles.categoryTextSelected : null]}>
+                <Text
+                  style={[styles.categoryText, selected ? styles.categoryTextSelected : null]}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.8}
+                >
                   {cat.name}
                 </Text>
               </Pressable>
