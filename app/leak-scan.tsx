@@ -30,7 +30,7 @@ export default function LeakScanRoute() {
   }, [router]);
 
   const handleLogByHand = useCallback(() => {
-    router.push('/(tabs)/expenses');
+    router.push('/(tabs)/money');
   }, [router]);
 
   if (state.stage === 'done' && state.result) {

@@ -253,7 +253,7 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
       });
     }
     track('scan_seed15_applied', { rows: seeded.length });
-    router.push('/(tabs)/habits');
+    router.push('/(tabs)');
   }, [result, addExpense, router]);
 
   if (undone) {

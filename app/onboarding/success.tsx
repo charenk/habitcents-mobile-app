@@ -69,7 +69,7 @@ export default function OnboardingSuccessScreen() {
     // onboarding_completed fires inside completeOnboarding() itself (spec 02
     // section 6), reading the latest doorChosen/habitStarted.
     await completeOnboarding();
-    router.replace('/(tabs)/habits');
+    router.replace('/(tabs)');
   };
 
   return (

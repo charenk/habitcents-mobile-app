@@ -10,6 +10,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
+import { SettingsSheet } from '@/components/SettingsSheet';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useHabits } from '@/contexts/HabitsContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
@@ -23,7 +24,8 @@ import { atMidnight, dayStateFor, isHabitLimitReached } from '@/utils/habitLoggi
 import { getEntitlement } from '@/utils/purchases';
 import { cardText, type CoachMomentCardId } from '@/utils/coachMoments';
 import { progressTowardDetection } from '@/utils/habitDetection';
-import type { AppTheme } from '@/constants/theme';
+import { formatDate } from '@/utils/dates';
+import { radii, typeScale, type AppTheme } from '@/constants/theme';
 import type { DetectedHabit, HabitChangeGoal } from '@/types/habit';
 import { strings } from '@/constants/strings';
 
@@ -35,12 +37,18 @@ type HabitSection = {
   data: (DetectedHabit | BreakingItem)[];
 };
 
-export default function HabitsScreen() {
+/**
+ * Today (redesign step 02). Same habit-logging content the Habits tab carried;
+ * only the screen header is new: an eyebrow date line above the serif title,
+ * with a gear that opens the settings sheet.
+ */
+export default function TodayScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [refreshing, setRefreshing] = useState(false);
+  const [settingsVisible, setSettingsVisible] = useState(false);
   const [pickOneHabitId, setPickOneHabitId] = useState<string | null>(null);
   const [partialGoalId, setPartialGoalId] = useState<string | null>(null);
   // DT-1 (P2-2): resolved once, attached to whichever leak is first in the
@@ -74,6 +82,12 @@ export default function HabitsScreen() {
 
   const { expenses } = useExpenses();
 
+  // Eyebrow date line, locale-aware (ADA-008): "THURSDAY, JULY 24".
+  const todayLabel = useMemo(
+    () => formatDate(new Date(), { weekday: 'long', month: 'long', day: 'numeric' }).toUpperCase(),
+    []
+  );
+
   // Coach Moment (P2-2, acceptance test 2): clear on blur (tab switch away)
   // so returning to an already-answered card does not re-show the same card.
   // lastMilestone has the identical lifecycle gap (state-lifecycle bug fixed
@@ -95,7 +109,7 @@ export default function HabitsScreen() {
   }, [expenses.length]);
 
   // FL-1 (P2-2, spec §3 "First log"): the first expense ever saved, surfaced
-  // on the next Habits-tab visit. maybeShowFirstLogMoment() is idempotent
+  // on the next Today visit. maybeShowFirstLogMoment() is idempotent
   // (null once already shown), so this is safe to re-run every time the
   // expense count changes.
   useEffect(() => {
@@ -249,7 +263,18 @@ export default function HabitsScreen() {
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
-        <Text style={styles.title}>{strings.habits.title}</Text>
+        <View style={styles.headerTitles}>
+          <Text style={styles.eyebrow}>{todayLabel}</Text>
+          <Text style={styles.title}>{strings.screenTitles.today}</Text>
+        </View>
+        <TouchableOpacity
+          style={styles.gearButton}
+          onPress={() => setSettingsVisible(true)}
+          accessibilityRole="button"
+          accessibilityLabel={strings.settings.title}
+        >
+          <Icon name="Settings2" size={18} color={theme.slate} />
+        </TouchableOpacity>
       </View>
 
       <KeptHero cents={totalKept} />
@@ -292,7 +317,7 @@ export default function HabitsScreen() {
           )}
           <TouchableOpacity
             style={styles.emptyCta}
-            onPress={() => router.push('/(tabs)/expenses')}
+            onPress={() => router.push('/(tabs)/money')}
             accessibilityRole="button"
           >
             <Text style={styles.emptyCtaText}>{strings.habitLogging.logAnExpense}</Text>
@@ -351,6 +376,8 @@ export default function HabitsScreen() {
           setPartialGoalId(null);
         }}
       />
+
+      <SettingsSheet visible={settingsVisible} onClose={() => setSettingsVisible(false)} />
     </View>
   );
 }
@@ -362,14 +389,37 @@ function createStyles(theme: AppTheme) {
       backgroundColor: theme.background,
     },
     header: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      justifyContent: 'space-between',
       paddingHorizontal: 20,
       paddingTop: 16,
       paddingBottom: 4,
     },
+    headerTitles: {
+      flex: 1,
+    },
+    eyebrow: {
+      fontSize: typeScale.eyebrow,
+      fontFamily: theme.fonts.uiSemibold,
+      letterSpacing: typeScale.eyebrowLetterSpacing,
+      color: theme.mist,
+    },
     title: {
-      fontSize: 28,
-      fontWeight: '700',
-      color: theme.text,
+      fontSize: typeScale.screenTitle,
+      fontFamily: theme.fonts.display,
+      color: theme.ink,
+    },
+    gearButton: {
+      width: 40,
+      height: 40,
+      borderRadius: radii.pill,
+      backgroundColor: theme.white,
+      borderWidth: 1,
+      borderColor: theme.cloud,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginTop: 4,
     },
     listContent: {
       paddingHorizontal: 16,

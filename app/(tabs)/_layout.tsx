@@ -4,6 +4,13 @@ import { Icon } from '@/components/ui/Icon';
 import { useTheme } from '@/contexts/ThemeContext';
 import { strings } from '@/constants/strings';
 
+/**
+ * Tab bar (redesign step 02, design/redesign-handoff/02-navigation.md plus the
+ * runbook decision of 2026-07-30 that keeps Categories as a fourth tab).
+ *
+ * Order: Today / Money / Insights / Categories. Settings is no longer a tab;
+ * it opens as a bottom sheet from the gear on Today.
+ */
 export default function TabLayout() {
   const theme = useTheme();
   // Tab bar metrics derive from the device's real bottom inset (ADA-022):
@@ -14,10 +21,12 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
+        headerShown: false,
         tabBarActiveTintColor: theme.primary,
         tabBarInactiveTintColor: theme.tabIconDefault,
         tabBarStyle: {
-          backgroundColor: theme.surface,
+          backgroundColor: theme.white,
+          borderTopWidth: 1,
           borderTopColor: theme.border,
           height: 56 + tabBarBottomPad,
           paddingTop: 8,
@@ -25,62 +34,38 @@ export default function TabLayout() {
         },
         tabBarLabelStyle: {
           fontSize: 11,
-          fontWeight: '500',
-        },
-        headerStyle: {
-          backgroundColor: theme.surface,
-        },
-        headerTintColor: theme.text,
-        headerTitleStyle: {
-          fontWeight: '600',
+          // Loaded font families ignore fontWeight on Android, so the weight
+          // has to come from the family itself (Inter 600).
+          fontFamily: theme.fonts.uiSemibold,
         },
       }}
     >
       <Tabs.Screen
-        name="expenses"
+        name="index"
         options={{
-          title: strings.tabs.expenses,
-          headerShown: false,
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="Wallet" size={size} color={color} />
-          ),
+          title: strings.tabs.today,
+          tabBarIcon: ({ color, size }) => <Icon name="Sun" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
-        name="reports"
+        name="money"
         options={{
-          title: strings.tabs.reports,
-          headerShown: false,
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="ChartColumn" size={size} color={color} />
-          ),
+          title: strings.tabs.money,
+          tabBarIcon: ({ color, size }) => <Icon name="Wallet" size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="insights"
+        options={{
+          title: strings.tabs.insights,
+          tabBarIcon: ({ color, size }) => <Icon name="TrendingUp" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="categories"
         options={{
           title: strings.tabs.categories,
-          headerShown: false,
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="LayoutGrid" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="habits"
-        options={{
-          title: strings.tabs.habits,
-          headerShown: false,
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="CircleCheck" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          href: null,
-          headerShown: false,
+          tabBarIcon: ({ color, size }) => <Icon name="LayoutGrid" size={size} color={color} />,
         }}
       />
     </Tabs>
