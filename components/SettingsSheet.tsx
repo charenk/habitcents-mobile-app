@@ -8,6 +8,9 @@
  * Scope notes:
  * - The spec's "Categories" row under Preferences is DROPPED (Charen,
  *   2026-07-30): Categories stays a tab, see design/REDESIGN_RUNBOOK.md.
+ * - Privacy policy and terms rows are carried over from the old settings
+ *   screen. Spec 02 omits them, but the store listing requires reachable
+ *   links, so dropping them would be a regression.
  * - Sign out touches nothing server-side because there are no accounts. It
  *   clears the local session (onboarding state + the has-onboarded flag) and
  *   sends the user back to onboarding. Expenses, habits and categories stay on
@@ -17,6 +20,7 @@
 import React, { useMemo } from 'react';
 import {
   Alert,
+  Linking,
   Pressable,
   StyleSheet,
   Text,
@@ -33,6 +37,9 @@ import { typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import { useCurrency } from '@/contexts/CurrencyContext';
+
+const PRIVACY_POLICY_URL = 'https://habitcents.com/privacy';
+const TERMS_OF_SERVICE_URL = 'https://habitcents.com/terms';
 import { useOnboarding } from '@/contexts/OnboardingContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { settingsRowLabel } from '@/utils/a11y';
@@ -134,6 +141,22 @@ export function SettingsSheet({ visible, onClose }: SettingsSheetProps): React.J
             label={strings.settings.restoreRow}
             onPress={() => {
               void handleRestorePress();
+            }}
+          />
+          <SettingsRow
+            styles={styles}
+            theme={theme}
+            label={strings.settings.privacyPolicy}
+            onPress={() => {
+              Linking.openURL(PRIVACY_POLICY_URL).catch(() => {});
+            }}
+          />
+          <SettingsRow
+            styles={styles}
+            theme={theme}
+            label={strings.settings.termsOfService}
+            onPress={() => {
+              Linking.openURL(TERMS_OF_SERVICE_URL).catch(() => {});
             }}
           />
           <SettingsRow
