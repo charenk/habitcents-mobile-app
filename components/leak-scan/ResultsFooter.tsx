@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
-import type { AppTheme } from '@/constants/theme';
+import { radii, typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import type { FileScan } from '@/utils/leakScan/types';
 
@@ -83,37 +83,41 @@ function createStyles(theme: AppTheme) {
     },
     row: {
       fontSize: 11.5,
-      color: theme.textSecondary,
+      fontFamily: theme.fonts.ui,
+      fontVariant: ['tabular-nums'],
+      color: theme.slate,
     },
+    // Destructive, so coral ink plus the word "Undo": never color alone.
     undo: {
-      fontSize: 13,
-      fontWeight: '600',
-      color: theme.danger,
-      marginTop: 8,
+      fontSize: typeScale.secondary,
+      fontFamily: theme.fonts.uiSemibold,
+      color: theme.coral,
+      marginTop: 10,
     },
     modalBackdrop: {
       flex: 1,
-      backgroundColor: 'rgba(0,0,0,0.4)',
+      backgroundColor: theme.scrim,
       justifyContent: 'center',
       alignItems: 'center',
       padding: 24,
     },
     modalCard: {
-      backgroundColor: theme.surface,
-      borderRadius: 16,
+      backgroundColor: theme.white,
+      borderRadius: radii.feature,
       padding: 20,
       width: '100%',
       maxWidth: 340,
     },
     modalTitle: {
-      fontSize: 17,
-      fontWeight: '700',
-      color: theme.text,
+      fontSize: 20,
+      fontFamily: theme.fonts.display,
+      color: theme.ink,
       marginBottom: 8,
     },
     modalMessage: {
       fontSize: 14,
-      color: theme.textSecondary,
+      fontFamily: theme.fonts.ui,
+      color: theme.slate,
       lineHeight: 20,
       marginBottom: 20,
     },
@@ -123,29 +127,30 @@ function createStyles(theme: AppTheme) {
     },
     modalCancel: {
       flex: 1,
-      minHeight: 44,
-      borderRadius: 12,
+      minHeight: 48,
+      borderRadius: radii.control,
       borderWidth: 1,
-      borderColor: theme.border,
+      borderColor: theme.cloud,
+      backgroundColor: theme.white,
       alignItems: 'center',
       justifyContent: 'center',
     },
     modalCancelText: {
-      fontSize: 14,
-      fontWeight: '600',
-      color: theme.text,
+      fontSize: 15,
+      fontFamily: theme.fonts.uiSemibold,
+      color: theme.ink,
     },
     modalConfirm: {
       flex: 1,
-      minHeight: 44,
-      borderRadius: 12,
-      backgroundColor: theme.danger,
+      minHeight: 48,
+      borderRadius: radii.control,
+      backgroundColor: theme.coral,
       alignItems: 'center',
       justifyContent: 'center',
     },
     modalConfirmText: {
-      fontSize: 14,
-      fontWeight: '600',
+      fontSize: 15,
+      fontFamily: theme.fonts.uiSemibold,
       color: theme.white,
     },
   });

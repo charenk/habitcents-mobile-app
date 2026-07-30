@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, ScrollView } from 'react-native';
+import { Button, Icon } from '@/components/ui';
 import { useTheme } from '@/contexts/ThemeContext';
-import type { AppTheme } from '@/constants/theme';
+import { radii, typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import { QuestionCard } from './QuestionCard';
 import type { IntakeState } from './useLeakScanIntake';
@@ -15,9 +16,10 @@ type IntakeScreenProps = {
 
 /**
  * Intake: CSV file selection, progress state, and the at-most-two permitted
- * questions (spec Stage 0/3/4, visual spec 11). Everything on-device; no
- * network. Caps (10MB/50k rows/5 files) are enforced by the intake hook,
- * which reports skipped files here for a plain-language notice.
+ * questions (spec Stage 0/3/4, visual spec 11; restyled per redesign spec 03
+ * path B). Everything on-device; no network. Caps (10MB/50k rows/5 files) are
+ * enforced by the intake hook, which reports skipped files here for a
+ * plain-language notice.
  */
 export function IntakeScreen({ state, onChooseFiles, onAnswer }: IntakeScreenProps) {
   const theme = useTheme();
@@ -48,7 +50,19 @@ export function IntakeScreen({ state, onChooseFiles, onAnswer }: IntakeScreenPro
       <Text style={styles.subtitle}>{strings.leakScan.intakeSubtitle}</Text>
 
       {state.fileNames.length > 0 && (
-        <Text style={styles.filesChosen}>{strings.leakScan.filesChosenCount(state.fileNames.length)}</Text>
+        <View style={styles.fileChips}>
+          {state.fileNames.map((name) => (
+            <View key={name} style={styles.fileChip}>
+              <Icon name="FileText" size={16} color={theme.slate} />
+              <Text style={styles.fileChipText} numberOfLines={1}>
+                {name}
+              </Text>
+            </View>
+          ))}
+          <Text style={styles.filesChosen}>
+            {strings.leakScan.filesChosenCount(state.fileNames.length)}
+          </Text>
+        </View>
       )}
 
       {state.skippedFileMessages.length > 0 && (
@@ -61,9 +75,11 @@ export function IntakeScreen({ state, onChooseFiles, onAnswer }: IntakeScreenPro
         </View>
       )}
 
-      <TouchableOpacity style={styles.primaryButton} onPress={onChooseFiles} accessibilityRole="button">
-        <Text style={styles.primaryButtonText}>{strings.leakScan.chooseFiles}</Text>
-      </TouchableOpacity>
+      <Button
+        label={strings.leakScan.chooseFiles}
+        onPress={onChooseFiles}
+        style={styles.primaryButton}
+      />
     </View>
   );
 }
@@ -80,60 +96,81 @@ function createStyles(theme: AppTheme) {
       alignItems: 'center',
     },
     title: {
-      fontSize: 22,
-      fontWeight: '700',
-      color: theme.text,
+      fontSize: 34,
+      fontFamily: theme.fonts.display,
+      color: theme.ink,
       textAlign: 'center',
+      lineHeight: 38,
       marginBottom: 8,
     },
     subtitle: {
       fontSize: 14,
-      color: theme.textSecondary,
+      fontFamily: theme.fonts.ui,
+      color: theme.slate,
       textAlign: 'center',
+      lineHeight: 20,
       marginBottom: 24,
     },
+    fileChips: {
+      alignSelf: 'stretch',
+      alignItems: 'center',
+      gap: 8,
+      marginBottom: 20,
+    },
+    fileChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      alignSelf: 'center',
+      maxWidth: '100%',
+      backgroundColor: theme.white,
+      borderWidth: 1,
+      borderColor: theme.cloud,
+      borderRadius: radii.card,
+      paddingVertical: 10,
+      paddingHorizontal: 12,
+    },
+    fileChipText: {
+      flexShrink: 1,
+      fontSize: typeScale.secondary,
+      fontFamily: theme.fonts.uiMedium,
+      color: theme.ink,
+    },
     filesChosen: {
-      fontSize: 13,
-      color: theme.textSecondary,
-      marginBottom: 12,
+      fontSize: typeScale.caption,
+      fontFamily: theme.fonts.ui,
+      color: theme.slate,
     },
     noticeBox: {
-      backgroundColor: theme.surface,
-      borderRadius: 12,
+      backgroundColor: theme.white,
+      borderRadius: radii.card,
       borderWidth: 1,
-      borderColor: theme.border,
+      borderColor: theme.cloud,
       padding: 12,
       marginBottom: 16,
       width: '100%',
     },
     noticeText: {
-      fontSize: 12.5,
-      color: theme.textSecondary,
+      fontSize: typeScale.caption,
+      fontFamily: theme.fonts.ui,
+      color: theme.slate,
       lineHeight: 18,
     },
     primaryButton: {
-      minHeight: 48,
-      paddingHorizontal: 24,
-      borderRadius: 12,
-      backgroundColor: theme.primary,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    primaryButtonText: {
-      fontSize: 15,
-      fontWeight: '700',
-      color: theme.white,
+      alignSelf: 'stretch',
     },
     scanningTitle: {
       fontSize: 17,
-      fontWeight: '700',
-      color: theme.text,
-      marginTop: 16,
+      fontFamily: theme.fonts.uiSemibold,
+      color: theme.ink,
+      marginTop: 18,
     },
     scanningSubtitle: {
-      fontSize: 13,
-      color: theme.textSecondary,
+      fontSize: typeScale.secondary,
+      fontFamily: theme.fonts.ui,
+      color: theme.slate,
       marginTop: 4,
+      textAlign: 'center',
     },
   });
 }

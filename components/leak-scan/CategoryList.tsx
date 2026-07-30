@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
-import type { AppTheme } from '@/constants/theme';
+import { radii, typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import { TierBadge } from './TierBadge';
 import { categoryDisplayLabel } from '@/utils/leakScanBridge';
@@ -82,20 +82,20 @@ export function CategoryList({ categories, onCategoryPress }: CategoryListProps)
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     container: {
-      backgroundColor: theme.surface,
-      borderRadius: 14,
-      borderWidth: 0.5,
-      borderColor: theme.border,
-      padding: 14,
+      backgroundColor: theme.white,
+      borderRadius: radii.feature,
+      borderWidth: 1,
+      borderColor: theme.cloud,
+      padding: 16,
     },
     title: {
-      fontSize: 15,
-      fontWeight: '700',
-      color: theme.text,
-      marginBottom: 10,
+      fontSize: typeScale.body,
+      fontFamily: theme.fonts.uiSemibold,
+      color: theme.ink,
+      marginBottom: 12,
     },
     row: {
-      marginBottom: 12,
+      marginBottom: 14,
     },
     rowHeader: {
       flexDirection: 'row',
@@ -105,37 +105,43 @@ function createStyles(theme: AppTheme) {
     },
     categoryName: {
       fontSize: 14,
-      fontWeight: '600',
-      color: theme.text,
+      fontFamily: theme.fonts.uiMedium,
+      color: theme.ink,
     },
     rowStats: {
       flexDirection: 'row',
       justifyContent: 'space-between',
+      alignItems: 'baseline',
       marginBottom: 6,
     },
     amount: {
-      fontSize: 13,
-      color: theme.text,
+      fontSize: 16,
+      fontFamily: theme.fonts.display,
+      color: theme.ink,
       fontVariant: ['tabular-nums'],
     },
     percent: {
-      fontSize: 12,
-      color: theme.textSecondary,
+      fontSize: typeScale.caption,
+      fontFamily: theme.fonts.ui,
+      color: theme.slate,
     },
+    // Spend bars are always mist-on-snow: spend is never a win, so the fill
+    // never borrows the Kept green (spec 01 section 1).
     barTrack: {
       height: 6,
-      borderRadius: 3,
+      borderRadius: radii.pill,
       overflow: 'hidden',
     },
     barFill: {
       height: 6,
-      borderRadius: 3,
+      borderRadius: radii.pill,
     },
     viewMore: {
-      fontSize: 13,
-      fontWeight: '600',
-      color: theme.text,
+      fontSize: typeScale.secondary,
+      fontFamily: theme.fonts.uiSemibold,
+      color: theme.primaryDark,
       marginTop: 4,
+      minHeight: 24,
     },
   });
 }

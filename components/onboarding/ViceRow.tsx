@@ -1,9 +1,10 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
+import { Icon } from '@/components/ui';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { currencyMeta } from '@/utils/currency';
-import type { AppTheme } from '@/constants/theme';
+import { radii, typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import { FREQUENCY_BANDS, type FrequencyBand } from '@/constants/onboardingPresets';
 
@@ -70,7 +71,7 @@ export function ViceRow({ name, presetCents, editedCents, band, onBandChange, on
               accessibilityLabel={strings.onboarding.editorCancelLabel}
               style={styles.xButton}
             >
-              <Text style={styles.xButtonText}>✕</Text>
+              <Icon name="X" size={14} color={theme.slate} />
             </TouchableOpacity>
           </View>
           <View style={styles.editRow}>
@@ -108,6 +109,11 @@ export function ViceRow({ name, presetCents, editedCents, band, onBandChange, on
             accessibilityRole="button"
             accessibilityState={{ selected: band === b }}
           >
+            {band === b && (
+              <View style={styles.bandCheck} importantForAccessibility="no">
+                <Icon name="Check" size={12} color={theme.primaryDark} />
+              </View>
+            )}
             <Text style={[styles.bandText, band === b && styles.bandTextOn]}>{BAND_LABEL[b]}</Text>
           </TouchableOpacity>
         ))}
@@ -119,34 +125,36 @@ export function ViceRow({ name, presetCents, editedCents, band, onBandChange, on
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     card: {
-      backgroundColor: theme.surface,
+      backgroundColor: theme.white,
       borderWidth: 1,
-      borderColor: theme.border,
-      borderRadius: 12,
-      padding: 12,
+      borderColor: theme.cloud,
+      borderRadius: radii.card,
+      padding: 14,
       marginBottom: 10,
     },
     name: {
-      fontSize: 15,
-      fontWeight: '700',
-      color: theme.text,
+      fontSize: typeScale.body,
+      fontFamily: theme.fonts.uiSemibold,
+      color: theme.ink,
     },
     priceTouchable: {
       marginTop: 2,
-      marginBottom: 10,
+      marginBottom: 12,
       minHeight: 22,
       justifyContent: 'center',
     },
     price: {
-      fontSize: 12,
-      // Informational price in its default state: textSecondary for the
-      // 4.5:1 contrast floor (spec 09 section 1.5). priceEdited overrides
-      // this once the user sets a custom price.
-      color: theme.textSecondary,
+      fontSize: typeScale.caption,
+      fontFamily: theme.fonts.ui,
+      fontVariant: ['tabular-nums'],
+      // Informational price in its default state: slate for the 4.5:1
+      // contrast floor (spec 09 section 1.5). priceEdited overrides this once
+      // the user sets a custom price.
+      color: theme.slate,
     },
     priceEdited: {
-      color: theme.primary,
-      fontWeight: '700',
+      color: theme.primaryDark,
+      fontFamily: theme.fonts.uiSemibold,
       textDecorationLine: 'underline',
       textDecorationStyle: 'dotted',
     },
@@ -154,30 +162,38 @@ function createStyles(theme: AppTheme) {
       flexDirection: 'row',
       gap: 6,
     },
+    // Same chip grammar as the step 1 preset chips: white/cloud at rest,
+    // sage-light + sage border + a check when selected.
     bandSegment: {
       flex: 1,
       minHeight: 44,
       borderWidth: 1.5,
-      borderColor: theme.border,
-      borderRadius: 8,
+      borderColor: theme.cloud,
+      borderRadius: radii.control,
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: theme.surface,
+      backgroundColor: theme.white,
     },
     bandSegmentOn: {
-      backgroundColor: theme.primary,
+      backgroundColor: theme.primaryLight,
       borderColor: theme.primary,
+    },
+    bandCheck: {
+      position: 'absolute',
+      top: 4,
+      right: 4,
     },
     bandText: {
       fontSize: 13,
-      fontWeight: '700',
-      color: theme.textSecondary,
+      fontFamily: theme.fonts.uiMedium,
+      color: theme.slate,
     },
     bandTextOn: {
-      color: theme.white,
+      fontFamily: theme.fonts.uiSemibold,
+      color: theme.primaryDark,
     },
     editBlock: {
-      marginBottom: 10,
+      marginBottom: 12,
     },
     editHead: {
       flexDirection: 'row',
@@ -186,22 +202,17 @@ function createStyles(theme: AppTheme) {
     },
     editHeadText: {
       fontSize: 13,
-      fontWeight: '700',
-      color: theme.text,
+      fontFamily: theme.fonts.uiSemibold,
+      color: theme.ink,
       flex: 1,
     },
     xButton: {
-      width: 24,
-      height: 24,
-      borderRadius: 12,
-      backgroundColor: theme.background,
+      width: 28,
+      height: 28,
+      borderRadius: radii.pill,
+      backgroundColor: theme.snow,
       alignItems: 'center',
       justifyContent: 'center',
-    },
-    xButtonText: {
-      fontSize: 12,
-      fontWeight: '700',
-      color: theme.textSecondary,
     },
     editRow: {
       flexDirection: 'row',
@@ -216,25 +227,27 @@ function createStyles(theme: AppTheme) {
       gap: 4,
       borderWidth: 1.5,
       borderColor: theme.primary,
-      borderRadius: 8,
+      borderRadius: radii.control,
       paddingHorizontal: 10,
       paddingVertical: 8,
       minHeight: 44,
     },
     editCurrency: {
       fontSize: 13,
-      color: theme.textSecondary,
+      fontFamily: theme.fonts.ui,
+      color: theme.slate,
     },
     editInput: {
       flex: 1,
       fontSize: 16,
-      fontWeight: '600',
-      color: theme.text,
+      fontFamily: theme.fonts.uiSemibold,
+      fontVariant: ['tabular-nums'],
+      color: theme.ink,
       padding: 0,
     },
     setButton: {
       backgroundColor: theme.primary,
-      borderRadius: 8,
+      borderRadius: radii.control,
       paddingHorizontal: 16,
       alignItems: 'center',
       justifyContent: 'center',
@@ -242,14 +255,15 @@ function createStyles(theme: AppTheme) {
     },
     setButtonText: {
       fontSize: 13,
-      fontWeight: '800',
+      fontFamily: theme.fonts.uiSemibold,
       color: theme.white,
     },
     editCaption: {
-      fontSize: 11,
-      // Informational reference caption: textSecondary for the 4.5:1
-      // contrast floor (spec 09 section 1.5).
-      color: theme.textSecondary,
+      fontSize: typeScale.eyebrow,
+      fontFamily: theme.fonts.ui,
+      // Informational reference caption: slate for the 4.5:1 contrast floor
+      // (spec 09 section 1.5).
+      color: theme.slate,
       marginTop: 6,
     },
   });

@@ -2,21 +2,25 @@ import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
-import type { AppTheme } from '@/constants/theme';
+import { radii, typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import { TierBadge } from './TierBadge';
 import type { KpiSummary } from '@/utils/leakScan/resultsSummary';
 
 type KpiRowProps = {
   kpi: KpiSummary;
-  /** Evidence window string, e.g. "Jul 1 to Jun 30 · 3 accounts" (spec 5.1). */
-  evidenceWindow: string;
+  /**
+   * Evidence window string, e.g. "Jul 1 to Jun 30 · 3 accounts" (spec 5.1).
+   * Optional: the redesigned results screen carries it in the screen eyebrow
+   * instead, so the first card omits the subtitle when nothing is passed.
+   */
+  evidenceWindow?: string;
 };
 
 /**
  * The KPI row (spec 5.1, visual spec 3): three stat cards, each with a big
- * tabular-nums number, label, evidence-window subtitle, and the tier badge of
- * its weakest input. No motion.
+ * serif tabular-nums number, label, evidence-window subtitle, and the tier
+ * badge of its weakest input. No motion.
  */
 export function KpiRow({ kpi, evidenceWindow }: KpiRowProps) {
   const theme = useTheme();
@@ -33,7 +37,7 @@ export function KpiRow({ kpi, evidenceWindow }: KpiRowProps) {
         </View>
         <Text style={styles.amount}>{format(kpi.totalSpentCents)}</Text>
         <Text style={styles.label}>{strings.leakScan.kpiTotalSpent}</Text>
-        <Text style={styles.subtitle}>{evidenceWindow}</Text>
+        {evidenceWindow ? <Text style={styles.subtitle}>{evidenceWindow}</Text> : null}
       </View>
 
       <View style={styles.card}>
@@ -65,10 +69,10 @@ function createStyles(theme: AppTheme) {
     },
     card: {
       flex: 1,
-      backgroundColor: theme.surface,
-      borderRadius: 14,
-      borderWidth: 0.5,
-      borderColor: theme.border,
+      backgroundColor: theme.white,
+      borderRadius: radii.card,
+      borderWidth: 1,
+      borderColor: theme.cloud,
       padding: 12,
     },
     badgeSlot: {
@@ -76,22 +80,23 @@ function createStyles(theme: AppTheme) {
       marginBottom: 4,
     },
     amount: {
-      fontSize: 22,
-      fontWeight: '700',
-      color: theme.text,
+      fontSize: typeScale.statCard,
+      fontFamily: theme.fonts.display,
+      color: theme.ink,
       fontVariant: ['tabular-nums'],
-      letterSpacing: -0.5,
     },
     label: {
-      fontSize: 11,
-      color: theme.textSecondary,
+      fontSize: typeScale.eyebrow,
+      fontFamily: theme.fonts.uiMedium,
+      color: theme.slate,
       marginTop: 3,
     },
     subtitle: {
       // Informational metadata (evidence window, covered days), so it uses
-      // textSecondary for the 4.5:1 contrast floor, not textTertiary (spec 09 §1.5).
+      // slate for the 4.5:1 contrast floor, not mist (spec 09 §1.5).
       fontSize: 10.5,
-      color: theme.textSecondary,
+      fontFamily: theme.fonts.ui,
+      color: theme.slate,
       marginTop: 2,
     },
   });
