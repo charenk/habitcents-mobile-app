@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon, CATEGORY_ICON_MAP } from '@/components/ui/Icon';
 import { useTheme } from '@/contexts/ThemeContext';
 import { formatDate } from '@/utils/dates';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -140,7 +140,7 @@ export default function CategoryDetailScreen() {
             accessibilityRole="button"
             accessibilityLabel={strings.common.back}
           >
-            <Ionicons name="arrow-back" size={24} color={theme.text} />
+            <Icon name="ArrowLeft" size={24} color={theme.text} />
           </TouchableOpacity>
         </View>
         <View style={styles.emptyContainer}>
@@ -185,7 +185,7 @@ export default function CategoryDetailScreen() {
               accessibilityRole="button"
               accessibilityLabel={strings.common.back}
             >
-              <Ionicons name="arrow-back" size={24} color={theme.text} />
+              <Icon name="ArrowLeft" size={24} color={theme.text} />
             </TouchableOpacity>
           ),
           headerRight: () => !category.isDefault ? (
@@ -196,7 +196,7 @@ export default function CategoryDetailScreen() {
               accessibilityRole="button"
               accessibilityLabel="Edit category"
             >
-              <Ionicons name="pencil" size={20} color={theme.text} />
+              <Icon name="Pencil" size={20} color={theme.text} />
             </TouchableOpacity>
           ) : null,
         }}
@@ -208,8 +208,8 @@ export default function CategoryDetailScreen() {
         {/* Header */}
         <View style={styles.headerSection}>
           <View style={[styles.iconContainer, { backgroundColor: category.color + '20' }]}>
-            <Ionicons
-              name={category.icon as keyof typeof Ionicons.glyphMap}
+            <Icon
+              name={CATEGORY_ICON_MAP[category.icon]}
               size={40}
               color={category.color}
             />
@@ -230,8 +230,8 @@ export default function CategoryDetailScreen() {
           </View>
           {stats.lastMonth > 0 && (
             <View style={styles.summaryTrend}>
-              <Ionicons
-                name={trendPercentage > 0 ? 'trending-up' : 'trending-down'}
+              <Icon
+                name={trendPercentage > 0 ? 'TrendingUp' : 'TrendingDown'}
                 size={18}
                 color={trendPercentage > 0 ? theme.danger : theme.primary}
               />

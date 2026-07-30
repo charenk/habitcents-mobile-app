@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon, CATEGORY_ICON_MAP } from '@/components/ui/Icon';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useOnboarding } from '@/contexts/OnboardingContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
@@ -109,7 +109,7 @@ export default function OnboardingGuidedLogScreen() {
               accessibilityState={{ selected: selectedCategory?.id === cat.id }}
             >
               <View style={[styles.categoryIcon, { backgroundColor: cat.color + '20' }]}>
-                <Ionicons name={cat.icon} size={24} color={cat.color} />
+                <Icon name={CATEGORY_ICON_MAP[cat.icon]} size={24} color={cat.color} />
               </View>
               <Text
                 style={[
@@ -132,7 +132,7 @@ export default function OnboardingGuidedLogScreen() {
           accessibilityRole="button"
         >
           <Text style={styles.buttonText}>{strings.expenses.saveExpense}</Text>
-          <Ionicons name="checkmark" size={20} color={theme.white} />
+          <Icon name="Check" size={20} color={theme.white} />
         </TouchableOpacity>
         <TouchableOpacity onPress={handleLater} accessibilityRole="button" style={styles.plainButton}>
           <Text style={styles.plainButtonText}>{strings.onboarding.guidedLogLater}</Text>

@@ -10,7 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/ui/Icon';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCategories } from '@/contexts/CategoriesContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
@@ -152,8 +152,8 @@ export function EditExpenseModal({ visible, expense, onClose }: EditExpenseModal
 
             <Text style={styles.sectionTitle}>{strings.editExpenseModal.merchant}</Text>
             <View style={styles.inputRow}>
-              <Ionicons
-                name="storefront-outline"
+              <Icon
+                name="Store"
                 size={20}
                 color={theme.textSecondary}
                 accessibilityElementsHidden
@@ -173,8 +173,8 @@ export function EditExpenseModal({ visible, expense, onClose }: EditExpenseModal
 
             <Text style={styles.sectionTitle}>{strings.editExpenseModal.note}</Text>
             <View style={styles.inputRow}>
-              <Ionicons
-                name="create-outline"
+              <Icon
+                name="SquarePen"
                 size={20}
                 color={theme.textSecondary}
                 accessibilityElementsHidden
@@ -219,8 +219,8 @@ export function EditExpenseModal({ visible, expense, onClose }: EditExpenseModal
                 accessibilityRole="button"
                 accessibilityLabel={strings.editExpenseModal.deleteAccessibilityLabel}
               >
-                <Ionicons
-                  name="trash-outline"
+                <Icon
+                  name="Trash2"
                   size={18}
                   color={theme.danger}
                   accessibilityElementsHidden

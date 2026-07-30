@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/ui/Icon';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useHabits } from '@/contexts/HabitsContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
@@ -279,8 +279,8 @@ export default function HabitsScreen() {
             </View>
           ) : (
             <>
-              <Ionicons
-                name="analytics-outline"
+              <Icon
+                name="ChartLine"
                 size={64}
                 color={theme.textTertiary}
                 accessibilityElementsHidden

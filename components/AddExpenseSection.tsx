@@ -10,7 +10,7 @@ import {
   Keyboard,
 } from 'react-native';
 import Reanimated, { useSharedValue, useAnimatedStyle, withTiming, withSequence, runOnUI } from 'react-native-reanimated';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/ui/Icon';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCategories } from '@/contexts/CategoriesContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
@@ -201,7 +201,7 @@ export const AddExpenseSection = forwardRef<AddExpenseSectionHandle, AddExpenseS
       <Animated.View style={[styles.expandedSection, { height: expandedHeight, opacity: expandedOpacity }]}>
         <View style={styles.expandedContent}>
           <View style={styles.inputRow}>
-            <Ionicons name="storefront-outline" size={20} color={theme.textSecondary} />
+            <Icon name="Store" size={20} color={theme.textSecondary} />
             <TextInput
               style={styles.descriptionInput}
               placeholder={strings.expenses.merchantPlaceholder}
@@ -232,7 +232,7 @@ export const AddExpenseSection = forwardRef<AddExpenseSectionHandle, AddExpenseS
           )}
 
           <View style={styles.inputRow}>
-            <Ionicons name="create-outline" size={20} color={theme.textSecondary} />
+            <Icon name="SquarePen" size={20} color={theme.textSecondary} />
             <TextInput
               style={styles.descriptionInput}
               placeholder={strings.expenses.notePlaceholder}
@@ -273,7 +273,7 @@ export const AddExpenseSection = forwardRef<AddExpenseSectionHandle, AddExpenseS
               >
                 {saved ? (
                   <View style={styles.saveButtonSavedRow}>
-                    <Ionicons name="checkmark" size={18} color={theme.white} />
+                    <Icon name="Check" size={18} color={theme.white} />
                     <Text style={styles.saveButtonText}>{strings.expenses.savedConfirmation}</Text>
                   </View>
                 ) : (

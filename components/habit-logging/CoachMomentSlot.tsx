@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/ui/Icon';
 import { useTheme } from '@/contexts/ThemeContext';
 import type { AppTheme } from '@/constants/theme';
 
@@ -27,7 +27,7 @@ export function CoachMomentSlot({ text, tint, headline }: CoachMomentSlotProps) 
     <View>
       {headline && <Text style={styles.headline}>{headline}</Text>}
       <View style={[styles.card, tint && styles.cardTint]}>
-        <Ionicons name="leaf-outline" size={13} color={theme.textSecondary} style={styles.icon} />
+        <Icon name="Sprout" size={13} color={theme.textSecondary} style={styles.icon} />
         <Text style={styles.text}>{text}</Text>
       </View>
     </View>

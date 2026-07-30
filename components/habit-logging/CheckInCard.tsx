@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Reanimated, { useSharedValue, useAnimatedStyle, withTiming, withSequence, runOnUI } from 'react-native-reanimated';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/ui/Icon';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { WeekStrip } from './WeekStrip';
@@ -202,7 +202,7 @@ export function CheckInCard({
           accessibilityLabel={onOpenDetail ? `${habit.name}, open details` : undefined}
         >
           <Text style={styles.name}>{habit.name}</Text>
-          {onOpenDetail && <Ionicons name="chevron-forward" size={16} color={theme.textTertiary} />}
+          {onOpenDetail && <Icon name="ChevronRight" size={16} color={theme.textTertiary} />}
         </TouchableOpacity>
       </View>
 
