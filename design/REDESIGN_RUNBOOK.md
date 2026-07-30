@@ -4,7 +4,7 @@ Living tracker for the 5-step visual redesign. Any session (or scheduled routine
 
 ## What this is
 
-Ground-up visual redesign: one sage green + calm neutrals, Instrument Serif + Inter, lucide icons, 4 tabs to 3, intent-first onboarding, confirmation toasts, an add-upcoming-expense flow. Product logic is unchanged.
+Ground-up visual redesign: one sage green + calm neutrals, Instrument Serif + Inter, lucide icons, restructured tabs (Today / Money / Insights / Categories), intent-first onboarding, confirmation toasts, an add-upcoming-expense flow. Product logic is unchanged.
 
 ## Product truths (never violate)
 
@@ -20,15 +20,16 @@ Ground-up visual redesign: one sage green + calm neutrals, Instrument Serif + In
 - **Per-step PRs to main**, each Lane 2 (needs-user-test). Steps ship independently; main will briefly show the new palette under old layouts between steps 1 and 2, which is accepted.
 - **Each step is gated on Charen's review.** A step ends as a waiting PR with simulator captures; Charen approves and merges, then says "go" (or the dispatcher routine picks up the next step once the previous PR is merged). No autonomous multi-step loop.
 - **Model routing:** Opus build workers, Opus reviewer, Haiku for purely mechanical parts. Fable only when Charen explicitly asks (weekly Fable quota is tight).
+- **Categories stays in the tab bar** (Charen, 2026-07-30, overrides spec 02). The handoff moved category management behind the settings sheet; Charen wants the current Categories nav kept and restyled to the redesign language instead. Tab set becomes **Today / Money / Insights / Categories** (4 tabs). Spec 02's "Categories row under Preferences -> app/categories.tsx stack route" is dropped; the settings sheet itself still ships as specced otherwise. Step 02 builds the tab (lucide `layout-grid`, new tab bar styling); step 04 restyles the Categories screen content (serif "Categories." title, EmojiTile rows, card styling) alongside the other screens.
 
 ## Step tracker
 
 | Step | Branch | Status |
 |---|---|---|
 | 01 tokens + foundations | `redesign/01-tokens` | in review (PR #42, awaiting Charen); tsc + 329 tests green, sim-verified |
-| 02 navigation (3 tabs, settings sheet, categories route) | `redesign/02-navigation` | not started |
+| 02 navigation (4 tabs incl. Categories, settings sheet) | `redesign/02-navigation` | not started |
 | 03 intent-first onboarding (3a variant) | `redesign/03-onboarding` | not started |
-| 04 screens (Today/Money/Insights/detail/sheets/paywall + recurrence model) | `redesign/04-screens` | not started |
+| 04 screens (Today/Money/Insights/Categories/detail/sheets/paywall + recurrence model) | `redesign/04-screens` | not started |
 | 05 copy (strings.ts replacement + dead-code cleanup) | `redesign/05-copy` | not started |
 
 ## Per-step definition of done
