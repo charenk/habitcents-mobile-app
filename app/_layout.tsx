@@ -24,6 +24,7 @@ import { ReportsProvider } from '@/contexts/ReportsContext';
 import { OnboardingProvider } from '@/contexts/OnboardingContext';
 import { ToastProvider } from '@/components/ui/Toast';
 import { PrivacyOverlay } from '@/components/PrivacyOverlay';
+import { DevSeedButton } from '@/components/dev/DevSeedButton';
 
 // Hold the native splash until fonts are ready so titles and currency numbers
 // never flash a fallback face. Safe to call at module scope (expo-splash-screen).
@@ -106,6 +107,8 @@ export default function RootLayout() {
                     iOS app-switcher snapshot, so it renders unconditionally at
                     the root rather than per-screen. */}
                 <PrivacyOverlay />
+                {/* Dev-only sample-data control; renders null in production. */}
+                <DevSeedButton />
               </OnboardingProvider>
             </ReportsProvider>
           </HabitsProvider>
