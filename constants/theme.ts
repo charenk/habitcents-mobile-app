@@ -22,6 +22,7 @@ const palette = {
   slate: '#4A5568', // secondary text
   mist: '#8898AA', // tertiary text, placeholder, spend bar fill
   cloud: '#E8EDF2', // hairline borders, slip dot fill, disabled fill
+  cloudDashed: '#D6DEE8', // one step darker than cloud, so a 1.5px dashed edge still reads
   snow: '#F7F9FC', // page background (never pure white pages)
   white: '#FFFFFF', // cards, sheets, tab bar
   hairlineSubtle: '#F1F4F8', // row separators inside cards
@@ -109,6 +110,7 @@ export const lightTheme = {
   slate: palette.slate,
   mist: palette.mist,
   cloud: palette.cloud,
+  cloudDashed: palette.cloudDashed,
   snow: palette.snow,
   hairlineSubtle: palette.hairlineSubtle,
   primaryLight: palette.sageLight,
@@ -210,6 +212,7 @@ export const darkTheme = {
   slate: lightTheme.slate,
   mist: lightTheme.mist,
   cloud: lightTheme.cloud,
+  cloudDashed: lightTheme.cloudDashed,
   snow: lightTheme.snow,
   hairlineSubtle: lightTheme.hairlineSubtle,
   primaryLight: lightTheme.primaryLight,
@@ -302,6 +305,7 @@ export type AppTheme = {
   slate: string;
   mist: string;
   cloud: string;
+  cloudDashed: string;
   snow: string;
   hairlineSubtle: string;
   primaryLight: string;

@@ -407,7 +407,8 @@ export const strings = {
     guidedLogLater: 'Later',
     guidedLogToast: 'Logged. Nice, that took ten seconds.',
     // 3.7 Success
-    leakMapReady: 'Your leak map is ready',
+    // Serif screen titles end with a period in the redesign (spec 05).
+    leakMapReady: 'Your leak map is ready.',
     biggestLeakCaption: (monthTotal: string) => `about ${monthTotal} a month · your biggest leak`,
     breakIt: 'Break it',
     trialQuietNote: "1 habit free, always. Premium trial available when you're ready.",
@@ -592,6 +593,7 @@ export const strings = {
     weekSummaryTail: (weekKept: string) => ` skipped this week · ${weekKept} kept`,
     // Weekly-cadence habit (second habit shape, spec 04 "Today" 3.7)
     weeklyPill: 'weekly',
+    monthlyPill: 'monthly',
     weeklyNoCheckIn: 'No daily check-in. Tap whenever you skip an order.',
     // Stopped habit
     breakItAgain: 'Break it again',
@@ -638,6 +640,17 @@ export const strings = {
     upcomingListEyebrow: 'Scheduled',
     upcomingEmptyBody: 'Mark an expense as repeating and its next date shows up here.',
     multiPaymentPill: (count: number, monthLabel: string) => `${count} payments in ${monthLabel}`,
+    // Schedule line under an upcoming row, assembled in utils/recurring.ts:
+    // "Monthly · 1st · next Aug 1", "Every 2 weeks · next Aug 14".
+    scheduleSeparator: ' · ',
+    scheduleOneTime: 'One-time',
+    scheduleWeekly: 'Weekly',
+    scheduleBiweekly: 'Every 2 weeks',
+    scheduleMonthly: 'Monthly',
+    scheduleAnnual: 'Yearly',
+    scheduleEveryNDays: (n: number) => `Every ${n} days`,
+    scheduleWeekdayPlural: (weekday: string) => `${weekday}s`,
+    scheduleNext: (date: string) => `next ${date}`,
   },
 
   // Add-upcoming sheet (spec 04 "Add-upcoming sheet").
@@ -715,6 +728,7 @@ export const strings = {
     subtitle: (merchant: string, timesPerMonth: number) =>
       `${merchant}, about ${timesPerMonth} times a month.`,
     subtitleNoMerchant: (timesPerMonth: number) => `About ${timesPerMonth} times a month.`,
+    eventHistoryEmpty: 'Nothing logged yet.',
     arcPill: (total: number, chapter: string) => `${total} of 66 · ${chapter}`,
     skipValueSheetTitle: 'One skip keeps',
     skipValueSave: 'Save',

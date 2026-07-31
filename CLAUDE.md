@@ -31,11 +31,12 @@ HabitCents is an Atomic Habits-inspired personal finance app that helps users tr
 FinanceHabitApp/
 ├── app/                      # Expo Router screens
 │   ├── (tabs)/              # Tab navigation screens
-│   │   ├── finance.tsx      # Main expense tracking
-│   │   ├── reports.tsx      # Dashboard with widgets
-│   │   ├── categories.tsx   # Category management
-│   │   ├── habits.tsx       # Habit tracking & learning
-│   │   └── settings.tsx     # App settings
+│   │   ├── index.tsx        # Today: kept band, check-in, quick log, logged today
+│   │   ├── money.tsx        # Money: Spent | Upcoming
+│   │   ├── insights.tsx     # Insights: leaks, where it went, pace
+│   │   └── categories.tsx   # Category management
+│   │   # Settings is a bottom sheet behind the gear on Today, not a tab
+│   │   # (components/SettingsSheet.tsx)
 │   ├── onboarding/          # PLG onboarding flow
 │   ├── habit/[id].tsx       # Habit detail screen
 │   └── category/[id].tsx    # Category detail screen

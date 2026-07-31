@@ -52,10 +52,12 @@ app/
   index.tsx             # Entry – onboarding gate → tabs
   welcome.tsx           # Onboarding / welcome screen
   (tabs)/
-    _layout.tsx         # Tab navigator config (Expenses, Habits, Settings)
-    finance.tsx         # Expenses tab: Today & Upcoming views
-    habits.tsx          # Habits tab
-    settings.tsx        # Settings tab (incl. Appearance)
+    _layout.tsx         # Tab navigator config (Today, Money, Insights, Categories)
+    index.tsx           # Today: kept band, check-in card, quick log, logged today
+    money.tsx           # Money: Spent | Upcoming (+ add-upcoming sheet)
+    insights.tsx        # Insights: your leaks, where it went, pace
+    categories.tsx      # Category management
+    # Settings is a bottom sheet behind the gear on Today, not a tab
 
 components/
   CalendarMonth.tsx         # Month calendar grid used in Upcoming view
