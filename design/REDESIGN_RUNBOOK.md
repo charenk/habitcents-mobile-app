@@ -1,6 +1,6 @@
 # HabitCents redesign runbook
 
-Living tracker for the 5-step visual redesign. Any session (or scheduled routine) can resume cold by reading this file plus the numbered spec for the current step, then checking `git log` on main for the last merged step. The full spec package lives in `design/redesign-handoff/` (README + `01`..`05` + the `.dc.html` prototypes; open `App Prototype.dc.html`, right phone / badge 3a, for behavior).
+**ALL 5 STEPS MERGED to main as of 2026-07-31.** The only thing still owed is the on-device upgrade test of the recurrence migration, before the next TestFlight build. Living tracker for the 5-step visual redesign. Any session (or scheduled routine) can resume cold by reading this file plus the numbered spec for the current step, then checking `git log` on main for the last merged step. The full spec package lives in `design/redesign-handoff/` (README + `01`..`05` + the `.dc.html` prototypes; open `App Prototype.dc.html`, right phone / badge 3a, for behavior).
 
 ## What this is
 
@@ -30,7 +30,7 @@ Ground-up visual redesign: one sage green + calm neutrals, Instrument Serif + In
 | 02 navigation (4 tabs incl. Categories, settings sheet) | `redesign/02-navigation` | MERGED (PR #43) |
 | 03 intent-first onboarding (3a variant) | `redesign/03-onboarding` | MERGED (PR #44) |
 | 04 screens (Today/Money/Insights/Categories/detail/sheets/paywall + recurrence model) | `redesign/04-screens` | MERGED (PR #45); reviewer blockers fixed; on-device upgrade test still outstanding |
-| 05 copy (strings.ts replacement + dead-code cleanup) | `redesign/05-copy` | not started |
+| 05 copy (strings.ts replacement + dead-code cleanup) | `redesign/05-copy` | MERGED (PR #47) |
 
 ## Per-step definition of done
 
