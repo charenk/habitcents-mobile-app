@@ -499,8 +499,13 @@ export const strings = {
     undoImport: 'Undo this import',
     undoConfirmTitle: 'Undo this import?',
     undoConfirmMessage: 'This removes everything this import added.',
-    // Post-scan handoff (spec 5 post-scan, visual spec 12)
+    // Post-scan handoff (spec 5 post-scan, visual spec 12).
+    // Spec 05 proposed "Continue to the app" here. Kept as-is deliberately
+    // (Charen, 2026-07-31): this button writes about 15 expenses before it
+    // navigates, and a navigation verb would hide a data write. The spec's
+    // confirmation toast still applies and fires on success.
     bringIn15Days: 'Bring in your last 15 days',
+    savedToHabitCents: 'Saved to HabitCents.',
     // Merchant review queue (spec 6/7, visual spec 10)
     reviewQueueTitle: (n: number) => `Quick check: ${n} merchant${n === 1 ? '' : 's'} we weren't sure about`,
     reviewQueueProgress: (done: number, n: number) => `${done} of ${n}`,
