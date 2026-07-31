@@ -1,16 +1,5 @@
 import React, { useMemo, useState, useCallback } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Modal,
-  TextInput,
-  KeyboardAvoidingView,
-  Platform,
-  Alert,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/ui/Icon';
@@ -23,10 +12,16 @@ import { HistoryCalendar } from '@/components/habit-logging/HistoryCalendar';
 import { EventHistory } from '@/components/habit-logging/EventHistory';
 import { PickOneSheet } from '@/components/habit-logging/PickOneSheet';
 import { PartialSlipSheet } from '@/components/habit-logging/PartialSlipSheet';
+import { Sheet } from '@/components/ui/Sheet';
+import { Button } from '@/components/ui/Button';
+import { AmountDisplay } from '@/components/ui/AmountDisplay';
+import { Keypad } from '@/components/ui/Keypad';
+import { useToast } from '@/components/ui/Toast';
+import { applyKeypadKey, keypadValueToCents, centsToKeypadValue } from '@/utils/keypad';
 import { atMidnight, weekStats, isHabitLimitReached, displayChapter } from '@/utils/habitLogging';
 import { getEntitlement } from '@/utils/purchases';
 import type { CoachMomentCardId } from '@/utils/coachMoments';
-import type { AppTheme } from '@/constants/theme';
+import { typeScale, type AppTheme } from '@/constants/theme';
 import type { DetectedHabit, HabitChangeGoal } from '@/types/habit';
 import { strings } from '@/constants/strings';
 import { hapticWarning } from '@/utils/motion';
@@ -37,6 +32,7 @@ export default function HabitDetailScreen() {
   const router = useRouter();
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
+  const { format } = useCurrency();
 
   const {
     getHabitById,
@@ -76,6 +72,8 @@ export default function HabitDetailScreen() {
   const [pickOneVisible, setPickOneVisible] = useState(false);
   const [partialVisible, setPartialVisible] = useState(false);
   const [editSkipVisible, setEditSkipVisible] = useState(false);
+  const [stopConfirmVisible, setStopConfirmVisible] = useState(false);
+  const toast = useToast();
 
   if (!habit) {
     return (
@@ -102,17 +100,20 @@ export default function HabitDetailScreen() {
     setPickOneVisible(false);
   };
 
+  // Confirm in a bottom sheet rather than a native alert (spec 04 habit
+  // detail): serif title, the history-is-kept reassurance, coral confirm.
   const handleStopBreaking = () => {
     if (!goal) return;
     hapticWarning();
-    Alert.alert(
-      strings.habitLogging.stopBreakingConfirmTitle,
-      strings.habitLogging.stopBreakingConfirmMessage,
-      [
-        { text: strings.common.cancel, style: 'cancel' },
-        { text: strings.habitLogging.stopBreakingHabit, style: 'destructive', onPress: () => stopBreakingHabit(goal.id) },
-      ]
-    );
+    setStopConfirmVisible(true);
+  };
+
+  const confirmStopBreaking = async () => {
+    if (!goal) return;
+    await stopBreakingHabit(goal.id);
+    setStopConfirmVisible(false);
+    toast.show(strings.toasts.stoppedHistoryKept);
+    router.back();
   };
 
   return (
@@ -140,7 +141,8 @@ export default function HabitDetailScreen() {
         contentContainerStyle={styles.scrollContent}
       >
         <View style={styles.headerSection}>
-          <Text style={styles.title}>{habit.name}</Text>
+          {/* Serif titles end in a period, habit names included (spec 01 s2). */}
+          <Text style={styles.title}>{/\.$/.test(habit.name) ? habit.name : `${habit.name}.`}</Text>
           <Text style={styles.description}>{habit.description}</Text>
         </View>
 
@@ -206,9 +208,33 @@ export default function HabitDetailScreen() {
           onSave={async (value) => {
             await updateSkipValue(goal.id, value);
             setEditSkipVisible(false);
+            toast.show(strings.toasts.skipValueSaved(format(value)));
           }}
         />
       )}
+
+      <Sheet
+        visible={stopConfirmVisible}
+        onClose={() => setStopConfirmVisible(false)}
+        accessibilityLabel={strings.habitLogging.stopBreakingConfirmTitle}
+      >
+        <View style={styles.confirmSheet}>
+          <Text style={styles.confirmTitle}>{strings.habitLogging.stopBreakingConfirmTitle}</Text>
+          <Text style={styles.confirmBody}>{strings.habitLogging.stopBreakingConfirmMessage}</Text>
+          <Button
+            label={strings.habitDetailV2.stopConfirmCta}
+            variant="destructiveFill"
+            onPress={() => {
+              void confirmStopBreaking();
+            }}
+          />
+          <Button
+            label={strings.habitDetailV2.stopConfirmKeepGoing}
+            variant="secondary"
+            onPress={() => setStopConfirmVisible(false)}
+          />
+        </View>
+      </Sheet>
     </>
   );
 }
@@ -341,47 +367,35 @@ function EditSkipValueSheet({
 }) {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
-  const [text, setText] = useState(String((initialValue / 100).toFixed(2)));
+  // Keypad-driven like every other amount in the redesign, so the number can
+  // be the display serif instead of a system-keyboard text field.
+  const [value, setValue] = useState(centsToKeypadValue(initialValue));
 
   React.useEffect(() => {
-    if (visible) setText(String((initialValue / 100).toFixed(2)));
+    if (visible) setValue(centsToKeypadValue(initialValue));
   }, [visible, initialValue]);
 
+  const cents = keypadValueToCents(value);
+
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onCancel}>
-      <KeyboardAvoidingView
-        style={styles.editSheetContainer}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        accessibilityViewIsModal
-      >
-        <View style={styles.grabber} />
-        <Text style={styles.editSheetTitle}>{strings.habitLogging.pickOneFieldLabel}</Text>
-        <View style={styles.inputRow}>
-          <TextInput
-            value={text}
-            onChangeText={setText}
-            keyboardType="decimal-pad"
-            style={styles.input}
-            accessibilityLabel={`${strings.habitLogging.pickOneFieldLabel}, amount`}
-          />
+    <Sheet
+      visible={visible}
+      onClose={onCancel}
+      accessibilityLabel={strings.habitDetailV2.skipValueSheetTitle}
+    >
+      <View style={styles.editSheetContainer}>
+        <Text style={styles.editSheetTitle}>{strings.habitDetailV2.skipValueSheetTitle}</Text>
+        <AmountDisplay valueCents={cents} focused={cents > 0} size={46} zeroAsPlaceholder />
+        <View style={styles.editSheetKeypad}>
+          <Keypad value={value} onChange={setValue} />
         </View>
-        <View style={styles.actionsSection}>
-          <TouchableOpacity
-            style={styles.primaryButton}
-            onPress={() => {
-              const parsed = parseFloat(text);
-              onSave(Number.isFinite(parsed) ? Math.max(0, Math.round(parsed * 100)) : 0);
-            }}
-            accessibilityRole="button"
-          >
-            <Text style={styles.primaryButtonText}>{strings.common.save}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.secondaryButton} onPress={onCancel} accessibilityRole="button">
-            <Text style={styles.secondaryButtonText}>{strings.common.cancel}</Text>
-          </TouchableOpacity>
-        </View>
-      </KeyboardAvoidingView>
-    </Modal>
+        <Button
+          label={strings.habitDetailV2.skipValueSave}
+          onPress={() => onSave(cents)}
+        />
+        <Button label={strings.common.cancel} variant="tertiary" onPress={onCancel} />
+      </View>
+    </Sheet>
   );
 }
 
@@ -416,16 +430,20 @@ function createStyles(theme: AppTheme) {
     headerSection: {
       marginBottom: 16,
     },
+    // Serif screen title, like Today / Money / Insights.
     title: {
-      fontSize: 28,
-      fontWeight: '700',
-      color: theme.text,
-      marginBottom: 8,
+      fontSize: typeScale.screenTitle,
+      lineHeight: 40,
+      fontFamily: theme.fonts.display,
+      color: theme.ink,
+      includeFontPadding: false,
+      marginBottom: 6,
     },
     description: {
-      fontSize: 16,
-      color: theme.textSecondary,
-      lineHeight: 24,
+      fontSize: typeScale.body,
+      fontFamily: theme.fonts.ui,
+      color: theme.slate,
+      lineHeight: 22,
     },
     breakingStack: {
       gap: 16,
@@ -444,14 +462,18 @@ function createStyles(theme: AppTheme) {
       paddingHorizontal: 8,
       alignItems: 'center',
     },
+    // Stat numbers are currency or counts, so they take the display serif
+    // with tabular figures (spec 01 section 2).
     statValue: {
-      fontSize: 18,
-      fontWeight: '700',
-      color: theme.text,
+      fontSize: typeScale.statCard,
+      fontFamily: theme.fonts.display,
+      fontVariant: ['tabular-nums'],
+      color: theme.ink,
     },
     statLabel: {
       fontSize: 11,
-      color: theme.textSecondary,
+      fontFamily: theme.fonts.ui,
+      color: theme.slate,
       marginTop: 2,
       textAlign: 'center',
     },
@@ -499,11 +521,35 @@ function createStyles(theme: AppTheme) {
       color: theme.textSecondary,
     },
     editSheetContainer: {
-      flex: 1,
-      backgroundColor: theme.surface,
       paddingHorizontal: 20,
-      paddingTop: 12,
-      paddingBottom: 28,
+      paddingTop: 4,
+      paddingBottom: 12,
+      gap: 8,
+    },
+    editSheetKeypad: {
+      marginTop: 8,
+      marginBottom: 8,
+    },
+    // Stop-breaking confirm (spec 04 habit detail).
+    confirmSheet: {
+      paddingHorizontal: 20,
+      paddingTop: 4,
+      paddingBottom: 12,
+      gap: 10,
+    },
+    confirmTitle: {
+      fontSize: 26,
+      lineHeight: 32,
+      fontFamily: theme.fonts.display,
+      color: theme.ink,
+      includeFontPadding: false,
+    },
+    confirmBody: {
+      fontSize: typeScale.body,
+      fontFamily: theme.fonts.ui,
+      color: theme.slate,
+      lineHeight: 22,
+      marginBottom: 6,
     },
     grabber: {
       width: 36,
