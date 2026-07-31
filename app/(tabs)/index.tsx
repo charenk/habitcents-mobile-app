@@ -324,6 +324,9 @@ export default function TodayScreen() {
       return (
         <LeakCard
           habit={habit}
+          // A stopped habit keeps its goal, so an existing goal on a leak means
+          // the user broke this one before and is being offered it again.
+          breakAgain={!!getGoalByHabitId(habit.id)}
           onBreak={() => setPickOneHabitId(habit.id)}
           onDismiss={() => handleDismissHabit(habit)}
           coachMomentCardId={detectionMoment?.habitId === habit.id ? detectionMoment.cardId : null}
@@ -625,12 +628,14 @@ function createStyles(theme: AppTheme) {
       marginBottom: 10,
       paddingHorizontal: 4,
     },
+    // Section headers are eyebrows like every other one on this screen; the
+    // uppercasing lives here so strings.ts keeps storing sentence case.
     sectionTitle: {
-      fontSize: 14,
-      fontWeight: '600',
-      color: theme.textSecondary,
+      fontSize: typeScale.eyebrow,
+      fontFamily: theme.fonts.uiSemibold,
+      letterSpacing: typeScale.eyebrowLetterSpacing,
+      color: theme.mist,
       textTransform: 'uppercase',
-      letterSpacing: 0.5,
     },
     loadingContainer: {
       flex: 1,
@@ -639,6 +644,7 @@ function createStyles(theme: AppTheme) {
     },
     loadingText: {
       fontSize: 16,
+      fontFamily: theme.fonts.ui,
       color: theme.textSecondary,
     },
     // Scrolls rather than centering in a fixed height: the quick log card and
@@ -652,13 +658,14 @@ function createStyles(theme: AppTheme) {
     },
     emptyTitle: {
       fontSize: 20,
-      fontWeight: '600',
+      fontFamily: theme.fonts.uiSemibold,
       color: theme.text,
       marginTop: 20,
       textAlign: 'center',
     },
     emptySubtitle: {
       fontSize: 15,
+      fontFamily: theme.fonts.ui,
       color: theme.textSecondary,
       marginTop: 8,
       textAlign: 'center',
@@ -668,14 +675,14 @@ function createStyles(theme: AppTheme) {
       marginTop: 20,
       minHeight: 46,
       paddingHorizontal: 20,
-      borderRadius: 12,
+      borderRadius: radii.control,
       backgroundColor: theme.primary,
       alignItems: 'center',
       justifyContent: 'center',
     },
     emptyCtaText: {
       fontSize: 15,
-      fontWeight: '600',
+      fontFamily: theme.fonts.uiSemibold,
       color: theme.white,
     },
     emptyCoachMoment: {
@@ -689,13 +696,13 @@ function createStyles(theme: AppTheme) {
     },
     reAuditLinkText: {
       fontSize: 14,
-      fontWeight: '600',
+      fontFamily: theme.fonts.uiSemibold,
       color: theme.textSecondary,
     },
     progressCard: {
       alignSelf: 'stretch',
       backgroundColor: theme.surface,
-      borderRadius: 16,
+      borderRadius: radii.feature,
       borderWidth: 1,
       borderColor: theme.border,
       padding: 20,
@@ -703,7 +710,7 @@ function createStyles(theme: AppTheme) {
     },
     progressTitle: {
       fontSize: 17,
-      fontWeight: '600',
+      fontFamily: theme.fonts.uiSemibold,
       color: theme.text,
     },
     progressMeterTrack: {
@@ -721,17 +728,18 @@ function createStyles(theme: AppTheme) {
     },
     progressCount: {
       fontSize: 15,
-      fontWeight: '700',
+      fontFamily: theme.fonts.uiBold,
       color: theme.text,
       marginTop: 12,
     },
     progressCountSuffix: {
       fontSize: 15,
-      fontWeight: '400',
+      fontFamily: theme.fonts.ui,
       color: theme.textSecondary,
     },
     progressBody: {
       fontSize: 14,
+      fontFamily: theme.fonts.ui,
       color: theme.textSecondary,
       marginTop: 6,
       lineHeight: 20,

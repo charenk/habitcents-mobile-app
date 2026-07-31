@@ -309,6 +309,7 @@ function createStyles(theme: AppTheme) {
     },
     featureText: {
       fontSize: 15,
+      fontFamily: theme.fonts.ui,
       color: theme.text,
       flex: 1,
     },
@@ -321,7 +322,7 @@ function createStyles(theme: AppTheme) {
       alignItems: 'center',
       borderWidth: 1.5,
       borderColor: theme.border,
-      borderRadius: 16,
+      borderRadius: radii.card,
       paddingVertical: 16,
       paddingHorizontal: 16,
       backgroundColor: theme.surface,
@@ -345,7 +346,7 @@ function createStyles(theme: AppTheme) {
     },
     planName: {
       fontSize: 16,
-      fontWeight: '700',
+      fontFamily: theme.fonts.uiBold,
       color: theme.text,
     },
     planBadge: {
@@ -356,13 +357,14 @@ function createStyles(theme: AppTheme) {
     },
     planBadgeText: {
       fontSize: 11,
-      fontWeight: '700',
+      fontFamily: theme.fonts.uiBold,
       color: theme.white,
       textTransform: 'uppercase',
       letterSpacing: 0.3,
     },
     planCaption: {
       fontSize: 13,
+      fontFamily: theme.fonts.ui,
       color: theme.textSecondary,
       marginTop: 3,
     },
@@ -372,11 +374,14 @@ function createStyles(theme: AppTheme) {
     },
     planPrice: {
       fontSize: 17,
-      fontWeight: '700',
+      fontFamily: theme.fonts.uiBold,
+      fontVariant: ['tabular-nums'],
       color: theme.text,
     },
     planPeriod: {
       fontSize: 12,
+      fontFamily: theme.fonts.ui,
+      fontVariant: ['tabular-nums'],
       color: theme.textSecondary,
       marginTop: 2,
     },
@@ -387,7 +392,7 @@ function createStyles(theme: AppTheme) {
       marginTop: 20,
       paddingHorizontal: 12,
       paddingVertical: 10,
-      borderRadius: 12,
+      borderRadius: radii.card,
       backgroundColor: theme.surface,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: theme.border,
@@ -395,6 +400,7 @@ function createStyles(theme: AppTheme) {
     plannedBannerText: {
       flex: 1,
       fontSize: 12,
+      fontFamily: theme.fonts.ui,
       color: theme.textSecondary,
       lineHeight: 17,
     },
@@ -407,6 +413,7 @@ function createStyles(theme: AppTheme) {
     },
     trialLine: {
       fontSize: 13,
+      fontFamily: theme.fonts.ui,
       color: theme.textSecondary,
       textAlign: 'center',
       marginBottom: 12,
@@ -414,7 +421,7 @@ function createStyles(theme: AppTheme) {
     },
     primaryButton: {
       minHeight: 52,
-      borderRadius: 14,
+      borderRadius: radii.control,
       backgroundColor: theme.primary,
       alignItems: 'center',
       justifyContent: 'center',
@@ -424,7 +431,7 @@ function createStyles(theme: AppTheme) {
     },
     primaryButtonText: {
       fontSize: 16,
-      fontWeight: '700',
+      fontFamily: theme.fonts.uiSemibold,
       color: theme.white,
     },
     restoreButton: {

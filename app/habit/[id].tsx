@@ -21,7 +21,7 @@ import { applyKeypadKey, keypadValueToCents, centsToKeypadValue } from '@/utils/
 import { atMidnight, weekStats, isHabitLimitReached, displayChapter } from '@/utils/habitLogging';
 import { getEntitlement } from '@/utils/purchases';
 import type { CoachMomentCardId } from '@/utils/coachMoments';
-import { typeScale, type AppTheme } from '@/constants/theme';
+import { radii, typeScale, type AppTheme } from '@/constants/theme';
 import type { DetectedHabit, HabitChangeGoal } from '@/types/habit';
 import { strings } from '@/constants/strings';
 import { hapticWarning } from '@/utils/motion';
@@ -296,7 +296,7 @@ function HabitDetailBreaking({
       />
 
       <View style={styles.statsRow}>
-        <StatBlock label={strings.habitLogging.statKept} value={format(goal.kept)} />
+        <StatBlock label={strings.habitLogging.statKept} value={format(goal.kept)} tinted />
         <StatBlock
           label={strings.habitLogging.statThisWeek}
           value={isDaily ? `${wk?.skips ?? 0} of ${wk?.answered ?? 0}` : strings.habitLogging.statThisWeekWeekly(periodSkipCount(goal))}
@@ -342,11 +342,11 @@ function periodSkipCount(goal: HabitChangeGoal): number {
   return goal.dayLogs.filter((e) => e.state === 'skipped' && e.date.getTime() >= monday.getTime()).length;
 }
 
-function StatBlock({ label, value }: { label: string; value: string }) {
+function StatBlock({ label, value, tinted }: { label: string; value: string; tinted?: boolean }) {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   return (
-    <View style={styles.statBlock}>
+    <View style={[styles.statBlock, tinted ? styles.statBlockTinted : null]}>
       <Text style={styles.statValue}>{value}</Text>
       <Text style={styles.statLabel}>{label}</Text>
     </View>
@@ -425,6 +425,7 @@ function createStyles(theme: AppTheme) {
     },
     emptyText: {
       fontSize: 16,
+      fontFamily: theme.fonts.ui,
       color: theme.textSecondary,
     },
     headerSection: {
@@ -451,6 +452,12 @@ function createStyles(theme: AppTheme) {
     statsRow: {
       flexDirection: 'row',
       gap: 8,
+    },
+    // Kept is the positive number, so its tile carries the sage-light tint
+    // (spec 04, habit detail). The other two stay neutral white.
+    statBlockTinted: {
+      backgroundColor: theme.primaryLight,
+      borderColor: 'transparent',
     },
     statBlock: {
       flex: 1,
@@ -490,26 +497,26 @@ function createStyles(theme: AppTheme) {
       justifyContent: 'center',
       backgroundColor: theme.primary,
       paddingVertical: 16,
-      borderRadius: 14,
+      borderRadius: radii.control,
       gap: 8,
     },
     primaryButtonText: {
       fontSize: 16,
-      fontWeight: '600',
+      fontFamily: theme.fonts.uiSemibold,
       color: theme.white,
     },
     secondaryButton: {
       alignItems: 'center',
       justifyContent: 'center',
       paddingVertical: 14,
-      borderRadius: 14,
+      borderRadius: radii.control,
       borderWidth: 1,
       borderColor: theme.border,
     },
     secondaryButtonText: {
       fontSize: 15,
+      fontFamily: theme.fonts.uiSemibold,
       color: theme.text,
-      fontWeight: '600',
     },
     plainButton: {
       alignItems: 'center',
@@ -518,6 +525,7 @@ function createStyles(theme: AppTheme) {
     },
     plainButtonText: {
       fontSize: 14,
+      fontFamily: theme.fonts.ui,
       color: theme.textSecondary,
     },
     editSheetContainer: {
@@ -561,7 +569,7 @@ function createStyles(theme: AppTheme) {
     },
     editSheetTitle: {
       fontSize: 13,
-      fontWeight: '600',
+      fontFamily: theme.fonts.uiSemibold,
       color: theme.textSecondary,
       marginBottom: 8,
     },

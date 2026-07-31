@@ -109,7 +109,11 @@ export function PickOneSheet({
         <Text style={styles.paragraph}>{strings.habitLogging.pickOneValueLine}</Text>
 
         <Text style={styles.eyebrow}>{strings.habitLogging.pickOneFieldLabel}</Text>
-        <AmountDisplay valueCents={cents} focused size={46} zeroAsPlaceholder />
+        {/* Wrapped so VoiceOver reads one labelled value instead of the
+            currency symbol and the number as two bare nodes. */}
+        <View accessible accessibilityLabel={`${strings.habitLogging.pickOneFieldLabel}, ${format(cents)}`}>
+          <AmountDisplay valueCents={cents} focused size={46} zeroAsPlaceholder />
+        </View>
 
         <View style={styles.keypad}>
           <Keypad value={value} onChange={setValue} />

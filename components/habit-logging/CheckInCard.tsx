@@ -177,7 +177,12 @@ export function CheckInCard({
         <Text style={styles.name} numberOfLines={2}>{habit.name}</Text>
         {!isDaily && (
           <View style={styles.cadencePill}>
-            <Text style={styles.cadencePillText}>{strings.today.weeklyPill}</Text>
+            {/* Detection emits monthly leaks too, so the pill names the real
+                cadence rather than always saying weekly.
+                TODO(step-05): hoist to strings.ts as today.monthlyPill. */}
+            <Text style={styles.cadencePillText}>
+              {habit.frequency === 'monthly' ? 'monthly' : strings.today.weeklyPill}
+            </Text>
           </View>
         )}
         <View style={styles.headerSpacer} />
