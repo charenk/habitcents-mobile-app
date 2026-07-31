@@ -4,6 +4,7 @@ import {
   Text,
   StyleSheet,
   SectionList,
+  ScrollView,
   RefreshControl,
   TouchableOpacity,
 } from 'react-native';
@@ -20,6 +21,14 @@ import { CheckInCard } from '@/components/habit-logging/CheckInCard';
 import { PickOneSheet } from '@/components/habit-logging/PickOneSheet';
 import { PartialSlipSheet } from '@/components/habit-logging/PartialSlipSheet';
 import { CoachMomentSlot } from '@/components/habit-logging/CoachMomentSlot';
+import { LogExpenseSheet } from '@/components/money/LogExpenseSheet';
+import { EditExpenseSheet } from '@/components/money/EditExpenseSheet';
+import { ExpenseRow } from '@/components/money/ExpenseRow';
+import { AmountDisplay } from '@/components/ui/AmountDisplay';
+import { EmojiTile } from '@/components/ui/EmojiTile';
+import { useCategories } from '@/contexts/CategoriesContext';
+import { categoryEmoji, categoryIdentityColor } from '@/constants/categoryEmoji';
+import type { Expense, ExpenseCategory } from '@/types/expense';
 import { atMidnight, dayStateFor, isHabitLimitReached } from '@/utils/habitLogging';
 import { getEntitlement } from '@/utils/purchases';
 import { cardText, type CoachMomentCardId } from '@/utils/coachMoments';
@@ -81,6 +90,27 @@ export default function TodayScreen() {
   } = useHabits();
 
   const { expenses } = useExpenses();
+  const { getVisibleCategories } = useCategories();
+
+  // Quick log and the logged-today list (spec 04 "Today" 3 and 4).
+  const [logCategory, setLogCategory] = useState<ExpenseCategory | undefined>(undefined);
+  const [logVisible, setLogVisible] = useState(false);
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+
+  // Five tiles plus a "more" affordance, per spec.
+  const quickCategories = useMemo(() => getVisibleCategories().slice(0, 5), [getVisibleCategories]);
+
+  const loggedToday = useMemo(() => {
+    const start = atMidnight(new Date()).getTime();
+    return expenses
+      .filter((e) => atMidnight(e.date).getTime() === start)
+      .sort((a, b) => b.date.getTime() - a.date.getTime());
+  }, [expenses]);
+
+  const openLogSheet = useCallback((category?: ExpenseCategory) => {
+    setLogCategory(category);
+    setLogVisible(true);
+  }, []);
 
   // Eyebrow date line, locale-aware (ADA-008): "THURSDAY, JULY 24".
   const todayLabel = useMemo(
@@ -219,6 +249,75 @@ export default function TodayScreen() {
     [isEmpty, expenses]
   );
 
+  // Quick log card plus today's logged rows. Rendered under the habit content
+  // on both the populated and the empty screen, so logging is always one tap
+  // away even before a leak exists.
+  const renderTodayFooter = () => (
+    <View style={styles.footerBlock}>
+      <View style={styles.quickLogCard}>
+        <View style={styles.quickLogHeader}>
+          <Text style={styles.eyebrow}>{strings.today.quickLogEyebrow.toUpperCase()}</Text>
+          <Text style={styles.quickLogHint}>{strings.today.quickLogHint}</Text>
+        </View>
+        <View style={styles.quickLogAmountRow}>
+          <AmountDisplay valueCents={0} size={40} zeroAsPlaceholder />
+          <TouchableOpacity
+            style={styles.quickLogPlus}
+            onPress={() => openLogSheet(undefined)}
+            accessibilityRole="button"
+            accessibilityLabel={strings.today.quickLogOpenLabel}
+          >
+            <Icon name="Plus" size={22} color={theme.white} />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.quickLogTiles}>
+          {quickCategories.map((cat) => (
+            <TouchableOpacity
+              key={cat.id}
+              onPress={() => openLogSheet(cat.name as ExpenseCategory)}
+              accessibilityRole="button"
+              accessibilityLabel={strings.today.quickLogCategoryLabel(cat.name)}
+            >
+              <EmojiTile
+                emoji={categoryEmoji(cat.name)}
+                size={40}
+                color={categoryIdentityColor(cat.name)}
+              />
+            </TouchableOpacity>
+          ))}
+          <TouchableOpacity
+            style={styles.quickLogMore}
+            onPress={() => openLogSheet(undefined)}
+            accessibilityRole="button"
+            accessibilityLabel={strings.today.quickLogMoreLabel}
+          >
+            <Text style={styles.quickLogMoreText}>...</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <Text style={[styles.eyebrow, styles.loggedTodayEyebrow]}>
+        {strings.today.loggedTodayEyebrow.toUpperCase()}
+      </Text>
+      {loggedToday.length === 0 ? (
+        <View style={styles.loggedTodayCard}>
+          <Text style={styles.loggedTodayEmpty}>{strings.today.loggedTodayEmpty}</Text>
+        </View>
+      ) : (
+        <View style={styles.loggedTodayCard}>
+          {loggedToday.map((expense, i) => (
+            <View
+              key={expense.id}
+              style={i > 0 ? styles.loggedTodaySeparator : undefined}
+            >
+              <ExpenseRow expense={expense} onPress={() => setEditingExpense(expense)} />
+            </View>
+          ))}
+        </View>
+      )}
+    </View>
+  );
+
   const renderItem = ({ item, section }: { item: DetectedHabit | BreakingItem; section: HabitSection }) => {
     if (section.type === 'leaks') {
       const habit = item as DetectedHabit;
@@ -284,7 +383,10 @@ export default function TodayScreen() {
           <Text style={styles.loadingText}>{strings.habits.loading}</Text>
         </View>
       ) : isEmpty ? (
-        <View style={styles.emptyContainer}>
+        <ScrollView
+          contentContainerStyle={styles.emptyContainer}
+          showsVerticalScrollIndicator={false}
+        >
           {detectionProgress ? (
             <View style={styles.progressCard}>
               <Text style={styles.progressTitle}>{strings.habits.spottingYourLeak}</Text>
@@ -334,7 +436,8 @@ export default function TodayScreen() {
               <CoachMomentSlot text={cardText(firstLogCardId)} />
             </View>
           )}
-        </View>
+          {renderTodayFooter()}
+        </ScrollView>
       ) : (
         <SectionList
           sections={sections}
@@ -344,6 +447,7 @@ export default function TodayScreen() {
           }}
           renderItem={renderItem}
           renderSectionHeader={renderSectionHeader}
+          ListFooterComponent={renderTodayFooter}
           contentContainerStyle={styles.listContent}
           stickySectionHeadersEnabled={false}
           showsVerticalScrollIndicator={false}
@@ -375,6 +479,18 @@ export default function TodayScreen() {
           if (partialGoalId) await savePartialSlip(partialGoalId, amount);
           setPartialGoalId(null);
         }}
+      />
+
+      <LogExpenseSheet
+        visible={logVisible}
+        initialCategory={logCategory}
+        onClose={() => setLogVisible(false)}
+      />
+
+      <EditExpenseSheet
+        visible={editingExpense !== null}
+        expense={editingExpense}
+        onClose={() => setEditingExpense(null)}
       />
 
       <SettingsSheet visible={settingsVisible} onClose={() => setSettingsVisible(false)} />
@@ -425,6 +541,85 @@ function createStyles(theme: AppTheme) {
       paddingHorizontal: 16,
       paddingBottom: 100,
     },
+    // Quick log and logged-today (spec 04 "Today" 3 and 4).
+    footerBlock: {
+      marginTop: 20,
+      alignSelf: 'stretch',
+    },
+    quickLogCard: {
+      backgroundColor: theme.white,
+      borderRadius: radii.feature,
+      borderWidth: 1,
+      borderColor: theme.border,
+      padding: 16,
+    },
+    quickLogHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    quickLogHint: {
+      fontSize: typeScale.caption,
+      fontFamily: theme.fonts.uiMedium,
+      color: theme.primaryDark,
+    },
+    quickLogAmountRow: {
+      flexDirection: 'row',
+      alignItems: 'flex-end',
+      justifyContent: 'space-between',
+      marginTop: 8,
+    },
+    quickLogPlus: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      backgroundColor: theme.primary,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    quickLogTiles: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      marginTop: 16,
+    },
+    quickLogMore: {
+      width: 40,
+      height: 40,
+      borderRadius: radii.control,
+      borderWidth: 1.5,
+      borderStyle: 'dashed',
+      borderColor: theme.border,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    quickLogMoreText: {
+      fontSize: 16,
+      fontFamily: theme.fonts.uiSemibold,
+      color: theme.mist,
+      marginTop: -6,
+    },
+    loggedTodayEyebrow: {
+      marginTop: 24,
+      marginBottom: 8,
+    },
+    loggedTodayCard: {
+      backgroundColor: theme.white,
+      borderRadius: radii.card,
+      borderWidth: 1,
+      borderColor: theme.border,
+      paddingHorizontal: 12,
+    },
+    loggedTodaySeparator: {
+      borderTopWidth: 1,
+      borderTopColor: theme.hairlineSubtle,
+    },
+    loggedTodayEmpty: {
+      fontSize: typeScale.secondary,
+      fontFamily: theme.fonts.ui,
+      color: theme.mist,
+      paddingVertical: 16,
+    },
     sectionHeader: {
       marginTop: 20,
       marginBottom: 10,
@@ -446,11 +641,14 @@ function createStyles(theme: AppTheme) {
       fontSize: 16,
       color: theme.textSecondary,
     },
+    // Scrolls rather than centering in a fixed height: the quick log card and
+    // logged-today list sit below this content and would otherwise overlap the
+    // kept band on shorter screens.
     emptyContainer: {
-      flex: 1,
-      justifyContent: 'center',
       alignItems: 'center',
-      paddingHorizontal: 40,
+      paddingHorizontal: 20,
+      paddingTop: 24,
+      paddingBottom: 100,
     },
     emptyTitle: {
       fontSize: 20,
