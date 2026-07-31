@@ -18,12 +18,14 @@
  */
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/ui/Icon';
+import { useToast } from '@/components/ui/Toast';
 import { useTheme } from '@/contexts/ThemeContext';
-import type { AppTheme } from '@/constants/theme';
+import { radii, typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import { hapticSelection } from '@/utils/motion';
 import { track } from '@/utils/analytics';
@@ -47,6 +49,7 @@ type PlanRow = {
 
 export default function PaywallScreen() {
   const insets = useSafeAreaInsets();
+  const toast = useToast();
   const router = useRouter();
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -112,17 +115,19 @@ export default function PaywallScreen() {
       outcome.current = 'purchased';
     }
     setPurchasing(false);
+    // Back to the gated sheet, which re-reads the entitlement on mount.
     router.back();
+    if (result.ok) toast.show(strings.toasts.trialStarted);
   };
 
   const handleRestore = async () => {
     const result = await restore();
     // Mock mode has nothing to restore; surface that plainly and stay put.
-    const message =
+    toast.show(
       result.ok && result.entitlement === 'premium'
         ? strings.settings.restoreDoneMessage
-        : strings.settings.restoreNoneMessage;
-    Alert.alert(strings.settings.restoreAlertTitle, message);
+        : strings.settings.restoreNoneMessage
+    );
   };
 
   const features = [strings.paywall.feature1, strings.paywall.feature2, strings.paywall.feature3];
@@ -145,13 +150,22 @@ export default function PaywallScreen() {
         contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 24 }]}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.title}>{strings.paywall.title}</Text>
-        <Text style={styles.subtitle}>{strings.paywall.subtitle}</Text>
+        {/* The one gradient allowed in the app (spec 01 section 1). */}
+        <LinearGradient
+          colors={[theme.lavender, theme.primary]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.hero}
+        >
+          <Text style={styles.heroEyebrow}>{strings.paywall.heroEyebrow.toUpperCase()}</Text>
+          <Text style={styles.title}>{strings.paywall.title}</Text>
+          <Text style={styles.subtitle}>{strings.paywall.subtitle}</Text>
+        </LinearGradient>
 
         <View style={styles.features}>
           {features.map((line) => (
             <View style={styles.featureRow} key={line}>
-              <Icon name="CircleCheck" size={20} color={theme.primary} />
+              <Icon name="Check" size={18} color={theme.primaryDark} />
               <Text style={styles.featureText}>{line}</Text>
             </View>
           ))}
@@ -213,6 +227,14 @@ export default function PaywallScreen() {
         >
           <Text style={styles.primaryButtonText}>{strings.paywall.startTrialCta}</Text>
         </TouchableOpacity>
+        {/* Descriptive dismiss, never "No thanks" (spec 04 paywall). */}
+        <TouchableOpacity
+          style={styles.restoreButton}
+          onPress={handleClose}
+          accessibilityRole="button"
+        >
+          <Text style={styles.stayFreeText}>{strings.paywall.stayOnFreePlan}</Text>
+        </TouchableOpacity>
         <TouchableOpacity
           style={styles.restoreButton}
           onPress={handleRestore}
@@ -247,15 +269,32 @@ function createStyles(theme: AppTheme) {
       paddingHorizontal: 24,
       paddingTop: 4,
     },
+    // Gradient hero: white type on lavender-to-sage, the only gradient surface.
+    hero: {
+      borderRadius: radii.feature,
+      paddingHorizontal: 20,
+      paddingVertical: 24,
+    },
+    heroEyebrow: {
+      fontSize: typeScale.eyebrow,
+      fontFamily: theme.fonts.uiSemibold,
+      letterSpacing: typeScale.eyebrowLetterSpacing,
+      color: theme.white,
+      opacity: 0.9,
+      marginBottom: 8,
+    },
     title: {
-      fontSize: 26,
-      fontWeight: '800',
-      color: theme.text,
-      lineHeight: 32,
+      fontSize: 30,
+      lineHeight: 36,
+      fontFamily: theme.fonts.display,
+      color: theme.white,
+      includeFontPadding: false,
     },
     subtitle: {
-      fontSize: 15,
-      color: theme.textSecondary,
+      fontSize: typeScale.body,
+      fontFamily: theme.fonts.ui,
+      color: theme.white,
+      opacity: 0.92,
       lineHeight: 21,
       marginTop: 8,
     },
@@ -289,8 +328,9 @@ function createStyles(theme: AppTheme) {
       minHeight: 64,
     },
     planCardSelected: {
+      borderWidth: 1.5,
       borderColor: theme.primary,
-      backgroundColor: theme.iconBgGreen,
+      backgroundColor: theme.primaryLight,
     },
     planRadioColumn: {
       marginRight: 12,
@@ -395,8 +435,13 @@ function createStyles(theme: AppTheme) {
     },
     restoreText: {
       fontSize: 14,
-      fontWeight: '600',
+      fontFamily: theme.fonts.uiSemibold,
       color: theme.primary,
+    },
+    stayFreeText: {
+      fontSize: 14,
+      fontFamily: theme.fonts.uiSemibold,
+      color: theme.slate,
     },
   });
 }
