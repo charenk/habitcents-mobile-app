@@ -45,13 +45,6 @@ export type UpcomingListProps = {
   onAdd: () => void;
 };
 
-/**
- * Spec 04: 1.5px dashed #D6DEE8 on the add affordance. One step darker than
- * cloud so a dashed edge still reads at 1.5px; not yet a palette entry.
- */
-// TODO(step-05): hoist to constants/theme.ts as a token
-const DASHED_BORDER = '#D6DEE8';
-
 export function UpcomingList({ items, windowDays, onAdd }: UpcomingListProps): React.JSX.Element {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -211,7 +204,7 @@ function createStyles(theme: AppTheme) {
       borderRadius: radii.card,
       borderWidth: 1.5,
       borderStyle: 'dashed',
-      borderColor: DASHED_BORDER,
+      borderColor: theme.cloudDashed,
       backgroundColor: theme.white,
       marginTop: 12,
     },

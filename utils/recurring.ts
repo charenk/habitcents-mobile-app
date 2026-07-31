@@ -11,6 +11,7 @@
  */
 
 import { formatDate } from '@/utils/dates';
+import { strings } from '@/constants/strings';
 import type { Expense, MonthDayOption, RecurrenceRule, Weekday } from '@/types/expense';
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
@@ -328,8 +329,7 @@ export function daysUntilLabel(daysUntil: number): string {
   return `in ${daysUntil} days`;
 }
 
-// TODO(step-05): hoist to strings.ts
-const SCHEDULE_SEPARATOR = ' · ';
+const SCHEDULE_SEPARATOR = strings.money.scheduleSeparator;
 
 /** Sunday of a known week, so a weekday number can be named in the device locale. */
 const WEEKDAY_REFERENCE_SUNDAY = new Date(2024, 0, 7);
@@ -337,13 +337,13 @@ const WEEKDAY_REFERENCE_SUNDAY = new Date(2024, 0, 7);
 function weekdayPlural(weekday: Weekday): string {
   const d = new Date(WEEKDAY_REFERENCE_SUNDAY);
   d.setDate(d.getDate() + weekday);
-  return `${formatDate(d, { weekday: 'long' })}s`;
+  return strings.money.scheduleWeekdayPlural(formatDate(d, { weekday: 'long' }));
 }
 
 function monthDayLabel(monthDay: MonthDayOption): string {
-  if (monthDay === 'last') return 'Last day';
-  if (monthDay === '1') return '1st';
-  return `${monthDay}th`;
+  if (monthDay === 'last') return strings.addUpcoming.monthDayLast;
+  if (monthDay === '1') return strings.addUpcoming.monthDayFirst;
+  return monthDay === '15' ? strings.addUpcoming.monthDayFifteenth : strings.addUpcoming.monthDayThirtieth;
 }
 
 /** "Aug 1" in the device locale (ADA-008: never hardcode en-US). */
@@ -356,32 +356,31 @@ function shortDate(date: Date): string {
  * "Weekly · Fridays · next Aug 7", "Every 2 weeks · next Aug 14",
  * "Every 9 days · next Aug 3", "One-time · Aug 12", "Yearly · next Jul 15".
  */
-// TODO(step-05): hoist to strings.ts
 export function describeSchedule(rule: RecurrenceRule, nextDate: Date): string {
   const parts: string[] = [];
 
   switch (rule.type) {
     case 'once':
-      return ['One-time', shortDate(nextDate)].join(SCHEDULE_SEPARATOR);
+      return [strings.money.scheduleOneTime, shortDate(nextDate)].join(SCHEDULE_SEPARATOR);
     case 'weekly':
-      parts.push('Weekly', weekdayPlural(rule.weekday));
+      parts.push(strings.money.scheduleWeekly, weekdayPlural(rule.weekday));
       break;
     case 'biweekly':
-      parts.push('Every 2 weeks');
+      parts.push(strings.money.scheduleBiweekly);
       break;
     case 'monthly':
-      parts.push('Monthly');
+      parts.push(strings.money.scheduleMonthly);
       if (rule.monthDay) parts.push(monthDayLabel(rule.monthDay));
       break;
     case 'annual':
-      parts.push('Yearly');
+      parts.push(strings.money.scheduleAnnual);
       break;
     case 'custom':
-      parts.push(`Every ${clampEveryNDays(rule.everyNDays)} days`);
+      parts.push(strings.money.scheduleEveryNDays(clampEveryNDays(rule.everyNDays)));
       break;
   }
 
-  parts.push(`next ${shortDate(nextDate)}`);
+  parts.push(strings.money.scheduleNext(shortDate(nextDate)));
   return parts.join(SCHEDULE_SEPARATOR);
 }
 
@@ -391,7 +390,6 @@ export function describeSchedule(rule: RecurrenceRule, nextDate: Date): string {
  * roughly twice a year and that is the surprise worth flagging. Earliest such
  * month wins when more than one qualifies.
  */
-// TODO(step-05): hoist to strings.ts
 export function multiPaymentMonth(
   occurrences: Date[]
 ): { monthLabel: string; count: number } | null {

@@ -39,8 +39,7 @@ export function EventHistory({ dayLogs, skipValue }: EventHistoryProps) {
   if (events.length === 0) {
     return (
       <View style={styles.card}>
-        {/* TODO(step-05): hoist to strings.ts (habitDetailV2.eventHistoryEmpty). */}
-        <Text style={styles.empty}>Nothing logged yet.</Text>
+        <Text style={styles.empty}>{strings.habitDetailV2.eventHistoryEmpty}</Text>
       </View>
     );
   }
