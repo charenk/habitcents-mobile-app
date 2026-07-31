@@ -34,7 +34,8 @@ export default function OnboardingForkScreen() {
   const handleSkip = async () => {
     await chooseDoor('skip');
     await completeOnboarding();
-    router.replace('/(tabs)/expenses');
+    // Every onboarding path converges on Today, skip included (spec 03).
+    router.replace('/(tabs)');
   };
 
   return (

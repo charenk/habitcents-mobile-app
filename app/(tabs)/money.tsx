@@ -1,21 +1,17 @@
-import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useCallback, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  AppState,
   ScrollView,
   useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { Icon } from '@/components/ui/Icon';
 import { useTheme } from '@/contexts/ThemeContext';
-import { formatDate } from '@/utils/dates';
 import { useExpenses } from '@/contexts/ExpensesContext';
 import { useCategories } from '@/contexts/CategoriesContext';
-import type { AppTheme } from '@/constants/theme';
+import { typeScale, type AppTheme } from '@/constants/theme';
 import { AddExpenseSection, type AddExpenseSectionHandle } from '@/components/AddExpenseSection';
 import { TodayExpensesPanel } from '@/components/TodayExpensesPanel';
 import { UpcomingPanel } from '@/components/UpcomingPanel';
@@ -27,13 +23,8 @@ import { selectableLabel } from '@/utils/a11y';
 
 const UPCOMING_WINDOW_DAYS = 60;
 
-function todayLabel(): string {
-  return formatDate(new Date(), { month: 'short', day: 'numeric' });
-}
-
-export default function ExpensesScreen() {
+export default function MoneyScreen() {
   const insets = useSafeAreaInsets();
-  const router = useRouter();
   // Matches the collapsed sheet peek (SNAP_COLLAPSED in TodayExpensesPanel) plus a
   // buffer, so the form's Save button always scrolls clear of the sheet. Live
   // window height (ADA-021), not a module-scope snapshot.
@@ -44,16 +35,6 @@ export default function ExpensesScreen() {
   const [activeCategoryId, setActiveCategoryId] = useState<string>('all');
   const [activeView, setActiveView] = useState<'recent' | 'upcoming'>('recent');
   const addExpenseRef = useRef<AddExpenseSectionHandle>(null);
-
-  // Recompute the date pill when the app returns to the foreground, so it never
-  // shows yesterday after being backgrounded overnight (M2).
-  const [dateLabel, setDateLabel] = useState(todayLabel);
-  useEffect(() => {
-    const sub = AppState.addEventListener('change', (s) => {
-      if (s === 'active') setDateLabel(todayLabel());
-    });
-    return () => sub.remove();
-  }, []);
 
   const { expenses, addExpense } = useExpenses();
   const { getVisibleCategories } = useCategories();
@@ -85,21 +66,11 @@ export default function ExpensesScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      {/* Header */}
+      {/* Header: serif screen title, then the recent / upcoming switch. */}
       <View style={styles.header}>
-        <View style={styles.headerTopRow}>
-          <View style={styles.datePill}>
-            <Text style={styles.datePillText}>{dateLabel}</Text>
-          </View>
-          <TouchableOpacity
-            style={styles.settingsButton}
-            onPress={() => router.push('/settings')}
-            accessibilityRole="button"
-            accessibilityLabel={strings.settings.title}
-          >
-            <Icon name="Settings2" size={22} color={theme.textSecondary} />
-          </TouchableOpacity>
-        </View>
+        <Text style={styles.screenTitle} accessibilityRole="header">
+          {strings.screenTitles.money}
+        </Text>
         <View style={styles.viewTabs}>
           <TouchableOpacity
             onPress={() => setActiveView('recent')}
@@ -186,50 +157,29 @@ function createStyles(theme: AppTheme) {
       paddingTop: 16,
       paddingBottom: 8,
     },
-    headerTopRow: {
-      flexDirection: 'row',
-      alignItems: 'flex-start',
-      justifyContent: 'space-between',
-    },
-    // 44pt target (P2-5 rule); negative margins keep the icon optically in the
-    // header corner without shrinking the tappable area.
-    settingsButton: {
-      width: 44,
-      height: 44,
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginTop: -10,
-      marginRight: -11,
-    },
-    datePill: {
-      alignSelf: 'flex-start',
-      backgroundColor: theme.primaryMuted,
-      paddingHorizontal: 12,
-      paddingVertical: 6,
-      borderRadius: 8,
-      marginBottom: 8,
-    },
-    datePillText: {
-      fontSize: 13,
-      fontWeight: '500',
-      color: theme.primary,
-      lineHeight: 16,
+    screenTitle: {
+      fontFamily: theme.fonts.display,
+      fontSize: typeScale.screenTitle,
+      lineHeight: 40,
+      color: theme.ink,
+      includeFontPadding: false,
     },
     viewTabs: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 20,
+      marginTop: 12,
     },
     viewTab: {
-      fontSize: 28,
-      fontWeight: '700',
-      lineHeight: 34,
+      fontFamily: theme.fonts.uiSemibold,
+      fontSize: typeScale.body,
+      lineHeight: 20,
     },
     viewTabActive: {
       color: theme.primary,
     },
     viewTabInactive: {
-      color: theme.textSecondary,
+      color: theme.mist,
     },
     panelWrap: {
       position: 'absolute',

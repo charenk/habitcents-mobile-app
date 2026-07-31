@@ -44,6 +44,7 @@ import {
   Sprout,
   SquarePen,
   Store,
+  Sun,
   TrendingDown,
   TrendingUp,
   Trash2,
@@ -72,6 +73,8 @@ const GLYPHS = {
   Trash2,
   Store,
   Repeat,
+  // Tab bar (redesign step 02): Today.
+  Sun,
   Wallet,
   ChartColumn,
   LayoutGrid,

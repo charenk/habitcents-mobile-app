@@ -78,7 +78,7 @@ export type HabitChangeGoal = {
   targetSubstitute?: string;
   startDate: Date;
   // --- Legacy streak system (pre-v2). Kept only because the Reports "Habit
-  // Streaks" widget (app/(tabs)/reports.tsx, components/WidgetCard.tsx) still
+  // Streaks" widget (app/(tabs)/insights.tsx, components/WidgetCard.tsx) still
   // reads these fields; that widget is out of scope for the habit-logging v2
   // build (docs/design-package-phase2/01-habit-logging-spec.md) and is left
   // untouched. Nothing in the v2 logging surfaces writes user-facing streak

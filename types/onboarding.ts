@@ -76,7 +76,7 @@ export const FEATURE_REVEALS: Omit<FeatureReveal, 'shownAt' | 'dismissedAt'>[] =
     triggerValue: 5,
     message: 'Tap Reports to see insights about your spending!',
     actionLabel: 'View Reports',
-    actionRoute: '/(tabs)/reports',
+    actionRoute: '/(tabs)/insights',
   },
   {
     id: 'reveal-habits',
@@ -85,7 +85,7 @@ export const FEATURE_REVEALS: Omit<FeatureReveal, 'shownAt' | 'dismissedAt'>[] =
     triggerValue: 10,
     message: "We've detected your first spending habit. Let's take a look!",
     actionLabel: 'View Habits',
-    actionRoute: '/(tabs)/habits',
+    actionRoute: '/(tabs)',
   },
   {
     id: 'reveal-learning',
@@ -94,7 +94,7 @@ export const FEATURE_REVEALS: Omit<FeatureReveal, 'shownAt' | 'dismissedAt'>[] =
     triggerValue: 7,
     message: 'Unlock micro-lessons on building better financial habits!',
     actionLabel: 'Start Learning',
-    actionRoute: '/(tabs)/habits',
+    actionRoute: '/(tabs)',
   },
   {
     id: 'reveal-categories',

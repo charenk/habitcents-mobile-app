@@ -11,11 +11,18 @@ export const strings = {
     back: 'Back',
     keep: 'Keep',
   },
+  // Tab bar (redesign step 02): Today / Money / Insights / Categories.
   tabs: {
-    expenses: 'Expenses',
-    reports: 'Reports',
+    today: 'Today',
+    money: 'Money',
+    insights: 'Insights',
     categories: 'Categories',
-    habits: 'Habits',
+  },
+  // Serif screen titles. The trailing period is part of the redesign voice.
+  screenTitles: {
+    today: 'Today.',
+    money: 'Money.',
+    insights: 'Insights.',
   },
   expenses: {
     recent: 'Recent',
@@ -271,6 +278,18 @@ export const strings = {
     restoreAlertTitle: 'Restore purchases',
     restoreNoneMessage: 'No previous purchases to restore.',
     restoreDoneMessage: 'Your purchases have been restored.',
+    // Settings bottom sheet (redesign step 02). Settings is no longer a tab;
+    // the gear on Today opens this sheet.
+    sheetTitle: 'Settings.',
+    planFree: 'Free plan · 1 habit',
+    groupPreferences: 'Preferences',
+    groupAbout: 'About',
+    premiumRow: 'Premium',
+    restoreRow: 'Restore purchases',
+    signOutRow: 'Sign out',
+    signOutHint: 'data stays on this device',
+    signOutToast: 'Signed out. Your data stays on this device.',
+    versionRow: 'Version',
   },
   addCategoryModal: {
     editCategory: 'Edit Category',

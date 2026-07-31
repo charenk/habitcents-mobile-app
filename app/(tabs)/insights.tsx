@@ -14,11 +14,11 @@ import {
   HabitStreaksContent,
   ProjectionContent,
 } from '@/components/WidgetCard';
-import type { AppTheme } from '@/constants/theme';
+import { typeScale, type AppTheme } from '@/constants/theme';
 import type { TimeRange } from '@/types/report';
 import { strings } from '@/constants/strings';
 
-export default function ReportsScreen() {
+export default function InsightsScreen() {
   const insets = useSafeAreaInsets();
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -122,9 +122,11 @@ export default function ReportsScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      {/* Header */}
+      {/* Header: serif screen title. */}
       <View style={styles.header}>
-        <Text style={styles.title}>{strings.reports.title}</Text>
+        <Text style={styles.screenTitle} accessibilityRole="header">
+          {strings.screenTitles.insights}
+        </Text>
       </View>
 
       <View style={styles.subtitleRow}>
@@ -164,18 +166,12 @@ function createStyles(theme: AppTheme) {
       paddingHorizontal: 20,
       paddingTop: 16,
     },
-    title: {
-      fontSize: 28,
-      fontWeight: '700',
-      color: theme.text,
-    },
-    editButton: {
-      width: 44,
-      height: 44,
-      borderRadius: 22,
-      backgroundColor: theme.surface,
-      justifyContent: 'center',
-      alignItems: 'center',
+    screenTitle: {
+      fontFamily: theme.fonts.display,
+      fontSize: typeScale.screenTitle,
+      lineHeight: 40,
+      color: theme.ink,
+      includeFontPadding: false,
     },
     subtitleRow: {
       paddingHorizontal: 20,
@@ -193,23 +189,6 @@ function createStyles(theme: AppTheme) {
       paddingHorizontal: 16,
       paddingBottom: 100,
     },
-    reorderControls: {
-      flexDirection: 'row',
-      justifyContent: 'flex-end',
-      marginBottom: 4,
-      gap: 4,
-    },
-    reorderButton: {
-      width: 32,
-      height: 32,
-      borderRadius: 8,
-      backgroundColor: theme.surface,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    reorderButtonDisabled: {
-      opacity: 0.5,
-    },
     loadingContainer: {
       flex: 1,
       justifyContent: 'center',
@@ -218,22 +197,6 @@ function createStyles(theme: AppTheme) {
     loadingText: {
       fontSize: 16,
       color: theme.textSecondary,
-    },
-    emptyContainer: {
-      alignItems: 'center',
-      paddingTop: 60,
-    },
-    emptyTitle: {
-      fontSize: 18,
-      fontWeight: '600',
-      color: theme.text,
-      marginTop: 16,
-    },
-    emptySubtitle: {
-      fontSize: 14,
-      color: theme.textSecondary,
-      marginTop: 8,
-      textAlign: 'center',
     },
     projectionPlaceholder: {
       paddingVertical: 20,
