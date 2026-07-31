@@ -2,6 +2,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Button } from '@/components/ui';
+import { useToast } from '@/components/ui/Toast';
 import { useTheme } from '@/contexts/ThemeContext';
 import { formatDate } from '@/utils/dates';
 import { useExpenses } from '@/contexts/ExpensesContext';
@@ -70,6 +71,7 @@ function monthLabel(dateISO: string): string {
 export function ResultsScreen({ result: initialResult, files }: ResultsScreenProps) {
   const theme = useTheme();
   const router = useRouter();
+  const toast = useToast();
   const { addExpense, deleteExpense, expenses } = useExpenses();
   const { addScanHabit, startBreakingHabit, dismissHabit, getHabitById, getActiveHabits } = useHabits();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -255,7 +257,11 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
     }
     track('scan_seed15_applied', { rows: seeded.length });
     router.push('/(tabs)');
-  }, [result, addExpense, router]);
+    // Every mutating action confirms itself (spec 01 section 5). This one
+    // writes about 15 expenses, so landing on Today in silence left the user
+    // with no evidence the import happened.
+    toast.show(strings.leakScan.savedToHabitCents);
+  }, [result, addExpense, router, toast]);
 
   if (undone) {
     return (
