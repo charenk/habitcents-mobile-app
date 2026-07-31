@@ -118,7 +118,10 @@ export default function OnboardingGuidedLogScreen() {
                 key={cat.id}
                 style={({ pressed }) => [
                   styles.categoryTile,
-                  selected ? { borderColor: identity, backgroundColor: theme.snow } : null,
+                  // Selection is sage everywhere in the app, so it stays sage
+                  // here too. The category's identity color still reads from
+                  // the EmojiTile wash below (Charen, 2026-07-31).
+                  selected ? { borderColor: theme.primary, backgroundColor: theme.snow } : null,
                   pressed && !selected ? styles.categoryTilePressed : null,
                 ]}
                 onPress={() => setSelectedCategory(cat)}

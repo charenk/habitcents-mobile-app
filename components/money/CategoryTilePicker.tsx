@@ -77,7 +77,10 @@ export function CategoryTilePicker({
             accessibilityState={{ selected }}
             style={({ pressed }) => [
               styles.tileWrap,
-              { borderColor: selected ? identity : 'transparent' },
+              // Selection is sage everywhere in the app, so it stays sage here
+              // too. The category's identity color still reads from the
+              // EmojiTile wash below (Charen, 2026-07-31).
+              { borderColor: selected ? theme.primary : 'transparent' },
               pressed ? styles.tileWrapPressed : null,
             ]}
           >
