@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, AccessibilityInfo } from 'react-native';
+import { View, Text, StyleSheet, AccessibilityInfo } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Button } from '@/components/ui';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useOnboarding } from '@/contexts/OnboardingContext';
@@ -15,7 +16,7 @@ import {
   biggestLeakCandidate,
   candidateToSeedInput,
 } from '@/utils/leakAudit';
-import type { AppTheme } from '@/constants/theme';
+import { radii, typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import { track } from '@/utils/analytics';
 
@@ -111,9 +112,11 @@ export default function OnboardingRevealScreen() {
           <Text style={styles.sub}>{strings.onboarding.noNumberYetSubtitle}</Text>
         </View>
         <View style={styles.footer}>
-          <TouchableOpacity style={styles.primaryButton} onPress={goToGuidedLog} accessibilityRole="button">
-            <Text style={styles.primaryButtonText}>{strings.onboarding.justStartLogging}</Text>
-          </TouchableOpacity>
+          <Button
+            label={strings.onboarding.justStartLogging}
+            onPress={goToGuidedLog}
+            style={styles.primaryButton}
+          />
         </View>
       </View>
     );
@@ -147,12 +150,17 @@ export default function OnboardingRevealScreen() {
       </View>
 
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.primaryButton} onPress={handlePlugBiggestLeak} accessibilityRole="button">
-          <Text style={styles.primaryButtonText}>{strings.onboarding.plugBiggestLeak}</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={handleJustStartLogging} accessibilityRole="button" style={styles.plainButton}>
-          <Text style={styles.plainButtonText}>{strings.onboarding.justStartLogging}</Text>
-        </TouchableOpacity>
+        <Button
+          label={strings.onboarding.plugBiggestLeak}
+          onPress={handlePlugBiggestLeak}
+          style={styles.primaryButton}
+        />
+        <Button
+          label={strings.onboarding.justStartLogging}
+          onPress={handleJustStartLogging}
+          variant="tertiary"
+          style={styles.plainButton}
+        />
       </View>
 
       <PickOneSheet
@@ -179,62 +187,71 @@ function createStyles(theme: AppTheme) {
       justifyContent: 'center',
     },
     title: {
-      fontSize: 20,
-      fontWeight: '700',
-      color: theme.text,
+      fontSize: 30,
+      fontFamily: theme.fonts.display,
+      color: theme.ink,
       textAlign: 'center',
+      lineHeight: 34,
       marginBottom: 8,
     },
     sub: {
-      fontSize: 15,
-      color: theme.textSecondary,
+      fontSize: typeScale.body,
+      fontFamily: theme.fonts.ui,
+      color: theme.slate,
       textAlign: 'center',
       lineHeight: 21,
     },
+    // The reveal number: serif 64, the largest numeral in the app.
     yearly: {
-      fontSize: 42,
-      fontWeight: '800',
-      color: theme.text,
+      fontSize: typeScale.reveal,
+      fontFamily: theme.fonts.display,
+      fontVariant: ['tabular-nums'],
+      color: theme.ink,
       textAlign: 'center',
-      letterSpacing: -1.5,
+      lineHeight: 70,
     },
     caption: {
       fontSize: 14,
-      color: theme.textSecondary,
+      fontFamily: theme.fonts.ui,
+      color: theme.slate,
       textAlign: 'center',
       marginTop: 4,
-      marginBottom: 20,
+      marginBottom: 24,
+      lineHeight: 20,
     },
     breakdownCard: {
-      backgroundColor: theme.surface,
+      backgroundColor: theme.white,
       borderWidth: 1,
-      borderColor: theme.border,
-      borderRadius: 14,
+      borderColor: theme.cloud,
+      borderRadius: radii.feature,
       paddingHorizontal: 16,
     },
     breakdownRow: {
       flexDirection: 'row',
       justifyContent: 'space-between',
+      alignItems: 'center',
       paddingVertical: 12,
       borderBottomWidth: 1,
-      borderBottomColor: theme.background,
+      borderBottomColor: theme.hairlineSubtle,
     },
     breakdownSource: {
       fontSize: 14,
-      fontWeight: '600',
-      color: theme.text,
+      fontFamily: theme.fonts.uiMedium,
+      color: theme.ink,
     },
     breakdownAmount: {
-      fontSize: 14,
-      fontWeight: '700',
-      color: theme.text,
+      fontSize: 16,
+      fontFamily: theme.fonts.display,
+      fontVariant: ['tabular-nums'],
+      color: theme.ink,
     },
     honesty: {
-      fontSize: 12,
-      color: theme.textSecondary,
+      fontSize: typeScale.caption,
+      fontFamily: theme.fonts.ui,
+      color: theme.slate,
       textAlign: 'center',
-      marginTop: 16,
-      lineHeight: 17,
+      marginTop: 18,
+      lineHeight: 18,
     },
     footer: {
       paddingHorizontal: 24,
@@ -242,27 +259,10 @@ function createStyles(theme: AppTheme) {
       alignItems: 'center',
     },
     primaryButton: {
-      minHeight: 48,
       width: '100%',
-      borderRadius: 14,
-      backgroundColor: theme.primary,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    primaryButtonText: {
-      fontSize: 16,
-      fontWeight: '700',
-      color: theme.white,
     },
     plainButton: {
-      marginTop: 10,
-      minHeight: 44,
-      justifyContent: 'center',
-    },
-    plainButtonText: {
-      fontSize: 14,
-      fontWeight: '600',
-      color: theme.textSecondary,
+      marginTop: 4,
     },
   });
 }

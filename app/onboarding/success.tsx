@@ -1,8 +1,8 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Icon } from '@/components/ui/Icon';
+import { Button, Icon } from '@/components/ui';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useOnboarding } from '@/contexts/OnboardingContext';
@@ -16,7 +16,7 @@ import {
   candidateToSeedInput,
 } from '@/utils/leakAudit';
 import { useCategories } from '@/contexts/CategoriesContext';
-import type { AppTheme } from '@/constants/theme';
+import { radii, typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 
 /**
@@ -75,8 +75,8 @@ export default function OnboardingSuccessScreen() {
   return (
     <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <View style={styles.content}>
-        <View style={styles.checkCircle}>
-          <Icon name="Check" size={48} color={theme.white} />
+        <View style={styles.brandMark}>
+          <Icon name="Sprout" size={22} color={theme.primaryDark} />
         </View>
         <Text style={styles.title}>{strings.onboarding.leakMapReady}</Text>
 
@@ -89,27 +89,26 @@ export default function OnboardingSuccessScreen() {
               {strings.onboarding.biggestLeakCaption(format(candidate.totalMonthlySpendCents))}
             </Text>
             {!habitAlreadyStarted && (
-              <TouchableOpacity style={styles.breakButton} onPress={handleBreakIt} accessibilityRole="button">
-                <Text style={styles.breakButtonText}>{strings.onboarding.breakIt}</Text>
-              </TouchableOpacity>
+              <Button
+                label={strings.onboarding.breakIt}
+                onPress={handleBreakIt}
+                style={styles.breakButton}
+              />
             )}
           </View>
         )}
 
         <Text style={styles.quietNote}>{strings.onboarding.trialQuietNote}</Text>
-        <TouchableOpacity
+        <Button
+          label={strings.onboarding.seePremium}
           onPress={() => router.push('/paywall?placement=onboarding')}
-          accessibilityRole="button"
+          variant="tertiary"
           style={styles.premiumLink}
-        >
-          <Text style={styles.premiumLinkText}>{strings.onboarding.seePremium}</Text>
-        </TouchableOpacity>
+        />
       </View>
 
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.primaryButton} onPress={handleContinue} accessibilityRole="button">
-          <Text style={styles.primaryButtonText}>{strings.onboarding.continueToHabits}</Text>
-        </TouchableOpacity>
+        <Button label={strings.onboarding.continueToHabits} onPress={handleContinue} />
       </View>
 
       <PickOneSheet
@@ -136,89 +135,67 @@ function createStyles(theme: AppTheme) {
       paddingHorizontal: 24,
       paddingTop: 24,
     },
-    checkCircle: {
-      width: 88,
-      height: 88,
-      borderRadius: 44,
-      backgroundColor: theme.primary,
+    // Quiet brand mark instead of a celebration burst: sprout in a sage-light
+    // disc (redesign spec 01, "no confetti, no bounce").
+    brandMark: {
+      width: 56,
+      height: 56,
+      borderRadius: radii.pill,
+      backgroundColor: theme.primaryLight,
       alignItems: 'center',
       justifyContent: 'center',
-      marginBottom: 16,
+      marginBottom: 14,
     },
     title: {
-      fontSize: 22,
-      fontWeight: '800',
-      color: theme.text,
+      fontSize: 30,
+      fontFamily: theme.fonts.display,
+      color: theme.ink,
       textAlign: 'center',
-      marginBottom: 8,
+      lineHeight: 34,
+      marginBottom: 4,
     },
     leakCard: {
       width: '100%',
-      backgroundColor: theme.surface,
-      borderRadius: 16,
+      backgroundColor: theme.white,
+      borderRadius: radii.feature,
       borderWidth: 1,
-      borderColor: theme.border,
+      borderColor: theme.cloud,
       padding: 16,
       marginTop: 16,
     },
     leakName: {
       fontSize: 16,
-      fontWeight: '700',
-      color: theme.text,
+      fontFamily: theme.fonts.uiSemibold,
+      color: theme.ink,
     },
     leakCaption: {
-      fontSize: 13,
-      color: theme.textSecondary,
+      fontSize: typeScale.secondary,
+      fontFamily: theme.fonts.ui,
+      color: theme.slate,
       marginTop: 4,
       marginBottom: 12,
     },
     breakButton: {
-      minHeight: 44,
-      borderRadius: 12,
-      backgroundColor: theme.primary,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    breakButtonText: {
-      fontSize: 15,
-      fontWeight: '600',
-      color: theme.white,
+      alignSelf: 'flex-start',
+      paddingHorizontal: 22,
     },
     quietNote: {
-      // P2-4 spec 05 section 6: readable captions use textSecondary, not
-      // textTertiary (fails WCAG AA on this background).
-      fontSize: 12,
-      color: theme.textSecondary,
+      // P2-4 spec 05 section 6: readable captions use slate, not mist
+      // (fails WCAG AA on this background).
+      fontSize: typeScale.caption,
+      fontFamily: theme.fonts.ui,
+      color: theme.slate,
       textAlign: 'center',
-      marginTop: 20,
-      lineHeight: 17,
+      marginTop: 24,
+      lineHeight: 18,
     },
     premiumLink: {
-      minHeight: 44,
-      justifyContent: 'center',
-      alignItems: 'center',
-      marginTop: 4,
-    },
-    premiumLinkText: {
-      fontSize: 14,
-      fontWeight: '600',
-      color: theme.primary,
+      alignSelf: 'center',
+      marginTop: 2,
     },
     footer: {
       paddingHorizontal: 24,
       paddingBottom: 24,
-    },
-    primaryButton: {
-      minHeight: 50,
-      borderRadius: 14,
-      backgroundColor: theme.primary,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    primaryButtonText: {
-      fontSize: 16,
-      fontWeight: '700',
-      color: theme.white,
     },
   });
 }

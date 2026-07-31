@@ -1,20 +1,24 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/contexts/ThemeContext';
-import { useCurrency } from '@/contexts/CurrencyContext';
 import { useOnboarding } from '@/contexts/OnboardingContext';
-import { welcomePositioningCents } from '@/constants/onboardingPresets';
+import { Button, Icon, Sheet } from '@/components/ui';
+import type { IconName } from '@/components/ui';
 import type { AppTheme } from '@/constants/theme';
+import { typeScale } from '@/constants/theme';
 import type { OnboardingStep } from '@/types/onboarding';
 import { strings } from '@/constants/strings';
 
 // Resume routing (spec 02 section 7, "Mid-flow abandon and reopen"): welcome
-// is not repeated once the fork has been resolved (doorChosen set). Reopening
-// resumes at the first incomplete input step with prior answers intact.
+// is not repeated once an intent has been picked (doorChosen set). Reopening
+// resumes at the first incomplete input step with prior answers intact. The
+// stored step is still named "fork"; the screen it routes to is now the intent
+// picker, so a track or scan user who abandons early re-picks rather than
+// landing on a route that no longer exists.
 const STEP_ROUTE: Partial<Record<OnboardingStep, string>> = {
-  fork: '/onboarding/fork',
+  fork: '/onboarding/intent',
   audit_subs: '/onboarding/audit-subs',
   audit_vices: '/onboarding/audit-vices',
   reveal: '/onboarding/reveal',
@@ -22,16 +26,26 @@ const STEP_ROUTE: Partial<Record<OnboardingStep, string>> = {
   success: '/onboarding/success',
 };
 
+// The three value props, stated up front (design/redesign-handoff/03-onboarding.md
+// screen 1) rather than teased behind a carousel.
+const VALUE_PROPS: { icon: IconName; text: string }[] = [
+  { icon: 'Timer', text: strings.onboarding.valuePropLog },
+  { icon: 'ChartPie', text: strings.onboarding.valuePropSee },
+  { icon: 'Sprout', text: strings.onboarding.valuePropBreak },
+];
+
+const HOW_IT_WORKS_ICONS: IconName[] = ['Timer', 'ChartPie', 'Sprout'];
+
 /**
- * Welcome (spec 02 section 3.1). One screen, no pager, no feature carousel, no
- * voice-input promises. Primary continues to the two-door fork; "How it works"
- * opens a 3-line sheet.
+ * Welcome (design/redesign-handoff/03-onboarding.md, screen 1). One screen, no
+ * pager and no feature carousel: brand row, serif headline, the three value
+ * props, the privacy line. Primary continues to the intent picker; "How it
+ * works" opens a three-row sheet.
  */
 export default function OnboardingWelcomeScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const theme = useTheme();
-  const { format, currency } = useCurrency();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const { onboardingState, isLoading, completeStep } = useOnboarding();
   const [howItWorksVisible, setHowItWorksVisible] = useState(false);
@@ -39,9 +53,9 @@ export default function OnboardingWelcomeScreen() {
   useEffect(() => {
     if (isLoading) return;
     if (!onboardingState.doorChosen || onboardingState.doorChosen === 'skip') return;
-    // Door 2 (statements) owns its own resume state past the fork; the only
-    // thing welcome needs to do is not re-show itself, so route straight back
-    // into that flow rather than falling through to a Door-1 STEP_ROUTE entry.
+    // The scan path owns its own resume state past the picker; the only thing
+    // welcome needs to do is not re-show itself, so route straight back into
+    // that flow rather than falling through to a STEP_ROUTE entry.
     if (onboardingState.doorChosen === 'statements') {
       router.replace('/leak-scan');
       return;
@@ -52,58 +66,65 @@ export default function OnboardingWelcomeScreen() {
     }
   }, [isLoading, onboardingState.doorChosen, onboardingState.currentStep, router]);
 
-  const handleFindMyLeak = async () => {
+  const handleGetStarted = async () => {
     await completeStep('welcome');
-    router.push('/onboarding/fork');
+    router.push('/onboarding/intent');
   };
 
   return (
     <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <View style={styles.content}>
-        <View style={styles.wordmark}>
-          <View style={styles.wordmarkDot}>
-            <Text style={styles.wordmarkDotText}>¢</Text>
+        <View style={styles.brandRow}>
+          <View style={styles.brandMark}>
+            <Icon name="Sprout" size={18} color={theme.white} />
           </View>
-          <Text style={styles.wordmarkText}>HabitCents</Text>
+          <Text style={styles.brandName}>{strings.onboarding.brandName}</Text>
         </View>
 
-        <Text style={styles.headline}>
-          {strings.onboarding.welcomeHeadline(format(welcomePositioningCents(currency)))}
+        <Text style={styles.headline} accessibilityRole="header">
+          {strings.onboarding.welcomeHeadline}
         </Text>
-        <Text style={styles.sub}>{strings.onboarding.welcomeSub}</Text>
+
+        <View style={styles.valueProps}>
+          {VALUE_PROPS.map(prop => (
+            <View key={prop.text} style={styles.valueRow}>
+              <View style={styles.valueTile}>
+                <Icon name={prop.icon} size={16} color={theme.primaryDark} />
+              </View>
+              <Text style={styles.valueText}>{prop.text}</Text>
+            </View>
+          ))}
+        </View>
+
+        <Text style={styles.privacy}>{strings.onboarding.welcomeSub}</Text>
       </View>
 
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.primaryButton} onPress={handleFindMyLeak} accessibilityRole="button">
-          <Text style={styles.primaryButtonText}>{strings.onboarding.findMyLeak}</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
+        <Button label={strings.onboarding.getStarted} onPress={handleGetStarted} />
+        <Button
+          label={strings.onboarding.howItWorks}
+          variant="tertiary"
           onPress={() => setHowItWorksVisible(true)}
-          accessibilityRole="button"
-          style={styles.plainButton}
-        >
-          <Text style={styles.plainButtonText}>{strings.onboarding.howItWorks}</Text>
-        </TouchableOpacity>
+        />
       </View>
 
-      <Modal
+      <Sheet
         visible={howItWorksVisible}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => setHowItWorksVisible(false)}
+        onClose={() => setHowItWorksVisible(false)}
+        accessibilityLabel={strings.onboarding.howItWorks}
       >
-        <View style={[styles.sheet, { paddingBottom: insets.bottom + 24 }]}>
-          <View style={styles.grabber} />
-          <Text style={styles.sheetText}>{strings.onboarding.howItWorksSheet}</Text>
-          <TouchableOpacity
-            style={styles.primaryButton}
-            onPress={() => setHowItWorksVisible(false)}
-            accessibilityRole="button"
-          >
-            <Text style={styles.primaryButtonText}>{strings.common.ok}</Text>
-          </TouchableOpacity>
+        <View style={styles.sheetBody}>
+          {strings.onboarding.howItWorksRows.map((row, i) => (
+            <View key={row} style={styles.valueRow}>
+              <View style={styles.valueTile}>
+                <Icon name={HOW_IT_WORKS_ICONS[i]} size={16} color={theme.primaryDark} />
+              </View>
+              <Text style={styles.valueText}>{row}</Text>
+            </View>
+          ))}
+          <Button label={strings.common.ok} onPress={() => setHowItWorksVisible(false)} />
         </View>
-      </Modal>
+      </Sheet>
     </View>
   );
 }
@@ -117,94 +138,74 @@ function createStyles(theme: AppTheme) {
     content: {
       flex: 1,
       justifyContent: 'center',
-      paddingHorizontal: 28,
+      paddingHorizontal: 24,
     },
-    wordmark: {
+    brandRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 8,
-      marginBottom: 24,
+      gap: 10,
+      marginBottom: 28,
     },
-    wordmarkDot: {
-      width: 32,
-      height: 32,
-      borderRadius: 16,
+    brandMark: {
+      width: 34,
+      height: 34,
+      borderRadius: 17,
       backgroundColor: theme.primary,
       alignItems: 'center',
       justifyContent: 'center',
     },
-    wordmarkDotText: {
-      color: theme.white,
-      fontSize: 18,
-      fontWeight: '800',
-    },
-    wordmarkText: {
-      fontSize: 18,
-      fontWeight: '800',
-      color: theme.text,
+    brandName: {
+      fontSize: 17,
+      fontFamily: theme.fonts.uiBold,
+      color: theme.ink,
     },
     headline: {
-      fontSize: 30,
-      fontWeight: '800',
-      color: theme.text,
-      lineHeight: 38,
-      letterSpacing: -0.4,
-      marginBottom: 12,
+      fontSize: 44,
+      lineHeight: 48,
+      fontFamily: theme.fonts.display,
+      color: theme.ink,
+      marginBottom: 28,
     },
-    sub: {
-      fontSize: 15,
-      color: theme.textSecondary,
+    valueProps: {
+      gap: 12,
+      marginBottom: 24,
+    },
+    valueRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+    },
+    valueTile: {
+      width: 32,
+      height: 32,
+      borderRadius: 9,
+      backgroundColor: theme.primaryLight,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    valueText: {
+      flex: 1,
+      fontSize: typeScale.body,
+      fontFamily: theme.fonts.ui,
+      color: theme.ink,
       lineHeight: 21,
+    },
+    privacy: {
+      fontSize: typeScale.secondary,
+      fontFamily: theme.fonts.ui,
+      color: theme.mist,
+      lineHeight: 19,
     },
     footer: {
       paddingHorizontal: 24,
-      paddingBottom: 24,
-      alignItems: 'center',
+      paddingBottom: 16,
+      gap: 6,
     },
-    primaryButton: {
-      minHeight: 50,
-      width: '100%',
-      borderRadius: 14,
-      backgroundColor: theme.primary,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    primaryButtonText: {
-      fontSize: 16,
-      fontWeight: '700',
-      color: theme.white,
-    },
-    plainButton: {
-      marginTop: 14,
-      minHeight: 44,
-      justifyContent: 'center',
-    },
-    plainButtonText: {
-      fontSize: 14,
-      fontWeight: '600',
-      color: theme.textSecondary,
-    },
-    sheet: {
-      flex: 1,
-      backgroundColor: theme.surface,
+    sheetBody: {
       paddingHorizontal: 20,
-      paddingTop: 12,
-      justifyContent: 'flex-end',
+      paddingTop: 16,
+      paddingBottom: 8,
       gap: 16,
-    },
-    grabber: {
-      position: 'absolute',
-      top: 12,
-      alignSelf: 'center',
-      width: 36,
-      height: 5,
-      borderRadius: 3,
-      backgroundColor: theme.border,
-    },
-    sheetText: {
-      fontSize: 16,
-      color: theme.text,
-      lineHeight: 23,
     },
   });
 }

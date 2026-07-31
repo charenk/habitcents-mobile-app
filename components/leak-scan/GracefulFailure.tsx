@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { Button, Icon } from '@/components/ui';
 import { useTheme } from '@/contexts/ThemeContext';
-import type { AppTheme } from '@/constants/theme';
+import { radii, typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 
 type GracefulFailureProps = {
@@ -11,10 +12,10 @@ type GracefulFailureProps = {
 };
 
 /**
- * "This one's on us" (spec 7, visual spec 9). No red, no error iconography;
- * three ordered next-best actions so the flow degrades into Door 1 rather
- * than dead-ending. This is the one screen where the apology carries the
- * warmth; everything else stays the same calm tokens as the rest of the app.
+ * "This one's on us" (spec 7, visual spec 9; restyled per redesign spec 03
+ * path B). No red, no error iconography: the mark is the brand sprout in a
+ * sage-light disc. Three ordered next-best actions so the flow degrades into
+ * the audit path rather than dead-ending. Copy is unchanged.
  */
 export function GracefulFailure({
   onTryDifferentExport,
@@ -27,24 +28,26 @@ export function GracefulFailure({
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.mark}>
-        <Text style={styles.markText}>¢</Text>
+        <Icon name="Sprout" size={22} color={theme.primaryDark} />
       </View>
       <Text style={styles.title}>{strings.leakScan.failureTitle}</Text>
       <Text style={styles.body}>{strings.leakScan.failureBody}</Text>
 
       <View style={styles.actions}>
-        <TouchableOpacity style={styles.primaryButton} onPress={onTryDifferentExport} accessibilityRole="button">
-          <Text style={styles.primaryButtonText}>{strings.leakScan.failureTryDifferentExport}</Text>
-        </TouchableOpacity>
+        <Button label={strings.leakScan.failureTryDifferentExport} onPress={onTryDifferentExport} />
         <Text style={styles.hint}>{strings.leakScan.failureTryDifferentExportHint}</Text>
 
-        <TouchableOpacity style={styles.secondaryButton} onPress={onStartLeakAudit} accessibilityRole="button">
-          <Text style={styles.secondaryButtonText}>{strings.leakScan.failureStartLeakAudit}</Text>
-        </TouchableOpacity>
+        <Button
+          label={strings.leakScan.failureStartLeakAudit}
+          onPress={onStartLeakAudit}
+          variant="secondary"
+        />
 
-        <TouchableOpacity style={styles.tertiaryButton} onPress={onLogByHand} accessibilityRole="button">
-          <Text style={styles.tertiaryButtonText}>{strings.leakScan.failureLogByHand}</Text>
-        </TouchableOpacity>
+        <Button
+          label={strings.leakScan.failureLogByHand}
+          onPress={onLogByHand}
+          variant="tertiary"
+        />
       </View>
     </ScrollView>
   );
@@ -59,24 +62,27 @@ function createStyles(theme: AppTheme) {
       justifyContent: 'center',
     },
     mark: {
+      alignSelf: 'center',
+      width: 56,
+      height: 56,
+      borderRadius: radii.pill,
+      backgroundColor: theme.primaryLight,
       alignItems: 'center',
-      marginBottom: 16,
-    },
-    markText: {
-      fontSize: 32,
-      fontWeight: '800',
-      color: theme.primary,
+      justifyContent: 'center',
+      marginBottom: 18,
     },
     title: {
-      fontSize: 20,
-      fontWeight: '700',
-      color: theme.text,
+      fontSize: 30,
+      fontFamily: theme.fonts.display,
+      color: theme.ink,
       textAlign: 'center',
+      lineHeight: 34,
       marginBottom: 12,
     },
     body: {
       fontSize: 14,
-      color: theme.textSecondary,
+      fontFamily: theme.fonts.ui,
+      color: theme.slate,
       textAlign: 'center',
       lineHeight: 21,
       marginBottom: 24,
@@ -84,48 +90,14 @@ function createStyles(theme: AppTheme) {
     actions: {
       gap: 8,
     },
-    primaryButton: {
-      minHeight: 48,
-      borderRadius: 12,
-      backgroundColor: theme.primary,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    primaryButtonText: {
-      fontSize: 15,
-      fontWeight: '700',
-      color: theme.white,
-    },
     hint: {
-      fontSize: 12,
-      color: theme.textSecondary,
+      fontSize: typeScale.caption,
+      fontFamily: theme.fonts.ui,
+      color: theme.slate,
       textAlign: 'center',
       marginBottom: 8,
       paddingHorizontal: 8,
-    },
-    secondaryButton: {
-      minHeight: 48,
-      borderRadius: 12,
-      borderWidth: 1,
-      borderColor: theme.border,
-      backgroundColor: theme.surface,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    secondaryButtonText: {
-      fontSize: 15,
-      fontWeight: '700',
-      color: theme.text,
-    },
-    tertiaryButton: {
-      minHeight: 48,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    tertiaryButtonText: {
-      fontSize: 14,
-      fontWeight: '600',
-      color: theme.textSecondary,
+      lineHeight: 18,
     },
   });
 }

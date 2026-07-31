@@ -50,6 +50,11 @@ export interface AnalyticsEventMap {
   // section 6). Structural only: counts, booleans, step/door names. Never
   // amounts, chip names, or typed text. ---
   door_chosen: { door: 'fresh' | 'statements' | 'skip' };
+  // Intent picker (design/redesign-handoff/03-onboarding.md screen 2). The
+  // picked card is the acquisition metric, so it gets its own event rather than
+  // riding on door_chosen (which still fires underneath for downstream logic).
+  onboarding_intent_selected: { intent: 'track' | 'scan' | 'break' };
+  onboarding_intent_skipped: Record<string, never>;
   audit_subs_done: { selected: number; edited: number; none: boolean };
   audit_vices_done: { answered: number; skipped: boolean };
   audit_amount_edited: { step: 'subs' | 'vices'; count: number };

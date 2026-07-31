@@ -1,11 +1,12 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Button } from '@/components/ui';
 import { useTheme } from '@/contexts/ThemeContext';
 import { formatDate } from '@/utils/dates';
 import { useExpenses } from '@/contexts/ExpensesContext';
 import { useHabits } from '@/contexts/HabitsContext';
-import type { AppTheme } from '@/constants/theme';
+import { radii, typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import { KpiRow } from './KpiRow';
 import { CategoryList } from './CategoryList';
@@ -267,7 +268,12 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
   return (
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <KpiRow kpi={kpi} evidenceWindow={evidenceWindow} />
+        <View style={styles.header}>
+          {evidenceWindow ? <Text style={styles.eyebrow}>{evidenceWindow}</Text> : null}
+          <Text style={styles.screenTitle}>{strings.leakScan.resultsTitle}</Text>
+        </View>
+
+        <KpiRow kpi={kpi} />
 
         <View style={styles.spacer} />
         <CategoryList categories={categories} onCategoryPress={(c) => setOpenCategory(c.category)} />
@@ -278,6 +284,7 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
         <View style={styles.spacer} />
         {result.habits.length > 0 && (
           <View>
+            <Text style={styles.sectionTitle}>{strings.leakScan.leaksRankedTitle}</Text>
             {result.habits.map((candidate, i) => {
               const windowDays = Math.max(result.coverage?.coveredDays ?? 0, 1);
               const monthTotalCents = Math.round((candidate.totalCents / windowDays) * 30);
@@ -324,9 +331,11 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
           </>
         )}
 
-        <TouchableOpacity style={styles.handoffButton} onPress={handleBringIn15Days} accessibilityRole="button">
-          <Text style={styles.handoffButtonText}>{strings.leakScan.bringIn15Days}</Text>
-        </TouchableOpacity>
+        <Button
+          label={strings.leakScan.bringIn15Days}
+          onPress={handleBringIn15Days}
+          style={styles.handoffButton}
+        />
 
         <ResultsFooter
           files={result.files}
@@ -388,41 +397,57 @@ function createStyles(theme: AppTheme) {
       padding: 16,
       paddingBottom: 40,
     },
+    header: {
+      marginBottom: 16,
+      paddingHorizontal: 4,
+    },
+    eyebrow: {
+      fontSize: typeScale.eyebrow,
+      fontFamily: theme.fonts.uiSemibold,
+      letterSpacing: typeScale.eyebrowLetterSpacing,
+      color: theme.mist,
+      textTransform: 'uppercase',
+      marginBottom: 2,
+    },
+    screenTitle: {
+      fontSize: typeScale.screenTitle,
+      fontFamily: theme.fonts.display,
+      color: theme.ink,
+      lineHeight: 38,
+    },
+    sectionTitle: {
+      fontSize: typeScale.body,
+      fontFamily: theme.fonts.uiSemibold,
+      color: theme.ink,
+      marginBottom: 10,
+      paddingHorizontal: 4,
+    },
     spacer: {
       height: 14,
     },
     reviewQueueBanner: {
-      backgroundColor: theme.surface,
-      borderRadius: 14,
-      borderWidth: 0.5,
-      borderColor: theme.border,
+      backgroundColor: theme.white,
+      borderRadius: radii.card,
+      borderWidth: 1,
+      borderColor: theme.cloud,
       padding: 14,
     },
     reviewQueueBannerText: {
       fontSize: 14,
-      fontWeight: '600',
-      color: theme.text,
+      fontFamily: theme.fonts.uiMedium,
+      color: theme.ink,
     },
     handoffButton: {
-      minHeight: 48,
-      borderRadius: 12,
-      backgroundColor: theme.primary,
-      alignItems: 'center',
-      justifyContent: 'center',
       marginTop: 14,
-    },
-    handoffButtonText: {
-      fontSize: 15,
-      fontWeight: '700',
-      color: theme.white,
     },
     undoneCenter: {
       alignItems: 'center',
       justifyContent: 'center',
     },
     undoneText: {
-      fontSize: 15,
-      color: theme.textSecondary,
+      fontSize: typeScale.body,
+      fontFamily: theme.fonts.ui,
+      color: theme.slate,
     },
   });
 }

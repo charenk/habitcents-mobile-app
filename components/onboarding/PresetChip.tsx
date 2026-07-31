@@ -1,9 +1,10 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
+import { Icon } from '@/components/ui';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { currencyMeta } from '@/utils/currency';
-import type { AppTheme } from '@/constants/theme';
+import { radii, typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 
 export type PresetChipProps = {
@@ -89,7 +90,7 @@ export function PresetChip({
             accessibilityLabel={strings.onboarding.editorCancelLabel}
             style={styles.xButton}
           >
-            <Text style={styles.xButtonText}>✕</Text>
+            <Icon name="X" size={14} color={theme.slate} />
           </TouchableOpacity>
         </View>
         <View style={styles.editRow}>
@@ -123,6 +124,11 @@ export function PresetChip({
       accessibilityLabel={a11yLabel}
       accessibilityState={{ selected }}
     >
+      {selected && (
+        <View style={styles.checkMark} importantForAccessibility="no">
+          <Icon name="Check" size={14} color={theme.primaryDark} />
+        </View>
+      )}
       {isCustom && selected ? (
         <TextInput
           value={customName}
@@ -159,30 +165,41 @@ export function PresetChip({
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
+    // Chip at rest: white on the snow page, cloud hairline. Selected: sage-light
+    // fill + sage border + the check mark below, so selection never rides on
+    // color alone (redesign spec 03 path C).
     chip: {
       flex: 1,
       minWidth: '45%',
-      backgroundColor: theme.surface,
+      backgroundColor: theme.white,
       borderWidth: 1.5,
-      borderColor: theme.border,
-      borderRadius: 12,
-      padding: 12,
-      minHeight: 60,
+      borderColor: theme.cloud,
+      borderRadius: radii.card,
+      paddingVertical: 12,
+      paddingLeft: 12,
+      paddingRight: 34,
+      minHeight: 64,
     },
     chipOn: {
       borderColor: theme.primary,
-      backgroundColor: theme.iconBgGreen + '30',
+      backgroundColor: theme.primaryLight,
     },
     chipEditing: {
       flexBasis: '100%',
       minWidth: '100%',
       borderColor: theme.primary,
-      backgroundColor: theme.surface,
+      backgroundColor: theme.white,
+      paddingRight: 12,
+    },
+    checkMark: {
+      position: 'absolute',
+      top: 10,
+      right: 10,
     },
     name: {
       fontSize: 14,
-      fontWeight: '700',
-      color: theme.text,
+      fontFamily: theme.fonts.uiSemibold,
+      color: theme.ink,
     },
     priceTouchable: {
       marginTop: 4,
@@ -190,26 +207,28 @@ function createStyles(theme: AppTheme) {
       justifyContent: 'center',
     },
     price: {
-      fontSize: 12,
-      // Informational price on an unselected chip: textSecondary for the
-      // 4.5:1 contrast floor (spec 09 section 1.5). priceOn/priceEdited
-      // override this when the chip is selected or edited.
-      color: theme.textSecondary,
+      fontSize: typeScale.caption,
+      fontFamily: theme.fonts.ui,
+      fontVariant: ['tabular-nums'],
+      // Informational price on an unselected chip: slate for the 4.5:1
+      // contrast floor (spec 09 section 1.5). priceOn/priceEdited override
+      // this when the chip is selected or edited.
+      color: theme.slate,
     },
     priceOn: {
-      color: theme.primary,
-      fontWeight: '700',
+      color: theme.primaryDark,
+      fontFamily: theme.fonts.uiSemibold,
     },
     priceEdited: {
       textDecorationLine: 'underline',
       textDecorationStyle: 'dotted',
-      color: theme.primary,
-      fontWeight: '700',
+      color: theme.primaryDark,
+      fontFamily: theme.fonts.uiSemibold,
     },
     customNameInput: {
       fontSize: 14,
-      fontWeight: '700',
-      color: theme.text,
+      fontFamily: theme.fonts.uiSemibold,
+      color: theme.ink,
       padding: 0,
     },
     editHead: {
@@ -219,22 +238,17 @@ function createStyles(theme: AppTheme) {
     },
     editHeadText: {
       fontSize: 13,
-      fontWeight: '700',
-      color: theme.text,
+      fontFamily: theme.fonts.uiSemibold,
+      color: theme.ink,
       flex: 1,
     },
     xButton: {
-      width: 24,
-      height: 24,
-      borderRadius: 12,
-      backgroundColor: theme.background,
+      width: 28,
+      height: 28,
+      borderRadius: radii.pill,
+      backgroundColor: theme.snow,
       alignItems: 'center',
       justifyContent: 'center',
-    },
-    xButtonText: {
-      fontSize: 12,
-      fontWeight: '700',
-      color: theme.textSecondary,
     },
     editRow: {
       flexDirection: 'row',
@@ -249,25 +263,27 @@ function createStyles(theme: AppTheme) {
       gap: 4,
       borderWidth: 1.5,
       borderColor: theme.primary,
-      borderRadius: 8,
+      borderRadius: radii.control,
       paddingHorizontal: 10,
       paddingVertical: 8,
       minHeight: 44,
     },
     editCurrency: {
       fontSize: 13,
-      color: theme.textSecondary,
+      fontFamily: theme.fonts.ui,
+      color: theme.slate,
     },
     editInput: {
       flex: 1,
       fontSize: 16,
-      fontWeight: '600',
-      color: theme.text,
+      fontFamily: theme.fonts.uiSemibold,
+      fontVariant: ['tabular-nums'],
+      color: theme.ink,
       padding: 0,
     },
     setButton: {
       backgroundColor: theme.primary,
-      borderRadius: 8,
+      borderRadius: radii.control,
       paddingHorizontal: 16,
       alignItems: 'center',
       justifyContent: 'center',
@@ -275,14 +291,15 @@ function createStyles(theme: AppTheme) {
     },
     setButtonText: {
       fontSize: 13,
-      fontWeight: '800',
+      fontFamily: theme.fonts.uiSemibold,
       color: theme.white,
     },
     editCaption: {
-      fontSize: 11,
-      // Informational reference caption: textSecondary for the 4.5:1
-      // contrast floor (spec 09 section 1.5).
-      color: theme.textSecondary,
+      fontSize: typeScale.eyebrow,
+      fontFamily: theme.fonts.ui,
+      // Informational reference caption: slate for the 4.5:1 contrast floor
+      // (spec 09 section 1.5).
+      color: theme.slate,
       marginTop: 6,
     },
   });

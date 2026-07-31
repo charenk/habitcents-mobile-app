@@ -31,7 +31,7 @@ export function DevSeedButton() {
   return (
     <View
       pointerEvents="box-none"
-      style={[styles.host, { bottom: Math.max(insets.bottom, 8) + 92 }]}
+      style={[styles.host, { top: insets.top + 180 }]}
     >
       <View style={styles.row}>
         <Pressable
@@ -56,8 +56,11 @@ export function DevSeedButton() {
 }
 
 const styles = StyleSheet.create({
-  host: { position: 'absolute', left: 12 },
-  row: { flexDirection: 'row', gap: 6, opacity: 0.85 },
+  // Pinned to the right edge below the header band: primary CTAs live along the
+  // bottom of most screens and titles along the top, so this is the one strip
+  // that stays clear on every screen.
+  host: { position: 'absolute', right: 8 },
+  row: { flexDirection: 'column', gap: 6, opacity: 0.75 },
   seed: {
     backgroundColor: '#1A1D23',
     borderRadius: 999,

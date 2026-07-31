@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Animated, AccessibilityInfo } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
-import type { AppTheme } from '@/constants/theme';
+import { typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import { keptHeroLabel } from '@/utils/a11y';
 
@@ -120,16 +120,18 @@ function createStyles(theme: AppTheme) {
       paddingVertical: 18,
     },
     label: {
-      fontSize: 12,
-      fontWeight: '700',
-      letterSpacing: 1.2,
+      fontSize: typeScale.eyebrow,
+      fontFamily: theme.fonts.uiSemibold,
+      letterSpacing: typeScale.eyebrowLetterSpacing,
       color: theme.textSecondary,
     },
+    // Kept is the hero currency number, so it carries the display serif
+    // (spec 01 section 2) with tabular figures.
     amount: {
-      fontSize: 42,
-      fontWeight: '800',
+      fontSize: typeScale.keptHero,
+      fontFamily: theme.fonts.display,
+      fontVariant: ['tabular-nums'],
       marginTop: 4,
-      letterSpacing: -1,
     },
     caption: {
       fontSize: 14,

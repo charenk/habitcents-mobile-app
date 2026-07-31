@@ -319,26 +319,40 @@ export const strings = {
     confirmDeleteAccessibilityLabel: 'Confirm delete expense',
     deleteAccessibilityLabel: 'Delete expense',
   },
-  // Onboarding (P2-1, docs/design-package-phase2/02-p2-1-onboarding-leak-audit.md).
-  // Two-door fork + Door 1 Leak Audit, the v1 ship gate. Sentence case, no em
-  // dashes; every amount below is a display example only, real amounts always
-  // render via useCurrency().format.
+  // Onboarding (P2-1, docs/design-package-phase2/02-p2-1-onboarding-leak-audit.md;
+  // welcome + intent picker rewritten by design/redesign-handoff/03-onboarding.md
+  // and 05-copy.md). Sentence case, no em dashes; every amount below is a
+  // display example only, real amounts always render via useCurrency().format.
   onboarding: {
-    // 3.1 Welcome
-    welcomeHeadline: (amount: string) => `Find the spending habit quietly costing you ${amount} a month`,
+    // 3.1 Welcome (redesign step 03, screen 1)
+    brandName: 'HabitCents',
+    welcomeHeadline: "Your money has a story. Let's read it.",
+    // The three value props, stated up front rather than teased.
+    valuePropLog: 'Log expenses in 10 seconds.',
+    valuePropSee: 'See where your money goes.',
+    valuePropBreak: 'Break the habit that costs you most.',
     welcomeSub: 'Everything stays on your phone. No bank login. No account.',
-    findMyLeak: 'Find my leak',
+    getStarted: 'Get started',
     howItWorks: 'How it works',
-    howItWorksSheet: "Log expenses in 10 seconds. We spot the habit that leaks the most. Every time you skip it, we count the money you kept.",
-    // 3.2 Two-door fork
-    forkTitle: 'How do you want to start?',
-    forkSub: 'Both stay on this device.',
-    doorFreshTag: 'About a minute',
-    doorFreshName: 'Start fresh',
-    doorFreshDescription: 'Tap through what you pay for. We estimate your leak from your answers.',
-    doorStatementsTag: '2 to 3 minutes',
-    doorStatementsName: 'Bring your statements',
-    doorStatementsDescription: 'Import a bank CSV. We scan it on your phone. Nothing uploads, ever.',
+    howItWorksRows: [
+      'Log expenses in 10 seconds.',
+      'We spot the habit that leaks the most.',
+      'Every time you skip it, we count the money you kept.',
+    ],
+    // 3.2 Intent picker (redesign step 03, screen 2; replaces the two-door fork)
+    intentTitle: 'What brings you here?',
+    intentSub: 'Pick one. You can do all three later.',
+    // Eyebrows are stored sentence case and rendered uppercase by the style, so
+    // screen readers announce them as sentences.
+    intentTrackEyebrow: '10 seconds to start',
+    intentTrackTitle: 'Just track my spending',
+    intentTrackDescription: 'Amount first, one tap per expense. Patterns show up on their own.',
+    intentScanEyebrow: '2 to 3 minutes',
+    intentScanTitle: 'See where it all goes',
+    intentScanDescription: 'Scan a bank statement on your phone. Nothing uploads, ever.',
+    intentBreakEyebrow: 'About a minute',
+    intentBreakTitle: 'Break an expensive habit',
+    intentBreakDescription: 'A 90-second audit finds the leak quietly costing you the most.',
     skipForNow: 'Skip for now',
     // 3.3 Step 1: auto-pilot charges
     step1Eyebrow: 'Step 1 of 2 · about 30 seconds',
@@ -384,6 +398,7 @@ export const strings = {
     // 3.6 Guided first log
     guidedLogHint: "One practice log and you're done. Try today's coffee. Amount first.",
     guidedLogLater: 'Later',
+    guidedLogToast: 'Logged. Nice, that took ten seconds.',
     // 3.7 Success
     leakMapReady: 'Your leak map is ready',
     biggestLeakCaption: (monthTotal: string) => `about ${monthTotal} a month · your biggest leak`,
@@ -404,13 +419,16 @@ export const strings = {
   leakScan: {
     reminderTimeLabel: 'Reminder time',
     // Intake
-    intakeTitle: 'Scan your statement',
+    intakeTitle: 'Scan your statement.',
     intakeSubtitle: 'CSV files only. Everything stays on this device.',
     chooseFiles: 'Choose CSV files',
     filesChosenCount: (n: number) => `${n} file${n === 1 ? '' : 's'} selected`,
     startScan: 'Start scan',
-    scanningTitle: 'Reading your file',
-    scanningSubtitle: 'This usually takes a few seconds.',
+    scanningTitle: 'Reading your files',
+    scanningSubtitle: 'On this device. Usually a few seconds.',
+    // Results (spec 03 path B, copy from 05-copy.md)
+    resultsTitle: 'Your statements, read.',
+    leaksRankedTitle: 'Your leaks, ranked',
     fileTooLarge: (name: string) => `${name} is larger than 10 MB and was skipped.`,
     tooManyFiles: 'Up to 5 files per scan; the rest were skipped.',
     // The two permitted questions (spec section 3, 4; visual spec section 11)

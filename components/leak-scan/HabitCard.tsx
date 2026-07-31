@@ -1,8 +1,10 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { EmojiTile, Icon } from '@/components/ui';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
-import type { AppTheme } from '@/constants/theme';
+import { categoryEmoji, categoryIdentityColor } from '@/constants/categoryEmoji';
+import { radii, typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import { TierBadge } from './TierBadge';
 import { habitCardLabel } from '@/utils/a11y';
@@ -83,13 +85,19 @@ export function HabitCard({
       ? `${candidate.topMerchants.join(', ')}.`
       : undefined;
 
+  const emoji = categoryEmoji(candidate.category);
+  const identityColor = categoryIdentityColor(candidate.category);
+
   if (candidate.governClass === 'fixed') {
     return (
       <View style={[styles.card, styles.tipCard]}>
         <View style={[styles.classPill, { backgroundColor: classBadge.bg }]}>
           <Text style={[styles.classPillText, { color: classBadge.ink }]}>{classBadge.label}</Text>
         </View>
-        <Text style={styles.title}>{candidate.merchantDisplay}</Text>
+        <View style={styles.titleRow}>
+          <EmojiTile emoji={emoji} size={40} color={identityColor} />
+          <Text style={[styles.title, styles.titleInRow]}>{candidate.merchantDisplay}</Text>
+        </View>
         <Text style={styles.tipText}>
           {strings.leakScan.fixedTipCard(tipMonth ?? month, format(tipAmountCents ?? monthTotalCents))}
         </Text>
@@ -118,12 +126,17 @@ export function HabitCard({
           accessibilityLabel="More options"
           hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
         >
-          <Text style={styles.menuDots}>⋯</Text>
+          <Icon name="Ellipsis" size={18} color={theme.slate} />
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.title}>{candidate.merchantDisplay}</Text>
-      <Text style={styles.statsRow}>{statsRow}</Text>
+      <View style={styles.titleRow}>
+        <EmojiTile emoji={emoji} size={40} color={identityColor} />
+        <View style={styles.titleColumn}>
+          <Text style={styles.title}>{candidate.merchantDisplay}</Text>
+          <Text style={styles.statsRow}>{statsRow}</Text>
+        </View>
+      </View>
       {description && <Text style={styles.description}>{description}</Text>}
 
       <View style={styles.footerRow}>
@@ -186,11 +199,11 @@ export function HabitCard({
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     card: {
-      backgroundColor: theme.surface,
-      borderWidth: 0.5,
-      borderColor: theme.border,
-      borderRadius: 14,
-      padding: 14,
+      backgroundColor: theme.white,
+      borderWidth: 1,
+      borderColor: theme.cloud,
+      borderRadius: radii.feature,
+      padding: 16,
       marginBottom: 10,
     },
     tipCard: {
@@ -209,20 +222,21 @@ function createStyles(theme: AppTheme) {
       gap: 8,
     },
     rank: {
-      fontSize: 13,
-      fontWeight: '800',
-      color: theme.textSecondary,
+      fontSize: typeScale.secondary,
+      fontFamily: theme.fonts.display,
+      fontVariant: ['tabular-nums'],
+      color: theme.slate,
     },
     classPill: {
       paddingHorizontal: 10,
       height: 22,
-      borderRadius: 999,
+      borderRadius: radii.pill,
       justifyContent: 'center',
       alignSelf: 'flex-start',
     },
     classPillText: {
-      fontSize: 11,
-      fontWeight: '700',
+      fontSize: typeScale.eyebrow,
+      fontFamily: theme.fonts.uiSemibold,
     },
     menuButton: {
       marginLeft: 'auto',
@@ -232,30 +246,42 @@ function createStyles(theme: AppTheme) {
       alignItems: 'center',
       justifyContent: 'center',
     },
-    menuDots: {
-      fontSize: 18,
-      color: theme.textSecondary,
+    titleRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      marginTop: 4,
+    },
+    titleColumn: {
+      flex: 1,
+    },
+    titleInRow: {
+      flex: 1,
     },
     title: {
       fontSize: 16,
-      fontWeight: '700',
-      color: theme.text,
+      fontFamily: theme.fonts.uiSemibold,
+      color: theme.ink,
     },
     statsRow: {
-      fontSize: 12,
-      color: theme.textSecondary,
-      marginTop: 4,
+      fontSize: typeScale.caption,
+      fontFamily: theme.fonts.ui,
+      fontVariant: ['tabular-nums'],
+      color: theme.slate,
+      marginTop: 2,
     },
     description: {
-      fontSize: 12.5,
-      color: theme.textSecondary,
-      marginTop: 8,
+      fontSize: typeScale.caption,
+      fontFamily: theme.fonts.ui,
+      color: theme.slate,
+      marginTop: 10,
       lineHeight: 18,
     },
     tipText: {
-      fontSize: 12.5,
-      color: theme.textSecondary,
-      marginTop: 6,
+      fontSize: typeScale.caption,
+      fontFamily: theme.fonts.ui,
+      color: theme.slate,
+      marginTop: 8,
       lineHeight: 18,
     },
     footerRow: {
@@ -265,58 +291,62 @@ function createStyles(theme: AppTheme) {
       marginTop: 12,
     },
     pacePill: {
-      backgroundColor: theme.tierLikelyBg,
+      backgroundColor: theme.amberBg,
       paddingHorizontal: 10,
       height: 22,
-      borderRadius: 999,
+      borderRadius: radii.pill,
       justifyContent: 'center',
     },
     pacePillText: {
-      fontSize: 11,
-      fontWeight: '700',
-      color: theme.tierLikelyInk,
+      fontSize: typeScale.eyebrow,
+      fontFamily: theme.fonts.uiSemibold,
+      fontVariant: ['tabular-nums'],
+      color: theme.amberInk,
     },
     trackButton: {
       backgroundColor: theme.primary,
-      paddingHorizontal: 14,
+      paddingHorizontal: 16,
       minHeight: 40,
-      borderRadius: 11,
+      borderRadius: radii.control,
       alignItems: 'center',
       justifyContent: 'center',
     },
     trackButtonText: {
-      fontSize: 13,
-      fontWeight: '700',
+      fontSize: typeScale.secondary,
+      fontFamily: theme.fonts.uiSemibold,
       color: theme.white,
     },
     monitorButton: {
-      backgroundColor: theme.surface,
+      backgroundColor: theme.white,
       borderWidth: 1,
-      borderColor: theme.border,
-      paddingHorizontal: 14,
+      borderColor: theme.cloud,
+      paddingHorizontal: 16,
       minHeight: 40,
-      borderRadius: 11,
+      borderRadius: radii.control,
       alignItems: 'center',
       justifyContent: 'center',
     },
     monitorButtonText: {
-      fontSize: 13,
-      fontWeight: '700',
-      color: theme.text,
+      fontSize: typeScale.secondary,
+      fontFamily: theme.fonts.uiSemibold,
+      color: theme.ink,
     },
     menuSheet: {
       marginTop: 10,
       borderTopWidth: 1,
-      borderTopColor: theme.border,
+      borderTopColor: theme.hairlineSubtle,
       paddingTop: 8,
       gap: 4,
     },
     menuItem: {
       paddingVertical: 8,
+      minHeight: 40,
+      justifyContent: 'center',
     },
     menuItemText: {
-      fontSize: 13,
-      color: theme.text,
+      fontSize: typeScale.secondary,
+      fontFamily: theme.fonts.ui,
+      color: theme.ink,
     },
   });
 }

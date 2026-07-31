@@ -1,14 +1,15 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Button } from '@/components/ui';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useOnboarding } from '@/contexts/OnboardingContext';
 import { ViceRow } from '@/components/onboarding/ViceRow';
 import { vicePresets, type FrequencyBand } from '@/constants/onboardingPresets';
 import { vicesWeeklyTotal } from '@/utils/leakAudit';
-import type { AppTheme } from '@/constants/theme';
+import { typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import { track } from '@/utils/analytics';
 import type { AuditViceSelection } from '@/types/onboarding';
@@ -105,12 +106,17 @@ export default function OnboardingAuditVicesScreen() {
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
         <Text style={styles.running}>{strings.onboarding.runningWeekly(format(weeklyTotal))}</Text>
-        <TouchableOpacity style={styles.primaryButton} onPress={handleSeeMyLeak} accessibilityRole="button">
-          <Text style={styles.primaryButtonText}>{strings.onboarding.seeMyLeak}</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={handleSkip} accessibilityRole="button" style={styles.plainButton}>
-          <Text style={styles.plainButtonText}>{strings.onboarding.skipThisStep}</Text>
-        </TouchableOpacity>
+        <Button
+          label={strings.onboarding.seeMyLeak}
+          onPress={handleSeeMyLeak}
+          style={styles.primaryButton}
+        />
+        <Button
+          label={strings.onboarding.skipThisStep}
+          onPress={handleSkip}
+          variant="tertiary"
+          style={styles.plainButton}
+        />
       </View>
     </View>
   );
@@ -128,63 +134,49 @@ function createStyles(theme: AppTheme) {
       paddingBottom: 24,
     },
     eyebrow: {
-      fontSize: 11,
-      fontWeight: '800',
-      letterSpacing: 1,
-      // Informational eyebrow label: textSecondary for the 4.5:1 contrast
-      // floor, not textTertiary (spec 09 section 1.5).
-      color: theme.textSecondary,
+      fontSize: typeScale.eyebrow,
+      fontFamily: theme.fonts.uiSemibold,
+      letterSpacing: typeScale.eyebrowLetterSpacing,
+      // Step eyebrows read in sage-dark (redesign spec 03 path C); sage-dark
+      // clears 4.5:1 on snow, so the contrast floor still holds.
+      color: theme.primaryDark,
       textTransform: 'uppercase',
-      marginBottom: 6,
+      marginBottom: 8,
     },
     title: {
-      fontSize: 22,
-      fontWeight: '800',
-      color: theme.text,
+      fontSize: 30,
+      fontFamily: theme.fonts.display,
+      color: theme.ink,
       marginBottom: 6,
-      letterSpacing: -0.3,
+      lineHeight: 34,
     },
     sub: {
       fontSize: 14,
-      color: theme.textSecondary,
+      fontFamily: theme.fonts.ui,
+      color: theme.slate,
       lineHeight: 20,
-      marginBottom: 16,
+      marginBottom: 18,
     },
     footer: {
       paddingHorizontal: 20,
-      paddingTop: 12,
+      paddingTop: 14,
       alignItems: 'center',
       backgroundColor: theme.background,
       borderTopWidth: 1,
-      borderTopColor: theme.border,
+      borderTopColor: theme.cloud,
     },
     running: {
-      fontSize: 13,
-      color: theme.textSecondary,
-      marginBottom: 10,
+      fontSize: 20,
+      fontFamily: theme.fonts.display,
+      fontVariant: ['tabular-nums'],
+      color: theme.ink,
+      marginBottom: 12,
     },
     primaryButton: {
-      minHeight: 48,
       width: '100%',
-      borderRadius: 14,
-      backgroundColor: theme.primary,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    primaryButtonText: {
-      fontSize: 16,
-      fontWeight: '700',
-      color: theme.white,
     },
     plainButton: {
-      marginTop: 10,
-      minHeight: 44,
-      justifyContent: 'center',
-    },
-    plainButtonText: {
-      fontSize: 14,
-      fontWeight: '600',
-      color: theme.textSecondary,
+      marginTop: 4,
     },
   });
 }

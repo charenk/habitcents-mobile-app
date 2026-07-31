@@ -3,20 +3,21 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
+  Pressable,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Icon, CATEGORY_ICON_MAP } from '@/components/ui/Icon';
+import { AmountDisplay, Button, EmojiTile, Icon, Keypad, useToast } from '@/components/ui';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useOnboarding } from '@/contexts/OnboardingContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
 import { useCategories } from '@/contexts/CategoriesContext';
-import { AmountInput } from '@/components/AmountInput';
-import type { AppTheme } from '@/constants/theme';
+import { categoryEmoji, categoryIdentityColor } from '@/constants/categoryEmoji';
+import { keypadValueToCents } from '@/utils/keypad';
+import { radii, typeScale, type AppTheme } from '@/constants/theme';
 import type { Category } from '@/types/category';
 import type { ExpenseCategory } from '@/types/expense';
 import { strings } from '@/constants/strings';
@@ -29,21 +30,27 @@ import { track } from '@/utils/analytics';
 const QUICK_CATEGORY_NAMES: ExpenseCategory[] = ['Food', 'Shopping', 'Entertainment', 'Transportation'];
 
 /**
- * Guided first log (spec 02 section 3.6). The real log form, not a
- * simulation: saving writes a real expense and fires first_log_saved.
- * Skippable via "Later"; the success screen still shows either way.
+ * Guided first log (spec 02 section 3.6, restyled per redesign spec 03 path A).
+ * The real log form, not a simulation: saving writes a real expense and fires
+ * first_log_saved. Skippable via "Later"; the success screen still shows either
+ * way. Amount entry is the shared amount-first pair (AmountDisplay + Keypad),
+ * so the number is serif and the keypad never summons the system keyboard.
  */
 export default function OnboardingGuidedLogScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
+  const toast = useToast();
   const { completeStep, skipStep } = useOnboarding();
   const { addExpense } = useExpenses();
   const { getVisibleCategories } = useCategories();
 
-  const [amount, setAmount] = useState(0);
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  // The keypad edits a decimal string; cents stay the derived value the save
+  // path has always used, so the write below is byte-for-byte the old one.
+  const [amountValue, setAmountValue] = useState('');
+  const amount = keypadValueToCents(amountValue);
+  const [pickedCategory, setPickedCategory] = useState<Category | null>(null);
 
   const quickCategories = useMemo(() => {
     const all = getVisibleCategories();
@@ -51,6 +58,11 @@ export default function OnboardingGuidedLogScreen() {
       (c): c is Category => !!c
     );
   }, [getVisibleCategories]);
+
+  // Food comes preselected (spec 03 path A) so the practice log really is one
+  // amount and one tap. Deriving it beats an effect: no first-render flash.
+  const selectedCategory = pickedCategory ?? quickCategories[0] ?? null;
+  const setSelectedCategory = setPickedCategory;
 
   const canSave = amount > 0 && !!selectedCategory;
 
@@ -68,6 +80,7 @@ export default function OnboardingGuidedLogScreen() {
     });
 
     track('first_log_saved', { guided: true });
+    toast.show(strings.onboarding.guidedLogToast);
     await completeStep('guided_log');
     router.push('/onboarding/success');
   };
@@ -82,61 +95,69 @@ export default function OnboardingGuidedLogScreen() {
       style={[styles.container, { paddingTop: insets.top }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <View style={styles.header}>
-        <Text style={styles.hint}>{strings.onboarding.guidedLogHint}</Text>
-      </View>
-
       <ScrollView
         style={styles.content}
         contentContainerStyle={styles.contentContainer}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.amountSection}>
-          <AmountInput value={amount} onChange={setAmount} autoFocus />
+        <View style={styles.coachBanner}>
+          <Icon name="Sprout" size={16} color={theme.primaryDark} style={styles.coachIcon} />
+          <Text style={styles.coachText}>{strings.onboarding.guidedLogHint}</Text>
         </View>
 
-        <View style={styles.categoryGrid}>
-          {quickCategories.map((cat) => (
-            <TouchableOpacity
-              key={cat.id}
-              style={[
-                styles.categoryChip,
-                selectedCategory?.id === cat.id && styles.categoryChipActive,
-                selectedCategory?.id === cat.id && { borderColor: cat.color },
-              ]}
-              onPress={() => setSelectedCategory(cat)}
-              accessibilityRole="button"
-              accessibilityState={{ selected: selectedCategory?.id === cat.id }}
-            >
-              <View style={[styles.categoryIcon, { backgroundColor: cat.color + '20' }]}>
-                <Icon name={CATEGORY_ICON_MAP[cat.icon]} size={24} color={cat.color} />
-              </View>
-              <Text
-                style={[
-                  styles.categoryText,
-                  selectedCategory?.id === cat.id && styles.categoryTextActive,
+        <View style={styles.amountSection}>
+          <AmountDisplay valueCents={amount} focused={amount > 0} size={52} zeroAsPlaceholder />
+        </View>
+
+        <View style={styles.categoryRow}>
+          {quickCategories.map((cat) => {
+            const selected = selectedCategory?.id === cat.id;
+            const identity = categoryIdentityColor(cat.name);
+            return (
+              <Pressable
+                key={cat.id}
+                style={({ pressed }) => [
+                  styles.categoryTile,
+                  selected ? { borderColor: identity, backgroundColor: theme.snow } : null,
+                  pressed && !selected ? styles.categoryTilePressed : null,
                 ]}
+                onPress={() => setSelectedCategory(cat)}
+                accessibilityRole="button"
+                accessibilityLabel={cat.name}
+                accessibilityState={{ selected }}
               >
-                {cat.name}
-              </Text>
-            </TouchableOpacity>
-          ))}
+                <EmojiTile emoji={categoryEmoji(cat.name)} size={44} color={identity} />
+                <Text
+                  style={[styles.categoryText, selected ? styles.categoryTextSelected : null]}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.8}
+                >
+                  {cat.name}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+
+        <View style={styles.keypadSection}>
+          <Keypad value={amountValue} onChange={setAmountValue} />
         </View>
       </ScrollView>
 
-      <View style={[styles.footer, { paddingBottom: insets.bottom + 24 }]}>
-        <TouchableOpacity
-          style={[styles.button, !canSave && styles.buttonDisabled]}
+      <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
+        <Button
+          label={strings.expenses.saveExpense}
           onPress={handleSave}
           disabled={!canSave}
-          accessibilityRole="button"
-        >
-          <Text style={styles.buttonText}>{strings.expenses.saveExpense}</Text>
-          <Icon name="Check" size={20} color={theme.white} />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={handleLater} accessibilityRole="button" style={styles.plainButton}>
-          <Text style={styles.plainButtonText}>{strings.onboarding.guidedLogLater}</Text>
-        </TouchableOpacity>
+          style={styles.primaryButton}
+        />
+        <Button
+          label={strings.onboarding.guidedLogLater}
+          onPress={handleLater}
+          variant="tertiary"
+          style={styles.laterButton}
+        />
       </View>
     </KeyboardAvoidingView>
   );
@@ -148,97 +169,81 @@ function createStyles(theme: AppTheme) {
       flex: 1,
       backgroundColor: theme.background,
     },
-    header: {
-      paddingHorizontal: 20,
-      paddingVertical: 16,
-    },
-    hint: {
-      fontSize: 14,
-      color: theme.textSecondary,
-      backgroundColor: theme.coachMomentBg,
-      borderRadius: 10,
-      padding: 12,
-    },
     content: {
       flex: 1,
     },
     contentContainer: {
-      paddingHorizontal: 24,
-      paddingTop: 8,
+      paddingHorizontal: 20,
+      paddingTop: 16,
+      paddingBottom: 24,
+    },
+    coachBanner: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: 10,
+      backgroundColor: theme.primaryLight,
+      borderRadius: radii.card,
+      paddingVertical: 12,
+      paddingHorizontal: 14,
+    },
+    coachIcon: {
+      marginTop: 2,
+    },
+    coachText: {
+      flex: 1,
+      fontSize: typeScale.body,
+      fontFamily: theme.fonts.ui,
+      color: theme.ink,
+      lineHeight: 21,
     },
     amountSection: {
-      alignItems: 'center',
-      marginBottom: 32,
+      marginTop: 28,
+      marginBottom: 24,
     },
-    categoryGrid: {
+    categoryRow: {
       flexDirection: 'row',
-      flexWrap: 'wrap',
-      gap: 12,
+      gap: 10,
     },
-    categoryChip: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: theme.surface,
-      paddingHorizontal: 16,
-      paddingVertical: 12,
-      borderRadius: 12,
-      borderWidth: 2,
-      borderColor: 'transparent',
-      minWidth: '45%',
+    categoryTile: {
       flex: 1,
-    },
-    categoryChipActive: {
-      backgroundColor: theme.background,
-    },
-    categoryIcon: {
-      width: 40,
-      height: 40,
-      borderRadius: 10,
       alignItems: 'center',
+      gap: 6,
+      paddingVertical: 12,
+      paddingHorizontal: 4,
+      borderRadius: radii.card,
+      borderWidth: 1.5,
+      borderColor: theme.cloud,
+      backgroundColor: theme.white,
+      minHeight: 92,
       justifyContent: 'center',
-      marginRight: 12,
+    },
+    categoryTilePressed: {
+      backgroundColor: theme.snow,
     },
     categoryText: {
-      fontSize: 15,
-      fontWeight: '500',
-      color: theme.text,
+      fontSize: typeScale.caption,
+      fontFamily: theme.fonts.uiMedium,
+      color: theme.slate,
+      textAlign: 'center',
     },
-    categoryTextActive: {
-      fontWeight: '600',
+    categoryTextSelected: {
+      fontFamily: theme.fonts.uiSemibold,
+      color: theme.ink,
+    },
+    keypadSection: {
+      marginTop: 24,
     },
     footer: {
-      paddingHorizontal: 24,
-      paddingTop: 16,
+      paddingHorizontal: 20,
+      paddingTop: 12,
       backgroundColor: theme.background,
-      alignItems: 'center',
     },
-    button: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: theme.primary,
-      paddingVertical: 18,
-      borderRadius: 16,
-      gap: 8,
+    primaryButton: {
       width: '100%',
     },
-    buttonDisabled: {
-      opacity: 0.5,
-    },
-    buttonText: {
-      fontSize: 18,
-      fontWeight: '700',
-      color: theme.white,
-    },
-    plainButton: {
-      marginTop: 10,
-      minHeight: 44,
-      justifyContent: 'center',
-    },
-    plainButtonText: {
-      fontSize: 14,
-      fontWeight: '600',
-      color: theme.textSecondary,
+    laterButton: {
+      marginTop: 6,
+      alignSelf: 'center',
     },
   });
 }
