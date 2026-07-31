@@ -23,6 +23,7 @@ export const strings = {
     today: 'Today.',
     money: 'Money.',
     insights: 'Insights.',
+    categories: 'Categories.',
   },
   expenses: {
     recent: 'Recent',
@@ -229,6 +230,12 @@ export const strings = {
       `Are you sure you want to delete "${name}"? Your existing expenses are kept; they'll just no longer show this category.`,
     thisMonthSuffix: (amount: string) => `${amount} this month`,
     addCategoryLabel: 'Add category',
+    // Redesign step 04: serif "Categories." title plus two eyebrow-labelled
+    // white cards. Eyebrows are stored sentence case and uppercased by the
+    // style so VoiceOver reads them as words, not letters.
+    eyebrowDefault: 'Default',
+    eyebrowCustom: 'Custom',
+    openCategoryLabel: (name: string) => `${name}, view details`,
   },
   categoryDetail: {
     notFound: 'Category not found',
@@ -533,5 +540,185 @@ export const strings = {
     startTrialCta: 'Start free trial',
     restoreCta: 'Restore purchases',
     closeLabel: 'Close',
+    // Redesign step 04 (spec 04 "Paywall"). The gradient hero eyebrow, and the
+    // descriptive dismiss that replaces a bare close. Never "No thanks".
+    heroEyebrow: 'Premium',
+    stayOnFreePlan: 'Stay on free plan',
+    planSelectedLabel: (name: string, price: string, selected: boolean) =>
+      `${name}, ${price}, ${selected ? 'selected' : 'not selected'}`,
+  },
+
+  // =====================================================================
+  // Redesign step 04 (design/redesign-handoff/04-screens.md + 05-copy.md).
+  // Sentence case; middots, never dashes. Eyebrow values are stored sentence
+  // case and uppercased by the style so screen readers announce words.
+  // Amounts are always passed in already formatted by useCurrency().format.
+  // =====================================================================
+
+  // Every mutating action fires exactly one toast (spec 01 section 5).
+  toasts: {
+    logged: 'Logged.',
+    saved: 'Saved.',
+    deleted: 'Deleted.',
+    undo: 'Undo',
+    restored: 'Restored.',
+    enterAmountFirst: 'Enter an amount first.',
+    addedToUpcoming: 'Added to upcoming.',
+    stoppedHistoryKept: 'Stopped. Your history is kept.',
+    trialStarted: 'Trial started. 14 days free.',
+    skipValueSaved: (skipValue: string) => `Saved. One skip keeps ${skipValue}.`,
+    keptBack: (amount: string) => `+${amount} kept back.`,
+    yesterdayCounted: (skipValue: string) => `Yesterday counted. +${skipValue} kept.`,
+    yesterdayNoted: 'Yesterday noted.',
+  },
+
+  // Today tab (spec 04 "Today").
+  today: {
+    settingsButtonLabel: 'Settings',
+    // Kept band. The eyebrow and caption already live in habitLogging
+    // (keptSoFar, keptCaption, keptZeroCaption); nothing is duplicated here.
+    // Check-in card
+    openHabitLabel: (name: string) => `${name}, view habit details`,
+    skipWithValue: (skipValue: string) => `Skipped it · keeps ${skipValue}`,
+    skipOneWithValue: (skipValue: string) => `I skipped one · keeps ${skipValue}`,
+    boughtIt: 'Bought it',
+    skippedIt: 'Skipped it',
+    keptAdded: (skipValue: string) => `+${skipValue} kept.`,
+    daysThisWeek: (n: number, m: number) => `That's ${n} of ${m} days this week.`,
+    slipLogged: 'Logged.',
+    slipKeptStays: (n: number, m: number) =>
+      `Still ${n} of ${m} days this week. Your kept stays yours.`,
+    weekSummarySkipped: (n: number, m: number) => `${n} of ${m} days`,
+    weekSummaryTail: (weekKept: string) => ` skipped this week · ${weekKept} kept`,
+    // Weekly-cadence habit (second habit shape, spec 04 "Today" 3.7)
+    weeklyPill: 'weekly',
+    weeklyNoCheckIn: 'No daily check-in. Tap whenever you skip an order.',
+    // Stopped habit
+    breakItAgain: 'Break it again',
+    // Quick log card
+    quickLogEyebrow: 'Quick log',
+    quickLogHint: 'amount first',
+    quickLogOpenLabel: 'Log an expense',
+    quickLogMoreLabel: 'More categories',
+    quickLogCategoryLabel: (name: string) => `Log a ${name} expense`,
+    // Logged today list
+    loggedTodayEyebrow: 'Logged today',
+    loggedTodayEmpty: 'Nothing logged today yet.',
+    editExpenseLabel: (title: string, amountLabel: string) => `Edit ${title}, ${amountLabel}`,
+  },
+
+  // Log and edit expense sheets (spec 04 "Log / Edit sheets").
+  expenseSheet: {
+    logEyebrow: 'Log expense',
+    editEyebrow: 'Edit expense',
+    categoryEyebrow: 'Category',
+    saveExpense: 'Save expense',
+    saveChanges: 'Save changes',
+    deleteExpense: 'Delete expense',
+    amountLabel: (formattedAmount: string) => `Amount, ${formattedAmount}`,
+    closeLabel: 'Close',
+  },
+
+  // Money tab (spec 04 "Money").
+  money: {
+    segmentSpent: 'Spent',
+    segmentUpcoming: 'Upcoming',
+    segmentLabel: 'Money view',
+    // Spent
+    spentGroupHeader: (dayLabel: string, total: string) => `${dayLabel} · ${total}`,
+    spentToday: 'Today',
+    spentYesterday: 'Yesterday',
+    spentEditHint: 'Tap a row to edit or delete it.',
+    spentEmptyTitle: 'Nothing logged yet',
+    spentEmptyBody: 'Log your first in about 10 seconds. Amount first, then tap a category.',
+    // Upcoming
+    upcomingWindowEyebrow: (days: number) => `Next ${days} days`,
+    upcomingScheduledCount: (n: number) => `${n} scheduled`,
+    upcomingAddAffordance: 'Add an upcoming expense',
+    upcomingListEyebrow: 'Scheduled',
+    upcomingEmptyBody: 'Mark an expense as repeating and its next date shows up here.',
+    multiPaymentPill: (count: number, monthLabel: string) => `${count} payments in ${monthLabel}`,
+  },
+
+  // Add-upcoming sheet (spec 04 "Add-upcoming sheet").
+  addUpcoming: {
+    title: 'Add upcoming.',
+    whatIsIt: 'What is it?',
+    namePlaceholder: 'Name it',
+    nameFieldLabel: 'Name',
+    nameRent: 'Rent',
+    nameInternet: 'Internet',
+    namePhone: 'Phone',
+    nameGym: 'Gym',
+    nameInsurance: 'Insurance',
+    nameUtilities: 'Utilities',
+    schedule: 'Schedule',
+    oneTime: 'One-time',
+    repeats: 'Repeats',
+    scheduleSegmentLabel: 'Schedule type',
+    // One-time
+    when: 'When?',
+    whenTomorrow: 'Tomorrow',
+    whenNextWeek: 'Next week',
+    whenInTwoWeeks: 'In two weeks',
+    whenNextMonth: 'Next month',
+    // Repeats
+    frequencyWeekly: 'Weekly',
+    frequencyBiweekly: 'Bi-weekly',
+    frequencyMonthly: 'Monthly',
+    frequencyCustom: 'Custom',
+    onWhichDay: 'On which day?',
+    starting: 'Starting',
+    startingThisWeek: 'This week',
+    startingNextWeek: 'Next week',
+    onThe: 'On the',
+    monthDayFirst: '1st',
+    monthDayFifteenth: '15th',
+    monthDayThirtieth: '30th',
+    monthDayLast: 'Last day',
+    everyNDaysLabel: 'Every N days',
+    everyNDaysValue: (n: number) => `Every ${n} days`,
+    everyNDaysDecrease: 'Fewer days',
+    everyNDaysIncrease: 'More days',
+    save: 'Add to upcoming',
+  },
+
+  // Insights tab (spec 04 "Insights").
+  insights: {
+    leaksTitle: 'Your leaks',
+    leakSummary: (monthTotal: string, buys: number) =>
+      `${monthTotal} a month · ${buys} buy${buys === 1 ? '' : 's'}`,
+    leakActionBreak: 'Break it',
+    leakActionBreaking: 'Breaking',
+    leakActionWatch: 'Watch',
+    leaksEmptyTitle: 'No leaks found yet',
+    leaksEmptyBody:
+      'Keep logging expenses. Around 4 logs at the same place is enough to spot a pattern.',
+    whereItWentTitle: 'Where it went',
+    whereItWentRange: (days: number) => `Last ${days} days`,
+    whereItWentEmpty: 'No spending in this range yet.',
+    paceTitle: (monthLabel: string) => `${monthLabel} pace`,
+    paceProjectedCaption: (daysLeft: number) =>
+      `projected · ${daysLeft} day${daysLeft === 1 ? '' : 's'} left`,
+    paceSpentUnder: (spent: string, difference: string, monthLabel: string) =>
+      `${spent} spent · ${difference} under ${monthLabel}`,
+    paceSpentOver: (spent: string, difference: string, monthLabel: string) =>
+      `${spent} spent · ${difference} over ${monthLabel}`,
+    paceSpentOnly: (spent: string) => `${spent} spent`,
+    pacePlaceholder: 'One full month of data unlocks your pace.',
+  },
+
+  // Habit detail redesign (spec 04 "Habit detail"). The arc, chapter and
+  // identity copy already live in habitLogging; only the new lines are here.
+  habitDetailV2: {
+    backLabel: 'Back',
+    subtitle: (merchant: string, timesPerMonth: number) =>
+      `${merchant}, about ${timesPerMonth} times a month.`,
+    subtitleNoMerchant: (timesPerMonth: number) => `About ${timesPerMonth} times a month.`,
+    arcPill: (total: number, chapter: string) => `${total} of 66 · ${chapter}`,
+    skipValueSheetTitle: 'One skip keeps',
+    skipValueSave: 'Save',
+    stopConfirmCta: 'Stop breaking it',
+    stopConfirmKeepGoing: 'Keep going',
   },
 } as const;

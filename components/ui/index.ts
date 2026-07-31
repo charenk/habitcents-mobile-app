@@ -10,3 +10,7 @@ export { Keypad } from './Keypad';
 export { Button } from './Button';
 export { Sheet } from './Sheet';
 export { ToastProvider, useToast } from './Toast';
+export { SegmentedControl } from './SegmentedControl';
+export type { SegmentedControlProps } from './SegmentedControl';
+export { Chip } from './Chip';
+export type { ChipProps } from './Chip';

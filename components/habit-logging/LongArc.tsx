@@ -1,14 +1,42 @@
-import React, { useMemo } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+/**
+ * The long arc card (design/redesign-handoff/04-screens.md, "Habit detail
+ * (R9)"; product rules in docs/design-package-phase2/01-habit-logging-spec.md
+ * section 4.6).
+ *
+ * Reads top to bottom as one sentence: how far along, who that makes you, and
+ * the promise that a slip never takes it back. The lavender segmented track
+ * replaces the old progress ring, because the four chapters are the thing the
+ * user is moving through, and a ring cannot show where one chapter ends and the
+ * next begins.
+ *
+ * Two invariants, both load-bearing:
+ * 1. The track is driven by `arcProgress(displayTotal)` and can only ever grow.
+ *    `displayTotal` is already max(totalSkips, highestMilestoneReached), and the
+ *    animation additionally refuses any target below the highest value it has
+ *    shown, so a same-day correction can never animate the arc backward.
+ * 2. The chapter name is supplied by the caller from `displayChapter(...)` for
+ *    the same reason: the chapter never falls.
+ *
+ * Segment widths are the chapter ranges themselves (10 / 20 / 20 / 16 skips of
+ * the 66), so the track is a true scale rather than four equal boxes.
+ */
+import React, { useEffect, useMemo, useRef } from 'react';
+import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { arcProgress, identityLineForTotal } from '@/utils/habitLogging';
+import { arcLabel } from '@/utils/a11y';
+import { motion, radii, typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
 import type { ChapterName } from '@/types/habit';
 import { strings } from '@/constants/strings';
+import { useReducedMotion } from '@/utils/motion';
+
+const ARC_TOTAL = 66;
 
 // Section 4.6 names only Deciding / Rhythm / Cruising / Rewired as the four
 // track segments (Rewiring is the identity-line/chapter-label stage between
-// Cruising and Rewired, not its own segment on the track).
+// Cruising and Rewired, not its own segment on the track). The lo/hi pairs are
+// both the fill math and the 10 / 20 / 20 / 16 segment weights.
 const CHAPTERS: { name: ChapterName; lo: number; hi: number; label: string }[] = [
   { name: 'Deciding', lo: 0, hi: 10, label: strings.habitLogging.chapterDeciding },
   { name: 'Rhythm', lo: 10, hi: 30, label: strings.habitLogging.chapterRhythm },
@@ -17,256 +45,162 @@ const CHAPTERS: { name: ChapterName; lo: number; hi: number; label: string }[] =
 ];
 
 type LongArcProps = {
-  /** Display total: max(live totalSkips, highestMilestoneReached) so the arc never falls (spec §4.6, §9). */
+  /** Display total: max(live totalSkips, highestMilestoneReached) so the arc never falls (spec 4.6, 9). */
   displayTotal: number;
+  /** Chapter to name in the pill, from displayChapter(...) so it never moves backward. */
+  chapter: ChapterName;
 };
 
-/**
- * The long arc identity card on the habit detail screen (spec 01 §4.6).
- * Replaces the old longest-streak stat and milestone marker row entirely.
- */
-export function LongArc({ displayTotal }: LongArcProps) {
+export function LongArc({ displayTotal, chapter }: LongArcProps) {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
-  const progress = arcProgress(displayTotal);
+  const reduceMotion = useReducedMotion();
+
+  const target = arcProgress(displayTotal);
+  const progress = useRef(new Animated.Value(target)).current;
+  // Highest fraction ever shown. The arc grows toward a new high and ignores
+  // anything lower, so it never animates downward.
+  const highWater = useRef(target);
+
+  useEffect(() => {
+    if (target <= highWater.current) return;
+    highWater.current = target;
+    if (reduceMotion) {
+      progress.setValue(target);
+      return;
+    }
+    Animated.timing(progress, {
+      toValue: target,
+      duration: motion.screen,
+      easing: Easing.bezier(...motion.easing),
+      // Width cannot run on the native driver. This node uses this one driver
+      // only; never mix drivers on it (release-build crash class).
+      useNativeDriver: false,
+    }).start();
+  }, [target, reduceMotion, progress]);
 
   return (
     <View style={styles.card}>
-      <Text style={styles.title}>{strings.habitLogging.longArcTitle}</Text>
-      <View style={styles.topRow}>
-        <View
-          accessible
-          accessibilityLabel={`${displayTotal} of 66 skips`}
-          style={styles.ringOuter}
-        >
-          <ProgressRing progress={progress} color={theme.primary} trackColor={theme.border} />
-          <View style={styles.ringInner}>
-            <Text style={styles.ringNumber}>{strings.habitLogging.arcOf66(displayTotal)}</Text>
-            <Text style={styles.ringLabel}>{strings.habitLogging.arcOf66Label}</Text>
-          </View>
-        </View>
-        <View style={styles.textCol}>
-          <Text style={styles.identityLine}>{identityLineForTotal(displayTotal)}</Text>
-          <Text style={styles.supportLine}>{strings.habitLogging.arcSupportLine(displayTotal)}</Text>
+      <View style={styles.headerRow}>
+        <Text style={styles.title}>{strings.habitLogging.longArcTitle}</Text>
+        <View style={styles.pill} accessible accessibilityLabel={arcLabel(displayTotal, chapter)}>
+          <Text style={styles.pillText}>{strings.habitDetailV2.arcPill(displayTotal, chapter)}</Text>
         </View>
       </View>
 
+      <Text style={styles.identityLine}>{identityLineForTotal(displayTotal)}</Text>
+      <Text style={styles.supportLine}>{strings.habitLogging.arcSupportLine(displayTotal)}</Text>
+
       <View style={styles.trackRow}>
-        {CHAPTERS.map((c) => {
-          const fill =
-            displayTotal >= c.hi ? 1 : displayTotal <= c.lo ? 0 : (displayTotal - c.lo) / (c.hi - c.lo);
-          return (
-            <View key={c.name} style={styles.trackSegment}>
-              <View style={[styles.trackFill, { width: `${fill * 100}%` }]} />
-            </View>
-          );
-        })}
+        {CHAPTERS.map((c) => (
+          <View key={c.name} style={[styles.trackSegment, { flex: c.hi - c.lo }]}>
+            <Animated.View
+              style={[
+                styles.trackFill,
+                {
+                  width: progress.interpolate({
+                    inputRange: [c.lo / ARC_TOTAL, c.hi / ARC_TOTAL],
+                    outputRange: ['0%', '100%'],
+                    extrapolate: 'clamp',
+                  }),
+                },
+              ]}
+            />
+          </View>
+        ))}
       </View>
       <View style={styles.labelsRow}>
         {CHAPTERS.map((c) => (
-          <Text key={c.name} style={styles.trackLabel}>{c.label}</Text>
+          <Text
+            key={c.name}
+            style={[styles.trackLabel, { flex: c.hi - c.lo }, c.name === chapter && styles.trackLabelActive]}
+          >
+            {c.label}
+          </Text>
         ))}
       </View>
     </View>
   );
 }
 
-const RING_SIZE = 84;
-const RING_INNER = 64;
-
-/**
- * A conic-style progress ring built from the standard two-half-disc pie
- * technique (no SVG dependency). Each half of the ring is a STATIC half-disc
- * clip window (fixed, does not rotate) containing a ROTATING half-disc fill
- * pivoting at the ring's own center via `transformOrigin` (RN 0.74+; this
- * project is on 0.81). Two same-radius, same-center half-discs offset by
- * angle theta overlap in an area that is exactly linear in theta (a circular
- * sector), which is what makes the fill fraction track `progress` linearly:
- * rotating the fill from 0deg to 180deg sweeps its overlap with the static
- * clip from fully covered down to fully clear.
- *
- * Right half fills first as progress goes 0 -> 0.5 (12 o'clock to 6 o'clock,
- * clockwise through 3 o'clock). Left half then fills as progress goes
- * 0.5 -> 1 (6 o'clock back to 12 o'clock, clockwise through 9 o'clock),
- * completing the ring. `progress` is 0-1.
- */
-function ProgressRing({ progress, color, trackColor }: { progress: number; color: string; trackColor: string }) {
-  const clamped = Math.max(0, Math.min(1, progress));
-  const angle = clamped * 360;
-  // Fill rotates AWAY from full coverage as theta goes 0 -> 180 (per the
-  // overlap formula, overlap fraction = (180 - theta) / 180). To grow the
-  // visible fill as progress increases, rotate by (180 - progressAngle) so
-  // theta shrinks from 180 (no overlap) to 0 (full overlap) as progress rises.
-  const rightFillRotation = 180 - Math.min(angle, 180);
-  const leftFillRotation = 180 - Math.max(0, Math.min(angle, 360) - 180);
-
-  return (
-    <View style={[ringStyles.base, { backgroundColor: trackColor }]}>
-      <View style={ringStyles.clipRight}>
-        <View
-          style={[
-            ringStyles.fillRight,
-            { backgroundColor: color, transform: [{ rotate: `${rightFillRotation}deg` }] },
-          ]}
-        />
-      </View>
-      <View style={ringStyles.clipLeft}>
-        <View
-          style={[
-            ringStyles.fillLeft,
-            { backgroundColor: color, transform: [{ rotate: `${leftFillRotation}deg` }] },
-          ]}
-        />
-      </View>
-    </View>
-  );
-}
-
-const ringStyles = StyleSheet.create({
-  base: {
-    position: 'absolute',
-    width: RING_SIZE,
-    height: RING_SIZE,
-    borderRadius: RING_SIZE / 2,
-  },
-  // Static clip windows: fixed half-discs, never rotate. Each is shaped to
-  // the ring's curvature via matching border-radius on the outer corners, so
-  // overflow:hidden clips to a true half-disc, not just a rectangle.
-  clipRight: {
-    position: 'absolute',
-    width: RING_SIZE / 2,
-    height: RING_SIZE,
-    left: RING_SIZE / 2,
-    top: 0,
-    borderTopRightRadius: RING_SIZE / 2,
-    borderBottomRightRadius: RING_SIZE / 2,
-    overflow: 'hidden',
-  },
-  clipLeft: {
-    position: 'absolute',
-    width: RING_SIZE / 2,
-    height: RING_SIZE,
-    left: 0,
-    top: 0,
-    borderTopLeftRadius: RING_SIZE / 2,
-    borderBottomLeftRadius: RING_SIZE / 2,
-    overflow: 'hidden',
-  },
-  // Rotating fills: full-size half-discs, oversized on the outer edge so the
-  // clip window (not the fill's own shape) is always the limiting boundary.
-  // Pivot is the clip window's inner edge (the ring's true center) via
-  // transformOrigin, matching the overlap-area derivation above.
-  fillRight: {
-    position: 'absolute',
-    width: RING_SIZE / 2,
-    height: RING_SIZE,
-    left: 0,
-    top: 0,
-    borderTopRightRadius: RING_SIZE / 2,
-    borderBottomRightRadius: RING_SIZE / 2,
-    transformOrigin: 'left center',
-  },
-  fillLeft: {
-    position: 'absolute',
-    width: RING_SIZE / 2,
-    height: RING_SIZE,
-    left: 0,
-    top: 0,
-    borderTopLeftRadius: RING_SIZE / 2,
-    borderBottomLeftRadius: RING_SIZE / 2,
-    transformOrigin: 'right center',
-  },
-});
-
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     card: {
-      backgroundColor: theme.surface,
-      borderRadius: 16,
-      padding: 16,
+      backgroundColor: theme.white,
+      borderRadius: radii.feature,
       borderWidth: 1,
-      borderColor: theme.border,
+      borderColor: theme.cloud,
+      padding: 18,
     },
-    title: {
-      fontSize: 15,
-      fontWeight: '600',
-      color: theme.text,
-      marginBottom: 12,
-    },
-    topRow: {
+    headerRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 14,
+      justifyContent: 'space-between',
+      gap: 10,
+      marginBottom: 12,
     },
-    ringOuter: {
-      width: RING_SIZE,
-      height: RING_SIZE,
-      borderRadius: RING_SIZE / 2,
-      backgroundColor: theme.border,
-      alignItems: 'center',
-      justifyContent: 'center',
-      overflow: 'hidden',
+    title: {
+      fontFamily: theme.fonts.uiSemibold,
+      fontSize: 15,
+      color: theme.ink,
     },
-    ringInner: {
-      width: RING_INNER,
-      height: RING_INNER,
-      borderRadius: RING_INNER / 2,
-      backgroundColor: theme.surface,
-      alignItems: 'center',
-      justifyContent: 'center',
+    pill: {
+      backgroundColor: theme.coachMomentMilestoneBg,
+      borderRadius: radii.pill,
+      paddingHorizontal: 10,
+      paddingVertical: 4,
     },
-    ringNumber: {
-      fontSize: 18,
-      fontWeight: '700',
-      color: theme.text,
-    },
-    ringLabel: {
-      fontSize: 9,
-      fontWeight: '700',
-      color: theme.textSecondary,
-      letterSpacing: 0.5,
-    },
-    textCol: {
-      flex: 1,
+    // Ink on the lavender tint, not lavender on lavender: the prototype's
+    // lavender-on-14%-lavender pill text is 2.9:1, below AA for this size.
+    pillText: {
+      fontFamily: theme.fonts.uiSemibold,
+      fontSize: 11.5,
+      color: theme.ink,
+      fontVariant: ['tabular-nums'],
     },
     identityLine: {
-      fontSize: 14,
-      fontWeight: '600',
-      color: theme.text,
-      lineHeight: 20,
+      fontFamily: theme.fonts.displayItalic,
+      fontSize: 20,
+      lineHeight: 26,
+      color: theme.ink,
     },
     supportLine: {
-      fontSize: 12,
-      color: theme.textSecondary,
-      marginTop: 3,
-      lineHeight: 17,
+      fontFamily: theme.fonts.ui,
+      fontSize: typeScale.caption,
+      lineHeight: 18,
+      color: theme.mist,
+      marginTop: 6,
+      fontVariant: ['tabular-nums'],
     },
     trackRow: {
       flexDirection: 'row',
       gap: 5,
-      marginTop: 14,
+      marginTop: 18,
     },
     trackSegment: {
-      flex: 1,
-      height: 5,
+      height: 6,
       borderRadius: 3,
-      backgroundColor: theme.border,
+      backgroundColor: theme.cloud,
       overflow: 'hidden',
     },
     trackFill: {
       height: '100%',
-      backgroundColor: theme.primary,
+      backgroundColor: theme.lavender,
       borderRadius: 3,
     },
     labelsRow: {
       flexDirection: 'row',
-      justifyContent: 'space-between',
-      marginTop: 5,
+      gap: 5,
+      marginTop: 7,
     },
     trackLabel: {
+      fontFamily: theme.fonts.ui,
       fontSize: 10.5,
-      fontWeight: '600',
-      color: theme.textSecondary,
+      color: theme.mist,
+    },
+    trackLabelActive: {
+      fontFamily: theme.fonts.uiSemibold,
+      color: theme.slate,
     },
   });
 }

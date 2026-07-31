@@ -1,17 +1,17 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import Reanimated, { useSharedValue, useAnimatedStyle, withSequence, withTiming, runOnUI } from 'react-native-reanimated';
 import { Icon } from '@/components/ui/Icon';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { weekStrip, weekStats, type WeekDayCell } from '@/utils/habitLogging';
-import { useReducedMotion } from '@/utils/motion';
-import type { AppTheme } from '@/constants/theme';
+import { typeScale, type AppTheme } from '@/constants/theme';
 import type { HabitLogEntry } from '@/types/habit';
 import { strings } from '@/constants/strings';
 
 const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 const DAY_NAMES_FULL = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+const DOT_SIZE = 26;
 
 type WeekStripProps = {
   dayLogs: HabitLogEntry[];
@@ -30,71 +30,13 @@ function stateLabel(cell: WeekDayCell): string {
 }
 
 /**
- * One week-strip dot. Owns the skip motion "week-dot pop" (Direction C, spec
- * 05): the instant a cell's state becomes 'skipped' (a fresh skip, not just a
- * re-render), the dot pops in with an overshoot scale. Reduced motion renders
- * the final state directly with no animation.
- */
-function WeekDot({
-  cell,
-  label,
-  styles,
-  theme,
-}: {
-  cell: WeekDayCell;
-  label: string;
-  styles: ReturnType<typeof createStyles>;
-  theme: AppTheme;
-}) {
-  const reduceMotion = useReducedMotion();
-  const prevStateRef = useRef(cell.state);
-  const scale = useSharedValue(1);
-  const animatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
-
-  useEffect(() => {
-    const justSkipped = prevStateRef.current !== 'skipped' && cell.state === 'skipped';
-    prevStateRef.current = cell.state;
-    if (!justSkipped || reduceMotion) return;
-    // Create the pop animation on the UI thread. Assigning a withSequence
-    // animation object to a shared value from the JS thread serializes it
-    // across the bridge, which segfaults on the New Architecture (Hermes) in
-    // worklets 0.5.1; a runOnUI worklet keeps it on the UI runtime.
-    runOnUI(() => {
-      'worklet';
-      scale.value = 0.4;
-      scale.value = withSequence(
-        withTiming(1.18, { duration: 200 }),
-        withTiming(1, { duration: 120 })
-      );
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cell.state, reduceMotion]);
-
-  return (
-    <Reanimated.View style={!reduceMotion && animatedStyle}>
-      <View
-        accessible
-        accessibilityLabel={label}
-        style={[
-          styles.dot,
-          cell.state === 'skipped' && styles.dotSkipped,
-          cell.state === 'slipped' && styles.dotSlipped,
-          cell.state === 'no-log' && cell.isToday && !cell.isFuture && !cell.isOutOfRange && styles.dotToday,
-          cell.state === 'no-log' && (!cell.isToday || cell.isFuture || cell.isOutOfRange) && styles.dotNoLog,
-        ]}
-      >
-        {cell.state === 'skipped' && (
-          <Icon name="Check" size={13} color={theme.white} />
-        )}
-      </View>
-    </Reanimated.View>
-  );
-}
-
-/**
  * The 7-dot Mon-Sun week strip on the daily-cadence check-in card
- * (spec 01 §4.2, §2). Same component renders identically on the Habits tab
- * and the habit detail screen (principle 6).
+ * (design/redesign-handoff/04-screens.md, "Today" 3). Same component renders
+ * identically on Today and the habit detail screen (principle 6).
+ *
+ * Four dot states, and none of them is red: a skip is sage with a white check,
+ * a slip is a flat cloud fill, today-unanswered is a sage ring, and anything
+ * not yet reachable is a cloud ring. Every number comes from weekStats.
  */
 export function WeekStrip({ dayLogs, trackingStart, skipValue, today = new Date() }: WeekStripProps) {
   const theme = useTheme();
@@ -110,24 +52,37 @@ export function WeekStrip({ dayLogs, trackingStart, skipValue, today = new Date(
   return (
     <View style={styles.container}>
       <View style={styles.row}>
-        {cells.map((cell, i) => (
-          <View key={i} style={styles.dayColumn}>
-            <WeekDot
-              cell={cell}
-              label={`${DAY_NAMES_FULL[i]}, ${stateLabel(cell)}`}
-              styles={styles}
-              theme={theme}
-            />
-            <Text style={styles.dayLabel}>{DAY_LABELS[i]}</Text>
-          </View>
-        ))}
+        {cells.map((cell, i) => {
+          const unanswered = cell.state === 'no-log';
+          const isTodayOpen = unanswered && cell.isToday && !cell.isFuture && !cell.isOutOfRange;
+          return (
+            <View key={i} style={styles.dayColumn}>
+              <View
+                accessible
+                accessibilityLabel={`${DAY_NAMES_FULL[i]}, ${stateLabel(cell)}`}
+                style={[
+                  styles.dot,
+                  cell.state === 'skipped' && styles.dotSkipped,
+                  cell.state === 'slipped' && styles.dotSlipped,
+                  isTodayOpen && styles.dotToday,
+                  unanswered && !isTodayOpen && styles.dotOpen,
+                ]}
+              >
+                {cell.state === 'skipped' && <Icon name="Check" size={14} color={theme.white} />}
+              </View>
+              <Text style={styles.dayLabel}>{DAY_LABELS[i]}</Text>
+            </View>
+          );
+        })}
       </View>
       {stats.answered > 0 && (
         <Text style={styles.summary}>
           <Text style={styles.summaryBold}>
-            {strings.habitLogging.weekSummaryBold(stats.skips, stats.answered)}
+            {strings.today.weekSummarySkipped(stats.skips, stats.answered)}
           </Text>
-          {strings.habitLogging.weekSummarySuffix(stats.weekKept > 0 ? format(stats.weekKept) : null)}
+          {stats.weekKept > 0
+            ? strings.today.weekSummaryTail(format(stats.weekKept))
+            : strings.habitLogging.weekSummarySuffix(null)}
         </Text>
       )}
     </View>
@@ -137,7 +92,7 @@ export function WeekStrip({ dayLogs, trackingStart, skipValue, today = new Date(
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     container: {
-      marginTop: 10,
+      marginTop: 14,
     },
     row: {
       flexDirection: 'row',
@@ -145,43 +100,46 @@ function createStyles(theme: AppTheme) {
     },
     dayColumn: {
       alignItems: 'center',
-      gap: 3,
+      gap: 5,
     },
     dot: {
-      width: 24,
-      height: 24,
-      borderRadius: 12,
+      width: DOT_SIZE,
+      height: DOT_SIZE,
+      borderRadius: DOT_SIZE / 2,
+      backgroundColor: theme.white,
       alignItems: 'center',
       justifyContent: 'center',
     },
     dotSkipped: {
       backgroundColor: theme.primary,
     },
+    // A slip is neutral: a flat cloud fill, never red, and it never subtracts.
     dotSlipped: {
-      backgroundColor: theme.slipWeekFill,
+      backgroundColor: theme.cloud,
     },
     dotToday: {
       borderWidth: 1.5,
       borderColor: theme.primary,
     },
-    dotNoLog: {
+    dotOpen: {
       borderWidth: 1.5,
-      borderColor: theme.border,
-      borderStyle: 'dashed',
+      borderColor: theme.cloud,
     },
     dayLabel: {
       fontSize: 9,
-      fontWeight: '700',
-      color: theme.textSecondary,
+      fontFamily: theme.fonts.uiBold,
+      color: theme.mist,
     },
     summary: {
-      fontSize: 12,
-      color: theme.textSecondary,
-      marginTop: 8,
+      fontSize: typeScale.caption,
+      fontFamily: theme.fonts.ui,
+      color: theme.slate,
+      marginTop: 10,
+      fontVariant: ['tabular-nums'],
     },
     summaryBold: {
-      fontWeight: '700',
-      color: theme.text,
+      fontFamily: theme.fonts.uiSemibold,
+      color: theme.ink,
     },
   });
 }

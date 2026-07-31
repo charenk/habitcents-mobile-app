@@ -1,114 +1,127 @@
-import React, { useMemo, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+/**
+ * Insights (redesign step 04, spec 04 "Insights").
+ *
+ * Three stacked cards under a serif title: your leaks, where it went, and this
+ * month's pace. The configurable widget dashboard is gone; the data still comes
+ * from ReportsContext so the category and projection math has exactly one
+ * implementation.
+ */
+import React, { useCallback, useMemo, useState } from 'react';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useReports } from '@/contexts/ReportsContext';
-import { hasFullMonthOfData } from '@/utils/recurring';
 import { useExpenses } from '@/contexts/ExpensesContext';
 import { useCategories } from '@/contexts/CategoriesContext';
 import { useHabits } from '@/contexts/HabitsContext';
-import {
-  WidgetCard,
-  SpendingByCategoryContent,
-  SpendingOverTimeContent,
-  HabitStreaksContent,
-  ProjectionContent,
-} from '@/components/WidgetCard';
+import { LeaksCard, type LeakRowData } from '@/components/insights/LeaksCard';
+import { WhereItWentCard } from '@/components/insights/WhereItWentCard';
+import { PaceCard, type PaceComparison } from '@/components/insights/PaceCard';
+import { PickOneSheet } from '@/components/habit-logging/PickOneSheet';
+import { categoryEmoji, categoryIdentityColor } from '@/constants/categoryEmoji';
+import { hasFullMonthOfData } from '@/utils/recurring';
+import { isHabitLimitReached } from '@/utils/habitLogging';
+import { getEntitlement } from '@/utils/purchases';
+import { formatDate } from '@/utils/dates';
 import { typeScale, type AppTheme } from '@/constants/theme';
-import type { TimeRange } from '@/types/report';
+import type { DetectedHabit } from '@/types/habit';
 import { strings } from '@/constants/strings';
+
+/**
+ * The "where it went" window. 'week' is the only TimeRange whose day count is
+ * exact (getDateRangeForTimeRange steps back 7 days), so the range label can
+ * name the window honestly.
+ */
+const WHERE_IT_WENT_DAYS = 7;
 
 export default function InsightsScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
-  const {
-    config,
-    isLoading,
-    updateWidgetTimeRange,
-    calculateSpendingByCategory,
-    calculateSpendingOverTime,
-    calculateMonthlyProjection,
-  } = useReports();
-
+  const { isLoading, calculateSpendingByCategory, calculateMonthlyProjection } = useReports();
   const { expenses } = useExpenses();
   const { categories } = useCategories();
-  const { getActiveHabits, getGoalByHabitId } = useHabits();
-
-  const sortedWidgets = useMemo(() => {
-    return [...config.widgets].sort((a, b) => a.order - b.order);
-  }, [config.widgets]);
-
-  const handleTimeRangeChange = useCallback(async (widgetId: string, timeRange: TimeRange) => {
-    await updateWidgetTimeRange(widgetId, timeRange);
-  }, [updateWidgetTimeRange]);
-
-  const renderWidgetContent = useCallback((widget: typeof sortedWidgets[0]) => {
-    switch (widget.type) {
-      case 'spending_by_category': {
-        const data = calculateSpendingByCategory(expenses, categories, widget.timeRange);
-        const total = data.reduce((sum, d) => sum + d.amount, 0);
-        return <SpendingByCategoryContent data={data} total={total} />;
-      }
-
-      case 'spending_over_time': {
-        const data = calculateSpendingOverTime(expenses, widget.timeRange);
-        return (
-          <SpendingOverTimeContent
-            data={data.map(d => ({ label: d.label, amount: d.amount }))}
-          />
-        );
-      }
-
-      case 'habit_streaks': {
-        const activeHabits = getActiveHabits();
-        const data = activeHabits.map(habit => {
-          const goal = getGoalByHabitId(habit.id);
-          return {
-            habitName: habit.name,
-            totalSkips: goal?.totalSkips || 0,
-          };
-        });
-        return <HabitStreaksContent data={data} />;
-      }
-
-      case 'monthly_projection': {
-        // Pre-coverage placeholder (spec 05 section 5.3): before a full
-        // calendar month of data exists, an extrapolated projection is a
-        // fabricated number. Show the honest placeholder instead.
-        if (!hasFullMonthOfData(expenses)) {
-          return (
-            <View style={styles.projectionPlaceholder}>
-              <Text style={styles.projectionPlaceholderText}>
-                {strings.leakScan.projectionPlaceholder}
-              </Text>
-            </View>
-          );
-        }
-        const projection = calculateMonthlyProjection(expenses);
-        return (
-          <ProjectionContent
-            currentSpent={projection.currentSpent}
-            projectedTotal={projection.projectedTotal}
-            daysRemaining={projection.daysRemaining}
-            comparedToLastMonth={projection.comparedToLastMonth}
-          />
-        );
-      }
-
-      default:
-        return null;
-    }
-  }, [
-    expenses,
-    categories,
-    calculateSpendingByCategory,
-    calculateSpendingOverTime,
-    calculateMonthlyProjection,
+  const {
+    getDiscoveredHabits,
     getActiveHabits,
-    getGoalByHabitId,
-  ]);
+    getHabitById,
+    startBreakingHabit,
+  } = useHabits();
+
+  const [pickOneHabitId, setPickOneHabitId] = useState<string | null>(null);
+
+  // 1. Your leaks: everything worth an action, biggest monthly drain first.
+  // Discovered-not-dismissed leaks come from getDiscoveredHabits; habits
+  // already being broken (changing) or merely watched (tracking) come from
+  // getActiveHabits. LeaksCard picks the row action from habit.status.
+  const leakRows: LeakRowData[] = useMemo(() => {
+    const nameFor = (habit: DetectedHabit): string =>
+      categories.find((c) => c.id === habit.categoryId)?.name ?? habit.categoryId;
+
+    return [...getDiscoveredHabits(), ...getActiveHabits()]
+      .sort((a, b) => b.totalMonthlySpend - a.totalMonthlySpend)
+      .map((habit) => {
+        const categoryName = nameFor(habit);
+        return {
+          habit,
+          emoji: categoryEmoji(categoryName),
+          tint: categoryIdentityColor(categoryName),
+        };
+      });
+  }, [categories, getDiscoveredHabits, getActiveHabits]);
+
+  // 2. Where it went: reuse the single category rollup implementation.
+  const spendingByCategory = useMemo(
+    () => calculateSpendingByCategory(expenses, categories, 'week'),
+    [calculateSpendingByCategory, expenses, categories]
+  );
+
+  // 3. Pace: honest placeholder until a full calendar month of data exists.
+  const covered = hasFullMonthOfData(expenses);
+  const projection = useMemo(
+    () => (covered ? calculateMonthlyProjection(expenses) : null),
+    [covered, calculateMonthlyProjection, expenses]
+  );
+
+  const monthLabel = useMemo(() => formatDate(new Date(), { month: 'long' }), []);
+
+  // The projection contract returns the last-month delta as a percentage only,
+  // so the money gap is summed here over the same previous-calendar-month
+  // window ReportsContext uses. No projection math is duplicated.
+  const comparison: PaceComparison | null = useMemo(() => {
+    if (!projection) return null;
+    const now = new Date();
+    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+    const lastMonthTotal = expenses
+      .filter((e) => e.date >= lastMonthStart && e.date <= lastMonthEnd)
+      .reduce((sum, e) => sum + e.amount, 0);
+    if (lastMonthTotal === 0) return null;
+
+    const delta = projection.projectedTotal - lastMonthTotal;
+    return {
+      differenceCents: Math.abs(delta),
+      direction: delta <= 0 ? 'under' : 'over',
+      monthLabel: formatDate(lastMonthStart, { month: 'long' }),
+    };
+  }, [projection, expenses]);
+
+  // Entitlement touchpoint (ADR 0007, BET-004): the pick-one sheet blocks Start
+  // once the active-habit count reaches the entitlement ceiling.
+  const freeTierBlocked = isHabitLimitReached(getActiveHabits().length, getEntitlement());
+  const pickOneHabit = pickOneHabitId ? getHabitById(pickOneHabitId) : null;
+
+  const handleStart = useCallback(
+    async (skipValue: number, valueEdited: boolean) => {
+      if (!pickOneHabitId) return;
+      await startBreakingHabit(pickOneHabitId, skipValue, valueEdited, 'detection');
+      setPickOneHabitId(null);
+    },
+    [pickOneHabitId, startBreakingHabit]
+  );
 
   if (isLoading) {
     return (
@@ -122,33 +135,44 @@ export default function InsightsScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      {/* Header: serif screen title. */}
       <View style={styles.header}>
-        <Text style={styles.screenTitle} accessibilityRole="header">
+        <Text style={styles.title} accessibilityRole="header">
           {strings.screenTitles.insights}
         </Text>
       </View>
 
-      <View style={styles.subtitleRow}>
-        <Text style={styles.subtitle}>{strings.reports.subtitle}</Text>
-      </View>
-
-      {/* Widgets */}
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {sortedWidgets.filter(w => w.isVisible).map((widget) => (
-          <WidgetCard
-            key={widget.id}
-            widget={widget}
-            onTimeRangeChange={(range) => handleTimeRangeChange(widget.id, range)}
-          >
-            {renderWidgetContent(widget)}
-          </WidgetCard>
-        ))}
+        <LeaksCard
+          rows={leakRows}
+          onBreak={(habit) => setPickOneHabitId(habit.id)}
+          onOpenHabit={(habitId) => router.push(`/habit/${habitId}`)}
+        />
+
+        <WhereItWentCard
+          rows={spendingByCategory}
+          rangeLabel={strings.insights.whereItWentRange(WHERE_IT_WENT_DAYS)}
+        />
+
+        <PaceCard monthLabel={monthLabel} projection={projection} comparison={comparison} />
       </ScrollView>
+
+      <PickOneSheet
+        visible={!!pickOneHabit}
+        habit={pickOneHabit ?? null}
+        monthTotal={pickOneHabit?.totalMonthlySpend ?? 0}
+        occurrences={pickOneHabit?.occurrencesPerPeriod ?? 0}
+        freeTierBlocked={freeTierBlocked}
+        onCancel={() => setPickOneHabitId(null)}
+        onStart={handleStart}
+        onStartTrial={() => {
+          setPickOneHabitId(null);
+          router.push('/paywall?placement=habit_gate');
+        }}
+      />
     </View>
   );
 }
@@ -157,37 +181,26 @@ function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: theme.background,
+      backgroundColor: theme.snow,
     },
     header: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
       paddingHorizontal: 20,
       paddingTop: 16,
+      paddingBottom: 4,
     },
-    screenTitle: {
-      fontFamily: theme.fonts.display,
+    title: {
       fontSize: typeScale.screenTitle,
-      lineHeight: 40,
+      fontFamily: theme.fonts.display,
       color: theme.ink,
-      includeFontPadding: false,
-    },
-    subtitleRow: {
-      paddingHorizontal: 20,
-      paddingTop: 4,
-      paddingBottom: 16,
-    },
-    subtitle: {
-      fontSize: 14,
-      color: theme.textSecondary,
     },
     scrollView: {
       flex: 1,
     },
     scrollContent: {
-      paddingHorizontal: 16,
+      paddingHorizontal: 20,
+      paddingTop: 14,
       paddingBottom: 100,
+      gap: 12,
     },
     loadingContainer: {
       flex: 1,
@@ -195,19 +208,9 @@ function createStyles(theme: AppTheme) {
       alignItems: 'center',
     },
     loadingText: {
-      fontSize: 16,
-      color: theme.textSecondary,
-    },
-    projectionPlaceholder: {
-      paddingVertical: 20,
-      paddingHorizontal: 16,
-      alignItems: 'center',
-    },
-    projectionPlaceholderText: {
-      fontSize: 14,
-      color: theme.textSecondary,
-      textAlign: 'center',
-      lineHeight: 20,
+      fontSize: typeScale.body,
+      fontFamily: theme.fonts.ui,
+      color: theme.slate,
     },
   });
 }

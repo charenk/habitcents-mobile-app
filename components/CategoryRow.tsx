@@ -1,129 +1,91 @@
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Icon, CATEGORY_ICON_MAP, type IconName } from '@/components/ui/Icon';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { Icon, EmojiTile } from '@/components/ui';
 import { deleteCategoryLabel } from '@/utils/a11y';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
-import type { AppTheme } from '@/constants/theme';
+import { categoryEmoji, categoryIdentityColor } from '@/constants/categoryEmoji';
+import { typeScale, type AppTheme } from '@/constants/theme';
 import type { Category } from '@/types/category';
 import { strings } from '@/constants/strings';
 
 type CategoryRowProps = {
   category: Category;
   totalSpent?: number;
-  trend?: 'increasing' | 'decreasing' | 'stable';
-  trendPercentage?: number;
   onPress?: () => void;
   onDelete?: () => void;
   showDelete?: boolean;
+  /** False on the last row of a card, so the card ends on a clean edge. */
+  showSeparator?: boolean;
 };
 
+/**
+ * One category inside a Categories card (redesign step 04). Emoji tile, name,
+ * spend caption, chevron, plus the delete affordance custom rows keep. The row
+ * sits directly on the card, so it carries no background of its own.
+ */
 export function CategoryRow({
   category,
   totalSpent = 0,
-  trend,
-  trendPercentage,
   onPress,
   onDelete,
   showDelete = false,
+  showSeparator = true,
 }: CategoryRowProps) {
   const theme = useTheme();
   const { format } = useCurrency();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
-  const getTrendIcon = (): IconName => {
-    switch (trend) {
-      case 'increasing':
-        return 'TrendingUp';
-      case 'decreasing':
-        return 'TrendingDown';
-      default:
-        return 'Minus';
-    }
-  };
-
-  const getTrendColor = () => {
-    switch (trend) {
-      case 'increasing':
-        return theme.danger;
-      case 'decreasing':
-        return theme.primary;
-      default:
-        return theme.textSecondary;
-    }
-  };
-
-  const showTrend = !!trend && trendPercentage !== undefined && trendPercentage > 0;
-  const trendWord = trend === 'increasing' ? 'up' : trend === 'decreasing' ? 'down' : 'flat';
-  const rowLabel = [
-    category.name,
-    totalSpent > 0 ? strings.categories.thisMonthSuffix(format(totalSpent)) : '',
-    showTrend ? `trending ${trendWord} ${trendPercentage}%` : '',
-  ]
+  const spentLabel = totalSpent > 0 ? strings.categories.thisMonthSuffix(format(totalSpent)) : null;
+  const rowLabel = [strings.categories.openCategoryLabel(category.name), spentLabel]
     .filter(Boolean)
     .join(', ');
 
+  // Default categories carry legacy palette hex; the redesign identity color
+  // keeps their tiles on the new palette. A custom category keeps the color
+  // its owner picked.
+  const tint = category.isDefault ? categoryIdentityColor(category.name) : category.color;
+
   return (
-    <TouchableOpacity
-      style={styles.container}
+    <Pressable
+      style={({ pressed }) => [
+        styles.container,
+        showSeparator ? styles.separator : null,
+        pressed ? styles.pressed : null,
+      ]}
       onPress={onPress}
-      activeOpacity={0.7}
       accessibilityRole="button"
       accessibilityLabel={rowLabel}
     >
-      <View
-        style={[styles.iconContainer, { backgroundColor: category.color + '20' }]}
-        importantForAccessibility="no-hide-descendants"
-        accessibilityElementsHidden
-      >
-        <Icon
-          name={CATEGORY_ICON_MAP[category.icon]}
-          size={24}
-          color={category.color}
-        />
-      </View>
+      <EmojiTile emoji={categoryEmoji(category.name)} size={36} color={tint} />
 
       <View style={styles.content}>
-        <Text style={styles.name}>{category.name}</Text>
-        {totalSpent > 0 && (
-          <Text style={styles.spent}>{strings.categories.thisMonthSuffix(format(totalSpent))}</Text>
-        )}
+        <Text style={styles.name} numberOfLines={1}>
+          {category.name}
+        </Text>
+        {spentLabel && <Text style={styles.spent}>{spentLabel}</Text>}
       </View>
 
-      {showTrend && (
-        <View style={styles.trendContainer}>
-          <Icon
-            name={getTrendIcon()}
-            size={16}
-            color={getTrendColor()}
-          />
-          <Text style={[styles.trendText, { color: getTrendColor() }]}>
-            {trendPercentage}%
-          </Text>
-        </View>
-      )}
-
       {showDelete && !category.isDefault && onDelete && (
-        <TouchableOpacity
+        <Pressable
           style={styles.deleteButton}
           onPress={onDelete}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           accessibilityRole="button"
           accessibilityLabel={deleteCategoryLabel(category.name)}
         >
-          <Icon name="Trash2" size={20} color={theme.danger} />
-        </TouchableOpacity>
+          <Icon name="Trash2" size={18} color={theme.coral} />
+        </Pressable>
       )}
 
       <Icon
         name="ChevronRight"
-        size={20}
-        color={theme.textTertiary}
-        style={styles.chevron}
+        size={16}
+        color={theme.mist}
         importantForAccessibility="no-hide-descendants"
         accessibilityElementsHidden
       />
-    </TouchableOpacity>
+    </Pressable>
   );
 }
 
@@ -132,49 +94,34 @@ function createStyles(theme: AppTheme) {
     container: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: theme.surface,
-      paddingVertical: 14,
-      paddingHorizontal: 16,
-      borderRadius: 12,
-      marginBottom: 8,
+      gap: 12,
+      minHeight: 56,
+      paddingVertical: 10,
     },
-    iconContainer: {
-      width: 44,
-      height: 44,
-      borderRadius: 12,
-      justifyContent: 'center',
-      alignItems: 'center',
-      marginRight: 12,
+    separator: {
+      borderBottomWidth: 1,
+      borderBottomColor: theme.hairlineSubtle,
+    },
+    pressed: {
+      opacity: 0.6,
     },
     content: {
       flex: 1,
     },
     name: {
-      fontSize: 16,
-      fontWeight: '600',
-      color: theme.text,
+      fontSize: typeScale.body,
+      fontFamily: theme.fonts.uiSemibold,
+      color: theme.ink,
     },
     spent: {
-      fontSize: 13,
-      color: theme.textSecondary,
+      fontSize: 12,
+      fontFamily: theme.fonts.ui,
+      color: theme.mist,
       marginTop: 2,
-    },
-    trendContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginRight: 8,
-    },
-    trendText: {
-      fontSize: 13,
-      fontWeight: '500',
-      marginLeft: 4,
+      fontVariant: ['tabular-nums'],
     },
     deleteButton: {
-      padding: 8,
-      marginRight: 4,
-    },
-    chevron: {
-      marginLeft: 4,
+      padding: 4,
     },
   });
 }

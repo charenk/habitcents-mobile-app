@@ -1,9 +1,25 @@
+/**
+ * History calendar (design/redesign-handoff/04-screens.md, "Habit detail (R9)";
+ * day-state rules in docs/design-package-phase2/01-habit-logging-spec.md
+ * sections 2 and 4.9).
+ *
+ * Three states, three shapes: sage disc with a white check for a skip, cloud
+ * disc for a slip, cloud outline for a day with no log. A slip is never red and
+ * never sage. Pre-tracking and future days render as an empty slot, not as a
+ * no-log day, because "you had not started yet" is not the same fact as "you
+ * did not answer".
+ *
+ * Touch targets: the 26px dot carries 9px of hitSlop on every side, which is
+ * the 44pt minimum (ADA fix, do not shrink either number without growing the
+ * other).
+ */
 import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Icon } from '@/components/ui/Icon';
 import { useTheme } from '@/contexts/ThemeContext';
 import { atMidnight, dayStateFor, isSameDay } from '@/utils/habitLogging';
 import { calendarCellLabel } from '@/utils/a11y';
+import { radii, typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
 import type { DayState, HabitLogEntry } from '@/types/habit';
 import { strings } from '@/constants/strings';
@@ -21,11 +37,6 @@ type HistoryCalendarProps = {
   onSelectToday?: () => void;
 };
 
-/**
- * The 3-state month calendar (spec 01 §4.9, §2). Pre-tracking and future days
- * are blank. Tapping today offers the same change-answer affordance as the
- * confirmation slot (handled by the caller via onSelectToday).
- */
 export function HistoryCalendar({ dayLogs, trackingStart, today = new Date(), onSelectToday }: HistoryCalendarProps) {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -74,7 +85,7 @@ export function HistoryCalendar({ dayLogs, trackingStart, today = new Date(), on
             accessibilityState={{ disabled: !canGoPrev }}
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           >
-            <Icon name="ChevronLeft" size={20} color={canGoPrev ? theme.primary : theme.border} />
+            <Icon name="ChevronLeft" size={20} color={canGoPrev ? theme.slate : theme.cloud} />
           </TouchableOpacity>
           <TouchableOpacity
             onPress={goNext}
@@ -84,7 +95,7 @@ export function HistoryCalendar({ dayLogs, trackingStart, today = new Date(), on
             accessibilityState={{ disabled: !canGoNext }}
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           >
-            <Icon name="ChevronRight" size={20} color={canGoNext ? theme.primary : theme.border} />
+            <Icon name="ChevronRight" size={20} color={canGoNext ? theme.slate : theme.cloud} />
           </TouchableOpacity>
         </View>
       </View>
@@ -108,6 +119,7 @@ export function HistoryCalendar({ dayLogs, trackingStart, today = new Date(), on
                 onPress={onSelectToday}
                 accessible={!outOfRange}
                 accessibilityLabel={label || undefined}
+                accessibilityRole={isToday && onSelectToday ? 'button' : undefined}
                 hitSlop={{ top: 9, bottom: 9, left: 9, right: 9 }}
                 style={[
                   styles.dot,
@@ -124,25 +136,25 @@ export function HistoryCalendar({ dayLogs, trackingStart, today = new Date(), on
       </View>
 
       <View style={styles.legendRow}>
-        <LegendItem color={theme.primary} label={strings.habitLogging.legendSkipped} />
-        <LegendItem color={theme.slip} label={strings.habitLogging.legendSlipped} />
-        <LegendItem outline label={strings.habitLogging.legendNoLog} theme={theme} />
+        <LegendItem theme={theme} color={theme.primary} label={strings.habitLogging.legendSkipped} />
+        <LegendItem theme={theme} color={theme.cloud} label={strings.habitLogging.legendSlipped} />
+        <LegendItem theme={theme} outline label={strings.habitLogging.legendNoLog} />
       </View>
     </View>
   );
 }
 
-function LegendItem({ color, outline, label, theme }: { color?: string; outline?: boolean; label: string; theme?: AppTheme }) {
+function LegendItem({ color, outline, label, theme }: { color?: string; outline?: boolean; label: string; theme: AppTheme }) {
   return (
     <View style={legendStyles.row}>
       <View
         style={[
           legendStyles.dot,
           color ? { backgroundColor: color } : null,
-          outline ? { borderWidth: 1.5, borderColor: theme?.border, backgroundColor: 'transparent' } : null,
+          outline ? { borderWidth: 1.5, borderColor: theme.cloud, backgroundColor: 'transparent' } : null,
         ]}
       />
-      <Text style={[legendStyles.label, { color: theme?.textSecondary }]}>{label}</Text>
+      <Text style={[legendStyles.label, { color: theme.mist, fontFamily: theme.fonts.ui }]}>{label}</Text>
     </View>
   );
 }
@@ -150,32 +162,32 @@ function LegendItem({ color, outline, label, theme }: { color?: string; outline?
 const legendStyles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: 6, marginRight: 14 },
   dot: { width: 12, height: 12, borderRadius: 6 },
-  label: { fontSize: 12 },
+  label: { fontSize: typeScale.caption },
 });
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     card: {
-      backgroundColor: theme.surface,
-      borderRadius: 16,
-      padding: 16,
+      backgroundColor: theme.white,
+      borderRadius: radii.feature,
       borderWidth: 1,
-      borderColor: theme.border,
+      borderColor: theme.cloud,
+      padding: 18,
     },
     headerRow: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      marginBottom: 10,
+      marginBottom: 12,
     },
     monthLabel: {
+      fontFamily: theme.fonts.uiSemibold,
       fontSize: 15,
-      fontWeight: '600',
-      color: theme.text,
+      color: theme.ink,
     },
     navRow: {
       flexDirection: 'row',
-      gap: 12,
+      gap: 16,
     },
     grid: {
       flexDirection: 'row',
@@ -184,15 +196,16 @@ function createStyles(theme: AppTheme) {
     dowLabel: {
       width: `${100 / 7}%`,
       textAlign: 'center',
-      fontSize: 11,
-      fontWeight: '600',
-      color: theme.textSecondary,
-      marginBottom: 6,
+      fontFamily: theme.fonts.uiBold,
+      fontSize: 9,
+      letterSpacing: 0.6,
+      color: theme.mist,
+      marginBottom: 8,
     },
     cellSlot: {
       width: `${100 / 7}%`,
       alignItems: 'center',
-      marginBottom: 6,
+      marginBottom: 8,
     },
     dot: {
       width: 26,
@@ -205,16 +218,19 @@ function createStyles(theme: AppTheme) {
       backgroundColor: theme.primary,
     },
     dotSlipped: {
-      backgroundColor: theme.slip,
+      backgroundColor: theme.cloud,
     },
     dotNoLog: {
       borderWidth: 1.5,
-      borderColor: theme.border,
+      borderColor: theme.cloud,
     },
     legendRow: {
       flexDirection: 'row',
       flexWrap: 'wrap',
-      marginTop: 14,
+      marginTop: 12,
+      paddingTop: 14,
+      borderTopWidth: 1,
+      borderTopColor: theme.hairlineSubtle,
     },
   });
 }
