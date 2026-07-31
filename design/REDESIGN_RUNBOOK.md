@@ -27,9 +27,9 @@ Ground-up visual redesign: one sage green + calm neutrals, Instrument Serif + In
 | Step | Branch | Status |
 |---|---|---|
 | 01 tokens + foundations | `redesign/01-tokens` | merged (PR #42) |
-| 02 navigation (4 tabs incl. Categories, settings sheet) | `redesign/02-navigation` | not started |
-| 03 intent-first onboarding (3a variant) | `redesign/03-onboarding` | in review (PR #44, stacked on 02) |
-| 04 screens (Today/Money/Insights/Categories/detail/sheets/paywall + recurrence model) | `redesign/04-screens` | in review (PR #45, stacked on 03); 406 tests green, sim-verified |
+| 02 navigation (4 tabs incl. Categories, settings sheet) | `redesign/02-navigation` | MERGED (PR #43) |
+| 03 intent-first onboarding (3a variant) | `redesign/03-onboarding` | MERGED (PR #44) |
+| 04 screens (Today/Money/Insights/Categories/detail/sheets/paywall + recurrence model) | `redesign/04-screens` | PR #45 open, targets main, CI green; awaiting on-device upgrade test |
 | 05 copy (strings.ts replacement + dead-code cleanup) | `redesign/05-copy` | not started |
 
 ## Per-step definition of done
