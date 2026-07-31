@@ -23,7 +23,7 @@ import { HistoryCalendar } from '@/components/habit-logging/HistoryCalendar';
 import { EventHistory } from '@/components/habit-logging/EventHistory';
 import { PickOneSheet } from '@/components/habit-logging/PickOneSheet';
 import { PartialSlipSheet } from '@/components/habit-logging/PartialSlipSheet';
-import { atMidnight, weekStats, isHabitLimitReached } from '@/utils/habitLogging';
+import { atMidnight, weekStats, isHabitLimitReached, displayChapter } from '@/utils/habitLogging';
 import { getEntitlement } from '@/utils/purchases';
 import type { CoachMomentCardId } from '@/utils/coachMoments';
 import type { AppTheme } from '@/constants/theme';
@@ -278,7 +278,10 @@ function HabitDetailBreaking({
         <StatBlock label={strings.habitLogging.statTotalSkips} value={String(goal.totalSkips)} />
       </View>
 
-      <LongArc displayTotal={displayTotal} />
+      <LongArc
+        displayTotal={displayTotal}
+        chapter={displayChapter(goal.totalSkips, goal.highestMilestoneReached)}
+      />
 
       {isDaily ? (
         <HistoryCalendar dayLogs={goal.dayLogs} trackingStart={goal.trackingStart} onSelectToday={onChangeAnswer} />

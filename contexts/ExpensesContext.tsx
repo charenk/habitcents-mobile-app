@@ -19,6 +19,14 @@ type ExpensesContextValue = {
   addExpense: (input: AddExpenseInput) => Promise<Expense>;
   updateExpense: (id: string, updates: Partial<Omit<Expense, 'id'>>) => Promise<void>;
   deleteExpense: (id: string) => Promise<void>;
+  /**
+   * Put a just-deleted expense back where it was (redesign step 04: the
+   * "Deleted." toast's Undo action). Position matters because the list is the
+   * user's own ordering, so undo must be visually identical to never having
+   * deleted. Not a new mutation in analytics terms: it reverses one, so it
+   * deliberately fires no event.
+   */
+  restoreExpense: (expense: Expense, index: number) => Promise<void>;
   getExpenseById: (id: string) => Expense | undefined;
   getExpensesByCategory: (category: ExpenseCategory | 'All') => Expense[];
   getExpensesByDateRange: (start: Date, end: Date) => Expense[];
@@ -45,6 +53,10 @@ function createExpense(input: AddExpenseInput): Expense {
     time: formatTime(input.date),
     isRecurring: input.isRecurring,
     recurrence: input.recurrence,
+    // Structured recurrence (redesign step 04). Written alongside the legacy
+    // isRecurring/recurrence mirrors so old readers keep working; the read path
+    // normalizes through utils/recurring resolveRule.
+    recurrenceRule: input.recurrenceRule,
     reminderEnabled: input.reminderEnabled,
     reminderTime: input.reminderTime,
     source: input.source ?? 'manual',
@@ -113,6 +125,20 @@ export function ExpensesProvider({ children }: { children: React.ReactNode }) {
     track('expense_deleted', {});
   }, [commit]);
 
+  // Undo for deleteExpense. Splices through the same commit ref every other
+  // mutation uses, so a restore that lands between two rapid edits still builds
+  // on the latest committed list rather than a stale render closure. The index
+  // is clamped: the list can legitimately have shrunk while the toast was up.
+  const restoreExpense = useCallback(async (
+    expense: Expense,
+    index: number
+  ): Promise<void> => {
+    const next = [...expensesRef.current];
+    const at = Math.max(0, Math.min(Math.trunc(index), next.length));
+    next.splice(at, 0, expense);
+    await commit(next);
+  }, [commit]);
+
   const getExpenseById = useCallback((id: string): Expense | undefined => {
     return expenses.find(e => e.id === id);
   }, [expenses]);
@@ -153,6 +179,7 @@ export function ExpensesProvider({ children }: { children: React.ReactNode }) {
     addExpense,
     updateExpense,
     deleteExpense,
+    restoreExpense,
     getExpenseById,
     getExpensesByCategory,
     getExpensesByDateRange,
@@ -160,7 +187,7 @@ export function ExpensesProvider({ children }: { children: React.ReactNode }) {
     getTotalSpent,
     getExpenseCount,
   }), [
-    expenses, isLoading, addExpense, updateExpense, deleteExpense,
+    expenses, isLoading, addExpense, updateExpense, deleteExpense, restoreExpense,
     getExpenseById, getExpensesByCategory, getExpensesByDateRange,
     getTotalByCategory, getTotalSpent, getExpenseCount,
   ]);

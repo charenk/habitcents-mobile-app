@@ -1,8 +1,8 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Animated, AccessibilityInfo } from 'react-native';
+import React, { useMemo } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
-import { typeScale, type AppTheme } from '@/constants/theme';
+import { radii, typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import { keptHeroLabel } from '@/utils/a11y';
 
@@ -11,101 +11,36 @@ type KeptHeroProps = {
 };
 
 /**
- * The Kept hero on the Habits tab (spec 01 §4.1). On any skip, the amount
- * counts up over 250ms while tinting green and scaling to 1.06, then settles
- * back over 200ms. Decreases (corrections) count down with no pulse.
- * Reduced-motion: instant swap, no scale. This is the only cross-habit
- * aggregate; no other cross-habit number exists.
+ * The kept band (design/redesign-handoff/04-screens.md, "Today" 2): a
+ * sage-light feature card holding the one cross-habit aggregate in the app.
+ * Eyebrow in sage-dark, the amount in the display serif with tabular figures,
+ * caption below. Zero swaps the caption for the first-skip line.
+ *
+ * Deliberately motionless. The redesign allows exactly one playful motion in
+ * the app and spends it on the skip confirmation (CheckInCard), so the older
+ * count-up plus scale/tint pulse is gone. That also retires the mixed
+ * native/JS Animated driver on a single node, which crashed release builds.
  */
 export function KeptHero({ cents }: KeptHeroProps) {
   const theme = useTheme();
   const { format } = useCurrency();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
-  const [display, setDisplay] = useState(cents);
-  const prevRef = useRef(cents);
-  const scale = useRef(new Animated.Value(1)).current;
-  const tint = useRef(new Animated.Value(0)).current; // 0 = text color, 1 = primary
-  const [reduceMotion, setReduceMotion] = useState(false);
-
-  useEffect(() => {
-    let mounted = true;
-    AccessibilityInfo.isReduceMotionEnabled?.()
-      .then((v) => { if (mounted) setReduceMotion(!!v); })
-      .catch(() => {});
-    return () => { mounted = false; };
-  }, []);
-
-  useEffect(() => {
-    const from = prevRef.current;
-    const to = cents;
-    prevRef.current = to;
-    if (from === to) return;
-
-    if (reduceMotion) {
-      setDisplay(to);
-      return;
-    }
-
-    const isIncrease = to > from;
-    const duration = 250;
-    const start = Date.now();
-    let raf: ReturnType<typeof setTimeout>;
-    const step = () => {
-      const elapsed = Date.now() - start;
-      const p = Math.min(1, elapsed / duration);
-      const eased = 1 - Math.pow(1 - p, 3);
-      setDisplay(Math.round(from + (to - from) * eased));
-      if (p < 1) {
-        raf = setTimeout(step, 16);
-      }
-    };
-    step();
-
-    if (isIncrease) {
-      // Both the scale (transform) and the tint (color) animate the same
-      // Animated.Text. color cannot use the native driver, so scale must stay
-      // on the JS driver too: mixing drivers on one node throws "Attempting to
-      // run JS driven animation on animated node that has been moved to native"
-      // which, in a release build, surfaces as an uncaught NSException and
-      // hard-crashes the app. A one-shot text pulse on the JS driver is
-      // imperceptible here.
-      Animated.parallel([
-        Animated.sequence([
-          Animated.timing(scale, { toValue: 1.06, duration: 250, useNativeDriver: false }),
-          Animated.timing(scale, { toValue: 1, duration: 200, useNativeDriver: false }),
-        ]),
-        Animated.sequence([
-          Animated.timing(tint, { toValue: 1, duration: 250, useNativeDriver: false }),
-          Animated.timing(tint, { toValue: 0, duration: 200, useNativeDriver: false }),
-        ]),
-      ]).start();
-    }
-
-    return () => clearTimeout(raf);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cents, reduceMotion]);
-
-  const color = tint.interpolate({ inputRange: [0, 1], outputRange: [theme.text, theme.primaryBright] });
-
-  // One utterance, spoken on settle (spec 09 §2, row "Kept hero"): the label is
-  // keyed to the final `cents`, not the per-frame `display`, so VoiceOver
-  // announces the settled value once rather than every count-up frame. Inner
-  // text nodes are hidden from the a11y tree so they are not read separately.
+  // One utterance (spec 09 §2, row "Kept hero"): the band reads as a single
+  // node, so VoiceOver says the settled value once instead of three fragments.
   return (
     <View
-      style={styles.container}
+      style={styles.card}
       accessible
       accessibilityRole="text"
       accessibilityLabel={keptHeroLabel(format(cents))}
     >
-      <Text style={styles.label} importantForAccessibility="no">{strings.habitLogging.keptSoFar}</Text>
-      <Animated.Text
-        style={[styles.amount, { color, transform: [{ scale }] }]}
-        importantForAccessibility="no"
-      >
-        {format(display)}
-      </Animated.Text>
+      <Text style={styles.label} importantForAccessibility="no">
+        {strings.habitLogging.keptSoFar}
+      </Text>
+      <Text style={styles.amount} importantForAccessibility="no">
+        {format(cents)}
+      </Text>
       <Text style={styles.caption} importantForAccessibility="no">
         {cents === 0 ? strings.habitLogging.keptZeroCaption : strings.habitLogging.keptCaption}
       </Text>
@@ -115,28 +50,37 @@ export function KeptHero({ cents }: KeptHeroProps) {
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
-    container: {
+    card: {
+      backgroundColor: theme.primaryLight,
+      borderRadius: radii.feature,
+      paddingVertical: 22,
+      paddingHorizontal: 20,
       alignItems: 'center',
-      paddingVertical: 18,
     },
     label: {
       fontSize: typeScale.eyebrow,
       fontFamily: theme.fonts.uiSemibold,
       letterSpacing: typeScale.eyebrowLetterSpacing,
-      color: theme.textSecondary,
+      color: theme.primaryDark,
+      textAlign: 'center',
     },
     // Kept is the hero currency number, so it carries the display serif
-    // (spec 01 section 2) with tabular figures.
+    // (spec 01 section 2) with tabular figures. Sage-dark rather than sage:
+    // the brand green does not carry on the sage-light band.
     amount: {
       fontSize: typeScale.keptHero,
       fontFamily: theme.fonts.display,
       fontVariant: ['tabular-nums'],
-      marginTop: 4,
+      color: theme.primaryDark,
+      marginTop: 6,
+      textAlign: 'center',
     },
     caption: {
-      fontSize: 14,
-      color: theme.textSecondary,
+      fontSize: typeScale.caption,
+      fontFamily: theme.fonts.ui,
+      color: theme.slate,
       marginTop: 2,
+      textAlign: 'center',
     },
   });
 }

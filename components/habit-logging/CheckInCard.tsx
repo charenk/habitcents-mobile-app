@@ -1,6 +1,15 @@
-import React, { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import Reanimated, { useSharedValue, useAnimatedStyle, withTiming, withSequence, runOnUI } from 'react-native-reanimated';
+import React, { useEffect, useMemo, useRef } from 'react';
+import {
+  Animated,
+  Easing,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
+import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -15,7 +24,7 @@ import {
 } from '@/utils/habitLogging';
 import { cardText, isMilestoneCard, type CoachMomentCardId } from '@/utils/coachMoments';
 import { useReducedMotion, hapticSuccess } from '@/utils/motion';
-import type { AppTheme } from '@/constants/theme';
+import { motion, radii, shadows, typeScale, type AppTheme } from '@/constants/theme';
 import type { DetectedHabit, HabitChangeGoal } from '@/types/habit';
 import { strings } from '@/constants/strings';
 
@@ -37,6 +46,9 @@ type CheckInCardProps = {
   onOpenDetail?: () => void;
 };
 
+/** Style carrying the pulse: a native-driven scale, or an opacity fade under reduced motion. */
+type PulseStyle = Animated.WithAnimatedValue<StyleProp<ViewStyle>>;
+
 function chapterCopy(chapter: ReturnType<typeof chapterForTotal>): string {
   switch (chapter) {
     case 'Deciding': return strings.habitLogging.chapterDeciding;
@@ -48,98 +60,15 @@ function chapterCopy(chapter: ReturnType<typeof chapterForTotal>): string {
 }
 
 /**
- * The skip/slip button pair, shared by the daily and weekly/monthly question
- * blocks below. Owns the skip motion (Direction C, spec 05; the Motion Layer
- * prototype): a press spring on the skip button, an expanding ring behind it,
- * and a success haptic. The Kept hero's own count-up/pulse (KeptHero.tsx) and
- * the week strip's dot pop (WeekStrip.tsx) fire independently off the
- * resulting data change, so this component only owns the button-local
- * motion. Reduced motion collapses the spring and ring to nothing; the
- * haptic still fires since it is not visual.
- */
-function SkipSlipButtons({
-  skipLabel,
-  onSkip,
-  onSlip,
-  styles,
-  theme,
-}: {
-  skipLabel: string;
-  onSkip: () => void;
-  onSlip: () => void;
-  styles: ReturnType<typeof createStyles>;
-  theme: AppTheme;
-}) {
-  const reduceMotion = useReducedMotion();
-  const [ringKey, setRingKey] = useState(0);
-  const [ringVisible, setRingVisible] = useState(false);
-  const scale = useSharedValue(1);
-  const ringScale = useSharedValue(0.3);
-  const ringOpacity = useSharedValue(0);
-  const buttonAnimatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
-  const ringAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: ringScale.value }],
-    opacity: ringOpacity.value,
-  }));
-
-  const handleSkip = () => {
-    hapticSuccess();
-    if (reduceMotion) {
-      onSkip();
-      return;
-    }
-    setRingKey((k) => k + 1);
-    setRingVisible(true);
-    // Build the skip animations on the UI thread. Assigning an animation
-    // object (withSequence / withTiming) to a shared value from the JS thread
-    // makes worklets serialize it across the bridge, which segfaults on the
-    // New Architecture (Hermes) in worklets 0.5.1. Creating them inside a
-    // runOnUI worklet keeps every animation object on the UI runtime, so
-    // nothing crosses the bridge and the motion is identical.
-    runOnUI(() => {
-      'worklet';
-      scale.value = withSequence(
-        withTiming(0.96, { duration: 100 }),
-        withTiming(1, { duration: 140 })
-      );
-      ringScale.value = 0.3;
-      ringOpacity.value = 0.5;
-      ringScale.value = withTiming(2.6, { duration: 550 });
-      ringOpacity.value = withTiming(0, { duration: 550 });
-    })();
-    // Unmount the ring view on the JS side once its animation is done. A
-    // plain timeout (rather than the reanimated callback) keeps this
-    // component's re-render logic entirely on the JS thread, which is
-    // simpler and accurate enough for a purely decorative unmount.
-    setTimeout(() => setRingVisible(false), 560);
-    onSkip();
-  };
-
-  return (
-    <View style={styles.buttonsRow}>
-      <Reanimated.View style={[styles.skipButtonWrap, !reduceMotion && buttonAnimatedStyle]}>
-        {ringVisible && (
-          <Reanimated.View
-            key={ringKey}
-            pointerEvents="none"
-            style={[styles.skipRing, ringAnimatedStyle, { borderColor: theme.primaryBright }]}
-          />
-        )}
-        <TouchableOpacity style={styles.primaryButton} onPress={handleSkip} accessibilityRole="button">
-          <Text style={styles.primaryButtonText}>{skipLabel}</Text>
-        </TouchableOpacity>
-      </Reanimated.View>
-      <TouchableOpacity style={styles.secondaryButton} onPress={onSlip} accessibilityRole="button">
-        <Text style={styles.secondaryButtonText}>{strings.habitLogging.boughtItButton}</Text>
-      </TouchableOpacity>
-    </View>
-  );
-}
-
-/**
- * The answer card (spec 01 §4.2). The single shared component used identically
- * on the Habits tab and the habit detail screen (principle 6, acceptance test
- * 6): never a different control between the two surfaces.
+ * The answer card (spec 01 §4.2, restyled for design/redesign-handoff/
+ * 04-screens.md "Today" 3). The single shared component used identically on
+ * Today and the habit detail screen (principle 6, acceptance test 6): never a
+ * different control between the two surfaces.
+ *
+ * Motion budget: the redesign allows exactly one playful motion in the whole
+ * app and it lives here, on the skip confirmation (280ms, scale 1 to 1.04 to
+ * 1). Reduced motion swaps it for an opacity fade. Nothing else animates, and
+ * a slip never animates at all.
  */
 export function CheckInCard({
   habit,
@@ -156,6 +85,7 @@ export function CheckInCard({
   const theme = useTheme();
   const { format } = useCurrency();
   const styles = useMemo(() => createStyles(theme), [theme]);
+  const reduceMotion = useReducedMotion();
 
   const isDaily = habit.frequency === 'daily';
   const today = atMidnight(new Date());
@@ -170,6 +100,32 @@ export function CheckInCard({
   const lastEntry = !isDaily && goal.dayLogs.length > 0 ? goal.dayLogs[goal.dayLogs.length - 1] : null;
   const showEventConfirmation = !isDaily && lastEntry != null && isSameCalendarMinute(lastEntry.date, new Date());
 
+  // The one allowed pulse (spec 01 §4, "Motion"): fires when the habit's own
+  // skip total goes up, so it follows a real skip on either cadence and never
+  // a slip or a re-render. goal.totalSkips is read, never recomputed.
+  const pulse = useRef(new Animated.Value(1)).current;
+  const prevSkips = useRef(goal.totalSkips);
+  useEffect(() => {
+    const skipped = goal.totalSkips > prevSkips.current;
+    prevSkips.current = goal.totalSkips;
+    if (!skipped) return;
+    pulse.setValue(0);
+    Animated.timing(pulse, {
+      toValue: 1,
+      duration: motion.pulse,
+      easing: Easing.bezier(...motion.easing),
+      useNativeDriver: true,
+    }).start();
+  }, [goal.totalSkips, pulse]);
+
+  const pulseStyle: PulseStyle = reduceMotion
+    ? { opacity: pulse }
+    : {
+        transform: [
+          { scale: pulse.interpolate({ inputRange: [0, 0.5, 1], outputRange: [1, 1.04, 1] }) },
+        ],
+      };
+
   // Coach Moment (P2-2, spec 01 §4.5): the trigger/dedup engine
   // (utils/coachMoments.ts, driven from HabitsContext) already decided which
   // card (if any) applies to this goal's most recent answer; this component
@@ -180,31 +136,53 @@ export function CheckInCard({
     if (!coachMoment || coachMoment.goalId !== goal.id) return null;
 
     const tint = isMilestoneCard(coachMoment.cardId);
+    const skipped = isDaily ? todayState === 'skipped' : lastEntry?.state === 'skipped';
     return {
       text: cardText(coachMoment.cardId),
       tint,
+      tone: (skipped ? 'sage' : 'snow') as 'sage' | 'snow',
       headline: tint && milestoneJustHit
         ? strings.habitLogging.milestoneHeadline(goal.totalSkips, chapterCopy(chapterForTotal(milestoneJustHit)))
         : undefined,
     };
-  }, [isDaily, answered, showEventConfirmation, coachMoment, goal.id, goal.totalSkips, milestoneJustHit]);
+  }, [
+    isDaily,
+    answered,
+    showEventConfirmation,
+    coachMoment,
+    goal.id,
+    goal.totalSkips,
+    milestoneJustHit,
+    todayState,
+    lastEntry,
+  ]);
 
   const skipValueLabel = format(goal.skipValue);
+  const todayEntry = goal.dayLogs.find((e) => atMidnight(e.date).getTime() === today.getTime());
+
+  const handleSkip = () => {
+    hapticSuccess();
+    onSkip();
+  };
 
   return (
     <View style={styles.card}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={onOpenDetail}
-          disabled={!onOpenDetail}
-          style={styles.headerButton}
-          accessibilityRole={onOpenDetail ? 'button' : undefined}
-          accessibilityLabel={onOpenDetail ? `${habit.name}, open details` : undefined}
-        >
-          <Text style={styles.name}>{habit.name}</Text>
-          {onOpenDetail && <Icon name="ChevronRight" size={16} color={theme.textTertiary} />}
-        </TouchableOpacity>
-      </View>
+      <Pressable
+        onPress={onOpenDetail}
+        disabled={!onOpenDetail}
+        style={styles.header}
+        accessibilityRole={onOpenDetail ? 'button' : undefined}
+        accessibilityLabel={onOpenDetail ? strings.today.openHabitLabel(habit.name) : undefined}
+      >
+        <Text style={styles.name} numberOfLines={2}>{habit.name}</Text>
+        {!isDaily && (
+          <View style={styles.cadencePill}>
+            <Text style={styles.cadencePillText}>{strings.today.weeklyPill}</Text>
+          </View>
+        )}
+        <View style={styles.headerSpacer} />
+        {onOpenDetail && <Icon name="ChevronRight" size={16} color={theme.mist} />}
+      </Pressable>
 
       {isDaily && <WeekStrip dayLogs={goal.dayLogs} trackingStart={goal.trackingStart} skipValue={goal.skipValue} />}
 
@@ -212,20 +190,27 @@ export function CheckInCard({
         <View style={styles.questionBlock}>
           <Text style={styles.question}>{strings.habitLogging.dailyQuestion}</Text>
           {goal.firstRun && <Text style={styles.firstRun}>{strings.habitLogging.firstRunLine}</Text>}
-          <SkipSlipButtons
-            skipLabel={strings.habitLogging.skipButton(skipValueLabel)}
-            onSkip={onSkip}
-            onSlip={onSlip}
-            styles={styles}
-            theme={theme}
-          />
+          <View style={styles.buttonsRow}>
+            <Button
+              label={strings.today.skipWithValue(skipValueLabel)}
+              onPress={handleSkip}
+              variant="primary"
+              style={styles.skipButton}
+            />
+            <Button
+              label={strings.today.boughtIt}
+              onPress={onSlip}
+              variant="secondary"
+              style={styles.slipButton}
+            />
+          </View>
         </View>
       )}
 
       {!isDaily && (
         <View style={styles.questionBlock}>
           <View style={styles.eventHeaderRow}>
-            <Text style={styles.question}>{strings.habitLogging.weeklyValueLine(skipValueLabel)}</Text>
+            <Text style={styles.question}>{strings.today.weeklyNoCheckIn}</Text>
             {goal.totalSkips > 0 && (
               <View style={styles.periodChip}>
                 <Text style={styles.periodChipText}>{strings.habitLogging.periodChip(periodSkipCount(goal))}</Text>
@@ -233,19 +218,20 @@ export function CheckInCard({
             )}
           </View>
           {goal.firstRun && <Text style={styles.firstRun}>{strings.habitLogging.firstRunLine}</Text>}
-          <SkipSlipButtons
-            skipLabel={strings.habitLogging.skipOneButton}
-            onSkip={onSkip}
-            onSlip={onSlip}
-            styles={styles}
-            theme={theme}
-          />
+          <View style={styles.buttonsRow}>
+            <Button
+              label={strings.today.skipOneWithValue(skipValueLabel)}
+              onPress={handleSkip}
+              variant="primary"
+              style={styles.skipButton}
+            />
+          </View>
         </View>
       )}
 
       {isDaily && answered && (
         <View style={styles.answeredBlock}>
-          <ConfirmationLine
+          <ConfirmationBlock
             isDaily
             state={todayState}
             firstEver={todayState === 'skipped' && goal.totalSkips === 1}
@@ -254,55 +240,53 @@ export function CheckInCard({
             weekAnswered={wk?.answered ?? 0}
             keptTotal={format(goal.kept)}
             keptIsZero={goal.kept === 0}
-            partialAmount={goal.dayLogs.find((e) => atMidnight(e.date).getTime() === today.getTime())?.partialAmount}
+            partialAmount={todayEntry?.partialAmount}
             skipValue={goal.skipValue}
             format={format}
+            pulseStyle={pulseStyle}
+            styles={styles}
+            theme={theme}
           />
 
           {coach && (
-            <CoachMomentSlot text={coach.text} tint={coach.tint} headline={coach.headline} />
+            <CoachMomentSlot text={coach.text} tint={coach.tint} tone={coach.tone} headline={coach.headline} />
           )}
 
           <View style={styles.linksRow}>
-            <TouchableOpacity
+            <Pressable
               onPress={onChangeAnswer}
               accessibilityRole="button"
               hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
             >
               <Text style={styles.linkText}>{strings.habitLogging.changeAnswer}</Text>
-            </TouchableOpacity>
-            {todayState === 'slipped' &&
-              goal.dayLogs.find((e) => atMidnight(e.date).getTime() === today.getTime())?.partialAmount == null && (
-                <TouchableOpacity
-                  onPress={onOpenPartial}
-                  accessibilityRole="button"
-                  hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
-                >
-                  <Text style={styles.linkText}>{strings.habitLogging.spentLessThanUsual}</Text>
-                </TouchableOpacity>
-              )}
+            </Pressable>
+            {todayState === 'slipped' && todayEntry?.partialAmount == null && (
+              <Pressable
+                onPress={onOpenPartial}
+                accessibilityRole="button"
+                hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
+              >
+                <Text style={styles.linkText}>{strings.habitLogging.spentLessThanUsual}</Text>
+              </Pressable>
+            )}
           </View>
 
           {canBackfill && (
             <View style={styles.backfillBlock}>
               <Text style={styles.backfillPrompt}>{strings.habitLogging.missedYesterday}</Text>
-              <View style={styles.backfillButtons}>
-                <TouchableOpacity
-                  style={styles.backfillButton}
+              <View style={styles.buttonsRow}>
+                <Button
+                  label={strings.habitLogging.backfillSkip}
                   onPress={() => onBackfill('skipped')}
-                  accessibilityRole="button"
-                  hitSlop={{ top: 4, bottom: 4 }}
-                >
-                  <Text style={styles.secondaryButtonText}>{strings.habitLogging.backfillSkip}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
+                  variant="secondary"
                   style={styles.backfillButton}
+                />
+                <Button
+                  label={strings.habitLogging.backfillBought}
                   onPress={() => onBackfill('slipped')}
-                  accessibilityRole="button"
-                  hitSlop={{ top: 4, bottom: 4 }}
-                >
-                  <Text style={styles.secondaryButtonText}>{strings.habitLogging.backfillBought}</Text>
-                </TouchableOpacity>
+                  variant="secondary"
+                  style={styles.backfillButton}
+                />
               </View>
             </View>
           )}
@@ -318,7 +302,7 @@ export function CheckInCard({
 
       {!isDaily && showEventConfirmation && lastEntry && (
         <View style={styles.answeredBlock}>
-          <ConfirmationLine
+          <ConfirmationBlock
             isDaily={false}
             state={lastEntry.state}
             firstEver={lastEntry.state === 'skipped' && goal.totalSkips === 1}
@@ -330,8 +314,13 @@ export function CheckInCard({
             partialAmount={undefined}
             skipValue={goal.skipValue}
             format={format}
+            pulseStyle={pulseStyle}
+            styles={styles}
+            theme={theme}
           />
-          {coach && <CoachMomentSlot text={coach.text} tint={coach.tint} headline={coach.headline} />}
+          {coach && (
+            <CoachMomentSlot text={coach.text} tint={coach.tint} tone={coach.tone} headline={coach.headline} />
+          )}
         </View>
       )}
     </View>
@@ -355,7 +344,7 @@ function periodSkipCount(goal: HabitChangeGoal): number {
   return goal.dayLogs.filter((e) => e.state === 'skipped' && e.date.getTime() >= monday.getTime()).length;
 }
 
-type ConfirmationLineProps = {
+type ConfirmationBlockProps = {
   isDaily: boolean;
   state: 'skipped' | 'slipped' | 'no-log';
   firstEver: boolean;
@@ -367,9 +356,17 @@ type ConfirmationLineProps = {
   partialAmount: number | undefined;
   skipValue: number;
   format: (cents: number) => string;
+  pulseStyle: PulseStyle;
+  styles: ReturnType<typeof createStyles>;
+  theme: AppTheme;
 };
 
-function ConfirmationLine({
+/**
+ * The confirmation slot: a 40px badge plus one or two lines. A skip is a sage
+ * circle-check, a slip is a cloud circle-minus. The slip badge is deliberately
+ * neutral: a slip is not a failure and never subtracts from kept.
+ */
+function ConfirmationBlock({
   isDaily,
   state,
   firstEver,
@@ -381,61 +378,99 @@ function ConfirmationLine({
   partialAmount,
   skipValue,
   format,
-}: ConfirmationLineProps) {
-  const theme = useTheme();
-  const styles = useMemo(() => createStyles(theme), [theme]);
+  pulseStyle,
+  styles,
+  theme,
+}: ConfirmationBlockProps) {
+  const skipped = state === 'skipped';
 
-  let text: string;
-  if (state === 'skipped') {
-    text = firstEver
+  let headline: string;
+  let detail: string | null = null;
+
+  if (skipped) {
+    headline = firstEver
       ? strings.habitLogging.skipConfirmationFirstEver(skipValueLabel)
-      : isDaily
-        ? strings.habitLogging.skipConfirmationDaily(skipValueLabel, weekSkips, weekAnswered)
-        : strings.habitLogging.skipConfirmationWeekly(skipValueLabel, weekSkips);
+      : strings.today.keptAdded(skipValueLabel);
+    if (!firstEver) {
+      detail = isDaily
+        ? strings.today.daysThisWeek(weekSkips, weekAnswered)
+        : strings.habitLogging.periodChip(weekSkips);
+    }
   } else if (partialAmount != null) {
-    const difference = format(Math.max(0, skipValue - partialAmount));
-    text = strings.habitLogging.partialConfirmation(format(partialAmount), skipValueLabel, difference);
+    headline = strings.habitLogging.partialConfirmation(
+      format(partialAmount),
+      skipValueLabel,
+      format(Math.max(0, skipValue - partialAmount))
+    );
   } else if (keptIsZero) {
-    text = strings.habitLogging.slipConfirmationZero;
+    headline = strings.habitLogging.slipConfirmationZero;
+  } else if (isDaily) {
+    headline = strings.today.slipLogged;
+    detail = strings.today.slipKeptStays(weekSkips, weekAnswered);
   } else {
-    text = isDaily
-      ? strings.habitLogging.slipConfirmationDaily(weekSkips, weekAnswered, keptTotal)
-      : strings.habitLogging.slipConfirmationWeekly(keptTotal);
+    headline = strings.habitLogging.slipConfirmationWeekly(keptTotal);
   }
 
-  return <Text style={styles.confirmation}>{text}</Text>;
+  return (
+    <Animated.View style={[styles.confirmationRow, skipped ? pulseStyle : null]}>
+      <View style={[styles.badge, skipped ? styles.badgeSkip : styles.badgeSlip]}>
+        <Icon
+          name={skipped ? 'Check' : 'Minus'}
+          size={20}
+          color={skipped ? theme.white : theme.mist}
+        />
+      </View>
+      <View style={styles.confirmationText}>
+        <Text style={styles.confirmationHeadline}>{headline}</Text>
+        {detail && <Text style={styles.confirmationDetail}>{detail}</Text>}
+      </View>
+    </Animated.View>
+  );
 }
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     card: {
-      backgroundColor: theme.surface,
-      borderRadius: 16,
-      padding: 16,
+      backgroundColor: theme.white,
+      borderRadius: radii.feature,
+      padding: 18,
       borderWidth: 1,
-      borderColor: theme.border,
+      borderColor: theme.cloud,
+      ...shadows.card,
     },
     header: {
       flexDirection: 'row',
-      justifyContent: 'space-between',
       alignItems: 'center',
+      gap: 8,
     },
-    headerButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 6,
+    headerSpacer: {
+      flex: 1,
     },
     name: {
-      fontSize: 17,
-      fontWeight: '600',
-      color: theme.text,
+      fontFamily: theme.fonts.uiSemibold,
+      fontSize: 16,
+      color: theme.ink,
+      flexShrink: 1,
+    },
+    cadencePill: {
+      backgroundColor: theme.coachMomentMilestoneBg,
+      borderRadius: radii.pill,
+      paddingHorizontal: 8,
+      paddingVertical: 3,
+    },
+    cadencePillText: {
+      fontFamily: theme.fonts.uiSemibold,
+      fontSize: 11,
+      color: theme.lavender,
     },
     questionBlock: {
-      marginTop: 12,
+      marginTop: 14,
     },
     question: {
-      fontSize: 15,
-      color: theme.text,
+      fontFamily: theme.fonts.ui,
+      fontSize: typeScale.body,
+      color: theme.ink,
+      flexShrink: 1,
     },
     eventHeaderRow: {
       flexDirection: 'row',
@@ -444,117 +479,104 @@ function createStyles(theme: AppTheme) {
       gap: 8,
     },
     periodChip: {
-      backgroundColor: theme.background,
-      borderRadius: 999,
+      backgroundColor: theme.snow,
+      borderRadius: radii.pill,
       paddingHorizontal: 10,
       paddingVertical: 4,
     },
     periodChipText: {
-      fontSize: 12,
-      fontWeight: '600',
-      color: theme.textSecondary,
+      fontFamily: theme.fonts.uiSemibold,
+      fontSize: typeScale.caption,
+      color: theme.slate,
+      fontVariant: ['tabular-nums'],
     },
     firstRun: {
-      fontSize: 13,
-      color: theme.textSecondary,
+      fontFamily: theme.fonts.ui,
+      fontSize: typeScale.secondary,
+      color: theme.slate,
       marginTop: 4,
     },
     buttonsRow: {
       flexDirection: 'row',
       gap: 8,
-      marginTop: 10,
-    },
-    skipButtonWrap: {
-      flex: 1,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    skipRing: {
-      position: 'absolute',
-      width: 60,
-      height: 60,
-      borderRadius: 30,
-      borderWidth: 2,
-    },
-    primaryButton: {
-      alignSelf: 'stretch',
-      minHeight: 46,
-      borderRadius: 12,
-      backgroundColor: theme.primary,
-      alignItems: 'center',
-      justifyContent: 'center',
-      paddingHorizontal: 12,
-    },
-    primaryButtonText: {
-      fontSize: 15,
-      fontWeight: '600',
-      color: theme.white,
-    },
-    secondaryButton: {
-      flex: 1,
-      minHeight: 46,
-      borderRadius: 12,
-      backgroundColor: theme.surface,
-      borderWidth: 1,
-      borderColor: theme.border,
-      alignItems: 'center',
-      justifyContent: 'center',
-      paddingHorizontal: 12,
-    },
-    secondaryButtonText: {
-      fontSize: 15,
-      fontWeight: '600',
-      color: theme.text,
-    },
-    answeredBlock: {
-      marginTop: 10,
-    },
-    confirmation: {
-      fontSize: 15,
-      color: theme.text,
-      fontWeight: '500',
-    },
-    linksRow: {
-      flexDirection: 'row',
-      gap: 16,
-      marginTop: 10,
-      flexWrap: 'wrap',
-    },
-    linkText: {
-      fontSize: 14,
-      color: theme.textSecondary,
-      fontWeight: '500',
-    },
-    backfillBlock: {
-      borderTopWidth: 1,
-      borderTopColor: theme.border,
       marginTop: 12,
-      paddingTop: 10,
     },
-    backfillPrompt: {
-      fontSize: 13,
-      color: theme.textSecondary,
-      marginBottom: 8,
+    // The skip is the point of the card, so it carries the wider share of the
+    // row as well as the only sage fill on this surface.
+    skipButton: {
+      flex: 1.6,
     },
-    backfillButtons: {
-      flexDirection: 'row',
-      gap: 8,
+    slipButton: {
+      flex: 1,
     },
     backfillButton: {
       flex: 1,
-      minHeight: 38,
-      borderRadius: 10,
-      backgroundColor: theme.surface,
-      borderWidth: 1,
-      borderColor: theme.border,
+    },
+    answeredBlock: {
+      marginTop: 14,
+    },
+    confirmationRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+    },
+    badge: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
       alignItems: 'center',
       justifyContent: 'center',
-      paddingHorizontal: 10,
+    },
+    badgeSkip: {
+      backgroundColor: theme.primary,
+    },
+    badgeSlip: {
+      backgroundColor: theme.cloud,
+    },
+    confirmationText: {
+      flex: 1,
+    },
+    confirmationHeadline: {
+      fontFamily: theme.fonts.uiSemibold,
+      fontSize: typeScale.body,
+      color: theme.ink,
+      fontVariant: ['tabular-nums'],
+    },
+    confirmationDetail: {
+      fontFamily: theme.fonts.ui,
+      fontSize: typeScale.secondary,
+      color: theme.slate,
+      marginTop: 2,
+      fontVariant: ['tabular-nums'],
+    },
+    linksRow: {
+      flexDirection: 'row',
+      gap: 18,
+      marginTop: 14,
+      flexWrap: 'wrap',
+    },
+    linkText: {
+      fontFamily: theme.fonts.uiSemibold,
+      fontSize: 14,
+      color: theme.slate,
+    },
+    backfillBlock: {
+      borderTopWidth: 1,
+      borderTopColor: theme.hairlineSubtle,
+      marginTop: 14,
+      paddingTop: 12,
+    },
+    backfillPrompt: {
+      fontFamily: theme.fonts.ui,
+      fontSize: typeScale.secondary,
+      color: theme.slate,
     },
     backfillDone: {
-      fontSize: 13,
-      color: theme.textSecondary,
-      marginTop: 10,
+      fontFamily: theme.fonts.ui,
+      fontSize: typeScale.secondary,
+      color: theme.slate,
+      marginTop: 12,
+      fontVariant: ['tabular-nums'],
     },
   });
 }

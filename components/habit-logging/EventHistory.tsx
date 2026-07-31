@@ -1,8 +1,18 @@
+/**
+ * Event history (design/redesign-handoff/04-screens.md, "Habit detail (R9)":
+ * the weekly/monthly cadence card that replaces the calendar; product rules in
+ * docs/design-package-phase2/01-habit-logging-spec.md section 4.9).
+ *
+ * A weekly or monthly leak has no daily question, so a month grid would be 28
+ * empty circles and two answers. The list shows only what actually happened,
+ * newest first: "Aug 3 · Skipped one · +$22.00" or "Aug 3 · Bought it".
+ */
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { formatDate } from '@/utils/dates';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import { radii, typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
 import type { HabitLogEntry } from '@/types/habit';
 import { strings } from '@/constants/strings';
@@ -16,11 +26,6 @@ function formatEventDate(d: Date): string {
   return formatDate(d, { month: 'short', day: 'numeric' });
 }
 
-/**
- * Event list for weekly/monthly cadence habits (spec 01 §4.9): newest first,
- * "{date} · Skipped one · +{skipValue}" or "{date} · Bought it" (partial:
- * "{date} · Bought it · {difference} kept").
- */
 export function EventHistory({ dayLogs, skipValue }: EventHistoryProps) {
   const theme = useTheme();
   const { format } = useCurrency();
@@ -30,6 +35,15 @@ export function EventHistory({ dayLogs, skipValue }: EventHistoryProps) {
     () => [...dayLogs].sort((a, b) => b.date.getTime() - a.date.getTime()),
     [dayLogs]
   );
+
+  if (events.length === 0) {
+    return (
+      <View style={styles.card}>
+        {/* TODO(step-05): hoist to strings.ts (habitDetailV2.eventHistoryEmpty). */}
+        <Text style={styles.empty}>Nothing logged yet.</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.card}>
@@ -52,29 +66,41 @@ export function EventHistory({ dayLogs, skipValue }: EventHistoryProps) {
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     card: {
-      backgroundColor: theme.surface,
-      borderRadius: 16,
-      paddingHorizontal: 16,
+      backgroundColor: theme.white,
+      borderRadius: radii.feature,
       borderWidth: 1,
-      borderColor: theme.border,
+      borderColor: theme.cloud,
+      paddingHorizontal: 18,
     },
     row: {
       flexDirection: 'row',
       justifyContent: 'space-between',
+      alignItems: 'center',
+      gap: 12,
+      minHeight: 44,
       paddingVertical: 12,
     },
     rowBorder: {
       borderBottomWidth: 1,
-      borderBottomColor: theme.border,
+      borderBottomColor: theme.hairlineSubtle,
     },
     date: {
-      fontSize: 14,
-      color: theme.textSecondary,
+      fontFamily: theme.fonts.ui,
+      fontSize: typeScale.secondary,
+      color: theme.mist,
+      fontVariant: ['tabular-nums'],
     },
     detail: {
+      fontFamily: theme.fonts.uiMedium,
       fontSize: 14,
-      fontWeight: '500',
-      color: theme.text,
+      color: theme.ink,
+      fontVariant: ['tabular-nums'],
+    },
+    empty: {
+      fontFamily: theme.fonts.ui,
+      fontSize: typeScale.secondary,
+      color: theme.mist,
+      paddingVertical: 18,
     },
   });
 }

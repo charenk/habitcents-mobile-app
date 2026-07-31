@@ -1,9 +1,32 @@
-import React, { useMemo, useState } from 'react';
-import { Modal, View, Text, StyleSheet, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
+/**
+ * Pick-one sheet (design/redesign-handoff/04-screens.md, "Pick-one sheet
+ * (R14)"; product rules in docs/design-package-phase2/01-habit-logging-spec.md
+ * section 4.3).
+ *
+ * The commitment moment: the leak's name, the evidence, and the one number the
+ * whole habit runs on. Amount first, like every other amount in the app, so the
+ * skip value is entered on the same keypad as an expense rather than in a
+ * lonely text field.
+ *
+ * Nothing is created until "Start breaking it" is tapped; "Not this one"
+ * creates nothing.
+ *
+ * PROPS ARE FROZEN. Today, habit detail, Insights, onboarding reveal/success
+ * and the Leak Scan results screen all render this sheet; the internals were
+ * rebuilt on Sheet + AmountDisplay + Keypad without touching the signature.
+ */
+import React, { useEffect, useMemo, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { AmountDisplay } from '@/components/ui/AmountDisplay';
+import { Button } from '@/components/ui/Button';
+import { Keypad } from '@/components/ui/Keypad';
+import { Sheet } from '@/components/ui/Sheet';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import { radii, typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
 import type { DetectedHabit, HabitFrequency } from '@/types/habit';
+import { centsToKeypadValue, keypadValueToCents } from '@/utils/keypad';
 import { strings } from '@/constants/strings';
 
 type PickOneSheetProps = {
@@ -33,11 +56,11 @@ function cadenceLabel(frequency: HabitFrequency): string {
   return strings.habitLogging.pickOneCadenceMonthly;
 }
 
-/**
- * The pick-one confirmation sheet (spec 01 §4.3). Opened by Break it (Habits
- * tab) or Track this leak (Leak Scan results). Nothing is created until Start
- * breaking it is tapped; Cancel creates nothing.
- */
+/** Serif titles end in a period (spec 01 §2), including habit names. */
+function titleCase(name: string): string {
+  return name.endsWith('.') ? name : `${name}.`;
+}
+
 export function PickOneSheet({
   visible,
   habit,
@@ -50,52 +73,48 @@ export function PickOneSheet({
 }: PickOneSheetProps) {
   const theme = useTheme();
   const { format } = useCurrency();
+  const { height } = useWindowDimensions();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
-  // Prefill from the detected per-occurrence average; user-editable, numeric
-  // keyboard, currency-formatted (spec §4.3 item 4). We track edits vs the
-  // prefilled value for the valueEdited analytics field.
-  const prefill = habit ? String((habit.averageAmount / 100).toFixed(2)) : '0.00';
-  const [text, setText] = useState(prefill);
+  // Prefilled from the detected per-occurrence average and edited on the keypad
+  // (spec §4.3 item 4). valueEdited compares cents against that prefill so the
+  // analytics field stays true regardless of how the string was typed.
+  const prefillCents = habit?.averageAmount ?? 0;
+  const [value, setValue] = useState(() => centsToKeypadValue(prefillCents));
 
-  React.useEffect(() => {
-    if (visible) setText(prefill);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visible, habit?.id]);
+  useEffect(() => {
+    if (visible) setValue(centsToKeypadValue(prefillCents));
+  }, [visible, habit?.id, prefillCents]);
 
   if (!habit) return null;
 
   const isDaily = habit.frequency === 'daily';
-  const parsed = parseFloat(text);
-  const parsedCents = Number.isFinite(parsed) ? Math.max(0, Math.round(parsed * 100)) : 0;
-  const valueEdited = text !== prefill;
+  const cents = keypadValueToCents(value);
+  const valueEdited = cents !== prefillCents;
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onCancel}>
-      <KeyboardAvoidingView
-        style={styles.container}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        accessibilityViewIsModal
+    <Sheet visible={visible} onClose={onCancel} accessibilityLabel={habit.name}>
+      <ScrollView
+        style={{ maxHeight: height * 0.86 }}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.grabber} />
-        <Text style={styles.title}>{habit.name}</Text>
-        <Text style={styles.subtitle}>{cadenceLabel(habit.frequency)}</Text>
+        <Text style={styles.title} accessibilityRole="header">{titleCase(habit.name)}</Text>
+        <Text style={styles.cadence}>{cadenceLabel(habit.frequency)}</Text>
 
         <Text style={styles.paragraph}>
           {strings.habitLogging.leakEvidence(habit.name, format(monthTotal), occurrences)}
         </Text>
         <Text style={styles.paragraph}>{strings.habitLogging.pickOneValueLine}</Text>
 
-        <Text style={styles.fieldLabel}>{strings.habitLogging.pickOneFieldLabel}</Text>
-        <View style={styles.inputRow}>
-          <TextInput
-            value={text}
-            onChangeText={setText}
-            keyboardType="decimal-pad"
-            style={styles.input}
-            accessibilityLabel={`${strings.habitLogging.pickOneFieldLabel}, amount`}
-          />
+        <Text style={styles.eyebrow}>{strings.habitLogging.pickOneFieldLabel}</Text>
+        <AmountDisplay valueCents={cents} focused size={46} zeroAsPlaceholder />
+
+        <View style={styles.keypad}>
+          <Keypad value={value} onChange={setValue} />
         </View>
+
         <Text style={styles.cadenceNote}>
           {isDaily ? strings.habitLogging.pickOneCadenceNoteDaily : strings.habitLogging.pickOneCadenceNoteEvent}
         </Text>
@@ -103,145 +122,104 @@ export function PickOneSheet({
         {freeTierBlocked && (
           <View style={styles.freeTierNote}>
             <Text style={styles.freeTierText}>{strings.habitLogging.freeTierNote}</Text>
-            <TouchableOpacity
+            <Pressable
               accessibilityRole="button"
               onPress={onStartTrial}
               hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
+              style={({ pressed }) => [styles.freeTierCtaHit, pressed ? styles.pressed : null]}
             >
               <Text style={styles.freeTierCta}>{strings.habitLogging.freeTierTrialCta}</Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
         )}
 
-        <View style={styles.buttons}>
-          <TouchableOpacity
-            style={[styles.primaryButton, freeTierBlocked && styles.primaryButtonDisabled]}
-            disabled={freeTierBlocked}
-            onPress={() => onStart(parsedCents, valueEdited)}
-            accessibilityRole="button"
-            accessibilityState={{ disabled: freeTierBlocked }}
-          >
-            <Text style={styles.primaryButtonText}>{strings.habitLogging.startBreakingIt}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.secondaryButton} onPress={onCancel} accessibilityRole="button">
-            <Text style={styles.secondaryButtonText}>{strings.common.cancel}</Text>
-          </TouchableOpacity>
-        </View>
-      </KeyboardAvoidingView>
-    </Modal>
+        <Button
+          label={strings.habitLogging.startBreakingIt}
+          onPress={() => onStart(cents, valueEdited)}
+          disabled={freeTierBlocked}
+          style={styles.primary}
+        />
+        <Button label={strings.habitLogging.notThisOne} variant="tertiary" onPress={onCancel} />
+      </ScrollView>
+    </Sheet>
   );
 }
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: theme.surface,
+    content: {
+      paddingTop: 10,
       paddingHorizontal: 20,
-      paddingTop: 12,
-      paddingBottom: 28,
-    },
-    grabber: {
-      width: 36,
-      height: 5,
-      borderRadius: 3,
-      backgroundColor: theme.border,
-      alignSelf: 'center',
-      marginBottom: 14,
+      paddingBottom: 16,
     },
     title: {
-      fontSize: 20,
-      fontWeight: '700',
-      color: theme.text,
+      fontFamily: theme.fonts.display,
+      fontSize: 32,
+      lineHeight: 38,
+      color: theme.ink,
     },
-    subtitle: {
-      fontSize: 13,
-      color: theme.textSecondary,
+    cadence: {
+      fontFamily: theme.fonts.ui,
+      fontSize: typeScale.secondary,
+      color: theme.slate,
       marginTop: 2,
-      marginBottom: 12,
+      marginBottom: 14,
     },
     paragraph: {
-      fontSize: 15,
-      color: theme.text,
-      lineHeight: 21,
+      fontFamily: theme.fonts.ui,
+      fontSize: 14,
+      lineHeight: 20,
+      color: theme.slate,
       marginBottom: 8,
     },
-    fieldLabel: {
-      fontSize: 13,
-      fontWeight: '600',
-      color: theme.textSecondary,
-      marginTop: 8,
+    eyebrow: {
+      fontFamily: theme.fonts.uiSemibold,
+      fontSize: typeScale.eyebrow,
+      letterSpacing: typeScale.eyebrowLetterSpacing,
+      textTransform: 'uppercase',
+      color: theme.mist,
+      marginTop: 14,
       marginBottom: 6,
     },
-    inputRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      borderWidth: 1,
-      borderColor: theme.border,
-      borderRadius: 12,
-      paddingHorizontal: 12,
-      paddingVertical: 10,
-      marginBottom: 10,
-    },
-    input: {
-      flex: 1,
-      fontSize: 17,
-      fontWeight: '600',
-      color: theme.text,
+    keypad: {
+      marginTop: 18,
     },
     cadenceNote: {
-      fontSize: 13,
-      color: theme.textSecondary,
-      marginBottom: 16,
+      fontFamily: theme.fonts.ui,
+      fontSize: typeScale.caption,
+      lineHeight: 18,
+      color: theme.mist,
+      marginTop: 14,
     },
     freeTierNote: {
-      backgroundColor: theme.background,
-      borderRadius: 12,
-      padding: 12,
-      marginBottom: 16,
-      gap: 6,
+      backgroundColor: theme.snow,
+      borderRadius: radii.card,
+      borderWidth: 1,
+      borderColor: theme.cloud,
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+      marginTop: 14,
     },
     freeTierText: {
-      fontSize: 13,
-      color: theme.textSecondary,
+      fontFamily: theme.fonts.ui,
+      fontSize: typeScale.secondary,
+      color: theme.slate,
+    },
+    freeTierCtaHit: {
+      minHeight: 32,
+      justifyContent: 'center',
+      marginTop: 2,
     },
     freeTierCta: {
-      fontSize: 13,
-      fontWeight: '600',
-      color: theme.primary,
+      fontFamily: theme.fonts.uiSemibold,
+      fontSize: typeScale.secondary,
+      color: theme.primaryDark,
     },
-    buttons: {
-      gap: 8,
-      marginTop: 'auto',
+    pressed: {
+      opacity: 0.6,
     },
-    primaryButton: {
-      minHeight: 46,
-      borderRadius: 12,
-      backgroundColor: theme.primary,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    primaryButtonDisabled: {
-      backgroundColor: theme.border,
-    },
-    primaryButtonText: {
-      fontSize: 15,
-      fontWeight: '600',
-      color: theme.white,
-    },
-    secondaryButton: {
-      minHeight: 46,
-      borderRadius: 12,
-      backgroundColor: theme.surface,
-      borderWidth: 1,
-      borderColor: theme.border,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    secondaryButtonText: {
-      fontSize: 15,
-      fontWeight: '600',
-      color: theme.text,
+    primary: {
+      marginTop: 18,
     },
   });
 }

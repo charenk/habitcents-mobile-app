@@ -1,14 +1,22 @@
+/**
+ * Categories (redesign step 04 restyle).
+ *
+ * Charen's call on 2026-07-30 keeps category management as a tab, so this is a
+ * visual pass only: serif title, a circular add button, eyebrow-labelled white
+ * cards, and the rebuilt CategoryRow. Every behavior is unchanged (CRUD, the
+ * delete confirm, the push into /category/[id], and AddCategoryModal).
+ */
 import React, { useMemo, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, SectionList, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Icon } from '@/components/ui/Icon';
+import { Icon } from '@/components/ui';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCategories } from '@/contexts/CategoriesContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
 import { CategoryRow } from '@/components/CategoryRow';
 import { AddCategoryModal } from '@/components/AddCategoryModal';
-import type { AppTheme } from '@/constants/theme';
+import { radii, typeScale, type AppTheme } from '@/constants/theme';
 import type { Category, CategoryIcon } from '@/types/category';
 import { strings } from '@/constants/strings';
 import { hapticWarning } from '@/utils/motion';
@@ -36,7 +44,7 @@ export default function CategoriesScreen() {
     getCustomCategories,
   } = useCategories();
 
-  const { expenses, getTotalByCategory } = useExpenses();
+  const { expenses } = useExpenses();
 
   const sections: CategorySection[] = useMemo(() => {
     const defaultCats = getDefaultCategories().filter(c => !c.isHidden);
@@ -45,10 +53,10 @@ export default function CategoriesScreen() {
     const result: CategorySection[] = [];
 
     if (defaultCats.length > 0) {
-      result.push({ title: strings.categories.defaultCategories, data: defaultCats });
+      result.push({ title: strings.categories.eyebrowDefault, data: defaultCats });
     }
     if (customCats.length > 0) {
-      result.push({ title: strings.categories.customCategories, data: customCats });
+      result.push({ title: strings.categories.eyebrowCustom, data: customCats });
     }
 
     return result;
@@ -67,11 +75,6 @@ export default function CategoriesScreen() {
       await addCategory(name, icon, color, monthlyBudget);
     }
   }, [editingCategory, addCategory, updateCategory]);
-
-  const handleEditCategory = useCallback((category: Category) => {
-    setEditingCategory(category);
-    setIsModalVisible(true);
-  }, []);
 
   const handleDeleteCategory = useCallback((category: Category) => {
     hapticWarning();
@@ -108,20 +111,6 @@ export default function CategoriesScreen() {
     return categoryExpenses.reduce((sum, e) => sum + e.amount, 0);
   }, [expenses]);
 
-  const renderCategory = ({ item }: { item: Category }) => (
-    <CategoryRow
-      category={item}
-      totalSpent={getCategorySpend(item)}
-      onPress={() => handleCategoryPress(item)}
-      onDelete={() => handleDeleteCategory(item)}
-      showDelete={!item.isDefault}
-    />
-  );
-
-  const renderSectionHeader = ({ section }: { section: CategorySection }) => (
-    <Text style={styles.sectionHeader}>{section.title}</Text>
-  );
-
   if (isLoading) {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -135,35 +124,51 @@ export default function CategoriesScreen() {
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
-        <Text style={styles.title}>{strings.categories.title}</Text>
-        <TouchableOpacity
-          style={styles.addButton}
+        <Text style={styles.title} accessibilityRole="header">
+          {strings.screenTitles.categories}
+        </Text>
+        <Pressable
+          style={({ pressed }) => [styles.addButton, pressed ? styles.addButtonPressed : null]}
           onPress={() => setIsModalVisible(true)}
           accessibilityRole="button"
           accessibilityLabel={strings.categories.addCategoryLabel}
         >
-          <Icon name="Plus" size={24} color={theme.primary} />
-        </TouchableOpacity>
+          <Icon name="Plus" size={18} color={theme.primary} />
+        </Pressable>
       </View>
 
-      <SectionList
-        sections={sections}
-        keyExtractor={(item) => item.id}
-        renderItem={renderCategory}
-        renderSectionHeader={renderSectionHeader}
-        contentContainerStyle={styles.listContent}
-        stickySectionHeadersEnabled={false}
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
-        ListEmptyComponent={
+      >
+        {sections.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Icon name="Folder" size={48} color={theme.textTertiary} />
+            <Icon name="Folder" size={22} color={theme.mist} />
             <Text style={styles.emptyText}>{strings.categories.emptyTitle}</Text>
-            <Text style={styles.emptySubtext}>
-              {strings.categories.emptySubtitle}
-            </Text>
+            <Text style={styles.emptySubtext}>{strings.categories.emptySubtitle}</Text>
           </View>
-        }
-      />
+        ) : (
+          sections.map((section) => (
+            <View key={section.title} style={styles.section}>
+              <Text style={styles.eyebrow}>{section.title}</Text>
+              <View style={styles.card}>
+                {section.data.map((category, index) => (
+                  <CategoryRow
+                    key={category.id}
+                    category={category}
+                    totalSpent={getCategorySpend(category)}
+                    onPress={() => handleCategoryPress(category)}
+                    onDelete={() => handleDeleteCategory(category)}
+                    showDelete={!category.isDefault}
+                    showSeparator={index < section.data.length - 1}
+                  />
+                ))}
+              </View>
+            </View>
+          ))
+        )}
+      </ScrollView>
 
       <AddCategoryModal
         visible={isModalVisible}
@@ -183,7 +188,7 @@ function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: theme.background,
+      backgroundColor: theme.snow,
     },
     header: {
       flexDirection: 'row',
@@ -191,36 +196,52 @@ function createStyles(theme: AppTheme) {
       alignItems: 'center',
       paddingHorizontal: 20,
       paddingTop: 16,
-      paddingBottom: 8,
+      paddingBottom: 4,
     },
     title: {
-      fontSize: 28,
-      fontWeight: '700',
-      color: theme.text,
+      fontSize: typeScale.screenTitle,
+      fontFamily: theme.fonts.display,
+      color: theme.ink,
     },
     addButton: {
-      width: 44,
-      height: 44,
-      borderRadius: 22,
-      backgroundColor: theme.surface,
-      justifyContent: 'center',
-      alignItems: 'center',
+      width: 40,
+      height: 40,
+      borderRadius: radii.pill,
+      backgroundColor: theme.white,
       borderWidth: 1,
-      borderColor: theme.border,
+      borderColor: theme.cloud,
+      alignItems: 'center',
+      justifyContent: 'center',
     },
-    listContent: {
-      paddingHorizontal: 16,
+    addButtonPressed: {
+      backgroundColor: theme.snow,
+    },
+    scrollView: {
+      flex: 1,
+    },
+    scrollContent: {
+      paddingHorizontal: 20,
+      paddingTop: 14,
       paddingBottom: 100,
+      gap: 20,
     },
-    sectionHeader: {
-      fontSize: 14,
-      fontWeight: '600',
-      color: theme.textSecondary,
+    section: {
+      gap: 8,
+    },
+    eyebrow: {
+      fontSize: typeScale.eyebrow,
+      fontFamily: theme.fonts.uiSemibold,
+      letterSpacing: typeScale.eyebrowLetterSpacing,
       textTransform: 'uppercase',
-      letterSpacing: 0.5,
-      marginTop: 24,
-      marginBottom: 12,
-      paddingHorizontal: 4,
+      color: theme.mist,
+      paddingHorizontal: 2,
+    },
+    card: {
+      backgroundColor: theme.white,
+      borderRadius: radii.feature,
+      borderWidth: 1,
+      borderColor: theme.cloud,
+      paddingHorizontal: 16,
     },
     loadingContainer: {
       flex: 1,
@@ -228,23 +249,24 @@ function createStyles(theme: AppTheme) {
       alignItems: 'center',
     },
     loadingText: {
-      fontSize: 16,
-      color: theme.textSecondary,
+      fontSize: typeScale.body,
+      fontFamily: theme.fonts.ui,
+      color: theme.slate,
     },
     emptyContainer: {
       alignItems: 'center',
       paddingTop: 60,
+      gap: 8,
     },
     emptyText: {
-      fontSize: 18,
-      fontWeight: '600',
-      color: theme.text,
-      marginTop: 16,
+      fontSize: 17,
+      fontFamily: theme.fonts.uiSemibold,
+      color: theme.ink,
     },
     emptySubtext: {
-      fontSize: 14,
-      color: theme.textSecondary,
-      marginTop: 8,
+      fontSize: typeScale.caption,
+      fontFamily: theme.fonts.ui,
+      color: theme.slate,
       textAlign: 'center',
     },
   });
