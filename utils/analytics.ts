@@ -80,6 +80,10 @@ export interface AnalyticsEventMap {
   answer_changed: { from: 'skipped' | 'slipped'; to: 'skipped' | 'slipped' };
   milestone_reached: { milestone: 10 | 30 | 50 | 66 };
   habit_dismissed: { source: string };
+  // Today tab (redesign U5, ADR 0019, DI-5): fires on every Spent/Kept chip
+  // tap. method is 'tap' for now; a later unit adds 'swipe' for the paired
+  // gesture, so the shape is defined here once for both.
+  today_view_switched: { to: 'spent' | 'kept'; method: 'tap' | 'swipe' };
   // Coaching (P2-2, docs/design-package-phase2/04-p2-2-coach-moments.md
   // section 5). trigger/card_id are structural identifiers only; no card
   // content, amounts, merchant, or habit names ever ride in this event.
