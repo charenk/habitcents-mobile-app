@@ -263,3 +263,47 @@ describe('Today: Spent/Kept chips', () => {
     expect(view.getByLabelText(new RegExp(strings.today.checkInPendingA11y))).toBeTruthy();
   });
 });
+
+describe('Today: break-another affordance (DI-6)', () => {
+  it('renders in the empty Kept view', async () => {
+    const view = await renderToday();
+
+    await tap(view.getByLabelText(/^Kept /));
+
+    expect(view.getByText(strings.today.breakAnotherHabitCta)).toBeTruthy();
+    expect(view.getByText(strings.habitLogging.freeTierNote)).toBeTruthy();
+  });
+
+  it('renders in the populated Kept view', async () => {
+    mockHabits = [makeHabit({ id: 'h1', frequency: 'daily', status: 'changing' })];
+    mockGoals = [makeGoal({ id: 'g1', habitId: 'h1', dayLogs: [] })];
+
+    const view = await renderToday();
+
+    await tap(view.getByLabelText(/^Kept /));
+
+    expect(view.getByText(strings.today.breakAnotherHabitCta)).toBeTruthy();
+    expect(view.getByText(strings.habitLogging.freeTierNote)).toBeTruthy();
+  });
+
+  it('under the free limit (zero active habits), press navigates to the re-audit entry', async () => {
+    const view = await renderToday();
+
+    await tap(view.getByLabelText(/^Kept /));
+    await tap(view.getByLabelText(new RegExp(`^${strings.today.breakAnotherHabitCta}`)));
+
+    expect(mockPush).toHaveBeenCalledWith('/onboarding/welcome');
+  });
+
+  it('at the free limit (one active habit), press navigates to the paywall gate', async () => {
+    mockHabits = [makeHabit({ id: 'h1', frequency: 'daily', status: 'changing' })];
+    mockGoals = [makeGoal({ id: 'g1', habitId: 'h1', dayLogs: [] })];
+
+    const view = await renderToday();
+
+    await tap(view.getByLabelText(/^Kept /));
+    await tap(view.getByLabelText(new RegExp(`^${strings.today.breakAnotherHabitCta}`)));
+
+    expect(mockPush).toHaveBeenCalledWith('/paywall?placement=habit_gate');
+  });
+});
