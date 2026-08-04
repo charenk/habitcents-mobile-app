@@ -174,6 +174,19 @@ export async function hydrateEntitlement(): Promise<Entitlement> {
 }
 
 /**
+ * Set the local mock grant directly, in memory and in storage.
+ *
+ * Exists for the developer menu (utils/devMenu.ts gate), which needs to flip
+ * free and premium to exercise the habit gate without faking a purchase.
+ * Nothing customer-facing calls it: purchase() and restore() remain the only
+ * paths a user can reach. In live mode this still only moves the mock value,
+ * which getEntitlement() ignores once a real client is installed.
+ */
+export async function setMockEntitlement(value: Entitlement): Promise<void> {
+  await writeMockEntitlement(value);
+}
+
+/**
  * Drop the local mock grant, so the free gate can be exercised again without
  * reinstalling. Used by restore() in mock mode's reset path and available to
  * settings.

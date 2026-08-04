@@ -16,12 +16,28 @@
       "distribution": "internal",
       "channel": "preview"
     },
+    "internal": {
+      "distribution": "store",
+      "channel": "internal",
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_DEV_MENU": "1"
+      }
+    },
     "production": {
       "autoIncrement": true,
-      "channel": "production"
+      "channel": "production",
+      "env": {
+        "EXPO_PUBLIC_DEV_MENU": "0"
+      }
     }
   },
   "submit": {
+    "internal": {
+      "ios": {
+        "ascAppId": "6791025610"
+      }
+    },
     "production": {
       "ios": {
         "ascAppId": "6791025610"

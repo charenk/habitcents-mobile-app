@@ -1,30 +1,20 @@
 /**
- * Dev-only sample data. Populates a realistic account (expenses across
- * categories, two detected leaks, one habit being broken mid-arc) so redesign
- * work can be checked against populated screens instead of empty states.
+ * Dev-only sample data. Builds a realistic account (expenses across categories,
+ * two detected leaks, one habit being broken mid-arc) so work can be checked
+ * against populated screens instead of empty states.
  *
- * Never shipped: every caller is gated behind `__DEV__` and the only UI trigger
- * (components/dev/DevSeedButton) renders null in production. Nothing here runs on
- * a normal launch. Dates are relative to the real "today" so the data always
- * reads as current.
+ * This file is pure fixture construction: nothing here writes storage or
+ * reloads. `data/devPersonas.ts` composes these builders into the presets the
+ * developer menu applies, and every entry point is behind DEV_MENU_ENABLED
+ * (utils/devMenu.ts), so nothing here runs on a normal launch.
+ *
+ * Dates are relative to the real "today" so the data always reads as current.
  */
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { DevSettings } from 'react-native';
 import type { Expense, ExpenseCategory, RecurrenceFrequency } from '@/types/expense';
 import type { Category, CategoryIcon } from '@/types/category';
 import type { DetectedHabit, HabitChangeGoal, HabitLogEntry } from '@/types/habit';
-import {
-  saveExpenses,
-  saveCategories,
-  saveHabits,
-  saveHabitGoals,
-  setHasOnboarded,
-  setCurrency,
-  saveOnboardingState,
-  saveProgressiveFeatureState,
-} from '@/utils/storage';
 
-function daysAgo(n: number, hour = 9, minute = 0): Date {
+export function daysAgo(n: number, hour = 9, minute = 0): Date {
   const d = new Date();
   d.setDate(d.getDate() - n);
   d.setHours(hour, minute, 0, 0);
@@ -55,7 +45,7 @@ const CATEGORY_DEFS: Array<[string, string, CategoryIcon, string]> = [
   ['cat-other', 'Other', 'ellipsis-horizontal-outline', '#9E9E9E'],
 ];
 
-function buildCategories(): Category[] {
+export function buildCategories(): Category[] {
   return CATEGORY_DEFS.map(([cid, name, icon, color]) => ({
     id: cid,
     name,
@@ -78,7 +68,7 @@ type ExpSpec = {
   variant?: 'yellow' | 'green';
 };
 
-function buildExpenses(): Expense[] {
+export function buildExpenses(): Expense[] {
   const specs: ExpSpec[] = [
     // Blue Bottle coffee: the leak being broken (repeat merchant)
     ...[[12, 8, 14], [10, 8, 32], [8, 7, 58], [5, 8, 21], [3, 8, 9], [1, 8, 40]].map(
@@ -142,7 +132,7 @@ function buildExpenses(): Expense[] {
 
 const SKIP_VALUE = 650; // $6.50 kept per skipped coffee
 
-function buildGoal(): HabitChangeGoal {
+export function buildGoal(): HabitChangeGoal {
   // 28 days of history ending yesterday: mostly skipped, a few honest slips.
   const slipDays = new Set([23, 19, 14, 6, 2]);
   const dayLogs: HabitLogEntry[] = [];
@@ -177,7 +167,7 @@ function buildGoal(): HabitChangeGoal {
   };
 }
 
-function buildHabits(): DetectedHabit[] {
+export function buildHabits(): DetectedHabit[] {
   return [
     {
       id: 'habit-coffee',
@@ -228,44 +218,4 @@ function buildHabits(): DetectedHabit[] {
       discoveredAt: daysAgo(20),
     },
   ];
-}
-
-/**
- * Overwrite local storage with the sample account and reload so every provider
- * re-hydrates. Dev only. Returns before the reload takes effect.
- */
-export async function seedDevData(): Promise<void> {
-  if (!__DEV__) return;
-  const expenses = buildExpenses();
-  await Promise.all([
-    saveCategories(buildCategories()),
-    saveExpenses(expenses),
-    saveHabits(buildHabits()),
-    saveHabitGoals([buildGoal()]),
-    setCurrency('USD'),
-    setHasOnboarded(),
-    saveOnboardingState({
-      currentStep: 'success',
-      hasSeenWelcome: true,
-      hasSeenValueProps: true,
-      hasAddedFirstExpense: true,
-      completedAt: daysAgo(28),
-      skippedSteps: [],
-    }),
-    saveProgressiveFeatureState({
-      expenseCount: expenses.length,
-      daysActive: 28,
-      revealedFeatures: ['habits', 'reports', 'upcoming'],
-      pendingReveals: [],
-      firstActiveDate: daysAgo(28),
-    }),
-  ]);
-  DevSettings.reload();
-}
-
-/** Wipe all local data and reload to the empty/onboarding state. Dev only. */
-export async function clearDevData(): Promise<void> {
-  if (!__DEV__) return;
-  await AsyncStorage.clear();
-  DevSettings.reload();
 }

@@ -16,21 +16,24 @@
  *   sends the user back to onboarding. Expenses, habits and categories stay on
  *   the device, which is what the row's hint promises.
  * - Motion lives in the Sheet primitive, which already honors reduced motion.
+ * - A third group, DEVELOPER, appears only in builds that carry the dev gate
+ *   (components/dev/DevMenuSection.tsx, utils/devMenu.ts). In production it is
+ *   a constant-false branch that renders nothing.
  */
 import React, { useMemo } from 'react';
 import {
   Alert,
   Linking,
-  Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
-  type StyleProp,
-  type ViewStyle,
+  useWindowDimensions,
 } from 'react-native';
 import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
-import { Icon } from '@/components/ui/Icon';
+import { DevMenuSection } from '@/components/dev/DevMenuSection';
+import { SettingsRow } from '@/components/settings/SettingsRow';
 import { Sheet } from '@/components/ui/Sheet';
 import { useToast } from '@/components/ui/Toast';
 import { typeScale } from '@/constants/theme';
@@ -44,6 +47,7 @@ import { useOnboarding } from '@/contexts/OnboardingContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { settingsRowLabel } from '@/utils/a11y';
 import { CURRENCIES } from '@/utils/currency';
+import { DEV_MENU_ENABLED } from '@/utils/devMenu';
 import { getEntitlement, restore } from '@/utils/purchases';
 import { clearOnboarding } from '@/utils/storage';
 
@@ -58,6 +62,7 @@ export function SettingsSheet({ visible, onClose }: SettingsSheetProps): React.J
   const router = useRouter();
   const { show } = useToast();
   const { currency, setCurrency } = useCurrency();
+  const { height: windowHeight } = useWindowDimensions();
   const { resetOnboarding } = useOnboarding();
 
   // Entitlement is read at render time; mock mode always reports 'free', so the
@@ -107,9 +112,11 @@ export function SettingsSheet({ visible, onClose }: SettingsSheetProps): React.J
 
   const version = Constants.expoConfig?.version ?? strings.settings.versionValue;
 
-  return (
-    <Sheet visible={visible} onClose={onClose} accessibilityLabel={strings.settings.sheetTitle}>
-      <View style={styles.content}>
+  // The developer group makes the sheet taller than the screen, so in a gated
+  // build the body scrolls inside a capped panel. Production takes the plain
+  // View branch and is unchanged.
+  const body = (
+    <>
         <Text style={styles.title}>{strings.settings.sheetTitle}</Text>
         {isFree ? <Text style={styles.plan}>{strings.settings.planFree}</Text> : null}
 
@@ -178,74 +185,29 @@ export function SettingsSheet({ visible, onClose }: SettingsSheetProps): React.J
             last
           />
         </View>
-      </View>
-    </Sheet>
-  );
-}
 
-type SettingsRowProps = {
-  styles: ReturnType<typeof createStyles>;
-  theme: AppTheme;
-  label: string;
-  /** Trailing value, e.g. the currency code or the app version. */
-  value?: string;
-  /** Trailing hint in small mist type, e.g. the sign-out reassurance. */
-  hint?: string;
-  onPress?: () => void;
-  chevron?: boolean;
-  destructive?: boolean;
-  /** Last row in its group: no separator below it. */
-  last?: boolean;
-  accessibilityLabel?: string;
-};
-
-/**
- * One 48pt row. Interactive rows are buttons; a static row (Version) stays a
- * labelled, non-actionable element so VoiceOver never offers a dead activation.
- */
-function SettingsRow({
-  styles,
-  theme,
-  label,
-  value,
-  hint,
-  onPress,
-  chevron,
-  destructive,
-  last,
-  accessibilityLabel,
-}: SettingsRowProps): React.JSX.Element {
-  const rowStyle: StyleProp<ViewStyle> = [styles.row, last ? styles.rowLast : null];
-  const body = (
-    <>
-      <Text style={[styles.rowLabel, destructive ? styles.rowLabelDestructive : null]}>
-        {label}
-      </Text>
-      <View style={styles.rowTrailing}>
-        {value ? <Text style={styles.rowValue}>{value}</Text> : null}
-        {hint ? <Text style={styles.rowHint}>{hint}</Text> : null}
-        {chevron ? <Icon name="ChevronRight" size={16} color={theme.mist} /> : null}
-      </View>
+        {/* Developer-only. Renders nothing unless the build carries the gate
+            (utils/devMenu.ts), so production is untouched. */}
+        {DEV_MENU_ENABLED ? (
+          <DevMenuSection styles={styles} theme={theme} onClose={onClose} />
+        ) : null}
     </>
   );
 
-  if (!onPress) {
-    return (
-      <View style={rowStyle} accessible accessibilityLabel={accessibilityLabel ?? label}>
-        {body}
-      </View>
-    );
-  }
-
   return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel ?? label}
-      style={({ pressed }) => [rowStyle, pressed ? styles.rowPressed : null]}
-    >
-      {body}
-    </Pressable>
+    <Sheet visible={visible} onClose={onClose} accessibilityLabel={strings.settings.sheetTitle}>
+      {DEV_MENU_ENABLED ? (
+        <ScrollView
+          style={{ maxHeight: Math.round(windowHeight * 0.75) }}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+        >
+          {body}
+        </ScrollView>
+      ) : (
+        <View style={styles.content}>{body}</View>
+      )}
+    </Sheet>
   );
 }
 
