@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react';
 import { useRouter } from 'expo-router';
+import { useOnboarding } from '@/contexts/OnboardingContext';
 import { useLeakScanIntake } from '@/components/leak-scan/useLeakScanIntake';
 import { IntakeScreen } from '@/components/leak-scan/IntakeScreen';
 import { ResultsScreen } from '@/components/leak-scan/ResultsScreen';
@@ -15,19 +16,21 @@ import { GracefulFailure } from '@/components/leak-scan/GracefulFailure';
  */
 export default function LeakScanRoute() {
   const router = useRouter();
+  const { chooseDoor, completeStep } = useOnboarding();
   const { state, pickAndScan, answerQuestion, reset } = useLeakScanIntake();
 
   const handleTryDifferentExport = useCallback(() => {
     reset();
   }, [reset]);
 
-  const handleStartLeakAudit = useCallback(() => {
-    // Door 1 entry point; the exact Leak Audit step route is a sibling build
-    // (P2-1 onboarding two-door fork), not yet registered. Routing to the
-    // fork's own entry keeps this a stable anchor regardless of that build's
-    // internal step routing.
-    router.push('/onboarding/welcome');
-  }, [router]);
+  const handleStartLeakAudit = useCallback(async () => {
+    // Mirror the intent picker's "break" path (spec 02 section 7: the failure
+    // action opens Leak Audit step 1). doorChosen must leave 'statements'
+    // first, or welcome's resume effect routes straight back here.
+    await chooseDoor('fresh');
+    await completeStep('fork');
+    router.push('/onboarding/audit-subs');
+  }, [chooseDoor, completeStep, router]);
 
   const handleLogByHand = useCallback(() => {
     router.push('/(tabs)/money');
