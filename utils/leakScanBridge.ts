@@ -15,6 +15,7 @@
 import type { HabitCandidate } from '@/utils/leakScan/types';
 import type { DetectedHabit, HabitFrequency } from '@/types/habit';
 import type { ExpenseCategory } from '@/types/expense';
+import { MIN_SPAN_DAYS_FOR_RATE } from '@/utils/habitDetection';
 
 /**
  * Display label for an ExpenseCategory value written by the scan. The type
@@ -85,6 +86,17 @@ export function habitCandidateToDetectedHabit(
     frequency,
     occurrencesPerPeriod: occurrencesPerPeriod(monthlyOccurrences, frequency),
     totalMonthlySpend,
+    // Observed evidence. A scan reads real statements, so its span is the
+    // covered window; the per-item spread is not in the candidate, so median,
+    // min and max all collapse to the per-occurrence average rather than being
+    // guessed (an equal min and max renders no range hint).
+    observedTotal: candidate.totalCents,
+    observedCount: candidate.occurrences,
+    spanDays: windowDays,
+    hasReliableRate: windowDays >= MIN_SPAN_DAYS_FOR_RATE,
+    medianAmount: averageAmount,
+    minAmount: averageAmount,
+    maxAmount: averageAmount,
     trend: 'stable',
     trendPercentage: 0,
     triggers: [],

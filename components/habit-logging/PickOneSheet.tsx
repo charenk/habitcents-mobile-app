@@ -14,9 +14,19 @@
  * PROPS ARE FROZEN. Today, habit detail, Insights, onboarding reveal/success
  * and the Leak Scan results screen all render this sheet; the internals were
  * rebuilt on Sheet + AmountDisplay + Keypad without touching the signature.
+ *
+ * Two changes from device feedback (2026-08-04):
+ * 1. Evidence and prefill come from the habit's observed fields. The `occurrences`
+ *    prop is a per-period RATE, so it read "1 times" for a five-log afternoon;
+ *    the sheet now uses habit.observedCount, and shows no monthly projection at
+ *    all until habit.hasReliableRate is true.
+ * 2. The gated state is a different screen, not the same screen with the button
+ *    greyed out. No amount, no keypad, no daily-question note: all three are
+ *    inert while gated. The user sees the leak, the situation, the price, and a
+ *    live way out.
  */
 import React, { useEffect, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { AmountDisplay } from '@/components/ui/AmountDisplay';
 import { Button } from '@/components/ui/Button';
 import { Keypad } from '@/components/ui/Keypad';
@@ -33,6 +43,11 @@ type PickOneSheetProps = {
   visible: boolean;
   habit: DetectedHabit | null;
   monthTotal: number;
+  /**
+   * Legacy prop, no longer rendered: it carries occurrencesPerPeriod, a rate
+   * ("1x per day"), which the evidence line used to print as a count. The real
+   * count is habit.observedCount. Kept so the frozen signature holds.
+   */
   occurrences: number;
   onCancel: () => void;
   onStart: (skipValue: number, valueEdited: boolean) => void;
@@ -76,10 +91,12 @@ export function PickOneSheet({
   const { height } = useWindowDimensions();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
-  // Prefilled from the detected per-occurrence average and edited on the keypad
-  // (spec §4.3 item 4). valueEdited compares cents against that prefill so the
-  // analytics field stays true regardless of how the string was typed.
-  const prefillCents = habit?.averageAmount ?? 0;
+  // Prefilled from the detected per-occurrence MEDIAN and edited on the keypad
+  // (spec §4.3 item 4). Median, not average: one $44 order in a set of $4-$22
+  // buys drags an average above every buy the user actually makes. valueEdited
+  // compares cents against that prefill so the analytics field stays true
+  // regardless of how the string was typed.
+  const prefillCents = habit?.medianAmount ?? habit?.averageAmount ?? 0;
   const [value, setValue] = useState(() => centsToKeypadValue(prefillCents));
 
   useEffect(() => {
@@ -91,6 +108,68 @@ export function PickOneSheet({
   const isDaily = habit.frequency === 'daily';
   const cents = keypadValueToCents(value);
   const valueEdited = cents !== prefillCents;
+  // A monthly rate is only shown once detection has watched the leak long
+  // enough to have one (utils/habitDetection.ts MIN_SPAN_DAYS_FOR_RATE).
+  const evidence = habit.hasReliableRate
+    ? strings.habitLogging.leakEvidenceReliable(habit.name, format(monthTotal), habit.observedCount)
+    : strings.habitLogging.leakEvidenceObserved(
+        habit.name,
+        format(habit.observedTotal),
+        habit.observedCount
+      );
+  const hasRange = habit.maxAmount > habit.minAmount;
+
+  const header = (
+    <>
+      <Text style={styles.title} accessibilityRole="header">{titleCase(habit.name)}</Text>
+      <Text style={styles.cadence}>
+        {strings.habitLogging.pickOneNewLeak} · {cadenceLabel(habit.frequency)}
+      </Text>
+
+      <Text style={styles.paragraph}>{evidence}</Text>
+      {!habit.hasReliableRate && (
+        <Text style={styles.hint}>{strings.habitLogging.leakEvidenceKeepLogging}</Text>
+      )}
+    </>
+  );
+
+  // Gated: a different sheet, not a disabled one. Nothing here pretends to be
+  // usable, and the only live control leads somewhere real.
+  if (freeTierBlocked) {
+    return (
+      <Sheet visible={visible} onClose={onCancel} accessibilityLabel={habit.name}>
+        <ScrollView
+          style={{ maxHeight: height * 0.86 }}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+        >
+          {header}
+
+          <View style={styles.gateCard}>
+            <Text style={styles.gateEyebrow}>{strings.habitLogging.freeTierNote}</Text>
+            <Text style={styles.gateTitle}>{strings.habitLogging.gateTitle}</Text>
+            <Text style={styles.gateBody}>
+              {strings.habitLogging.gateBody(strings.paywall.planMonthlyPrice)}
+            </Text>
+            {/* Same honesty note the paywall carries: nothing is charged yet. */}
+            <Text style={styles.gatePlanned}>{strings.paywall.plannedBanner}</Text>
+          </View>
+
+          <Button
+            label={strings.habitLogging.gateUpgradeCta}
+            onPress={() => onStartTrial?.()}
+            style={styles.primary}
+          />
+          {/* Neutral exit: the leak is not being rejected, just deferred. */}
+          <Button
+            label={strings.habitLogging.gateMaybeLater}
+            variant="tertiary"
+            onPress={onCancel}
+          />
+        </ScrollView>
+      </Sheet>
+    );
+  }
 
   return (
     <Sheet visible={visible} onClose={onCancel} accessibilityLabel={habit.name}>
@@ -100,15 +179,15 @@ export function PickOneSheet({
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <Text style={styles.title} accessibilityRole="header">{titleCase(habit.name)}</Text>
-        <Text style={styles.cadence}>{cadenceLabel(habit.frequency)}</Text>
-
-        <Text style={styles.paragraph}>
-          {strings.habitLogging.leakEvidence(habit.name, format(monthTotal), occurrences)}
-        </Text>
+        {header}
         <Text style={styles.paragraph}>{strings.habitLogging.pickOneValueLine}</Text>
 
         <Text style={styles.eyebrow}>{strings.habitLogging.pickOneFieldLabel}</Text>
+        {hasRange && (
+          <Text style={styles.hint}>
+            {strings.habitLogging.pickOneRangeHint(format(habit.minAmount), format(habit.maxAmount))}
+          </Text>
+        )}
         {/* Wrapped so VoiceOver reads one labelled value instead of the
             currency symbol and the number as two bare nodes. */}
         <View accessible accessibilityLabel={`${strings.habitLogging.pickOneFieldLabel}, ${format(cents)}`}>
@@ -123,24 +202,9 @@ export function PickOneSheet({
           {isDaily ? strings.habitLogging.pickOneCadenceNoteDaily : strings.habitLogging.pickOneCadenceNoteEvent}
         </Text>
 
-        {freeTierBlocked && (
-          <View style={styles.freeTierNote}>
-            <Text style={styles.freeTierText}>{strings.habitLogging.freeTierNote}</Text>
-            <Pressable
-              accessibilityRole="button"
-              onPress={onStartTrial}
-              hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
-              style={({ pressed }) => [styles.freeTierCtaHit, pressed ? styles.pressed : null]}
-            >
-              <Text style={styles.freeTierCta}>{strings.habitLogging.freeTierTrialCta}</Text>
-            </Pressable>
-          </View>
-        )}
-
         <Button
           label={strings.habitLogging.startBreakingIt}
           onPress={() => onStart(cents, valueEdited)}
-          disabled={freeTierBlocked}
           style={styles.primary}
         />
         <Button label={strings.habitLogging.notThisOne} variant="tertiary" onPress={onCancel} />
@@ -195,32 +259,50 @@ function createStyles(theme: AppTheme) {
       color: theme.mist,
       marginTop: 14,
     },
-    freeTierNote: {
+    // Quiet second line: the keep-logging note and the buy-range hint.
+    hint: {
+      fontFamily: theme.fonts.ui,
+      fontSize: typeScale.caption,
+      lineHeight: 18,
+      color: theme.mist,
+      marginBottom: 8,
+    },
+    gateCard: {
       backgroundColor: theme.snow,
       borderRadius: radii.card,
       borderWidth: 1,
       borderColor: theme.cloud,
       paddingHorizontal: 14,
-      paddingVertical: 12,
-      marginTop: 14,
+      paddingVertical: 14,
+      marginTop: 10,
     },
-    freeTierText: {
+    gateEyebrow: {
+      fontFamily: theme.fonts.uiSemibold,
+      fontSize: typeScale.eyebrow,
+      letterSpacing: typeScale.eyebrowLetterSpacing,
+      textTransform: 'uppercase',
+      color: theme.mist,
+      marginBottom: 6,
+    },
+    gateTitle: {
+      fontFamily: theme.fonts.uiSemibold,
+      fontSize: 16,
+      lineHeight: 22,
+      color: theme.ink,
+    },
+    gateBody: {
       fontFamily: theme.fonts.ui,
       fontSize: typeScale.secondary,
+      lineHeight: 20,
       color: theme.slate,
+      marginTop: 4,
     },
-    freeTierCtaHit: {
-      minHeight: 32,
-      justifyContent: 'center',
-      marginTop: 2,
-    },
-    freeTierCta: {
-      fontFamily: theme.fonts.uiSemibold,
-      fontSize: typeScale.secondary,
-      color: theme.primaryDark,
-    },
-    pressed: {
-      opacity: 0.6,
+    gatePlanned: {
+      fontFamily: theme.fonts.ui,
+      fontSize: typeScale.caption,
+      lineHeight: 17,
+      color: theme.mist,
+      marginTop: 10,
     },
     primary: {
       marginTop: 18,

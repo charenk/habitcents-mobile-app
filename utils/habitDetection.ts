@@ -25,6 +25,35 @@ const MIN_MONTHLY_SPEND_CENTS = 2000; // $20 minimum
 const MIN_CONFIDENCE = 0.5;
 
 /**
+ * Days of real observation required before a monthly rate is presented to the
+ * user (device feedback 2026-08-04). Detection itself is unchanged: 4 logs at
+ * one merchant still surfaces a leak. What changes is what we are willing to
+ * claim about it. Five logs inside one afternoon tell us $87 was spent; they
+ * tell us nothing about a month, and extrapolating them to "$522 a month"
+ * invents a statistic. Two weeks is the shortest span that can contain a
+ * weekly rhythm as well as a daily one.
+ */
+export const MIN_SPAN_DAYS_FOR_RATE = 14;
+
+/**
+ * Median of a list of cent amounts. Even counts average the middle pair, which
+ * can land on a half cent, so the result is rounded to whole cents. Returns 0
+ * for an empty list. Pure and exported so the skip-value prefill is testable
+ * on its own.
+ *
+ * Why median and not average: Charen's real set was $22, $12, $4, $5, $44. The
+ * average ($17.40) is pulled up by one big order; the median ($12) is the buy
+ * he actually makes, which is the number a skip is worth.
+ */
+export function medianCents(values: number[]): number {
+  if (values.length === 0) return 0;
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  if (sorted.length % 2 === 1) return sorted[mid];
+  return Math.round((sorted[mid - 1] + sorted[mid]) / 2);
+}
+
+/**
  * Generate unique ID
  */
 function generateId(): string {
@@ -344,6 +373,14 @@ export function detectHabits(
     const avgAmount = Math.round(totalAmount / groupExpenses.length);
     const { frequency, occurrencesPerPeriod, monthlyOccurrences } = calculateFrequency(groupExpenses);
 
+    // What we actually observed, as opposed to what we extrapolate from it.
+    const amounts = groupExpenses.map((e) => e.amount);
+    const sortedByDate = [...groupExpenses].sort((a, b) => a.date.getTime() - b.date.getTime());
+    const spanDays =
+      (sortedByDate[sortedByDate.length - 1].date.getTime() - sortedByDate[0].date.getTime()) /
+      MS_PER_DAY;
+    const hasReliableRate = spanDays >= MIN_SPAN_DAYS_FOR_RATE;
+
     // Normalize to monthly spend from the single canonical rate.
     const monthlySpend = Math.round(avgAmount * monthlyOccurrences);
 
@@ -378,20 +415,35 @@ export function detectHabits(
     const categoryId = groupExpenses[0].categoryId || groupExpenses[0].category;
     const sentiment = determineSentiment(categoryId, monthlySpend, trend, bigLeakCents);
 
-    // Format monthly spend for description in the active currency
+    // Format for the description in the active currency. Under the span
+    // threshold the description states the observed total instead of a monthly
+    // rate we have not earned the right to claim.
     const monthlySpendLabel = formatMoney(monthlySpend, currency, { compact: true });
+    const observedTotalLabel = formatMoney(totalAmount, currency, { compact: true });
     const habitName = createHabitName(merchant);
+    const description = hasReliableRate
+      ? `You spend ~${monthlySpendLabel}/month on ${habitName.toLowerCase()}`
+      : `${observedTotalLabel} on ${habitName.toLowerCase()} across ${groupExpenses.length} buys so far`;
 
     habits.push({
       id: generateId(),
       name: `${habitName} Spending`,
-      description: `You spend ~${monthlySpendLabel}/month on ${habitName.toLowerCase()}`,
+      description,
       categoryId,
       merchantPattern: merchant,
       averageAmount: avgAmount,
       frequency,
       occurrencesPerPeriod,
+      // Kept populated for back-compat (savings goals, sorting, legacy rows).
+      // Surfaces must consult hasReliableRate before showing it as a rate.
       totalMonthlySpend: monthlySpend,
+      observedTotal: totalAmount,
+      observedCount: groupExpenses.length,
+      spanDays,
+      hasReliableRate,
+      medianAmount: medianCents(amounts),
+      minAmount: Math.min(...amounts),
+      maxAmount: Math.max(...amounts),
       trend,
       trendPercentage,
       triggers,
@@ -441,6 +493,16 @@ export function mergeHabits(
         averageAmount: habit.averageAmount,
         occurrencesPerPeriod: habit.occurrencesPerPeriod,
         totalMonthlySpend: habit.totalMonthlySpend,
+        // Observed evidence is refreshed with the rest of the numbers, so a
+        // habit stored before this field existed becomes honest on the next
+        // detection pass rather than keeping its old projection copy.
+        observedTotal: habit.observedTotal,
+        observedCount: habit.observedCount,
+        spanDays: habit.spanDays,
+        hasReliableRate: habit.hasReliableRate,
+        medianAmount: habit.medianAmount,
+        minAmount: habit.minAmount,
+        maxAmount: habit.maxAmount,
         trend: habit.trend,
         trendPercentage: habit.trendPercentage,
         triggers: habit.triggers,

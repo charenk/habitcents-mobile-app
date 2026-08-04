@@ -15,6 +15,7 @@ import {
   Inter_700Bold,
 } from '@expo-google-fonts/inter';
 import { initAnalytics, track, flushAnalytics } from '@/utils/analytics';
+import { hydrateEntitlement } from '@/utils/purchases';
 import { ThemeProvider, useIsDark } from '@/contexts/ThemeContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { CategoriesProvider } from '@/contexts/CategoriesContext';
@@ -75,6 +76,13 @@ export default function RootLayout() {
   useEffect(() => {
     if (fontsLoaded || fontError) SplashScreen.hideAsync();
   }, [fontsLoaded, fontError]);
+
+  // Read the stored entitlement back into memory before the first gate check.
+  // Feature gates read it synchronously during render, so it has to be warm
+  // rather than awaited per call.
+  useEffect(() => {
+    void hydrateEntitlement();
+  }, []);
 
   if (!fontsLoaded && !fontError) return null;
 

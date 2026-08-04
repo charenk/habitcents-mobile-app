@@ -385,6 +385,17 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
       frequency: input.frequency,
       occurrencesPerPeriod: input.occurrencesPerPeriod,
       totalMonthlySpend: input.totalMonthlySpend,
+      // Audit-seeded habits carry a cadence the user stated themselves, so the
+      // monthly line is their own arithmetic rather than an extrapolation from
+      // a handful of logs: the rate is presentable from the start. There is no
+      // per-buy history yet, so the spread collapses to the stated average.
+      observedTotal: input.totalMonthlySpend,
+      observedCount: input.occurrencesPerPeriod,
+      spanDays: 0,
+      hasReliableRate: true,
+      medianAmount: input.averageAmount,
+      minAmount: input.averageAmount,
+      maxAmount: input.averageAmount,
       trend: 'stable',
       trendPercentage: 0,
       triggers: [],
