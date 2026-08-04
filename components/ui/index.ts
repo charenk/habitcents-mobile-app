@@ -14,3 +14,5 @@ export { SegmentedControl } from './SegmentedControl';
 export type { SegmentedControlProps } from './SegmentedControl';
 export { Chip } from './Chip';
 export type { ChipProps } from './Chip';
+export { ScreenHeader } from './ScreenHeader';
+export type { ScreenHeaderProps, ScreenHeaderAction } from './ScreenHeader';

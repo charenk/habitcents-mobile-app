@@ -19,6 +19,7 @@ import { LeaksCard, type LeakRowData } from '@/components/insights/LeaksCard';
 import { WhereItWentCard } from '@/components/insights/WhereItWentCard';
 import { PaceCard, type PaceComparison } from '@/components/insights/PaceCard';
 import { PickOneSheet } from '@/components/habit-logging/PickOneSheet';
+import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { categoryEmoji, categoryIdentityColor } from '@/constants/categoryEmoji';
 import { hasFullMonthOfData } from '@/utils/recurring';
 import { isHabitLimitReached } from '@/utils/habitLogging';
@@ -126,6 +127,7 @@ export default function InsightsScreen() {
   if (isLoading) {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
+        <ScreenHeader title={strings.screenTitles.insights} />
         <View style={styles.loadingContainer}>
           <Text style={styles.loadingText}>{strings.reports.loading}</Text>
         </View>
@@ -135,11 +137,7 @@ export default function InsightsScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <View style={styles.header}>
-        <Text style={styles.title} accessibilityRole="header">
-          {strings.screenTitles.insights}
-        </Text>
-      </View>
+      <ScreenHeader title={strings.screenTitles.insights} />
 
       <ScrollView
         style={styles.scrollView}
@@ -182,16 +180,6 @@ function createStyles(theme: AppTheme) {
     container: {
       flex: 1,
       backgroundColor: theme.snow,
-    },
-    header: {
-      paddingHorizontal: 20,
-      paddingTop: 16,
-      paddingBottom: 4,
-    },
-    title: {
-      fontSize: typeScale.screenTitle,
-      fontFamily: theme.fonts.display,
-      color: theme.ink,
     },
     scrollView: {
       flex: 1,

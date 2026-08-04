@@ -12,6 +12,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
+import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { SettingsSheet } from '@/components/SettingsSheet';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useHabits } from '@/contexts/HabitsContext';
@@ -52,8 +53,8 @@ type HabitSection = {
 
 /**
  * Today (redesign step 02). Same habit-logging content the Habits tab carried;
- * only the screen header is new: an eyebrow date line above the serif title,
- * with a gear that opens the settings sheet.
+ * the header is ScreenHeader with the date as its eyebrow below the serif
+ * title, and a gear that opens the settings sheet.
  */
 export default function TodayScreen() {
   const insets = useSafeAreaInsets();
@@ -116,9 +117,10 @@ export default function TodayScreen() {
     setLogVisible(true);
   }, []);
 
-  // Eyebrow date line, locale-aware (ADA-008): "THURSDAY, JULY 24".
+  // Eyebrow date line, locale-aware (ADA-008): "Thursday, July 24".
+  // ScreenHeader uppercases it, so this stays sentence case.
   const todayLabel = useMemo(
-    () => formatDate(new Date(), { weekday: 'long', month: 'long', day: 'numeric' }).toUpperCase(),
+    () => formatDate(new Date(), { weekday: 'long', month: 'long', day: 'numeric' }),
     []
   );
 
@@ -381,20 +383,13 @@ export default function TodayScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <View style={styles.header}>
-        <View style={styles.headerTitles}>
-          <Text style={styles.eyebrow}>{todayLabel}</Text>
-          <Text style={styles.title}>{strings.screenTitles.today}</Text>
-        </View>
-        <TouchableOpacity
-          style={styles.gearButton}
-          onPress={() => setSettingsVisible(true)}
-          accessibilityRole="button"
-          accessibilityLabel={strings.settings.title}
-        >
-          <Icon name="Settings2" size={18} color={theme.slate} />
-        </TouchableOpacity>
-      </View>
+      <ScreenHeader
+        title={strings.screenTitles.today}
+        eyebrow={todayLabel}
+        actions={[
+          { icon: 'Settings2', label: strings.settings.title, onPress: () => setSettingsVisible(true) },
+        ]}
+      />
 
       <KeptHero cents={totalKept} />
 
@@ -524,41 +519,14 @@ function createStyles(theme: AppTheme) {
       flex: 1,
       backgroundColor: theme.background,
     },
-    header: {
-      flexDirection: 'row',
-      alignItems: 'flex-start',
-      justifyContent: 'space-between',
-      paddingHorizontal: 20,
-      paddingTop: 16,
-      paddingBottom: 4,
-    },
-    headerTitles: {
-      flex: 1,
-    },
     eyebrow: {
       fontSize: typeScale.eyebrow,
       fontFamily: theme.fonts.uiSemibold,
       letterSpacing: typeScale.eyebrowLetterSpacing,
       color: theme.mist,
     },
-    title: {
-      fontSize: typeScale.screenTitle,
-      fontFamily: theme.fonts.display,
-      color: theme.ink,
-    },
-    gearButton: {
-      width: 40,
-      height: 40,
-      borderRadius: radii.pill,
-      backgroundColor: theme.white,
-      borderWidth: 1,
-      borderColor: theme.cloud,
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginTop: 4,
-    },
     listContent: {
-      paddingHorizontal: 16,
+      paddingHorizontal: 20,
       paddingBottom: 100,
     },
     // Quick log and logged-today (spec 04 "Today" 3 and 4).
