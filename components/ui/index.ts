@@ -2,7 +2,7 @@
  * Shared UI primitives for the redesign (spec 01, section 5).
  * Import from '@/components/ui' rather than the individual files.
  */
-export { Icon, CATEGORY_ICON_MAP } from './Icon';
+export { Icon, CATEGORY_ICON_MAP, categoryIconName } from './Icon';
 export type { IconName } from './Icon';
 export { EmojiTile } from './EmojiTile';
 export { AmountDisplay } from './AmountDisplay';

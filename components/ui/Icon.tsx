@@ -126,10 +126,18 @@ type IconProps = Omit<SvgProps, 'color'> & {
   strokeWidth?: number;
 };
 
+/**
+ * Rendered when a lookup misses. A name can only miss if it came from data
+ * rather than from source (see categoryIconName), and a missing glyph must
+ * degrade to a neutral mark, never to undefined: React throws "Element type
+ * is invalid" and takes the whole screen down with it.
+ */
+const FALLBACK_GLYPH: IconName = 'Ellipsis';
+
 export function Icon({ name, size = 18, color, strokeWidth = 1.5, ...rest }: IconProps) {
   const theme = useTheme();
   const resolvedColor = color ?? theme.ink;
-  const Glyph = GLYPHS[name];
+  const Glyph = GLYPHS[name] ?? GLYPHS[FALLBACK_GLYPH];
   return <Glyph size={size} color={resolvedColor} strokeWidth={strokeWidth} {...rest} />;
 }
 
@@ -161,3 +169,16 @@ export const CATEGORY_ICON_MAP: Record<CategoryIcon, IconName> = {
   'card-outline': 'CreditCard',
   'ellipsis-horizontal-outline': 'Ellipsis',
 };
+
+/**
+ * Resolve a stored category.icon string to a glyph name.
+ *
+ * category.icon comes out of AsyncStorage, so TypeScript's CategoryIcon union
+ * is a claim about the data, not a guarantee: an older seed set, a hand-edited
+ * record or a future rename all produce a string with no entry in the map.
+ * Indexing directly returned undefined and crashed the Categories screen, so
+ * unknown names degrade to the neutral "other" glyph instead.
+ */
+export function categoryIconName(icon: string): IconName {
+  return CATEGORY_ICON_MAP[icon as CategoryIcon] ?? 'Ellipsis';
+}
