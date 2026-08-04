@@ -15,6 +15,7 @@ import { SpendPulse } from './SpendPulse';
 import { HabitCard } from './HabitCard';
 import { ProjectionSection } from './ProjectionSection';
 import { ResultsFooter } from './ResultsFooter';
+import { useCompleteScanOnboarding } from './useCompleteScanOnboarding';
 import { ReviewQueueSheet } from './ReviewQueueSheet';
 import { CategoryTransactionsSheet } from './CategoryTransactionsSheet';
 import { PulseDayDetailSheet } from './PulseDayDetailSheet';
@@ -74,6 +75,7 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
   const toast = useToast();
   const { addExpense, deleteExpense, expenses } = useExpenses();
   const { addScanHabit, startBreakingHabit, dismissHabit, getHabitById, getActiveHabits } = useHabits();
+  const completeScanOnboarding = useCompleteScanOnboarding();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   const [result, setResult] = useState(initialResult);
@@ -256,12 +258,15 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
       });
     }
     track('scan_seed15_applied', { rows: seeded.length });
+    // This is the scan door's only exit into the app; it must complete
+    // onboarding here or the user loops back into an empty scan on relaunch.
+    await completeScanOnboarding();
     router.push('/(tabs)');
     // Every mutating action confirms itself (spec 01 section 5). This one
     // writes about 15 expenses, so landing on Today in silence left the user
     // with no evidence the import happened.
     toast.show(strings.leakScan.savedToHabitCents);
-  }, [result, addExpense, router, toast]);
+  }, [result, addExpense, router, toast, completeScanOnboarding]);
 
   if (undone) {
     return (
