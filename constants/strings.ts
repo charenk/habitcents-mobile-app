@@ -663,7 +663,17 @@ export const strings = {
   money: {
     segmentSpent: 'Spent',
     segmentUpcoming: 'Upcoming',
+    segmentHabits: 'Habits',
     segmentLabel: 'Money view',
+    // Habits (management surface for every leak and habit, ADR 0019 DI-8).
+    // count is ACTIVE habits (status tracking or changing) only, so the total
+    // is never claimed for a leak nobody has started breaking yet.
+    habitsManagedSummary: (count: number, formattedTotal: string) =>
+      `${count} habit${count === 1 ? '' : 's'} managed · about ${formattedTotal} a month`,
+    // Shown instead when every row is still a discovered-not-started leak, so
+    // the line never reads "0 habits managed" over a real dollar figure.
+    habitsDiscoveredSummary: (count: number) =>
+      `${count} leak${count === 1 ? '' : 's'} found, none managed yet`,
     // Spent
     spentGroupHeader: (dayLabel: string, total: string) => `${dayLabel} · ${total}`,
     spentToday: 'Today',
