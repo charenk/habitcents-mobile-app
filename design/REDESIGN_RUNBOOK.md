@@ -39,6 +39,21 @@ Ground-up visual redesign: one sage green + calm neutrals, Instrument Serif + In
 3. Opus reviewer subagent signs off against the step's numbered spec (every exact hex/px/radius/size/copy value) and the repo rules in `mobile-app/CLAUDE.md`.
 4. PR to main using the repo template, labeled needs-user-test (Lane 2), with simulator captures and a what-to-test checklist. Update this tracker. Stop and show Charen.
 
+## Release-boot gate: REQUIRED before every `eas build` submit
+
+Builds 4 and 5 both shipped launch crashes that a local release run would have caught. A dev build proves nothing about a store build. Before any `eas build -p ios --profile production`:
+
+1. **Regenerate the native project first.** `ios/` is gitignored and goes stale silently; a project prebuilt before a later `app.json` change (an added `updates.url`, a new plugin) produces a *different* app from the one EAS builds. Build 5's first local release repro was worthless for exactly this reason: `ios/` was prebuilt 2026-07-03, before EAS Update landed, so `Expo.plist` had `EXUpdatesEnabled=false` and expo-updates never ran locally.
+   `LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 npx expo prebuild -p ios --clean`
+2. **Confirm the local config matches EAS.** `ios/HabitCents/Supporting/Expo.plist` must show `EXUpdatesEnabled=true` with `EXUpdatesURL` and `EXUpdatesRuntimeVersion`, and the built `.app` must contain `EXUpdates.bundle/app.manifest` plus `EXUpdates.bundle/fingerprint`. That fingerprint must equal the `Runtime Version` shown by `eas build:view` for the build you are comparing against; if it does not, you are not testing the same app.
+3. **Build and boot in Release.**
+   `CI=1 LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 npx expo run:ios --configuration Release --device <booted sim UDID>`
+   Metro is not used (the bundle is embedded); kill any stray `expo start` first.
+4. **Walk it:** boots to Today or onboarding, all four tabs, habit detail, paywall from settings gear > Premium, log an expense.
+5. **Upgrade seed:** write legacy-format records (flat `recurrence` strings, no `recurrenceRule`, ionicon-name category icons) plus `@habitcents_onboarded='true'` into the release app's `Library/Application Support/com.habitcents.app/RCTAsyncLocalStorage_V1/manifest.json` inside the sim container, relaunch, open Money > Upcoming. Items must project with no duplicates and no crash.
+
+Known limit: the local simulator runtime tracks the installed Xcode (currently 16.2 / iOS 18.3), while Charen's device is on iOS 26. This gate cannot catch an iOS-26-only failure. When a crash reproduces on device but not here, get the exception reason off the device before guessing: plug the iPhone into the Mac, open Console.app, filter on HabitCents, and launch the app. The `.ips` file from Analytics Data strips the NSException reason string; the live device log does not.
+
 ## Repo rules that bite (from mobile-app/CLAUDE.md)
 
 No em dashes anywhere (UI, code, comments). Sentence case. Keep the leak / skip / kept / slip vocabulary. Amounts always via `useCurrency().format`. Green is positive-only. Honor prefers-reduced-motion. Synthetic Leak Scan fixtures only. Never commit to main; branch per ADR 0012.
