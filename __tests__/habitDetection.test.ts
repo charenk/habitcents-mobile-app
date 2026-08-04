@@ -18,6 +18,11 @@ function makeExpense(
 ): Expense {
   const date = new Date();
   date.setDate(date.getDate() - daysAgo);
+  // The detection cutoff is computed a few ms AFTER this date, so a series
+  // ending exactly 90 days back sits ms-outside the window and drops below
+  // MIN_OCCURRENCES under CI load. Five minutes of margin keeps the docstring
+  // true on any machine.
+  date.setMinutes(date.getMinutes() + 5);
   return {
     id: `${merchant}-${daysAgo}`,
     title: merchant,
