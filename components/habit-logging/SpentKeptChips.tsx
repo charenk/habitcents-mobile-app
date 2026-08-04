@@ -63,6 +63,11 @@ export function SpentKeptChips({
         accessibilityState={{ selected: spentSelected }}
         accessibilityLabel={selectableLabel(`${strings.today.spentChipLabel} ${formattedSpent}`, spentSelected)}
         style={[styles.card, spentSelected ? styles.cardSelected : styles.cardUnselected]}
+        // DI-7: a stable non-a11y hook for tests, since both Today panes now
+        // stay mounted and can carry their own "Kept"/"Spent"-prefixed a11y
+        // labels (e.g. KeptHero's "Kept so far, ..."), which broke the old
+        // getByLabelText(/^Kept /) pattern used to find this chip.
+        testID="spent-chip"
       >
         <Text style={styles.eyebrow} maxFontSizeMultiplier={1.5}>
           {strings.today.spentChipLabel.toUpperCase()}
@@ -81,6 +86,7 @@ export function SpentKeptChips({
           selectableLabel(`${strings.today.keptChipLabel} ${formattedKept}`, keptSelected) + pendingSuffix
         }
         style={[styles.card, keptSelected ? styles.cardSelected : styles.cardUnselected]}
+        testID="kept-chip"
       >
         <View style={styles.keptEyebrowRow}>
           <Text style={styles.eyebrow} maxFontSizeMultiplier={1.5}>

@@ -1,5 +1,6 @@
 /**
- * Today: Spent/Kept chip views (redesign U5, ADR 0019, DI-5).
+ * Today: Spent/Kept chip views (redesign U5, ADR 0019, DI-5) plus the DI-7
+ * swipe pager between them.
  *
  * Provider wiring mirrors __tests__/profile.test.tsx (SafeAreaProvider with
  * initialMetrics + ThemeProvider + CurrencyProvider + ToastProvider), plus
@@ -8,10 +9,24 @@
  * test.tsx uses for the same two data contexts): the real HabitsContext hits
  * AsyncStorage and coach-moment selection, neither of which this suite needs,
  * and a direct mock lets each test seed goals/habits/expenses synchronously.
+ *
+ * DI-7 note: both panes stay mounted at all times now (the pager scrolls
+ * between them rather than swapping which one exists), so a plain
+ * getByText/getByLabelText presence check against pane content no longer
+ * proves which view is selected, and getByLabelText(/^Kept /) started
+ * matching two things at once (the chip and KeptHero's always-mounted "Kept
+ * so far, ..." label). Selection is verified two ways below instead: the
+ * chips' own testID (spent-chip / kept-chip, added alongside the pager) plus
+ * their accessibilityState, and, for the swipe path, by invoking the
+ * pager's onMomentumScrollEnd handler directly with a synthetic event
+ * (testID today-pager) and checking the resulting chip state and analytics
+ * call, the same way a real swipe would drive it.
  */
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock')
 );
+
+jest.mock('@/utils/analytics', () => ({ track: jest.fn() }));
 
 const mockPush = jest.fn();
 jest.mock('expo-router', () => {
@@ -68,6 +83,7 @@ jest.mock('@/contexts/CategoriesContext', () => ({
 
 import React from 'react';
 import { act, cleanup, fireEvent, render } from '@testing-library/react-native';
+import { Dimensions } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
@@ -75,8 +91,15 @@ import { ToastProvider } from '@/components/ui/Toast';
 import TodayScreen from '@/app/(tabs)/index';
 import { strings } from '@/constants/strings';
 import { formatMoney } from '@/utils/currency';
+import { track } from '@/utils/analytics';
 import type { Expense } from '@/types/expense';
 import type { DetectedHabit, HabitChangeGoal } from '@/types/habit';
+
+const mockTrack = track as jest.Mock;
+// Same source useWindowDimensions() reads from, so a synthetic
+// onMomentumScrollEnd offset of exactly one window width lands on page 1
+// (Kept) the same way the real pager's paging math would.
+const windowWidth = Dimensions.get('window').width;
 
 const initialMetrics = {
   frame: { x: 0, y: 0, width: 390, height: 844 },
@@ -182,6 +205,7 @@ beforeEach(() => {
   mockHabits = [];
   mockExpenses = [];
   mockPush.mockClear();
+  mockTrack.mockClear();
 });
 
 afterEach(cleanup);
@@ -208,22 +232,62 @@ describe('Today: Spent/Kept chips', () => {
   it('tapping Kept swaps to habit content', async () => {
     const view = await renderToday();
 
-    await tap(view.getByLabelText(/^Kept /));
+    await tap(view.getByTestId('kept-chip'));
 
+    // Both panes stay mounted (DI-7), so selection is proved by which chip
+    // reports selected, not by pane content existing (keptSoFar is always
+    // in the tree now). The tap also fires the existing tap analytics event
+    // unchanged.
     expect(view.getByLabelText(/^Kept .*, selected/)).toBeTruthy();
-    expect(view.getByText(strings.habitLogging.keptSoFar)).toBeTruthy();
+    expect(view.getByLabelText(/^Spent .*, not selected/)).toBeTruthy();
+    expect(mockTrack).toHaveBeenCalledWith('today_view_switched', { to: 'kept', method: 'tap' });
   });
 
   it('tapping Spent swaps back', async () => {
     const view = await renderToday();
 
-    await tap(view.getByLabelText(/^Kept /));
-    expect(view.getByText(strings.habitLogging.keptSoFar)).toBeTruthy();
+    await tap(view.getByTestId('kept-chip'));
+    expect(view.getByLabelText(/^Kept .*, selected/)).toBeTruthy();
 
-    await tap(view.getByLabelText(/^Spent /));
+    await tap(view.getByTestId('spent-chip'));
 
     expect(view.getByLabelText(/^Spent .*, selected/)).toBeTruthy();
-    expect(view.getAllByLabelText(strings.today.quickLogOpenLabel).length).toBeGreaterThan(0);
+    expect(view.getByLabelText(/^Kept .*, not selected/)).toBeTruthy();
+    expect(mockTrack).toHaveBeenLastCalledWith('today_view_switched', { to: 'spent', method: 'tap' });
+  });
+
+  it('a synthetic pager swipe to page 1 switches to Kept and fires the swipe analytics event', async () => {
+    const view = await renderToday();
+    const pager = view.getByTestId('today-pager');
+
+    // Mirrors what a real swipe delivers: onMomentumScrollEnd firing once
+    // the pager has already physically settled on the next page's offset.
+    await act(async () => {
+      fireEvent(pager, 'momentumScrollEnd', {
+        nativeEvent: { contentOffset: { x: windowWidth } },
+      });
+    });
+
+    expect(view.getByLabelText(/^Kept .*, selected/)).toBeTruthy();
+    expect(view.getByLabelText(/^Spent .*, not selected/)).toBeTruthy();
+    expect(mockTrack).toHaveBeenCalledWith('today_view_switched', { to: 'kept', method: 'swipe' });
+  });
+
+  it('a momentum end that settles back on the current page does not re-fire analytics', async () => {
+    const view = await renderToday();
+    const pager = view.getByTestId('today-pager');
+
+    // A momentum end landing on the page that is already selected (e.g. the
+    // settle after a chip-tap-triggered programmatic scroll) must not double
+    // count as a swipe.
+    await act(async () => {
+      fireEvent(pager, 'momentumScrollEnd', {
+        nativeEvent: { contentOffset: { x: 0 } },
+      });
+    });
+
+    expect(view.getByLabelText(/^Spent .*, selected/)).toBeTruthy();
+    expect(mockTrack).not.toHaveBeenCalled();
   });
 
   it('a seeded today expense of class spend moves the Spent chip, a transfer does not', async () => {
@@ -265,11 +329,16 @@ describe('Today: Spent/Kept chips', () => {
 });
 
 describe('Today: break-another affordance (DI-6)', () => {
+  // Both panes stay mounted (DI-7), so the affordance's presence in the tree
+  // no longer depends on the Kept tap; the tap here is kept for realism and
+  // to prove the chip actually reaches selected, which the DI-6 assertions
+  // below now check alongside the affordance text.
   it('renders in the empty Kept view', async () => {
     const view = await renderToday();
 
-    await tap(view.getByLabelText(/^Kept /));
+    await tap(view.getByTestId('kept-chip'));
 
+    expect(view.getByLabelText(/^Kept .*, selected/)).toBeTruthy();
     expect(view.getByText(strings.today.breakAnotherHabitCta)).toBeTruthy();
     expect(view.getByText(strings.habitLogging.freeTierNote)).toBeTruthy();
   });
@@ -280,8 +349,9 @@ describe('Today: break-another affordance (DI-6)', () => {
 
     const view = await renderToday();
 
-    await tap(view.getByLabelText(/^Kept /));
+    await tap(view.getByTestId('kept-chip'));
 
+    expect(view.getByLabelText(/^Kept .*, selected/)).toBeTruthy();
     expect(view.getByText(strings.today.breakAnotherHabitCta)).toBeTruthy();
     expect(view.getByText(strings.habitLogging.freeTierNote)).toBeTruthy();
   });
@@ -289,7 +359,7 @@ describe('Today: break-another affordance (DI-6)', () => {
   it('under the free limit (zero active habits), press navigates to the re-audit entry', async () => {
     const view = await renderToday();
 
-    await tap(view.getByLabelText(/^Kept /));
+    await tap(view.getByTestId('kept-chip'));
     await tap(view.getByLabelText(new RegExp(`^${strings.today.breakAnotherHabitCta}`)));
 
     expect(mockPush).toHaveBeenCalledWith('/onboarding/welcome');
@@ -301,7 +371,7 @@ describe('Today: break-another affordance (DI-6)', () => {
 
     const view = await renderToday();
 
-    await tap(view.getByLabelText(/^Kept /));
+    await tap(view.getByTestId('kept-chip'));
     await tap(view.getByLabelText(new RegExp(`^${strings.today.breakAnotherHabitCta}`)));
 
     expect(mockPush).toHaveBeenCalledWith('/paywall?placement=habit_gate');

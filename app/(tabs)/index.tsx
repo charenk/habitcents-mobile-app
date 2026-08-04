@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect, useState, useCallback } from 'react';
+import React, { useMemo, useEffect, useState, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,9 @@ import {
   ScrollView,
   RefreshControl,
   TouchableOpacity,
+  useWindowDimensions,
+  type NativeSyntheticEvent,
+  type NativeScrollEvent,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect, useLocalSearchParams } from 'expo-router';
@@ -34,6 +37,7 @@ import { cardText, type CoachMomentCardId } from '@/utils/coachMoments';
 import { progressTowardDetection } from '@/utils/habitDetection';
 import { formatDate } from '@/utils/dates';
 import { track } from '@/utils/analytics';
+import { useReducedMotion } from '@/utils/motion';
 import { radii, typeScale, type AppTheme } from '@/constants/theme';
 import type { DetectedHabit, HabitChangeGoal } from '@/types/habit';
 import { strings } from '@/constants/strings';
@@ -64,6 +68,17 @@ export default function TodayScreen() {
   const [pickOneHabitId, setPickOneHabitId] = useState<string | null>(null);
   const [partialGoalId, setPartialGoalId] = useState<string | null>(null);
   const [todayView, setTodayView] = useState<SpentKeptView>('spent');
+  // DI-7 pager plumbing (ADR 0019): see the comment block at the pager
+  // itself, below, for the no-new-drivers / drop-safety rationale.
+  const pagerRef = useRef<ScrollView>(null);
+  const [pagerReady, setPagerReady] = useState(false);
+  const pagerLayoutDone = useRef(false);
+  // False until the first tap or swipe; deep-link/init positioning stays
+  // silent (no animation) regardless of the reduced-motion setting because
+  // it never happens, it only reads the setting once a person has acted.
+  const pagerInteracted = useRef(false);
+  const { width: screenWidth } = useWindowDimensions();
+  const reducedMotion = useReducedMotion();
   // DT-1 (P2-2): resolved once, attached to whichever leak is first in the
   // list at that moment, so the card only ever renders on one LeakCard.
   const [detectionMoment, setDetectionMoment] = useState<{ habitId: string; cardId: CoachMomentCardId } | null>(null);
@@ -146,9 +161,46 @@ export default function TodayScreen() {
   }, [params.view]);
 
   const handleTodayViewChange = useCallback((view: SpentKeptView) => {
+    pagerInteracted.current = true;
     setTodayView(view);
     track('today_view_switched', { to: view, method: 'tap' });
   }, []);
+
+  // Chips stay the source of truth for the selected state; this only moves
+  // the pager to match whatever todayView currently is. animated is false
+  // for the very first positioning (deep link or default) because
+  // pagerInteracted is still false at that point, true once a person has
+  // tapped or swiped, unless reduced motion says otherwise.
+  const scrollPagerTo = useCallback((view: SpentKeptView, animated: boolean) => {
+    pagerRef.current?.scrollTo({ x: view === 'kept' ? screenWidth : 0, y: 0, animated });
+  }, [screenWidth]);
+
+  const handlePagerLayout = useCallback(() => {
+    if (pagerLayoutDone.current) return;
+    pagerLayoutDone.current = true;
+    setPagerReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (!pagerReady) return;
+    scrollPagerTo(todayView, pagerInteracted.current && !reducedMotion);
+  }, [pagerReady, todayView, reducedMotion, scrollPagerTo]);
+
+  // Swipe path: the pager has already physically landed on a page by the
+  // time momentum ends, so this only reads where it landed and syncs
+  // todayView + analytics to match. A landing that matches the current
+  // todayView (e.g. momentum end firing for the same programmatic scroll a
+  // chip tap just triggered) fires nothing, so a tap never double-counts.
+  const handlePagerMomentumEnd = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    if (!screenWidth) return;
+    const landedIndex = Math.round(e.nativeEvent.contentOffset.x / screenWidth);
+    const landedView: SpentKeptView = landedIndex >= 1 ? 'kept' : 'spent';
+    pagerInteracted.current = true;
+    if (landedView !== todayView) {
+      setTodayView(landedView);
+      track('today_view_switched', { to: landedView, method: 'swipe' });
+    }
+  }, [screenWidth, todayView]);
 
   // Coach Moment (P2-2, acceptance test 2): clear on blur (tab switch away)
   // so returning to an already-answered card does not re-show the same card.
@@ -396,22 +448,50 @@ export default function TodayScreen() {
         />
       </View>
 
-      {todayView === 'spent' ? (
-        <ScrollView
-          style={styles.spentScroll}
-          contentContainerStyle={styles.spentScrollContent}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={theme.primary} />
-          }
-        >
-          <QuickLogRow onOpenSheet={openLogSheet} categories={quickCategories} />
-          <View style={styles.loggedTodaySpacer}>
-            <LoggedTodayList expenses={loggedToday} onEditExpense={setEditingExpense} />
-          </View>
-        </ScrollView>
-      ) : (
-        <>
+      {/*
+        DI-7 pager (ADR 0019): a plain horizontal ScrollView, pagingEnabled,
+        native scrolling only. No react-native-gesture-handler, no
+        Reanimated worklets, no mixed animation drivers (crash-history rule;
+        see design/REDESIGN_RUNBOOK.md and the release-only-animation-crash
+        lesson it captures). Both panes stay mounted so each keeps its own
+        scroll position across switches; selection lives in the chips'
+        accessibilityState and in which page the pager has scrolled to, not
+        in which pane exists. Drop-safe: this unit only touches this pager,
+        the handlers above (handleTodayViewChange, scrollPagerTo,
+        handlePagerLayout, handlePagerMomentumEnd, the pagerReady sync
+        effect) and the two callers that flip pagerInteracted. Reverting
+        them restores the plain todayView ? <SpentPane/> : <KeptPane/>
+        conditional with no other effect on the app.
+      */}
+      <ScrollView
+        ref={pagerRef}
+        horizontal
+        pagingEnabled
+        directionalLockEnabled
+        showsHorizontalScrollIndicator={false}
+        onMomentumScrollEnd={handlePagerMomentumEnd}
+        onLayout={handlePagerLayout}
+        scrollEventThrottle={16}
+        style={styles.pager}
+        testID="today-pager"
+      >
+        <View style={{ width: screenWidth }}>
+          <ScrollView
+            style={styles.spentScroll}
+            contentContainerStyle={styles.spentScrollContent}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={theme.primary} />
+            }
+          >
+            <QuickLogRow onOpenSheet={openLogSheet} categories={quickCategories} />
+            <View style={styles.loggedTodaySpacer}>
+              <LoggedTodayList expenses={loggedToday} onEditExpense={setEditingExpense} />
+            </View>
+          </ScrollView>
+        </View>
+
+        <View style={{ width: screenWidth }}>
           {/* DI-6 gutter fix: the band renders full-bleed by default (see
               onboarding success, which supplies its own padded container
               instead); Today has no such wrapper, so it passes the same 20pt
@@ -464,8 +544,13 @@ export default function TodayScreen() {
                 style={styles.emptyCta}
                 // The quick-log card now lives on the Spent view, not the Money
                 // tab, so the CTA switches views in place rather than navigating
-                // away (was router.push('/(tabs)/money')).
-                onPress={() => setTodayView('spent')}
+                // away (was router.push('/(tabs)/money')). Routed through the
+                // same tap-like interaction flag as a chip tap so the pager
+                // animates over to match (DI-7).
+                onPress={() => {
+                  pagerInteracted.current = true;
+                  setTodayView('spent');
+                }}
                 accessibilityRole="button"
               >
                 <Text style={styles.emptyCtaText}>{strings.habitLogging.logAnExpense}</Text>
@@ -502,8 +587,8 @@ export default function TodayScreen() {
               }
             />
           )}
-        </>
-      )}
+        </View>
+      </ScrollView>
 
       <PickOneSheet
         visible={!!pickOneHabit}
@@ -553,6 +638,11 @@ function createStyles(theme: AppTheme) {
     chipsRow: {
       marginTop: 8,
       marginBottom: 4,
+    },
+    // DI-7: the pager fills whatever vertical space is left below the chips
+    // row, same as the single conditional pane did before it.
+    pager: {
+      flex: 1,
     },
     // DI-6: shares the 20pt gutter the chips row and both list content styles
     // use below, so the band no longer renders full-bleed on Today.
