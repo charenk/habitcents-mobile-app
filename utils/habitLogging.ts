@@ -73,6 +73,11 @@ export function startOfWeek(d: Date): Date {
  * themselves, since that is a rendering concern, not a logging fact.
  */
 export function dayStateFor(dayLogs: HabitLogEntry[], day: Date): DayState {
+  // Storage backfills dayLogs, but a goal handed straight from an older
+  // in-memory shape can still arrive without it. A missing log list means
+  // nothing was answered, which is exactly no-log; it must never throw during
+  // a render.
+  if (!Array.isArray(dayLogs)) return 'no-log';
   const entry = dayLogs.find((e) => isSameDay(e.date, day));
   if (!entry) return 'no-log';
   return entry.state === 'skipped' ? 'skipped' : 'slipped';
