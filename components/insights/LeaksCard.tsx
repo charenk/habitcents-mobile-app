@@ -66,10 +66,11 @@ export function LeaksCard({ rows, onBreak, onOpenHabit }: LeaksCardProps) {
       ) : (
         rows.map(({ habit, emoji, tint }, index) => {
           const action = actionFor(habit.status);
-          const summary = strings.insights.leakSummary(
-            format(habit.totalMonthlySpend),
-            habit.occurrencesPerPeriod
-          );
+          // Under the observation threshold there is no honest monthly rate to
+          // show, so the row states the total we watched instead.
+          const summary = habit.hasReliableRate
+            ? strings.insights.leakSummary(format(habit.totalMonthlySpend), habit.observedCount)
+            : strings.insights.leakSummaryObserved(format(habit.observedTotal), habit.observedCount);
 
           return (
             <View

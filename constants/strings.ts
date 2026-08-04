@@ -74,8 +74,19 @@ export const strings = {
     breakingNowSection: 'Breaking now',
     breakIt: 'Break it',
     notThisOne: 'Not this one',
-    leakEvidence: (name: string, monthTotal: string, occurrences: number) =>
-      `${name} costs you about ${monthTotal} a month. You bought it ${occurrences} times in the last 30 days.`,
+    // Leak evidence, two builders (device feedback 2026-08-04). A monthly rate
+    // is only claimed once the leak has been watched for MIN_SPAN_DAYS_FOR_RATE
+    // (utils/habitDetection.ts); under that, we state what was observed and say
+    // so. Both take observedCount, the REAL number of logs, never
+    // occurrencesPerPeriod, which is a per-period rate that reads like a count.
+    // The window here is 3 months because observedCount counts the whole
+    // DETECTION_WINDOW_DAYS group (90 days), not a trailing month. Saying
+    // "30 days" would undercount the window the number actually came from.
+    leakEvidenceReliable: (name: string, monthTotal: string, observedCount: number) =>
+      `${name} costs you about ${monthTotal} a month. You bought it ${observedCount} time${observedCount === 1 ? '' : 's'} in the last 3 months.`,
+    leakEvidenceObserved: (name: string, observedTotal: string, observedCount: number) =>
+      `${observedTotal} at ${name} across ${observedCount} buy${observedCount === 1 ? '' : 's'}.`,
+    leakEvidenceKeepLogging: 'Keep logging to see the monthly pattern.',
     // Check-in card (4.2)
     dailyQuestion: 'Did you skip it today?',
     weeklyValueLine: (skipValue: string) => `Each skip keeps ${skipValue}.`,
@@ -110,16 +121,29 @@ export const strings = {
     // engine in utils/coachMoments.ts.
     milestoneHeadline: (n: number, chapter: string) => `${n} total skips · ${chapter}`,
     // Pick-one sheet (4.3)
+    // The subtitle now names the moment ("New leak detected"); the cadence word
+    // moves to a secondary line so daily vs weekly is still legible.
+    pickOneNewLeak: 'New leak detected',
     pickOneCadenceDaily: 'A daily leak',
     pickOneCadenceWeekly: 'A weekly leak',
     pickOneCadenceMonthly: 'A monthly leak',
     pickOneValueLine: 'Each time you skip it, we count the money as kept.',
     pickOneFieldLabel: 'One skip keeps',
+    // Range hint under the skip-value field: the prefill is the median buy, so
+    // the spread it came from is stated rather than implied.
+    pickOneRangeHint: (min: string, max: string) => `Your buys ranged ${min} to ${max}.`,
     pickOneCadenceNoteDaily: "We'll ask each day: did you skip it?",
     pickOneCadenceNoteEvent: 'Tap I skipped one whenever you skip. No daily check-in.',
     startBreakingIt: 'Start breaking it',
+    // Habit gate (ADR 0007, free = 1 habit). The gated sheet states the
+    // situation and the price instead of showing an inert keypad behind a
+    // disabled button.
     freeTierNote: '1 habit on the free plan',
-    freeTierTrialCta: 'Start a free trial',
+    gateTitle: "You're already breaking one habit",
+    gateBody: (monthlyPrice: string) =>
+      `Free keeps 1 habit, always. Premium breaks up to 5 at once, from ${monthlyPrice} a month.`,
+    gateUpgradeCta: 'See Premium',
+    gateMaybeLater: 'Maybe later',
     // Partial slip sheet (4.7)
     partialSheetTitle: 'How much did it cost?',
     partialSheetSubtitle: (skipValue: string) =>
@@ -711,6 +735,9 @@ export const strings = {
     leaksTitle: 'Your leaks',
     leakSummary: (monthTotal: string, buys: number) =>
       `${monthTotal} a month · ${buys} buy${buys === 1 ? '' : 's'}`,
+    // Same row, thin observation: the total we watched, never a monthly rate.
+    leakSummaryObserved: (observedTotal: string, buys: number) =>
+      `${observedTotal} so far · ${buys} buy${buys === 1 ? '' : 's'}`,
     leakActionBreak: 'Break it',
     leakActionBreaking: 'Breaking',
     leakActionWatch: 'Watch',

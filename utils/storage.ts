@@ -226,10 +226,25 @@ export async function saveCategories(categories: Category[]): Promise<void> {
 export async function getHabits(): Promise<DetectedHabit[]> {
   return loadArray<DetectedHabit>(HABITS_KEY, (raw) => {
     if (!raw || typeof raw !== 'object' || typeof raw.id !== 'string') return null;
+    // Observed-evidence fields (device feedback 2026-08-04). A habit written
+    // before they existed has none of them, and the leak card reads them during
+    // render, so every one gets a value here. The defaults reproduce exactly
+    // what the old row already displayed; the next detection pass overwrites
+    // them with real observation through mergeHabits().
+    const num = (value: unknown, fallback: number): number =>
+      typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+    const averageAmount = num(raw.averageAmount, 0);
     return {
       ...raw,
       discoveredAt: toValidDate(raw.discoveredAt) ?? new Date(),
       dismissedAt: raw.dismissedAt ? toValidDate(raw.dismissedAt) ?? undefined : undefined,
+      observedTotal: num(raw.observedTotal, num(raw.totalMonthlySpend, 0)),
+      observedCount: num(raw.observedCount, num(raw.occurrencesPerPeriod, 0)),
+      spanDays: num(raw.spanDays, 0),
+      hasReliableRate: typeof raw.hasReliableRate === 'boolean' ? raw.hasReliableRate : true,
+      medianAmount: num(raw.medianAmount, averageAmount),
+      minAmount: num(raw.minAmount, averageAmount),
+      maxAmount: num(raw.maxAmount, averageAmount),
     } as DetectedHabit;
   });
 }

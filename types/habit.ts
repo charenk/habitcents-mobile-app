@@ -132,6 +132,29 @@ export type DetectedHabit = {
   frequency: HabitFrequency;
   occurrencesPerPeriod: number;
   totalMonthlySpend: number; // Cents
+  // --- Observed evidence (device feedback 2026-08-04). ---
+  // The projection fields above are a rate, and a rate is only honest once the
+  // leak has been watched long enough to have one. Five logs at one merchant in
+  // one afternoon used to render as "about $522 a month, bought 1 times",
+  // which is a fabricated statistic. These fields carry what was actually seen
+  // so every surface can choose observation over projection.
+  // Sum of the group, cents. What the user really spent.
+  observedTotal: number;
+  // Number of logs in the group. The REAL count; never occurrencesPerPeriod,
+  // which is a per-period rate ("1x per day") and reads as a count by accident.
+  observedCount: number;
+  // First-to-last span of the group in days. 0 for a same-day cluster.
+  spanDays: number;
+  // True only when spanDays >= MIN_SPAN_DAYS_FOR_RATE (utils/habitDetection).
+  // False means: show the observed total, never a monthly projection.
+  hasReliableRate: boolean;
+  // Median per-occurrence amount, cents. Prefills the skip value because a
+  // single $44 order should not drag the default up the way an average does.
+  medianAmount: number;
+  // Smallest and largest single buy in the group, cents. Powers the range hint
+  // under the skip-value field.
+  minAmount: number;
+  maxAmount: number;
   trend: 'increasing' | 'decreasing' | 'stable';
   trendPercentage: number;
   triggers: HabitTrigger[];

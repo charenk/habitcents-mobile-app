@@ -43,9 +43,26 @@ export function LeakCard({ habit, onBreak, onDismiss, coachMomentCardId, breakAg
   return (
     <View style={styles.card}>
       <Text style={styles.name}>{habit.name}</Text>
-      <Text style={styles.evidence}>
-        {strings.habitLogging.leakEvidence(habit.name, format(habit.totalMonthlySpend), habit.occurrencesPerPeriod)}
-      </Text>
+      {habit.hasReliableRate ? (
+        <Text style={styles.evidence}>
+          {strings.habitLogging.leakEvidenceReliable(
+            habit.name,
+            format(habit.totalMonthlySpend),
+            habit.observedCount
+          )}
+        </Text>
+      ) : (
+        <>
+          <Text style={[styles.evidence, styles.evidenceTight]}>
+            {strings.habitLogging.leakEvidenceObserved(
+              habit.name,
+              format(habit.observedTotal),
+              habit.observedCount
+            )}
+          </Text>
+          <Text style={styles.evidenceHint}>{strings.habitLogging.leakEvidenceKeepLogging}</Text>
+        </>
+      )}
       <View style={styles.buttonsRow}>
         <Button
           label={breakAgain ? strings.today.breakItAgain : strings.habitLogging.breakIt}
@@ -88,6 +105,17 @@ function createStyles(theme: AppTheme) {
       marginBottom: 14,
       lineHeight: 19,
       fontVariant: ['tabular-nums'],
+    },
+    // The observed line and its quiet second line read as one paragraph.
+    evidenceTight: {
+      marginBottom: 2,
+    },
+    evidenceHint: {
+      fontFamily: theme.fonts.ui,
+      fontSize: typeScale.caption,
+      color: theme.mist,
+      marginBottom: 14,
+      lineHeight: 18,
     },
     buttonsRow: {
       flexDirection: 'row',

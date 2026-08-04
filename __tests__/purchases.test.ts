@@ -1,3 +1,8 @@
+jest.mock('@react-native-async-storage/async-storage', () =>
+  require('@react-native-async-storage/async-storage/jest/async-storage-mock')
+);
+
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   purchasesEnabled,
   purchasesMode,
@@ -5,7 +10,10 @@ import {
   isPremium,
   purchase,
   restore,
+  hydrateEntitlement,
+  resetMockEntitlement,
   __setPurchasesForTests,
+  MOCK_ENTITLEMENT_KEY,
   PRODUCT_ANNUAL,
   PRODUCT_MONTHLY,
   type PurchasesClient,
@@ -50,28 +58,61 @@ describe('purchases config gating', () => {
   });
 });
 
+/**
+ * Mock entitlement (device feedback 2026-08-04). The previous version of this
+ * block asserted the opposite: that a mock purchase must leave the user on
+ * 'free'. That is what made the paywall lie, because it announced "Trial
+ * started" and returned the user to a still-locked sheet, and it left free = 1
+ * vs premium = 5 untestable. The mock now grants a clearly-labeled MOCK
+ * entitlement locally; what must stay true is that the mode is still 'mock',
+ * nothing claims a real charge, and the grant can be cleared.
+ */
 describe('mock entitlement + purchase/restore', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     delete process.env[KEY];
     __setPurchasesForTests(null);
+    await AsyncStorage.clear();
   });
 
-  it('reports free entitlement in mock mode', () => {
+  it('reports free entitlement before any mock purchase', () => {
     expect(getEntitlement()).toBe('free');
     expect(isPremium()).toBe(false);
   });
 
-  it('mock purchase resolves ok without granting premium', async () => {
+  it('mock purchase grants a MOCK premium entitlement and stays in mock mode', async () => {
     const result = await purchase(PRODUCT_ANNUAL);
-    expect(result.ok).toBe(true);
-    expect(result).toMatchObject({ ok: true, mode: 'mock', productId: PRODUCT_ANNUAL });
-    // The mock must not silently hand out premium.
-    expect(getEntitlement()).toBe('free');
+    expect(result).toMatchObject({
+      ok: true,
+      mode: 'mock',
+      entitlement: 'premium',
+      productId: PRODUCT_ANNUAL,
+    });
+    // The gate really opens, which is the whole point.
+    expect(getEntitlement()).toBe('premium');
+    expect(isPremium()).toBe(true);
+    // Nothing pretends the purchase was real: the mode is still mock and the
+    // stored value says so out loud.
+    expect(purchasesMode()).toBe('mock');
+    expect(await AsyncStorage.getItem(MOCK_ENTITLEMENT_KEY)).toBe('premium-mock');
   });
 
-  it('mock restore resolves ok with nothing to restore', async () => {
-    const result = await restore();
-    expect(result).toMatchObject({ ok: true, mode: 'mock', entitlement: 'free' });
+  it('keeps the mock grant across a relaunch, and clears it on reset', async () => {
+    await purchase(PRODUCT_MONTHLY);
+    // Simulate a cold start: memory is empty, storage is not.
+    __setPurchasesForTests(null);
+    expect(getEntitlement()).toBe('free');
+    expect(await hydrateEntitlement()).toBe('premium');
+    expect(getEntitlement()).toBe('premium');
+
+    await resetMockEntitlement();
+    expect(getEntitlement()).toBe('free');
+    expect(await AsyncStorage.getItem(MOCK_ENTITLEMENT_KEY)).toBeNull();
+  });
+
+  it('mock restore reports the local grant, free when there is none', async () => {
+    expect(await restore()).toMatchObject({ ok: true, mode: 'mock', entitlement: 'free' });
+    await purchase(PRODUCT_ANNUAL);
+    expect(await restore()).toMatchObject({ ok: true, mode: 'mock', entitlement: 'premium' });
   });
 
   it('logs a [purchases:mock] line on a mock purchase', async () => {

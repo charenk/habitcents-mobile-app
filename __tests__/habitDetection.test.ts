@@ -1,4 +1,9 @@
-import { detectHabits, progressTowardDetection } from '@/utils/habitDetection';
+import {
+  detectHabits,
+  medianCents,
+  progressTowardDetection,
+  MIN_SPAN_DAYS_FOR_RATE,
+} from '@/utils/habitDetection';
 import type { Expense } from '@/types/expense';
 
 /**
@@ -75,14 +80,103 @@ describe('detectHabits monthly spend math', () => {
     // 5 expenses all on the same day: avg gap is 0.
     const habits = detectHabits(series('Bar', 1000, 0, 5));
     // May or may not surface as a habit, but must never crash or produce a
-    // non-finite / absurd number.
+    // non-finite number.
     for (const h of habits) {
       expect(Number.isFinite(h.totalMonthlySpend)).toBe(true);
       expect(h.totalMonthlySpend).toBeGreaterThan(0);
-      // Bounded: at most avg amount times the daily-rate cap (~30/month).
-      expect(h.totalMonthlySpend).toBeLessThanOrEqual(1000 * 31);
     }
   });
+});
+
+/**
+ * Observation vs projection (device feedback 2026-08-04).
+ *
+ * The predecessor of this block asserted only that a same-day cluster stayed
+ * finite and under avg * 31, which certified the bug: Charen logged 5 Pizzahut
+ * buys within minutes and the app answered "costs you about $522.00 a month,
+ * you bought it 1 times in the last 30 days". A monthly rate is a claim about a
+ * month, and one afternoon cannot support it.
+ */
+describe('observed evidence vs monthly projection', () => {
+  /** Charen's real set: $22, $12, $4, $5, $44 at one merchant, minutes apart. */
+  function pizzahutCluster() {
+    return [2200, 1200, 400, 500, 4400].map((cents) => makeExpense('Pizzahut', cents, 0));
+  }
+
+  it('counts every buy in a same-day cluster and refuses to state a monthly rate', () => {
+    const habits = detectHabits(pizzahutCluster());
+    expect(habits).toHaveLength(1);
+    const habit = habits[0];
+
+    // The real count, not occurrencesPerPeriod (which is a per-day rate of 1).
+    expect(habit.observedCount).toBe(5);
+    expect(habit.observedTotal).toBe(8700);
+    expect(habit.spanDays).toBe(0);
+    // No monthly projection is presentable: 5 logs, 0 days of span.
+    expect(habit.hasReliableRate).toBe(false);
+  });
+
+  it('keeps the leak detectable, so the 4-log promise still holds', () => {
+    // The fix is about what we claim, not about hiding the leak.
+    expect(detectHabits(pizzahutCluster())).toHaveLength(1);
+  });
+
+  it('presents observation, never the ~30x extrapolation of one afternoon', () => {
+    const habit = detectHabits(pizzahutCluster())[0];
+    // What the sheet and the leak card show while hasReliableRate is false.
+    expect(habit.observedTotal).toBe(8700);
+    expect(habit.description).toContain('across 5 buys');
+    expect(habit.description).not.toContain('/month');
+  });
+
+  it('starts presenting a monthly rate once the span reaches the threshold', () => {
+    // Same 5 buys, spread across 20 days instead of one afternoon.
+    const spread = detectHabits(series('Pizzahut', 1740, 5, 5));
+    expect(spread).toHaveLength(1);
+    expect(spread[0].spanDays).toBeGreaterThanOrEqual(MIN_SPAN_DAYS_FOR_RATE);
+    expect(spread[0].hasReliableRate).toBe(true);
+    expect(spread[0].observedCount).toBe(5);
+  });
+
+  it('reports the buy range so the prefilled skip value can be explained', () => {
+    const habit = detectHabits(pizzahutCluster())[0];
+    expect(habit.minAmount).toBe(400);
+    expect(habit.maxAmount).toBe(4400);
+    // Median, not the $17.40 average one big order pulls it up to.
+    expect(habit.medianAmount).toBe(1200);
+  });
+});
+
+describe('medianCents', () => {
+  it('returns the middle value for an odd count', () => {
+    expect(medianCents([300, 100, 200])).toBe(200);
+  });
+
+  it('averages the middle pair for an even count', () => {
+    expect(medianCents([100, 200, 300, 400])).toBe(250);
+  });
+
+  it('rounds a half-cent middle pair to whole cents', () => {
+    expect(medianCents([100, 201])).toBe(151);
+  });
+
+  it('ignores an outlier the way an average cannot', () => {
+    // Charen's set. Average is 1740; the buy he actually makes is 1200.
+    expect(medianCents([2200, 1200, 400, 500, 4400])).toBe(1200);
+  });
+
+  it('returns 0 for an empty list', () => {
+    expect(medianCents([])).toBe(0);
+  });
+
+  it('does not mutate the caller list', () => {
+    const values = [300, 100, 200];
+    medianCents(values);
+    expect(values).toEqual([300, 100, 200]);
+  });
+});
+
+describe('detectHabits guards', () => {
 
   it('returns nothing below the minimum-occurrence threshold', () => {
     expect(detectHabits(series('Rare', 5000, 5, 3))).toHaveLength(0);
