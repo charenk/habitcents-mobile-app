@@ -12,6 +12,7 @@ import {
   restore,
   hydrateEntitlement,
   resetMockEntitlement,
+  setMockEntitlement,
   __setPurchasesForTests,
   MOCK_ENTITLEMENT_KEY,
   PRODUCT_ANNUAL,
@@ -113,6 +114,36 @@ describe('mock entitlement + purchase/restore', () => {
     expect(await restore()).toMatchObject({ ok: true, mode: 'mock', entitlement: 'free' });
     await purchase(PRODUCT_ANNUAL);
     expect(await restore()).toMatchObject({ ok: true, mode: 'mock', entitlement: 'premium' });
+  });
+
+  // The developer menu flips this directly instead of faking a purchase, so it
+  // has to round-trip the same way a purchase does: memory, storage, relaunch.
+  it('setMockEntitlement round-trips premium through a relaunch', async () => {
+    await setMockEntitlement('premium');
+    expect(getEntitlement()).toBe('premium');
+    expect(isPremium()).toBe(true);
+    expect(await AsyncStorage.getItem(MOCK_ENTITLEMENT_KEY)).toBe('premium-mock');
+
+    // Cold start: memory is empty, storage is not.
+    __setPurchasesForTests(null);
+    expect(getEntitlement()).toBe('free');
+    expect(await hydrateEntitlement()).toBe('premium');
+  });
+
+  it('setMockEntitlement back to free clears memory and storage', async () => {
+    await setMockEntitlement('premium');
+    await setMockEntitlement('free');
+    expect(getEntitlement()).toBe('free');
+    expect(isPremium()).toBe(false);
+    expect(await AsyncStorage.getItem(MOCK_ENTITLEMENT_KEY)).toBeNull();
+    expect(await hydrateEntitlement()).toBe('free');
+  });
+
+  it('setMockEntitlement flips the habit ceiling the gate reads', async () => {
+    await setMockEntitlement('free');
+    expect(habitLimitForEntitlement(getEntitlement())).toBe(FREE_TIER_HABIT_LIMIT);
+    await setMockEntitlement('premium');
+    expect(habitLimitForEntitlement(getEntitlement())).toBe(PREMIUM_TIER_HABIT_LIMIT);
   });
 
   it('logs a [purchases:mock] line on a mock purchase', async () => {

@@ -55,6 +55,19 @@ Builds 4 and 5 both shipped launch crashes that a local release run would have c
 
 Known limit: the local simulator runtime tracks the installed Xcode (currently 16.2 / iOS 18.3), while Charen's device is on iOS 26. This gate cannot catch an iOS-26-only failure. When a crash reproduces on device but not here, get the exception reason off the device before guessing: plug the iPhone into the Mac, open Console.app, filter on HabitCents, and launch the app. The `.ips` file from Analytics Data strips the NSException reason string; the live device log does not.
 
+## Which build profile to ship (2026-08-04)
+
+There are now two TestFlight paths. Both reach TestFlight; only one carries the developer menu.
+
+- **Debug/testing build (Charen's own device testing):**
+  `eas build -p ios --profile internal` then `eas submit -p ios --profile internal`
+  Channel `internal`, `EXPO_PUBLIC_DEV_MENU=1`. The settings sheet grows a DEVELOPER group: entitlement toggle (free / premium), three data personas (new user, first run, returning user), restart onboarding, wipe app data, and a build-info row naming the channel. Use this for every feedback round.
+- **App Store build (clean, what customers get):**
+  `eas build -p ios --profile production` then `eas submit -p ios --profile production`
+  Channel `production`, `EXPO_PUBLIC_DEV_MENU=0` set explicitly so the gate cannot leak in from a stray shell var. No developer section exists in the bundle's reachable code.
+
+The gate itself is `utils/devMenu.ts` (`DEV_MENU_ENABLED`). Nothing dev-only may read `__DEV__` or the env var directly, so `grep -rn DEV_MENU_ENABLED` lists every gate. The release-boot gate above still applies to both profiles.
+
 ## Repo rules that bite (from mobile-app/CLAUDE.md)
 
 No em dashes anywhere (UI, code, comments). Sentence case. Keep the leak / skip / kept / slip vocabulary. Amounts always via `useCurrency().format`. Green is positive-only. Honor prefers-reduced-motion. Synthetic Leak Scan fixtures only. Never commit to main; branch per ADR 0012.
