@@ -113,7 +113,7 @@ describe('PickOneSheet evidence', () => {
     });
 
     expect(
-      view.getByText('Pizzahut Spending costs you about $150.00 a month. You bought it 40 times in the last 30 days.')
+      view.getByText('Pizzahut Spending costs you about $150.00 a month. You bought it 40 times in the last 3 months.')
     ).toBeTruthy();
     expect(view.queryByText(strings.habitLogging.leakEvidenceKeepLogging)).toBeNull();
   });

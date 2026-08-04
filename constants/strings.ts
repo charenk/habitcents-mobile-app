@@ -79,8 +79,11 @@ export const strings = {
     // (utils/habitDetection.ts); under that, we state what was observed and say
     // so. Both take observedCount, the REAL number of logs, never
     // occurrencesPerPeriod, which is a per-period rate that reads like a count.
+    // The window here is 3 months because observedCount counts the whole
+    // DETECTION_WINDOW_DAYS group (90 days), not a trailing month. Saying
+    // "30 days" would undercount the window the number actually came from.
     leakEvidenceReliable: (name: string, monthTotal: string, observedCount: number) =>
-      `${name} costs you about ${monthTotal} a month. You bought it ${observedCount} time${observedCount === 1 ? '' : 's'} in the last 30 days.`,
+      `${name} costs you about ${monthTotal} a month. You bought it ${observedCount} time${observedCount === 1 ? '' : 's'} in the last 3 months.`,
     leakEvidenceObserved: (name: string, observedTotal: string, observedCount: number) =>
       `${observedTotal} at ${name} across ${observedCount} buy${observedCount === 1 ? '' : 's'}.`,
     leakEvidenceKeepLogging: 'Keep logging to see the monthly pattern.',
