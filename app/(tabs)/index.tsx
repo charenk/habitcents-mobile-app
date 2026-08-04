@@ -475,7 +475,14 @@ export default function TodayScreen() {
         style={styles.pager}
         testID="today-pager"
       >
-        <View style={{ width: screenWidth }}>
+        <View
+          style={{ width: screenWidth }}
+          // Both panes stay mounted for the pager, so the off-screen one must
+          // be hidden from assistive tech or VoiceOver walks into content the
+          // eye cannot see.
+          accessibilityElementsHidden={todayView !== 'spent'}
+          importantForAccessibility={todayView !== 'spent' ? 'no-hide-descendants' : 'auto'}
+        >
           <ScrollView
             style={styles.spentScroll}
             contentContainerStyle={styles.spentScrollContent}
@@ -491,7 +498,11 @@ export default function TodayScreen() {
           </ScrollView>
         </View>
 
-        <View style={{ width: screenWidth }}>
+        <View
+          style={{ width: screenWidth }}
+          accessibilityElementsHidden={todayView !== 'kept'}
+          importantForAccessibility={todayView !== 'kept' ? 'no-hide-descendants' : 'auto'}
+        >
           {/* DI-6 gutter fix: the band renders full-bleed by default (see
               onboarding success, which supplies its own padded container
               instead); Today has no such wrapper, so it passes the same 20pt
