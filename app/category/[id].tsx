@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Icon, CATEGORY_ICON_MAP } from '@/components/ui/Icon';
+import { Icon, categoryIconName } from '@/components/ui/Icon';
 import { useTheme } from '@/contexts/ThemeContext';
 import { formatDate } from '@/utils/dates';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -209,7 +209,7 @@ export default function CategoryDetailScreen() {
         <View style={styles.headerSection}>
           <View style={[styles.iconContainer, { backgroundColor: category.color + '20' }]}>
             <Icon
-              name={CATEGORY_ICON_MAP[category.icon]}
+              name={categoryIconName(category.icon)}
               size={40}
               color={category.color}
             />

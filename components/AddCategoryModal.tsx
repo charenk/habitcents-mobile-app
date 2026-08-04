@@ -10,7 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { Icon, CATEGORY_ICON_MAP } from '@/components/ui/Icon';
+import { Icon, categoryIconName } from '@/components/ui/Icon';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { currencyMeta } from '@/utils/currency';
@@ -127,7 +127,7 @@ export function AddCategoryModal({
             <View style={styles.previewContainer}>
               <View style={[styles.previewIcon, { backgroundColor: selectedColor + '20' }]}>
                 <Icon
-                  name={CATEGORY_ICON_MAP[selectedIcon]}
+                  name={categoryIconName(selectedIcon)}
                   size={32}
                   color={selectedColor}
                 />
@@ -168,7 +168,7 @@ export function AddCategoryModal({
                     accessibilityLabel={iconOptionLabel(icon)}
                   >
                     <Icon
-                      name={CATEGORY_ICON_MAP[icon]}
+                      name={categoryIconName(icon)}
                       size={24}
                       color={selectedIcon === icon ? selectedColor : theme.textSecondary}
                     />
