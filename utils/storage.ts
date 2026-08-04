@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { ThemeMode } from '@/constants/theme';
 import type { Expense } from '@/types/expense';
 import type { Category } from '@/types/category';
-import type { DetectedHabit, HabitChangeGoal, HabitMilestone } from '@/types/habit';
+import type { DetectedHabit, HabitChangeGoal, HabitLogEntry, HabitMilestone } from '@/types/habit';
 import type { DashboardConfig } from '@/types/report';
 import type { OnboardingState, ProgressiveFeatureState, AuditAnswers } from '@/types/onboarding';
 import { type CurrencyCode, DEFAULT_CURRENCY, isCurrencyCode } from '@/utils/currency';
@@ -251,9 +251,22 @@ export async function saveHabits(habits: DetectedHabit[]): Promise<void> {
 export async function getHabitGoals(): Promise<HabitChangeGoal[]> {
   return loadArray<HabitChangeGoal>(HABIT_GOALS_KEY, (raw) => {
     if (!raw || typeof raw !== 'object' || typeof raw.id !== 'string') return null;
+    const startDate = toValidDate(raw.startDate) ?? new Date();
+    // Habit logging v2 fields. A goal written before v2 has none of them, and
+    // an absent dayLogs used to reach dayStateFor() as undefined and crash the
+    // check-in card on render. Every v2 field gets a value here so the rest of
+    // the app can treat a revived goal as complete.
+    const dayLogs: HabitLogEntry[] = Array.isArray(raw.dayLogs)
+      ? raw.dayLogs
+          .map((entry: { date: unknown }) => {
+            const date = toValidDate(entry.date);
+            return date ? ({ ...entry, date } as HabitLogEntry) : null;
+          })
+          .filter((entry: HabitLogEntry | null): entry is HabitLogEntry => entry !== null)
+      : [];
     return {
       ...raw,
-      startDate: toValidDate(raw.startDate) ?? new Date(),
+      startDate,
       lastLogDate: raw.lastLogDate ? toValidDate(raw.lastLogDate) ?? undefined : undefined,
       // Reconstruct log dates; drop entries with invalid dates. Default to [] for
       // goals saved before logs existed.
@@ -271,6 +284,17 @@ export async function getHabitGoals(): Promise<HabitChangeGoal[]> {
             reachedAt: m.reachedAt ? toValidDate(m.reachedAt) ?? undefined : undefined,
           }))
         : [],
+      dayLogs,
+      // Tracking cannot have started before the goal existed, so startDate is
+      // the honest fallback: earlier days then read as out of range, not no-log.
+      trackingStart: toValidDate(raw.trackingStart) ?? startDate,
+      skipValue: typeof raw.skipValue === 'number' ? raw.skipValue : 0,
+      kept: typeof raw.kept === 'number' ? raw.kept : 0,
+      totalSkips: typeof raw.totalSkips === 'number' ? raw.totalSkips : 0,
+      highestMilestoneReached:
+        typeof raw.highestMilestoneReached === 'number' ? raw.highestMilestoneReached : 0,
+      firstRun: typeof raw.firstRun === 'boolean' ? raw.firstRun : dayLogs.length === 0,
+      backfillUsed: raw.backfillUsed === true,
     } as HabitChangeGoal;
   });
 }
