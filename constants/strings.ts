@@ -292,7 +292,6 @@ export const strings = {
     weekOf: (dateLabel: string) => `Week of ${dateLabel}`,
   },
   settings: {
-    title: 'Settings',
     preferences: 'Preferences',
     currency: 'Currency',
     about: 'About',
@@ -309,9 +308,6 @@ export const strings = {
     restoreAlertTitle: 'Restore purchases',
     restoreNoneMessage: 'No previous purchases to restore.',
     restoreDoneMessage: 'Your purchases have been restored.',
-    // Settings bottom sheet (redesign step 02). Settings is no longer a tab;
-    // the gear on Today opens this sheet.
-    sheetTitle: 'Settings.',
     planFree: 'Free plan · 1 habit',
     groupPreferences: 'Preferences',
     groupAbout: 'About',
@@ -321,6 +317,15 @@ export const strings = {
     signOutHint: 'data stays on this device',
     signOutToast: 'Signed out. Your data stays on this device.',
     versionRow: 'Version',
+  },
+  // Profile page (design/header-unification U4, ADR 0019). Settings moved from
+  // a bottom sheet behind Today's gear to a pushed route reachable from every
+  // tab. Only net-new strings live here; every row still reads from
+  // strings.settings.* above so nothing is duplicated.
+  profile: {
+    title: 'Profile.',
+    headerLabel: 'Profile',
+    supportRow: 'Support',
   },
   addCategoryModal: {
     editCategory: 'Edit Category',
@@ -604,7 +609,6 @@ export const strings = {
 
   // Today tab (spec 04 "Today").
   today: {
-    settingsButtonLabel: 'Settings',
     // Kept band. The eyebrow and caption already live in habitLogging
     // (keptSoFar, keptCaption, keptZeroCaption); nothing is duplicated here.
     // Check-in card

@@ -15,6 +15,7 @@
 import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { AddUpcomingSheet } from '@/components/money/AddUpcomingSheet';
 import { EditExpenseSheet } from '@/components/money/EditExpenseSheet';
 import { SpentList } from '@/components/money/SpentList';
@@ -35,6 +36,7 @@ type MoneyView = 'spent' | 'upcoming';
 
 export default function MoneyScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
@@ -70,7 +72,12 @@ export default function MoneyScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <ScreenHeader title={strings.screenTitles.money} />
+      <ScreenHeader
+        title={strings.screenTitles.money}
+        actions={[
+          { icon: 'CircleUser', label: strings.profile.headerLabel, onPress: () => router.push('/profile') },
+        ]}
+      />
       <View style={styles.segments}>
         <SegmentedControl<MoneyView>
           options={segments}

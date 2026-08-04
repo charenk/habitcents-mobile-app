@@ -13,7 +13,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
-import { SettingsSheet } from '@/components/SettingsSheet';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useHabits } from '@/contexts/HabitsContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
@@ -54,7 +53,8 @@ type HabitSection = {
 /**
  * Today (redesign step 02). Same habit-logging content the Habits tab carried;
  * the header is ScreenHeader with the date as its eyebrow below the serif
- * title, and a gear that opens the settings sheet.
+ * title, and a profile action that pushes /profile (design/header-unification
+ * U4, ADR 0019: settings moved from a bottom sheet to a pushed route).
  */
 export default function TodayScreen() {
   const insets = useSafeAreaInsets();
@@ -62,7 +62,6 @@ export default function TodayScreen() {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [refreshing, setRefreshing] = useState(false);
-  const [settingsVisible, setSettingsVisible] = useState(false);
   const [pickOneHabitId, setPickOneHabitId] = useState<string | null>(null);
   const [partialGoalId, setPartialGoalId] = useState<string | null>(null);
   // DT-1 (P2-2): resolved once, attached to whichever leak is first in the
@@ -387,7 +386,7 @@ export default function TodayScreen() {
         title={strings.screenTitles.today}
         eyebrow={todayLabel}
         actions={[
-          { icon: 'Settings2', label: strings.settings.title, onPress: () => setSettingsVisible(true) },
+          { icon: 'CircleUser', label: strings.profile.headerLabel, onPress: () => router.push('/profile') },
         ]}
       />
 
@@ -507,8 +506,6 @@ export default function TodayScreen() {
         expense={editingExpense}
         onClose={() => setEditingExpense(null)}
       />
-
-      <SettingsSheet visible={settingsVisible} onClose={() => setSettingsVisible(false)} />
     </View>
   );
 }

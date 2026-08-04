@@ -1,8 +1,9 @@
 /**
- * One 48pt settings row, lifted out of components/SettingsSheet.tsx verbatim so
- * the developer menu section can reuse it without importing the sheet back into
- * itself (a require cycle). Styling still lives in the sheet's createStyles and
- * is passed in, so there is exactly one place that defines how a row looks.
+ * One 48pt settings row, lifted out of app/profile.tsx (formerly
+ * components/SettingsSheet.tsx) verbatim so the developer menu section can
+ * reuse it without importing the page back into itself (a require cycle).
+ * Styling still lives in the page's createStyles and is passed in, so there
+ * is exactly one place that defines how a row looks.
  *
  * Interactive rows are buttons; a static row (Version, Build) stays a labelled,
  * non-actionable element so VoiceOver never offers a dead activation.
