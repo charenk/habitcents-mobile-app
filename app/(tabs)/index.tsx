@@ -5,6 +5,7 @@ import {
   StyleSheet,
   SectionList,
   ScrollView,
+  Pressable,
   RefreshControl,
   TouchableOpacity,
 } from 'react-native';
@@ -39,6 +40,9 @@ import type { DetectedHabit, HabitChangeGoal } from '@/types/habit';
 import { strings } from '@/constants/strings';
 
 type BreakingItem = { habit: DetectedHabit; goal: HabitChangeGoal };
+
+/** Pads the 40pt quick-log tiles out to the 44pt minimum touch target. */
+const QUICK_TILE_HIT_SLOP = { top: 4, bottom: 4, left: 4, right: 4 };
 
 type HabitSection = {
   title: string;
@@ -260,7 +264,16 @@ export default function TodayScreen() {
           <Text style={styles.quickLogHint}>{strings.today.quickLogHint}</Text>
         </View>
         <View style={styles.quickLogAmountRow}>
-          <AmountDisplay valueCents={0} size={40} zeroAsPlaceholder />
+          {/* The big zero is the obvious thing to tap, so it opens the sheet
+              too; the plus stays for anyone who reads it as the only control. */}
+          <Pressable
+            style={styles.quickLogAmountTap}
+            onPress={() => openLogSheet(undefined)}
+            accessibilityRole="button"
+            accessibilityLabel={strings.today.quickLogOpenLabel}
+          >
+            <AmountDisplay valueCents={0} size={40} zeroAsPlaceholder />
+          </Pressable>
           <TouchableOpacity
             style={styles.quickLogPlus}
             onPress={() => openLogSheet(undefined)}
@@ -277,6 +290,9 @@ export default function TodayScreen() {
               onPress={() => openLogSheet(cat.name as ExpenseCategory)}
               accessibilityRole="button"
               accessibilityLabel={strings.today.quickLogCategoryLabel(cat.name)}
+              // 40pt tiles with a 10pt gap: 4pt of slop all round reaches the
+              // 44pt minimum without touching the neighbouring tile.
+              hitSlop={QUICK_TILE_HIT_SLOP}
             >
               <EmojiTile
                 emoji={categoryEmoji(cat.name)}
@@ -290,6 +306,7 @@ export default function TodayScreen() {
             onPress={() => openLogSheet(undefined)}
             accessibilityRole="button"
             accessibilityLabel={strings.today.quickLogMoreLabel}
+            hitSlop={QUICK_TILE_HIT_SLOP}
           >
             <Text style={styles.quickLogMoreText}>...</Text>
           </TouchableOpacity>
@@ -571,6 +588,14 @@ function createStyles(theme: AppTheme) {
       alignItems: 'flex-end',
       justifyContent: 'space-between',
       marginTop: 8,
+    },
+    // Takes the row's free width so the whole left side of the card opens the
+    // sheet, not just the glyphs. No visual change: the amount still sits on
+    // the baseline it did before.
+    quickLogAmountTap: {
+      flex: 1,
+      minHeight: 44,
+      justifyContent: 'flex-end',
     },
     quickLogPlus: {
       width: 44,

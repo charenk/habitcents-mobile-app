@@ -8,14 +8,21 @@
  * looks exactly as it did before, not as if the row were re-logged.
  */
 import { useEffect, useMemo, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 import { AmountDisplay } from '@/components/ui/AmountDisplay';
 import { Button } from '@/components/ui/Button';
 import { Keypad } from '@/components/ui/Keypad';
 import { Sheet } from '@/components/ui/Sheet';
 import { useToast } from '@/components/ui/Toast';
 import { strings } from '@/constants/strings';
-import { typeScale } from '@/constants/theme';
+import { radii, typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
 import { useCategories } from '@/contexts/CategoriesContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
@@ -37,6 +44,7 @@ export function EditExpenseSheet({
 }: EditExpenseSheetProps): React.JSX.Element {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
+  const { height } = useWindowDimensions();
   const { show } = useToast();
   const { getVisibleCategories } = useCategories();
   const { expenses, updateExpense, deleteExpense, restoreExpense } = useExpenses();
@@ -45,6 +53,7 @@ export function EditExpenseSheet({
 
   const [value, setValue] = useState('');
   const [category, setCategory] = useState<ExpenseCategory | null>(null);
+  const [merchant, setMerchant] = useState('');
 
   // Refill from the row every time the sheet opens on a (possibly different)
   // expense, so an abandoned edit never leaks into the next row.
@@ -52,6 +61,7 @@ export function EditExpenseSheet({
     if (visible && expense) {
       setValue(centsToKeypadValue(expense.amount));
       setCategory(expense.category);
+      setMerchant(expense.merchant ?? '');
     }
   }, [visible, expense]);
 
@@ -66,18 +76,24 @@ export function EditExpenseSheet({
 
     const resolved = category ?? expense.category;
     const match = categories.find((c) => toExpenseCategory(c.name) === resolved);
+    const typedMerchant = merchant.trim();
 
-    // The title is only rewritten when it was auto-derived from the category in
-    // the first place. A merchant-named row keeps its name through a
-    // recategorization.
+    // The title is only rewritten when it was auto-derived in the first place:
+    // from the category, or from the merchant the log sheet wrote. A title the
+    // user typed by hand survives a recategorization and a merchant rename.
     const titleWasDerived =
-      expense.title === expense.category || categories.some((c) => c.name === expense.title);
+      expense.title === expense.category ||
+      categories.some((c) => c.name === expense.title) ||
+      (!!expense.merchant && expense.title === expense.merchant);
 
     void updateExpense(expense.id, {
       amount: cents,
       category: resolved,
       categoryId: match?.id,
-      ...(titleWasDerived ? { title: match?.name ?? resolved } : null),
+      // Cleared to undefined rather than '', because detection treats an empty
+      // merchant as no merchant and storage drops the key entirely.
+      merchant: typedMerchant || undefined,
+      ...(titleWasDerived ? { title: typedMerchant || (match?.name ?? resolved) } : null),
     });
 
     show(strings.toasts.saved);
@@ -106,8 +122,18 @@ export function EditExpenseSheet({
   };
 
   return (
-    <Sheet visible={visible} onClose={onClose} accessibilityLabel={strings.expenseSheet.editEyebrow}>
-      <View style={styles.content}>
+    <Sheet
+      visible={visible}
+      onClose={onClose}
+      avoidKeyboard
+      accessibilityLabel={strings.expenseSheet.editEyebrow}
+    >
+      <ScrollView
+        style={{ maxHeight: height * 0.82 }}
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
         <Text style={[styles.eyebrow, styles.eyebrowFirst]}>
           {strings.expenseSheet.editEyebrow}
         </Text>
@@ -116,6 +142,19 @@ export function EditExpenseSheet({
 
         <Text style={styles.eyebrow}>{strings.expenseSheet.categoryEyebrow}</Text>
         <CategoryTilePicker categories={categories} value={category} onChange={setCategory} />
+
+        <Text style={styles.eyebrow}>{strings.expenseSheet.whereEyebrow}</Text>
+        <TextInput
+          value={merchant}
+          onChangeText={setMerchant}
+          placeholder={strings.expenses.merchantPlaceholder}
+          placeholderTextColor={theme.mist}
+          style={styles.merchantField}
+          accessibilityLabel={strings.expenses.merchantFieldLabel}
+          autoCapitalize="words"
+          autoCorrect={false}
+          returnKeyType="done"
+        />
 
         <View style={styles.keypad}>
           <Keypad value={value} onChange={setValue} />
@@ -132,7 +171,7 @@ export function EditExpenseSheet({
           onPress={handleDelete}
           variant="destructive"
         />
-      </View>
+      </ScrollView>
     </Sheet>
   );
 }
@@ -155,6 +194,18 @@ function createStyles(theme: AppTheme) {
     },
     eyebrowFirst: {
       marginTop: 0,
+    },
+    merchantField: {
+      marginTop: 4,
+      minHeight: 44,
+      borderRadius: radii.control,
+      borderWidth: 1,
+      borderColor: theme.cloud,
+      backgroundColor: theme.snow,
+      paddingHorizontal: 14,
+      fontFamily: theme.fonts.ui,
+      fontSize: typeScale.body,
+      color: theme.ink,
     },
     keypad: {
       marginTop: 20,

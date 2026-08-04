@@ -619,6 +619,11 @@ export const strings = {
     logEyebrow: 'Log expense',
     editEyebrow: 'Edit expense',
     categoryEyebrow: 'Category',
+    // Optional merchant capture (Charen, 2026-08-04). Detection groups on
+    // expense.merchant, so this field is the only way the app's own logging
+    // flow can ever produce a leak. The field label and placeholder are the
+    // ones the old form used (strings.expenses.merchant*), reused as is.
+    whereEyebrow: 'Where',
     saveExpense: 'Save expense',
     saveChanges: 'Save changes',
     deleteExpense: 'Delete expense',
