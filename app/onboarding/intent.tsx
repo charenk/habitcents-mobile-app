@@ -48,7 +48,10 @@ const CARDS: IntentCard[] = [
     eyebrow: strings.onboarding.intentBreakEyebrow,
     title: strings.onboarding.intentBreakTitle,
     description: strings.onboarding.intentBreakDescription,
-    route: '/onboarding/audit-subs',
+    // Door 3 (W3, "the app is the onboarding" complete): unused, same as
+    // Door 1's route above. handlePick's intent === 'break' branch replaces
+    // straight into the tabs instead of pushing this route.
+    route: '',
   },
 ];
 
@@ -72,33 +75,31 @@ export default function OnboardingIntentScreen() {
   const router = useRouter();
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
-  const { chooseDoor, completeStep, completeOnboarding } = useOnboarding();
+  const { chooseDoor, completeOnboarding } = useOnboarding();
 
   const handlePick = async (card: IntentCard) => {
     track('onboarding_intent_selected', { intent: card.intent });
     await chooseDoor(DOOR_FOR_INTENT[card.intent]);
 
-    // Door 1 (W2, "the app is the onboarding"): track no longer pushes a
-    // guided-log screen. It lands straight on Today, which opens the real
-    // LogExpenseSheet itself (firstLog=1) and completes onboarding from
-    // there once that sheet is saved or dismissed (app/(tabs)/index.tsx).
-    // currentStep deliberately stays at 'fork' rather than advancing:
-    // NEXT_STEP['fork'] is 'audit_subs', the break path's next screen, which
-    // would be the wrong resume target for a track user. If the app is
-    // killed before Today finishes completing onboarding, a relaunch's
-    // welcome resume effect sends them back to this picker (STEP_ROUTE
-    // ['fork']), same as it already does today for an early abandon here.
+    // Door 1 & Door 3 (W2 + W3, "the app is the onboarding" complete): both
+    // land straight on Today via a deep link instead of pushing a dedicated
+    // onboarding screen; Today itself opens the relevant sheet (the real
+    // LogExpenseSheet for track, BreakHabitSheet for break) and completes
+    // onboarding once that sheet resolves (app/(tabs)/index.tsx). currentStep
+    // deliberately stays at 'fork' in both cases: NEXT_STEP has no forward
+    // step from 'fork' anymore (only Door 2's scan flow still pushes a
+    // route), so an early abandon before either sheet resolves still resumes
+    // at this picker on relaunch (STEP_ROUTE['fork'], welcome.tsx).
     if (card.intent === 'track') {
       router.replace('/(tabs)?view=spent&firstLog=1');
       return;
     }
-
-    // Only the break path advances the stored step, because that is the one
-    // whose next screen is the audit. Scan leaves the step at the picker so
-    // an early abandon resumes here rather than mid-audit.
     if (card.intent === 'break') {
-      await completeStep('fork');
+      router.replace('/(tabs)?view=kept&breakEntry=1');
+      return;
     }
+
+    // Scan only, from here down.
     router.push(card.route);
   };
 

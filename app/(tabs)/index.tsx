@@ -32,7 +32,9 @@ import { QuickLogRow } from '@/components/money/QuickLogRow';
 import { LoggedTodayList } from '@/components/money/LoggedTodayList';
 import { FirstRunRibbon } from '@/components/onboarding/FirstRunRibbon';
 import { useFirstRunRibbon } from '@/components/onboarding/useFirstRunRibbon';
+import { BreakHabitSheet, type BreakHabitStartData } from '@/components/onboarding/BreakHabitSheet';
 import { useCategories } from '@/contexts/CategoriesContext';
+import { VICE_CATEGORIES } from '@/constants/onboardingPresets';
 import type { Expense, ExpenseCategory } from '@/types/expense';
 import { atMidnight, dayStateFor, isHabitLimitReached, keptOnDay } from '@/utils/habitLogging';
 import { getEntitlement } from '@/utils/purchases';
@@ -54,14 +56,20 @@ type HabitSection = {
 };
 
 // Door 1 real-app first run (W2, "the app is the onboarding"). The FirstRunRibbon
-// storage record's `door` value for this flow; Door 3's unit picks its own.
+// storage record's `door` value for this flow.
 const DOOR1_KEY = 'door1';
+// Door 3 break sheet (W3): same hook, its own door key. The two ribbons share
+// one storage record (useFirstRunRibbon), so only one is ever pending at a
+// time; combined into a single render slot below.
+const DOOR3_KEY = 'door3';
 
 // FirstRunRibbon message keys -> copy. The hook only persists the key, so the
 // mapping (and therefore the wording) lives here with the rest of Today's copy.
 const FIRST_RUN_RIBBON_LINES: Record<string, string> = {
   door1_saved: strings.today.firstRunRibbonSaved,
   door1_gentle: strings.today.firstRunRibbonGentle,
+  door3_started: strings.today.door3RibbonStarted,
+  door3_gentle: strings.today.door3RibbonGentle,
 };
 
 /**
@@ -123,7 +131,7 @@ export default function TodayScreen() {
     maybeShowFirstLogMoment,
   } = useHabits();
 
-  const { expenses } = useExpenses();
+  const { expenses, addExpense } = useExpenses();
   const { getVisibleCategories, getCategoryByName } = useCategories();
   const {
     isLoading: onboardingLoading,
@@ -151,13 +159,29 @@ export default function TodayScreen() {
   const [firstLogSavedInfo, setFirstLogSavedInfo] = useState<LogExpenseSavedInfo | null>(null);
   const door1HandledRef = useRef(false);
   const {
-    ribbonPending,
-    messageKey: ribbonMessageKey,
+    ribbonPending: door1RibbonPending,
+    messageKey: door1MessageKey,
     nudgeResolved,
     showRibbon,
-    dismissRibbon,
+    dismissRibbon: dismissDoor1Ribbon,
     resolveNudge,
   } = useFirstRunRibbon(DOOR1_KEY);
+
+  // Door 3 break sheet (W3, "the app is the onboarding" complete): same
+  // exactly-once pattern as door1CoachActive/door1HandledRef above.
+  // door3CoachActive is true only while the sheet was opened via the
+  // breakEntry deep link (never for a later "break another" open, which
+  // happens after onboarding is already complete), so completeOnboarding only
+  // ever fires from the onboarding entry path.
+  const [breakSheetVisible, setBreakSheetVisible] = useState(false);
+  const [door3CoachActive, setDoor3CoachActive] = useState(false);
+  const door3HandledRef = useRef(false);
+  const {
+    ribbonPending: door3RibbonPending,
+    messageKey: door3MessageKey,
+    showRibbon: showDoor3Ribbon,
+    dismissRibbon: dismissDoor3Ribbon,
+  } = useFirstRunRibbon(DOOR3_KEY);
 
   // Five tiles plus a "more" affordance, per spec. Unused while showCategoryTiles
   // stays false on QuickLogRow, kept computed so a one-line flip reactivates it.
@@ -196,7 +220,7 @@ export default function TodayScreen() {
   // Deep link support: an onboarding flow can land Today on a specific view
   // via ?view=kept|spent. Anything else (missing, malformed) is ignored and
   // the default (Spent) stands.
-  const params = useLocalSearchParams<{ view?: string; firstLog?: string }>();
+  const params = useLocalSearchParams<{ view?: string; firstLog?: string; breakEntry?: string }>();
   useEffect(() => {
     if (params.view === 'kept' || params.view === 'spent') {
       setTodayView(params.view);
@@ -218,6 +242,21 @@ export default function TodayScreen() {
     openLogSheet();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onboardingLoading, params.firstLog]);
+
+  // Door 3 break sheet (W3): intent.tsx's break card lands here with
+  // breakEntry=1 instead of pushing the retired audit-subs screen. Same
+  // isOnboardingComplete() guard as door 1, for the same reason (a stale
+  // breakEntry=1 in history must never reopen the coach flow once onboarding
+  // is done).
+  useEffect(() => {
+    if (onboardingLoading) return;
+    if (params.breakEntry !== '1') return;
+    if (door3HandledRef.current) return;
+    if (isOnboardingComplete()) return;
+    setDoor3CoachActive(true);
+    setBreakSheetVisible(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onboardingLoading, params.breakEntry]);
 
   // First save while the Door 1 coach flow is active: fires the guided-log
   // analytics equivalent for funnel continuity, completes the same
@@ -251,6 +290,90 @@ export default function TodayScreen() {
     void showRibbon('door1_gentle');
   }, [door1CoachActive, skipOnboardingStep, completeOnboarding, showRibbon]);
 
+  // Door 3 break sheet "Start breaking it": builds the habit with the stated
+  // cadence the user just picked (stated-rate exception, mirroring how the
+  // retired audit's candidateToSeedInput set hasReliableRate true: the price
+  // and cadence are the user's own input, not a fabricated projection), starts
+  // it, and, only when the user answered "Yes, log it" to "Did you buy it
+  // today?", writes that one expense (ADR 0020: only an explicit yes writes
+  // an expense). This never answers the new habit's check-in question itself:
+  // "did you skip it today?" stays unanswered even on a bought-today yes,
+  // because that daily ritual is the user's to answer, not a side effect of
+  // admitting today's buy while setting the habit up.
+  const handleBreakSheetStart = useCallback(async (data: BreakHabitStartData) => {
+    const merchantPattern = data.chipId === 'custom' ? data.name : data.chipId;
+    const category: ExpenseCategory = data.chipId === 'custom' ? 'Other' : VICE_CATEGORIES[data.chipId];
+    const categoryId = getCategoryByName(category)?.id ?? getCategoryByName('Other')?.id ?? 'Other';
+    // Monthly-equivalent for the seeded habit's totalMonthlySpend, same
+    // approx-month convention the rest of the app uses elsewhere (weekly *
+    // 52/12); the honest yearly line on the sheet itself uses the exact
+    // 365/52/12 multipliers instead, since that is what is actually shown.
+    const monthlyMultiplier = data.cadence === 'daily' ? 30 : data.cadence === 'weekly' ? 52 / 12 : 1;
+
+    const habit = await seedDiscoveredHabit({
+      merchantPattern,
+      name: data.name,
+      description: '',
+      categoryId,
+      averageAmount: data.amountCents,
+      frequency: data.cadence,
+      occurrencesPerPeriod: 1,
+      totalMonthlySpend: Math.round(data.amountCents * monthlyMultiplier),
+    });
+    await startBreakingHabit(habit.id, data.amountCents, data.valueEdited, 'onboarding');
+
+    if (data.boughtToday) {
+      await addExpense({
+        title: data.name,
+        amount: data.amountCents,
+        category,
+        categoryId,
+        merchant: data.name,
+        date: new Date(),
+        isRecurring: false,
+        reminderEnabled: false,
+      });
+    }
+
+    setBreakSheetVisible(false);
+    if (door3CoachActive && !door3HandledRef.current) {
+      door3HandledRef.current = true;
+      setDoor3CoachActive(false);
+      await completeOnboarding();
+      await showDoor3Ribbon('door3_started');
+    }
+  }, [
+    seedDiscoveredHabit,
+    startBreakingHabit,
+    addExpense,
+    getCategoryByName,
+    door3CoachActive,
+    completeOnboarding,
+    showDoor3Ribbon,
+  ]);
+
+  // Close without starting (scrim, swipe, or the gate's "Maybe later"): same
+  // exactly-once completion as handleLogSheetClose above. Only acts when the
+  // sheet was opened via the onboarding deep link (door3CoachActive), so a
+  // later "break another" close (onboarding already complete by then) never
+  // re-fires completeOnboarding.
+  const handleBreakSheetClose = useCallback(() => {
+    setBreakSheetVisible(false);
+    if (!door3CoachActive || door3HandledRef.current) return;
+    door3HandledRef.current = true;
+    setDoor3CoachActive(false);
+    void completeOnboarding();
+    void showDoor3Ribbon('door3_gentle');
+  }, [door3CoachActive, completeOnboarding, showDoor3Ribbon]);
+
+  // Gate's "See Premium": leaving for the paywall is still leaving without
+  // starting a habit, so it completes onboarding the same way "Maybe later"
+  // does before navigating.
+  const handleBreakSheetStartTrial = useCallback(() => {
+    handleBreakSheetClose();
+    router.push('/paywall?placement=habit_gate');
+  }, [handleBreakSheetClose, router]);
+
   // Watch-nudge accept ("Buy this often? Watch it as a leak"): seeds an
   // honestly-observed discovered habit from the one log that was just saved,
   // no stated cadence, hasReliableRate false (never a fabricated monthly
@@ -279,6 +402,11 @@ export default function TodayScreen() {
   }, [resolveNudge]);
 
   const watchNudgeVisible = !!firstLogSavedInfo?.merchant && !nudgeResolved;
+  // The two ribbons share one storage record (useFirstRunRibbon), so at most
+  // one is ever pending; whichever it is drives the single render slot below.
+  const ribbonPending = door1RibbonPending || door3RibbonPending;
+  const ribbonMessageKey = door1RibbonPending ? door1MessageKey : door3RibbonPending ? door3MessageKey : null;
+  const dismissRibbon = door1RibbonPending ? dismissDoor1Ribbon : dismissDoor3Ribbon;
   const ribbonLine = ribbonMessageKey ? FIRST_RUN_RIBBON_LINES[ribbonMessageKey] ?? null : null;
 
   const handleTodayViewChange = useCallback((view: SpentKeptView) => {
@@ -454,13 +582,14 @@ export default function TodayScreen() {
 
   // Break-another affordance (DI-6, ADR 0019): same gate freeTierBlocked
   // already drives on PickOneSheet's "start" path, reused here so a second
-  // press-through leads to the identical outcome. Under the limit it reuses
-  // the exact re-audit target the empty state's link already routes to.
+  // press-through leads to the identical outcome. Under the limit it opens
+  // the break sheet in place (W3: the audit it used to route to,
+  // /onboarding/welcome, is deleted; the sheet lives on Today now).
   const handleBreakAnother = useCallback(() => {
     if (freeTierBlocked) {
       router.push('/paywall?placement=habit_gate');
     } else {
-      router.push('/onboarding/welcome');
+      setBreakSheetVisible(true);
     }
   }, [freeTierBlocked, router]);
 
@@ -485,10 +614,10 @@ export default function TodayScreen() {
   );
 
   // Persistent break-another affordance (DI-6, ADR 0019): a dashed card like
-  // UpcomingList's add-upcoming row (components/money/UpcomingList.tsx),
-  // chosen over the quieter reAuditLink text style for the same discoverability
-  // reason the money tab already leans on it. Rendered once, reused at the
-  // bottom of both the populated (SectionList footer) and empty Kept content.
+  // UpcomingList's add-upcoming row (components/money/UpcomingList.tsx).
+  // Rendered once, reused at the bottom of both the populated (SectionList
+  // footer) and empty Kept content; W3 consolidated the empty state's former
+  // separate reAuditLink text link into this single affordance.
   const breakAnotherAffordance = (
     <TouchableOpacity
       style={styles.breakAnother}
@@ -725,13 +854,6 @@ export default function TodayScreen() {
               >
                 <Text style={styles.emptyCtaText}>{strings.habitLogging.logAnExpense}</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.reAuditLink}
-                onPress={() => router.push('/onboarding/welcome')}
-                accessibilityRole="button"
-              >
-                <Text style={styles.reAuditLinkText}>{strings.onboarding.reAuditLink}</Text>
-              </TouchableOpacity>
               {firstLogCardId && (
                 <View style={styles.emptyCoachMoment}>
                   <CoachMomentSlot text={cardText(firstLogCardId)} />
@@ -796,6 +918,14 @@ export default function TodayScreen() {
         visible={editingExpense !== null}
         expense={editingExpense}
         onClose={() => setEditingExpense(null)}
+      />
+
+      <BreakHabitSheet
+        visible={breakSheetVisible}
+        freeTierBlocked={freeTierBlocked}
+        onClose={handleBreakSheetClose}
+        onStart={handleBreakSheetStart}
+        onStartTrial={handleBreakSheetStartTrial}
       />
     </View>
   );
@@ -946,22 +1076,13 @@ function createStyles(theme: AppTheme) {
       alignSelf: 'stretch',
       marginTop: 24,
     },
-    reAuditLink: {
-      marginTop: 14,
-      minHeight: 44,
-      justifyContent: 'center',
-    },
-    reAuditLinkText: {
-      fontSize: 14,
-      fontFamily: theme.fonts.uiSemibold,
-      color: theme.textSecondary,
-    },
     // Break-another affordance (DI-6, ADR 0019): a dashed card mirroring
     // UpcomingList's add-upcoming row (components/money/UpcomingList.tsx
-    // `add`/`addLabel`), picked over the quieter reAuditLink text treatment
-    // for the same discoverability reason the money tab leans on it. Two
-    // lines (label + caption) rather than UpcomingList's single centered
-    // line, so it is left-aligned with the icon instead of centered.
+    // `add`/`addLabel`). W3 consolidated this with the empty state's former
+    // reAuditLink text link (same destination, now redundant); this dashed
+    // card is the single re-entry point in both the empty and populated Kept
+    // views. Two lines (label + caption) rather than UpcomingList's single
+    // centered line, so it is left-aligned with the icon instead of centered.
     breakAnother: {
       flexDirection: 'row',
       alignItems: 'center',

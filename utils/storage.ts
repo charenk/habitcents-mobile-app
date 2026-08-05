@@ -21,6 +21,11 @@ const DASHBOARD_KEY = '@habitcents_dashboard';
 const ONBOARDING_STATE_KEY = '@habitcents_onboarding_state';
 const PROGRESSIVE_FEATURES_KEY = '@habitcents_progressive_features';
 // Onboarding Leak Audit answer persistence (P2-1, spec 02 section 7).
+// LEGACY (W3, "the app is the onboarding" complete): the audit screens that
+// wrote this key are deleted, and nothing reads it back into a screen
+// anymore. Kept only so completeOnboarding's one-time clearAuditAnswers()
+// call below still has a key to clear on a device upgrading from before this
+// update; never write new data here.
 const AUDIT_ANSWERS_KEY = '@habitcents_audit_answers';
 
 // =====================

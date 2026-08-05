@@ -1,0 +1,391 @@
+/**
+ * Break habit sheet (W3, "the app is the onboarding" complete, ADR 0020 +
+ * 0022). Door 3's entire flow, replacing the deleted audit-subs / audit-vices
+ * / reveal / success screens: one sheet, over the real app, that goes straight
+ * from "pick a habit" to "start breaking it".
+ *
+ * Presentational only, like PickOneSheet: this component collects the pick
+ * (chip or custom name), the amount, the cadence, and the bought-today
+ * answer, then hands the whole thing to `onStart`. It does not touch
+ * HabitsContext, ExpensesContext, or OnboardingContext itself; the caller
+ * (app/(tabs)/index.tsx) owns seeding the habit, starting it, optionally
+ * logging today's expense, and completing onboarding, the same split
+ * PickOneSheet already uses.
+ *
+ * Amount-first, like every other amount in the app (AmountDisplay + Keypad).
+ * The honest yearly line is pure arithmetic from what the user just typed
+ * (365/52/12 by cadence), never an invented rate. Bought-today defaults to
+ * "Not today" (ADR 0020): only an explicit Yes ever asks the caller to write
+ * an expense.
+ */
+import React, { useEffect, useMemo, useState } from 'react';
+import { ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
+import { AmountDisplay } from '@/components/ui/AmountDisplay';
+import { Button } from '@/components/ui/Button';
+import { Chip } from '@/components/ui/Chip';
+import { Keypad } from '@/components/ui/Keypad';
+import { SegmentedControl } from '@/components/ui/SegmentedControl';
+import { Sheet } from '@/components/ui/Sheet';
+import { useTheme } from '@/contexts/ThemeContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
+import { radii, typeScale } from '@/constants/theme';
+import type { AppTheme } from '@/constants/theme';
+import { vicePresets, VICE_IDS, type ViceId } from '@/constants/onboardingPresets';
+import { centsToKeypadValue, keypadValueToCents } from '@/utils/keypad';
+import type { HabitFrequency } from '@/types/habit';
+import { strings } from '@/constants/strings';
+
+const CUSTOM_CHIP_ID = 'custom' as const;
+type BreakChipId = ViceId | typeof CUSTOM_CHIP_ID;
+
+const CADENCE_OPTIONS: { value: HabitFrequency; label: string }[] = [
+  { value: 'daily', label: strings.onboarding.breakSheetCadenceMostDays },
+  { value: 'weekly', label: strings.onboarding.breakSheetCadenceWeekly },
+  { value: 'monthly', label: strings.onboarding.breakSheetCadenceMonthly },
+];
+
+const YEARLY_MULTIPLIER: Record<HabitFrequency, number> = {
+  daily: 365,
+  weekly: 52,
+  monthly: 12,
+};
+
+/** Pure arithmetic on the entered amount, rounded to the nearest whole unit. */
+function yearlyKeepCents(amountCents: number, cadence: HabitFrequency): number {
+  return Math.round((amountCents * YEARLY_MULTIPLIER[cadence]) / 100) * 100;
+}
+
+function yearlyLineFor(cadence: HabitFrequency, formattedAmount: string): string {
+  if (cadence === 'weekly') return strings.onboarding.breakSheetYearlyLineWeekly(formattedAmount);
+  if (cadence === 'monthly') return strings.onboarding.breakSheetYearlyLineMonthly(formattedAmount);
+  return strings.onboarding.breakSheetYearlyLineDaily(formattedAmount);
+}
+
+const BOUGHT_OPTIONS: { value: 'no' | 'yes'; label: string }[] = [
+  { value: 'no', label: strings.onboarding.breakSheetBoughtNo },
+  { value: 'yes', label: strings.onboarding.breakSheetBoughtYes },
+];
+
+export type BreakHabitStartData = {
+  /** The vice preset id, or 'custom' for a typed name. */
+  chipId: BreakChipId;
+  /** Display name: the preset's name, or the trimmed custom text. Doubles as
+   * the seeded habit's merchantPattern base (the caller derives the exact
+   * merchantPattern; see index.tsx). */
+  name: string;
+  amountCents: number;
+  /** True when amountCents differs from the selected chip's preset (always
+   * true for the custom chip, which has no preset to compare against). */
+  valueEdited: boolean;
+  cadence: HabitFrequency;
+  boughtToday: boolean;
+};
+
+export type BreakHabitSheetProps = {
+  visible: boolean;
+  /** Free-tier touchpoint (ADR 0007): reachable here via restart-onboarding
+   * when a habit is already being broken. Swaps to the gate treatment,
+   * mirroring PickOneSheet's gated state. */
+  freeTierBlocked?: boolean;
+  /** Dismiss without starting: scrim tap, swipe, or "Maybe later" on the gate. */
+  onClose: () => void;
+  onStart: (data: BreakHabitStartData) => void;
+  /** Opens the paywall from the gate's upgrade CTA. Optional, like
+   * PickOneSheet's, since a caller that never gates can omit it. */
+  onStartTrial?: () => void;
+};
+
+export function BreakHabitSheet({
+  visible,
+  freeTierBlocked = false,
+  onClose,
+  onStart,
+  onStartTrial,
+}: BreakHabitSheetProps) {
+  const theme = useTheme();
+  const { currency, format } = useCurrency();
+  const { height } = useWindowDimensions();
+  const styles = useMemo(() => createStyles(theme), [theme]);
+
+  const presets = useMemo(() => vicePresets(currency), [currency]);
+  const presetCentsById = useMemo(
+    () => new Map(presets.map((p) => [p.id, p.perItemCents])),
+    [presets]
+  );
+  const presetNameById = useMemo(() => new Map(presets.map((p) => [p.id, p.name])), [presets]);
+
+  const [selectedChip, setSelectedChip] = useState<BreakChipId | null>(null);
+  const [customName, setCustomName] = useState('');
+  const [value, setValue] = useState('');
+  const [cadence, setCadence] = useState<HabitFrequency>('daily');
+  const [boughtToday, setBoughtToday] = useState<'no' | 'yes'>('no');
+
+  // Fresh state every time the sheet opens: this is a new pick each time, not
+  // an edit of the last one (PickOneSheet resets on `visible` the same way).
+  useEffect(() => {
+    if (!visible) return;
+    setSelectedChip(null);
+    setCustomName('');
+    setValue('');
+    setCadence('daily');
+    setBoughtToday('no');
+  }, [visible]);
+
+  const selectChip = (id: BreakChipId) => {
+    setSelectedChip(id);
+    if (id === CUSTOM_CHIP_ID) {
+      // No stated price to prefill from; the user types both the name and
+      // the amount.
+      setValue('');
+    } else {
+      setValue(centsToKeypadValue(presetCentsById.get(id) ?? 0));
+    }
+  };
+
+  const amountCents = keypadValueToCents(value);
+  const prefillCents = selectedChip && selectedChip !== CUSTOM_CHIP_ID ? presetCentsById.get(selectedChip) ?? 0 : 0;
+  const valueEdited = amountCents !== prefillCents;
+
+  const name =
+    selectedChip === CUSTOM_CHIP_ID
+      ? customName.trim()
+      : selectedChip
+        ? presetNameById.get(selectedChip) ?? ''
+        : '';
+
+  const canStart =
+    !!selectedChip &&
+    amountCents > 0 &&
+    (selectedChip !== CUSTOM_CHIP_ID || customName.trim().length > 0);
+
+  const yearlyCents = yearlyKeepCents(amountCents, cadence);
+  const yearlyLine = yearlyLineFor(cadence, format(yearlyCents));
+
+  const handleStart = () => {
+    if (!canStart || !selectedChip) return;
+    onStart({
+      chipId: selectedChip,
+      name,
+      amountCents,
+      valueEdited,
+      cadence,
+      boughtToday: boughtToday === 'yes',
+    });
+  };
+
+  if (freeTierBlocked) {
+    return (
+      <Sheet visible={visible} onClose={onClose} accessibilityLabel={strings.onboarding.breakSheetTitle}>
+        <ScrollView
+          style={{ maxHeight: height * 0.86 }}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+        >
+          <Text style={styles.title} accessibilityRole="header">
+            {strings.onboarding.breakSheetTitle}
+          </Text>
+          <Text style={styles.caption}>{strings.onboarding.breakSheetCaption}</Text>
+
+          <View style={styles.gateCard}>
+            <Text style={styles.gateEyebrow}>{strings.habitLogging.freeTierNote}</Text>
+            <Text style={styles.gateTitle}>{strings.habitLogging.gateTitle}</Text>
+            <Text style={styles.gateBody}>
+              {strings.habitLogging.gateBody(strings.paywall.planMonthlyPrice)}
+            </Text>
+            <Text style={styles.gatePlanned}>{strings.paywall.plannedBanner}</Text>
+          </View>
+
+          <Button
+            label={strings.habitLogging.gateUpgradeCta}
+            onPress={() => onStartTrial?.()}
+            style={styles.primary}
+          />
+          <Button label={strings.habitLogging.gateMaybeLater} variant="tertiary" onPress={onClose} />
+        </ScrollView>
+      </Sheet>
+    );
+  }
+
+  return (
+    <Sheet
+      visible={visible}
+      onClose={onClose}
+      avoidKeyboard
+      accessibilityLabel={strings.onboarding.breakSheetTitle}
+    >
+      <ScrollView
+        style={{ maxHeight: height * 0.86 }}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        <Text style={styles.title} accessibilityRole="header">
+          {strings.onboarding.breakSheetTitle}
+        </Text>
+        <Text style={styles.caption}>{strings.onboarding.breakSheetCaption}</Text>
+
+        <View style={styles.chipRow}>
+          {VICE_IDS.map((id) => (
+            <Chip
+              key={id}
+              label={presetNameById.get(id) ?? id}
+              selected={selectedChip === id}
+              onPress={() => selectChip(id)}
+            />
+          ))}
+          <Chip
+            label={strings.onboarding.somethingElse}
+            selected={selectedChip === CUSTOM_CHIP_ID}
+            onPress={() => selectChip(CUSTOM_CHIP_ID)}
+          />
+        </View>
+
+        {selectedChip === CUSTOM_CHIP_ID && (
+          <TextInput
+            value={customName}
+            onChangeText={setCustomName}
+            placeholder={strings.onboarding.somethingElseNamePlaceholder}
+            placeholderTextColor={theme.textTertiary}
+            style={styles.customNameInput}
+            accessibilityLabel={strings.onboarding.somethingElseNamePlaceholder}
+          />
+        )}
+
+        <Text style={styles.eyebrow}>{strings.habitLogging.pickOneFieldLabel}</Text>
+        <View
+          accessible
+          accessibilityLabel={`${strings.habitLogging.pickOneFieldLabel}, ${format(amountCents)}`}
+        >
+          <AmountDisplay valueCents={amountCents} focused size={40} zeroAsPlaceholder />
+        </View>
+        <View style={styles.keypad}>
+          <Keypad value={value} onChange={setValue} />
+        </View>
+
+        <Text style={styles.eyebrow}>{strings.onboarding.breakSheetCadenceLabel}</Text>
+        <SegmentedControl
+          options={CADENCE_OPTIONS}
+          value={cadence}
+          onChange={setCadence}
+          accessibilityLabel={strings.onboarding.breakSheetCadenceLabel}
+        />
+
+        <Text style={styles.yearlyLine}>{yearlyLine}</Text>
+
+        <Text style={styles.eyebrow}>{strings.onboarding.breakSheetBoughtTodayLabel}</Text>
+        <SegmentedControl
+          options={BOUGHT_OPTIONS}
+          value={boughtToday}
+          onChange={setBoughtToday}
+          accessibilityLabel={strings.onboarding.breakSheetBoughtTodayLabel}
+        />
+
+        <Button
+          label={strings.habitLogging.startBreakingIt}
+          onPress={handleStart}
+          disabled={!canStart}
+          style={styles.primary}
+        />
+      </ScrollView>
+    </Sheet>
+  );
+}
+
+function createStyles(theme: AppTheme) {
+  return StyleSheet.create({
+    content: {
+      paddingTop: 10,
+      paddingHorizontal: 20,
+      paddingBottom: 16,
+    },
+    title: {
+      fontFamily: theme.fonts.display,
+      fontSize: 28,
+      lineHeight: 34,
+      color: theme.ink,
+    },
+    caption: {
+      fontFamily: theme.fonts.ui,
+      fontSize: 14,
+      lineHeight: 20,
+      color: theme.slate,
+      marginTop: 4,
+      marginBottom: 16,
+    },
+    chipRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 8,
+    },
+    customNameInput: {
+      marginTop: 10,
+      minHeight: 44,
+      borderWidth: 1.5,
+      borderColor: theme.primary,
+      borderRadius: radii.control,
+      paddingHorizontal: 14,
+      fontFamily: theme.fonts.uiSemibold,
+      fontSize: 15,
+      color: theme.ink,
+    },
+    eyebrow: {
+      fontFamily: theme.fonts.uiSemibold,
+      fontSize: typeScale.eyebrow,
+      letterSpacing: typeScale.eyebrowLetterSpacing,
+      textTransform: 'uppercase',
+      color: theme.mist,
+      marginTop: 18,
+      marginBottom: 8,
+    },
+    keypad: {
+      marginTop: 14,
+    },
+    yearlyLine: {
+      fontFamily: theme.fonts.ui,
+      fontSize: 14,
+      lineHeight: 20,
+      color: theme.slate,
+      marginTop: 12,
+    },
+    primary: {
+      marginTop: 22,
+    },
+    gateCard: {
+      backgroundColor: theme.snow,
+      borderRadius: radii.card,
+      borderWidth: 1,
+      borderColor: theme.cloud,
+      paddingHorizontal: 14,
+      paddingVertical: 14,
+      marginTop: 10,
+    },
+    gateEyebrow: {
+      fontFamily: theme.fonts.uiSemibold,
+      fontSize: typeScale.eyebrow,
+      letterSpacing: typeScale.eyebrowLetterSpacing,
+      textTransform: 'uppercase',
+      color: theme.mist,
+      marginBottom: 6,
+    },
+    gateTitle: {
+      fontFamily: theme.fonts.uiSemibold,
+      fontSize: 16,
+      lineHeight: 22,
+      color: theme.ink,
+    },
+    gateBody: {
+      fontFamily: theme.fonts.ui,
+      fontSize: typeScale.secondary,
+      lineHeight: 20,
+      color: theme.slate,
+      marginTop: 4,
+    },
+    gatePlanned: {
+      fontFamily: theme.fonts.ui,
+      fontSize: typeScale.caption,
+      lineHeight: 17,
+      color: theme.mist,
+      marginTop: 10,
+    },
+  });
+}
