@@ -1,0 +1,64 @@
+# Pattern vocabulary
+
+The one-page self-check for anyone shipping UI in this app. Read it before building, run the checklist before opening a PR. Deviations are allowed; unexplained deviations are not: name them in the PR body so the reviewer judges the exception, not the surprise.
+
+Sources of truth this page compresses: `design/redesign-handoff/01-tokens-and-foundations.md` (tokens), ADR 0018 (system of record), ADR 0019 (chrome and views), ADR 0021 (switching vocabulary). If this page disagrees with those, those win; fix this page.
+
+## Color
+
+- Neutrals carry roughly 90 percent of every screen: ink, slate, mist, cloud, snow. If a screen feels colorful, something is off.
+- Sage (`theme.primary` and `primaryDark`) means one thing: a kept outcome or the action that produces one (CTA, kept numbers, active tab tint, skip confirm). Sage never touches a spend figure, a border around one, or decoration.
+- Spend is never a win: spend figures are ink, spend bars are mist on snow.
+- Lavender = habit arc, chapters, premium. Amber = upcoming money. Coral = destructive only. A slip is never red.
+- The only gradient in the app is the premium upsell card's.
+
+## Type
+
+- Instrument Serif appears in exactly two places: screen titles ending in a period and money (hero, stat, keypad, reveal amounts). Never body, never buttons.
+- Everything else is Inter, on the typeScale steps. No sizes off the scale.
+- Eyebrows are the only all-caps: 11pt, semibold, letterSpacing .88, uppercased by the component. Strings stay sentence case.
+- Every number that can sit above another number is tabular: `fontVariant: ['tabular-nums']`.
+
+## Controls
+
+- There is ONE switching pattern: the cloud track with a raised white thumb. Small scale = SegmentedControl (Money views, sheet toggles). Value scale = the Today scoreboard. Do not invent a third switcher; grow one of these.
+- Buttons: primary sage (48 to 52pt min height), secondary white with cloud border, tertiary bare slate text, destructive coral. Pick from these four.
+- The dashed-border card is the app's "add another" affordance (add upcoming, break another habit). Reuse it for any add-an-item entry.
+- 40pt pill buttons with cloud borders are header chrome only, icons in slate, never sage.
+
+## Surfaces
+
+- Feature card: radius 20, white, 1px cloud border, `shadows.card`. List card: radius 14. Sheets: bottom-anchored, radius 20 top, grab handle. Toasts: ink pill, one per mutating action.
+- One 20pt horizontal gutter per screen. Full-bleed is reserved for nothing currently; if you think you need it, that is a named deviation.
+- Vertical rhythm inside a view is a 12pt stack gap.
+
+## Motion
+
+- Budget: tap 120ms, sheet and toast 220ms, screen 360ms, easing `cubic-bezier(0.22, 1, 0.36, 1)`.
+- Exactly one playful motion exists: the 280ms skip-confirm pulse. Do not add a second without an ADR.
+- Thumb swaps in switchers are instant, by design.
+- Every animation has a reduced-motion path (opacity only or nothing). Mixed animation drivers on one node crashed two release builds; one driver per node, no JS-thread sequences.
+
+## Accessibility
+
+- Screen titles carry `accessibilityRole="header"`. Switchers are tablist/tab with selected state. Targets are 44pt or padded to it with hitSlop.
+- Dynamic Type caps: 1.5 on chrome and eyebrows, 1.3 on serif amounts.
+- Anything mounted off-screen (pagers) is hidden from assistive tech.
+- Status conveyed by color (pending dot) is also in the accessible label.
+
+## Copy
+
+- All strings live in `constants/strings.ts`. Sentence case. No em dashes, anywhere, ever.
+- Locked vocabulary: leak, skip, kept, slip. Never streak, success, or completed language.
+- Never invent statistics; state observed evidence ("$119.05 across 4 buys"), not fabricated rates.
+
+## The PR self-check
+
+- [ ] No new color meanings, no sage near spend, no red slip
+- [ ] Type on the scale; serif only for titles and money; tabular numbers
+- [ ] Controls picked from the vocabulary above, not invented
+- [ ] 20pt gutter, 12pt rhythm, radii from the set (10 / 14 / 20 / 999)
+- [ ] Motion inside the budget with a reduced-motion path, single driver
+- [ ] Header roles, tab roles, 44pt targets, Dynamic Type caps
+- [ ] Strings centralized, sentence case, locked vocabulary
+- [ ] Any deviation from the above named in the PR body
