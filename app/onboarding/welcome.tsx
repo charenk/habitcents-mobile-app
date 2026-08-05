@@ -1,11 +1,11 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useOnboarding } from '@/contexts/OnboardingContext';
-import { Button, Icon, Sheet } from '@/components/ui';
-import type { IconName } from '@/components/ui';
+import { Button, Icon } from '@/components/ui';
+import { OutcomeCarousel } from '@/components/onboarding/OutcomeCarousel';
 import type { AppTheme } from '@/constants/theme';
 import { typeScale } from '@/constants/theme';
 import type { OnboardingStep } from '@/types/onboarding';
@@ -26,21 +26,12 @@ const STEP_ROUTE: Partial<Record<OnboardingStep, string>> = {
   success: '/onboarding/success',
 };
 
-// The three value props, stated up front (design/redesign-handoff/03-onboarding.md
-// screen 1) rather than teased behind a carousel.
-const VALUE_PROPS: { icon: IconName; text: string }[] = [
-  { icon: 'Timer', text: strings.onboarding.valuePropLog },
-  { icon: 'ChartPie', text: strings.onboarding.valuePropSee },
-  { icon: 'Sprout', text: strings.onboarding.valuePropBreak },
-];
-
-const HOW_IT_WORKS_ICONS: IconName[] = ['Timer', 'ChartPie', 'Sprout'];
-
 /**
- * Welcome (design/redesign-handoff/03-onboarding.md, screen 1). One screen, no
- * pager and no feature carousel: brand row, serif headline, the three value
- * props, the privacy line. Primary continues to the intent picker; "How it
- * works" opens a three-row sheet.
+ * Welcome (design/redesign-handoff/03-onboarding.md, screen 1; OB-5/ADR 0020).
+ * Brand row, serif headline, the outcome carousel, the privacy line. Primary
+ * continues to the intent picker. The static three-row value-prop list and
+ * the redundant How-it-works sheet are retired in favor of
+ * components/onboarding/OutcomeCarousel.tsx, which carries the same lines.
  */
 export default function OnboardingWelcomeScreen() {
   const insets = useSafeAreaInsets();
@@ -48,7 +39,6 @@ export default function OnboardingWelcomeScreen() {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const { onboardingState, isLoading, completeStep } = useOnboarding();
-  const [howItWorksVisible, setHowItWorksVisible] = useState(false);
 
   useEffect(() => {
     if (isLoading) return;
@@ -85,15 +75,8 @@ export default function OnboardingWelcomeScreen() {
           {strings.onboarding.welcomeHeadline}
         </Text>
 
-        <View style={styles.valueProps}>
-          {VALUE_PROPS.map(prop => (
-            <View key={prop.text} style={styles.valueRow}>
-              <View style={styles.valueTile}>
-                <Icon name={prop.icon} size={16} color={theme.primaryDark} />
-              </View>
-              <Text style={styles.valueText}>{prop.text}</Text>
-            </View>
-          ))}
+        <View style={styles.carousel}>
+          <OutcomeCarousel />
         </View>
 
         <Text style={styles.privacy}>{strings.onboarding.welcomeSub}</Text>
@@ -101,30 +84,7 @@ export default function OnboardingWelcomeScreen() {
 
       <View style={styles.footer}>
         <Button label={strings.onboarding.getStarted} onPress={handleGetStarted} />
-        <Button
-          label={strings.onboarding.howItWorks}
-          variant="tertiary"
-          onPress={() => setHowItWorksVisible(true)}
-        />
       </View>
-
-      <Sheet
-        visible={howItWorksVisible}
-        onClose={() => setHowItWorksVisible(false)}
-        accessibilityLabel={strings.onboarding.howItWorks}
-      >
-        <View style={styles.sheetBody}>
-          {strings.onboarding.howItWorksRows.map((row, i) => (
-            <View key={row} style={styles.valueRow}>
-              <View style={styles.valueTile}>
-                <Icon name={HOW_IT_WORKS_ICONS[i]} size={16} color={theme.primaryDark} />
-              </View>
-              <Text style={styles.valueText}>{row}</Text>
-            </View>
-          ))}
-          <Button label={strings.common.ok} onPress={() => setHowItWorksVisible(false)} />
-        </View>
-      </Sheet>
     </View>
   );
 }
@@ -166,29 +126,8 @@ function createStyles(theme: AppTheme) {
       color: theme.ink,
       marginBottom: 28,
     },
-    valueProps: {
-      gap: 12,
+    carousel: {
       marginBottom: 24,
-    },
-    valueRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 12,
-    },
-    valueTile: {
-      width: 32,
-      height: 32,
-      borderRadius: 9,
-      backgroundColor: theme.primaryLight,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    valueText: {
-      flex: 1,
-      fontSize: typeScale.body,
-      fontFamily: theme.fonts.ui,
-      color: theme.ink,
-      lineHeight: 21,
     },
     privacy: {
       fontSize: typeScale.secondary,
@@ -199,13 +138,6 @@ function createStyles(theme: AppTheme) {
     footer: {
       paddingHorizontal: 24,
       paddingBottom: 16,
-      gap: 6,
-    },
-    sheetBody: {
-      paddingHorizontal: 20,
-      paddingTop: 16,
-      paddingBottom: 8,
-      gap: 16,
     },
   });
 }
