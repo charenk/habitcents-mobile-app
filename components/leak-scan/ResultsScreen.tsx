@@ -28,6 +28,7 @@ import {
 } from '@/utils/leakScan';
 import { spendableRows } from '@/utils/leakScan/netting';
 import { seedLast15Days, recurringToExpenses } from '@/utils/leakScan/importWrite';
+import { scanResultToSummary } from '@/utils/leakScan/summarize';
 import type { ScanFileInput } from '@/utils/leakScan';
 import type { PulseCell } from '@/utils/leakScan/spendPulse';
 import type { GovernClass, HabitCandidate, ScanResult } from '@/utils/leakScan/types';
@@ -40,6 +41,7 @@ import {
   type ScanRules,
 } from '@/utils/scanRules';
 import { habitCandidateToDetectedHabit, scanHabitId } from '@/utils/leakScanBridge';
+import { saveScanSummary } from '@/utils/storage';
 import { track } from '@/utils/analytics';
 import { isHabitLimitReached } from '@/utils/habitLogging';
 import { getEntitlement } from '@/utils/purchases';
@@ -95,6 +97,11 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
       setRulesState(updatedRules);
       const next = runScan(files, { rules: updatedRules, importId: initialResult.importId });
       setResult(next);
+      // Corrections change what the scan concluded, so the persisted summary
+      // follows the corrected result too (same write the intake hook does).
+      if (!next.gracefulFailure) {
+        void saveScanSummary(scanResultToSummary(next, new Date()));
+      }
     },
     [files, initialResult.importId]
   );
