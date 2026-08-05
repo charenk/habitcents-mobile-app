@@ -22,7 +22,12 @@ const STEP_ROUTE: Partial<Record<OnboardingStep, string>> = {
   audit_subs: '/onboarding/audit-subs',
   audit_vices: '/onboarding/audit-vices',
   reveal: '/onboarding/reveal',
-  guided_log: '/onboarding/guided-log',
+  // W2 ("the app is the onboarding") retires the practice-log screen. A
+  // stored currentStep of 'guided_log' can still exist on-device from before
+  // this update (the audit/break path used to stop here); mapped forward to
+  // success, its former next step, rather than a route that no longer
+  // exists. Door 3's unit owns the full step-machine rewrite this implies.
+  guided_log: '/onboarding/success',
   success: '/onboarding/success',
 };
 

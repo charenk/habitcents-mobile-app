@@ -29,7 +29,10 @@ const CARDS: IntentCard[] = [
     eyebrow: strings.onboarding.intentTrackEyebrow,
     title: strings.onboarding.intentTrackTitle,
     description: strings.onboarding.intentTrackDescription,
-    route: '/onboarding/guided-log',
+    // Door 1 (W2, "the app is the onboarding"): unused. handlePick's
+    // intent === 'track' branch below replaces straight into the tabs
+    // instead of pushing this route.
+    route: '',
   },
   {
     intent: 'scan',
@@ -74,9 +77,25 @@ export default function OnboardingIntentScreen() {
   const handlePick = async (card: IntentCard) => {
     track('onboarding_intent_selected', { intent: card.intent });
     await chooseDoor(DOOR_FOR_INTENT[card.intent]);
+
+    // Door 1 (W2, "the app is the onboarding"): track no longer pushes a
+    // guided-log screen. It lands straight on Today, which opens the real
+    // LogExpenseSheet itself (firstLog=1) and completes onboarding from
+    // there once that sheet is saved or dismissed (app/(tabs)/index.tsx).
+    // currentStep deliberately stays at 'fork' rather than advancing:
+    // NEXT_STEP['fork'] is 'audit_subs', the break path's next screen, which
+    // would be the wrong resume target for a track user. If the app is
+    // killed before Today finishes completing onboarding, a relaunch's
+    // welcome resume effect sends them back to this picker (STEP_ROUTE
+    // ['fork']), same as it already does today for an early abandon here.
+    if (card.intent === 'track') {
+      router.replace('/(tabs)?view=spent&firstLog=1');
+      return;
+    }
+
     // Only the break path advances the stored step, because that is the one
-    // whose next screen is the audit. Track and scan leave the step at the
-    // picker so an early abandon resumes here rather than mid-audit.
+    // whose next screen is the audit. Scan leaves the step at the picker so
+    // an early abandon resumes here rather than mid-audit.
     if (card.intent === 'break') {
       await completeStep('fork');
     }

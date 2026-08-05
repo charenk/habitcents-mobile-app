@@ -431,10 +431,6 @@ export const strings = {
     // Both-empty edge case (section 8)
     noNumberYetTitle: "We'll find your leak from your real logs.",
     noNumberYetSubtitle: 'Around 4 logs at the same place is enough to spot a pattern.',
-    // 3.6 Guided first log
-    guidedLogHint: "One practice log and you're done. Try today's coffee. Amount first.",
-    guidedLogLater: 'Later',
-    guidedLogToast: 'Logged. Nice, that took ten seconds.',
     // 3.7 Success
     // Serif screen titles end with a period in the redesign (spec 05).
     leakMapReady: 'Your leak map is ready.',
@@ -651,6 +647,23 @@ export const strings = {
     // (the same gate copy PickOneSheet's locked sheet already states) rather
     // than inventing a new pricing line.
     breakAnotherHabitCta: 'Break another habit',
+    // Door 1 real-app first run (W2, ratified onboarding redesign): Door 1 no
+    // longer passes through a practice log screen, it opens the real
+    // LogExpenseSheet in place. The hint copy voice carries over from the
+    // retired guided-log screen (onboarding.guidedLogHint).
+    firstLogCoachLine: "The real thing, not a practice run. Amount first.",
+    // FirstRunRibbon messages (components/onboarding/FirstRunRibbon.tsx),
+    // keyed by messageKey in the persisted record. Saved: the log went
+    // through. Gentle: the sheet was closed before saving, so onboarding
+    // still completes but nothing is claimed to have happened yet.
+    firstRunRibbonSaved: "Logged for real. A few more like this and we'll spot your first leak.",
+    firstRunRibbonGentle: "Log your first expense whenever you're ready.",
+    // Watch-nudge (W2 item 3): a dashed, UpcomingList-style affordance under
+    // the just-logged row, offered only when that log carries a merchant.
+    // Accepting seeds a discovered, honestly-observed leak (one log, no
+    // stated cadence); it never claims to "create a habit".
+    watchLeakNudgeLabel: 'Buy this often? Watch it as a leak',
+    watchLeakNudgeDismiss: 'not now',
   },
 
   // Log and edit expense sheets (spec 04 "Log / Edit sheets").

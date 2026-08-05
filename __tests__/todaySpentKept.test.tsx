@@ -78,7 +78,21 @@ jest.mock('@/contexts/ExpensesContext', () => ({
 }));
 
 jest.mock('@/contexts/CategoriesContext', () => ({
-  useCategories: () => ({ getVisibleCategories: () => [] }),
+  useCategories: () => ({ getVisibleCategories: () => [], getCategoryByName: () => undefined }),
+}));
+
+// Door 1 real-app first run (W2) reads useOnboarding(); none of this file's
+// existing suites exercise that flow, so onboarding is complete by default
+// and every mutator is a no-op spy. door1FirstRun.test.tsx covers the flow
+// itself with a fuller mock.
+jest.mock('@/contexts/OnboardingContext', () => ({
+  useOnboarding: () => ({
+    isLoading: false,
+    isOnboardingComplete: () => true,
+    completeStep: jest.fn(async () => {}),
+    skipStep: jest.fn(async () => {}),
+    completeOnboarding: jest.fn(async () => {}),
+  }),
 }));
 
 import React from 'react';
