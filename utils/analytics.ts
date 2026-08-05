@@ -123,13 +123,18 @@ export interface AnalyticsEventMap {
     sign_confidence: number;
   };
   scan_categories_expanded: Record<string, never>;
+  // Finding-first ladder's dashed expander (ADR 0020, W4), same shape as
+  // scan_categories_expanded above.
+  scan_leak_ladder_expanded: Record<string, never>;
   scan_pulse_day_opened: Record<string, never>;
   scan_habit_tracked: { class: 'govern' | 'influence' | 'fixed'; cadence_route: string };
   scan_habit_dismissed: { class: 'govern' | 'influence' | 'fixed' };
   scan_correction: { stage: string; from_tier: 'solid' | 'likely' | 'needs-review' };
   scan_projection_saved: { n_recurring: number };
   scan_reminder_intent_set: Record<string, never>;
-  scan_seed15_applied: { rows: number };
+  // Renamed from scan_seed15_applied (ADR 0020, W4): the CTA's window is no
+  // longer fixed at 15 days, so `days` travels with the row count.
+  scan_seed_applied: { rows: number; days: number };
   scan_undone: Record<string, never>;
 }
 
