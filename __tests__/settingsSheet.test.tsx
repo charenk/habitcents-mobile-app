@@ -12,6 +12,9 @@
  * unit test). Copy comes from the real constants/strings.ts, so a reworded
  * string moves the assertions with it.
  */
+// Full-provider renders exceed jest's 5s default under CI worker load.
+jest.setTimeout(20000);
+
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock')
 );
