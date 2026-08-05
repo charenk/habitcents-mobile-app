@@ -355,27 +355,30 @@ export const strings = {
   // and 05-copy.md). Sentence case, no em dashes; every amount below is a
   // display example only, real amounts always render via useCurrency().format.
   onboarding: {
-    // 3.1 Welcome (redesign step 03, screen 1; OB-5/ADR 0020 replaces the
-    // three-row value-prop list and the How-it-works sheet with
-    // components/onboarding/OutcomeCarousel.tsx). valuePropLog is the one
-    // value-prop line the carousel still uses; valuePropSee/valuePropBreak
-    // were the other two rows and are retired with the list they lived in.
+    // 3.1 Welcome (redesign step 03, screen 1; W1/ADR 0020+0022 replaces the
+    // outcome carousel with the honest-zero hero: the real KeptHero at
+    // cents=0 plus two value rows. A finance app never shows an invented
+    // total, so the only accumulated total this screen ever renders is the
+    // user's own ($0.00). valuePropLog is one of the two value-prop rows;
+    // valuePropSee/valuePropBreak were retired with the pre-carousel list.
     brandName: 'HabitCents',
     welcomeHeadline: "Your money has a story. Let's read it.",
     valuePropLog: 'Log expenses in 10 seconds.',
     welcomeSub: 'Everything stays on your phone. No bank login. No account.',
     getStarted: 'Get started',
-    // Rescued from the retired How-it-works sheet's second and third rows;
-    // now the outcome carousel's card 2 and card 3 lines.
-    outcomeSpotLeak: 'We spot the habit that leaks the most.',
+    // Rescued from the retired How-it-works sheet's third row; now the
+    // second honest-zero value row under the hero.
     outcomeKeptCounts: 'Every time you skip it, we count the money you kept.',
-    // Decorative example values inside the carousel's mini UI vignettes.
-    // Never real data and never routed through useCurrency().format: these
-    // are fixed mockup content, same as a static design comp.
-    outcomeLogAmount: '$4.50',
-    outcomeLeakMerchant: 'Coffee out',
-    outcomeLeakMonthly: '$85.00 a month',
-    outcomeKeptAmount: '$149.50',
+    // Example fragments under the hero (W1): per-skip example prices only,
+    // explicitly marked "for example", never an accumulated total. Rotates
+    // decoratively; never routed through useCurrency().format, these are
+    // fixed mockup content, same as a static design comp.
+    exampleSkipPrefix: 'for example:',
+    exampleSkips: [
+      'one skipped coffee keeps $6.50',
+      'one skipped delivery keeps $18.00',
+      'one skipped impulse buy keeps $12.50',
+    ],
     // 3.2 Intent picker (redesign step 03, screen 2; replaces the two-door fork)
     intentTitle: 'What brings you here?',
     intentSub: 'Pick one. You can do all three later.',
