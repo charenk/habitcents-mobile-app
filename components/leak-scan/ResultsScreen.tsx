@@ -129,27 +129,32 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
   const reviewQueue = useMemo(() => buildReviewQueue(result.rows), [result]);
   const evidenceWindow = useMemo(() => evidenceWindowLabel(result, kpi.nAccounts), [result, kpi]);
 
-  // Finding-first ladder (ADR 0020): the biggest-leak card is the top-ranked
-  // candidate (result.habits is already sorted by the pipeline's own
-  // governability-weighted rankScore). Zero candidates means there is no
-  // finding to lead with, so the screen falls back to the pre-W4 order in
-  // full below.
-  const topCandidate = result.habits[0] ?? null;
-  const hasFinding = !!topCandidate;
+  // Finding-first ladder (ADR 0020): ONE ranking governs the whole ladder,
+  // monthly cost with frequency tiebreak. The card takes its head, the list
+  // takes the rest, so "Your biggest leak" is literally true against
+  // everything shown below it. (The pipeline's governability-weighted order
+  // is deliberately not used here; a card claiming "biggest" must never sit
+  // above a pricier leak.) Zero candidates means there is no finding to lead
+  // with, so the screen falls back to the pre-W4 order in full below.
   const rankedLeaksWindowDays = Math.max(result.coverage?.coveredDays ?? 0, 1);
-  const rankedLeaksBelow = useMemo(() => {
-    if (!topCandidate) return result.habits;
-    return result.habits
-      .filter((c) => c.merchantStem !== topCandidate.merchantStem)
-      .slice()
-      .sort((a, b) => {
-        const byMonthlyCost =
-          monthlyCostCents(b, rankedLeaksWindowDays) - monthlyCostCents(a, rankedLeaksWindowDays);
-        if (byMonthlyCost !== 0) return byMonthlyCost;
-        return b.occurrences - a.occurrences; // frequency tiebreak
-      })
-      .slice(0, RANKED_LEAKS_CAP);
-  }, [result.habits, topCandidate, rankedLeaksWindowDays]);
+  const rankedByMonthlyCost = useMemo(
+    () =>
+      result.habits
+        .slice()
+        .sort((a, b) => {
+          const byMonthlyCost =
+            monthlyCostCents(b, rankedLeaksWindowDays) - monthlyCostCents(a, rankedLeaksWindowDays);
+          if (byMonthlyCost !== 0) return byMonthlyCost;
+          return b.occurrences - a.occurrences; // frequency tiebreak
+        }),
+    [result.habits, rankedLeaksWindowDays]
+  );
+  const topCandidate = rankedByMonthlyCost[0] ?? null;
+  const hasFinding = !!topCandidate;
+  const rankedLeaksBelow = useMemo(
+    () => (topCandidate ? rankedByMonthlyCost.slice(1, 1 + RANKED_LEAKS_CAP) : result.habits),
+    [rankedByMonthlyCost, topCandidate, result.habits]
+  );
   // Zero-candidate fallback (existing dashboard order, spec: "skip the card
   // entirely"): the ranked-leaks section then shows the full unfiltered list,
   // same as before W4.
