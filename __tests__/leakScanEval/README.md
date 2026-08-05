@@ -153,9 +153,59 @@ All floors pass (87/87 assertions green). The suite is deliberately green today
 even though several rows below are ugly -- that's the point of a baseline: the
 numbers are honest, and OB-3 fixes them against this yardstick.
 
-## Known gaps (measured, not fixed here)
+## OB-3 fix results (2026-08-04)
 
-### 1. Amount/Description column-role swap when description values end in a digit -- CRITICAL
+Re-measured by running `npm run scan:eval` after the three fixes below landed.
+Same fixture set, same floors (except where a fix let a floor tighten -- noted
+inline). All 87 assertions still pass.
+
+| fixture | status | rowsParsed | solid | likely | needsReview | required candidates | known gaps |
+|---|---|---|---|---|---|---|---|
+| adapted:bom-preamble | ok | 6/6 | 0% | 83% | 17% (floor <=35%) | 0/0 | 0 |
+| adapted:sign-balance | ok | 7/7 | 0% | 86% | 14% (floor <=30%) | 0/0 | 0 |
+| adapted:sign-type | ok | 6/6 | 0% | 83% | 17% (floor <=35%) | 0/0 | 0 |
+| adapted:cross-account-transfer | ok | 6/6 | 0% | 100% | 0% (floor <=15%) | 0/0 | 0 |
+| adapted:refund-pair | ok | 4/4 | 0% | 100% | 0% (floor <=15%) | 0/0 | 0 |
+| adapted:etransfer-monthly | ok | 7/7 | 0% | 100% | 0% (floor <=15%) | 1/1 | 0 |
+| adapted:biweekly-loan | ok | 5/5 | 0% | 100% | 0% (floor <=15%) | 1/1 | 0 |
+| adapted:truncated-vs-sibling | ok | 112/100 | 0% | 100% | **0%** (floor tightened 0.95 -> **0.15**) | **2/2** (both now required) | 0 |
+| adapted:messy-merchant | ok | 2/2 | 0% | 100% | 0% (floor <=15%) | 0/0 | 0 |
+| adapted:walmart-recategorize | ok | 4/4 | 75% | 25% | 0% (floor <=15%) | 1/1 | 0 |
+| adapted:dupe-reimport | ok | 3/3 | 0% | 100% | 0% (floor <=15%) | 0/0 | 0 |
+| adapted:garbage-failure | failed (expected) | 0/0 | -- | -- | 0% (floor <=100%) | 0/0 | 0 |
+| adapted:jpy-zero-decimal | ok | 3/3 | 0% | 67% | 33% (floor <=50%) | 0/0 | 0 |
+| adapted:quoted-fields | ok | 3/3 | 0% | 67% | 33% (floor <=50%) | 0/0 | 0 |
+| adapted:semicolon-delimiter | ok | 3/3 | 0% | 100% | 0% (floor <=30%) | 0/0 | 0 |
+| card-merchant-suffixes | ok | 28/26 | **61%** | 36% | **4%** (floor tightened 0.32 -> **0.10**) | **2/2** (both now required) | 0 |
+| chequing-split-mixed-dates | ok | 29/27 | 52% | 31% | 17% (floor <=25%) | 2/2 | 0 |
+| private:basic-2884 (local only) | ok | **100/95** | 0% | 57% | 43% (floor tightened 1.0 -> 0.5) | 0/0 | 3 |
+| private:momentum-1026 (local only) | ok | **100/95** | 0% | 8% | 92% | 0/0 | 2 |
+| private:passport-1023 (local only) | ok | **27/25** | 7% | 63% | 30% (floor tightened 1.0 -> 0.5) | 0/0 | 0 |
+| private:combined (local only) | ok | **227/215** | 1% | 36% | 63% | 0/0 | 0 |
+
+Headline change: every one of Charen's three real Scotia exports now parses
+**100% of its data rows** (100/100, 100/100, 27/27 -- `private/basic-2884`'s one
+"missing" row versus its raw CSV line count is a legitimate exact-duplicate
+merge, `duplicatesMerged: 1`, verified separately, not a parsing loss), up from
+1 row out of 99/99/26 before. Amount correctness was spot-checked by comparing
+the full bag of parsed `|amountCents|` magnitudes against the raw CSV `Amount`
+column per file: `momentum-1026` and `passport-1023` matched 100% exactly
+(100/100 and 27/27); `basic-2884` matched 99/100 with the one difference being
+the legitimate duplicate merge above. `adapted:truncated-vs-sibling`'s
+needs-review share dropped from 89% to 0% (well under the required <30%, and
+the floor itself was tightened to 15% to match). The three private fixtures'
+remaining needs-review share (30-92%) is categorization recall against real,
+unrecognized merchant names (a Scotia-specific known-chains gap), not a parsing
+defect -- out of scope for this unit; see gap #4 below, which stands
+unchanged.
+
+## Known gaps (baseline measurements, 2026-08-04)
+
+Gaps 1-3 below were measured by the OB-2 harness and are now FIXED (OB-3, this
+branch) -- kept here as the historical record of what was found and how, with a
+"Fixed in OB-3" line added to each. Gaps 4-5 are unchanged and still open.
+
+### 1. Amount/Description column-role swap when description values end in a digit -- CRITICAL -- FIXED in OB-3
 
 **This is the headline finding of this baseline.** `inferColumns()` (Stage 3,
 `utils/leakScan/columns.ts`) scores every column's "amount-ness" via
@@ -191,23 +241,42 @@ Measured twice in this baseline, by two independent mechanisms:
   column) reliably triggers.
 
 This is why the private baseline rows above show `rowsParsed: 1/1`: the floor
-is set to the measured (terrible) reality, honestly, not padded. Not fixed in
-this unit -- OB-3 should treat this as its top-priority fix, most plausibly by
-requiring a much larger sample before trusting a 100% parse rate (an n=1 or
-even n=5 "perfect" score should not outrank a real column's n=90+ perfect
-score), and/or breaking `argmax` ties by preferring a header keyword match
-(`KW.description`) over column position.
+is set to the measured (terrible) reality, honestly, not padded.
 
-### 2. Amount-variance recurrence tolerance excludes real, mildly-variable bills
+**Fixed in OB-3** (`utils/leakScan/columns.ts`): the amount role is now chosen
+by `amountEvidenceScore()`, which scores typed evidence instead of the bare
+`looksLikeAmount` parse rate -- pure-numeric-ness (does the cell, after peeling
+the same decorations `parseAmount` peels, contain ONLY digits/separators, or
+did it only "look like" a number because its letters got stripped away),
+two-decimal-shape dominance, non-empty coverage, a sample-size confidence
+factor (shrinks a thin sample toward 0 so an n=1 sparse column can never
+outrank an n=90+ real column), and a header-keyword hint. The same n=1 sparse-
+column pathology turned out to also hijack `descriptionIndex` once it stopped
+winning `amountIndex` (observed live while fixing this: a "Filter" column with
+one populated cell scored a perfect description-ness from that single sample),
+so `descriptionScore()` got the same sample-confidence shrink for consistency.
+Result: all three real exports now parse 100% of their data rows with correct
+amounts (see the OB-3 results table above); `adapted:truncated-vs-sibling`'s
+needs-review share dropped from 89% to 0%.
+
+### 2. Amount-variance recurrence tolerance excludes real, mildly-variable bills -- FIXED in OB-3
 
 `adapted:truncated-vs-sibling`'s sibling file has a `"Monthly Bill Utility"`
 line that drifts about 5% month to month (spec caps fixed-recurrence variance at
 2%), so it never registers as recurring; `Utilities` is also not a discretionary
 category, so it can't register as a behavioral habit either. A realistic bill
-that isn't perfectly flat is invisible to both detectors. `required: false`,
-documented in `adaptedFixtures.ts`.
+that isn't perfectly flat is invisible to both detectors.
 
-### 3. Punctuation splits a merchant's stem, undercounting its true frequency
+**Fixed in OB-3** (`utils/leakScan/recurrence.ts`): `detectRecurrence()` now
+uses its own `RECURRENCE_AMOUNT_VARIANCE_MAX` (10%, up from the shared 2%),
+separate from the 2% the governability classifier and the behavioral/
+discretionary-habit "is this variable" test still use. Safe to widen alone
+because `detectRecurrence` also requires the interval-regularity gate (same
+day-of-month rhythm) that genuinely variable discretionary spend essentially
+never clears by chance. The manifest candidate flipped from `required: false` +
+`knownGap` to `required: true` in `adaptedFixtures.ts` and passes.
+
+### 3. Punctuation splits a merchant's stem, undercounting its true frequency -- FIXED in OB-3
 
 `card-merchant-suffixes.csv`: `normalizeMerchant()` strips an apostrophe to a
 space, so `"McDonald's"` tokenizes to `["mcdonald", "s"]` and stems to
@@ -217,7 +286,16 @@ space, so `"McDonald's"` tokenizes to `["mcdonald", "s"]` and stems to
 habit floor on its own and IS surfaced; the apostrophe minority stays under the
 floor and is silently dropped. Net effect: the habit is found, but its
 occurrence count and total undercount the merchant's true frequency by ~43%.
-`required: false`, documented in `fixtures/card-merchant-suffixes.expected.json`.
+
+**Fixed in OB-3** (`utils/leakScan/categorize.ts`): `normalizeMerchant()` now
+strips apostrophe-like characters (straight `'`, curly `'`/`'`, modifier-letter
+`ʻ`/`ʼ`, acute/grave) outright, before the general punctuation-to-space strip
+gets a chance to turn them into a token boundary, so `"McDonald's"` and
+`"Mcdonalds"` both stem to `"mcdonalds"` and cluster together. The manifest
+candidate flipped from `required: false` + `knownGap` to `required: true` in
+`fixtures/card-merchant-suffixes.expected.json` and passes; the fixture's solid
+tier share rose from 39% to 61% as a side effect (the merged group now clears
+`KNOWN_CHAINS['mcdonalds']` on its full occurrence count).
 
 ### 4. "Uber Eats" (space-separated) miscategorizes as Transportation, not Food
 
@@ -241,11 +319,14 @@ not from how many rows actually survived to become `ScanRow`s. A file that lost
 
 ## Cross-account netting (private:combined)
 
-Running all three of Charen's real exports as one multi-file `runScan` session
-(`private:combined`) shows `transfers: 0, refunds: 0` -- but this is **not** a
-netting-logic finding. Gap #1 above already discards 98/99, 98/99, and 25/26
-rows per file before netting has anything to work with (3 total rows survive
-across all three files combined). Netting itself cannot be meaningfully
-evaluated here until gap #1 is fixed; re-run this fixture after OB-3 lands to
-get a real read on whether the chequing-to-card payment transfers net instead
-of double-counting.
+Re-measured after the OB-3 fixes (gap #1 no longer discards nearly every row).
+Running all three of Charen's real exports as one multi-file `runScan` session:
+**13 transfer pairs (26 rows) matched and marked internal, 0 refund pairs, 0
+rows flagged needs-review for an ambiguous match.** Netting works correctly:
+the chequing-to-card payment legs net against each other instead of double-
+counting, with no ambiguous pairs left unresolved. Zero refund pairs is a
+property of this particular data (no charge/refund pairs happen to be present
+across the three files), not a netting defect -- refund-pair netting is
+already covered by `adapted:refund-pair` and acceptance test 5. No netting.ts
+change was needed; this was purely a downstream consequence of gap #1, which
+is why it could not be meaningfully measured before OB-3.
