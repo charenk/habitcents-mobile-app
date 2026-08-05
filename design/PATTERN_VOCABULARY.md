@@ -51,6 +51,7 @@ Sources of truth this page compresses: `design/redesign-handoff/01-tokens-and-fo
 - All strings live in `constants/strings.ts`. Sentence case. No em dashes, anywhere, ever.
 - Locked vocabulary: leak, skip, kept, slip. Never streak, success, or completed language.
 - Never invent statistics; state observed evidence ("$119.05 across 4 buys"), not fabricated rates.
+- No invented totals, ever (ADR 0022): the only accumulated total the app renders is the user's own. Sample dollars appear only as per-skip example prices explicitly marked as examples ("for example: one skipped coffee keeps $6.50"). Applies to onboarding, empty states, marketing surfaces, and screenshots alike.
 
 ## The PR self-check
 
