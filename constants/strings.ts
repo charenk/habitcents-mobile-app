@@ -756,6 +756,24 @@ export const strings = {
       `${spent} spent · ${difference} over ${monthLabel}`,
     paceSpentOnly: (spent: string) => `${spent} spent`,
     pacePlaceholder: 'One full month of data unlocks your pace.',
+
+    // First scan segment (W5, OB-6 Insights half, ADR 0020: summary shown
+    // until replaced, no expiry). Conditional on a persisted ScanSummary.
+    monthSegment: 'This month',
+    scanSegment: 'First scan',
+    scanSegmentControlLabel: 'Insights view',
+    scanSnapshotEyebrow: (date: string) => `First scan · ${date}`,
+    // Evidence line under the eyebrow: what this snapshot covers, honestly.
+    // windowLabel is omitted when the scan carried no coverage window.
+    scanEvidenceLine: (fileCount: number, rowCount: number, windowLabel?: string | null) =>
+      windowLabel
+        ? `${fileCount} file${fileCount === 1 ? '' : 's'} · ${windowLabel} · ${rowCount} row${rowCount === 1 ? '' : 's'}`
+        : `${fileCount} file${fileCount === 1 ? '' : 's'} · ${rowCount} row${rowCount === 1 ? '' : 's'}`,
+    // Leak rows here are display-only; the app has no dedicated habit-
+    // management surface other than the leaks card in This month, above.
+    scanLeaksCaption: 'Manage leaks from This month, above.',
+    scanProjectionLockedInCaption: (amount: string) => `${amount} locked in from recurring`,
+    scanUpdatedCaption: 'Updated when you run a new scan.',
   },
 
   // Habit detail redesign (spec 04 "Habit detail"). The arc, chapter and
