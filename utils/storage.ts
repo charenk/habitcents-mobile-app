@@ -5,6 +5,7 @@ import type { Category } from '@/types/category';
 import type { DetectedHabit, HabitChangeGoal, HabitLogEntry, HabitMilestone } from '@/types/habit';
 import type { DashboardConfig } from '@/types/report';
 import type { OnboardingState, ProgressiveFeatureState, AuditAnswers } from '@/types/onboarding';
+import type { ScanSummary } from '@/types/scanSummary';
 import { type CurrencyCode, DEFAULT_CURRENCY, isCurrencyCode } from '@/utils/currency';
 import { type CoachMomentState, createInitialCoachMomentState } from '@/utils/coachMoments';
 
@@ -22,6 +23,9 @@ const ONBOARDING_STATE_KEY = '@habitcents_onboarding_state';
 const PROGRESSIVE_FEATURES_KEY = '@habitcents_progressive_features';
 // Onboarding Leak Audit answer persistence (P2-1, spec 02 section 7).
 const AUDIT_ANSWERS_KEY = '@habitcents_audit_answers';
+// Leak Scan summary snapshot (OB-4, ADR 0020): survives navigation so a later
+// Insights segment can read the last scan without re-running the pipeline.
+const SCAN_SUMMARY_KEY = '@habitcents_scan_summary';
 
 // =====================
 // SAFE LOAD HELPERS
@@ -495,5 +499,89 @@ export async function clearAuditAnswers(): Promise<void> {
     await AsyncStorage.removeItem(AUDIT_ANSWERS_KEY);
   } catch (error) {
     console.error('Error clearing audit answers:', error);
+  }
+}
+
+// =====================
+// LEAK SCAN SUMMARY (OB-4, ADR 0020)
+// =====================
+
+/**
+ * Get the persisted Leak Scan summary snapshot, or null if none is stored,
+ * the blob is corrupt, or its schemaVersion is not one this build knows how
+ * to read. Every date field is revived and defaulted individually rather than
+ * trusted as-is: this codebase already crashed a real device once (build 5,
+ * see the getHabitGoals dayLogs revive above) on a stored record missing a
+ * field a render path assumed existed. A bad or unreadable summary degrades
+ * to "no summary yet" -- it never throws into whatever reads it.
+ */
+export async function getScanSummary(): Promise<ScanSummary | null> {
+  try {
+    const value = await AsyncStorage.getItem(SCAN_SUMMARY_KEY);
+    if (!value) return null;
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(value);
+    } catch {
+      await backupCorrupt(SCAN_SUMMARY_KEY, value);
+      return null;
+    }
+    if (!parsed || typeof parsed !== 'object') {
+      await backupCorrupt(SCAN_SUMMARY_KEY, value);
+      return null;
+    }
+    const raw = parsed as Record<string, unknown>;
+    if (raw.schemaVersion !== 1) {
+      await backupCorrupt(SCAN_SUMMARY_KEY, value);
+      return null;
+    }
+    const createdAt = toValidDate(raw.createdAt);
+    if (!createdAt) return null;
+
+    const rawEvidence = (raw.evidence as Record<string, unknown>) ?? {};
+    const rawKpis = (raw.kpis as Record<string, unknown>) ?? {};
+    const num = (value: unknown, fallback: number): number =>
+      typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+
+    return {
+      schemaVersion: 1,
+      createdAt,
+      evidence: {
+        windowStart: rawEvidence.windowStart ? toValidDate(rawEvidence.windowStart) : null,
+        windowEnd: rawEvidence.windowEnd ? toValidDate(rawEvidence.windowEnd) : null,
+        fileCount: num(rawEvidence.fileCount, 0),
+        rowCount: num(rawEvidence.rowCount, 0),
+      },
+      kpis: {
+        totalSpentCents: num(rawKpis.totalSpentCents, 0),
+        totalSpentTier: (rawKpis.totalSpentTier as ScanSummary['kpis']['totalSpentTier']) ?? 'needs-review',
+        perDayCents: num(rawKpis.perDayCents, 0),
+        transactionCount: num(rawKpis.transactionCount, 0),
+        purchasesPerDay: num(rawKpis.purchasesPerDay, 0),
+        coveredDays: num(rawKpis.coveredDays, 0),
+        nAccounts: num(rawKpis.nAccounts, 0),
+      },
+      categories: Array.isArray(raw.categories) ? (raw.categories as ScanSummary['categories']) : [],
+      topLeaks: Array.isArray(raw.topLeaks) ? (raw.topLeaks as ScanSummary['topLeaks']) : [],
+      projection: (raw.projection as ScanSummary['projection']) ?? null,
+    };
+  } catch (error) {
+    console.error('Error reading scan summary:', error);
+    return null;
+  }
+}
+
+/**
+ * Persist the Leak Scan summary snapshot. Each successful save REPLACES the
+ * previous one (ADR 0020: kept until replaced, no expiry) -- there is only
+ * ever one summary on device, matching a single AsyncStorage key rather than
+ * an array.
+ */
+export async function saveScanSummary(summary: ScanSummary | null): Promise<void> {
+  if (!summary) return;
+  try {
+    await AsyncStorage.setItem(SCAN_SUMMARY_KEY, JSON.stringify(summary));
+  } catch (error) {
+    console.error('Error saving scan summary:', error);
   }
 }
