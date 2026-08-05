@@ -1,0 +1,10 @@
+{
+  "description": "Chequing export with a quoted preamble row, split Debit/Credit columns, three mixed date formats (ISO, MDY slash, DD-Mon textual) in the same file, a refund pair, a lone credit-card-payment transfer leg, three months of history, and Starbucks written under three different store-suffix variants to stress merchant-suffix grouping.",
+  "minRowsParsed": 27,
+  "expectedCandidates": [
+    { "merchantContains": "park", "cadence": "monthly", "required": true },
+    { "merchantContains": "starbucks", "cadence": "daily", "required": true }
+  ],
+  "maxNeedsReviewShare": 0.25,
+  "expectGracefulFailure": false
+}

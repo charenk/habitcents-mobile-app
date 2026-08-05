@@ -8,7 +8,8 @@
     "android": "expo run:android",
     "web": "expo start --web",
     "lint": "expo lint",
-    "test": "jest"
+    "test": "jest",
+    "scan:eval": "jest --testPathPattern=leakScanEval --verbose"
   },
   "dependencies": {
     "@expo-google-fonts/instrument-serif": "^0.4.1",
