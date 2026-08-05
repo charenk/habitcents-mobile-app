@@ -1,22 +1,28 @@
 /**
- * SpentKeptChips (redesign U5, ADR 0019, DI-5): the two value chips ARE the
- * Today tab control. Two side-by-side cards, Spent and Kept, each showing an
- * eyebrow label over a serif amount; tapping one swaps the body content below
- * between the two in-page views (Spent is today's spend only, Kept holds the
- * kept-today number plus the habit content).
+ * SpentKeptChips (2026-08-04 artifact "Today, in the app's own vocabulary",
+ * refining ADR 0019 / redesign U5, DI-5): the segmented scoreboard that is
+ * the Today tab control. It is SegmentedControl's own track/thumb treatment
+ * scaled up to card size, so Today speaks the same segmented-control
+ * vocabulary Money already does, rather than a bespoke ring-selected pair of
+ * cards. Tapping a segment swaps the body content below between the two
+ * in-page views (Spent is today's spend only, Kept holds the kept-today
+ * number plus the habit content).
  *
- * Selection is carried by the ring (borderWidth/borderColor), never by color:
- * a selected card gets the sage border, an unselected one the cloud hairline.
- * The Spent amount is theme.ink always, selected or not, because spend is
- * never a win and must never borrow the sage "kept" color.
+ * Selection is carried by fill, not a ring: the selected segment gets the
+ * white thumb (plus card shadow) that SegmentedControl uses for its own
+ * selected segment; the unselected segment sits transparent on the cloud
+ * track. The Spent amount is never sage, selected or not, because spend is
+ * never a win and must never borrow the "kept" color; the ring this rule
+ * used to guard is gone, so the rule is now trivially honored by the fill
+ * simply never being sage on that side.
  *
- * No motion (house style, like SegmentedControl): the ring swaps instantly.
+ * No motion (house style, like SegmentedControl): the thumb swaps instantly.
  */
 import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
-import { radii, typeScale, type AppTheme } from '@/constants/theme';
+import { radii, shadows, typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import { selectableLabel } from '@/utils/a11y';
 
@@ -53,7 +59,7 @@ export function SpentKeptChips({
 
   return (
     <View
-      style={styles.row}
+      style={styles.track}
       accessibilityRole="tablist"
       accessibilityLabel={strings.today.spentKeptTabsLabel}
     >
@@ -62,18 +68,25 @@ export function SpentKeptChips({
         accessibilityRole="tab"
         accessibilityState={{ selected: spentSelected }}
         accessibilityLabel={selectableLabel(`${strings.today.spentChipLabel} ${formattedSpent}`, spentSelected)}
-        style={[styles.card, spentSelected ? styles.cardSelected : styles.cardUnselected]}
+        style={[styles.segment, spentSelected ? styles.segmentSelected : null]}
         // DI-7: a stable non-a11y hook for tests, since both Today panes now
         // stay mounted and can carry their own "Kept"/"Spent"-prefixed a11y
         // labels (e.g. KeptHero's "Kept so far, ..."), which broke the old
         // getByLabelText(/^Kept /) pattern used to find this chip.
         testID="spent-chip"
       >
-        <Text style={styles.eyebrow} maxFontSizeMultiplier={1.5}>
+        <Text
+          style={[styles.eyebrow, spentSelected ? styles.eyebrowSpentSelected : null]}
+          maxFontSizeMultiplier={1.5}
+        >
           {strings.today.spentChipLabel.toUpperCase()}
         </Text>
-        {/* Spend is never a win: ink always, selected or not (never sage). */}
-        <Text style={styles.spentAmount} maxFontSizeMultiplier={1.3}>
+        {/* Spend is never a win: it never takes the sage fill, selected or
+            not, only slate at rest and ink when selected. */}
+        <Text
+          style={[styles.amount, spentSelected ? styles.spentAmountSelected : null]}
+          maxFontSizeMultiplier={1.3}
+        >
           {formattedSpent}
         </Text>
       </Pressable>
@@ -85,16 +98,22 @@ export function SpentKeptChips({
         accessibilityLabel={
           selectableLabel(`${strings.today.keptChipLabel} ${formattedKept}`, keptSelected) + pendingSuffix
         }
-        style={[styles.card, keptSelected ? styles.cardSelected : styles.cardUnselected]}
+        style={[styles.segment, keptSelected ? styles.segmentSelected : null]}
         testID="kept-chip"
       >
         <View style={styles.keptEyebrowRow}>
-          <Text style={styles.eyebrow} maxFontSizeMultiplier={1.5}>
+          <Text
+            style={[styles.eyebrow, keptSelected ? styles.eyebrowKeptSelected : null]}
+            maxFontSizeMultiplier={1.5}
+          >
             {strings.today.keptChipLabel.toUpperCase()}
           </Text>
           {checkInPending ? <View style={styles.pendingDot} /> : null}
         </View>
-        <Text style={styles.keptAmount} maxFontSizeMultiplier={1.3}>
+        <Text
+          style={[styles.amount, keptSelected ? styles.keptAmountSelected : null]}
+          maxFontSizeMultiplier={1.3}
+        >
           {formattedKept}
         </Text>
       </Pressable>
@@ -104,33 +123,34 @@ export function SpentKeptChips({
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
-    row: {
+    track: {
       flexDirection: 'row',
-      gap: 10,
-      paddingHorizontal: 20,
-    },
-    card: {
-      flex: 1,
+      backgroundColor: theme.cloud,
       borderRadius: radii.feature,
+      padding: 3,
+      gap: 3,
+    },
+    segment: {
+      flex: 1,
+      borderRadius: radii.feature - 3,
+      paddingVertical: 12,
+      paddingHorizontal: 14,
+    },
+    segmentSelected: {
       backgroundColor: theme.white,
-      padding: 14,
-    },
-    // The ring signals selection ("this is the view you're looking at"), not
-    // positivity: it is the same sage used for every other selected control in
-    // the app, never a hint that the number itself is good.
-    cardSelected: {
-      borderWidth: 1.5,
-      borderColor: theme.primary,
-    },
-    cardUnselected: {
-      borderWidth: 1,
-      borderColor: theme.cloud,
+      ...shadows.card,
     },
     eyebrow: {
       fontSize: typeScale.eyebrow,
       fontFamily: theme.fonts.uiSemibold,
       letterSpacing: typeScale.eyebrowLetterSpacing,
       color: theme.mist,
+    },
+    eyebrowSpentSelected: {
+      color: theme.ink,
+    },
+    eyebrowKeptSelected: {
+      color: theme.primaryDark,
     },
     keptEyebrowRow: {
       flexDirection: 'row',
@@ -143,19 +163,18 @@ function createStyles(theme: AppTheme) {
       borderRadius: 3,
       backgroundColor: theme.primary,
     },
-    spentAmount: {
+    amount: {
       fontSize: typeScale.statCard,
       fontFamily: theme.fonts.display,
       fontVariant: ['tabular-nums'],
-      color: theme.ink,
+      color: theme.slate,
       marginTop: 6,
     },
-    keptAmount: {
-      fontSize: typeScale.statCard,
-      fontFamily: theme.fonts.display,
-      fontVariant: ['tabular-nums'],
+    spentAmountSelected: {
+      color: theme.ink,
+    },
+    keptAmountSelected: {
       color: theme.primaryDark,
-      marginTop: 6,
     },
   });
 }

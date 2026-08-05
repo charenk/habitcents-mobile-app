@@ -611,8 +611,8 @@ export const strings = {
   today: {
     // Spent/Kept chips (redesign U5, ADR 0019, DI-5): the two value chips that
     // ARE the Today tab control. Sentence case, uppercased in-component.
-    spentChipLabel: 'Spent',
-    keptChipLabel: 'Kept',
+    spentChipLabel: 'Spent today',
+    keptChipLabel: 'Kept today',
     spentKeptTabsLabel: 'Today view',
     checkInPendingA11y: 'check-in waiting',
     // Kept band. The eyebrow and caption already live in habitLogging
