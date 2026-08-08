@@ -1,15 +1,15 @@
 /**
- * DEVELOPER section of the settings sheet: the on-device debug controls.
+ * DEVELOPER section of the Profile page: the on-device debug controls.
  *
- * Why it lives inside settings rather than as a floating overlay: the old
+ * Why it lives inside Profile rather than as a floating overlay: the old
  * floating Seed/Clear pills collided with real UI twice, and they were gated on
  * `__DEV__`, so they did not exist in the TestFlight builds Charen actually
  * tests. This section is gated on DEV_MENU_ENABLED instead, which the
  * `internal` EAS profile turns on and `production` explicitly turns off.
  *
- * It renders nothing unless the gate is on, and the call site in
- * components/SettingsSheet.tsx checks the same gate, so a production build has
- * two constant-false branches and no reachable dev code.
+ * It renders nothing unless the gate is on, and the call site in app/profile.tsx
+ * checks the same gate, so a production build has two constant-false branches
+ * and no reachable dev code.
  *
  * Copy here is deliberately NOT in constants/strings.ts: none of it is
  * customer-facing, and keeping it local means a production build carries no
@@ -58,13 +58,13 @@ const copy = {
 };
 
 export type DevMenuSectionProps = {
-  /** The settings sheet's own stylesheet, so rows look identical to the rest. */
+  /** The Profile page's own stylesheet, so rows look identical to the rest. */
   styles: SettingsRowStyles & {
     eyebrow: StyleProp<TextStyle>;
     group: StyleProp<ViewStyle>;
   };
   theme: AppTheme;
-  /** Close the sheet before navigating away. */
+  /** Pop Profile off the stack before navigating away. */
   onClose: () => void;
 };
 

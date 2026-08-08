@@ -21,6 +21,7 @@ import { PaceCard, type PaceComparison } from '@/components/insights/PaceCard';
 import { ScanSnapshotCard } from '@/components/insights/ScanSnapshotCard';
 import { PickOneSheet } from '@/components/habit-logging/PickOneSheet';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
+import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { categoryEmoji, categoryIdentityColor } from '@/constants/categoryEmoji';
 import { hasFullMonthOfData } from '@/utils/recurring';
 import { isHabitLimitReached } from '@/utils/habitLogging';
@@ -156,9 +157,14 @@ export default function InsightsScreen() {
     [pickOneHabitId, startBreakingHabit]
   );
 
+  const profileAction = [
+    { icon: 'CircleUser' as const, label: strings.profile.headerLabel, onPress: () => router.push('/profile') },
+  ];
+
   if (isLoading) {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
+        <ScreenHeader title={strings.screenTitles.insights} actions={profileAction} />
         <View style={styles.loadingContainer}>
           <Text style={styles.loadingText}>{strings.reports.loading}</Text>
         </View>
@@ -168,21 +174,20 @@ export default function InsightsScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <View style={styles.header}>
-        <Text style={styles.title} accessibilityRole="header">
-          {strings.screenTitles.insights}
-        </Text>
-        {scanSummary ? (
-          <View style={styles.segments}>
-            <SegmentedControl<InsightsView>
-              options={segments}
-              value={view}
-              onChange={setView}
-              accessibilityLabel={strings.insights.scanSegmentControlLabel}
-            />
-          </View>
-        ) : null}
-      </View>
+      <ScreenHeader title={strings.screenTitles.insights} actions={profileAction} />
+      {/* Same composition the Today tab uses: ScreenHeader owns the chrome,
+          the switcher sits below it as its own row (merge of first-scan onto
+          the DI stack, resolution per the independents review). */}
+      {scanSummary ? (
+        <View style={styles.segments}>
+          <SegmentedControl<InsightsView>
+            options={segments}
+            value={view}
+            onChange={setView}
+            accessibilityLabel={strings.insights.scanSegmentControlLabel}
+          />
+        </View>
+      ) : null}
 
       <ScrollView
         style={styles.scrollView}
@@ -230,17 +235,7 @@ function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: theme.snow,
-    },
-    header: {
-      paddingHorizontal: 20,
-      paddingTop: 16,
-      paddingBottom: 4,
-    },
-    title: {
-      fontSize: typeScale.screenTitle,
-      fontFamily: theme.fonts.display,
-      color: theme.ink,
+      backgroundColor: theme.background,
     },
     segments: {
       marginTop: 12,

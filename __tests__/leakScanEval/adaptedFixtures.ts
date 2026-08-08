@@ -114,25 +114,21 @@ export const adaptedFixtures: FixtureCase[] = [
     files: [truncatedFile, yearSiblingFile],
     manifest: {
       description:
-        'Acceptance 8: a 100-row ~30-day export ("Cafe Number 0".."Cafe Number 4", amount cycling $5-$24) beside a 12-month sibling. THE HEADLINE FINDING of this baseline: on the truncated file, inferColumns() swaps the Description and Amount column roles (see knownGap below), so 89% of rows land in needs-review with garbled merchant stems. Only measured, never fixed, here (OB-3).',
+        'Acceptance 8: a 100-row ~30-day export ("Cafe Number 0".."Cafe Number 4", amount cycling $5-$24) beside a 12-month sibling. Was THE HEADLINE FINDING of the OB-2 baseline: inferColumns() swapped the Description and Amount column roles on the truncated file (a description column whose values end in a digit spuriously tied the real Amount column\'s parse rate; argmax broke the tie toward the lower column index), landing 89% of rows in needs-review with garbled merchant stems. Fixed in OB-3 by scoring the amount role on typed evidence (pure-numeric-ness, decimal shape, non-empty coverage, sample-size confidence, header hint) instead of the bare parse rate; both candidates below now pass.',
       minRowsParsed: 100,
       expectedCandidates: [
         {
           merchantContains: 'monthly',
           cadence: 'monthly',
-          required: false,
-          knownGap:
-            "yearSiblingFile's \"Monthly Bill Utility\" amount drifts ~5% month to month (spec caps fixed-recurrence variance at 2%), so it never registers as recurring, and Utilities is not a discretionary category so it cannot register as a behavioral habit either. A real, mildly-variable monthly bill is invisible to the recurrence detector.",
+          required: true,
         },
         {
           merchantContains: 'cafe',
           cadence: 'daily',
-          required: false,
-          knownGap:
-            'Column-role swap, not a recall gap: truncatedFile\'s "Description" values ("Cafe Number 0".."Cafe Number 4") each end in a digit, so parseAmount() strips them down to that trailing digit and looksLikeAmount() reports true for every row -- a spurious 100% amount-parse-rate that TIES the real Amount column\'s own 100% rate. inferColumns()\'s argmax breaks ties toward the lower column index, so the Description column (index 1) wins the amountIndex role and the real Amount column (index 2) is demoted to descriptionIndex. Every row\'s rawDescription becomes its own amount string ("-5.00" etc), merchantStem becomes noise ("5 00", "6 00", ...), and categorization has nothing to match on. This is the same failure mode measured on Charen\'s real private exports (see private/README notes): ANY description column whose values commonly end in a digit (store numbers, "Cafe Number 3", "STARBUCKS #4521") is at risk of this swap whenever it ties or beats the real amount column\'s parse rate.',
+          required: true,
         },
       ],
-      maxNeedsReviewShare: 0.95,
+      maxNeedsReviewShare: 0.15,
       expectGracefulFailure: false,
     },
   },

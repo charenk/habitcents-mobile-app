@@ -12,7 +12,7 @@
  * copy, or code to streak/success/completed language.
  */
 
-import type { ChapterName, DayState, HabitLogEntry, MilestoneThreshold } from '@/types/habit';
+import type { ChapterName, DayState, HabitChangeGoal, HabitLogEntry, MilestoneThreshold } from '@/types/habit';
 import { MILESTONE_THRESHOLDS } from '@/types/habit';
 import type { Entitlement } from '@/utils/purchases';
 
@@ -209,6 +209,30 @@ export function canBackfillYesterday(
 /** Credit for a partial slip (section 4.7): never negative, capped at skipValue. */
 export function partialSlipCredit(skipValue: number, amountSpent: number): number {
   return Math.max(0, skipValue - amountSpent);
+}
+
+/**
+ * Cents kept on the given local day across one goal's day logs (redesign U5,
+ * ADR 0019, "Kept today" chip): skipValue for each skipped entry that lands on
+ * `day`, the partial-slip credit for each slipped entry on `day` that carries
+ * a partialAmount, zero for a plain slip or no-log. Sums over every matching
+ * entry rather than the first: daily cadence only ever has one entry per day,
+ * but weekly/monthly cadence allows more than one event on the same day
+ * (section 3.3, 5), and each should count.
+ *
+ * Same guard as dayStateFor: dayLogs may be undefined on a legacy goal shape,
+ * and that must read as "nothing kept today", never throw.
+ */
+export function keptOnDay(goal: HabitChangeGoal, day: Date): number {
+  if (!Array.isArray(goal.dayLogs)) return 0;
+  return goal.dayLogs.reduce((sum, entry) => {
+    if (!isSameDay(entry.date, day)) return sum;
+    if (entry.state === 'skipped') return sum + goal.skipValue;
+    if (entry.state === 'slipped' && entry.partialAmount !== undefined) {
+      return sum + partialSlipCredit(goal.skipValue, entry.partialAmount);
+    }
+    return sum;
+  }, 0);
 }
 
 /**

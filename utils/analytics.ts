@@ -74,12 +74,15 @@ export interface AnalyticsEventMap {
   // section 6). cadence is 'daily' | 'weekly' | 'monthly'; never amounts,
   // merchant names, or habit titles.
   habit_goal_created: { cadence?: string; value_edited: boolean };
-  habit_tracking_started: { cadence?: string; source: 'detection' | 'scan' };
+  habit_tracking_started: { cadence?: string; source: 'detection' | 'scan' | 'onboarding' };
   skip_logged: { cadence?: string; total_skips_after: number; week_skips: number; backfill: boolean };
   slip_logged: { cadence?: string; partial: boolean; backfill: boolean };
   answer_changed: { from: 'skipped' | 'slipped'; to: 'skipped' | 'slipped' };
   milestone_reached: { milestone: 10 | 30 | 50 | 66 };
   habit_dismissed: { source: string };
+  // Today tab (redesign U5/U7, ADR 0019, DI-5/DI-7): fires on every
+  // Spent/Kept switch, chip tap or pager swipe.
+  today_view_switched: { to: 'spent' | 'kept'; method: 'tap' | 'swipe' };
   // Coaching (P2-2, docs/design-package-phase2/04-p2-2-coach-moments.md
   // section 5). trigger/card_id are structural identifiers only; no card
   // content, amounts, merchant, or habit names ever ride in this event.
