@@ -29,6 +29,13 @@ const PAYMENT_METHOD = /\((apple pay|google pay|paypal|visa|mastercard|amex|debi
 const PHONE = /\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b/g;
 const STORE_NUMBER = /#\s*\d+|\bstore\s*\d+\b/gi;
 const URL_TAIL = /\.[a-z]{2,}(\/\S*)?\s*$/i;
+// Apostrophe-like characters (straight, curly open/close, modifier-letter, acute,
+// grave) that a merchant name can carry ("McDonald's") without it being a real word
+// boundary. Removed outright, not turned into a space, so "McDonald's" and
+// "Mcdonalds" stem to the same "mcdonalds" -- OB-3 gap #3: the general punctuation
+// strip below (which DOES turn stray punctuation into a space) was splitting these
+// into two tokens ("mcdonald", "s"), undercounting the merchant's true frequency.
+const APOSTROPHE = /['‘’ʻʼ´`]/g;
 
 /**
  * Normalize a raw transaction description into a merchant stem: uppercase-fold,
@@ -40,6 +47,9 @@ export function normalizeMerchant(raw: string): string {
   if (!s) return '';
   // Remove neutralized-formula quote if present.
   if (s.startsWith("'")) s = s.slice(1);
+  // Drop apostrophes before the general punctuation strip turns them into a token
+  // boundary (see APOSTROPHE above).
+  s = s.replace(APOSTROPHE, '');
 
   s = s.replace(PAYMENT_METHOD, ' ');
   s = s.replace(PHONE, ' ');
