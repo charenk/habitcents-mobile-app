@@ -27,6 +27,7 @@ import {
 import { AmountDisplay } from '@/components/ui/AmountDisplay';
 import { Button } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
+import { Icon } from '@/components/ui/Icon';
 import { Keypad } from '@/components/ui/Keypad';
 import { Sheet } from '@/components/ui/Sheet';
 import { useToast } from '@/components/ui/Toast';
@@ -44,17 +45,38 @@ import { CategoryTilePicker, toExpenseCategory } from './CategoryTilePicker';
 /** How many recent-merchant chips the sheet offers before it stops. */
 const RECENT_MERCHANT_LIMIT = 6;
 
+/** What handleSave actually sent to addExpense, handed back via onSaved. */
+export type LogExpenseSavedInfo = {
+  merchant?: string;
+  amount: number;
+  category: ExpenseCategory;
+};
+
 export type LogExpenseSheetProps = {
   visible: boolean;
   onClose: () => void;
   /** Preselects a tile, e.g. when opened from a Today quick-log category. */
   initialCategory?: ExpenseCategory;
+  /**
+   * One-line coach caption above the amount (Door 1 first-run, W2). Undefined
+   * (every caller but Door 1's first-run open) renders nothing.
+   */
+  coachLine?: string;
+  /**
+   * Fires once, synchronously, right before onClose, but only on a
+   * successful save. Lets a caller (Door 1's first-run flow) tell a save
+   * apart from a close-without-saving without a second save path to keep in
+   * sync with this one.
+   */
+  onSaved?: (info: LogExpenseSavedInfo) => void;
 };
 
 export function LogExpenseSheet({
   visible,
   onClose,
   initialCategory,
+  coachLine,
+  onSaved,
 }: LogExpenseSheetProps): React.JSX.Element {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -133,6 +155,10 @@ export function LogExpenseSheet({
 
     hapticSuccess();
     show(strings.toasts.logged);
+    // Built from the same values just sent to addExpense, not its return
+    // value, so this stays correct under both the real context and any test
+    // mock that doesn't echo the saved row back.
+    onSaved?.({ merchant: typedMerchant || undefined, amount: cents, category: resolved });
     onClose();
   };
 
@@ -154,6 +180,13 @@ export function LogExpenseSheet({
         <Text style={[styles.eyebrow, styles.eyebrowFirst]}>
           {strings.expenseSheet.logEyebrow}
         </Text>
+
+        {coachLine ? (
+          <View style={styles.coachLine}>
+            <Icon name="Sprout" size={14} color={theme.primaryDark} />
+            <Text style={styles.coachLineText}>{coachLine}</Text>
+          </View>
+        ) : null}
 
         <AmountDisplay valueCents={cents} focused size={48} zeroAsPlaceholder />
 
@@ -218,6 +251,19 @@ function createStyles(theme: AppTheme) {
     },
     eyebrowFirst: {
       marginTop: 0,
+    },
+    coachLine: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: 6,
+      marginBottom: 8,
+    },
+    coachLineText: {
+      flex: 1,
+      fontFamily: theme.fonts.ui,
+      fontSize: typeScale.caption,
+      color: theme.slate,
+      lineHeight: 17,
     },
     chipRow: {
       flexDirection: 'row',

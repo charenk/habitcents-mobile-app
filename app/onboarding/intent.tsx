@@ -29,7 +29,10 @@ const CARDS: IntentCard[] = [
     eyebrow: strings.onboarding.intentTrackEyebrow,
     title: strings.onboarding.intentTrackTitle,
     description: strings.onboarding.intentTrackDescription,
-    route: '/onboarding/guided-log',
+    // Door 1 (W2, "the app is the onboarding"): unused. handlePick's
+    // intent === 'track' branch below replaces straight into the tabs
+    // instead of pushing this route.
+    route: '',
   },
   {
     intent: 'scan',
@@ -45,7 +48,10 @@ const CARDS: IntentCard[] = [
     eyebrow: strings.onboarding.intentBreakEyebrow,
     title: strings.onboarding.intentBreakTitle,
     description: strings.onboarding.intentBreakDescription,
-    route: '/onboarding/audit-subs',
+    // Door 3 (W3, "the app is the onboarding" complete): unused, same as
+    // Door 1's route above. handlePick's intent === 'break' branch replaces
+    // straight into the tabs instead of pushing this route.
+    route: '',
   },
 ];
 
@@ -69,17 +75,31 @@ export default function OnboardingIntentScreen() {
   const router = useRouter();
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
-  const { chooseDoor, completeStep, completeOnboarding } = useOnboarding();
+  const { chooseDoor, completeOnboarding } = useOnboarding();
 
   const handlePick = async (card: IntentCard) => {
     track('onboarding_intent_selected', { intent: card.intent });
     await chooseDoor(DOOR_FOR_INTENT[card.intent]);
-    // Only the break path advances the stored step, because that is the one
-    // whose next screen is the audit. Track and scan leave the step at the
-    // picker so an early abandon resumes here rather than mid-audit.
-    if (card.intent === 'break') {
-      await completeStep('fork');
+
+    // Door 1 & Door 3 (W2 + W3, "the app is the onboarding" complete): both
+    // land straight on Today via a deep link instead of pushing a dedicated
+    // onboarding screen; Today itself opens the relevant sheet (the real
+    // LogExpenseSheet for track, BreakHabitSheet for break) and completes
+    // onboarding once that sheet resolves (app/(tabs)/index.tsx). currentStep
+    // deliberately stays at 'fork' in both cases: NEXT_STEP has no forward
+    // step from 'fork' anymore (only Door 2's scan flow still pushes a
+    // route), so an early abandon before either sheet resolves still resumes
+    // at this picker on relaunch (STEP_ROUTE['fork'], welcome.tsx).
+    if (card.intent === 'track') {
+      router.replace('/(tabs)?view=spent&firstLog=1');
+      return;
     }
+    if (card.intent === 'break') {
+      router.replace('/(tabs)?view=kept&breakEntry=1');
+      return;
+    }
+
+    // Scan only, from here down.
     router.push(card.route);
   };
 

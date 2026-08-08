@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { radii, typeScale, type AppTheme } from '@/constants/theme';
@@ -8,6 +8,10 @@ import { keptHeroLabel } from '@/utils/a11y';
 
 type KeptHeroProps = {
   cents: number;
+  // Optional outer-style override (DI-6): defaults to unset so onboarding
+  // success, which already sits inside its own padded container, keeps its
+  // current full-width-within-parent look untouched.
+  style?: StyleProp<ViewStyle>;
 };
 
 /**
@@ -21,7 +25,7 @@ type KeptHeroProps = {
  * count-up plus scale/tint pulse is gone. That also retires the mixed
  * native/JS Animated driver on a single node, which crashed release builds.
  */
-export function KeptHero({ cents }: KeptHeroProps) {
+export function KeptHero({ cents, style }: KeptHeroProps) {
   const theme = useTheme();
   const { format } = useCurrency();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -30,7 +34,7 @@ export function KeptHero({ cents }: KeptHeroProps) {
   // node, so VoiceOver says the settled value once instead of three fragments.
   return (
     <View
-      style={styles.card}
+      style={[styles.card, style]}
       accessible
       accessibilityRole="text"
       accessibilityLabel={keptHeroLabel(format(cents))}

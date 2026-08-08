@@ -292,7 +292,6 @@ export const strings = {
     weekOf: (dateLabel: string) => `Week of ${dateLabel}`,
   },
   settings: {
-    title: 'Settings',
     preferences: 'Preferences',
     currency: 'Currency',
     about: 'About',
@@ -309,9 +308,6 @@ export const strings = {
     restoreAlertTitle: 'Restore purchases',
     restoreNoneMessage: 'No previous purchases to restore.',
     restoreDoneMessage: 'Your purchases have been restored.',
-    // Settings bottom sheet (redesign step 02). Settings is no longer a tab;
-    // the gear on Today opens this sheet.
-    sheetTitle: 'Settings.',
     planFree: 'Free plan · 1 habit',
     groupPreferences: 'Preferences',
     groupAbout: 'About',
@@ -321,6 +317,15 @@ export const strings = {
     signOutHint: 'data stays on this device',
     signOutToast: 'Signed out. Your data stays on this device.',
     versionRow: 'Version',
+  },
+  // Profile page (design/header-unification U4, ADR 0019). Settings moved from
+  // a bottom sheet behind Today's gear to a pushed route reachable from every
+  // tab. Only net-new strings live here; every row still reads from
+  // strings.settings.* above so nothing is duplicated.
+  profile: {
+    title: 'Profile.',
+    headerLabel: 'Profile',
+    supportRow: 'Support',
   },
   addCategoryModal: {
     editCategory: 'Edit Category',
@@ -385,64 +390,33 @@ export const strings = {
     intentBreakTitle: 'Break an expensive habit',
     intentBreakDescription: 'A 90-second audit finds the leak quietly costing you the most.',
     skipForNow: 'Skip for now',
-    // 3.3 Step 1: auto-pilot charges
-    step1Eyebrow: 'Step 1 of 2 · about 30 seconds',
-    step1Title: 'Which of these charge you on auto-pilot?',
-    step1Sub: "Tap the ones that ring a bell, we'll watch them for you. A quick scan, not a full inventory. Tap a price to make it exact.",
+    // "Something else" is shared: the intent picker's audit chips used to own
+    // it, and the Door 3 break sheet (below) reuses it rather than duplicating.
     somethingElse: 'Something else',
-    somethingElseYouSetIt: 'you set it',
     somethingElseNamePlaceholder: 'What is it called?',
-    runningTotalMonth: (total: string) => `${total} a month so far`,
-    continueButton: 'Continue',
-    noneOfThese: 'None of these',
-    editorRealPrice: (chipName: string) => `${chipName} · your real price`,
-    editorPresetCaption: (preset: string) =>
-      `Preset was ${preset}. Set saves your exact price, ✕ keeps the preset.`,
-    editorSet: 'Set',
-    editorCancelLabel: 'Keep the preset price',
-    // 3.4 Step 2: everyday rhythm
-    step2Eyebrow: 'Step 2 of 2 · about 30 seconds',
-    step2Title: 'And the everyday stuff?',
-    step2Sub: 'Roughly how often in a typical week. No amounts to add up. Tap a price if yours differs.',
-    eachAmount: (amount: string) => `about ${amount} each`,
-    bandNever: 'Never',
-    bandOneToTwo: '1-2',
-    bandThreeToFive: '3-5',
-    bandDaily: 'Daily',
-    runningWeekly: (weekly: string) => `adds ${weekly} a week`,
-    seeMyLeak: 'See my leak',
-    skipThisStep: 'Skip this step',
-    // 3.5 The reveal
-    revealYearly: (yearly: string) => `~${yearly}`,
-    revealCaption: (monthly: string) => `leaking a year. That's about ${monthly} a month.`,
-    revealCaptionSubsOnly: (monthly: string) =>
-      `leaking a year from your subscriptions so far. That's about ${monthly} a month.`,
-    breakdownLine: (source: string, amount: string) => `${source} · ~${amount}/yr`,
-    revealHonesty: 'A starting estimate from one minute of taps, not a judgment. Real logs sharpen it from here.',
-    plugBiggestLeak: 'Plug the biggest leak',
-    justStartLogging: 'Just start logging',
-    revealAnnouncement: (yearly: string, monthly: string) =>
-      `About ${yearly} a year leaking, about ${monthly} a month`,
-    // Both-empty edge case (section 8)
-    noNumberYetTitle: "We'll find your leak from your real logs.",
-    noNumberYetSubtitle: 'Around 4 logs at the same place is enough to spot a pattern.',
-    // 3.6 Guided first log
-    guidedLogHint: "One practice log and you're done. Try today's coffee. Amount first.",
-    guidedLogLater: 'Later',
-    guidedLogToast: 'Logged. Nice, that took ten seconds.',
-    // 3.7 Success
-    // Serif screen titles end with a period in the redesign (spec 05).
-    leakMapReady: 'Your leak map is ready.',
-    biggestLeakCaption: (monthTotal: string) => `about ${monthTotal} a month · your biggest leak`,
-    breakIt: 'Break it',
-    trialQuietNote: "1 habit free, always. Premium trial available when you're ready.",
-    seePremium: 'See what Premium adds',
-    continueToHabits: 'Continue',
-    // Re-entry (section 7, Habits empty-state link)
-    reAuditLink: 'Take the 90-second leak audit',
-    // Door 2 graceful-failure re-entry (section 8.6): scan-found chips are
-    // pre-selected at exact values, no tilde, annotated.
-    fromYourStatements: 'from your statements',
+    // ---------------------------------------------------------------------
+    // Door 3 break sheet (W3, "the app is the onboarding" complete, ADR 0020
+    // + 0022). The audit/reveal/success screens this used to lead to are
+    // deleted; breaking a habit now happens in one sheet over the real app.
+    // Locked vocabulary: leak/skip/kept/slip, "break a habit" never "create a
+    // goal". The amount/CTA copy below is deliberately identical to the
+    // pick-one sheet's (strings.habitLogging), reused rather than duplicated.
+    // ---------------------------------------------------------------------
+    breakSheetTitle: 'Break an expensive habit.',
+    breakSheetCaption: 'Pick one or name your own. One is free, always.',
+    breakSheetCadenceLabel: 'How often',
+    breakSheetCadenceMostDays: 'Most days',
+    breakSheetCadenceWeekly: 'Weekly',
+    breakSheetCadenceMonthly: 'Monthly',
+    // Pure arithmetic from the amount the user just typed (365/52/12 by
+    // cadence), never an invented rate; full sentences per cadence rather than
+    // composed word fragments, so each reads naturally.
+    breakSheetYearlyLineDaily: (amount: string) => `Skipping it most days keeps about ${amount} a year.`,
+    breakSheetYearlyLineWeekly: (amount: string) => `Skipping it every week keeps about ${amount} a year.`,
+    breakSheetYearlyLineMonthly: (amount: string) => `Skipping it every month keeps about ${amount} a year.`,
+    breakSheetBoughtTodayLabel: 'Did you buy it today?',
+    breakSheetBoughtYes: 'Yes, log it',
+    breakSheetBoughtNo: 'Not today',
   },
   // --- Leak Scan (P2-1b). Canonical behavior: docs/design-context/leak-scan-spec.md.
   // Canonical visuals: docs/design-package-phase2/03-p2-1b-leak-scan-visuals.md.
@@ -604,7 +578,12 @@ export const strings = {
 
   // Today tab (spec 04 "Today").
   today: {
-    settingsButtonLabel: 'Settings',
+    // Spent/Kept chips (redesign U5, ADR 0019, DI-5): the two value chips that
+    // ARE the Today tab control. Sentence case, uppercased in-component.
+    spentChipLabel: 'Spent today',
+    keptChipLabel: 'Kept today',
+    spentKeptTabsLabel: 'Today view',
+    checkInPendingA11y: 'check-in waiting',
     // Kept band. The eyebrow and caption already live in habitLogging
     // (keptSoFar, keptCaption, keptZeroCaption); nothing is duplicated here.
     // Check-in card
@@ -635,7 +614,36 @@ export const strings = {
     // Logged today list
     loggedTodayEyebrow: 'Logged today',
     loggedTodayEmpty: 'Nothing logged today yet.',
+    alreadyBreakingToast: "You're already breaking this habit.",
     editExpenseLabel: (title: string, amountLabel: string) => `Edit ${title}, ${amountLabel}`,
+    // Break-another affordance (DI-6, ADR 0019): quiet, always-present at the
+    // bottom of the Kept view. The caption reuses habitLogging.freeTierNote
+    // (the same gate copy PickOneSheet's locked sheet already states) rather
+    // than inventing a new pricing line.
+    breakAnotherHabitCta: 'Break another habit',
+    // Door 1 real-app first run (W2, ratified onboarding redesign): Door 1 no
+    // longer passes through a practice log screen, it opens the real
+    // LogExpenseSheet in place. The hint copy voice carries over from the
+    // retired guided-log screen (onboarding.guidedLogHint).
+    firstLogCoachLine: "The real thing, not a practice run. Amount first.",
+    // FirstRunRibbon messages (components/onboarding/FirstRunRibbon.tsx),
+    // keyed by messageKey in the persisted record. Saved: the log went
+    // through. Gentle: the sheet was closed before saving, so onboarding
+    // still completes but nothing is claimed to have happened yet.
+    firstRunRibbonSaved: "Logged for real. A few more like this and we'll spot your first leak.",
+    firstRunRibbonGentle: "Log your first expense whenever you're ready.",
+    // Door 3 first-run ribbon (W3): same FirstRunRibbon component and hook as
+    // door1's above, keyed 'door3' instead. Started: a habit exists, so point
+    // at the check-in card that's now on the page. Gentle: nothing was
+    // started, so nothing is claimed to have happened yet.
+    door3RibbonStarted: 'Your habit is set. Your first check-in is below.',
+    door3RibbonGentle: "Break a habit whenever you're ready.",
+    // Watch-nudge (W2 item 3): a dashed, UpcomingList-style affordance under
+    // the just-logged row, offered only when that log carries a merchant.
+    // Accepting seeds a discovered, honestly-observed leak (one log, no
+    // stated cadence); it never claims to "create a habit".
+    watchLeakNudgeLabel: 'Buy this often? Watch it as a leak',
+    watchLeakNudgeDismiss: 'not now',
   },
 
   // Log and edit expense sheets (spec 04 "Log / Edit sheets").

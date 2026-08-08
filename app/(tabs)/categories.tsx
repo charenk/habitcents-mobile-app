@@ -113,6 +113,7 @@ export default function CategoriesScreen() {
 
   const headerActions = [
     { icon: 'Plus' as const, label: strings.categories.addCategoryLabel, onPress: () => setIsModalVisible(true) },
+    { icon: 'CircleUser' as const, label: strings.profile.headerLabel, onPress: () => router.push('/profile') },
   ];
 
   if (isLoading) {
@@ -181,7 +182,7 @@ function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: theme.snow,
+      backgroundColor: theme.background,
     },
     scrollView: {
       flex: 1,

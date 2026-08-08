@@ -56,15 +56,19 @@ type OnboardingContextValue = {
 
 const OnboardingContext = createContext<OnboardingContextValue | null>(null);
 
-// Step transitions for the rebuilt P2-1 flow (spec 02 section 2):
-// welcome -> fork -> audit_subs -> audit_vices -> reveal -> guided_log -> success.
+// Step machine (W3, "the app is the onboarding" complete, ADR 0020 + 0022):
+// welcome -> fork, then every door completes onboarding at its own terminal
+// action in the real app rather than advancing through a chain of screens.
+// fork is the intent picker's currentStep (STEP_ROUTE['fork'] in welcome.tsx
+// below); nothing maps forward from it anymore; Door 2's scan flow still
+// pushes its own route from the picker without advancing currentStep, same
+// as Door 1 and Door 3 already don't (app/onboarding/intent.tsx). The
+// audit_subs / audit_vices / reveal / guided_log / success steps this used to
+// chain through belonged to screens now deleted; see STEP_ROUTE for how a
+// stored one of those revives without crashing (the build 5 dayLogs lesson,
+// docs/runs.log: never let a stale persisted value route to gone code).
 const NEXT_STEP: Partial<Record<OnboardingStep, OnboardingStep>> = {
   welcome: 'fork',
-  fork: 'audit_subs',
-  audit_subs: 'audit_vices',
-  audit_vices: 'reveal',
-  reveal: 'guided_log',
-  guided_log: 'success',
 };
 
 export function OnboardingProvider({ children }: { children: React.ReactNode }) {

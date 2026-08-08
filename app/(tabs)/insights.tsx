@@ -124,10 +124,14 @@ export default function InsightsScreen() {
     [pickOneHabitId, startBreakingHabit]
   );
 
+  const profileAction = [
+    { icon: 'CircleUser' as const, label: strings.profile.headerLabel, onPress: () => router.push('/profile') },
+  ];
+
   if (isLoading) {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
-        <ScreenHeader title={strings.screenTitles.insights} />
+        <ScreenHeader title={strings.screenTitles.insights} actions={profileAction} />
         <View style={styles.loadingContainer}>
           <Text style={styles.loadingText}>{strings.reports.loading}</Text>
         </View>
@@ -137,7 +141,7 @@ export default function InsightsScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <ScreenHeader title={strings.screenTitles.insights} />
+      <ScreenHeader title={strings.screenTitles.insights} actions={profileAction} />
 
       <ScrollView
         style={styles.scrollView}
@@ -179,7 +183,7 @@ function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: theme.snow,
+      backgroundColor: theme.background,
     },
     scrollView: {
       flex: 1,
