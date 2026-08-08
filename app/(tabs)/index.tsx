@@ -647,8 +647,12 @@ function createStyles(theme: AppTheme) {
       backgroundColor: theme.background,
     },
     chipsRow: {
+      // The track itself carries no horizontal padding (SegmentedControl
+      // doesn't either); the 20pt gutter lives here, same as money.tsx's
+      // "segments" wrapper around its own SegmentedControl.
+      paddingHorizontal: 20,
       marginTop: 8,
-      marginBottom: 4,
+      marginBottom: 12,
     },
     // DI-7: the pager fills whatever vertical space is left below the chips
     // row, same as the single conditional pane did before it.
@@ -669,7 +673,7 @@ function createStyles(theme: AppTheme) {
       paddingBottom: 100,
     },
     loggedTodaySpacer: {
-      marginTop: 20,
+      marginTop: 12,
     },
     listContent: {
       paddingHorizontal: 20,

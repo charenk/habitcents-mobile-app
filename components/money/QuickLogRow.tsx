@@ -1,11 +1,16 @@
 /**
- * QuickLogRow (redesign U5, ADR 0019, DI-5): the amount-first quick-log card,
- * extracted verbatim from the old Today screen footer so the Spent view can
- * mount it directly. The five-category-tile row moves with it, gated behind
- * `showCategoryTiles` (default false, spec 04 "Today" 3): the log sheet's own
- * category picker covers that choice now, so Today ships without the tiles.
- * The prop and the tile markup both stay so a one-line flip is a real revert,
- * not a rebuild.
+ * QuickLogRow (redesign U5, ADR 0019, DI-5; header gated per the 2026-08-04
+ * scoreboard artifact): the amount-first quick-log card, extracted verbatim
+ * from the old Today screen footer so the Spent view can mount it directly.
+ * The five-category-tile row moves with it, gated behind `showCategoryTiles`
+ * (default false, spec 04 "Today" 3): the log sheet's own category picker
+ * covers that choice now, so Today ships without the tiles. In the shipping
+ * (tiles-off) configuration the QUICK LOG header also drops: the amount
+ * placeholder and plus button already read as a card without it, and the
+ * scoreboard above now carries the "today" framing the hint used to add. The
+ * tiles variant keeps the header, since it still needs the context. The
+ * prop, the header, and the tile markup all stay so a one-line flip is a
+ * real revert, not a rebuild.
  */
 import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -39,11 +44,13 @@ export function QuickLogRow({
 
   return (
     <View style={styles.quickLogCard}>
-      <View style={styles.quickLogHeader}>
-        <Text style={styles.eyebrow}>{strings.today.quickLogEyebrow.toUpperCase()}</Text>
-        <Text style={styles.quickLogHint}>{strings.today.quickLogHint}</Text>
-      </View>
-      <View style={styles.quickLogAmountRow}>
+      {showCategoryTiles ? (
+        <View style={styles.quickLogHeader}>
+          <Text style={styles.eyebrow}>{strings.today.quickLogEyebrow.toUpperCase()}</Text>
+          <Text style={styles.quickLogHint}>{strings.today.quickLogHint}</Text>
+        </View>
+      ) : null}
+      <View style={[styles.quickLogAmountRow, showCategoryTiles ? styles.quickLogAmountRowWithHeader : null]}>
         {/* The big zero is the obvious thing to tap, so it opens the sheet
             too; the plus stays for anyone who reads it as the only control. */}
         <Pressable
@@ -126,6 +133,10 @@ function createStyles(theme: AppTheme) {
       flexDirection: 'row',
       alignItems: 'flex-end',
       justifyContent: 'space-between',
+    },
+    // Only the tiles variant renders the header above; the header's own
+    // bottom spacing needs this row to add its top gap back.
+    quickLogAmountRowWithHeader: {
       marginTop: 8,
     },
     // Takes the row's free width so the whole left side of the card opens the

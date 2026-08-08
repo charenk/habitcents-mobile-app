@@ -83,13 +83,14 @@ jest.mock('@/contexts/CategoriesContext', () => ({
 
 import React from 'react';
 import { act, cleanup, fireEvent, render } from '@testing-library/react-native';
-import { Dimensions } from 'react-native';
+import { Dimensions, StyleSheet } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { ToastProvider } from '@/components/ui/Toast';
 import TodayScreen from '@/app/(tabs)/index';
 import { strings } from '@/constants/strings';
+import { lightTheme } from '@/constants/theme';
 import { formatMoney } from '@/utils/currency';
 import { track } from '@/utils/analytics';
 import type { Expense } from '@/types/expense';
@@ -227,6 +228,27 @@ describe('Today: Spent/Kept chips', () => {
     expect(view.getByLabelText(/^Spent .*, selected/)).toBeTruthy();
     expect(view.getByLabelText(/^Kept .*, not selected/)).toBeTruthy();
     expect(view.getAllByLabelText(strings.today.quickLogOpenLabel).length).toBeGreaterThan(0);
+  });
+
+  it('carries selection as the segmented scoreboard thumb, not just accessibilityState', async () => {
+    const view = await renderToday();
+
+    // accessibilityState.selected stays the source of truth for a11y and for
+    // the other tests in this file; this test additionally proves selection
+    // is visibly rendered as the SegmentedControl-style white thumb fill
+    // (theme.white plus the card shadow), same as the spec's "fill, not
+    // ring" language, by flattening the Pressable's own style prop rather
+    // than relying on a snapshot.
+    const spentChip = view.getByTestId('spent-chip');
+    const keptChip = view.getByTestId('kept-chip');
+
+    expect(StyleSheet.flatten(spentChip.props.style).backgroundColor).toBe(lightTheme.white);
+    expect(StyleSheet.flatten(keptChip.props.style).backgroundColor).toBeUndefined();
+
+    await tap(keptChip);
+
+    expect(StyleSheet.flatten(keptChip.props.style).backgroundColor).toBe(lightTheme.white);
+    expect(StyleSheet.flatten(spentChip.props.style).backgroundColor).toBeUndefined();
   });
 
   it('tapping Kept swaps to habit content', async () => {
