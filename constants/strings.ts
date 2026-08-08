@@ -646,6 +646,11 @@ export const strings = {
     loggedTodayEyebrow: 'Logged today',
     loggedTodayEmpty: 'Nothing logged today yet.',
     editExpenseLabel: (title: string, amountLabel: string) => `Edit ${title}, ${amountLabel}`,
+    // Break-another affordance (DI-6, ADR 0019): quiet, always-present at the
+    // bottom of the Kept view. The caption reuses habitLogging.freeTierNote
+    // (the same gate copy PickOneSheet's locked sheet already states) rather
+    // than inventing a new pricing line.
+    breakAnotherHabitCta: 'Break another habit',
   },
 
   // Log and edit expense sheets (spec 04 "Log / Edit sheets").

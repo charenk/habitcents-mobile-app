@@ -279,6 +279,18 @@ export default function TodayScreen() {
   // count reaches the current entitlement's ceiling (free = 1, premium = 5).
   const freeTierBlocked = isHabitLimitReached(activeHabits.length, getEntitlement());
 
+  // Break-another affordance (DI-6, ADR 0019): same gate freeTierBlocked
+  // already drives on PickOneSheet's "start" path, reused here so a second
+  // press-through leads to the identical outcome. Under the limit it reuses
+  // the exact re-audit target the empty state's link already routes to.
+  const handleBreakAnother = useCallback(() => {
+    if (freeTierBlocked) {
+      router.push('/paywall?placement=habit_gate');
+    } else {
+      router.push('/onboarding/welcome');
+    }
+  }, [freeTierBlocked, router]);
+
   const handleStart = useCallback(async (skipValue: number, valueEdited: boolean) => {
     if (!pickOneHabitId) return;
     await startBreakingHabit(pickOneHabitId, skipValue, valueEdited, 'detection');
@@ -297,6 +309,27 @@ export default function TodayScreen() {
   const detectionProgress = useMemo(
     () => (isEmpty && expenses.length > 0 ? progressTowardDetection(expenses) : null),
     [isEmpty, expenses]
+  );
+
+  // Persistent break-another affordance (DI-6, ADR 0019): a dashed card like
+  // UpcomingList's add-upcoming row (components/money/UpcomingList.tsx),
+  // chosen over the quieter reAuditLink text style for the same discoverability
+  // reason the money tab already leans on it. Rendered once, reused at the
+  // bottom of both the populated (SectionList footer) and empty Kept content.
+  const breakAnotherAffordance = (
+    <TouchableOpacity
+      style={styles.breakAnother}
+      onPress={handleBreakAnother}
+      accessibilityRole="button"
+      accessibilityLabel={`${strings.today.breakAnotherHabitCta}, ${strings.habitLogging.freeTierNote}`}
+      activeOpacity={0.7}
+    >
+      <Icon name="Plus" size={18} color={theme.primaryDark} />
+      <View style={styles.breakAnotherText}>
+        <Text style={styles.breakAnotherLabel}>{strings.today.breakAnotherHabitCta}</Text>
+        <Text style={styles.breakAnotherCaption}>{strings.habitLogging.freeTierNote}</Text>
+      </View>
+    </TouchableOpacity>
   );
 
   const renderItem = ({ item, section }: { item: DetectedHabit | BreakingItem; section: HabitSection }) => {
@@ -379,7 +412,11 @@ export default function TodayScreen() {
         </ScrollView>
       ) : (
         <>
-          <KeptHero cents={totalKept} />
+          {/* DI-6 gutter fix: the band renders full-bleed by default (see
+              onboarding success, which supplies its own padded container
+              instead); Today has no such wrapper, so it passes the same 20pt
+              horizontal gutter the chips row and both list content styles use. */}
+          <KeptHero cents={totalKept} style={styles.keptHeroGutter} />
 
           {isLoading ? (
             <View style={styles.loadingContainer}>
@@ -445,6 +482,7 @@ export default function TodayScreen() {
                   <CoachMomentSlot text={cardText(firstLogCardId)} />
                 </View>
               )}
+              <View style={styles.breakAnotherWrap}>{breakAnotherAffordance}</View>
             </ScrollView>
           ) : (
             <SectionList
@@ -455,6 +493,7 @@ export default function TodayScreen() {
               }}
               renderItem={renderItem}
               renderSectionHeader={renderSectionHeader}
+              ListFooterComponent={<View style={styles.breakAnotherWrap}>{breakAnotherAffordance}</View>}
               contentContainerStyle={styles.listContent}
               stickySectionHeadersEnabled={false}
               showsVerticalScrollIndicator={false}
@@ -514,6 +553,11 @@ function createStyles(theme: AppTheme) {
     chipsRow: {
       marginTop: 8,
       marginBottom: 4,
+    },
+    // DI-6: shares the 20pt gutter the chips row and both list content styles
+    // use below, so the band no longer renders full-bleed on Today.
+    keptHeroGutter: {
+      marginHorizontal: 20,
     },
     spentScroll: {
       flex: 1,
@@ -604,6 +648,48 @@ function createStyles(theme: AppTheme) {
       fontSize: 14,
       fontFamily: theme.fonts.uiSemibold,
       color: theme.textSecondary,
+    },
+    // Break-another affordance (DI-6, ADR 0019): a dashed card mirroring
+    // UpcomingList's add-upcoming row (components/money/UpcomingList.tsx
+    // `add`/`addLabel`), picked over the quieter reAuditLink text treatment
+    // for the same discoverability reason the money tab leans on it. Two
+    // lines (label + caption) rather than UpcomingList's single centered
+    // line, so it is left-aligned with the icon instead of centered.
+    breakAnother: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      minHeight: 56,
+      borderRadius: radii.card,
+      borderWidth: 1.5,
+      borderStyle: 'dashed',
+      borderColor: theme.cloudDashed,
+      backgroundColor: theme.white,
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+    },
+    breakAnotherText: {
+      flex: 1,
+    },
+    breakAnotherLabel: {
+      fontSize: 14,
+      fontFamily: theme.fonts.uiSemibold,
+      color: theme.primaryDark,
+    },
+    breakAnotherCaption: {
+      fontSize: typeScale.caption,
+      fontFamily: theme.fonts.ui,
+      color: theme.textSecondary,
+      marginTop: 2,
+    },
+    // Wraps the affordance wherever it is placed (empty ScrollView content or
+    // the populated SectionList's footer): alignSelf stretch matters in the
+    // empty case, whose ScrollView centers its content (styles.emptyContainer,
+    // alignItems: 'center'); the cards above never carry their own bottom
+    // margin, so both spots need the same explicit top spacing too.
+    breakAnotherWrap: {
+      alignSelf: 'stretch',
+      marginTop: 24,
     },
     progressCard: {
       alignSelf: 'stretch',
