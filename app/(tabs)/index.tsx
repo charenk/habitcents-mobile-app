@@ -46,6 +46,7 @@ import { useReducedMotion } from '@/utils/motion';
 import { radii, typeScale, type AppTheme } from '@/constants/theme';
 import type { DetectedHabit, HabitChangeGoal } from '@/types/habit';
 import { strings } from '@/constants/strings';
+import { useToast } from '@/components/ui/Toast';
 
 type BreakingItem = { habit: DetectedHabit; goal: HabitChangeGoal };
 
@@ -101,6 +102,7 @@ export default function TodayScreen() {
   const pagerInteracted = useRef(false);
   const { width: screenWidth } = useWindowDimensions();
   const reducedMotion = useReducedMotion();
+  const { show } = useToast();
   // DT-1 (P2-2): resolved once, attached to whichever leak is first in the
   // list at that moment, so the card only ever renders on one LeakCard.
   const [detectionMoment, setDetectionMoment] = useState<{ habitId: string; cardId: CoachMomentCardId } | null>(null);
@@ -176,6 +178,8 @@ export default function TodayScreen() {
   const [breakSheetVisible, setBreakSheetVisible] = useState(false);
   const [door3CoachActive, setDoor3CoachActive] = useState(false);
   const door3HandledRef = useRef(false);
+  // Guards a double-tap on the break sheet's async Start (finding 1).
+  const breakStartInFlightRef = useRef(false);
   const {
     ribbonPending: door3RibbonPending,
     messageKey: door3MessageKey,
@@ -301,6 +305,17 @@ export default function TodayScreen() {
   // because that daily ritual is the user's to answer, not a side effect of
   // admitting today's buy while setting the habit up.
   const handleBreakSheetStart = useCallback(async (data: BreakHabitStartData) => {
+    // Two guards before any await (stack review finding 1):
+    // 1. A double-tap on the async Start button must not create two habits.
+    // 2. The onboarding outcome is claimed NOW, so a scrim tap or back press
+    //    while the writes are in flight runs handleBreakSheetClose as a
+    //    visual close only, instead of firing the gentle ribbon for a habit
+    //    that is actually being created.
+    if (breakStartInFlightRef.current) return;
+    breakStartInFlightRef.current = true;
+    const claimedOnboarding = door3CoachActive && !door3HandledRef.current;
+    if (claimedOnboarding) door3HandledRef.current = true;
+
     const merchantPattern = data.chipId === 'custom' ? data.name : data.chipId;
     const category: ExpenseCategory = data.chipId === 'custom' ? 'Other' : VICE_CATEGORIES[data.chipId];
     const categoryId = getCategoryByName(category)?.id ?? getCategoryByName('Other')?.id ?? 'Other';
@@ -320,7 +335,17 @@ export default function TodayScreen() {
       occurrencesPerPeriod: 1,
       totalMonthlySpend: Math.round(data.amountCents * monthlyMultiplier),
     });
-    await startBreakingHabit(habit.id, data.amountCents, data.valueEdited, 'onboarding');
+    // seedDiscoveredHabit protects live habits: re-picking one the user is
+    // already breaking returns it unchanged. Starting it again would append
+    // an orphan goal (stack review finding 2), so say so and stop; a
+    // bought-today yes below still writes the expense, which is an honest
+    // statement regardless.
+    const alreadyBreaking = habit.status === 'changing' || habit.status === 'tracking';
+    if (alreadyBreaking) {
+      show(strings.today.alreadyBreakingToast);
+    } else {
+      await startBreakingHabit(habit.id, data.amountCents, data.valueEdited, 'onboarding');
+    }
 
     if (data.boughtToday) {
       await addExpense({
@@ -336,12 +361,12 @@ export default function TodayScreen() {
     }
 
     setBreakSheetVisible(false);
-    if (door3CoachActive && !door3HandledRef.current) {
-      door3HandledRef.current = true;
+    if (claimedOnboarding) {
       setDoor3CoachActive(false);
       await completeOnboarding();
       await showDoor3Ribbon('door3_started');
     }
+    breakStartInFlightRef.current = false;
   }, [
     seedDiscoveredHabit,
     startBreakingHabit,
@@ -350,6 +375,7 @@ export default function TodayScreen() {
     door3CoachActive,
     completeOnboarding,
     showDoor3Ribbon,
+    show,
   ]);
 
   // Close without starting (scrim, swipe, or the gate's "Maybe later"): same

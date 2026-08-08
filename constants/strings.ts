@@ -614,6 +614,7 @@ export const strings = {
     // Logged today list
     loggedTodayEyebrow: 'Logged today',
     loggedTodayEmpty: 'Nothing logged today yet.',
+    alreadyBreakingToast: "You're already breaking this habit.",
     editExpenseLabel: (title: string, amountLabel: string) => `Edit ${title}, ${amountLabel}`,
     // Break-another affordance (DI-6, ADR 0019): quiet, always-present at the
     // bottom of the Kept view. The caption reuses habitLogging.freeTierNote

@@ -373,6 +373,15 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
   }): Promise<DetectedHabit> => {
     const existing = habits.find(h => h.merchantPattern === input.merchantPattern);
 
+    // Same protection addScanHabit gives: a habit the user is already
+    // tracking or breaking is live data; re-seeding it (reachable via the
+    // break-another sheet re-picking an active preset, stack review finding
+    // 2) must never overwrite its amounts or cadence. Return it untouched
+    // and let the caller notice the status.
+    if (existing && (existing.status === 'tracking' || existing.status === 'changing')) {
+      return existing;
+    }
+
     if (existing) {
       const refreshed: DetectedHabit = {
         ...existing,

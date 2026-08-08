@@ -350,3 +350,63 @@ describe('Door 3 break sheet: free-tier gate', () => {
     expect(mockCompleteOnboarding).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('Door 3 break sheet: stack review findings', () => {
+  it('a scrim close while Start is in flight never shows the gentle ribbon (finding 1)', async () => {
+    mockParams = { view: 'kept', breakEntry: '1' };
+
+    // Make the first awaited write hang until we release it, so the close
+    // can race in exactly the window the review traced.
+    let releaseSeed: (h: DetectedHabit) => void = () => {};
+    mockSeedDiscoveredHabit.mockImplementationOnce(
+      () => new Promise<DetectedHabit>((resolve) => { releaseSeed = resolve; })
+    );
+
+    const view = await renderToday();
+    await tap(view.getByText(coffee.name));
+    await tap(view.getByText(strings.habitLogging.startBreakingIt));
+
+    // Mid-flight: the user taps the scrim.
+    await tap(view.getByLabelText('Close'));
+
+    // Release the write and let the handler finish.
+    await act(async () => {
+      releaseSeed({ id: 'seeded-habit', status: 'discovered' } as unknown as DetectedHabit);
+      await Promise.resolve();
+    });
+
+    expect(mockStartBreakingHabit).toHaveBeenCalledTimes(1);
+    expect(mockCompleteOnboarding).toHaveBeenCalledTimes(1);
+    expect(view.getByText(strings.today.door3RibbonStarted)).toBeTruthy();
+    expect(view.queryByText(strings.today.door3RibbonGentle)).toBeNull();
+  });
+
+  it('double-tapping Start creates exactly one habit (finding 1 guard)', async () => {
+    mockParams = { view: 'kept', breakEntry: '1' };
+    const view = await renderToday();
+    await tap(view.getByText(coffee.name));
+    const start = view.getByText(strings.habitLogging.startBreakingIt);
+    await act(async () => {
+      fireEvent.press(start);
+      fireEvent.press(start);
+      await Promise.resolve();
+    });
+    expect(mockSeedDiscoveredHabit).toHaveBeenCalledTimes(1);
+    expect(mockStartBreakingHabit).toHaveBeenCalledTimes(1);
+  });
+
+  it('re-picking an already-breaking preset never starts a second goal (finding 2)', async () => {
+    mockParams = { view: 'kept', breakEntry: '1' };
+    // seedDiscoveredHabit's protect-active guard returns the live habit
+    // untouched; the screen must then refuse to start it again.
+    mockSeedDiscoveredHabit.mockImplementationOnce(
+      async () => ({ id: 'h-live', status: 'changing' } as unknown as DetectedHabit)
+    );
+    const view = await renderToday();
+    await tap(view.getByText(coffee.name));
+    await tap(view.getByText(strings.habitLogging.startBreakingIt));
+
+    expect(mockStartBreakingHabit).not.toHaveBeenCalled();
+    expect(view.getByText(strings.today.alreadyBreakingToast)).toBeTruthy();
+  });
+});
