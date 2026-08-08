@@ -17,15 +17,24 @@ import { strings } from '@/constants/strings';
 // is not repeated once an intent has been picked (doorChosen set). Reopening
 // resumes at the first incomplete input step with prior answers intact. The
 // stored step is still named "fork"; the screen it routes to is now the intent
-// picker, so a track or scan user who abandons early re-picks rather than
-// landing on a route that no longer exists.
+// picker, so a track, break, or scan user who abandons early re-picks rather
+// than landing on a route that no longer exists.
 const STEP_ROUTE: Partial<Record<OnboardingStep, string>> = {
   fork: '/onboarding/intent',
-  audit_subs: '/onboarding/audit-subs',
-  audit_vices: '/onboarding/audit-vices',
-  reveal: '/onboarding/reveal',
-  guided_log: '/onboarding/guided-log',
-  success: '/onboarding/success',
+  // W3 ("the app is the onboarding" complete): audit_subs, audit_vices,
+  // reveal, guided_log, and success all belonged to screens deleted by this
+  // update. A device that has one of these stored from before must not crash
+  // trying to route to a screen that no longer exists (the build 5 dayLogs
+  // lesson, docs/runs.log: an unhandled resume target is exactly how that
+  // crash happened); resuming at the intent picker is honest too, since
+  // auditAnswers are legacy now and nothing reads a partial audit's answers
+  // back into a screen anymore (OnboardingContext.completeOnboarding already
+  // clears them on the next successful completion).
+  audit_subs: '/onboarding/intent',
+  audit_vices: '/onboarding/intent',
+  reveal: '/onboarding/intent',
+  guided_log: '/onboarding/intent',
+  success: '/onboarding/intent',
 };
 
 // The two honest-zero value rows under the hero (W1, ADR 0020/0022).

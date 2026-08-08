@@ -3,11 +3,13 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 );
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getExpenses, getHabitGoals } from '@/utils/storage';
+import { getExpenses, getHabitGoals, getScanSummary, saveScanSummary } from '@/utils/storage';
 import { dayStateFor } from '@/utils/habitLogging';
+import type { ScanSummary } from '@/types/scanSummary';
 
 const EXPENSES_KEY = '@habitcents_expenses';
 const GOALS_KEY = '@habitcents_habit_goals';
+const SCAN_SUMMARY_KEY = '@habitcents_scan_summary';
 
 beforeEach(async () => {
   await AsyncStorage.clear();
@@ -138,5 +140,94 @@ describe('habit goal revive: pre-v2 goals', () => {
     expect(goal.skipValue).toBe(650);
     expect(goal.kept).toBe(1300);
     expect(goal.firstRun).toBe(false);
+  });
+});
+
+// Leak Scan summary snapshot (OB-4, ADR 0020).
+describe('scan summary storage', () => {
+  function summary(overrides: Partial<ScanSummary> = {}): ScanSummary {
+    return {
+      schemaVersion: 1,
+      createdAt: new Date('2026-08-01T00:00:00.000Z'),
+      evidence: {
+        windowStart: new Date('2026-07-01T00:00:00.000Z'),
+        windowEnd: new Date('2026-07-31T00:00:00.000Z'),
+        fileCount: 1,
+        rowCount: 42,
+      },
+      kpis: {
+        totalSpentCents: 120000,
+        totalSpentTier: 'solid',
+        perDayCents: 3871,
+        transactionCount: 42,
+        purchasesPerDay: 1.35,
+        coveredDays: 31,
+        nAccounts: 1,
+      },
+      categories: [{ name: 'Food', totalCents: 60000, share: 0.5 }],
+      topLeaks: [
+        { name: 'Coffee Shop', monthlyCents: 4000, observedCents: 4000, buys: 8, cadence: 'weekly', tier: 'solid' },
+      ],
+      projection: { nextMonthCents: 3360, lockedInCents: 2000 },
+      ...overrides,
+    };
+  }
+
+  it('returns null when nothing is stored', async () => {
+    expect(await getScanSummary()).toBeNull();
+  });
+
+  it('round trips a save and revives every date field', async () => {
+    await saveScanSummary(summary());
+    const out = await getScanSummary();
+    expect(out).not.toBeNull();
+    expect(out?.createdAt instanceof Date).toBe(true);
+    expect(out?.createdAt.toISOString()).toBe('2026-08-01T00:00:00.000Z');
+    expect(out?.evidence.windowStart instanceof Date).toBe(true);
+    expect(out?.evidence.windowEnd instanceof Date).toBe(true);
+    expect(out?.evidence.fileCount).toBe(1);
+    expect(out?.kpis).toEqual(summary().kpis);
+    expect(out?.categories).toEqual(summary().categories);
+    expect(out?.topLeaks).toEqual(summary().topLeaks);
+    expect(out?.projection).toEqual(summary().projection);
+  });
+
+  it('revives a null evidence window without throwing', async () => {
+    await saveScanSummary(summary({ evidence: { windowStart: null, windowEnd: null, fileCount: 0, rowCount: 0 } }));
+    const out = await getScanSummary();
+    expect(out?.evidence.windowStart).toBeNull();
+    expect(out?.evidence.windowEnd).toBeNull();
+  });
+
+  it('does not throw or write on a null summary (graceful-failure no-op)', async () => {
+    await saveScanSummary(null);
+    expect(await getScanSummary()).toBeNull();
+  });
+
+  it('backs up and returns null on corrupt (unparseable) JSON', async () => {
+    await AsyncStorage.setItem(SCAN_SUMMARY_KEY, '{ this is not json ');
+    expect(await getScanSummary()).toBeNull();
+    expect(await AsyncStorage.getItem(SCAN_SUMMARY_KEY + '_corrupt_backup')).toContain('not json');
+  });
+
+  it('returns null on an unknown schemaVersion, never throws', async () => {
+    await AsyncStorage.setItem(SCAN_SUMMARY_KEY, JSON.stringify({ ...summary(), schemaVersion: 2 }));
+    expect(await getScanSummary()).toBeNull();
+  });
+
+  it('returns null when the stored blob is not an object', async () => {
+    await AsyncStorage.setItem(SCAN_SUMMARY_KEY, JSON.stringify('just a string'));
+    expect(await getScanSummary()).toBeNull();
+  });
+
+  it('a second save replaces the first (kept until replaced, ADR 0020)', async () => {
+    await saveScanSummary(summary({ evidence: { windowStart: null, windowEnd: null, fileCount: 1, rowCount: 10 } }));
+    await saveScanSummary(summary({ evidence: { windowStart: null, windowEnd: null, fileCount: 3, rowCount: 99 } }));
+    const out = await getScanSummary();
+    expect(out?.evidence.fileCount).toBe(3);
+    expect(out?.evidence.rowCount).toBe(99);
+    // Only ever one summary on device: no array, no accumulation.
+    const raw = await AsyncStorage.getItem(SCAN_SUMMARY_KEY);
+    expect(JSON.parse(raw!).evidence.rowCount).toBe(99);
   });
 });

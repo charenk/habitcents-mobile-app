@@ -7,10 +7,10 @@
  * delete confirm, the push into /category/[id], and AddCategoryModal).
  */
 import React, { useMemo, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Icon } from '@/components/ui';
+import { Icon, ScreenHeader } from '@/components/ui';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCategories } from '@/contexts/CategoriesContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
@@ -111,9 +111,15 @@ export default function CategoriesScreen() {
     return categoryExpenses.reduce((sum, e) => sum + e.amount, 0);
   }, [expenses]);
 
+  const headerActions = [
+    { icon: 'Plus' as const, label: strings.categories.addCategoryLabel, onPress: () => setIsModalVisible(true) },
+    { icon: 'CircleUser' as const, label: strings.profile.headerLabel, onPress: () => router.push('/profile') },
+  ];
+
   if (isLoading) {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
+        <ScreenHeader title={strings.screenTitles.categories} actions={headerActions} />
         <View style={styles.loadingContainer}>
           <Text style={styles.loadingText}>{strings.categories.loading}</Text>
         </View>
@@ -123,19 +129,7 @@ export default function CategoriesScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <View style={styles.header}>
-        <Text style={styles.title} accessibilityRole="header">
-          {strings.screenTitles.categories}
-        </Text>
-        <Pressable
-          style={({ pressed }) => [styles.addButton, pressed ? styles.addButtonPressed : null]}
-          onPress={() => setIsModalVisible(true)}
-          accessibilityRole="button"
-          accessibilityLabel={strings.categories.addCategoryLabel}
-        >
-          <Icon name="Plus" size={18} color={theme.primary} />
-        </Pressable>
-      </View>
+      <ScreenHeader title={strings.screenTitles.categories} actions={headerActions} />
 
       <ScrollView
         style={styles.scrollView}
@@ -188,33 +182,7 @@ function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: theme.snow,
-    },
-    header: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingHorizontal: 20,
-      paddingTop: 16,
-      paddingBottom: 4,
-    },
-    title: {
-      fontSize: typeScale.screenTitle,
-      fontFamily: theme.fonts.display,
-      color: theme.ink,
-    },
-    addButton: {
-      width: 40,
-      height: 40,
-      borderRadius: radii.pill,
-      backgroundColor: theme.white,
-      borderWidth: 1,
-      borderColor: theme.cloud,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    addButtonPressed: {
-      backgroundColor: theme.snow,
+      backgroundColor: theme.background,
     },
     scrollView: {
       flex: 1,

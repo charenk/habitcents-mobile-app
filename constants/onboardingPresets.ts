@@ -123,6 +123,20 @@ const VICE_NAMES: Record<ViceId, string> = {
   impulse: 'Impulse buys',
 };
 
+/**
+ * Expense category each vice preset maps to (W3, Door 3 break sheet): when the
+ * "Did you buy it today?" toggle is Yes, the logged expense needs a real
+ * ExpenseCategory, not just a display name. Vice presets carry no category of
+ * their own, so this is the honest, stable mapping; the sheet's "Something
+ * else" chip has no preset to map from and falls back to 'Other' at the call
+ * site instead of appearing here.
+ */
+export const VICE_CATEGORIES: Record<ViceId, ExpenseCategory> = {
+  coffee: 'Food',
+  delivery: 'Food',
+  impulse: 'Shopping',
+};
+
 export const SUBSCRIPTION_CHIP_IDS: SubscriptionChipId[] = [
   'video', 'music', 'cloud', 'gaming', 'news', 'fitness', 'dating',
 ];

@@ -1,24 +1,16 @@
 /**
- * SettingsSheet (design/redesign-handoff/02-navigation.md, "Settings").
+ * Profile (design/header-unification U4, ADR 0019). The bottom sheet behind
+ * Today's gear is gone; this pushed route is reachable from the same
+ * top-right spot on all four tabs instead, so it always feels one tap away.
  *
- * The Settings tab is gone; the gear on Today opens this bottom sheet instead.
- * Serif title, a plan line, then two labelled groups of rows: Preferences
- * (Currency, Premium) and About (Restore purchases, Sign out, Version).
+ * Everything below the title is migrated verbatim from the deleted
+ * components/SettingsSheet.tsx: the SettingsRow sub-component, the group/
+ * eyebrow/row styles, and every handler. The app has no accounts yet, so the
+ * copy stays settings-shaped under a Profile name; nothing here promises an
+ * identity feature.
  *
- * Scope notes:
- * - The spec's "Categories" row under Preferences is DROPPED (Charen,
- *   2026-07-30): Categories stays a tab, see design/REDESIGN_RUNBOOK.md.
- * - Privacy policy and terms rows are carried over from the old settings
- *   screen. Spec 02 omits them, but the store listing requires reachable
- *   links, so dropping them would be a regression.
- * - Sign out touches nothing server-side because there are no accounts. It
- *   clears the local session (onboarding state + the has-onboarded flag) and
- *   sends the user back to onboarding. Expenses, habits and categories stay on
- *   the device, which is what the row's hint promises.
- * - Motion lives in the Sheet primitive, which already honors reduced motion.
- * - A third group, DEVELOPER, appears only in builds that carry the dev gate
- *   (components/dev/DevMenuSection.tsx, utils/devMenu.ts). In production it is
- *   a constant-false branch that renders nothing.
+ * The paywall placement value stays 'settings' for funnel continuity even
+ * though the entry point is now named Profile (ADR 0019).
  */
 import React, { useMemo } from 'react';
 import {
@@ -27,22 +19,20 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
-  useWindowDimensions,
 } from 'react-native';
 import Constants from 'expo-constants';
-import { useRouter } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DevMenuSection } from '@/components/dev/DevMenuSection';
 import { SettingsRow } from '@/components/settings/SettingsRow';
-import { Sheet } from '@/components/ui/Sheet';
+import { Icon } from '@/components/ui/Icon';
 import { useToast } from '@/components/ui/Toast';
 import { typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import { useCurrency } from '@/contexts/CurrencyContext';
-
-const PRIVACY_POLICY_URL = 'https://habitcents.com/privacy';
-const TERMS_OF_SERVICE_URL = 'https://habitcents.com/terms';
 import { useOnboarding } from '@/contexts/OnboardingContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { settingsRowLabel } from '@/utils/a11y';
@@ -51,26 +41,25 @@ import { DEV_MENU_ENABLED } from '@/utils/devMenu';
 import { getEntitlement, restore } from '@/utils/purchases';
 import { clearOnboarding } from '@/utils/storage';
 
-type SettingsSheetProps = {
-  visible: boolean;
-  onClose: () => void;
-};
+const PRIVACY_POLICY_URL = 'https://habitcents.com/privacy';
+const TERMS_OF_SERVICE_URL = 'https://habitcents.com/terms';
+const SUPPORT_URL = 'https://habitcents.com/support';
 
-export function SettingsSheet({ visible, onClose }: SettingsSheetProps): React.JSX.Element {
+export default function ProfileScreen(): React.JSX.Element {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const { show } = useToast();
   const { currency, setCurrency } = useCurrency();
-  const { height: windowHeight } = useWindowDimensions();
   const { resetOnboarding } = useOnboarding();
 
   // Entitlement is read at render time; mock mode always reports 'free', so the
   // free line is the only one with ratified copy today.
   const isFree = getEntitlement() === 'free';
 
-  // Ported verbatim from the old app/(tabs)/settings.tsx: an alert listing every
-  // supported currency, tapping one persists it through CurrencyContext.
+  // Ported verbatim from SettingsSheet: an alert listing every supported
+  // currency, tapping one persists it through CurrencyContext.
   const handleCurrencyPress = () => {
     Alert.alert(strings.settings.currencyAlertTitle, strings.settings.currencyAlertMessage, [
       ...CURRENCIES.map((c) => ({
@@ -83,13 +72,14 @@ export function SettingsSheet({ visible, onClose }: SettingsSheetProps): React.J
     ]);
   };
 
+  // Pushing the paywall on top of Profile reads naturally, so this does not
+  // back() first.
   const handlePremiumPress = () => {
-    onClose();
     router.push('/paywall?placement=settings');
   };
 
-  // Restore (BET-004, mock mode). Same outcome branching the old screen used;
-  // the redesign reports it in a toast instead of an alert.
+  // Restore (BET-004, mock mode). Same outcome branching the old sheet used;
+  // reported in a toast rather than an alert.
   const handleRestorePress = async () => {
     const result = await restore();
     show(
@@ -100,24 +90,49 @@ export function SettingsSheet({ visible, onClose }: SettingsSheetProps): React.J
   };
 
   // No accounts, so nothing to sign out of server-side: reset the onboarding
-  // context (in-memory state + its persisted copy + audit answers) and drop the
-  // has-onboarded flag, then send the user to the welcome screen.
+  // context (in-memory state + its persisted copy + audit answers) and drop
+  // the has-onboarded flag, then send the user to the welcome screen.
+  // Popping Profile off the stack first (router.back()) means replace()
+  // swaps out the tab underneath it instead of leaving it stranded below
+  // onboarding, so there is nothing to swipe back into after sign out.
   const handleSignOutPress = async () => {
     await resetOnboarding();
     await clearOnboarding();
-    onClose();
+    router.back();
     router.replace('/onboarding/welcome');
     show(strings.settings.signOutToast);
   };
 
   const version = Constants.expoConfig?.version ?? strings.settings.versionValue;
 
-  // The developer group makes the sheet taller than the screen, so in a gated
-  // build the body scrolls inside a capped panel. Production takes the plain
-  // View branch and is unchanged.
-  const body = (
+  return (
     <>
-        <Text style={styles.title}>{strings.settings.sheetTitle}</Text>
+      <Stack.Screen
+        options={{
+          headerShown: true,
+          headerTitle: '',
+          headerTransparent: true,
+          headerLeft: () => (
+            <TouchableOpacity
+              onPress={() => router.back()}
+              style={styles.backButton}
+              accessibilityRole="button"
+              accessibilityLabel={strings.common.back}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Icon name="ArrowLeft" size={24} color={theme.text} />
+            </TouchableOpacity>
+          ),
+        }}
+      />
+      <ScrollView
+        style={[styles.container, { paddingTop: insets.top + 44 }]}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        <Text style={styles.title} accessibilityRole="header">
+          {strings.profile.title}
+        </Text>
         {isFree ? <Text style={styles.plan}>{strings.settings.planFree}</Text> : null}
 
         <Text style={styles.eyebrow}>{strings.settings.groupPreferences}</Text>
@@ -169,6 +184,14 @@ export function SettingsSheet({ visible, onClose }: SettingsSheetProps): React.J
           <SettingsRow
             styles={styles}
             theme={theme}
+            label={strings.profile.supportRow}
+            onPress={() => {
+              Linking.openURL(SUPPORT_URL).catch(() => {});
+            }}
+          />
+          <SettingsRow
+            styles={styles}
+            theme={theme}
             label={strings.settings.signOutRow}
             hint={strings.settings.signOutHint}
             destructive
@@ -187,41 +210,34 @@ export function SettingsSheet({ visible, onClose }: SettingsSheetProps): React.J
         </View>
 
         {/* Developer-only. Renders nothing unless the build carries the gate
-            (utils/devMenu.ts), so production is untouched. */}
+            (utils/devMenu.ts), so production is untouched. Popping back before
+            restarting onboarding matches handleSignOutPress above. */}
         {DEV_MENU_ENABLED ? (
-          <DevMenuSection styles={styles} theme={theme} onClose={onClose} />
+          <DevMenuSection styles={styles} theme={theme} onClose={() => router.back()} />
         ) : null}
+      </ScrollView>
     </>
-  );
-
-  return (
-    <Sheet visible={visible} onClose={onClose} accessibilityLabel={strings.settings.sheetTitle}>
-      {DEV_MENU_ENABLED ? (
-        <ScrollView
-          style={{ maxHeight: Math.round(windowHeight * 0.75) }}
-          contentContainerStyle={styles.content}
-          showsVerticalScrollIndicator={false}
-        >
-          {body}
-        </ScrollView>
-      ) : (
-        <View style={styles.content}>{body}</View>
-      )}
-    </Sheet>
   );
 }
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.background,
+    },
     content: {
-      paddingTop: 10,
-      paddingHorizontal: 20,
-      paddingBottom: 24,
+      paddingHorizontal: 16,
+      paddingBottom: 100,
+    },
+    backButton: {
+      padding: 4,
     },
     title: {
+      fontSize: typeScale.screenTitle,
       fontFamily: theme.fonts.display,
-      fontSize: 30,
-      lineHeight: 36,
+      lineHeight: 40,
+      includeFontPadding: false,
       color: theme.ink,
     },
     plan: {

@@ -15,6 +15,7 @@ import { SpendPulse } from './SpendPulse';
 import { HabitCard } from './HabitCard';
 import { ProjectionSection } from './ProjectionSection';
 import { ResultsFooter } from './ResultsFooter';
+import { useCompleteScanOnboarding } from './useCompleteScanOnboarding';
 import { ReviewQueueSheet } from './ReviewQueueSheet';
 import { CategoryTransactionsSheet } from './CategoryTransactionsSheet';
 import { PulseDayDetailSheet } from './PulseDayDetailSheet';
@@ -28,6 +29,7 @@ import {
 } from '@/utils/leakScan';
 import { spendableRows } from '@/utils/leakScan/netting';
 import { seedLast15Days, recurringToExpenses } from '@/utils/leakScan/importWrite';
+import { scanResultToSummary } from '@/utils/leakScan/summarize';
 import type { ScanFileInput } from '@/utils/leakScan';
 import type { PulseCell } from '@/utils/leakScan/spendPulse';
 import type { GovernClass, HabitCandidate, ScanResult } from '@/utils/leakScan/types';
@@ -40,6 +42,7 @@ import {
   type ScanRules,
 } from '@/utils/scanRules';
 import { habitCandidateToDetectedHabit, scanHabitId } from '@/utils/leakScanBridge';
+import { saveScanSummary } from '@/utils/storage';
 import { track } from '@/utils/analytics';
 import { isHabitLimitReached } from '@/utils/habitLogging';
 import { getEntitlement } from '@/utils/purchases';
@@ -74,6 +77,7 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
   const toast = useToast();
   const { addExpense, deleteExpense, expenses } = useExpenses();
   const { addScanHabit, startBreakingHabit, dismissHabit, getHabitById, getActiveHabits } = useHabits();
+  const completeScanOnboarding = useCompleteScanOnboarding();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   const [result, setResult] = useState(initialResult);
@@ -95,6 +99,11 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
       setRulesState(updatedRules);
       const next = runScan(files, { rules: updatedRules, importId: initialResult.importId });
       setResult(next);
+      // Corrections change what the scan concluded, so the persisted summary
+      // follows the corrected result too (same write the intake hook does).
+      if (!next.gracefulFailure) {
+        void saveScanSummary(scanResultToSummary(next, new Date()));
+      }
     },
     [files, initialResult.importId]
   );
@@ -256,12 +265,15 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
       });
     }
     track('scan_seed15_applied', { rows: seeded.length });
+    // This is the scan door's only exit into the app; it must complete
+    // onboarding here or the user loops back into an empty scan on relaunch.
+    await completeScanOnboarding();
     router.push('/(tabs)');
     // Every mutating action confirms itself (spec 01 section 5). This one
     // writes about 15 expenses, so landing on Today in silence left the user
     // with no evidence the import happened.
     toast.show(strings.leakScan.savedToHabitCents);
-  }, [result, addExpense, router, toast]);
+  }, [result, addExpense, router, toast, completeScanOnboarding]);
 
   if (undone) {
     return (

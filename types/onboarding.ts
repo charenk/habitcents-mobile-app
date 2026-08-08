@@ -1,14 +1,17 @@
 /**
  * Type definitions for onboarding flow and progressive feature reveal.
  *
- * Onboarding flow (P2-1, docs/design-package-phase2/02-p2-1-onboarding-leak-audit.md):
- * welcome -> fork -> [Door 1: audit_subs -> audit_vices -> reveal] -> guided_log -> success.
- * 'reveal' IS tracked as a currentStep gate even though it has no answers of
- * its own: without it, abandoning on the reveal screen and reopening would
- * resume past it straight into guided_log, so the user would never see their
- * leak number (the 90-second gate's entire point). Section 7 "Mid-flow
- * abandon and reopen" resumes at the first incomplete step with prior
- * answers intact.
+ * Onboarding flow (W3, "the app is the onboarding" complete, ADR 0020 + 0022):
+ * welcome -> fork (the intent picker), then every door completes onboarding at
+ * its own terminal action in the real app: Door 1 (track) from the first
+ * LogExpenseSheet save/close, Door 3 (break) from BreakHabitSheet's start/
+ * close, Door 2 (scan) from its own results flow, skip immediately.
+ * audit_subs / audit_vices / reveal / guided_log / success are RETIRED step
+ * values: the screens they named (P2-1, docs/design-package-phase2/
+ * 02-p2-1-onboarding-leak-audit.md) are deleted. They stay in the union below
+ * only so a currentStep persisted before this update still deserializes; see
+ * OnboardingContext's NEXT_STEP and welcome.tsx's STEP_ROUTE for how a stored
+ * one revives (at the intent picker) without crashing.
  */
 
 export type OnboardingStep =

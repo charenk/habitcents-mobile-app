@@ -37,3 +37,7 @@ yarn-error.*
 # Metro
 .metro-health-check*
 .claude/
+
+# Leak Scan eval harness: Charen's sanitized real bank exports for local runs
+# only. Never committed (see __tests__/leakScanEval/README.md).
+__tests__/leakScanEval/private/

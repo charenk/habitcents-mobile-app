@@ -1,0 +1,31 @@
+"Custom filters (select dates and amounts), From date=2026-04-01, To date=2026-06-30","","","",""
+Date,Description,Debit,Credit,Balance
+2026-04-01,Park Property Management Rent,1200.00,,3800.00
+04/03/2026,Starbucks #4521,5.75,,3794.25
+05-Apr-2026,Petro Canada Gas,42.10,,3752.15
+04/06/2026,Best Buy Electronics,89.99,,3662.16
+2026-04-08,Grocery Market,64.20,,3597.96
+10-Apr-2026,Best Buy Electronics Refund,,89.99,3687.95
+04/10/2026,Starbucks 88 King St,6.10,,3681.85
+2026-04-14,Credit Card Payment,500.00,,3181.85
+04/17/2026,STARBUCKS DOWNTOWN TORONTO,4.95,,3176.90
+20-Apr-2026,Ikea Waterloo,210.44,,2966.46
+04/24/2026,Starbucks #4521,5.50,,2960.96
+2026-04-28,Canadian Tire,58.30,,2902.66
+2026-05-01,Park Property Management Rent,1200.00,,1702.66
+05/08/2026,Starbucks 88 King St,6.25,,1696.41
+11-May-2026,Value Village,34.75,,1661.66
+05/15/2026,STARBUCKS DOWNTOWN TORONTO,5.25,,1656.41
+2026-05-19,Bulk Barn,18.60,,1637.81
+05/22/2026,Starbucks #4521,5.60,,1632.21
+26-May-2026,Uber Eats Toronto,28.40,,1603.81
+05/29/2026,Starbucks 88 King St,6.15,,1597.66
+2026-06-01,Park Property Management Rent,1200.00,,397.66
+06/05/2026,STARBUCKS DOWNTOWN TORONTO,4.90,,392.76
+09-Jun-2026,Payroll Deposit,,3200.00,3592.76
+06/09/2026,Home Hardware,47.90,,3544.86
+2026-06-12,Starbucks #4521,5.70,,3539.16
+06/16/2026,Petsmart,62.15,,3477.01
+2026-06-19,Uber Eats Toronto,19.85,,3457.16
+23-Jun-2026,Starbucks 88 King St,5.80,,3451.36
+06/26/2026,STARBUCKS DOWNTOWN TORONTO,5.15,,3446.21

@@ -397,3 +397,185 @@ CASE STUDY MOMENT
 On-device testing earned its keep in one tap: the app that passed every unit test and ran clean on web and simulator hard-crashed the moment a real user opened the Habits tab on a fresh install, a release-only failure that only a build on a real phone could surface.
 
 ---
+
+---
+
+## 2026-08-07 — Phase DI built end to end: chrome, Today scoreboard, onboarding doors v2, scan engine fixed on real bank data
+
+### Session scan
+
+**Scope:** end of session (multi-day live session, 08-04 to 08-07)
+**Built this session:** Turned Charen's annotated build 6 screenshots into a ratified two-batch plan, then built all of it as 16 Lane 2 PRs: unified headers, a Profile page, Today's Spent/Kept scoreboard, a Money Habits segment, and an onboarding redesign that deletes four screens so every door lands in the real app. An eval harness proved the bank-statement scanner parsed 1 row in 99 on real exports, and the fix took it to 100%.
+**Pillar scores:** P1: Strong · P2: Strong · P3: Strong · P4: Strong · P5: Strong
+**P6:** generated (Friday)
+
+---
+
+### P1 CONCEPT DISCOVERED — The app is the onboarding
+
+**TWITTER POST**
+I deleted four onboarding screens this week: the practice-log screen, two audit steps, the success ceremony. They taught users an interface that stops existing the moment onboarding ends. Now every door drops you into the real app with one line of coaching. The first log IS the thousandth log.
+
+VISUAL NOTE: side by side: the old guided practice screen vs the real log sheet opening over Today with the coach line.
+
+---
+
+**TWITTER THREAD**
+Tweet 1: Onboarding screens are a promise that the real app will be worse.
+Tweet 2: My app had a practice-log screen, a two-step audit, and a success ceremony. Users learned all three, then arrived in the actual app as strangers. The practice log even wrote data the detection engine could not use.
+Tweet 3: The redesign principle: the app is the onboarding. Door 1 opens the REAL log sheet over the REAL home screen with one coach line. Door 3 is a bottom sheet over the habit view; closing it reveals your first check-in, already waiting.
+Tweet 4: The success screen became a single dismissible ribbon: "Logged for real. A few more like this and we'll spot your first leak." Context, not ceremony.
+Final tweet: Count the screens a new user sees exactly once. Each one is training for an interface that does not exist. Delete them and coach the real one.
+
+VISUAL NOTE: tweet 3, the break sheet over the dimmed Kept view; final tweet, the ribbon on Today.
+
+---
+
+**LINKEDIN POST**
+This week I deleted a third of my app's onboarding, on purpose.
+
+HabitCents had a careful onboarding: a practice logging screen, a 90-second audit across two steps, a success screen with a primed counter. Each one polished. Each one a parallel copy of an interface the user would never see again.
+
+Watching the flows end to end on the simulator made the cost obvious. Users finished onboarding as experts in screens that had just ceased to exist, and strangers to the app they landed in. Worse, the practice log wrote throwaway data the habit-detection engine could not use.
+
+The replacement principle fits in a sentence: the app is the onboarding. Every path now lands on real components with one line of coaching. The first expense is logged in the real sheet over the real home screen. Naming a habit to break happens in a bottom sheet, and closing it reveals your first daily check-in already waiting. The ceremony screen became one dismissible line.
+
+Four screens deleted, and the tutorial cannot drift out of sync with the product, because the tutorial is the product.
+
+VISUAL NOTE: three-frame strip: door tap, real sheet over home, ribbon on arrival.
+
+---
+
+CASE STUDY MOMENT
+The app-is-the-onboarding rewrite (four screens deleted, flows landing on real components) anchors the onboarding chapter of the portfolio case study.
+
+---
+
+### P2 ITERATION WITH RATIONALE — Shipped faithfully in the morning, redesigned by evening
+
+**TWITTER POST**
+Morning: shipped the exact control from my own mockup. Two outlined stat tiles that switch views. Evening: lived with it on the simulator, realized nothing about it says "tap me," and rebuilt it as the app's existing segmented control grown to scoreboard scale. The mockup was the hypothesis. The built thing was the test.
+
+VISUAL NOTE: before/after of the Today header: v1 ring tiles vs the track-and-thumb scoreboard.
+
+---
+
+**LINKEDIN POST**
+I shipped a control at 10am and replaced it by dinner, and I think that was the fastest correct path.
+
+The morning version was faithful to my annotated mockup: two outlined value tiles for the Today screen, a colored ring marking the active view. Tests green, pixel-accurate to the sketch.
+
+Then I used it. On the simulator, next to real cards, the tiles read as statistics, not as a switcher. The ring was a whisper. And two near-identical green money labels stacked within an inch of each other.
+
+Instead of iterating in code, I built an interactive HTML prototype comparing the shipped version against a refinement that reuses the segmented control my app already teaches on another tab, at larger scale. Same information, borrowed muscle memory. My reviewer approved it from the prototype in minutes, and the swap was one component's internals.
+
+Two lessons I keep relearning. A mockup is a hypothesis; only the built thing running next to real neighbors tells the truth. And when you refine, reach for a pattern the product already owns before inventing a third one.
+
+VISUAL NOTE: the comparison artifact screenshot with both phone frames.
+
+---
+
+### P3 PLATFORM PATTERN — A swipe pager with zero new dependencies
+
+**TWITTER POST**
+RN swipe-between-views without react-native-pager-view or gesture-handler: a horizontal ScrollView with pagingEnabled. Native scrolling, no JS animation drivers, so it cannot reproduce the release-only crash class that burned me twice. One catch nobody mentions: both panes stay mounted, so hide the off-screen one from VoiceOver (accessibilityElementsHidden / importantForAccessibility) or screen-reader users walk into invisible content.
+
+VISUAL NOTE: 3-second screen recording of the swipe with the thumb syncing. NONE if fiddly.
+
+---
+
+**LINKEDIN POST**
+Small React Native pattern that saved me a native dependency and a class of crashes.
+
+I needed swipe-between-views on my app's home screen. The reflex is react-native-pager-view or a gesture-handler setup. But my app has release-build crash scars from mixed animation drivers, and every new native dependency means a fresh native build through the release gate.
+
+The boring answer: a horizontal ScrollView with pagingEnabled. Chip tap calls scrollTo; onMomentumScrollEnd syncs state back after a swipe. Native scrolling physics, zero new dependencies, nothing for the animation system to crash.
+
+The non-obvious part: with both pages permanently mounted, assistive tech can reach the off-screen page. VoiceOver users swipe into content the eye cannot see. The fix is two props per page, toggled by the active view: accessibilityElementsHidden on iOS, importantForAccessibility no-hide-descendants on Android.
+
+Reduced motion: the tap jumps without animating; the user's own swipe is their gesture, so it stays.
+
+VISUAL NOTE: short recording, or NONE.
+
+---
+
+### P4 PRODUCT AND DESIGN JUDGMENT — No invented totals, ever
+
+**TWITTER POST**
+My cofounder-of-one asked the best design question of the week: our welcome screen showed "$149.50 kept" as a sample. In a finance app, whose money is that? New structural rule: the only accumulated total the app ever renders is the user's own. Sample dollars appear only as marked example prices: "for example: one skipped coffee keeps $6.50." A price is arithmetic. Only totals can lie.
+
+VISUAL NOTE: the honest-zero welcome: real $0.00 hero with the rotating example line under it.
+
+---
+
+**LINKEDIN POST**
+The sharpest design review note I got this week was seven words: "isn't showing money that isn't theirs a risk?"
+
+My welcome screen mockup had a lovely animated counter: $149.50 kept, ticking upward. Pure marketing. And in a personal finance app, indistinguishable from a claim. Either the user reads it as typical results, or worse, as THEIR counter, which then "resets" to zero after signup. Both spend trust we have not earned.
+
+The fix was not a disclaimer label. It was a structural rule now written into the design system: the app never renders an invented total. The welcome hero is the user's real counter, showing a real $0.00 with its honest caption: "your first skip starts this counter." The liveliness comes from unit prices cycling beneath it, explicitly marked: "for example: one skipped coffee keeps $6.50."
+
+A price is arithmetic anyone can verify. A total is a history, and fabricated history is exactly what a money app cannot afford.
+
+Bonus property we got free: an existing user who revisits the welcome screen sees their own true total there. The honest version is also the more personal one.
+
+VISUAL NOTE: before/after: fake $149.50 counter vs honest-zero hero.
+
+---
+
+### P5 BUILDING WITH AI HONESTLY — Measure before you polish
+
+**TWITTER POST**
+User feedback said our bank-statement scanner "hardly had any value." Before letting AI agents redesign the results screen, I had one build an eval harness and run my real bank exports through it. Result: 1 row parsed out of 99. The beautiful results UI would have been paint on a broken engine. Fix the column-inference bug first; files now parse 100%. Harness before polish, always.
+
+VISUAL NOTE: the before/after score table from the PR (aggregates only).
+
+---
+
+**TWITTER THREAD**
+Tweet 1: My AI agents were one prompt away from polishing a feature that did not work. A test harness saved us.
+Tweet 2: The plan said: redesign the statement-scan results screen. User feedback said the scan felt worthless. Two explanations: bad presentation, or bad engine. Only one is fixable with UI.
+Tweet 3: So the first agent built an eval harness instead: fixture CSVs plus expected-outcome manifests, scored on parse rate, categorization, and detection recall. Then we fed it my real bank exports (gitignored, never committed).
+Tweet 4: Score: 1 row parsed out of 99. A sparse metadata column was beating the real Amount column in the inference heuristic. Every downstream number was garbage. No results screen could have fixed that.
+Tweet 5: The fix scored evidence properly (pure-numeric share, decimal shape, coverage) and the same files now parse 100%, with cross-account transfers netting correctly.
+Final tweet: Agents will confidently build whatever you ask for. Ask for the measurement first, and make the polish wait for the numbers.
+VISUAL NOTE: tweet 4, the harness score table.
+
+---
+
+**LINKEDIN POST**
+This week an AI agent's most valuable output was a table proving our feature didn't work.
+
+The roadmap said: redesign the bank-statement scan results screen. The user feedback behind it said the scan "hardly had any value." I nearly pointed the build agents straight at the UI.
+
+Instead, the first unit of work was an evaluation harness: fixture bank files with expected-outcome manifests, scoring the pipeline on parse rate, categorization coverage, and habit-detection recall. Then we ran my own real bank exports through it, from a gitignored folder that never touches version control.
+
+The baseline: 1 row parsed out of 99. A sparse metadata column was outscoring the real amount column inside the inference heuristic, and its tiebreak favored the wrong one. Every number downstream of that was noise. The prettiest results screen in the world would have been paint on a broken engine.
+
+With the defect measured, the fix was surgical, and the same files now parse at 100% with cross-account payment transfers netting correctly. The redesigned results screen ships after the engine that feeds it, in that order, enforced by the numbers.
+
+Working with AI agents daily, this is the discipline that matters most: they will build exactly what you ask for, with total confidence, whether or not it should exist yet. Make the measurement the first deliverable.
+
+VISUAL NOTE: the before/after harness table.
+
+---
+
+### P6 WEEKLY SUMMARY — From annotated screenshots to 16 pull requests
+
+**LINKEDIN POST**
+This week on HabitCents, solo with an AI team:
+
+Monday started with annotated screenshots of everything that bothered me about build 6: titles that jumped between tabs, settings hidden on one screen, a home page that buried expense logging, habits invisible on the Money tab.
+
+By Friday: 16 pull requests, each with simulator captures and a test checklist. A shared header. A Profile page. The home screen split into a Spent/Kept scoreboard. An onboarding rewrite that deleted four screens because the app itself is the better tutorial. And a bank-statement scanner that went from parsing 1 row of my real exports to all of them, because we measured before we polished.
+
+The process that made it work: annotate honestly, plan as decision records, build mockup-faithful first, then refine against the running thing on the same day, and let a prototype settle every design argument before code.
+
+Nothing merges until it passes my hands on a real device. That pile is my weekend.
+
+VISUAL NOTE: 2x2 grid: scoreboard, break sheet, honest-zero welcome, harness score table.
+
+---
+
+CASE STUDY MOMENT
+One session turned an annotated design review into a fully-built two-batch redesign with an evidence-gated pipeline fix: the end-to-end story for the "designing with an AI team" case study.

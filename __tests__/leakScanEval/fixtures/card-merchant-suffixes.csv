@@ -1,0 +1,30 @@
+"Custom filters (select dates and amounts), From date=2026-04-01, To date=2026-06-30","","",""
+Date,Description,Type,Amount
+2026-04-01,Netflix.com,Debit,16.99
+04/02/2026,MCDONALDS DRIVE THRU,Debit,8.45
+04/05/2026,Rustic Table Bistro,Debit,34.20
+04/09/2026,MCDONALD'S #2201,Debit,9.10
+04/12/2026,Wireless World Gadgets,Debit,245.00
+04/16/2026,Mcdonalds Store 88,Debit,7.85
+04/17/2026,Wireless World Gadgets Refund,Credit,245.00
+04/20/2026,Green Leaf Kitchen,Debit,19.60
+04/23/2026,MCDONALD'S #2201,Debit,10.20
+04/26/2026,QuickFix Auto Shop,Debit,88.50
+04/30/2026,MCDONALDS DRIVE THRU,Debit,8.90
+2026-05-01,Netflix.com,Debit,16.99
+05/07/2026,Mcdonalds Store 88,Debit,11.15
+05/11/2026,Sunset Grill Patio,Debit,41.75
+05/14/2026,MCDONALD'S #2201,Debit,7.60
+05/18/2026,Northside Cinema,Debit,15.00
+05/21/2026,MCDONALDS DRIVE THRU,Debit,9.75
+05/25/2026,Fresh Mart Deli,Debit,22.35
+05/28/2026,MCDONALD'S #2201,Debit,8.30
+2026-06-01,Netflix.com,Debit,16.99
+06/04/2026,Mcdonalds Store 88,Debit,12.05
+06/08/2026,Annual Fee,Debit,25.00
+06/11/2026,MCDONALDS DRIVE THRU,Debit,8.65
+06/15/2026,Rustic Table Bistro,Debit,29.90
+06/18/2026,MCDONALD'S #2201,Debit,9.95
+06/22/2026,Green Leaf Kitchen,Debit,17.40
+06/25/2026,Mcdonalds Store 88,Debit,7.40
+06/28/2026,MCDONALD'S #2201,Debit,10.60

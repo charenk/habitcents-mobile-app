@@ -4,6 +4,7 @@ import { useLeakScanIntake } from '@/components/leak-scan/useLeakScanIntake';
 import { IntakeScreen } from '@/components/leak-scan/IntakeScreen';
 import { ResultsScreen } from '@/components/leak-scan/ResultsScreen';
 import { GracefulFailure } from '@/components/leak-scan/GracefulFailure';
+import { useCompleteScanOnboarding } from '@/components/leak-scan/useCompleteScanOnboarding';
 
 /**
  * The Leak Scan route (P2-1b, Door 2). Registered at the exact path
@@ -16,12 +17,15 @@ import { GracefulFailure } from '@/components/leak-scan/GracefulFailure';
 export default function LeakScanRoute() {
   const router = useRouter();
   const { state, pickAndScan, answerQuestion, reset } = useLeakScanIntake();
+  const completeScanOnboarding = useCompleteScanOnboarding();
 
   const handleTryDifferentExport = useCallback(() => {
     reset();
   }, [reset]);
 
   const handleStartLeakAudit = useCallback(() => {
+    // The user chose to go back, not into the app, so onboarding stays
+    // incomplete here (contrast handleLogByHand below).
     // Door 1 entry point; the exact Leak Audit step route is a sibling build
     // (P2-1 onboarding two-door fork), not yet registered. Routing to the
     // fork's own entry keeps this a stable anchor regardless of that build's
@@ -29,9 +33,12 @@ export default function LeakScanRoute() {
     router.push('/onboarding/welcome');
   }, [router]);
 
-  const handleLogByHand = useCallback(() => {
+  const handleLogByHand = useCallback(async () => {
+    // Graceful failure's other exit into the app; same relaunch-loop guard as
+    // Results' Bring in 15 days.
+    await completeScanOnboarding();
     router.push('/(tabs)/money');
-  }, [router]);
+  }, [router, completeScanOnboarding]);
 
   if (state.stage === 'done' && state.result) {
     if (state.result.gracefulFailure) {
