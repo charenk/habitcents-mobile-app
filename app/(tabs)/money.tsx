@@ -1,9 +1,9 @@
 /**
  * Money tab (design/redesign-handoff/04-screens.md, "Money" R7/R22).
  *
- * Two views behind one segmented control: what has already been spent, and
- * what is coming. The screen owns the split and the sheets; the two lists are
- * presentational.
+ * Three views behind one segmented control: what has already been spent,
+ * what is coming, and every leak/habit under management. The screen owns the
+ * split and the sheets; the three lists are presentational.
  *
  * The correctness rule this screen exists to enforce: an expense scheduled for
  * next month is NOT money spent. Storage keeps scheduled items as ordinary
@@ -11,28 +11,42 @@
  * on or before the end of today before it groups anything. Without that filter
  * a rent bill authored today for the 1st would appear as a spend the user
  * never made.
+ *
+ * Habits (ADR 0019 DI-8) builds the identical LeakRowData[] Insights builds
+ * for "Your leaks" and wires the identical pick-one sheet + free-tier gate.
+ * The two tabs deliberately show the same rows: Money is where you manage a
+ * leak, Insights is where you notice it.
  */
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { AddUpcomingSheet } from '@/components/money/AddUpcomingSheet';
 import { EditExpenseSheet } from '@/components/money/EditExpenseSheet';
+import { HabitsList } from '@/components/money/HabitsList';
 import { SpentList } from '@/components/money/SpentList';
 import { UpcomingList } from '@/components/money/UpcomingList';
+import { PickOneSheet } from '@/components/habit-logging/PickOneSheet';
+import type { LeakRowData } from '@/components/habit-logging/HabitLeakRow';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
+import { categoryEmoji, categoryIdentityColor } from '@/constants/categoryEmoji';
 import { strings } from '@/constants/strings';
 import type { AppTheme } from '@/constants/theme';
+import { useCategories } from '@/contexts/CategoriesContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
+import { useHabits } from '@/contexts/HabitsContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import type { DetectedHabit } from '@/types/habit';
 import type { Expense } from '@/types/expense';
 import { groupExpensesByDate } from '@/data/expensesMock';
+import { isHabitLimitReached } from '@/utils/habitLogging';
+import { getEntitlement } from '@/utils/purchases';
 import { computeUpcoming } from '@/utils/recurring';
 
 const UPCOMING_WINDOW_DAYS = 60;
 
-type MoneyView = 'spent' | 'upcoming';
+type MoneyView = 'spent' | 'upcoming' | 'habits';
 
 export default function MoneyScreen() {
   const insets = useSafeAreaInsets();
@@ -41,10 +55,18 @@ export default function MoneyScreen() {
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   const { expenses } = useExpenses();
+  const { categories } = useCategories();
+  const {
+    getDiscoveredHabits,
+    getActiveHabits,
+    getHabitById,
+    startBreakingHabit,
+  } = useHabits();
 
   const [view, setView] = useState<MoneyView>('spent');
   const [editing, setEditing] = useState<Expense | null>(null);
   const [addUpcomingVisible, setAddUpcomingVisible] = useState(false);
+  const [pickOneHabitId, setPickOneHabitId] = useState<string | null>(null);
 
   // Spent is history only: everything dated after the end of today belongs to
   // Upcoming, where the projection engine owns it.
@@ -61,11 +83,51 @@ export default function MoneyScreen() {
     [expenses]
   );
 
+  // Habits: every leak worth an action, biggest monthly drain first. Built
+  // identically to Insights' leakRows (app/(tabs)/insights.tsx) so the two
+  // tabs never disagree about what a leak is worth.
+  const habitRows: LeakRowData[] = useMemo(() => {
+    const nameFor = (habit: DetectedHabit): string =>
+      categories.find((c) => c.id === habit.categoryId)?.name ?? habit.categoryId;
+
+    return [...getDiscoveredHabits(), ...getActiveHabits()]
+      .sort((a, b) => b.totalMonthlySpend - a.totalMonthlySpend)
+      .map((habit) => {
+        const categoryName = nameFor(habit);
+        return {
+          habit,
+          emoji: categoryEmoji(categoryName),
+          tint: categoryIdentityColor(categoryName),
+        };
+      });
+  }, [categories, getDiscoveredHabits, getActiveHabits]);
+
+  const managedMonthlyTotal = useMemo(
+    () => getActiveHabits().reduce((sum, habit) => sum + habit.totalMonthlySpend, 0),
+    [getActiveHabits]
+  );
+
+  // Entitlement touchpoint (ADR 0007, BET-004): the pick-one sheet blocks Start
+  // once the active-habit count reaches the entitlement ceiling. Same gate
+  // Insights wires for the identical sheet.
+  const freeTierBlocked = isHabitLimitReached(getActiveHabits().length, getEntitlement());
+  const pickOneHabit = pickOneHabitId ? getHabitById(pickOneHabitId) : null;
+
+  const handleStart = useCallback(
+    async (skipValue: number, valueEdited: boolean) => {
+      if (!pickOneHabitId) return;
+      await startBreakingHabit(pickOneHabitId, skipValue, valueEdited, 'detection');
+      setPickOneHabitId(null);
+    },
+    [pickOneHabitId, startBreakingHabit]
+  );
+
   const segments = useMemo(
     () =>
       [
         { value: 'spent' as const, label: strings.money.segmentSpent },
         { value: 'upcoming' as const, label: strings.money.segmentUpcoming },
+        { value: 'habits' as const, label: strings.money.segmentHabits },
       ] as const,
     []
   );
@@ -92,13 +154,20 @@ export default function MoneyScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {view === 'spent' ? (
-          <SpentList sections={sections} onEditExpense={setEditing} />
-        ) : (
+        {view === 'spent' && <SpentList sections={sections} onEditExpense={setEditing} />}
+        {view === 'upcoming' && (
           <UpcomingList
             items={upcoming}
             windowDays={UPCOMING_WINDOW_DAYS}
             onAdd={() => setAddUpcomingVisible(true)}
+          />
+        )}
+        {view === 'habits' && (
+          <HabitsList
+            rows={habitRows}
+            managedMonthlyTotal={managedMonthlyTotal}
+            onBreak={(habit) => setPickOneHabitId(habit.id)}
+            onOpenHabit={(habitId) => router.push(`/habit/${habitId}`)}
           />
         )}
       </ScrollView>
@@ -111,6 +180,19 @@ export default function MoneyScreen() {
       <AddUpcomingSheet
         visible={addUpcomingVisible}
         onClose={() => setAddUpcomingVisible(false)}
+      />
+      <PickOneSheet
+        visible={!!pickOneHabit}
+        habit={pickOneHabit ?? null}
+        monthTotal={pickOneHabit?.totalMonthlySpend ?? 0}
+        occurrences={pickOneHabit?.occurrencesPerPeriod ?? 0}
+        freeTierBlocked={freeTierBlocked}
+        onCancel={() => setPickOneHabitId(null)}
+        onStart={handleStart}
+        onStartTrial={() => {
+          setPickOneHabitId(null);
+          router.push('/paywall?placement=habit_gate');
+        }}
       />
     </View>
   );
