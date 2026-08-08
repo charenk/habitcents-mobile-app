@@ -360,20 +360,29 @@ export const strings = {
   // and 05-copy.md). Sentence case, no em dashes; every amount below is a
   // display example only, real amounts always render via useCurrency().format.
   onboarding: {
-    // 3.1 Welcome (redesign step 03, screen 1)
+    // 3.1 Welcome (redesign step 03, screen 1; W1/ADR 0020+0022 replaces the
+    // outcome carousel with the honest-zero hero: the real KeptHero at
+    // cents=0 plus two value rows. A finance app never shows an invented
+    // total, so the only accumulated total this screen ever renders is the
+    // user's own ($0.00). valuePropLog is one of the two value-prop rows;
+    // valuePropSee/valuePropBreak were retired with the pre-carousel list.
     brandName: 'HabitCents',
     welcomeHeadline: "Your money has a story. Let's read it.",
-    // The three value props, stated up front rather than teased.
     valuePropLog: 'Log expenses in 10 seconds.',
-    valuePropSee: 'See where your money goes.',
-    valuePropBreak: 'Break the habit that costs you most.',
     welcomeSub: 'Everything stays on your phone. No bank login. No account.',
     getStarted: 'Get started',
-    howItWorks: 'How it works',
-    howItWorksRows: [
-      'Log expenses in 10 seconds.',
-      'We spot the habit that leaks the most.',
-      'Every time you skip it, we count the money you kept.',
+    // Rescued from the retired How-it-works sheet's third row; now the
+    // second honest-zero value row under the hero.
+    outcomeKeptCounts: 'Every time you skip it, we count the money you kept.',
+    // Example fragments under the hero (W1): per-skip example prices only,
+    // explicitly marked "for example", never an accumulated total. Rotates
+    // decoratively; never routed through useCurrency().format, these are
+    // fixed mockup content, same as a static design comp.
+    exampleSkipPrefix: 'for example:',
+    exampleSkips: [
+      'one skipped coffee keeps $6.50',
+      'one skipped delivery keeps $18.00',
+      'one skipped impulse buy keeps $12.50',
     ],
     // 3.2 Intent picker (redesign step 03, screen 2; replaces the two-door fork)
     intentTitle: 'What brings you here?',
@@ -389,7 +398,8 @@ export const strings = {
     intentBreakEyebrow: 'About a minute',
     intentBreakTitle: 'Break an expensive habit',
     intentBreakDescription: 'A 90-second audit finds the leak quietly costing you the most.',
-    skipForNow: 'Skip for now',
+    // Ratified inviting phrasing (Charen, 2026-08-04); replaces 'Skip for now'.
+    skipForNow: "I'll explore on my own",
     // "Something else" is shared: the intent picker's audit chips used to own
     // it, and the Door 3 break sheet (below) reuses it rather than duplicating.
     somethingElse: 'Something else',
@@ -469,6 +479,11 @@ export const strings = {
     pulseLegendZero: 'no spend',
     pulseLegendOutOfCoverage: 'outside your files',
     pulseCaption: (n: number, covered: number) => `You transacted on ${n} of ${covered} days.`,
+    // Finding-first ladder (ADR 0020, W4 redesign step, Charen 2026-08-04):
+    // results lead with one BiggestLeakCard before the dashboard, which stays
+    // collapsed behind this dashed expander until tapped.
+    biggestLeakEyebrow: 'Your biggest leak',
+    seeFullPicture: "See the full picture: categories, pulse, next month's projection",
     // Habit cards (spec 5.4, visual spec 6)
     classGovern: 'Govern',
     classInfluence: 'Influence',
@@ -498,11 +513,13 @@ export const strings = {
     undoConfirmTitle: 'Undo this import?',
     undoConfirmMessage: 'This removes everything this import added.',
     // Post-scan handoff (spec 5 post-scan, visual spec 12).
-    // Spec 05 proposed "Continue to the app" here. Kept as-is deliberately
-    // (Charen, 2026-07-31): this button writes about 15 expenses before it
+    // Spec 05 proposed "Continue to the app" here. Kept as a write-labeled verb
+    // deliberately (Charen, 2026-07-31): this button writes expenses before it
     // navigates, and a navigation verb would hide a data write. The spec's
-    // confirmation toast still applies and fires on success.
-    bringIn15Days: 'Bring in your last 15 days',
+    // confirmation toast still applies and fires on success. Window widened
+    // 15 -> 30 days and promoted to the primary CTA (ADR 0020, W4 finding-first
+    // ladder, Charen 2026-08-04); this closes the leak-scan CTA punch-list item.
+    bringInLastDays: (days: number) => `Bring in your last ${days} days`,
     savedToHabitCents: 'Saved to HabitCents.',
     // Merchant review queue (spec 6/7, visual spec 10)
     reviewQueueTitle: (n: number) => `Quick check: ${n} merchant${n === 1 ? '' : 's'} we weren't sure about`,
@@ -667,7 +684,17 @@ export const strings = {
   money: {
     segmentSpent: 'Spent',
     segmentUpcoming: 'Upcoming',
+    segmentHabits: 'Habits',
     segmentLabel: 'Money view',
+    // Habits (management surface for every leak and habit, ADR 0019 DI-8).
+    // count is ACTIVE habits (status tracking or changing) only, so the total
+    // is never claimed for a leak nobody has started breaking yet.
+    habitsManagedSummary: (count: number, formattedTotal: string) =>
+      `${count} habit${count === 1 ? '' : 's'} managed · about ${formattedTotal} a month`,
+    // Shown instead when every row is still a discovered-not-started leak, so
+    // the line never reads "0 habits managed" over a real dollar figure.
+    habitsDiscoveredSummary: (count: number) =>
+      `${count} leak${count === 1 ? '' : 's'} found, none managed yet`,
     // Spent
     spentGroupHeader: (dayLabel: string, total: string) => `${dayLabel} · ${total}`,
     spentToday: 'Today',
@@ -764,6 +791,24 @@ export const strings = {
       `${spent} spent · ${difference} over ${monthLabel}`,
     paceSpentOnly: (spent: string) => `${spent} spent`,
     pacePlaceholder: 'One full month of data unlocks your pace.',
+
+    // First scan segment (W5, OB-6 Insights half, ADR 0020: summary shown
+    // until replaced, no expiry). Conditional on a persisted ScanSummary.
+    monthSegment: 'This month',
+    scanSegment: 'First scan',
+    scanSegmentControlLabel: 'Insights view',
+    scanSnapshotEyebrow: (date: string) => `First scan · ${date}`,
+    // Evidence line under the eyebrow: what this snapshot covers, honestly.
+    // windowLabel is omitted when the scan carried no coverage window.
+    scanEvidenceLine: (fileCount: number, rowCount: number, windowLabel?: string | null) =>
+      windowLabel
+        ? `${fileCount} file${fileCount === 1 ? '' : 's'} · ${windowLabel} · ${rowCount} row${rowCount === 1 ? '' : 's'}`
+        : `${fileCount} file${fileCount === 1 ? '' : 's'} · ${rowCount} row${rowCount === 1 ? '' : 's'}`,
+    // Leak rows here are display-only; the app has no dedicated habit-
+    // management surface other than the leaks card in This month, above.
+    scanLeaksCaption: 'Manage leaks from This month, above.',
+    scanProjectionLockedInCaption: (amount: string) => `${amount} locked in from recurring`,
+    scanUpdatedCaption: 'Updated when you run a new scan.',
   },
 
   // Habit detail redesign (spec 04 "Habit detail"). The arc, chapter and

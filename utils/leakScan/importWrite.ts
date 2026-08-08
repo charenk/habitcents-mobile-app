@@ -52,15 +52,29 @@ export function rowToExpense(row: ScanRow, importId: string): Expense {
 }
 
 /**
- * The 15-day seed (post-scan handoff): the most recent 15 days of categorized SPEND
- * rows become expense-log entries. Detection/projection keep full-history basis
- * elsewhere; this only limits what lands in the Reporting-scale log.
+ * The last-N-days seed (post-scan handoff): the most recent `days` days of
+ * categorized SPEND rows become expense-log entries. Detection/projection keep
+ * full-history basis elsewhere; this only limits what lands in the
+ * Reporting-scale log. The results screen CTA calls this with 30 (ADR 0020,
+ * W4 finding-first ladder); `days` stays a parameter rather than a hardcoded
+ * window so a future change to the CTA's window doesn't need a second copy of
+ * this function.
  */
-export function seedLast15Days(result: ScanResult, now: Date = new Date()): Expense[] {
-  const cutoff = now.getTime() - 15 * DAY;
+export function seedLastDays(result: ScanResult, days: number, now: Date = new Date()): Expense[] {
+  const cutoff = now.getTime() - days * DAY;
   return spendableRows(result.rows)
     .filter((r) => r.date.getTime() >= cutoff)
     .map((r) => rowToExpense(r, result.importId));
+}
+
+/**
+ * Back-compat wrapper for the pre-ADR-0020 15-day window. The results screen
+ * itself now calls seedLastDays(result, 30) directly; this wrapper exists only
+ * because __tests__/leakScan/acceptance.test.ts's undo test (acceptance 14)
+ * still exercises the 15-day shape.
+ */
+export function seedLast15Days(result: ScanResult, now: Date = new Date()): Expense[] {
+  return seedLastDays(result, 15, now);
 }
 
 /**

@@ -9,7 +9,7 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useReports } from '@/contexts/ReportsContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
@@ -18,16 +18,22 @@ import { useHabits } from '@/contexts/HabitsContext';
 import { LeaksCard, type LeakRowData } from '@/components/insights/LeaksCard';
 import { WhereItWentCard } from '@/components/insights/WhereItWentCard';
 import { PaceCard, type PaceComparison } from '@/components/insights/PaceCard';
+import { ScanSnapshotCard } from '@/components/insights/ScanSnapshotCard';
 import { PickOneSheet } from '@/components/habit-logging/PickOneSheet';
+import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { categoryEmoji, categoryIdentityColor } from '@/constants/categoryEmoji';
 import { hasFullMonthOfData } from '@/utils/recurring';
 import { isHabitLimitReached } from '@/utils/habitLogging';
 import { getEntitlement } from '@/utils/purchases';
 import { formatDate } from '@/utils/dates';
+import { getScanSummary } from '@/utils/storage';
 import { typeScale, type AppTheme } from '@/constants/theme';
 import type { DetectedHabit } from '@/types/habit';
+import type { ScanSummary } from '@/types/scanSummary';
 import { strings } from '@/constants/strings';
+
+type InsightsView = 'month' | 'scan';
 
 /**
  * The "where it went" window. 'week' is the only TimeRange whose day count is
@@ -53,6 +59,33 @@ export default function InsightsScreen() {
   } = useHabits();
 
   const [pickOneHabitId, setPickOneHabitId] = useState<string | null>(null);
+
+  // First scan segment (W5, OB-6 Insights half, ADR 0020: kept until
+  // replaced, no expiry). Re-read on every focus, not just mount, so a scan
+  // run elsewhere and then returned to shows up here without a reload.
+  const [scanSummary, setScanSummary] = useState<ScanSummary | null>(null);
+  const [view, setView] = useState<InsightsView>('month');
+
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
+      getScanSummary().then((summary) => {
+        if (!cancelled) setScanSummary(summary);
+      });
+      return () => {
+        cancelled = true;
+      };
+    }, [])
+  );
+
+  const segments = useMemo(
+    () =>
+      [
+        { value: 'month' as const, label: strings.insights.monthSegment },
+        { value: 'scan' as const, label: strings.insights.scanSegment },
+      ] as const,
+    []
+  );
 
   // 1. Your leaks: everything worth an action, biggest monthly drain first.
   // Discovered-not-dismissed leaks come from getDiscoveredHabits; habits
@@ -142,24 +175,43 @@ export default function InsightsScreen() {
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <ScreenHeader title={strings.screenTitles.insights} actions={profileAction} />
+      {/* Same composition the Today tab uses: ScreenHeader owns the chrome,
+          the switcher sits below it as its own row (merge of first-scan onto
+          the DI stack, resolution per the independents review). */}
+      {scanSummary ? (
+        <View style={styles.segments}>
+          <SegmentedControl<InsightsView>
+            options={segments}
+            value={view}
+            onChange={setView}
+            accessibilityLabel={strings.insights.scanSegmentControlLabel}
+          />
+        </View>
+      ) : null}
 
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <LeaksCard
-          rows={leakRows}
-          onBreak={(habit) => setPickOneHabitId(habit.id)}
-          onOpenHabit={(habitId) => router.push(`/habit/${habitId}`)}
-        />
+        {scanSummary && view === 'scan' ? (
+          <ScanSnapshotCard summary={scanSummary} />
+        ) : (
+          <>
+            <LeaksCard
+              rows={leakRows}
+              onBreak={(habit) => setPickOneHabitId(habit.id)}
+              onOpenHabit={(habitId) => router.push(`/habit/${habitId}`)}
+            />
 
-        <WhereItWentCard
-          rows={spendingByCategory}
-          rangeLabel={strings.insights.whereItWentRange(WHERE_IT_WENT_DAYS)}
-        />
+            <WhereItWentCard
+              rows={spendingByCategory}
+              rangeLabel={strings.insights.whereItWentRange(WHERE_IT_WENT_DAYS)}
+            />
 
-        <PaceCard monthLabel={monthLabel} projection={projection} comparison={comparison} />
+            <PaceCard monthLabel={monthLabel} projection={projection} comparison={comparison} />
+          </>
+        )}
       </ScrollView>
 
       <PickOneSheet
@@ -184,6 +236,9 @@ function createStyles(theme: AppTheme) {
     container: {
       flex: 1,
       backgroundColor: theme.background,
+    },
+    segments: {
+      marginTop: 12,
     },
     scrollView: {
       flex: 1,
