@@ -41,3 +41,13 @@ npx eas-cli build:list --platform ios --limit 1 --non-interactive   # check late
 # --- Every build after the first: one command (build number auto-increments) ---
 # npx eas-cli build -p ios --profile production --auto-submit
 # EAS_BUILD_NO_EXPO_GO_WARNING=true            # silence the benign "Expo Go not recommended for production" warning
+
+# --- Added 2026-08-07 (phase DI: multi-branch simulator verification + scan eval) ---
+# Per-branch simulator check without rebuilding (JS-only branches; one debug build serves all):
+# git checkout --detach origin/<branch>            # in the REAL checkout (Metro cannot follow worktree symlinks)
+# lsof -ti :8081 | xargs kill                      # free the Metro port first
+# nohup npx expo start --port 8081 &               # Metro from the real checkout
+# xcrun simctl terminate booted com.habitcents.app; xcrun simctl launch booted com.habitcents.app
+xcrun simctl io booted screenshot out.png          # capture for PR what-to-test comments
+npm test -- leakScanEval                           # scan pipeline eval harness (fixtures + scores)
+# Real bank exports go ONLY in __tests__/leakScanEval/private/ (gitignored; verify with git check-ignore)
