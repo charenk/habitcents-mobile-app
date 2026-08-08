@@ -11,6 +11,7 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 import {
   runScan,
   seedLast15Days,
+  seedLastDays,
   recurringToExpenses,
   undoImport,
   headerFingerprint,
@@ -231,9 +232,44 @@ describe('Leak Scan acceptance tests (spec section 9)', () => {
     // No imported rows survive undo.
     expect(afterUndo.some((e) => e.importId === result.importId)).toBe(false);
   });
+
+  // 15. seedLastDays generalization (ADR 0020, W4 finding-first ladder): the
+  // results screen CTA now imports a 30-day window instead of 15. seedLast15Days
+  // above stays a thin wrapper (`seedLastDays(result, 15, now)`) for any other
+  // 15-day call site; this pins the generalized function's own window math.
+  it('15. seedLastDays(result, 30) brings in rows a 15-day window would miss', () => {
+    const result = runScan([windowFileForSeedDays()]);
+    const now = new Date('2026-03-10');
+
+    const seeded15 = seedLastDays(result, 15, now);
+    const seeded30 = seedLastDays(result, 30, now);
+
+    // Feb 15 sits 23 days before "now": outside a 15-day window, inside 30.
+    const feb15In15 = seeded15.some((e) => e.date.toISOString().startsWith('2026-02-15'));
+    const feb15In30 = seeded30.some((e) => e.date.toISOString().startsWith('2026-02-15'));
+    expect(feb15In15).toBe(false);
+    expect(feb15In30).toBe(true);
+    expect(seeded30.length).toBeGreaterThan(seeded15.length);
+
+    // seedLast15Days is exactly seedLastDays(result, 15, now): the wrapper's
+    // output does not drift from the generalized function's own 15-day case.
+    expect(seedLast15Days(result, now)).toEqual(seeded15);
+  });
 });
 
-// --- Local helpers for test 14 (kept out of the shared fixtures file). ---
+// --- Local helpers for tests 14-15 (kept out of the shared fixtures file). ---
+
+/** Rows straddling the 15-day/30-day seed boundary relative to now = 2026-03-10:
+ *  Feb 15 sits 23 days back (inside 30, outside 15), Mar 5 sits inside both. */
+function windowFileForSeedDays() {
+  return {
+    fileName: 'chequing-window.csv',
+    text:
+      'Date,Description,Amount,Balance\n' +
+      '2026-02-15,Hardware Store,-30.00,970.00\n' +
+      '2026-03-05,Grocery Market,-40.00,930.00\n',
+  };
+}
 
 function subscriptionFileForUndo() {
   return {

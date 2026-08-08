@@ -29,7 +29,7 @@ export {
   looksLikeAmount,
   looksLikeDate,
 } from './parsers';
-export { rowToExpense, seedLast15Days, recurringToExpenses, undoImport } from './importWrite';
+export { rowToExpense, seedLastDays, seedLast15Days, recurringToExpenses, undoImport } from './importWrite';
 export * as scanAnalytics from './analytics';
 
 // Results-screen support (build item 3): pure SpendPulse cell derivation

@@ -479,6 +479,11 @@ export const strings = {
     pulseLegendZero: 'no spend',
     pulseLegendOutOfCoverage: 'outside your files',
     pulseCaption: (n: number, covered: number) => `You transacted on ${n} of ${covered} days.`,
+    // Finding-first ladder (ADR 0020, W4 redesign step, Charen 2026-08-04):
+    // results lead with one BiggestLeakCard before the dashboard, which stays
+    // collapsed behind this dashed expander until tapped.
+    biggestLeakEyebrow: 'Your biggest leak',
+    seeFullPicture: "See the full picture: categories, pulse, next month's projection",
     // Habit cards (spec 5.4, visual spec 6)
     classGovern: 'Govern',
     classInfluence: 'Influence',
@@ -508,11 +513,13 @@ export const strings = {
     undoConfirmTitle: 'Undo this import?',
     undoConfirmMessage: 'This removes everything this import added.',
     // Post-scan handoff (spec 5 post-scan, visual spec 12).
-    // Spec 05 proposed "Continue to the app" here. Kept as-is deliberately
-    // (Charen, 2026-07-31): this button writes about 15 expenses before it
+    // Spec 05 proposed "Continue to the app" here. Kept as a write-labeled verb
+    // deliberately (Charen, 2026-07-31): this button writes expenses before it
     // navigates, and a navigation verb would hide a data write. The spec's
-    // confirmation toast still applies and fires on success.
-    bringIn15Days: 'Bring in your last 15 days',
+    // confirmation toast still applies and fires on success. Window widened
+    // 15 -> 30 days and promoted to the primary CTA (ADR 0020, W4 finding-first
+    // ladder, Charen 2026-08-04); this closes the leak-scan CTA punch-list item.
+    bringInLastDays: (days: number) => `Bring in your last ${days} days`,
     savedToHabitCents: 'Saved to HabitCents.',
     // Merchant review queue (spec 6/7, visual spec 10)
     reviewQueueTitle: (n: number) => `Quick check: ${n} merchant${n === 1 ? '' : 's'} we weren't sure about`,

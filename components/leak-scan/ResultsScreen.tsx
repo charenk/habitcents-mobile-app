@@ -13,6 +13,7 @@ import { KpiRow } from './KpiRow';
 import { CategoryList } from './CategoryList';
 import { SpendPulse } from './SpendPulse';
 import { HabitCard } from './HabitCard';
+import { BiggestLeakCard } from './BiggestLeakCard';
 import { ProjectionSection } from './ProjectionSection';
 import { ResultsFooter } from './ResultsFooter';
 import { useCompleteScanOnboarding } from './useCompleteScanOnboarding';
@@ -28,7 +29,7 @@ import {
   runScan,
 } from '@/utils/leakScan';
 import { spendableRows } from '@/utils/leakScan/netting';
-import { seedLast15Days, recurringToExpenses } from '@/utils/leakScan/importWrite';
+import { seedLastDays, recurringToExpenses } from '@/utils/leakScan/importWrite';
 import { scanResultToSummary } from '@/utils/leakScan/summarize';
 import type { ScanFileInput } from '@/utils/leakScan';
 import type { PulseCell } from '@/utils/leakScan/spendPulse';
@@ -52,6 +53,12 @@ type ResultsScreenProps = {
   files: ScanFileInput[];
 };
 
+/** ADR 0020: the ranked-leaks list below the biggest-leak card caps at 5. */
+const RANKED_LEAKS_CAP = 5;
+/** ADR 0020: the post-scan handoff CTA's import window, widened from 15 to 30
+ *  days and promoted to the primary CTA. */
+const BRING_IN_DAYS = 30;
+
 function evidenceWindowLabel(result: ScanResult, nAccounts: number): string {
   if (!result.coverage) return '';
   const start = formatDate(new Date(result.coverage.startISO), { month: 'short', day: 'numeric' });
@@ -61,6 +68,14 @@ function evidenceWindowLabel(result: ScanResult, nAccounts: number): string {
 
 function monthLabel(dateISO: string): string {
   return formatDate(new Date(dateISO), { month: 'long' });
+}
+
+/** Monthly-equivalent cost used to rank the leaks list below the biggest-leak
+ *  card (ADR 0020: "ranked by monthly cost with frequency tiebreak"), a
+ *  different ordering than the pipeline's own governability-weighted
+ *  rankScore that picks the biggest-leak card itself. */
+function monthlyCostCents(candidate: HabitCandidate, windowDays: number): number {
+  return Math.round((candidate.totalCents / windowDays) * 30);
 }
 
 /**
@@ -88,6 +103,9 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
   const [openCategory, setOpenCategory] = useState<ExpenseCategory | null>(null);
   const [openPulseCell, setOpenPulseCell] = useState<PulseCell | null>(null);
   const [undone, setUndone] = useState(false);
+  // Finding-first ladder (ADR 0020): collapsed on first render, local state so
+  // a re-visit within this session (i.e. this mount) keeps it expanded.
+  const [ladderExpanded, setLadderExpanded] = useState(false);
 
   React.useEffect(() => {
     getScanRules().then(setRulesState);
@@ -112,6 +130,37 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
   const categories = useMemo(() => buildCategorySummary(result), [result]);
   const reviewQueue = useMemo(() => buildReviewQueue(result.rows), [result]);
   const evidenceWindow = useMemo(() => evidenceWindowLabel(result, kpi.nAccounts), [result, kpi]);
+
+  // Finding-first ladder (ADR 0020): ONE ranking governs the whole ladder,
+  // monthly cost with frequency tiebreak. The card takes its head, the list
+  // takes the rest, so "Your biggest leak" is literally true against
+  // everything shown below it. (The pipeline's governability-weighted order
+  // is deliberately not used here; a card claiming "biggest" must never sit
+  // above a pricier leak.) Zero candidates means there is no finding to lead
+  // with, so the screen falls back to the pre-W4 order in full below.
+  const rankedLeaksWindowDays = Math.max(result.coverage?.coveredDays ?? 0, 1);
+  const rankedByMonthlyCost = useMemo(
+    () =>
+      result.habits
+        .slice()
+        .sort((a, b) => {
+          const byMonthlyCost =
+            monthlyCostCents(b, rankedLeaksWindowDays) - monthlyCostCents(a, rankedLeaksWindowDays);
+          if (byMonthlyCost !== 0) return byMonthlyCost;
+          return b.occurrences - a.occurrences; // frequency tiebreak
+        }),
+    [result.habits, rankedLeaksWindowDays]
+  );
+  const topCandidate = rankedByMonthlyCost[0] ?? null;
+  const hasFinding = !!topCandidate;
+  const rankedLeaksBelow = useMemo(
+    () => (topCandidate ? rankedByMonthlyCost.slice(1, 1 + RANKED_LEAKS_CAP) : result.habits),
+    [rankedByMonthlyCost, topCandidate, result.habits]
+  );
+  // Zero-candidate fallback (existing dashboard order, spec: "skip the card
+  // entirely"): the ranked-leaks section then shows the full unfiltered list,
+  // same as before W4.
+  const leaksToShow = hasFinding ? rankedLeaksBelow : result.habits;
   const openCategoryRows = useMemo(
     () => (openCategory ? spendableRows(result.rows).filter((r) => r.category === openCategory) : []),
     [openCategory, result.rows]
@@ -251,8 +300,8 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
     setUndone(true);
   }, [expenses, result.importId, deleteExpense]);
 
-  const handleBringIn15Days = useCallback(async () => {
-    const seeded = seedLast15Days(result);
+  const handleBringInDays = useCallback(async () => {
+    const seeded = seedLastDays(result, BRING_IN_DAYS);
     for (const exp of seeded) {
       await addExpense({
         title: exp.title,
@@ -264,16 +313,26 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
         reminderEnabled: false,
       });
     }
-    track('scan_seed15_applied', { rows: seeded.length });
+    track('scan_seed_applied', { rows: seeded.length, days: BRING_IN_DAYS });
     // This is the scan door's only exit into the app; it must complete
     // onboarding here or the user loops back into an empty scan on relaunch.
     await completeScanOnboarding();
     router.push('/(tabs)');
     // Every mutating action confirms itself (spec 01 section 5). This one
-    // writes about 15 expenses, so landing on Today in silence left the user
+    // writes about 30 expenses, so landing on Today in silence left the user
     // with no evidence the import happened.
     toast.show(strings.leakScan.savedToHabitCents);
   }, [result, addExpense, router, toast, completeScanOnboarding]);
+
+  // Dashed expander (ADR 0020): mirrors CategoryList's "View more" analytics
+  // pattern, fired once per expand.
+  const handleToggleLadder = useCallback(() => {
+    setLadderExpanded((prev) => {
+      const next = !prev;
+      if (next) track('scan_leak_ladder_expanded', {});
+      return next;
+    });
+  }, []);
 
   if (undone) {
     return (
@@ -291,49 +350,81 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
           <Text style={styles.screenTitle}>{strings.leakScan.resultsTitle}</Text>
         </View>
 
-        <KpiRow kpi={kpi} />
-
-        <View style={styles.spacer} />
-        <CategoryList categories={categories} onCategoryPress={(c) => setOpenCategory(c.category)} />
-
-        <View style={styles.spacer} />
-        <SpendPulse result={result} onCellPress={setOpenPulseCell} />
-
-        <View style={styles.spacer} />
-        {result.habits.length > 0 && (
-          <View>
-            <Text style={styles.sectionTitle}>{strings.leakScan.leaksRankedTitle}</Text>
-            {result.habits.map((candidate, i) => {
-              const windowDays = Math.max(result.coverage?.coveredDays ?? 0, 1);
-              const monthTotalCents = Math.round((candidate.totalCents / windowDays) * 30);
-              const recurringMatch = recurringByStem.get(candidate.merchantStem);
-              // Extra-payment amount for a biweekly 3-payment month is the
-              // third occurrence's amount, i.e. the item's own per-payment
-              // amount (nextMonthHits already reflects the 3-hit month).
-              const tipAmountCents = recurringMatch ? recurringMatch.amountCents : undefined;
-              return (
-                <HabitCard
-                  key={candidate.merchantStem}
-                  rank={i + 1}
-                  candidate={candidate}
-                  month={evidenceMonthLabel}
-                  monthTotalCents={monthTotalCents}
-                  coveredDays={result.coverage?.coveredDays ?? 0}
-                  tipMonth={upcomingMonthLabel}
-                  tipAmountCents={tipAmountCents}
-                  onTrack={() => handleTrackLeak(candidate)}
-                  onMonitor={() => handleMonitor(candidate)}
-                  onNotAHabit={() => handleNotAHabit(candidate)}
-                  onWrongDetails={() => setOpenCategory(candidate.category)}
-                />
-              );
-            })}
-          </View>
+        {hasFinding && topCandidate && (
+          <>
+            <BiggestLeakCard
+              candidate={topCandidate}
+              coveredDays={result.coverage?.coveredDays ?? 0}
+              onBreak={() => handleTrackLeak(topCandidate)}
+              onDismiss={() => handleNotAHabit(topCandidate)}
+            />
+            <View style={styles.spacer} />
+            <TouchableOpacity
+              style={styles.ladderExpander}
+              onPress={handleToggleLadder}
+              accessibilityRole="button"
+              accessibilityState={{ expanded: ladderExpanded }}
+            >
+              <Text style={styles.ladderExpanderText}>{strings.leakScan.seeFullPicture}</Text>
+            </TouchableOpacity>
+          </>
         )}
 
-        <View style={styles.spacer} />
-        <ProjectionSection summary={projection} onSave={handleSaveProjection} />
+        {(!hasFinding || ladderExpanded) && (
+          <>
+            {/* Zero-candidate fallback renders the pre-W4 order exactly (header
+                directly into KpiRow, no extra gap); the expanded ladder adds
+                the gap after the dashed expander above. */}
+            {hasFinding && <View style={styles.spacer} />}
+            <KpiRow kpi={kpi} />
 
+            <View style={styles.spacer} />
+            <CategoryList categories={categories} onCategoryPress={(c) => setOpenCategory(c.category)} />
+
+            <View style={styles.spacer} />
+            <SpendPulse result={result} onCellPress={setOpenPulseCell} />
+
+            <View style={styles.spacer} />
+            {leaksToShow.length > 0 && (
+              <View>
+                <Text style={styles.sectionTitle}>{strings.leakScan.leaksRankedTitle}</Text>
+                {leaksToShow.map((candidate, i) => {
+                  const windowDays = Math.max(result.coverage?.coveredDays ?? 0, 1);
+                  const monthTotalCents = Math.round((candidate.totalCents / windowDays) * 30);
+                  const recurringMatch = recurringByStem.get(candidate.merchantStem);
+                  // Extra-payment amount for a biweekly 3-payment month is the
+                  // third occurrence's amount, i.e. the item's own per-payment
+                  // amount (nextMonthHits already reflects the 3-hit month).
+                  const tipAmountCents = recurringMatch ? recurringMatch.amountCents : undefined;
+                  return (
+                    <HabitCard
+                      key={candidate.merchantStem}
+                      rank={i + 1}
+                      candidate={candidate}
+                      month={evidenceMonthLabel}
+                      monthTotalCents={monthTotalCents}
+                      coveredDays={result.coverage?.coveredDays ?? 0}
+                      tipMonth={upcomingMonthLabel}
+                      tipAmountCents={tipAmountCents}
+                      onTrack={() => handleTrackLeak(candidate)}
+                      onMonitor={() => handleMonitor(candidate)}
+                      onNotAHabit={() => handleNotAHabit(candidate)}
+                      onWrongDetails={() => setOpenCategory(candidate.category)}
+                    />
+                  );
+                })}
+              </View>
+            )}
+
+            <View style={styles.spacer} />
+            <ProjectionSection summary={projection} onSave={handleSaveProjection} />
+          </>
+        )}
+
+        {/* The review-queue banner qualifies every number above it, including
+            the biggest-leak card's evidence, so it renders above the fold
+            regardless of the ladder state (independents review finding;
+            honesty surfaces never sit behind an expander). */}
         {reviewQueue.length > 0 && (
           <>
             <View style={styles.spacer} />
@@ -350,8 +441,8 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
         )}
 
         <Button
-          label={strings.leakScan.bringIn15Days}
-          onPress={handleBringIn15Days}
+          label={strings.leakScan.bringInLastDays(BRING_IN_DAYS)}
+          onPress={handleBringInDays}
           style={styles.handoffButton}
         />
 
@@ -442,6 +533,26 @@ function createStyles(theme: AppTheme) {
     },
     spacer: {
       height: 14,
+    },
+    // Dashed expander (ADR 0020, "app's dashed grammar"): matches
+    // components/money/UpcomingList.tsx's dashed add affordance.
+    ladderExpander: {
+      minHeight: 52,
+      borderRadius: radii.card,
+      borderWidth: 1.5,
+      borderStyle: 'dashed',
+      borderColor: theme.cloudDashed,
+      backgroundColor: theme.white,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+    },
+    ladderExpanderText: {
+      fontFamily: theme.fonts.uiSemibold,
+      fontSize: 14,
+      color: theme.primaryDark,
+      textAlign: 'center',
     },
     reviewQueueBanner: {
       backgroundColor: theme.white,
