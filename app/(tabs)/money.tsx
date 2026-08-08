@@ -13,15 +13,15 @@
  * never made.
  */
 import { useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AddUpcomingSheet } from '@/components/money/AddUpcomingSheet';
 import { EditExpenseSheet } from '@/components/money/EditExpenseSheet';
 import { SpentList } from '@/components/money/SpentList';
 import { UpcomingList } from '@/components/money/UpcomingList';
+import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { strings } from '@/constants/strings';
-import { typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
 import { useExpenses } from '@/contexts/ExpensesContext';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -70,18 +70,14 @@ export default function MoneyScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <View style={styles.header}>
-        <Text style={styles.screenTitle} accessibilityRole="header">
-          {strings.screenTitles.money}
-        </Text>
-        <View style={styles.segments}>
-          <SegmentedControl<MoneyView>
-            options={segments}
-            value={view}
-            onChange={setView}
-            accessibilityLabel={strings.money.segmentLabel}
-          />
-        </View>
+      <ScreenHeader title={strings.screenTitles.money} />
+      <View style={styles.segments}>
+        <SegmentedControl<MoneyView>
+          options={segments}
+          value={view}
+          onChange={setView}
+          accessibilityLabel={strings.money.segmentLabel}
+        />
       </View>
 
       <ScrollView
@@ -119,20 +115,12 @@ function createStyles(theme: AppTheme) {
       flex: 1,
       backgroundColor: theme.background,
     },
-    header: {
-      paddingHorizontal: 20,
-      paddingTop: 8,
-      paddingBottom: 4,
-    },
-    screenTitle: {
-      fontFamily: theme.fonts.display,
-      fontSize: typeScale.screenTitle,
-      lineHeight: 40,
-      color: theme.ink,
-      includeFontPadding: false,
-    },
+    // ScreenHeader already ends in a 4pt paddingBottom, so an 8pt top margin
+    // here reproduces the 12pt gap the old single header block had between
+    // the title and the segmented control.
     segments: {
-      marginTop: 12,
+      paddingHorizontal: 20,
+      marginTop: 8,
     },
     scroll: {
       flex: 1,
