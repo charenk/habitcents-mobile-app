@@ -397,7 +397,7 @@ export const strings = {
     intentScanDescription: 'Scan a bank statement on your phone. Nothing uploads, ever.',
     intentBreakEyebrow: 'About a minute',
     intentBreakTitle: 'Break an expensive habit',
-    intentBreakDescription: 'A 90-second audit finds the leak quietly costing you the most.',
+    intentBreakDescription: 'Name it, price it, start today.',
     // Ratified inviting phrasing (Charen, 2026-08-04); replaces 'Skip for now'.
     skipForNow: "I'll explore on my own",
     // "Something else" is shared: the intent picker's audit chips used to own
