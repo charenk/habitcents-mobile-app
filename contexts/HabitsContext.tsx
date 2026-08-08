@@ -159,6 +159,17 @@ function generateId(prefix: string): string {
 
 export function HabitsProvider({ children }: { children: React.ReactNode }) {
   const [habits, setHabits] = useState<DetectedHabit[]>([]);
+  // Mirror of `habits` for same-tick read-after-write: the Door 3 break sheet
+  // seeds a habit and starts breaking it in ONE handler, so the start call
+  // cannot wait for the state commit (release smoke caught "Habit not found"
+  // there; same reasoning as the coach-moment ref below and the
+  // ExpensesContext commit pattern). Mutators that must be readable in the
+  // same tick update the ref synchronously; the effect keeps it fresh for
+  // every other path.
+  const habitsRef = useRef<DetectedHabit[]>([]);
+  useEffect(() => {
+    habitsRef.current = habits;
+  }, [habits]);
   const [goals, setGoals] = useState<HabitChangeGoal[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [lastMilestone, setLastMilestone] = useState<HabitsContextValue['lastMilestone']>(null);
@@ -312,7 +323,9 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
     valueEdited: boolean,
     source: 'detection' | 'scan' | 'onboarding' = 'detection'
   ): Promise<HabitChangeGoal> => {
-    const habit = habits.find(h => h.id === habitId);
+    // Read through the ref: the break sheet seeds and starts in one
+    // handler tick, before the seeded habit reaches the `habits` render state.
+    const habit = habitsRef.current.find(h => h.id === habitId);
     if (!habit) {
       throw new Error('Habit not found');
     }
@@ -394,6 +407,7 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
         totalMonthlySpend: input.totalMonthlySpend,
       };
       const updatedHabits = habits.map(h => (h.id === existing.id ? refreshed : h));
+      habitsRef.current = updatedHabits;
       setHabits(updatedHabits);
       await saveHabits(updatedHabits);
       return refreshed;
@@ -435,6 +449,7 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
     };
 
     const updatedHabits = [...habits, habit];
+    habitsRef.current = updatedHabits;
     setHabits(updatedHabits);
     await saveHabits(updatedHabits);
     return habit;
