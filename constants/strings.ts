@@ -609,6 +609,12 @@ export const strings = {
 
   // Today tab (spec 04 "Today").
   today: {
+    // Spent/Kept chips (redesign U5, ADR 0019, DI-5): the two value chips that
+    // ARE the Today tab control. Sentence case, uppercased in-component.
+    spentChipLabel: 'Spent',
+    keptChipLabel: 'Kept',
+    spentKeptTabsLabel: 'Today view',
+    checkInPendingA11y: 'check-in waiting',
     // Kept band. The eyebrow and caption already live in habitLogging
     // (keptSoFar, keptCaption, keptZeroCaption); nothing is duplicated here.
     // Check-in card

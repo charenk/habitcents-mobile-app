@@ -5,12 +5,11 @@ import {
   StyleSheet,
   SectionList,
   ScrollView,
-  Pressable,
   RefreshControl,
   TouchableOpacity,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter, useFocusEffect } from 'expo-router';
+import { useRouter, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -22,27 +21,24 @@ import { CheckInCard } from '@/components/habit-logging/CheckInCard';
 import { PickOneSheet } from '@/components/habit-logging/PickOneSheet';
 import { PartialSlipSheet } from '@/components/habit-logging/PartialSlipSheet';
 import { CoachMomentSlot } from '@/components/habit-logging/CoachMomentSlot';
+import { SpentKeptChips, type SpentKeptView } from '@/components/habit-logging/SpentKeptChips';
 import { LogExpenseSheet } from '@/components/money/LogExpenseSheet';
 import { EditExpenseSheet } from '@/components/money/EditExpenseSheet';
-import { ExpenseRow } from '@/components/money/ExpenseRow';
-import { AmountDisplay } from '@/components/ui/AmountDisplay';
-import { EmojiTile } from '@/components/ui/EmojiTile';
+import { QuickLogRow } from '@/components/money/QuickLogRow';
+import { LoggedTodayList } from '@/components/money/LoggedTodayList';
 import { useCategories } from '@/contexts/CategoriesContext';
-import { categoryEmoji, categoryIdentityColor } from '@/constants/categoryEmoji';
 import type { Expense, ExpenseCategory } from '@/types/expense';
-import { atMidnight, dayStateFor, isHabitLimitReached } from '@/utils/habitLogging';
+import { atMidnight, dayStateFor, isHabitLimitReached, keptOnDay } from '@/utils/habitLogging';
 import { getEntitlement } from '@/utils/purchases';
 import { cardText, type CoachMomentCardId } from '@/utils/coachMoments';
 import { progressTowardDetection } from '@/utils/habitDetection';
 import { formatDate } from '@/utils/dates';
+import { track } from '@/utils/analytics';
 import { radii, typeScale, type AppTheme } from '@/constants/theme';
 import type { DetectedHabit, HabitChangeGoal } from '@/types/habit';
 import { strings } from '@/constants/strings';
 
 type BreakingItem = { habit: DetectedHabit; goal: HabitChangeGoal };
-
-/** Pads the 40pt quick-log tiles out to the 44pt minimum touch target. */
-const QUICK_TILE_HIT_SLOP = { top: 4, bottom: 4, left: 4, right: 4 };
 
 type HabitSection = {
   title: string;
@@ -51,10 +47,13 @@ type HabitSection = {
 };
 
 /**
- * Today (redesign step 02). Same habit-logging content the Habits tab carried;
- * the header is ScreenHeader with the date as its eyebrow below the serif
- * title, and a profile action that pushes /profile (design/header-unification
- * U4, ADR 0019: settings moved from a bottom sheet to a pushed route).
+ * Today (redesign U5, ADR 0019, DI-5). Two in-page views, Spent (default) and
+ * Kept, controlled by the SpentKeptChips value chips: the chips ARE the tab
+ * control, there is no separate SegmentedControl. Spent holds the quick-log
+ * card and today's logged expenses; Kept holds the all-time KeptHero band plus
+ * the same Leaks found / Breaking now content this screen always carried.
+ * Leaks live in Kept only; the quick-log category tiles are dropped (the log
+ * sheet's own picker covers category choice).
  */
 export default function TodayScreen() {
   const insets = useSafeAreaInsets();
@@ -64,6 +63,7 @@ export default function TodayScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [pickOneHabitId, setPickOneHabitId] = useState<string | null>(null);
   const [partialGoalId, setPartialGoalId] = useState<string | null>(null);
+  const [todayView, setTodayView] = useState<SpentKeptView>('spent');
   // DT-1 (P2-2): resolved once, attached to whichever leak is first in the
   // list at that moment, so the card only ever renders on one LeakCard.
   const [detectionMoment, setDetectionMoment] = useState<{ habitId: string; cardId: CoachMomentCardId } | null>(null);
@@ -101,7 +101,8 @@ export default function TodayScreen() {
   const [logVisible, setLogVisible] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
 
-  // Five tiles plus a "more" affordance, per spec.
+  // Five tiles plus a "more" affordance, per spec. Unused while showCategoryTiles
+  // stays false on QuickLogRow, kept computed so a one-line flip reactivates it.
   const quickCategories = useMemo(() => getVisibleCategories().slice(0, 5), [getVisibleCategories]);
 
   const loggedToday = useMemo(() => {
@@ -110,6 +111,17 @@ export default function TodayScreen() {
       .filter((e) => atMidnight(e.date).getTime() === start)
       .sort((a, b) => b.date.getTime() - a.date.getTime());
   }, [expenses]);
+
+  // Spent chip (spec 04 "Today"): today's spend-class rows only. Transfers and
+  // income never inflate the spent figure, so a non-spend class is excluded
+  // rather than netted in.
+  const spentTodayCents = useMemo(
+    () =>
+      loggedToday
+        .filter((e) => (e.class ?? 'spend') === 'spend')
+        .reduce((sum, e) => sum + e.amount, 0),
+    [loggedToday]
+  );
 
   const openLogSheet = useCallback((category?: ExpenseCategory) => {
     setLogCategory(category);
@@ -122,6 +134,21 @@ export default function TodayScreen() {
     () => formatDate(new Date(), { weekday: 'long', month: 'long', day: 'numeric' }),
     []
   );
+
+  // Deep link support: an onboarding flow can land Today on a specific view
+  // via ?view=kept|spent. Anything else (missing, malformed) is ignored and
+  // the default (Spent) stands.
+  const params = useLocalSearchParams<{ view?: string }>();
+  useEffect(() => {
+    if (params.view === 'kept' || params.view === 'spent') {
+      setTodayView(params.view);
+    }
+  }, [params.view]);
+
+  const handleTodayViewChange = useCallback((view: SpentKeptView) => {
+    setTodayView(view);
+    track('today_view_switched', { to: view, method: 'tap' });
+  }, []);
 
   // Coach Moment (P2-2, acceptance test 2): clear on blur (tab switch away)
   // so returning to an already-answered card does not re-show the same card.
@@ -183,6 +210,24 @@ export default function TodayScreen() {
       })
       .filter((x): x is BreakingItem => x !== null);
   }, [activeHabits, getGoalByHabitId]);
+
+  // Kept chip (spec 04 "Today"): kept TODAY across every goal, distinct from
+  // the all-time total the KeptHero band still shows inside the Kept view.
+  const keptTodayCents = useMemo(() => {
+    const today = new Date();
+    return goals.reduce((sum, g) => sum + keptOnDay(g, today), 0);
+  }, [goals]);
+
+  // The Kept chip's pending dot (spec: "renders a quiet dot on the Kept chip"):
+  // true while any daily-cadence habit's check-in question is unanswered
+  // today, the same test sortedBreakingItems below uses to rank an unanswered
+  // card first.
+  const checkInPending = useMemo(() => {
+    const today = atMidnight(new Date());
+    return breakingItems.some(
+      ({ habit, goal }) => habit.frequency === 'daily' && dayStateFor(goal.dayLogs, today) === 'no-log'
+    );
+  }, [breakingItems]);
 
   // Stacking (spec §4.2): unanswered daily first, then weekly/monthly, then
   // answered-today cards.
@@ -254,88 +299,6 @@ export default function TodayScreen() {
     [isEmpty, expenses]
   );
 
-  // Quick log card plus today's logged rows. Rendered under the habit content
-  // on both the populated and the empty screen, so logging is always one tap
-  // away even before a leak exists.
-  const renderTodayFooter = () => (
-    <View style={styles.footerBlock}>
-      <View style={styles.quickLogCard}>
-        <View style={styles.quickLogHeader}>
-          <Text style={styles.eyebrow}>{strings.today.quickLogEyebrow.toUpperCase()}</Text>
-          <Text style={styles.quickLogHint}>{strings.today.quickLogHint}</Text>
-        </View>
-        <View style={styles.quickLogAmountRow}>
-          {/* The big zero is the obvious thing to tap, so it opens the sheet
-              too; the plus stays for anyone who reads it as the only control. */}
-          <Pressable
-            style={styles.quickLogAmountTap}
-            onPress={() => openLogSheet(undefined)}
-            accessibilityRole="button"
-            accessibilityLabel={strings.today.quickLogOpenLabel}
-          >
-            <AmountDisplay valueCents={0} size={40} zeroAsPlaceholder />
-          </Pressable>
-          <TouchableOpacity
-            style={styles.quickLogPlus}
-            onPress={() => openLogSheet(undefined)}
-            accessibilityRole="button"
-            accessibilityLabel={strings.today.quickLogOpenLabel}
-          >
-            <Icon name="Plus" size={22} color={theme.white} />
-          </TouchableOpacity>
-        </View>
-        <View style={styles.quickLogTiles}>
-          {quickCategories.map((cat) => (
-            <TouchableOpacity
-              key={cat.id}
-              onPress={() => openLogSheet(cat.name as ExpenseCategory)}
-              accessibilityRole="button"
-              accessibilityLabel={strings.today.quickLogCategoryLabel(cat.name)}
-              // 40pt tiles with a 10pt gap: 4pt of slop all round reaches the
-              // 44pt minimum without touching the neighbouring tile.
-              hitSlop={QUICK_TILE_HIT_SLOP}
-            >
-              <EmojiTile
-                emoji={categoryEmoji(cat.name)}
-                size={40}
-                color={categoryIdentityColor(cat.name)}
-              />
-            </TouchableOpacity>
-          ))}
-          <TouchableOpacity
-            style={styles.quickLogMore}
-            onPress={() => openLogSheet(undefined)}
-            accessibilityRole="button"
-            accessibilityLabel={strings.today.quickLogMoreLabel}
-            hitSlop={QUICK_TILE_HIT_SLOP}
-          >
-            <Text style={styles.quickLogMoreText}>...</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      <Text style={[styles.eyebrow, styles.loggedTodayEyebrow]}>
-        {strings.today.loggedTodayEyebrow.toUpperCase()}
-      </Text>
-      {loggedToday.length === 0 ? (
-        <View style={styles.loggedTodayCard}>
-          <Text style={styles.loggedTodayEmpty}>{strings.today.loggedTodayEmpty}</Text>
-        </View>
-      ) : (
-        <View style={styles.loggedTodayCard}>
-          {loggedToday.map((expense, i) => (
-            <View
-              key={expense.id}
-              style={i > 0 ? styles.loggedTodaySeparator : undefined}
-            >
-              <ExpenseRow expense={expense} onPress={() => setEditingExpense(expense)} />
-            </View>
-          ))}
-        </View>
-      )}
-    </View>
-  );
-
   const renderItem = ({ item, section }: { item: DetectedHabit | BreakingItem; section: HabitSection }) => {
     if (section.type === 'leaks') {
       const habit = item as DetectedHabit;
@@ -390,85 +353,117 @@ export default function TodayScreen() {
         ]}
       />
 
-      <KeptHero cents={totalKept} />
+      <View style={styles.chipsRow}>
+        <SpentKeptChips
+          spentCents={spentTodayCents}
+          keptCents={keptTodayCents}
+          value={todayView}
+          onChange={handleTodayViewChange}
+          checkInPending={checkInPending}
+        />
+      </View>
 
-      {isLoading ? (
-        <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>{strings.habits.loading}</Text>
-        </View>
-      ) : isEmpty ? (
+      {todayView === 'spent' ? (
         <ScrollView
-          contentContainerStyle={styles.emptyContainer}
-          showsVerticalScrollIndicator={false}
-        >
-          {detectionProgress ? (
-            <View style={styles.progressCard}>
-              <Text style={styles.progressTitle}>{strings.habits.spottingYourLeak}</Text>
-              <View style={styles.progressMeterTrack}>
-                <View
-                  style={[
-                    styles.progressMeterFill,
-                    { width: `${(detectionProgress.n / detectionProgress.threshold) * 100}%` },
-                  ]}
-                />
-              </View>
-              <Text style={styles.progressCount}>
-                {strings.habits.logsAtSamePlace(detectionProgress.n, detectionProgress.threshold)}
-                <Text style={styles.progressCountSuffix}> at the same place</Text>
-              </Text>
-              <Text style={styles.progressBody}>{strings.habits.logsAtSamePlaceBody}</Text>
-            </View>
-          ) : (
-            <>
-              <Icon
-                name="ChartLine"
-                size={64}
-                color={theme.textTertiary}
-                accessibilityElementsHidden
-                importantForAccessibility="no-hide-descendants"
-              />
-              <Text style={styles.emptyTitle}>{strings.habitLogging.emptyLeaksTitle}</Text>
-              <Text style={styles.emptySubtitle}>{strings.habitLogging.emptyLeaksSubtitle}</Text>
-            </>
-          )}
-          <TouchableOpacity
-            style={styles.emptyCta}
-            onPress={() => router.push('/(tabs)/money')}
-            accessibilityRole="button"
-          >
-            <Text style={styles.emptyCtaText}>{strings.habitLogging.logAnExpense}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.reAuditLink}
-            onPress={() => router.push('/onboarding/welcome')}
-            accessibilityRole="button"
-          >
-            <Text style={styles.reAuditLinkText}>{strings.onboarding.reAuditLink}</Text>
-          </TouchableOpacity>
-          {firstLogCardId && (
-            <View style={styles.emptyCoachMoment}>
-              <CoachMomentSlot text={cardText(firstLogCardId)} />
-            </View>
-          )}
-          {renderTodayFooter()}
-        </ScrollView>
-      ) : (
-        <SectionList
-          sections={sections}
-          keyExtractor={(item, index) => {
-            if ('habit' in item) return item.habit.id;
-            return 'id' in item ? item.id : `item-${index}`;
-          }}
-          renderItem={renderItem}
-          renderSectionHeader={renderSectionHeader}
-          ListFooterComponent={renderTodayFooter}
-          contentContainerStyle={styles.listContent}
-          stickySectionHeadersEnabled={false}
+          style={styles.spentScroll}
+          contentContainerStyle={styles.spentScrollContent}
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={theme.primary} />
           }
-        />
+        >
+          <QuickLogRow onOpenSheet={openLogSheet} categories={quickCategories} />
+          <View style={styles.loggedTodaySpacer}>
+            <LoggedTodayList expenses={loggedToday} onEditExpense={setEditingExpense} />
+          </View>
+        </ScrollView>
+      ) : (
+        <>
+          <KeptHero cents={totalKept} />
+
+          {isLoading ? (
+            <View style={styles.loadingContainer}>
+              <Text style={styles.loadingText}>{strings.habits.loading}</Text>
+            </View>
+          ) : isEmpty ? (
+            <ScrollView
+              contentContainerStyle={styles.emptyContainer}
+              showsVerticalScrollIndicator={false}
+              refreshControl={
+                <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={theme.primary} />
+              }
+            >
+              {detectionProgress ? (
+                <View style={styles.progressCard}>
+                  <Text style={styles.progressTitle}>{strings.habits.spottingYourLeak}</Text>
+                  <View style={styles.progressMeterTrack}>
+                    <View
+                      style={[
+                        styles.progressMeterFill,
+                        { width: `${(detectionProgress.n / detectionProgress.threshold) * 100}%` },
+                      ]}
+                    />
+                  </View>
+                  <Text style={styles.progressCount}>
+                    {strings.habits.logsAtSamePlace(detectionProgress.n, detectionProgress.threshold)}
+                    <Text style={styles.progressCountSuffix}> at the same place</Text>
+                  </Text>
+                  <Text style={styles.progressBody}>{strings.habits.logsAtSamePlaceBody}</Text>
+                </View>
+              ) : (
+                <>
+                  <Icon
+                    name="ChartLine"
+                    size={64}
+                    color={theme.textTertiary}
+                    accessibilityElementsHidden
+                    importantForAccessibility="no-hide-descendants"
+                  />
+                  <Text style={styles.emptyTitle}>{strings.habitLogging.emptyLeaksTitle}</Text>
+                  <Text style={styles.emptySubtitle}>{strings.habitLogging.emptyLeaksSubtitle}</Text>
+                </>
+              )}
+              <TouchableOpacity
+                style={styles.emptyCta}
+                // The quick-log card now lives on the Spent view, not the Money
+                // tab, so the CTA switches views in place rather than navigating
+                // away (was router.push('/(tabs)/money')).
+                onPress={() => setTodayView('spent')}
+                accessibilityRole="button"
+              >
+                <Text style={styles.emptyCtaText}>{strings.habitLogging.logAnExpense}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.reAuditLink}
+                onPress={() => router.push('/onboarding/welcome')}
+                accessibilityRole="button"
+              >
+                <Text style={styles.reAuditLinkText}>{strings.onboarding.reAuditLink}</Text>
+              </TouchableOpacity>
+              {firstLogCardId && (
+                <View style={styles.emptyCoachMoment}>
+                  <CoachMomentSlot text={cardText(firstLogCardId)} />
+                </View>
+              )}
+            </ScrollView>
+          ) : (
+            <SectionList
+              sections={sections}
+              keyExtractor={(item, index) => {
+                if ('habit' in item) return item.habit.id;
+                return 'id' in item ? item.id : `item-${index}`;
+              }}
+              renderItem={renderItem}
+              renderSectionHeader={renderSectionHeader}
+              contentContainerStyle={styles.listContent}
+              stickySectionHeadersEnabled={false}
+              showsVerticalScrollIndicator={false}
+              refreshControl={
+                <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={theme.primary} />
+              }
+            />
+          )}
+        </>
       )}
 
       <PickOneSheet
@@ -516,102 +511,24 @@ function createStyles(theme: AppTheme) {
       flex: 1,
       backgroundColor: theme.background,
     },
-    eyebrow: {
-      fontSize: typeScale.eyebrow,
-      fontFamily: theme.fonts.uiSemibold,
-      letterSpacing: typeScale.eyebrowLetterSpacing,
-      color: theme.mist,
+    chipsRow: {
+      marginTop: 8,
+      marginBottom: 4,
+    },
+    spentScroll: {
+      flex: 1,
+    },
+    spentScrollContent: {
+      paddingHorizontal: 20,
+      paddingTop: 16,
+      paddingBottom: 100,
+    },
+    loggedTodaySpacer: {
+      marginTop: 20,
     },
     listContent: {
       paddingHorizontal: 20,
       paddingBottom: 100,
-    },
-    // Quick log and logged-today (spec 04 "Today" 3 and 4).
-    footerBlock: {
-      marginTop: 20,
-      alignSelf: 'stretch',
-    },
-    quickLogCard: {
-      backgroundColor: theme.white,
-      borderRadius: radii.feature,
-      borderWidth: 1,
-      borderColor: theme.border,
-      padding: 16,
-    },
-    quickLogHeader: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-    },
-    quickLogHint: {
-      fontSize: typeScale.caption,
-      fontFamily: theme.fonts.uiMedium,
-      color: theme.primaryDark,
-    },
-    quickLogAmountRow: {
-      flexDirection: 'row',
-      alignItems: 'flex-end',
-      justifyContent: 'space-between',
-      marginTop: 8,
-    },
-    // Takes the row's free width so the whole left side of the card opens the
-    // sheet, not just the glyphs. No visual change: the amount still sits on
-    // the baseline it did before.
-    quickLogAmountTap: {
-      flex: 1,
-      minHeight: 44,
-      justifyContent: 'flex-end',
-    },
-    quickLogPlus: {
-      width: 44,
-      height: 44,
-      borderRadius: 22,
-      backgroundColor: theme.primary,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    quickLogTiles: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 10,
-      marginTop: 16,
-    },
-    quickLogMore: {
-      width: 40,
-      height: 40,
-      borderRadius: radii.control,
-      borderWidth: 1.5,
-      borderStyle: 'dashed',
-      borderColor: theme.border,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    quickLogMoreText: {
-      fontSize: 16,
-      fontFamily: theme.fonts.uiSemibold,
-      color: theme.mist,
-      marginTop: -6,
-    },
-    loggedTodayEyebrow: {
-      marginTop: 24,
-      marginBottom: 8,
-    },
-    loggedTodayCard: {
-      backgroundColor: theme.white,
-      borderRadius: radii.card,
-      borderWidth: 1,
-      borderColor: theme.border,
-      paddingHorizontal: 12,
-    },
-    loggedTodaySeparator: {
-      borderTopWidth: 1,
-      borderTopColor: theme.hairlineSubtle,
-    },
-    loggedTodayEmpty: {
-      fontSize: typeScale.secondary,
-      fontFamily: theme.fonts.ui,
-      color: theme.mist,
-      paddingVertical: 16,
     },
     sectionHeader: {
       marginTop: 20,
@@ -637,9 +554,8 @@ function createStyles(theme: AppTheme) {
       fontFamily: theme.fonts.ui,
       color: theme.textSecondary,
     },
-    // Scrolls rather than centering in a fixed height: the quick log card and
-    // logged-today list sit below this content and would otherwise overlap the
-    // kept band on shorter screens.
+    // Scrolls rather than centering in a fixed height: on shorter screens the
+    // content would otherwise overlap the kept band above it.
     emptyContainer: {
       alignItems: 'center',
       paddingHorizontal: 20,
