@@ -3,7 +3,9 @@ import * as DocumentPicker from 'expo-document-picker';
 import { File } from 'expo-file-system';
 import { runScan, type ScanFileInput } from '@/utils/leakScan';
 import { MAX_FILES, MAX_FILE_BYTES, type ScanQuestion, type ScanResult } from '@/utils/leakScan/types';
+import { scanResultToSummary } from '@/utils/leakScan/summarize';
 import { getScanRules, saveScanRules, setDateOrder, setSignConvention, type ScanRules } from '@/utils/scanRules';
+import { saveScanSummary } from '@/utils/storage';
 import { track } from '@/utils/analytics';
 
 export type IntakeStage = 'idle' | 'picking' | 'scanning' | 'question' | 'done';
@@ -69,6 +71,13 @@ export function useLeakScanIntake() {
         likely_count: tierBreakdown.likely,
         needs_review_count: tierBreakdown['needs-review'],
       });
+      // Fire-and-forget (OB-4, ADR 0020): persists a small display-ready
+      // snapshot so a later Insights segment can show it without re-running
+      // the pipeline. A rule-answer re-run lands here too (this function is
+      // the only place a scan reaches 'done'), so a correction's re-run
+      // naturally overwrites the prior summary with the corrected result --
+      // the right behavior per the "kept until replaced" contract.
+      void saveScanSummary(scanResultToSummary(result, new Date()));
     }
     setState((s) => ({ ...s, stage: 'done', pendingQuestion: null, result }));
   }, []);

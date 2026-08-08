@@ -1,0 +1,15 @@
+{
+  "description": "Credit card export (Type column, debits positive) with a quoted preamble row, a Netflix monthly subscription, a refund pair, six interleaved one-off merchants, and a McDonald's habit written half the time as \"MCDONALD'S\" (apostrophe) and half as \"MCDONALDS\"/\"Mcdonalds\" (no apostrophe) across three months, to measure whether merchant-stem grouping survives an apostrophe.",
+  "minRowsParsed": 26,
+  "expectedCandidates": [
+    { "merchantContains": "netflix", "cadence": "monthly", "required": true },
+    {
+      "merchantContains": "mcdonald",
+      "cadence": "daily",
+      "required": false,
+      "knownGap": "normalizeMerchant() splits \"McDonald's\" on the apostrophe into a separate 'mcdonald' stem (KNOWN_CHAINS keys on the punctuation-free 'mcdonalds'). Measured: the no-apostrophe spelling ('mcdonalds', 8 of the file's 14 occurrences) clears the habit floor on its own and IS surfaced; the apostrophe spelling ('mcdonald', the other 6) stays under the floor and is silently dropped. Net effect: the habit is found, but its occurrence count and total undercount the merchant's true frequency by 6/14 (~43%), and any punctuation variant alone (without a majority no-apostrophe group) would be missed outright."
+    }
+  ],
+  "maxNeedsReviewShare": 0.32,
+  "expectGracefulFailure": false
+}

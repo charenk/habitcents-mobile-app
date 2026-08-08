@@ -23,6 +23,9 @@ const mockUpdateExpense = jest.fn(
 );
 let mockExpenses: Expense[] = [];
 
+// Full-provider renders exceed jest's 5s default under CI worker load.
+jest.setTimeout(20000);
+
 jest.mock('@/contexts/ExpensesContext', () => ({
   useExpenses: () => ({
     expenses: mockExpenses,
