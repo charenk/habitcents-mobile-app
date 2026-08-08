@@ -52,13 +52,16 @@ type HabitsContextValue = {
   /**
    * Pick-one sheet "Start breaking it" (spec 01 §3.1, §4.3). Nothing is
    * created until this is called; cancel on the sheet creates nothing.
-   * `source` distinguishes detection-surfaced leaks from Leak Scan results.
+   * `source` distinguishes detection-surfaced leaks from Leak Scan results
+   * from Door 3's own onboarding sheet (W3: neither detected from history nor
+   * scanned from a statement, so it gets its own honest value rather than
+   * borrowing 'detection').
    */
   startBreakingHabit: (
     habitId: string,
     skipValue: number,
     valueEdited: boolean,
-    source?: 'detection' | 'scan'
+    source?: 'detection' | 'scan' | 'onboarding'
   ) => Promise<HabitChangeGoal>;
   /**
    * Onboarding Leak Audit bridge (P2-1, spec 02 §3.5, §5): the audit's biggest
@@ -307,7 +310,7 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
     habitId: string,
     skipValue: number,
     valueEdited: boolean,
-    source: 'detection' | 'scan' = 'detection'
+    source: 'detection' | 'scan' | 'onboarding' = 'detection'
   ): Promise<HabitChangeGoal> => {
     const habit = habits.find(h => h.id === habitId);
     if (!habit) {
@@ -369,6 +372,15 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
     observedOnly?: boolean;
   }): Promise<DetectedHabit> => {
     const existing = habits.find(h => h.merchantPattern === input.merchantPattern);
+
+    // Same protection addScanHabit gives: a habit the user is already
+    // tracking or breaking is live data; re-seeding it (reachable via the
+    // break-another sheet re-picking an active preset, stack review finding
+    // 2) must never overwrite its amounts or cadence. Return it untouched
+    // and let the caller notice the status.
+    if (existing && (existing.status === 'tracking' || existing.status === 'changing')) {
+      return existing;
+    }
 
     if (existing) {
       const refreshed: DetectedHabit = {

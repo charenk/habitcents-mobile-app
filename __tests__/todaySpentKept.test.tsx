@@ -74,7 +74,7 @@ jest.mock('@/contexts/HabitsContext', () => ({
 
 let mockExpenses: Expense[] = [];
 jest.mock('@/contexts/ExpensesContext', () => ({
-  useExpenses: () => ({ expenses: mockExpenses }),
+  useExpenses: () => ({ expenses: mockExpenses, addExpense: jest.fn(async () => undefined) }),
 }));
 
 jest.mock('@/contexts/CategoriesContext', () => ({
@@ -392,13 +392,16 @@ describe('Today: break-another affordance (DI-6)', () => {
     expect(view.getByText(strings.habitLogging.freeTierNote)).toBeTruthy();
   });
 
-  it('under the free limit (zero active habits), press navigates to the re-audit entry', async () => {
+  // W3, "the app is the onboarding" complete: the affordance used to route to
+  // the (now-deleted) audit; it opens BreakHabitSheet in place instead.
+  it('under the free limit (zero active habits), press opens the break sheet in place', async () => {
     const view = await renderToday();
 
     await tap(view.getByTestId('kept-chip'));
     await tap(view.getByLabelText(new RegExp(`^${strings.today.breakAnotherHabitCta}`)));
 
-    expect(mockPush).toHaveBeenCalledWith('/onboarding/welcome');
+    expect(view.getByText(strings.onboarding.breakSheetTitle)).toBeTruthy();
+    expect(mockPush).not.toHaveBeenCalled();
   });
 
   it('at the free limit (one active habit), press navigates to the paywall gate', async () => {
