@@ -16,6 +16,7 @@ import { HabitCard } from './HabitCard';
 import { BiggestLeakCard } from './BiggestLeakCard';
 import { ProjectionSection } from './ProjectionSection';
 import { ResultsFooter } from './ResultsFooter';
+import { useCompleteScanOnboarding } from './useCompleteScanOnboarding';
 import { ReviewQueueSheet } from './ReviewQueueSheet';
 import { CategoryTransactionsSheet } from './CategoryTransactionsSheet';
 import { PulseDayDetailSheet } from './PulseDayDetailSheet';
@@ -91,6 +92,7 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
   const toast = useToast();
   const { addExpense, deleteExpense, expenses } = useExpenses();
   const { addScanHabit, startBreakingHabit, dismissHabit, getHabitById, getActiveHabits } = useHabits();
+  const completeScanOnboarding = useCompleteScanOnboarding();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   const [result, setResult] = useState(initialResult);
@@ -312,12 +314,15 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
       });
     }
     track('scan_seed_applied', { rows: seeded.length, days: BRING_IN_DAYS });
+    // This is the scan door's only exit into the app; it must complete
+    // onboarding here or the user loops back into an empty scan on relaunch.
+    await completeScanOnboarding();
     router.push('/(tabs)');
     // Every mutating action confirms itself (spec 01 section 5). This one
     // writes about 30 expenses, so landing on Today in silence left the user
     // with no evidence the import happened.
     toast.show(strings.leakScan.savedToHabitCents);
-  }, [result, addExpense, router, toast]);
+  }, [result, addExpense, router, toast, completeScanOnboarding]);
 
   // Dashed expander (ADR 0020): mirrors CategoryList's "View more" analytics
   // pattern, fired once per expand.
@@ -413,21 +418,25 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
 
             <View style={styles.spacer} />
             <ProjectionSection summary={projection} onSave={handleSaveProjection} />
+          </>
+        )}
 
-            {reviewQueue.length > 0 && (
-              <>
-                <View style={styles.spacer} />
-                <TouchableOpacity
-                  style={styles.reviewQueueBanner}
-                  onPress={() => setReviewQueueOpen(true)}
-                  accessibilityRole="button"
-                >
-                  <Text style={styles.reviewQueueBannerText}>
-                    {strings.leakScan.reviewQueueTitle(reviewQueue.length)}
-                  </Text>
-                </TouchableOpacity>
-              </>
-            )}
+        {/* The review-queue banner qualifies every number above it, including
+            the biggest-leak card's evidence, so it renders above the fold
+            regardless of the ladder state (independents review finding;
+            honesty surfaces never sit behind an expander). */}
+        {reviewQueue.length > 0 && (
+          <>
+            <View style={styles.spacer} />
+            <TouchableOpacity
+              style={styles.reviewQueueBanner}
+              onPress={() => setReviewQueueOpen(true)}
+              accessibilityRole="button"
+            >
+              <Text style={styles.reviewQueueBannerText}>
+                {strings.leakScan.reviewQueueTitle(reviewQueue.length)}
+              </Text>
+            </TouchableOpacity>
           </>
         )}
 

@@ -31,6 +31,7 @@ import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { ToastProvider } from '@/components/ui/Toast';
 import { ExpensesProvider } from '@/contexts/ExpensesContext';
 import { HabitsProvider } from '@/contexts/HabitsContext';
+import { OnboardingProvider } from '@/contexts/OnboardingContext';
 import { ResultsScreen } from '@/components/leak-scan/ResultsScreen';
 import { strings } from '@/constants/strings';
 import type { HabitCandidate, ScanResult } from '@/utils/leakScan/types';
@@ -47,7 +48,11 @@ function Providers({ children }: { children: React.ReactNode }) {
         <CurrencyProvider>
           <ToastProvider>
             <ExpensesProvider>
-              <HabitsProvider>{children}</HabitsProvider>
+              {/* ResultsScreen calls useCompleteScanOnboarding (PR #59), so the
+                  provider joined the wrapper at the merge. */}
+              <OnboardingProvider>
+                <HabitsProvider>{children}</HabitsProvider>
+              </OnboardingProvider>
             </ExpensesProvider>
           </ToastProvider>
         </CurrencyProvider>
@@ -90,6 +95,28 @@ function makeScanResult(habits: HabitCandidate[], overrides: Partial<ScanResult>
     tier: 'solid',
     gracefulFailure: false,
     ...overrides,
+  };
+}
+
+function makeNeedsReviewRow(): ScanResult['rows'][number] {
+  return {
+    id: 'r-nr-1',
+    dateISO: '2026-01-02',
+    date: new Date('2026-01-02'),
+    amountCents: -1500,
+    rawDescription: 'Mystery Merchant',
+    merchantStem: 'mystery',
+    merchantDisplay: 'Mystery Merchant',
+    category: 'Other',
+    categoryTier: 'needs-review',
+    rowClass: 'spend',
+    account: 'A',
+    pending: false,
+    foreign: false,
+    internal: false,
+    reversed: false,
+    needsReview: true,
+    hash: 'h-nr-1',
   };
 }
 
@@ -165,6 +192,19 @@ describe('results screen: finding-first ladder (ADR 0020)', () => {
 
     expect(view.getByText(strings.leakScan.kpiTotalSpent)).toBeTruthy();
     expect(expander.props.accessibilityState?.expanded).toBe(true);
+  });
+
+  it('keeps the review-queue banner above the fold while the ladder is collapsed', async () => {
+    // Honesty surface rule (independents review): the banner qualifies every
+    // number on screen, including the biggest-leak card's evidence, so it must
+    // not sit behind the expander.
+    const result = makeScanResult([makeCandidate()], { rows: [makeNeedsReviewRow()] });
+
+    const view = await renderResults(result);
+
+    expect(view.getByText(strings.leakScan.reviewQueueTitle(1))).toBeTruthy();
+    // And the ladder is still collapsed: the banner did not drag the dashboard out.
+    expect(view.queryByText(strings.leakScan.kpiTotalSpent)).toBeNull();
   });
 
   it('caps the ranked list at 5 for a 7-candidate synthetic result', async () => {

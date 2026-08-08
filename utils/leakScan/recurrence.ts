@@ -1,10 +1,12 @@
 /**
  * Stage 9: recurrence & habit detection (runs on FULL history).
  *
- * Fixed recurrence: same merchant stem, amount variance <= 2%, interval regularity
- * (monthly +/-4d, biweekly +/-2d, weekly +/-1d, annual +/-10d), >= 3 occurrences
- * (>= 2 for annual). Detects rent, loans, insurance, subscriptions, and small fixed
- * transfers regardless of size (the $11/mo e-transfer case).
+ * Fixed recurrence: same merchant stem, amount variance <= 10% (OB-3: widened from a
+ * 2% floor that excluded real, mildly-variable bills; see RECURRENCE_AMOUNT_VARIANCE_MAX
+ * below), interval regularity (monthly +/-4d, biweekly +/-2d, weekly +/-1d, annual
+ * +/-10d), >= 3 occurrences (>= 2 for annual). Detects rent, loans, insurance,
+ * subscriptions, and small fixed transfers regardless of size (the $11/mo e-transfer
+ * case).
  *
  * Behavioral habit: merchant stem or category with >= 4 occurrences/month, variable
  * amounts, discretionary category. Governability classifier ranks candidates by
@@ -24,7 +26,26 @@ import type { ScanRules } from '@/utils/scanRules';
 const DAY = 24 * 60 * 60 * 1000;
 const MAX_HABITS = 10;
 
-const AMOUNT_VARIANCE_MAX = 0.02; // <= 2%
+const AMOUNT_VARIANCE_MAX = 0.02; // <= 2%: governability classifier's "fixed" test and
+// the behavioral-habit "variable amount" test (spec 9 table). Kept tight here on purpose:
+// this is what tells a truly flat contract (rent, loan) apart from spend that just
+// happens to repeat, and it's what stops genuinely-variable discretionary spend from
+// masquerading as fixed. NOT used by detectRecurrence itself; see
+// RECURRENCE_AMOUNT_VARIANCE_MAX below.
+
+// detectRecurrence's own, wider tolerance (OB-3 gap #2, measured: a real monthly
+// utility bill drifting ~5% month to month fell between this 2% floor and the
+// discretionary-habit path -- Utilities isn't a discretionary category, so it wasn't
+// picked up there either, and the bill vanished from the scan entirely). 10% is the
+// chosen band: usage-billed utilities (hydro, water, variable-rate insurance) commonly
+// drift 3-8% month to month while still being the same fixed commitment, so 10% covers
+// the measured case with headroom without being so loose it papers over a merchant that
+// isn't really fixed. This tolerance is safe to widen independently of the 2% above
+// because detectRecurrence ALSO requires the interval-regularity gate just below (same
+// day-of-month rhythm, +/-4d monthly / +/-1d weekly / +/-2d biweekly, >=3 occurrences) --
+// genuinely variable discretionary spend (coffee, takeout) essentially never lands on a
+// regular schedule by chance, so loosening the amount check alone doesn't let it in.
+const RECURRENCE_AMOUNT_VARIANCE_MAX = 0.1; // <= 10%, schedule-anchored candidates only.
 
 // Interval definitions: nominal days and tolerance (spec 9).
 const INTERVALS: { interval: RecurrenceInterval; days: number; tol: number; minOcc: number }[] = [
@@ -122,8 +143,8 @@ function biweeklyHitsNextMonth(lastDateISO: string): number {
 
 /**
  * Test a group for fixed recurrence. Returns the recurring item, or null. Amounts
- * must be within 2% variance; gaps must fit one interval's tolerance; occurrence
- * count must clear the interval floor.
+ * must be within RECURRENCE_AMOUNT_VARIANCE_MAX (10%) variance; gaps must fit one
+ * interval's tolerance; occurrence count must clear the interval floor.
  */
 function detectRecurrence(group: Group): RecurringItem | null {
   const rows = [...group.rows].sort((a, b) => a.date.getTime() - b.date.getTime());
@@ -133,7 +154,7 @@ function detectRecurrence(group: Group): RecurringItem | null {
   const med = median(amounts);
   if (med === 0) return null;
   const maxDev = Math.max(...amounts.map((a) => Math.abs(a - med) / med));
-  if (maxDev > AMOUNT_VARIANCE_MAX) return null;
+  if (maxDev > RECURRENCE_AMOUNT_VARIANCE_MAX) return null;
 
   // Average gap in days.
   const gaps: number[] = [];

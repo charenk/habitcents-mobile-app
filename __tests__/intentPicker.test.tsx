@@ -98,19 +98,33 @@ describe('Onboarding intent picker', () => {
     expect(view.getByText(strings.onboarding.intentSub)).toBeTruthy();
   });
 
-  it.each([
-    ['track', 'intentTrackTitle', '/onboarding/guided-log'],
-    ['scan', 'intentScanTitle', '/leak-scan'],
-    ['break', 'intentBreakTitle', '/onboarding/audit-subs'],
-  ] as const)(
-    'fires onboarding_intent_selected with intent %s and routes onward',
-    async (intent, labelKey, route) => {
-      const view = await renderScreen();
-      await pressLabel(view, strings.onboarding[labelKey]);
-      expect(trackMock).toHaveBeenCalledWith('onboarding_intent_selected', { intent });
-      expect(mockPush).toHaveBeenCalledWith(route);
-    }
-  );
+  it('fires onboarding_intent_selected with intent scan and pushes the leak-scan route', async () => {
+    const view = await renderScreen();
+    await pressLabel(view, strings.onboarding.intentScanTitle);
+    expect(trackMock).toHaveBeenCalledWith('onboarding_intent_selected', { intent: 'scan' });
+    expect(mockPush).toHaveBeenCalledWith('/leak-scan');
+  });
+
+  // Door 1 (W2, "the app is the onboarding"): track no longer pushes a
+  // guided-log route, it replaces straight into Today with firstLog=1.
+  it('track intent replaces into Today with the firstLog param instead of pushing a route', async () => {
+    const view = await renderScreen();
+    await pressLabel(view, strings.onboarding.intentTrackTitle);
+    expect(trackMock).toHaveBeenCalledWith('onboarding_intent_selected', { intent: 'track' });
+    expect(mockReplace).toHaveBeenCalledWith('/(tabs)?view=spent&firstLog=1');
+    expect(mockPush).not.toHaveBeenCalled();
+  });
+
+  // Door 3 (W3, "the app is the onboarding" complete): break no longer pushes
+  // the deleted audit-subs route either, it replaces straight into Today's
+  // Kept view with breakEntry=1, same pattern as track's firstLog=1.
+  it('break intent replaces into Today with the breakEntry param instead of pushing a route', async () => {
+    const view = await renderScreen();
+    await pressLabel(view, strings.onboarding.intentBreakTitle);
+    expect(trackMock).toHaveBeenCalledWith('onboarding_intent_selected', { intent: 'break' });
+    expect(mockReplace).toHaveBeenCalledWith('/(tabs)?view=kept&breakEntry=1');
+    expect(mockPush).not.toHaveBeenCalled();
+  });
 
   it('fires onboarding_intent_skipped on skip and lands on Today', async () => {
     const view = await renderScreen();

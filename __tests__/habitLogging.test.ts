@@ -9,6 +9,7 @@ import {
   displayChapter,
   identityLineForTotal,
   isSameDay,
+  keptOnDay,
   milestoneCrossed,
   partialSlipCredit,
   slipFollowsStreak,
@@ -16,7 +17,7 @@ import {
   weekStats,
   weekStrip,
 } from '@/utils/habitLogging';
-import type { HabitLogEntry } from '@/types/habit';
+import type { HabitChangeGoal, HabitLogEntry } from '@/types/habit';
 
 // A fixed Wednesday so week-boundary tests are deterministic.
 // 2026-07-01 is a Wednesday.
@@ -252,6 +253,68 @@ describe('slipFollowsStreak', () => {
       entry('2026-06-30T08:00:00', 'slipped'),
     ];
     expect(slipFollowsStreak(logs, new Date('2026-07-01T08:00:00'))).toBe(false);
+  });
+});
+
+describe('keptOnDay', () => {
+  function goal(overrides: Partial<HabitChangeGoal> & { dayLogs: HabitLogEntry[] }): HabitChangeGoal {
+    const base: HabitChangeGoal = {
+      id: 'g1',
+      habitId: 'h1',
+      targetType: 'reduce_amount',
+      startDate: new Date('2026-06-01T00:00:00'),
+      currentStreak: 0,
+      longestStreak: 0,
+      savingsGoal: 0,
+      actualSavings: 0,
+      milestones: [],
+      logs: [],
+      skipValue: 600,
+      kept: 0,
+      totalSkips: 0,
+      highestMilestoneReached: 0,
+      trackingStart: new Date('2026-06-01T00:00:00'),
+      dayLogs: [],
+      firstRun: false,
+      backfillUsed: false,
+    };
+    return { ...base, ...overrides };
+  }
+
+  it('credits skipValue on a skip day', () => {
+    const g = goal({ skipValue: 600, dayLogs: [entry('2026-07-01T09:00:00', 'skipped')] });
+    expect(keptOnDay(g, WED)).toBe(600);
+  });
+
+  it('credits nothing on a plain slip day', () => {
+    const g = goal({ dayLogs: [entry('2026-07-01T09:00:00', 'slipped')] });
+    expect(keptOnDay(g, WED)).toBe(0);
+  });
+
+  it('credits the partial-slip amount on a partial slip day', () => {
+    const g = goal({
+      skipValue: 600,
+      dayLogs: [entry('2026-07-01T09:00:00', 'slipped', { partialAmount: 200 })],
+    });
+    expect(keptOnDay(g, WED)).toBe(400);
+  });
+
+  it('excludes a backfilled-yesterday entry from today', () => {
+    const g = goal({
+      skipValue: 600,
+      dayLogs: [entry('2026-06-30T09:00:00', 'skipped', { backfill: true })],
+    });
+    expect(keptOnDay(g, WED)).toBe(0);
+  });
+
+  it('is zero when dayLogs is undefined (legacy goal shape)', () => {
+    const g = goal({ dayLogs: undefined as unknown as HabitLogEntry[] });
+    expect(keptOnDay(g, WED)).toBe(0);
+  });
+
+  it('is zero for a day with no entry at all', () => {
+    const g = goal({ dayLogs: [] });
+    expect(keptOnDay(g, WED)).toBe(0);
   });
 });
 

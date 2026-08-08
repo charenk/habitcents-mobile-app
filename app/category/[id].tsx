@@ -16,7 +16,7 @@ import { useCurrency } from '@/contexts/CurrencyContext';
 import { useCategories } from '@/contexts/CategoriesContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
 import { AddCategoryModal } from '@/components/AddCategoryModal';
-import type { AppTheme } from '@/constants/theme';
+import { typeScale, type AppTheme } from '@/constants/theme';
 import type { CategoryIcon } from '@/types/category';
 import type { Expense } from '@/types/expense';
 import { strings } from '@/constants/strings';
@@ -214,7 +214,10 @@ export default function CategoryDetailScreen() {
               color={category.color}
             />
           </View>
-          <Text style={styles.title}>{category.name}</Text>
+          {/* Serif titles end in a period, category names included (spec 01 s2). */}
+          <Text style={styles.title}>
+            {/\.$/.test(category.name) ? category.name : `${category.name}.`}
+          </Text>
           {category.monthlyBudget && (
             <Text style={styles.budgetText}>
               {strings.categoryDetail.budget(format(category.monthlyBudget))}
@@ -380,15 +383,20 @@ function createStyles(theme: AppTheme) {
       justifyContent: 'center',
       marginBottom: 16,
     },
+    // Serif screen title, like Today / Money / Insights.
     title: {
-      fontSize: 28,
-      fontWeight: '700',
-      color: theme.text,
-      marginBottom: 4,
+      fontSize: typeScale.screenTitle,
+      lineHeight: 40,
+      fontFamily: theme.fonts.display,
+      color: theme.ink,
+      includeFontPadding: false,
+      marginBottom: 6,
     },
     budgetText: {
-      fontSize: 15,
-      color: theme.textSecondary,
+      fontSize: typeScale.body,
+      fontFamily: theme.fonts.ui,
+      color: theme.slate,
+      lineHeight: 22,
     },
     summaryCard: {
       backgroundColor: theme.surface,
