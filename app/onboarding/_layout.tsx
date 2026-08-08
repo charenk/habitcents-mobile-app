@@ -8,7 +8,6 @@ export default function OnboardingLayout() {
       <Stack.Screen name="audit-subs" />
       <Stack.Screen name="audit-vices" />
       <Stack.Screen name="reveal" />
-      <Stack.Screen name="guided-log" />
       <Stack.Screen name="success" />
     </Stack>
   );

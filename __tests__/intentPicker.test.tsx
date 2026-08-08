@@ -99,7 +99,6 @@ describe('Onboarding intent picker', () => {
   });
 
   it.each([
-    ['track', 'intentTrackTitle', '/onboarding/guided-log'],
     ['scan', 'intentScanTitle', '/leak-scan'],
     ['break', 'intentBreakTitle', '/onboarding/audit-subs'],
   ] as const)(
@@ -111,6 +110,16 @@ describe('Onboarding intent picker', () => {
       expect(mockPush).toHaveBeenCalledWith(route);
     }
   );
+
+  // Door 1 (W2, "the app is the onboarding"): track no longer pushes a
+  // guided-log route, it replaces straight into Today with firstLog=1.
+  it('track intent replaces into Today with the firstLog param instead of pushing a route', async () => {
+    const view = await renderScreen();
+    await pressLabel(view, strings.onboarding.intentTrackTitle);
+    expect(trackMock).toHaveBeenCalledWith('onboarding_intent_selected', { intent: 'track' });
+    expect(mockReplace).toHaveBeenCalledWith('/(tabs)?view=spent&firstLog=1');
+    expect(mockPush).not.toHaveBeenCalled();
+  });
 
   it('fires onboarding_intent_skipped on skip and lands on Today', async () => {
     const view = await renderScreen();

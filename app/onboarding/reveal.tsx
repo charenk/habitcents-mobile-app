@@ -32,7 +32,7 @@ export default function OnboardingRevealScreen() {
   const theme = useTheme();
   const { currency, format } = useCurrency();
   const styles = useMemo(() => createStyles(theme), [theme]);
-  const { auditAnswers, markHabitStarted, completeStep } = useOnboarding();
+  const { auditAnswers, markHabitStarted, completeStep, skipStep } = useOnboarding();
   const { seedDiscoveredHabit, startBreakingHabit, getHabitById } = useHabits();
   const { getCategoryByName } = useCategories();
 
@@ -63,14 +63,22 @@ export default function OnboardingRevealScreen() {
     }
   }, [projection]);
 
-  const goToGuidedLog = async () => {
+  // W2 ("the app is the onboarding") retires the practice-log screen this
+  // used to push to. The audit/break path here isn't Door 1 (that's
+  // intent.tsx's track card, which now lands straight on Today), so it keeps
+  // its own success.tsx ending; skipStep('guided_log') advances the stored
+  // step machine past the now-nonexistent screen honestly (it really was
+  // never shown) rather than leaving currentStep stuck at 'guided_log'.
+  // Door 3's unit owns the full rewrite this implies for the step machine.
+  const goToSuccess = async () => {
     await completeStep('reveal');
-    router.push('/onboarding/guided-log');
+    await skipStep('guided_log');
+    router.push('/onboarding/success');
   };
 
   const handlePlugBiggestLeak = async () => {
     if (!candidate) {
-      void goToGuidedLog();
+      void goToSuccess();
       return;
     }
     const habit = await seedDiscoveredHabit(
@@ -80,7 +88,7 @@ export default function OnboardingRevealScreen() {
   };
 
   const handleJustStartLogging = () => {
-    void goToGuidedLog();
+    void goToSuccess();
   };
 
   const handlePickOneStart = async (skipValue: number, valueEdited: boolean) => {
@@ -88,12 +96,12 @@ export default function OnboardingRevealScreen() {
     await startBreakingHabit(pickOneHabitId, skipValue, valueEdited, 'detection');
     await markHabitStarted();
     setPickOneHabitId(null);
-    void goToGuidedLog();
+    void goToSuccess();
   };
 
   const handlePickOneCancel = () => {
     setPickOneHabitId(null);
-    void goToGuidedLog();
+    void goToSuccess();
   };
 
   React.useEffect(() => {
@@ -114,7 +122,7 @@ export default function OnboardingRevealScreen() {
         <View style={styles.footer}>
           <Button
             label={strings.onboarding.justStartLogging}
-            onPress={goToGuidedLog}
+            onPress={goToSuccess}
             style={styles.primaryButton}
           />
         </View>

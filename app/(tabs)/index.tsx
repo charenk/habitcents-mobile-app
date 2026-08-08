@@ -18,6 +18,7 @@ import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useHabits } from '@/contexts/HabitsContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
+import { useOnboarding } from '@/contexts/OnboardingContext';
 import { KeptHero } from '@/components/habit-logging/KeptHero';
 import { LeakCard } from '@/components/habit-logging/LeakCard';
 import { CheckInCard } from '@/components/habit-logging/CheckInCard';
@@ -25,10 +26,12 @@ import { PickOneSheet } from '@/components/habit-logging/PickOneSheet';
 import { PartialSlipSheet } from '@/components/habit-logging/PartialSlipSheet';
 import { CoachMomentSlot } from '@/components/habit-logging/CoachMomentSlot';
 import { SpentKeptChips, type SpentKeptView } from '@/components/habit-logging/SpentKeptChips';
-import { LogExpenseSheet } from '@/components/money/LogExpenseSheet';
+import { LogExpenseSheet, type LogExpenseSavedInfo } from '@/components/money/LogExpenseSheet';
 import { EditExpenseSheet } from '@/components/money/EditExpenseSheet';
 import { QuickLogRow } from '@/components/money/QuickLogRow';
 import { LoggedTodayList } from '@/components/money/LoggedTodayList';
+import { FirstRunRibbon } from '@/components/onboarding/FirstRunRibbon';
+import { useFirstRunRibbon } from '@/components/onboarding/useFirstRunRibbon';
 import { useCategories } from '@/contexts/CategoriesContext';
 import type { Expense, ExpenseCategory } from '@/types/expense';
 import { atMidnight, dayStateFor, isHabitLimitReached, keptOnDay } from '@/utils/habitLogging';
@@ -48,6 +51,17 @@ type HabitSection = {
   title: string;
   type: 'leaks' | 'breaking';
   data: (DetectedHabit | BreakingItem)[];
+};
+
+// Door 1 real-app first run (W2, "the app is the onboarding"). The FirstRunRibbon
+// storage record's `door` value for this flow; Door 3's unit picks its own.
+const DOOR1_KEY = 'door1';
+
+// FirstRunRibbon message keys -> copy. The hook only persists the key, so the
+// mapping (and therefore the wording) lives here with the rest of Today's copy.
+const FIRST_RUN_RIBBON_LINES: Record<string, string> = {
+  door1_saved: strings.today.firstRunRibbonSaved,
+  door1_gentle: strings.today.firstRunRibbonGentle,
 };
 
 /**
@@ -90,6 +104,7 @@ export default function TodayScreen() {
     isLoading,
     refreshHabits,
     dismissHabit,
+    seedDiscoveredHabit,
     startBreakingHabit,
     answerToday,
     answerEvent,
@@ -109,12 +124,40 @@ export default function TodayScreen() {
   } = useHabits();
 
   const { expenses } = useExpenses();
-  const { getVisibleCategories } = useCategories();
+  const { getVisibleCategories, getCategoryByName } = useCategories();
+  const {
+    isLoading: onboardingLoading,
+    isOnboardingComplete,
+    completeStep: completeOnboardingStep,
+    skipStep: skipOnboardingStep,
+    completeOnboarding,
+  } = useOnboarding();
 
   // Quick log and the logged-today list (spec 04 "Today" 3 and 4).
   const [logCategory, setLogCategory] = useState<ExpenseCategory | undefined>(undefined);
   const [logVisible, setLogVisible] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+
+  // Door 1 real-app first run (W2). door1CoachActive gates the LogExpenseSheet's
+  // coach caption and save/close wiring; it's true only between the auto-open
+  // effect below and whichever of the two completion paths runs first.
+  // firstLogSavedInfo is set only on a successful save, and drives the
+  // watch-nudge (merchant-gated) under the just-logged row. The ref, not
+  // state, guards exactly-once completion: handleFirstLogSaved and
+  // handleLogSheetClose can both fire from the same LogExpenseSheet.onClose
+  // call (save calls onSaved then onClose synchronously), and a ref reads
+  // correctly mid-callback where a state update would not have committed yet.
+  const [door1CoachActive, setDoor1CoachActive] = useState(false);
+  const [firstLogSavedInfo, setFirstLogSavedInfo] = useState<LogExpenseSavedInfo | null>(null);
+  const door1HandledRef = useRef(false);
+  const {
+    ribbonPending,
+    messageKey: ribbonMessageKey,
+    nudgeResolved,
+    showRibbon,
+    dismissRibbon,
+    resolveNudge,
+  } = useFirstRunRibbon(DOOR1_KEY);
 
   // Five tiles plus a "more" affordance, per spec. Unused while showCategoryTiles
   // stays false on QuickLogRow, kept computed so a one-line flip reactivates it.
@@ -153,12 +196,90 @@ export default function TodayScreen() {
   // Deep link support: an onboarding flow can land Today on a specific view
   // via ?view=kept|spent. Anything else (missing, malformed) is ignored and
   // the default (Spent) stands.
-  const params = useLocalSearchParams<{ view?: string }>();
+  const params = useLocalSearchParams<{ view?: string; firstLog?: string }>();
   useEffect(() => {
     if (params.view === 'kept' || params.view === 'spent') {
       setTodayView(params.view);
     }
   }, [params.view]);
+
+  // Door 1 real-app first run (W2): intent.tsx's track card lands here with
+  // firstLog=1 instead of pushing the retired guided-log screen. Opens the
+  // real LogExpenseSheet in place, once, the same openLogSheet every other
+  // caller uses. Guarded on isOnboardingComplete() (not just the ref) so a
+  // stale firstLog=1 in history (e.g. back-navigation) can never reopen the
+  // coach flow once onboarding is actually done.
+  useEffect(() => {
+    if (onboardingLoading) return;
+    if (params.firstLog !== '1') return;
+    if (door1HandledRef.current) return;
+    if (isOnboardingComplete()) return;
+    setDoor1CoachActive(true);
+    openLogSheet();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onboardingLoading, params.firstLog]);
+
+  // First save while the Door 1 coach flow is active: fires the guided-log
+  // analytics equivalent for funnel continuity, completes the same
+  // completeStep/completeOnboarding bookkeeping the retired guided-log
+  // screen used to (guarded, exactly once via the ref), and queues the
+  // FirstRunRibbon's "saved" line. The watch-nudge below reads
+  // firstLogSavedInfo directly, not the ribbon record.
+  const handleFirstLogSaved = useCallback((info: LogExpenseSavedInfo) => {
+    if (door1HandledRef.current) return;
+    door1HandledRef.current = true;
+    setDoor1CoachActive(false);
+    setFirstLogSavedInfo(info);
+    track('first_log_saved', { guided: true });
+    void completeOnboardingStep('guided_log');
+    void completeOnboarding();
+    void showRibbon('door1_saved');
+  }, [completeOnboardingStep, completeOnboarding, showRibbon]);
+
+  // The sheet's own dismiss path (backdrop, swipe, or the Save handler
+  // itself once it has already called onSaved above). Only acts when the
+  // save path hasn't already claimed this open (the ref check), so closing
+  // without saving still completes onboarding, just with the gentler line
+  // (they are already in the app; nothing here should trap them).
+  const handleLogSheetClose = useCallback(() => {
+    setLogVisible(false);
+    if (!door1CoachActive || door1HandledRef.current) return;
+    door1HandledRef.current = true;
+    setDoor1CoachActive(false);
+    void skipOnboardingStep('guided_log');
+    void completeOnboarding();
+    void showRibbon('door1_gentle');
+  }, [door1CoachActive, skipOnboardingStep, completeOnboarding, showRibbon]);
+
+  // Watch-nudge accept ("Buy this often? Watch it as a leak"): seeds an
+  // honestly-observed discovered habit from the one log that was just saved,
+  // no stated cadence, hasReliableRate false (never a fabricated monthly
+  // rate). Its job stops there; the leak surfaces in Kept's "Leaks found"
+  // like any other discovered habit, nothing here deep-links to it.
+  const handleAcceptWatchNudge = useCallback(async () => {
+    if (!firstLogSavedInfo?.merchant) return;
+    const categoryId =
+      getCategoryByName(firstLogSavedInfo.category)?.id ?? getCategoryByName('Other')?.id ?? 'Other';
+    await seedDiscoveredHabit({
+      merchantPattern: firstLogSavedInfo.merchant,
+      name: firstLogSavedInfo.merchant,
+      description: '',
+      categoryId,
+      averageAmount: firstLogSavedInfo.amount,
+      frequency: 'monthly',
+      occurrencesPerPeriod: 1,
+      totalMonthlySpend: firstLogSavedInfo.amount,
+      observedOnly: true,
+    });
+    await resolveNudge();
+  }, [firstLogSavedInfo, getCategoryByName, resolveNudge]);
+
+  const handleDismissWatchNudge = useCallback(() => {
+    void resolveNudge();
+  }, [resolveNudge]);
+
+  const watchNudgeVisible = !!firstLogSavedInfo?.merchant && !nudgeResolved;
+  const ribbonLine = ribbonMessageKey ? FIRST_RUN_RIBBON_LINES[ribbonMessageKey] ?? null : null;
 
   const handleTodayViewChange = useCallback((view: SpentKeptView) => {
     pagerInteracted.current = true;
@@ -448,6 +569,12 @@ export default function TodayScreen() {
         />
       </View>
 
+      {ribbonPending && ribbonLine ? (
+        <View style={styles.ribbonWrap}>
+          <FirstRunRibbon line={ribbonLine} onDismiss={dismissRibbon} />
+        </View>
+      ) : null}
+
       {/*
         DI-7 pager (ADR 0019): a plain horizontal ScrollView, pagingEnabled,
         native scrolling only. No react-native-gesture-handler, no
@@ -494,6 +621,38 @@ export default function TodayScreen() {
             <QuickLogRow onOpenSheet={openLogSheet} categories={quickCategories} />
             <View style={styles.loggedTodaySpacer}>
               <LoggedTodayList expenses={loggedToday} onEditExpense={setEditingExpense} />
+              {watchNudgeVisible ? (
+                // The watch-nudge (W2 item 3): UpcomingList's dashed-card
+                // grammar (components/money/UpcomingList.tsx `add`), one-shot
+                // for the door 1 first-run flow only, never a permanent Today
+                // feature. Two tap targets in one dashed card: the label
+                // accepts (seeds an honest discovered habit), "not now"
+                // dismisses; both resolve the nudge permanently.
+                <View style={styles.watchNudge}>
+                  <TouchableOpacity
+                    style={styles.watchNudgeAccept}
+                    onPress={handleAcceptWatchNudge}
+                    accessibilityRole="button"
+                    accessibilityLabel={strings.today.watchLeakNudgeLabel}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.watchNudgeLabel} numberOfLines={1}>
+                      {strings.today.watchLeakNudgeLabel}
+                    </Text>
+                  </TouchableOpacity>
+                  <Text style={styles.watchNudgeSeparator}>·</Text>
+                  <TouchableOpacity
+                    onPress={handleDismissWatchNudge}
+                    hitSlop={{ top: 12, bottom: 12, left: 8, right: 12 }}
+                    accessibilityRole="button"
+                    accessibilityLabel={strings.today.watchLeakNudgeDismiss}
+                  >
+                    <Text style={styles.watchNudgeDismissText}>
+                      {strings.today.watchLeakNudgeDismiss}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              ) : null}
             </View>
           </ScrollView>
         </View>
@@ -628,7 +787,9 @@ export default function TodayScreen() {
       <LogExpenseSheet
         visible={logVisible}
         initialCategory={logCategory}
-        onClose={() => setLogVisible(false)}
+        coachLine={door1CoachActive ? strings.today.firstLogCoachLine : undefined}
+        onSaved={door1CoachActive ? handleFirstLogSaved : undefined}
+        onClose={handleLogSheetClose}
       />
 
       <EditExpenseSheet
@@ -654,6 +815,12 @@ function createStyles(theme: AppTheme) {
       marginTop: 8,
       marginBottom: 12,
     },
+    // FirstRunRibbon (W2, Door 1 real-app first run): shares the chips row's
+    // gutter, sits under it on both panes since the pager starts below this.
+    ribbonWrap: {
+      paddingHorizontal: 20,
+      marginBottom: 12,
+    },
     // DI-7: the pager fills whatever vertical space is left below the chips
     // row, same as the single conditional pane did before it.
     pager: {
@@ -674,6 +841,41 @@ function createStyles(theme: AppTheme) {
     },
     loggedTodaySpacer: {
       marginTop: 12,
+    },
+    // Watch-nudge (W2 item 3): UpcomingList's dashed-card grammar
+    // (components/money/UpcomingList.tsx `add`), placed directly under the
+    // logged-today card so it reads as attached to the row that just landed.
+    watchNudge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      minHeight: 48,
+      borderRadius: radii.card,
+      borderWidth: 1.5,
+      borderStyle: 'dashed',
+      borderColor: theme.cloudDashed,
+      backgroundColor: theme.white,
+      paddingHorizontal: 16,
+      marginTop: 10,
+    },
+    watchNudgeAccept: {
+      flex: 1,
+      paddingVertical: 12,
+    },
+    watchNudgeLabel: {
+      fontFamily: theme.fonts.uiSemibold,
+      fontSize: 14,
+      color: theme.primaryDark,
+    },
+    watchNudgeSeparator: {
+      fontFamily: theme.fonts.ui,
+      fontSize: 14,
+      color: theme.mist,
+    },
+    watchNudgeDismissText: {
+      fontFamily: theme.fonts.ui,
+      fontSize: 14,
+      color: theme.mist,
     },
     listContent: {
       paddingHorizontal: 20,

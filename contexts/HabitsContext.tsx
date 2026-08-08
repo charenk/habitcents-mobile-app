@@ -79,6 +79,17 @@ type HabitsContextValue = {
     frequency: DetectedHabit['frequency'];
     occurrencesPerPeriod: number;
     totalMonthlySpend: number;
+    /**
+     * Door 1 watch-nudge (W2, app/(tabs)/index.tsx): a single just-logged
+     * expense carries no stated cadence, unlike the audit's evidence above
+     * (the user's own "about this often" arithmetic). When true, the seeded
+     * habit gets the honest observed-only shape detectHabits() uses for a
+     * group that hasn't been watched long enough for a rate (types/habit.ts
+     * "Observed evidence"): hasReliableRate false, observedCount 1, and no
+     * projected monthly figure is ever claimed. Omit/false preserves the
+     * existing stated-cadence behavior for the audit callers.
+     */
+    observedOnly?: boolean;
   }) => Promise<DetectedHabit>;
   /** Daily cadence: answer today's check-in question (spec §3.2). */
   answerToday: (goalId: string, state: AnswerState) => Promise<void>;
@@ -355,6 +366,7 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
     frequency: DetectedHabit['frequency'];
     occurrencesPerPeriod: number;
     totalMonthlySpend: number;
+    observedOnly?: boolean;
   }): Promise<DetectedHabit> => {
     const existing = habits.find(h => h.merchantPattern === input.merchantPattern);
 
@@ -389,10 +401,16 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
       // monthly line is their own arithmetic rather than an extrapolation from
       // a handful of logs: the rate is presentable from the start. There is no
       // per-buy history yet, so the spread collapses to the stated average.
-      observedTotal: input.totalMonthlySpend,
-      observedCount: input.occurrencesPerPeriod,
+      // observedOnly (Door 1 watch-nudge) has no stated cadence at all, just
+      // one real log, so it gets the honest opposite: hasReliableRate false
+      // and observedCount 1, same as an unwatched detectHabits() group. Every
+      // surface already consults hasReliableRate before showing a monthly
+      // figure, so totalMonthlySpend/occurrencesPerPeriod above are carried
+      // through unread rather than invented (never a fabricated rate).
+      observedTotal: input.observedOnly ? input.averageAmount : input.totalMonthlySpend,
+      observedCount: input.observedOnly ? 1 : input.occurrencesPerPeriod,
       spanDays: 0,
-      hasReliableRate: true,
+      hasReliableRate: !input.observedOnly,
       medianAmount: input.averageAmount,
       minAmount: input.averageAmount,
       maxAmount: input.averageAmount,
