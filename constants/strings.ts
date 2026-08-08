@@ -360,20 +360,29 @@ export const strings = {
   // and 05-copy.md). Sentence case, no em dashes; every amount below is a
   // display example only, real amounts always render via useCurrency().format.
   onboarding: {
-    // 3.1 Welcome (redesign step 03, screen 1)
+    // 3.1 Welcome (redesign step 03, screen 1; W1/ADR 0020+0022 replaces the
+    // outcome carousel with the honest-zero hero: the real KeptHero at
+    // cents=0 plus two value rows. A finance app never shows an invented
+    // total, so the only accumulated total this screen ever renders is the
+    // user's own ($0.00). valuePropLog is one of the two value-prop rows;
+    // valuePropSee/valuePropBreak were retired with the pre-carousel list.
     brandName: 'HabitCents',
     welcomeHeadline: "Your money has a story. Let's read it.",
-    // The three value props, stated up front rather than teased.
     valuePropLog: 'Log expenses in 10 seconds.',
-    valuePropSee: 'See where your money goes.',
-    valuePropBreak: 'Break the habit that costs you most.',
     welcomeSub: 'Everything stays on your phone. No bank login. No account.',
     getStarted: 'Get started',
-    howItWorks: 'How it works',
-    howItWorksRows: [
-      'Log expenses in 10 seconds.',
-      'We spot the habit that leaks the most.',
-      'Every time you skip it, we count the money you kept.',
+    // Rescued from the retired How-it-works sheet's third row; now the
+    // second honest-zero value row under the hero.
+    outcomeKeptCounts: 'Every time you skip it, we count the money you kept.',
+    // Example fragments under the hero (W1): per-skip example prices only,
+    // explicitly marked "for example", never an accumulated total. Rotates
+    // decoratively; never routed through useCurrency().format, these are
+    // fixed mockup content, same as a static design comp.
+    exampleSkipPrefix: 'for example:',
+    exampleSkips: [
+      'one skipped coffee keeps $6.50',
+      'one skipped delivery keeps $18.00',
+      'one skipped impulse buy keeps $12.50',
     ],
     // 3.2 Intent picker (redesign step 03, screen 2; replaces the two-door fork)
     intentTitle: 'What brings you here?',
@@ -389,7 +398,8 @@ export const strings = {
     intentBreakEyebrow: 'About a minute',
     intentBreakTitle: 'Break an expensive habit',
     intentBreakDescription: 'A 90-second audit finds the leak quietly costing you the most.',
-    skipForNow: 'Skip for now',
+    // Ratified inviting phrasing (Charen, 2026-08-04); replaces 'Skip for now'.
+    skipForNow: "I'll explore on my own",
     // "Something else" is shared: the intent picker's audit chips used to own
     // it, and the Door 3 break sheet (below) reuses it rather than duplicating.
     somethingElse: 'Something else',

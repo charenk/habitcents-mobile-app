@@ -1,11 +1,13 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Animated, View, Text, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useOnboarding } from '@/contexts/OnboardingContext';
-import { Button, Icon, Sheet } from '@/components/ui';
+import { Button, Icon } from '@/components/ui';
 import type { IconName } from '@/components/ui';
+import { KeptHero } from '@/components/habit-logging/KeptHero';
+import { useReducedMotion } from '@/utils/motion';
 import type { AppTheme } from '@/constants/theme';
 import { typeScale } from '@/constants/theme';
 import type { OnboardingStep } from '@/types/onboarding';
@@ -35,21 +37,83 @@ const STEP_ROUTE: Partial<Record<OnboardingStep, string>> = {
   success: '/onboarding/intent',
 };
 
-// The three value props, stated up front (design/redesign-handoff/03-onboarding.md
-// screen 1) rather than teased behind a carousel.
-const VALUE_PROPS: { icon: IconName; text: string }[] = [
+// The two honest-zero value rows under the hero (W1, ADR 0020/0022).
+const VALUE_ROWS: { icon: IconName; text: string }[] = [
   { icon: 'Timer', text: strings.onboarding.valuePropLog },
-  { icon: 'ChartPie', text: strings.onboarding.valuePropSee },
-  { icon: 'Sprout', text: strings.onboarding.valuePropBreak },
+  { icon: 'ChartLine', text: strings.onboarding.outcomeKeptCounts },
 ];
 
-const HOW_IT_WORKS_ICONS: IconName[] = ['Timer', 'ChartPie', 'Sprout'];
+const EXAMPLE_ROTATE_MS = 2600;
+const EXAMPLE_FADE_MS = 220;
 
 /**
- * Welcome (design/redesign-handoff/03-onboarding.md, screen 1). One screen, no
- * pager and no feature carousel: brand row, serif headline, the three value
- * props, the privacy line. Primary continues to the intent picker; "How it
- * works" opens a three-row sheet.
+ * The rotating "for example: ..." caption under the hero (W1). Cosmetic
+ * only: the accessibility label is pinned to the first example so VoiceOver
+ * never announces a rotation (PATTERN_VOCABULARY "anything mounted
+ * off-screen" spirit extended to anything that moves on its own; there is no
+ * live region here on purpose). A plain setInterval drives a single Animated
+ * opacity value with useNativeDriver true, one driver on one node, matching
+ * this app's motion rule after two release-build crashes from mixed drivers.
+ */
+function ExampleCaption({ theme, styles }: { theme: AppTheme; styles: Styles }) {
+  const reduceMotion = useReducedMotion();
+  const [index, setIndex] = useState(0);
+  const opacity = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    if (reduceMotion) return;
+    const id = setInterval(() => {
+      Animated.timing(opacity, {
+        toValue: 0,
+        duration: EXAMPLE_FADE_MS,
+        useNativeDriver: true,
+      }).start(() => {
+        setIndex(i => (i + 1) % strings.onboarding.exampleSkips.length);
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: EXAMPLE_FADE_MS,
+          useNativeDriver: true,
+        }).start();
+      });
+    }, EXAMPLE_ROTATE_MS);
+    return () => clearInterval(id);
+  }, [reduceMotion, opacity]);
+
+  const fragment = reduceMotion
+    ? strings.onboarding.exampleSkips[0]
+    : strings.onboarding.exampleSkips[index];
+
+  return (
+    <View
+      style={styles.exampleRow}
+      accessible
+      // Static first line on purpose: the rotation is decorative, not
+      // content, so the accessible label never changes underneath a reader.
+      accessibilityLabel={`${strings.onboarding.exampleSkipPrefix} ${strings.onboarding.exampleSkips[0]}`}
+    >
+      <Text style={styles.examplePrefix} importantForAccessibility="no">
+        {strings.onboarding.exampleSkipPrefix}{' '}
+      </Text>
+      <Animated.Text style={[styles.exampleFragment, { opacity }]} importantForAccessibility="no">
+        {fragment}
+      </Animated.Text>
+    </View>
+  );
+}
+
+/**
+ * Welcome (design/redesign-handoff/03-onboarding.md, screen 1; W1, ADR
+ * 0020/0022). Brand row, serif headline, the honest-zero hero, the privacy
+ * line. Primary continues to the intent picker.
+ *
+ * Honest-zero rule (Charen, 2026-08-04): a finance app never shows an
+ * invented total. The real KeptHero renders at cents=0, so it honestly says
+ * "$0.00 / your first skip starts this counter" by itself. Sample dollars
+ * appear only as per-skip example prices explicitly marked "for example",
+ * never as a fake accumulated total. This replaces
+ * components/onboarding/OutcomeCarousel.tsx (OB-5), which is retired along
+ * with the static three-row value-prop list and How-it-works sheet it once
+ * replaced.
  */
 export default function OnboardingWelcomeScreen() {
   const insets = useSafeAreaInsets();
@@ -57,7 +121,6 @@ export default function OnboardingWelcomeScreen() {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const { onboardingState, isLoading, completeStep } = useOnboarding();
-  const [howItWorksVisible, setHowItWorksVisible] = useState(false);
 
   useEffect(() => {
     if (isLoading) return;
@@ -94,13 +157,20 @@ export default function OnboardingWelcomeScreen() {
           {strings.onboarding.welcomeHeadline}
         </Text>
 
+        <View style={styles.heroSection}>
+          {/* Content column already carries the screen's 24pt gutter, so the
+              hero is not full-bleed here; no extra gutter style needed. */}
+          <KeptHero cents={0} />
+          <ExampleCaption theme={theme} styles={styles} />
+        </View>
+
         <View style={styles.valueProps}>
-          {VALUE_PROPS.map(prop => (
-            <View key={prop.text} style={styles.valueRow}>
+          {VALUE_ROWS.map(row => (
+            <View key={row.text} style={styles.valueRow}>
               <View style={styles.valueTile}>
-                <Icon name={prop.icon} size={16} color={theme.primaryDark} />
+                <Icon name={row.icon} size={16} color={theme.primaryDark} />
               </View>
-              <Text style={styles.valueText}>{prop.text}</Text>
+              <Text style={styles.valueText}>{row.text}</Text>
             </View>
           ))}
         </View>
@@ -110,30 +180,7 @@ export default function OnboardingWelcomeScreen() {
 
       <View style={styles.footer}>
         <Button label={strings.onboarding.getStarted} onPress={handleGetStarted} />
-        <Button
-          label={strings.onboarding.howItWorks}
-          variant="tertiary"
-          onPress={() => setHowItWorksVisible(true)}
-        />
       </View>
-
-      <Sheet
-        visible={howItWorksVisible}
-        onClose={() => setHowItWorksVisible(false)}
-        accessibilityLabel={strings.onboarding.howItWorks}
-      >
-        <View style={styles.sheetBody}>
-          {strings.onboarding.howItWorksRows.map((row, i) => (
-            <View key={row} style={styles.valueRow}>
-              <View style={styles.valueTile}>
-                <Icon name={HOW_IT_WORKS_ICONS[i]} size={16} color={theme.primaryDark} />
-              </View>
-              <Text style={styles.valueText}>{row}</Text>
-            </View>
-          ))}
-          <Button label={strings.common.ok} onPress={() => setHowItWorksVisible(false)} />
-        </View>
-      </Sheet>
     </View>
   );
 }
@@ -175,6 +222,25 @@ function createStyles(theme: AppTheme) {
       color: theme.ink,
       marginBottom: 28,
     },
+    heroSection: {
+      marginBottom: 24,
+    },
+    exampleRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'center',
+      marginTop: 10,
+    },
+    examplePrefix: {
+      fontSize: typeScale.caption,
+      fontFamily: theme.fonts.ui,
+      color: theme.mist,
+    },
+    exampleFragment: {
+      fontSize: typeScale.caption,
+      fontFamily: theme.fonts.ui,
+      color: theme.slate,
+    },
     valueProps: {
       gap: 12,
       marginBottom: 24,
@@ -208,13 +274,8 @@ function createStyles(theme: AppTheme) {
     footer: {
       paddingHorizontal: 24,
       paddingBottom: 16,
-      gap: 6,
-    },
-    sheetBody: {
-      paddingHorizontal: 20,
-      paddingTop: 16,
-      paddingBottom: 8,
-      gap: 16,
     },
   });
 }
+
+type Styles = ReturnType<typeof createStyles>;

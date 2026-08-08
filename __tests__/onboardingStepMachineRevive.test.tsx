@@ -37,6 +37,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { act, cleanup, render } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '@/contexts/ThemeContext';
+import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { OnboardingProvider } from '@/contexts/OnboardingContext';
 import OnboardingWelcomeScreen from '@/app/onboarding/welcome';
 import type { OnboardingState } from '@/types/onboarding';
@@ -53,7 +54,11 @@ function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SafeAreaProvider initialMetrics={initialMetrics}>
       <ThemeProvider>
-        <OnboardingProvider>{children}</OnboardingProvider>
+        {/* The honest-zero welcome renders the real KeptHero, which reads
+            useCurrency; the provider joined the wrapper at the W1+W3 merge. */}
+        <CurrencyProvider>
+          <OnboardingProvider>{children}</OnboardingProvider>
+        </CurrencyProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );
