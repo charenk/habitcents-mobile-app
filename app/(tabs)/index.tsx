@@ -15,7 +15,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
-import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useHabits } from '@/contexts/HabitsContext';
@@ -859,22 +858,20 @@ export default function TodayScreen() {
                   icon="ChartLine"
                   title={strings.insights.leaksEmptyTitle}
                   body={strings.insights.leaksEmptyBody}
+                  cta={{
+                    label: strings.habitLogging.logAnExpense,
+                    // The quick-log card now lives on the Spent view, not the
+                    // Money tab, so the CTA switches views in place rather
+                    // than navigating away (was router.push('/(tabs)/money')).
+                    // Routed through the same tap-like interaction flag as a
+                    // chip tap so the pager animates over to match (DI-7).
+                    onPress: () => {
+                      pagerInteracted.current = true;
+                      setTodayView('spent');
+                    },
+                  }}
                 />
               )}
-              <Button
-                variant="secondary"
-                label={strings.habitLogging.logAnExpense}
-                // The quick-log card now lives on the Spent view, not the Money
-                // tab, so the CTA switches views in place rather than navigating
-                // away (was router.push('/(tabs)/money')). Routed through the
-                // same tap-like interaction flag as a chip tap so the pager
-                // animates over to match (DI-7).
-                onPress={() => {
-                  pagerInteracted.current = true;
-                  setTodayView('spent');
-                }}
-                style={styles.emptyCta}
-              />
               {firstLogCardId && (
                 <View style={styles.emptyCoachMoment}>
                   <CoachMomentSlot text={cardText(firstLogCardId)} />
@@ -1063,9 +1060,6 @@ function createStyles(theme: AppTheme) {
       paddingHorizontal: 20,
       paddingTop: 24,
       paddingBottom: 100,
-    },
-    emptyCta: {
-      marginTop: 20,
     },
     emptyCoachMoment: {
       alignSelf: 'stretch',
