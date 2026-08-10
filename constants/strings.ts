@@ -311,12 +311,19 @@ export const strings = {
     planFree: 'Free plan · 1 habit',
     groupPreferences: 'Preferences',
     groupAbout: 'About',
-    premiumRow: 'Premium',
+    subscriptionRow: 'Subscription',
+    subscriptionValueFree: 'Free',
     restoreRow: 'Restore purchases',
     signOutRow: 'Sign out',
     signOutHint: 'data stays on this device',
     signOutToast: 'Signed out. Your data stays on this device.',
     versionRow: 'Version',
+    // Row affordance vocabulary (design/row-affordances): legal rows leave the
+    // app for the browser; a failed Linking.openURL now surfaces a toast
+    // instead of failing silently.
+    linkOpenFailed: 'Could not open the link.',
+    mailOpenFailed: 'Could not open mail.',
+    supportEmail: 'support@habitcents.com',
   },
   // Profile page (design/header-unification U4, ADR 0019). Settings moved from
   // a bottom sheet behind Today's gear to a pushed route reachable from every

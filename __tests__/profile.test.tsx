@@ -43,6 +43,7 @@ jest.mock('@/utils/purchases', () => {
 });
 
 import React from 'react';
+import { Linking } from 'react-native';
 import { act, cleanup, fireEvent, render } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '@/contexts/ThemeContext';
@@ -52,6 +53,7 @@ import { ToastProvider } from '@/components/ui/Toast';
 import ProfileScreen from '@/app/profile';
 import { clearOnboarding } from '@/utils/storage';
 import { strings } from '@/constants/strings';
+import { settingsRowLabel } from '@/utils/a11y';
 
 // Non-zero frame + insets so useSafeAreaInsets resolves without a live layout.
 const initialMetrics = {
@@ -91,9 +93,13 @@ beforeEach(() => {
   (clearOnboarding as jest.Mock).mockClear();
   mockRestore.mockReset();
   mockRestore.mockResolvedValue({ ok: true, mode: 'mock', entitlement: 'free' });
+  jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
 });
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  jest.restoreAllMocks();
+});
 
 describe('Profile', () => {
   it('renders the title, plan line and every row', async () => {
@@ -106,15 +112,28 @@ describe('Profile', () => {
 
     // Rows are found by their accessibility label, which is what VoiceOver reads.
     expect(view.getByLabelText('Currency, USD')).toBeTruthy();
-    expect(view.getByLabelText(strings.settings.premiumRow)).toBeTruthy();
+    expect(
+      view.getByLabelText(
+        settingsRowLabel(strings.settings.subscriptionRow, strings.settings.subscriptionValueFree)
+      )
+    ).toBeTruthy();
     expect(view.getByLabelText(strings.settings.restoreRow)).toBeTruthy();
     expect(view.getByLabelText(strings.settings.privacyPolicy)).toBeTruthy();
     expect(view.getByLabelText(strings.settings.termsOfService)).toBeTruthy();
-    expect(view.getByLabelText(strings.profile.supportRow)).toBeTruthy();
+    expect(
+      view.getByLabelText(settingsRowLabel(strings.profile.supportRow, strings.settings.supportEmail))
+    ).toBeTruthy();
     expect(view.getByLabelText(strings.settings.signOutRow)).toBeTruthy();
     expect(view.getByLabelText('Version, 1.0.0')).toBeTruthy();
     // The sign-out reassurance sits on the right of its row.
     expect(view.getByText(strings.settings.signOutHint)).toBeTruthy();
+    // Subscription mirrors Currency: a status value left of the chevron. The
+    // dev menu's Entitlement row (gated on DEV_MENU_ENABLED) can render the
+    // same "Free" text, so this only asserts the value renders at least once
+    // rather than requiring a single match.
+    expect(view.getAllByText(strings.settings.subscriptionValueFree).length).toBeGreaterThan(0);
+    // Support shows the address it will mail to, right-aligned as the row's value.
+    expect(view.getByText(strings.settings.supportEmail)).toBeTruthy();
   });
 
   it('sign out clears the local session, pops back, replaces to onboarding and toasts', async () => {
@@ -130,15 +149,56 @@ describe('Profile', () => {
     expect(view.getByText(strings.settings.signOutToast)).toBeTruthy();
   });
 
-  it('premium row pushes the paywall with the settings placement, no back needed', async () => {
+  it('subscription row pushes the paywall with the settings placement, no back needed', async () => {
     const view = await renderProfile();
 
     await act(async () => {
-      fireEvent.press(view.getByLabelText(strings.settings.premiumRow));
+      fireEvent.press(
+        view.getByLabelText(
+          settingsRowLabel(strings.settings.subscriptionRow, strings.settings.subscriptionValueFree)
+        )
+      );
     });
 
     expect(mockPush).toHaveBeenCalledWith('/paywall?placement=settings');
     expect(mockBack).not.toHaveBeenCalled();
+  });
+
+  it('support row opens the mail composer at the shown address', async () => {
+    const view = await renderProfile();
+
+    await act(async () => {
+      fireEvent.press(
+        view.getByLabelText(settingsRowLabel(strings.profile.supportRow, strings.settings.supportEmail))
+      );
+    });
+
+    expect(Linking.openURL).toHaveBeenCalledWith(`mailto:${strings.settings.supportEmail}`);
+  });
+
+  it('support row toasts on a Linking failure instead of failing silently', async () => {
+    (Linking.openURL as jest.Mock).mockRejectedValueOnce(new Error('no mail client'));
+    const view = await renderProfile();
+
+    await act(async () => {
+      fireEvent.press(
+        view.getByLabelText(settingsRowLabel(strings.profile.supportRow, strings.settings.supportEmail))
+      );
+    });
+
+    expect(await view.findByText(strings.settings.mailOpenFailed)).toBeTruthy();
+  });
+
+  it('privacy policy row opens the browser and toasts on a Linking failure', async () => {
+    (Linking.openURL as jest.Mock).mockRejectedValueOnce(new Error('no browser'));
+    const view = await renderProfile();
+
+    await act(async () => {
+      fireEvent.press(view.getByLabelText(strings.settings.privacyPolicy));
+    });
+
+    expect(Linking.openURL).toHaveBeenCalledWith('https://habitcents.com/privacy');
+    expect(await view.findByText(strings.settings.linkOpenFailed)).toBeTruthy();
   });
 
   it('restore purchases reports no-purchases-found in a toast', async () => {

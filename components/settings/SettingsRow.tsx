@@ -7,6 +7,14 @@
  *
  * Interactive rows are buttons; a static row (Version, Build) stays a labelled,
  * non-actionable element so VoiceOver never offers a dead activation.
+ *
+ * Trailing affordance vocabulary (design/row-affordances, design/PATTERN_
+ * VOCABULARY.md "Rows"): the trailing slot can carry a status value (13pt
+ * slate) and exactly one of chevron (in-app destination: a screen or a sheet)
+ * or externalLink (leaves the app for the browser). A row with neither is an
+ * in-place action; it still gets a pressed state, but nothing in the trailing
+ * slot promises where the tap goes. Passing both chevron and externalLink is
+ * a caller error the type system does not currently forbid; don't do it.
  */
 import React from 'react';
 import {
@@ -44,7 +52,10 @@ export type SettingsRowProps = {
   /** Trailing hint in small mist type, e.g. the sign-out reassurance. */
   hint?: string;
   onPress?: () => void;
+  /** In-app destination: pushes a screen or opens a sheet. */
   chevron?: boolean;
+  /** Leaves the app for the browser. Mutually exclusive with chevron. */
+  externalLink?: boolean;
   destructive?: boolean;
   /** Last row in its group: no separator below it. */
   last?: boolean;
@@ -59,6 +70,7 @@ export function SettingsRow({
   hint,
   onPress,
   chevron,
+  externalLink,
   destructive,
   last,
   accessibilityLabel,
@@ -73,6 +85,7 @@ export function SettingsRow({
         {value ? <Text style={styles.rowValue}>{value}</Text> : null}
         {hint ? <Text style={styles.rowHint}>{hint}</Text> : null}
         {chevron ? <Icon name="ChevronRight" size={16} color={theme.mist} /> : null}
+        {externalLink ? <Icon name="ExternalLink" size={16} color={theme.mist} /> : null}
       </View>
     </>
   );

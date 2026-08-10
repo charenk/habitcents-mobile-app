@@ -43,7 +43,7 @@ import { clearOnboarding } from '@/utils/storage';
 
 const PRIVACY_POLICY_URL = 'https://habitcents.com/privacy';
 const TERMS_OF_SERVICE_URL = 'https://habitcents.com/terms';
-const SUPPORT_URL = 'https://habitcents.com/support';
+const SUPPORT_MAILTO_URL = `mailto:${strings.settings.supportEmail}`;
 
 export default function ProfileScreen(): React.JSX.Element {
   const theme = useTheme();
@@ -73,9 +73,18 @@ export default function ProfileScreen(): React.JSX.Element {
   };
 
   // Pushing the paywall on top of Profile reads naturally, so this does not
-  // back() first.
-  const handlePremiumPress = () => {
+  // back() first. Placement stays 'settings' for funnel continuity even
+  // though the row now reads Subscription (ADR 0019).
+  const handleSubscriptionPress = () => {
     router.push('/paywall?placement=settings');
+  };
+
+  // Legal rows leave the app for the browser (external-link affordance,
+  // design/row-affordances). A device with no browser handler, or a rejected
+  // universal link, used to fail silently; it now surfaces a toast so the tap
+  // is never a dead end.
+  const openExternal = (url: string, failureMessage: string) => {
+    Linking.openURL(url).catch(() => show(failureMessage));
   };
 
   // Restore (BET-004, mock mode). Same outcome branching the old sheet used;
@@ -143,15 +152,21 @@ export default function ProfileScreen(): React.JSX.Element {
             label={strings.settings.currency}
             value={currency}
             onPress={handleCurrencyPress}
+            chevron
             accessibilityLabel={settingsRowLabel(strings.settings.currency, currency)}
           />
           <SettingsRow
             styles={styles}
             theme={theme}
-            label={strings.settings.premiumRow}
-            onPress={handlePremiumPress}
+            label={strings.settings.subscriptionRow}
+            value={strings.settings.subscriptionValueFree}
+            onPress={handleSubscriptionPress}
             chevron
             last
+            accessibilityLabel={settingsRowLabel(
+              strings.settings.subscriptionRow,
+              strings.settings.subscriptionValueFree
+            )}
           />
         </View>
 
@@ -169,25 +184,32 @@ export default function ProfileScreen(): React.JSX.Element {
             styles={styles}
             theme={theme}
             label={strings.settings.privacyPolicy}
+            externalLink
             onPress={() => {
-              Linking.openURL(PRIVACY_POLICY_URL).catch(() => {});
+              openExternal(PRIVACY_POLICY_URL, strings.settings.linkOpenFailed);
             }}
           />
           <SettingsRow
             styles={styles}
             theme={theme}
             label={strings.settings.termsOfService}
+            externalLink
             onPress={() => {
-              Linking.openURL(TERMS_OF_SERVICE_URL).catch(() => {});
+              openExternal(TERMS_OF_SERVICE_URL, strings.settings.linkOpenFailed);
             }}
           />
           <SettingsRow
             styles={styles}
             theme={theme}
             label={strings.profile.supportRow}
+            value={strings.settings.supportEmail}
             onPress={() => {
-              Linking.openURL(SUPPORT_URL).catch(() => {});
+              openExternal(SUPPORT_MAILTO_URL, strings.settings.mailOpenFailed);
             }}
+            accessibilityLabel={settingsRowLabel(
+              strings.profile.supportRow,
+              strings.settings.supportEmail
+            )}
           />
           <SettingsRow
             styles={styles}
@@ -290,7 +312,7 @@ function createStyles(theme: AppTheme) {
     },
     rowValue: {
       fontFamily: theme.fonts.ui,
-      fontSize: typeScale.body,
+      fontSize: typeScale.secondary,
       color: theme.slate,
     },
     rowHint: {

@@ -24,6 +24,7 @@ import {
   CreditCard,
   Dumbbell,
   Ellipsis,
+  ExternalLink,
   FileText,
   Film,
   Flag,
@@ -93,6 +94,9 @@ const GLYPHS = {
   // Onboarding welcome + intent picker (redesign step 03).
   ChartPie,
   Timer,
+  // Row affordance vocabulary (design/row-affordances): a row leaves the app
+  // for the browser.
+  ExternalLink,
   // Leak Scan intake: CSV file chips (redesign step 03, path B).
   FileText,
   TrendingUp,
