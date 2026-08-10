@@ -26,8 +26,9 @@
  *
  * Category (U2): a single sideways-scrolling row of labeled tags
  * (CategoryChipRow) replaces the emoji-tile grid. CategoryTilePicker itself
- * stays in the codebase (AddUpcomingSheet still renders it), so only its
- * stored-name helpers are imported here.
+ * was never rendered anywhere in the app and was deleted; its stored-name
+ * helper (`toExpenseCategory`) moved to utils/expenseCategory.ts and is
+ * imported from there here.
  *
  * Merchant (U2): the recent-merchant chip row now renders in BOTH modes
  * (the source is unchanged: the user's own recent logs). In edit mode the
@@ -61,9 +62,9 @@ import { useCurrency } from '@/contexts/CurrencyContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import type { Expense, ExpenseCategory } from '@/types/expense';
+import { toExpenseCategory } from '@/utils/expenseCategory';
 import { hapticSuccess } from '@/utils/motion';
 import { CategoryChipRow } from './CategoryChipRow';
-import { toExpenseCategory } from './CategoryTilePicker';
 
 /** How many recent-merchant chips the sheet offers before it stops (log
  *  mode's natural recency list; edit mode may add one more, see below). */

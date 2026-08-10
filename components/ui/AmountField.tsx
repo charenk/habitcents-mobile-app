@@ -72,7 +72,11 @@ export function AmountField({
   }, [autoFocus]);
 
   const handleChangeText = (raw: string) => {
-    const sanitized = sanitizeAmountInput(raw);
+    // Passing the field's current text lets sanitizeAmountInput tell a paste
+    // (a multi-character delta, formatted-number separator rules) apart from
+    // a single keystroke (comma is the decimal key, first separator wins) so
+    // pasting "1,234.56" doesn't silently become 1.23 (utils/amountInput.ts).
+    const sanitized = sanitizeAmountInput(raw, text);
     setText(sanitized);
     const cents = keypadValueToCents(sanitized);
     lastReportedCents.current = cents;
