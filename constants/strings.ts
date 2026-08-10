@@ -713,8 +713,14 @@ export const strings = {
       `${count} leak${count === 1 ? '' : 's'} found, none managed yet`,
     // Spent
     spentGroupHeader: (dayLabel: string, total: string) => `${dayLabel} · ${total}`,
+    // "Today" / "Yesterday" combined with a formatted date for the eyebrow,
+    // e.g. "Today · Aug 10" (SpentList dayLabelFor is the one place this runs).
+    spentDayLabel: (dayLabel: string, date: string) => `${dayLabel} · ${date}`,
     spentToday: 'Today',
     spentYesterday: 'Yesterday',
+    // Today section, no rows yet. Deliberately compact, one line, not the
+    // full EmptyState primitive, so past days stay visible below it.
+    spentTodayEmpty: "Nothing yet today. Add it if you spent, and enjoy it if you didn't.",
     spentEditHint: 'Tap a row to edit or delete it.',
     spentEmptyTitle: 'Nothing logged yet',
     spentEmptyBody: 'Log your first in about 10 seconds. Amount first, then tap a category.',
