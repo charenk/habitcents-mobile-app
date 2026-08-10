@@ -3,9 +3,10 @@
  * Alert.alert currency picker at app/profile.tsx (8 stacked system buttons,
  * no indicator of the current selection, centered text). Rows are
  * left-aligned and speak the same vocabulary as the Profile row that opens
- * them (the code, e.g. USD), the selected row carries a sage check plus
+ * them (the code, e.g. USD), the selected row carries an ink check plus
  * accessibilityState.selected so the status reads by shape and label, not
- * color alone, and Cancel is the only centered text in the sheet.
+ * color alone (sage is reserved for kept outcomes, not list selection),
+ * and Cancel is the only centered text in the sheet.
  */
 import React, { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -59,7 +60,7 @@ export function CurrencySheet({ visible, onClose }: CurrencySheetProps): React.J
               ]}
             >
               <Text style={styles.rowLabel}>{label}</Text>
-              {selected ? <Icon name="Check" size={20} color={theme.primary} /> : null}
+              {selected ? <Icon name="Check" size={20} color={theme.ink} /> : null}
             </Pressable>
           );
         })}

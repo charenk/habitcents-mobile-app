@@ -15,8 +15,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
-import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { Button } from '@/components/ui/Button';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useHabits } from '@/contexts/HabitsContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
@@ -849,28 +849,37 @@ export default function TodayScreen() {
                     <Text style={styles.progressCountSuffix}>{strings.habits.logsAtSamePlaceSuffix}</Text>
                   </Text>
                   <Text style={styles.progressBody}>{strings.habits.logsAtSamePlaceBody}</Text>
+                  {/* The card says "keep logging"; the button below is how.
+                      Same in-place view switch as the empty state's CTA. */}
+                  <Button
+                    variant="secondary"
+                    label={strings.habitLogging.logAnExpense}
+                    onPress={() => {
+                      pagerInteracted.current = true;
+                      setTodayView('spent');
+                    }}
+                    style={styles.progressCta}
+                  />
                 </View>
               ) : (
                 <EmptyState
                   icon="ChartLine"
                   title={strings.insights.leaksEmptyTitle}
                   body={strings.insights.leaksEmptyBody}
+                  cta={{
+                    label: strings.habitLogging.logAnExpense,
+                    // The quick-log card now lives on the Spent view, not the
+                    // Money tab, so the CTA switches views in place rather
+                    // than navigating away (was router.push('/(tabs)/money')).
+                    // Routed through the same tap-like interaction flag as a
+                    // chip tap so the pager animates over to match (DI-7).
+                    onPress: () => {
+                      pagerInteracted.current = true;
+                      setTodayView('spent');
+                    },
+                  }}
                 />
               )}
-              <Button
-                variant="secondary"
-                label={strings.habitLogging.logAnExpense}
-                // The quick-log card now lives on the Spent view, not the Money
-                // tab, so the CTA switches views in place rather than navigating
-                // away (was router.push('/(tabs)/money')). Routed through the
-                // same tap-like interaction flag as a chip tap so the pager
-                // animates over to match (DI-7).
-                onPress={() => {
-                  pagerInteracted.current = true;
-                  setTodayView('spent');
-                }}
-                style={styles.emptyCta}
-              />
               {firstLogCardId && (
                 <View style={styles.emptyCoachMoment}>
                   <CoachMomentSlot text={cardText(firstLogCardId)} />
@@ -1060,9 +1069,6 @@ function createStyles(theme: AppTheme) {
       paddingTop: 24,
       paddingBottom: 100,
     },
-    emptyCta: {
-      marginTop: 20,
-    },
     emptyCoachMoment: {
       alignSelf: 'stretch',
       marginTop: 24,
@@ -1154,6 +1160,10 @@ function createStyles(theme: AppTheme) {
       color: theme.textSecondary,
       marginTop: 6,
       lineHeight: 20,
+    },
+    progressCta: {
+      alignSelf: 'stretch',
+      marginTop: 12,
     },
   });
 }
