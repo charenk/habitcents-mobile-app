@@ -16,6 +16,7 @@ import { useRouter, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { Button } from '@/components/ui/Button';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useHabits } from '@/contexts/HabitsContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
@@ -852,6 +853,17 @@ export default function TodayScreen() {
                     <Text style={styles.progressCountSuffix}>{strings.habits.logsAtSamePlaceSuffix}</Text>
                   </Text>
                   <Text style={styles.progressBody}>{strings.habits.logsAtSamePlaceBody}</Text>
+                  {/* The card says "keep logging"; the button below is how.
+                      Same in-place view switch as the empty state's CTA. */}
+                  <Button
+                    variant="secondary"
+                    label={strings.habitLogging.logAnExpense}
+                    onPress={() => {
+                      pagerInteracted.current = true;
+                      setTodayView('spent');
+                    }}
+                    style={styles.progressCta}
+                  />
                 </View>
               ) : (
                 <EmptyState
@@ -1152,6 +1164,10 @@ function createStyles(theme: AppTheme) {
       color: theme.textSecondary,
       marginTop: 6,
       lineHeight: 20,
+    },
+    progressCta: {
+      alignSelf: 'stretch',
+      marginTop: 12,
     },
   });
 }
