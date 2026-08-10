@@ -11,10 +11,14 @@
  * Trailing affordance vocabulary (design/row-affordances, design/PATTERN_
  * VOCABULARY.md "Rows"): the trailing slot can carry a status value (13pt
  * slate) and exactly one of chevron (in-app destination: a screen or a sheet)
- * or externalLink (leaves the app for the browser). A row with neither is an
- * in-place action; it still gets a pressed state, but nothing in the trailing
- * slot promises where the tap goes. Passing both chevron and externalLink is
- * a caller error the type system does not currently forbid; don't do it.
+ * or externalLink (leaves the app for the browser). A value can instead be a
+ * shown mail address (Support): no chevron, no externalLink, but the address
+ * itself promises a mail action, opening the device's mail composer. A row
+ * whose value is a plain status, or that has no value at all, and carries
+ * neither chevron nor externalLink is an in-place action; it still gets a
+ * pressed state, but nothing in the trailing slot promises where the tap
+ * goes. Passing both chevron and externalLink is a caller error the type
+ * system does not currently forbid; don't do it.
  */
 import React from 'react';
 import {
