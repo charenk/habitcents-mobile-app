@@ -15,7 +15,8 @@ const EMOJI: Record<string, string> = {
   Food: '🍕',
   Shopping: '🛍',
   Entertainment: '🎬',
-  Transportation: '🚗',
+  // Bus, not Car's 🚗 (U2 config fix): the two used to share a glyph.
+  Transportation: '🚌',
   Car: '🚗',
   Mortgage: '🏠',
   'Mortgage/Rent': '🏠',
@@ -30,15 +31,20 @@ const COLOR: Record<string, string> = {
   Food: lightTheme.categoryColors.food,
   Shopping: lightTheme.categoryColors.shopping,
   Entertainment: lightTheme.categoryColors.entertainment,
-  Transportation: lightTheme.categoryColors.transport,
+  // Own hue (U2 config fix): used to collide with Car and Other, both on
+  // categoryColors.transport.
+  Transportation: lightTheme.categoryColors.transit,
   Car: lightTheme.categoryColors.transport,
   Mortgage: lightTheme.categoryColors.housing,
   'Mortgage/Rent': lightTheme.categoryColors.housing,
-  Utilities: lightTheme.categoryColors.entertainment,
+  // Own hue (U2 config fix): used to borrow Entertainment's amber.
+  Utilities: lightTheme.categoryColors.utility,
   Healthcare: lightTheme.categoryColors.health,
   'Software & Subscriptions': lightTheme.categoryColors.subscriptions,
   Groceries: lightTheme.categoryColors.groceries,
-  Other: lightTheme.categoryColors.transport,
+  // Neutral slate tint (U2 config fix), not a hue that means something
+  // elsewhere (this used to double up on Car/Transportation's transport blue).
+  Other: lightTheme.categoryColors.neutral,
 };
 
 /** Emoji for a category name; falls back to the generic card glyph. */

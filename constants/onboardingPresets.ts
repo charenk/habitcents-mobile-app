@@ -105,6 +105,40 @@ export const VICE_CATEGORIES: Record<ViceId, ExpenseCategory> = {
 
 export const VICE_IDS: ViceId[] = ['coffee', 'delivery', 'impulse'];
 
+/**
+ * Own glyphs for the vice presets (build 8 release-gate punchlist item). Both
+ * coffee and delivery map to VICE_CATEGORIES.Food, so a habit seeded from
+ * either preset used to inherit categoryEmoji('Food') = the pizza slice: "Coffee
+ * or tea out" showed a pizza in Money > Habits and the Insights leak rows.
+ * Keyed by ViceId rather than the display name so a future copy edit to
+ * VICE_NAMES can't silently break the lookup.
+ */
+const VICE_GLYPHS: Record<ViceId, string> = {
+  coffee: '☕',
+  delivery: '🥡',
+  impulse: '🛍️',
+};
+
+/**
+ * Glyph for a leak/habit row, vice-preset-aware. `BreakHabitSheet` writes the
+ * chosen preset's id (e.g. 'coffee') as `DetectedHabit.merchantPattern` for
+ * every non-custom pick (app/(tabs)/index.tsx handleBreakSheetStart), which
+ * is also exactly the ViceId shape, so that field doubles as a reliable "was
+ * this seeded from a vice preset" signal without a new stored field. Anything
+ * else (organic detection, a custom-named break, or no merchantPattern at
+ * all) falls back to the category glyph the caller already resolved.
+ */
+export function habitLeakGlyph(
+  habit: { merchantPattern?: string },
+  categoryEmoji: string
+): string {
+  const pattern = habit.merchantPattern;
+  if (pattern && (VICE_IDS as string[]).includes(pattern)) {
+    return VICE_GLYPHS[pattern as ViceId];
+  }
+  return categoryEmoji;
+}
+
 /** Lookup: the preset table for the given currency (falls back to USD row shape). */
 function tableFor(currency: CurrencyCode): CurrencyPresetTable {
   return PRESET_TABLE[currency] ?? PRESET_TABLE.USD;

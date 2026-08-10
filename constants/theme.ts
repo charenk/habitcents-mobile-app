@@ -135,6 +135,19 @@ export const lightTheme = {
     shopping: '#EC4899',
     subscriptions: '#06B6D4',
     health: '#34C39A',
+    // Added U2 (config fix: Transportation shared Car's emoji + transport
+    // blue). A muted brown, matching the identity the legacy
+    // DEFAULT_CATEGORIES table (types/category.ts) already assigns
+    // Transportation on the category detail screen, just not wired into the
+    // shared categoryEmoji.ts lookup before now.
+    transit: '#8D6E63',
+    // Added U2 (Utilities borrowed Entertainment's amber). Indigo: distinct
+    // from housing's lighter lavender-purple and transport's sky blue.
+    utility: '#5C6BC0',
+    // Added U2 (Other borrowed transport blue, colliding with both Car and
+    // Transportation). A neutral slate-family tint rather than a hue that
+    // means something elsewhere in the palette.
+    neutral: '#64748B',
   },
 
   // Type families. Instrument Serif is display-only (screen titles, hero and
@@ -157,7 +170,10 @@ export type CategoryColorKey =
   | 'entertainment'
   | 'shopping'
   | 'subscriptions'
-  | 'health';
+  | 'health'
+  | 'transit'
+  | 'utility'
+  | 'neutral';
 
 export type AppFonts = {
   display: string;

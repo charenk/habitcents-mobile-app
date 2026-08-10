@@ -671,7 +671,10 @@ export const strings = {
     watchLeakNudgeDismiss: 'not now',
   },
 
-  // Log and edit expense sheets (spec 04 "Log / Edit sheets").
+  // Log and edit expense sheets (spec 04 "Log / Edit sheets"). Merged into one
+  // ExpenseSheet component (U2, the expense drawer rebuild); the mode
+  // ('log' | 'edit') only changes the eyebrow, this coach line, the primary
+  // button label, and edit's added delete row.
   expenseSheet: {
     logEyebrow: 'Log expense',
     editEyebrow: 'Edit expense',
@@ -681,6 +684,11 @@ export const strings = {
     // flow can ever produce a leak. The field label and placeholder are the
     // ones the old form used (strings.expenses.merchant*), reused as is.
     whereEyebrow: 'Where',
+    // U2/ADR 0023: the amount is now a real, full-width input, so the log
+    // sheet always carries this coach line (not only Door 1's first run,
+    // which still overrides it with its own richer copy via the coachLine
+    // prop). Edit mode never shows a coach line.
+    logCoachLine: 'Amount first. The rest takes one tap.',
     saveExpense: 'Save expense',
     saveChanges: 'Save changes',
     deleteExpense: 'Delete expense',

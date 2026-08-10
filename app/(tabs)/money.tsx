@@ -22,7 +22,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { AddUpcomingSheet } from '@/components/money/AddUpcomingSheet';
-import { EditExpenseSheet } from '@/components/money/EditExpenseSheet';
+import { ExpenseSheet } from '@/components/money/ExpenseSheet';
 import { HabitsList } from '@/components/money/HabitsList';
 import { SpentList } from '@/components/money/SpentList';
 import { UpcomingList } from '@/components/money/UpcomingList';
@@ -31,6 +31,7 @@ import type { LeakRowData } from '@/components/habit-logging/HabitLeakRow';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { categoryEmoji, categoryIdentityColor } from '@/constants/categoryEmoji';
+import { habitLeakGlyph } from '@/constants/onboardingPresets';
 import { strings } from '@/constants/strings';
 import type { AppTheme } from '@/constants/theme';
 import { useCategories } from '@/contexts/CategoriesContext';
@@ -96,7 +97,7 @@ export default function MoneyScreen() {
         const categoryName = nameFor(habit);
         return {
           habit,
-          emoji: categoryEmoji(categoryName),
+          emoji: habitLeakGlyph(habit, categoryEmoji(categoryName)),
           tint: categoryIdentityColor(categoryName),
         };
       });
@@ -172,7 +173,8 @@ export default function MoneyScreen() {
         )}
       </ScrollView>
 
-      <EditExpenseSheet
+      <ExpenseSheet
+        mode="edit"
         visible={editing !== null}
         expense={editing}
         onClose={() => setEditing(null)}

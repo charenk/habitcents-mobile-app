@@ -28,8 +28,7 @@ import { PickOneSheet } from '@/components/habit-logging/PickOneSheet';
 import { PartialSlipSheet } from '@/components/habit-logging/PartialSlipSheet';
 import { CoachMomentSlot } from '@/components/habit-logging/CoachMomentSlot';
 import { SpentKeptChips, type SpentKeptView } from '@/components/habit-logging/SpentKeptChips';
-import { LogExpenseSheet, type LogExpenseSavedInfo } from '@/components/money/LogExpenseSheet';
-import { EditExpenseSheet } from '@/components/money/EditExpenseSheet';
+import { ExpenseSheet, type LogExpenseSavedInfo } from '@/components/money/ExpenseSheet';
 import { QuickLogRow } from '@/components/money/QuickLogRow';
 import { LoggedTodayList } from '@/components/money/LoggedTodayList';
 import { FirstRunRibbon } from '@/components/onboarding/FirstRunRibbon';
@@ -932,7 +931,8 @@ export default function TodayScreen() {
         }}
       />
 
-      <LogExpenseSheet
+      <ExpenseSheet
+        mode="log"
         visible={logVisible}
         initialCategory={logCategory}
         coachLine={door1CoachActive ? strings.today.firstLogCoachLine : undefined}
@@ -940,7 +940,8 @@ export default function TodayScreen() {
         onClose={handleLogSheetClose}
       />
 
-      <EditExpenseSheet
+      <ExpenseSheet
+        mode="edit"
         visible={editingExpense !== null}
         expense={editingExpense}
         onClose={() => setEditingExpense(null)}
