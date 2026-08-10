@@ -1,9 +1,10 @@
 /**
- * Profile (design/header-unification U4, ADR 0019). Mirrors the deleted
- * __tests__/settingsSheet.test.tsx: it renders the specced title, plan line
- * and every row (now pushed as its own screen rather than a bottom sheet),
- * and pins the same two mutating behaviors (Premium push, Sign out) plus the
- * new Support row and both restore-purchases outcomes.
+ * Profile (design/header-unification U4, ADR 0019; back control unified onto
+ * ScreenHeader U1). Mirrors the deleted __tests__/settingsSheet.test.tsx: it
+ * renders the specced title, plan line and every row (now pushed as its own
+ * screen rather than a bottom sheet), and pins the same two mutating
+ * behaviors (Premium push, Sign out) plus the new Support row and both
+ * restore-purchases outcomes.
  *
  * Provider wiring mirrors the deleted test (SafeAreaProvider with
  * initialMetrics + ThemeProvider + ToastProvider), plus CurrencyProvider and
@@ -12,9 +13,11 @@
  * Module mocks carry the seams: utils/storage (so the sign-out clear is
  * observable without touching AsyncStorage), utils/purchases (so both restore
  * outcomes are directly controllable) and expo-router (no navigator in a unit
- * test; Stack.Screen renders nothing so it never needs a real navigation
- * context). Copy comes from the real constants/strings.ts, so a reworded
- * string moves the assertions with it.
+ * test). The screen no longer renders a native Stack.Screen header (that was
+ * the bug: a transparent floating header whose clearance could overlap the
+ * title), so the back control asserted below is the real ScreenHeader pill
+ * button, not a stub. Copy comes from the real constants/strings.ts, so a
+ * reworded string moves the assertions with it.
  */
 // Full-provider renders exceed jest's 5s default under CI worker load.
 jest.setTimeout(20000);
@@ -28,7 +31,6 @@ const mockPush = jest.fn();
 const mockBack = jest.fn();
 jest.mock('expo-router', () => ({
   useRouter: () => ({ replace: mockReplace, push: mockPush, back: mockBack }),
-  Stack: { Screen: () => null },
 }));
 
 jest.mock('@/utils/storage', () => {
@@ -99,7 +101,11 @@ describe('Profile', () => {
   it('renders the title, plan line and every row', async () => {
     const view = await renderProfile();
 
-    expect(view.getByText(strings.profile.title)).toBeTruthy();
+    // The serif title is rendered by the shared ScreenHeader and carries the
+    // header role VoiceOver needs (ADA-005 pattern).
+    const title = view.getByText(strings.profile.title);
+    expect(title).toBeTruthy();
+    expect(title.props.accessibilityRole).toBe('header');
     expect(view.getByText(strings.settings.planFree)).toBeTruthy();
     expect(view.getByText(strings.settings.groupPreferences)).toBeTruthy();
     expect(view.getByText(strings.settings.groupAbout)).toBeTruthy();
@@ -115,6 +121,16 @@ describe('Profile', () => {
     expect(view.getByLabelText('Version, 1.0.0')).toBeTruthy();
     // The sign-out reassurance sits on the right of its row.
     expect(view.getByText(strings.settings.signOutHint)).toBeTruthy();
+  });
+
+  it('the shared header back button pops the screen', async () => {
+    const view = await renderProfile();
+
+    await act(async () => {
+      fireEvent.press(view.getByLabelText(strings.common.back));
+    });
+
+    expect(mockBack).toHaveBeenCalledTimes(1);
   });
 
   it('sign out clears the local session, pops back, replaces to onboarding and toasts', async () => {

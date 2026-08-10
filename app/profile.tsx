@@ -19,15 +19,13 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import Constants from 'expo-constants';
-import { Stack, useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { DevMenuSection } from '@/components/dev/DevMenuSection';
 import { SettingsRow } from '@/components/settings/SettingsRow';
-import { Icon } from '@/components/ui/Icon';
+import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { useToast } from '@/components/ui/Toast';
 import { typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
@@ -48,7 +46,6 @@ const SUPPORT_URL = 'https://habitcents.com/support';
 export default function ProfileScreen(): React.JSX.Element {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
-  const insets = useSafeAreaInsets();
   const router = useRouter();
   const { show } = useToast();
   const { currency, setCurrency } = useCurrency();
@@ -107,32 +104,12 @@ export default function ProfileScreen(): React.JSX.Element {
 
   return (
     <>
-      <Stack.Screen
-        options={{
-          headerShown: true,
-          headerTitle: '',
-          headerTransparent: true,
-          headerLeft: () => (
-            <TouchableOpacity
-              onPress={() => router.back()}
-              style={styles.backButton}
-              accessibilityRole="button"
-              accessibilityLabel={strings.common.back}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <Icon name="ArrowLeft" size={24} color={theme.text} />
-            </TouchableOpacity>
-          ),
-        }}
-      />
       <ScrollView
-        style={[styles.container, { paddingTop: insets.top + 44 }]}
+        style={styles.container}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.title} accessibilityRole="header">
-          {strings.profile.title}
-        </Text>
+        <ScreenHeader title={strings.profile.title} onBack={() => router.back()} />
         {isFree ? <Text style={styles.plan}>{strings.settings.planFree}</Text> : null}
 
         <Text style={styles.eyebrow}>{strings.settings.groupPreferences}</Text>
@@ -227,18 +204,11 @@ function createStyles(theme: AppTheme) {
       backgroundColor: theme.background,
     },
     content: {
-      paddingHorizontal: 16,
+      // Matches ScreenHeader's own 20pt gutter (PATTERN_VOCABULARY.md: one
+      // 20pt horizontal gutter per screen) so the title lines up with the
+      // rows below it now that both share the same header component.
+      paddingHorizontal: 20,
       paddingBottom: 100,
-    },
-    backButton: {
-      padding: 4,
-    },
-    title: {
-      fontSize: typeScale.screenTitle,
-      fontFamily: theme.fonts.display,
-      lineHeight: 40,
-      includeFontPadding: false,
-      color: theme.ink,
     },
     plan: {
       fontFamily: theme.fonts.ui,

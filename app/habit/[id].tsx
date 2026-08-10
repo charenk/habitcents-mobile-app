@@ -1,8 +1,8 @@
 import React, { useMemo, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { useLocalSearchParams, useRouter, Stack, useFocusEffect } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
+import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useHabits } from '@/contexts/HabitsContext';
@@ -28,7 +28,6 @@ import { hapticWarning } from '@/utils/motion';
 
 export default function HabitDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const insets = useSafeAreaInsets();
   const router = useRouter();
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -77,17 +76,8 @@ export default function HabitDetailScreen() {
 
   if (!habit) {
     return (
-      <View style={[styles.container, { paddingTop: insets.top }]}>
-        <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            accessibilityRole="button"
-            accessibilityLabel={strings.common.back}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <Icon name="ArrowLeft" size={24} color={theme.text} />
-          </TouchableOpacity>
-        </View>
+      <View style={styles.container}>
+        <ScreenHeader onBack={() => router.back()} />
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyText}>{strings.habitDetail.notFound}</Text>
         </View>
@@ -116,33 +106,14 @@ export default function HabitDetailScreen() {
     router.back();
   };
 
+  // Serif titles end in a period, habit names included (spec 01 s2).
+  const habitTitle = /\.$/.test(habit.name) ? habit.name : `${habit.name}.`;
+
   return (
     <>
-      <Stack.Screen
-        options={{
-          headerShown: true,
-          headerTitle: '',
-          headerTransparent: true,
-          headerLeft: () => (
-            <TouchableOpacity
-              onPress={() => router.back()}
-              style={styles.backButton}
-              accessibilityRole="button"
-              accessibilityLabel={strings.common.back}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <Icon name="ArrowLeft" size={24} color={theme.text} />
-            </TouchableOpacity>
-          ),
-        }}
-      />
-      <ScrollView
-        style={[styles.container, { paddingTop: insets.top + 44 }]}
-        contentContainerStyle={styles.scrollContent}
-      >
+      <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
+        <ScreenHeader title={habitTitle} onBack={() => router.back()} />
         <View style={styles.headerSection}>
-          {/* Serif titles end in a period, habit names included (spec 01 s2). */}
-          <Text style={styles.title}>{/\.$/.test(habit.name) ? habit.name : `${habit.name}.`}</Text>
           <Text style={styles.description}>{habit.description}</Text>
         </View>
 
@@ -406,17 +377,11 @@ function createStyles(theme: AppTheme) {
       backgroundColor: theme.background,
     },
     scrollContent: {
-      paddingHorizontal: 16,
+      // Matches ScreenHeader's own 20pt gutter (PATTERN_VOCABULARY.md: one
+      // 20pt horizontal gutter per screen) so the title lines up with the
+      // content below it now that both share the same header component.
+      paddingHorizontal: 20,
       paddingBottom: 100,
-    },
-    header: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingHorizontal: 16,
-      paddingVertical: 12,
-    },
-    backButton: {
-      padding: 4,
     },
     emptyContainer: {
       flex: 1,
@@ -430,15 +395,6 @@ function createStyles(theme: AppTheme) {
     },
     headerSection: {
       marginBottom: 16,
-    },
-    // Serif screen title, like Today / Money / Insights.
-    title: {
-      fontSize: typeScale.screenTitle,
-      lineHeight: 40,
-      fontFamily: theme.fonts.display,
-      color: theme.ink,
-      includeFontPadding: false,
-      marginBottom: 6,
     },
     description: {
       fontSize: typeScale.body,
