@@ -263,6 +263,7 @@ export const strings = {
   },
   categoryDetail: {
     notFound: 'Category not found',
+    editCategoryLabel: 'Edit category',
     budget: (amount: string) => `Budget: ${amount}/month`,
     thisMonth: 'this month',
     vsLastMonth: (percent: number) => `${percent}% vs last month`,
