@@ -1,10 +1,10 @@
 /**
  * CategoryChipRow: the one-row, sideways-scrolling category rail that
  * replaces CategoryTilePicker inside ExpenseSheet (U2, the expense drawer
- * rebuild). CategoryTilePicker itself stays in the codebase; AddUpcomingSheet
- * still renders its emoji-tile grid unchanged (git grep verified before this
- * file was written), so only its stored-name helpers (`toExpenseCategory`,
- * `isCategorySelected`) are reused here, not the grid component.
+ * rebuild). CategoryTilePicker's emoji-tile grid was never rendered anywhere
+ * in the app (git grep confirmed no `<CategoryTilePicker` usage), so the
+ * component was deleted; its stored-name helpers (`toExpenseCategory`,
+ * `isCategorySelected`) moved to utils/expenseCategory.ts and are reused here.
  *
  * Chips read emoji + label, radius 999, min 44pt touch height. Selected uses
  * Chip's `tone="soft"` (sage-light fill + sage border + ink text) rather than
@@ -28,7 +28,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import type { Category } from '@/types/category';
 import type { ExpenseCategory } from '@/types/expense';
 import { withAlpha } from '@/utils/color';
-import { isCategorySelected, toExpenseCategory } from './CategoryTilePicker';
+import { isCategorySelected, toExpenseCategory } from '@/utils/expenseCategory';
 
 const EDGE_FADE_WIDTH = 28;
 /** Left margin the auto-scroll leaves before the selected chip, so it isn't
@@ -59,6 +59,19 @@ export function CategoryChipRow({
   const positions = useRef<Map<string, number>>(new Map());
   const didAutoScroll = useRef(false);
 
+  // Scrolls to `x` once per true->false->true edge of scrollToSelected, from
+  // whichever call site gets there first: the effect below (value/categories
+  // changing after mount) or the selected chip's own onLayout (first mount,
+  // see recordPosition), since either can win the race.
+  const attemptAutoScroll = useCallback(
+    (x: number) => {
+      if (!scrollToSelected || didAutoScroll.current) return;
+      didAutoScroll.current = true;
+      scrollRef.current?.scrollTo({ x: Math.max(0, x - SCROLL_LEAD_IN), animated: false });
+    },
+    [scrollToSelected]
+  );
+
   useEffect(() => {
     if (!scrollToSelected) {
       // Reset for the next time the sheet opens on an edit.
@@ -70,15 +83,26 @@ export function CategoryChipRow({
     if (!selected) return;
     const x = positions.current.get(selected.id);
     if (x == null) return;
-    didAutoScroll.current = true;
-    scrollRef.current?.scrollTo({ x: Math.max(0, x - SCROLL_LEAD_IN), animated: false });
-  }, [scrollToSelected, value, categories]);
+    attemptAutoScroll(x);
+  }, [scrollToSelected, value, categories, attemptAutoScroll]);
 
   const recordPosition = useCallback(
-    (id: string) => (e: LayoutChangeEvent) => {
-      positions.current.set(id, e.nativeEvent.layout.x);
+    (category: Category) => (e: LayoutChangeEvent) => {
+      const x = e.nativeEvent.layout.x;
+      positions.current.set(category.id, x);
+      // onLayout for every chip fires after this component's first-mount
+      // effect above (RN measures layout post-commit), so on a fresh open
+      // the effect above reads an empty positions map and bails before this
+      // chip has ever recorded a position. Nothing re-triggers it after
+      // that: no state changes, so no re-render, so no visible selection
+      // until something unrelated happens to re-run the effect. If this
+      // layout belongs to the selected chip, perform the scroll here
+      // instead of waiting for that unrelated re-render.
+      if (scrollToSelected && value != null && toExpenseCategory(category.name) === value) {
+        attemptAutoScroll(x);
+      }
     },
-    []
+    [scrollToSelected, value, attemptAutoScroll]
   );
 
   return (
@@ -92,7 +116,11 @@ export function CategoryChipRow({
         {categories.map((category) => {
           const selected = isCategorySelected(category, value);
           return (
-            <View key={category.id} onLayout={recordPosition(category.id)}>
+            <View
+              key={category.id}
+              testID={`category-chip-${category.id}`}
+              onLayout={recordPosition(category)}
+            >
               <Chip
                 label={category.name}
                 emoji={categoryEmoji(category.name)}
