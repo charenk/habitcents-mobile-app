@@ -9,6 +9,8 @@ export { AmountDisplay } from './AmountDisplay';
 export { Keypad } from './Keypad';
 export { Button } from './Button';
 export { Sheet } from './Sheet';
+export { ConfirmSheet } from './ConfirmSheet';
+export type { ConfirmSheetProps } from './ConfirmSheet';
 export { ToastProvider, useToast } from './Toast';
 export { SegmentedControl } from './SegmentedControl';
 export type { SegmentedControlProps } from './SegmentedControl';

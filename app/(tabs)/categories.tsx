@@ -5,12 +5,16 @@
  * visual pass only: serif title, a circular add button, eyebrow-labelled white
  * cards, and the rebuilt CategoryRow. Every behavior is unchanged (CRUD, the
  * delete confirm, the push into /category/[id], and AddCategoryModal).
+ *
+ * The delete confirm moved off Alert.alert onto the house ConfirmSheet
+ * (design/selection-sheets U3), matching the pattern app/habit/[id].tsx
+ * already used for its own destructive confirm.
  */
 import React, { useMemo, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Icon, ScreenHeader } from '@/components/ui';
+import { ConfirmSheet, Icon, ScreenHeader } from '@/components/ui';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCategories } from '@/contexts/CategoriesContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
@@ -33,6 +37,10 @@ export default function CategoriesScreen() {
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  // deleteTarget stays set through the sheet's close animation (only
+  // deleteConfirmVisible toggles), so the title/body never go blank mid-exit.
+  const [deleteTarget, setDeleteTarget] = useState<Category | null>(null);
+  const [deleteConfirmVisible, setDeleteConfirmVisible] = useState(false);
 
   const {
     categories,
@@ -65,34 +73,27 @@ export default function CategoriesScreen() {
   const handleAddCategory = useCallback(async (
     name: string,
     icon: CategoryIcon,
-    color: string,
-    monthlyBudget?: number
+    color: string
   ) => {
     if (editingCategory) {
-      await updateCategory(editingCategory.id, { name, icon, color, monthlyBudget });
+      await updateCategory(editingCategory.id, { name, icon, color });
       setEditingCategory(null);
     } else {
-      await addCategory(name, icon, color, monthlyBudget);
+      await addCategory(name, icon, color);
     }
   }, [editingCategory, addCategory, updateCategory]);
 
   const handleDeleteCategory = useCallback((category: Category) => {
     hapticWarning();
-    Alert.alert(
-      strings.categories.deleteTitle,
-      strings.categories.deleteMessage(category.name),
-      [
-        { text: strings.common.cancel, style: 'cancel' },
-        {
-          text: strings.common.delete,
-          style: 'destructive',
-          onPress: async () => {
-            await deleteCategory(category.id);
-          },
-        },
-      ]
-    );
-  }, [deleteCategory]);
+    setDeleteTarget(category);
+    setDeleteConfirmVisible(true);
+  }, []);
+
+  const confirmDeleteCategory = useCallback(async () => {
+    if (!deleteTarget) return;
+    await deleteCategory(deleteTarget.id);
+    setDeleteConfirmVisible(false);
+  }, [deleteTarget, deleteCategory]);
 
   const handleCategoryPress = useCallback((category: Category) => {
     router.push(`/category/${category.id}`);
@@ -171,8 +172,19 @@ export default function CategoriesScreen() {
         initialName={editingCategory?.name}
         initialIcon={editingCategory?.icon}
         initialColor={editingCategory?.color}
-        initialBudget={editingCategory?.monthlyBudget ? editingCategory.monthlyBudget / 100 : undefined}
         isEditing={!!editingCategory}
+      />
+
+      <ConfirmSheet
+        visible={deleteConfirmVisible}
+        onClose={() => setDeleteConfirmVisible(false)}
+        onConfirm={() => {
+          void confirmDeleteCategory();
+        }}
+        title={strings.categories.deleteTitle(deleteTarget?.name ?? '')}
+        body={strings.categories.deleteMessage}
+        confirmLabel={strings.categories.deleteConfirmCta}
+        cancelLabel={strings.categories.deleteCancel}
       />
     </View>
   );
