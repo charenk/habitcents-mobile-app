@@ -1,7 +1,9 @@
 import { useMemo } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/contexts/ThemeContext';
 import { radii, typeScale, type AppTheme } from '@/constants/theme';
+import { strings } from '@/constants/strings';
 import { Icon, type IconName } from './Icon';
 
 export type ScreenHeaderAction = {
@@ -11,13 +13,27 @@ export type ScreenHeaderAction = {
 };
 
 export type ScreenHeaderProps = {
-  title: string;
+  title?: string;
   eyebrow?: string;
   actions?: ScreenHeaderAction[];
+  /**
+   * Present on every pushed route (profile, habit detail, category detail).
+   * Renders the 40pt pill back button ahead of the title and switches the
+   * header into "pushed" mode: it draws its own top inset instead of relying
+   * on a parent container, so it can sit as the first child of the screen's
+   * ScrollView content and travel with it. That is deliberate: the header
+   * used to be a native transparent Stack.Screen header floating above a
+   * ScrollView whose clearance was hardcoded padding on `style` (magic 44),
+   * which let the serif title slide under the back control on scroll and
+   * never respected Dynamic Type. Tabs never pass this, so their layout is
+   * unchanged (see ADR 0019, design/header-unification U1).
+   */
+  onBack?: () => void;
 };
 
 /**
- * ScreenHeader: the one header every tab renders through.
+ * ScreenHeader: the one header every tab, and now every pushed route,
+ * renders through.
  *
  * Before this, each tab hand-rolled its own title block and the paddings
  * quietly drifted apart (Money's paddingTop 8 versus 16 everywhere else,
@@ -29,26 +45,43 @@ export type ScreenHeaderProps = {
  * user reads first. Uppercasing lives here so strings.ts keeps storing
  * sentence case, same convention as Today's section titles.
  */
-export function ScreenHeader({ title, eyebrow, actions }: ScreenHeaderProps) {
+export function ScreenHeader({ title, eyebrow, actions, onBack }: ScreenHeaderProps) {
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   return (
-    <View style={styles.row}>
-      <View style={styles.titleColumn}>
-        {/* Dense chrome caps Dynamic Type at 1.5x (ADA-005 pattern): past that
-            the serif title wraps onto the actions column. */}
-        <Text
-          style={styles.title}
-          accessibilityRole="header"
-          maxFontSizeMultiplier={1.5}
-        >
-          {title}
-        </Text>
-        {eyebrow ? (
-          <Text style={styles.eyebrow} maxFontSizeMultiplier={1.5}>
-            {eyebrow.toUpperCase()}
-          </Text>
+    <View style={[styles.row, onBack ? { paddingTop: insets.top + 16 } : null]}>
+      <View style={styles.leftGroup}>
+        {onBack ? (
+          <TouchableOpacity
+            onPress={onBack}
+            style={styles.backButton}
+            accessibilityRole="button"
+            accessibilityLabel={strings.common.back}
+            hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
+          >
+            <Icon name="ArrowLeft" size={18} color={theme.slate} />
+          </TouchableOpacity>
+        ) : null}
+
+        {title ? (
+          <View style={styles.titleColumn}>
+            {/* Dense chrome caps Dynamic Type at 1.5x (ADA-005 pattern): past
+                that the serif title wraps onto the actions column. */}
+            <Text
+              style={styles.title}
+              accessibilityRole="header"
+              maxFontSizeMultiplier={1.5}
+            >
+              {title}
+            </Text>
+            {eyebrow ? (
+              <Text style={styles.eyebrow} maxFontSizeMultiplier={1.5}>
+                {eyebrow.toUpperCase()}
+              </Text>
+            ) : null}
+          </View>
         ) : null}
       </View>
 
@@ -81,6 +114,22 @@ function createStyles(theme: AppTheme) {
       paddingHorizontal: 20,
       paddingTop: 16,
       paddingBottom: 4,
+    },
+    leftGroup: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+    },
+    backButton: {
+      width: 40,
+      height: 40,
+      borderRadius: radii.pill,
+      backgroundColor: theme.white,
+      borderWidth: 1,
+      borderColor: theme.cloud,
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     titleColumn: {
       flex: 1,

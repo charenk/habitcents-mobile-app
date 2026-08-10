@@ -1,23 +1,35 @@
+/**
+ * AddCategoryModal (design/selection-sheets U3): converted off a raw Modal
+ * with a hand-rolled overlay onto the house ui/Sheet, and its styles migrated
+ * off the legacy token set (theme.surface/text/textSecondary/border, raw
+ * fontWeight) onto the redesign tokens (theme.fonts.*, ink/slate/mist/cloud/
+ * snow, typeScale).
+ *
+ * Per D10 (budgets removed from MVP), the monthly budget field is gone
+ * entirely: no input, no state, no strings. types/category.ts keeps
+ * `monthlyBudget` on the Category type since stored data may still carry it;
+ * this form just never writes or reads it anymore.
+ */
 import React, { useMemo, useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  Modal,
   TouchableOpacity,
   TextInput,
   ScrollView,
-  KeyboardAvoidingView,
-  Platform,
+  useWindowDimensions,
 } from 'react-native';
+import { Button } from '@/components/ui/Button';
 import { Icon, categoryIconName } from '@/components/ui/Icon';
+import { Sheet } from '@/components/ui/Sheet';
 import { useTheme } from '@/contexts/ThemeContext';
-import { useCurrency } from '@/contexts/CurrencyContext';
-import { currencyMeta } from '@/utils/currency';
+import { radii, typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
 import type { CategoryIcon } from '@/types/category';
 import { ICON_OPTIONS, COLOR_OPTIONS } from '@/types/category';
 import { strings } from '@/constants/strings';
+import { withAlpha } from '@/utils/color';
 
 // "home-outline" -> "home icon" (spec 09 §2, icon-grid label).
 function iconOptionLabel(icon: string): string {
@@ -27,11 +39,10 @@ function iconOptionLabel(icon: string): string {
 type AddCategoryModalProps = {
   visible: boolean;
   onClose: () => void;
-  onSave: (name: string, icon: CategoryIcon, color: string, monthlyBudget?: number) => void;
+  onSave: (name: string, icon: CategoryIcon, color: string) => void;
   initialName?: string;
   initialIcon?: CategoryIcon;
   initialColor?: string;
-  initialBudget?: number;
   isEditing?: boolean;
 };
 
@@ -42,18 +53,15 @@ export function AddCategoryModal({
   initialName = '',
   initialIcon = 'wallet-outline',
   initialColor = COLOR_OPTIONS[0],
-  initialBudget,
   isEditing = false,
 }: AddCategoryModalProps) {
   const theme = useTheme();
-  const { currency } = useCurrency();
-  const currencySymbol = currencyMeta(currency).symbol;
+  const { height } = useWindowDimensions();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   const [name, setName] = useState(initialName);
   const [selectedIcon, setSelectedIcon] = useState<CategoryIcon>(initialIcon);
   const [selectedColor, setSelectedColor] = useState(initialColor);
-  const [budget, setBudget] = useState(initialBudget?.toString() || '');
 
   // Re-sync when the modal opens or targets a different category, so editing a
   // second category no longer shows the first one's values / resets its icon and
@@ -63,14 +71,12 @@ export function AddCategoryModal({
       setName(initialName);
       setSelectedIcon(initialIcon);
       setSelectedColor(initialColor);
-      setBudget(initialBudget?.toString() || '');
     }
-  }, [visible, initialName, initialIcon, initialColor, initialBudget]);
+  }, [visible, initialName, initialIcon, initialColor]);
 
   const handleSave = () => {
     if (!name.trim()) return;
-    const budgetValue = budget ? parseInt(budget, 10) * 100 : undefined;
-    onSave(name.trim(), selectedIcon, selectedColor, budgetValue);
+    onSave(name.trim(), selectedIcon, selectedColor);
     resetForm();
     onClose();
   };
@@ -79,7 +85,6 @@ export function AddCategoryModal({
     setName('');
     setSelectedIcon('wallet-outline');
     setSelectedColor(COLOR_OPTIONS[0]);
-    setBudget('');
   };
 
   const handleClose = () => {
@@ -87,225 +92,148 @@ export function AddCategoryModal({
     onClose();
   };
 
+  const title = isEditing ? strings.addCategoryModal.editCategory : strings.addCategoryModal.newCategory;
+
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent
-      onRequestClose={handleClose}
-    >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={styles.overlay}
+    <Sheet visible={visible} onClose={handleClose} avoidKeyboard accessibilityLabel={title}>
+      <ScrollView
+        style={{ maxHeight: height * 0.86 }}
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
-        <View style={styles.container}>
-          <View style={styles.header}>
-            <TouchableOpacity onPress={handleClose} accessibilityRole="button">
-              <Text style={styles.cancelText}>{strings.common.cancel}</Text>
-            </TouchableOpacity>
-            <Text style={styles.title}>
-              {isEditing ? strings.addCategoryModal.editCategory : strings.addCategoryModal.newCategory}
-            </Text>
-            <TouchableOpacity
-              onPress={handleSave}
-              disabled={!name.trim()}
-              accessibilityRole="button"
-              accessibilityState={{ disabled: !name.trim() }}
-            >
-              <Text style={[styles.saveText, !name.trim() && styles.saveTextDisabled]}>
-                {strings.common.save}
-              </Text>
-            </TouchableOpacity>
+        <Text style={styles.title} accessibilityRole="header">
+          {title}
+        </Text>
+
+        {/* Preview */}
+        <View style={styles.previewContainer}>
+          <View style={[styles.previewIcon, { backgroundColor: withAlpha(selectedColor, 0.12) }]}>
+            <Icon name={categoryIconName(selectedIcon)} size={32} color={selectedColor} />
           </View>
-
-          <ScrollView
-            style={styles.content}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-          >
-            {/* Preview */}
-            <View style={styles.previewContainer}>
-              <View style={[styles.previewIcon, { backgroundColor: selectedColor + '20' }]}>
-                <Icon
-                  name={categoryIconName(selectedIcon)}
-                  size={32}
-                  color={selectedColor}
-                />
-              </View>
-              <Text style={styles.previewName}>
-                {name || strings.addCategoryModal.categoryNamePreview}
-              </Text>
-            </View>
-
-            {/* Name Input */}
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>{strings.addCategoryModal.name}</Text>
-              <TextInput
-                style={styles.input}
-                value={name}
-                onChangeText={setName}
-                placeholder={strings.addCategoryModal.namePlaceholder}
-                placeholderTextColor={theme.textTertiary}
-                maxLength={30}
-              />
-            </View>
-
-            {/* Icon Picker */}
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>{strings.addCategoryModal.icon}</Text>
-              <View style={styles.iconGrid}>
-                {ICON_OPTIONS.map((icon) => (
-                  <TouchableOpacity
-                    key={icon}
-                    style={[
-                      styles.iconOption,
-                      selectedIcon === icon && styles.iconOptionSelected,
-                      selectedIcon === icon && { borderColor: selectedColor },
-                    ]}
-                    onPress={() => setSelectedIcon(icon)}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected: selectedIcon === icon }}
-                    accessibilityLabel={iconOptionLabel(icon)}
-                  >
-                    <Icon
-                      name={categoryIconName(icon)}
-                      size={24}
-                      color={selectedIcon === icon ? selectedColor : theme.textSecondary}
-                    />
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-
-            {/* Color Picker */}
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>{strings.addCategoryModal.color}</Text>
-              <View style={styles.colorGrid}>
-                {COLOR_OPTIONS.map((color, index) => (
-                  <TouchableOpacity
-                    key={color}
-                    style={[
-                      styles.colorOption,
-                      { backgroundColor: color },
-                      selectedColor === color && styles.colorOptionSelected,
-                    ]}
-                    onPress={() => setSelectedColor(color)}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected: selectedColor === color }}
-                    accessibilityLabel={`color option ${index + 1}`}
-                  >
-                    {selectedColor === color && (
-                      <Icon name="Check" size={20} color={theme.white} />
-                    )}
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-
-            {/* Budget Input (Optional) */}
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>{strings.addCategoryModal.monthlyBudget}</Text>
-              <View style={styles.budgetInputContainer}>
-                <Text style={styles.budgetPrefix}>{currencySymbol}</Text>
-                <TextInput
-                  style={styles.budgetInput}
-                  value={budget}
-                  onChangeText={(text) => setBudget(text.replace(/[^0-9]/g, ''))}
-                  placeholder={strings.addCategoryModal.budgetPlaceholder}
-                  placeholderTextColor={theme.textTertiary}
-                  keyboardType="number-pad"
-                  maxLength={8}
-                />
-              </View>
-            </View>
-
-            <View style={styles.bottomPadding} />
-          </ScrollView>
+          <Text style={styles.previewName}>
+            {name || strings.addCategoryModal.categoryNamePreview}
+          </Text>
         </View>
-      </KeyboardAvoidingView>
-    </Modal>
+
+        {/* Name Input */}
+        <Text style={styles.eyebrow}>{strings.addCategoryModal.name}</Text>
+        <TextInput
+          style={styles.input}
+          value={name}
+          onChangeText={setName}
+          placeholder={strings.addCategoryModal.namePlaceholder}
+          placeholderTextColor={theme.mist}
+          maxLength={30}
+        />
+
+        {/* Icon Picker */}
+        <Text style={styles.eyebrow}>{strings.addCategoryModal.icon}</Text>
+        <View style={styles.iconGrid}>
+          {ICON_OPTIONS.map((icon) => (
+            <TouchableOpacity
+              key={icon}
+              style={[
+                styles.iconOption,
+                selectedIcon === icon && { borderColor: selectedColor },
+              ]}
+              onPress={() => setSelectedIcon(icon)}
+              accessibilityRole="button"
+              accessibilityState={{ selected: selectedIcon === icon }}
+              accessibilityLabel={iconOptionLabel(icon)}
+            >
+              <Icon
+                name={categoryIconName(icon)}
+                size={24}
+                color={selectedIcon === icon ? selectedColor : theme.slate}
+              />
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Color Picker */}
+        <Text style={styles.eyebrow}>{strings.addCategoryModal.color}</Text>
+        <View style={styles.colorGrid}>
+          {COLOR_OPTIONS.map((color, index) => (
+            <TouchableOpacity
+              key={color}
+              style={[
+                styles.colorOption,
+                { backgroundColor: color },
+                selectedColor === color && styles.colorOptionSelected,
+              ]}
+              onPress={() => setSelectedColor(color)}
+              accessibilityRole="button"
+              accessibilityState={{ selected: selectedColor === color }}
+              accessibilityLabel={`color option ${index + 1}`}
+            >
+              {selectedColor === color && <Icon name="Check" size={20} color={theme.white} />}
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <Button
+          label={strings.common.save}
+          onPress={handleSave}
+          disabled={!name.trim()}
+          style={styles.save}
+        />
+        <Button label={strings.common.cancel} variant="tertiary" onPress={handleClose} />
+      </ScrollView>
+    </Sheet>
   );
 }
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
-    overlay: {
-      flex: 1,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      justifyContent: 'flex-end',
-    },
-    container: {
-      backgroundColor: theme.background,
-      borderTopLeftRadius: 20,
-      borderTopRightRadius: 20,
-      maxHeight: '90%',
-    },
-    header: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingHorizontal: 16,
-      paddingVertical: 16,
-      borderBottomWidth: 1,
-      borderBottomColor: theme.border,
-    },
-    cancelText: {
-      fontSize: 16,
-      color: theme.textSecondary,
+    content: {
+      paddingTop: 10,
+      paddingHorizontal: 20,
+      paddingBottom: 16,
     },
     title: {
-      fontSize: 17,
-      fontWeight: '600',
-      color: theme.text,
-    },
-    saveText: {
-      fontSize: 16,
-      fontWeight: '600',
-      color: theme.primary,
-    },
-    saveTextDisabled: {
-      color: theme.textTertiary,
-    },
-    content: {
-      paddingHorizontal: 16,
+      fontFamily: theme.fonts.display,
+      fontSize: 26,
+      lineHeight: 32,
+      color: theme.ink,
+      includeFontPadding: false,
     },
     previewContainer: {
       alignItems: 'center',
-      paddingVertical: 24,
+      paddingVertical: 20,
     },
     previewIcon: {
       width: 72,
       height: 72,
-      borderRadius: 18,
+      borderRadius: radii.card,
       justifyContent: 'center',
       alignItems: 'center',
       marginBottom: 12,
     },
     previewName: {
+      fontFamily: theme.fonts.uiSemibold,
       fontSize: 18,
-      fontWeight: '600',
-      color: theme.text,
+      color: theme.ink,
     },
-    section: {
-      marginBottom: 24,
-    },
-    sectionTitle: {
-      fontSize: 14,
-      fontWeight: '600',
-      color: theme.textSecondary,
-      marginBottom: 12,
+    eyebrow: {
+      fontFamily: theme.fonts.uiSemibold,
+      fontSize: typeScale.eyebrow,
+      letterSpacing: typeScale.eyebrowLetterSpacing,
       textTransform: 'uppercase',
-      letterSpacing: 0.5,
+      color: theme.mist,
+      marginTop: 18,
+      marginBottom: 8,
     },
     input: {
-      backgroundColor: theme.surface,
-      borderRadius: 12,
-      paddingHorizontal: 16,
-      paddingVertical: 14,
-      fontSize: 16,
-      color: theme.text,
+      minHeight: 44,
+      borderRadius: radii.control,
       borderWidth: 1,
-      borderColor: theme.border,
+      borderColor: theme.cloud,
+      backgroundColor: theme.snow,
+      paddingHorizontal: 14,
+      fontFamily: theme.fonts.ui,
+      fontSize: typeScale.body,
+      color: theme.ink,
     },
     iconGrid: {
       flexDirection: 'row',
@@ -317,14 +245,11 @@ function createStyles(theme: AppTheme) {
       height: 48,
       justifyContent: 'center',
       alignItems: 'center',
-      borderRadius: 12,
-      backgroundColor: theme.surface,
+      borderRadius: radii.control,
+      backgroundColor: theme.snow,
       margin: 4,
       borderWidth: 2,
       borderColor: 'transparent',
-    },
-    iconOptionSelected: {
-      borderWidth: 2,
     },
     colorGrid: {
       flexDirection: 'row',
@@ -334,38 +259,17 @@ function createStyles(theme: AppTheme) {
     colorOption: {
       width: 44,
       height: 44,
-      borderRadius: 22,
+      borderRadius: radii.pill,
       justifyContent: 'center',
       alignItems: 'center',
       margin: 6,
     },
     colorOptionSelected: {
       borderWidth: 3,
-      borderColor: theme.text,
+      borderColor: theme.ink,
     },
-    budgetInputContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: theme.surface,
-      borderRadius: 12,
-      paddingHorizontal: 16,
-      borderWidth: 1,
-      borderColor: theme.border,
-    },
-    budgetPrefix: {
-      fontSize: 18,
-      fontWeight: '600',
-      color: theme.textSecondary,
-      marginRight: 4,
-    },
-    budgetInput: {
-      flex: 1,
-      paddingVertical: 14,
-      fontSize: 18,
-      color: theme.text,
-    },
-    bottomPadding: {
-      height: 40,
+    save: {
+      marginTop: 20,
     },
   });
 }

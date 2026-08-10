@@ -1,17 +1,24 @@
 /**
- * Log and edit sheet merchant capture (device feedback, 2026-08-04).
+ * ExpenseSheet (U2, the expense drawer rebuild): merchant capture, mode
+ * parity, and edit merchant pre-selection.
  *
  * The sheets are the only place the app itself can write `expense.merchant`,
- * and detection groups strictly on that field, so these tests pin the write
- * contract rather than the layout: what lands in addExpense with and without a
- * typed place, that the recent chips come back unique and newest first, and
- * that four sheet-shaped rows WITH a merchant do reach detectHabits while the
- * same four without one still do not.
+ * and detection groups strictly on that field, so several of these tests pin
+ * the write contract rather than the layout: what lands in addExpense with
+ * and without a typed place, that the recent chips come back unique and
+ * newest first, and that four sheet-shaped rows WITH a merchant do reach
+ * detectHabits while the same four without one still do not.
  *
  * Provider wiring mirrors __tests__/settingsSheet.test.tsx (SafeAreaProvider
  * with initialMetrics + ThemeProvider + CurrencyProvider + ToastProvider). The
  * two data contexts are module-mocked so a fixture list of expenses can be fed
  * in directly, which storage seeding cannot do synchronously.
+ *
+ * Amount entry (ADR 0023): the sheet's AmountField is a real TextInput on the
+ * native decimal pad, so tests type a full amount string via changeText
+ * rather than tapping digit-labeled Keypad buttons. It's found by its
+ * "Amount, ..." accessibility label PREFIX (the suffix changes with the
+ * current value as soon as typing starts).
  */
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock')
@@ -21,6 +28,8 @@ const mockAddExpense = jest.fn(async (_input: AddExpenseInput) => undefined);
 const mockUpdateExpense = jest.fn(
   async (_id: string, _updates: Partial<Omit<Expense, 'id'>>) => undefined
 );
+const mockDeleteExpense = jest.fn(async (_id: string) => undefined);
+const mockRestoreExpense = jest.fn(async (_expense: Expense, _index: number) => undefined);
 let mockExpenses: Expense[] = [];
 
 // Full-provider renders exceed jest's 5s default under CI worker load.
@@ -31,8 +40,8 @@ jest.mock('@/contexts/ExpensesContext', () => ({
     expenses: mockExpenses,
     addExpense: mockAddExpense,
     updateExpense: mockUpdateExpense,
-    deleteExpense: jest.fn(async () => {}),
-    restoreExpense: jest.fn(async () => {}),
+    deleteExpense: mockDeleteExpense,
+    restoreExpense: mockRestoreExpense,
   }),
 }));
 
@@ -46,8 +55,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { ToastProvider } from '@/components/ui/Toast';
-import { LogExpenseSheet } from '@/components/money/LogExpenseSheet';
-import { EditExpenseSheet } from '@/components/money/EditExpenseSheet';
+import { ExpenseSheet } from '@/components/money/ExpenseSheet';
 import { strings } from '@/constants/strings';
 import type { Category } from '@/types/category';
 import type { AddExpenseInput, Expense } from '@/types/expense';
@@ -92,7 +100,7 @@ function Providers({ children }: { children: React.ReactNode }) {
 }
 
 /**
- * One stored expense, shaped the way the log sheet writes them: title equal to
+ * One stored expense, shaped the way the sheet writes them: title equal to
  * the merchant when there is one, category name when there is not.
  */
 function makeExpense(overrides: Partial<Expense> & { id: string }): Expense {
@@ -116,10 +124,20 @@ const onClose = jest.fn();
 async function renderLogSheet() {
   const view = await render(
     <Providers>
-      <LogExpenseSheet visible onClose={onClose} />
+      <ExpenseSheet mode="log" visible onClose={onClose} />
     </Providers>
   );
   // Flush the provider load effects and the sheet's enter animation.
+  await act(async () => {});
+  return view;
+}
+
+async function renderEditSheet(expense: Expense) {
+  const view = await render(
+    <Providers>
+      <ExpenseSheet mode="edit" visible expense={expense} onClose={onClose} />
+    </Providers>
+  );
   await act(async () => {});
   return view;
 }
@@ -136,11 +154,12 @@ async function tap(element: Parameters<typeof fireEvent.press>[0]): Promise<void
   });
 }
 
-/** Types an amount on the keypad the same way a finger would. */
-async function pressKeypad(view: View, digits: string): Promise<void> {
-  for (const digit of digits) {
-    await tap(view.getByLabelText(digit));
-  }
+/** Types a full amount string into the native AmountField in one change,
+ *  the way a decimal-pad keystroke stream ultimately resolves to a value. */
+async function typeAmount(view: View, amount: string): Promise<void> {
+  await act(async () => {
+    fireEvent.changeText(view.getByLabelText(/^Amount,/), amount);
+  });
 }
 
 /** Types into the merchant field. */
@@ -154,16 +173,18 @@ beforeEach(() => {
   mockExpenses = [];
   mockAddExpense.mockClear();
   mockUpdateExpense.mockClear();
+  mockDeleteExpense.mockClear();
+  mockRestoreExpense.mockClear();
   onClose.mockClear();
 });
 
 afterEach(cleanup);
 
-describe('LogExpenseSheet merchant capture', () => {
+describe('ExpenseSheet log mode: merchant capture', () => {
   it('saves no merchant and a category title when the field is left empty', async () => {
     const view = await renderLogSheet();
 
-    await pressKeypad(view, '450');
+    await typeAmount(view, '450');
     await tap(view.getByLabelText('Food, not selected'));
     await tap(view.getByRole('button', { name: strings.expenseSheet.saveExpense }));
 
@@ -171,7 +192,6 @@ describe('LogExpenseSheet merchant capture', () => {
     const saved = mockAddExpense.mock.calls[0][0];
     expect(saved.merchant).toBeUndefined();
     expect(saved.title).toBe('Food');
-    // '4', '5', '0' on the keypad is 450 major units, not 450 cents.
     expect(saved.amount).toBe(45000);
     expect(saved.category).toBe('Food');
   });
@@ -179,7 +199,7 @@ describe('LogExpenseSheet merchant capture', () => {
   it('saves the typed place as both merchant and title', async () => {
     const view = await renderLogSheet();
 
-    await pressKeypad(view, '450');
+    await typeAmount(view, '450');
     await tap(view.getByLabelText('Food, not selected'));
     await typeMerchant(view, '  Starbucks  ');
     await tap(view.getByRole('button', { name: strings.expenseSheet.saveExpense }));
@@ -211,7 +231,7 @@ describe('LogExpenseSheet merchant capture', () => {
     );
     expect(view.getByLabelText('Starbucks, selected')).toBeTruthy();
 
-    await pressKeypad(view, '450');
+    await typeAmount(view, '450');
     await tap(view.getByRole('button', { name: strings.expenseSheet.saveExpense }));
 
     const saved = mockAddExpense.mock.calls[0][0];
@@ -246,17 +266,7 @@ describe('detection reachability from the log sheet', () => {
   });
 });
 
-describe('EditExpenseSheet merchant editing', () => {
-  async function renderEditSheet(expense: Expense) {
-    const view = await render(
-      <Providers>
-        <EditExpenseSheet visible expense={expense} onClose={onClose} />
-      </Providers>
-    );
-    await act(async () => {});
-    return view;
-  }
-
+describe('ExpenseSheet edit mode: merchant editing', () => {
   it('prefills the stored place and clearing it writes undefined', async () => {
     const expense = makeExpense({
       id: 'e1',
@@ -280,5 +290,87 @@ describe('EditExpenseSheet merchant editing', () => {
     // category name rather than keeping a place the row no longer has.
     expect(updates.title).toBe('Food');
   });
+
+  it('pre-selects the current merchant among the chips when it is already in the recent list', async () => {
+    // The edited row itself supplies its own merchant into the natural
+    // recency list built from `expenses`, so no prepend is needed here.
+    const expense = makeExpense({
+      id: 'e1',
+      merchant: 'Starbucks',
+      title: 'Starbucks',
+    });
+    mockExpenses = [
+      expense,
+      makeExpense({ id: 'e2', merchant: 'Chipotle', title: 'Chipotle' }),
+    ];
+    const view = await renderEditSheet(expense);
+
+    expect(view.getByLabelText('Starbucks, selected')).toBeTruthy();
+    expect(view.getByLabelText('Chipotle, not selected')).toBeTruthy();
+  });
+
+  it('prepends the current merchant when older logs pushed it out of the recent list', async () => {
+    const expense = makeExpense({ id: 'e1', merchant: 'Old Favorite', title: 'Old Favorite' });
+    // Six newer, unrelated merchants fill the recency list ahead of the
+    // edited row, which the natural iteration order would otherwise drop.
+    const newer = Array.from({ length: 6 }, (_, i) =>
+      makeExpense({ id: `newer-${i}`, merchant: `Place ${i}`, title: `Place ${i}` })
+    );
+    mockExpenses = [...newer, expense];
+
+    const view = await renderEditSheet(expense);
+
+    expect(view.getByLabelText('Old Favorite, selected')).toBeTruthy();
+  });
+
+  it('deletes with no confirmation and offers an undo toast', async () => {
+    const expense = makeExpense({ id: 'e1', merchant: 'Starbucks', title: 'Starbucks' });
+    mockExpenses = [expense];
+    const view = await renderEditSheet(expense);
+
+    await tap(view.getByRole('button', { name: strings.expenseSheet.deleteExpense }));
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(mockDeleteExpense).toHaveBeenCalledWith('e1');
+    expect(view.getByText(strings.toasts.deleted)).toBeTruthy();
+
+    await tap(view.getByText(strings.toasts.undo));
+    expect(mockRestoreExpense).toHaveBeenCalledWith(expense, 0);
+  });
 });
 
+describe('ExpenseSheet mode parity', () => {
+  it('log and edit render the same category chips and merchant section', async () => {
+    mockExpenses = [makeExpense({ id: 'r1', merchant: 'Chipotle', title: 'Chipotle' })];
+
+    // Both sheets rendered at once (no cleanup between them): RNTL scopes
+    // each render()'s queries to its own tree, so this is the simplest way
+    // to compare the two side by side within one test.
+    const logView = await renderLogSheet();
+    const editView = await renderEditSheet(
+      makeExpense({ id: 'e1', merchant: 'Chipotle', title: 'Chipotle' })
+    );
+
+    for (const category of mockCategories) {
+      expect(logView.getByText(category.name)).toBeTruthy();
+      expect(editView.getByText(category.name)).toBeTruthy();
+    }
+
+    expect(logView.getByLabelText(strings.expenses.merchantFieldLabel)).toBeTruthy();
+    expect(editView.getByLabelText(strings.expenses.merchantFieldLabel)).toBeTruthy();
+    expect(logView.getByLabelText(/^Chipotle, /)).toBeTruthy();
+    expect(editView.getByLabelText(/^Chipotle, /)).toBeTruthy();
+  });
+
+  it('only edit mode renders the delete row; only log mode renders a coach line', async () => {
+    const logView = await renderLogSheet();
+    expect(logView.queryByRole('button', { name: strings.expenseSheet.deleteExpense })).toBeNull();
+    expect(logView.getByText(strings.expenseSheet.logCoachLine)).toBeTruthy();
+
+    const editView = await renderEditSheet(makeExpense({ id: 'e1' }));
+    expect(
+      editView.getByRole('button', { name: strings.expenseSheet.deleteExpense })
+    ).toBeTruthy();
+    expect(editView.queryByText(strings.expenseSheet.logCoachLine)).toBeNull();
+  });
+});

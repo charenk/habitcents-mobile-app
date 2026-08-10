@@ -4,26 +4,25 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   FlatList,
 } from 'react-native';
-import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Icon, categoryIconName } from '@/components/ui/Icon';
+import { ScreenHeader } from '@/components/ui/ScreenHeader';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { useTheme } from '@/contexts/ThemeContext';
 import { formatDate } from '@/utils/dates';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useCategories } from '@/contexts/CategoriesContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
 import { AddCategoryModal } from '@/components/AddCategoryModal';
-import { typeScale, type AppTheme } from '@/constants/theme';
+import { type AppTheme } from '@/constants/theme';
 import type { CategoryIcon } from '@/types/category';
 import type { Expense } from '@/types/expense';
 import { strings } from '@/constants/strings';
 
 export default function CategoryDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const insets = useSafeAreaInsets();
   const router = useRouter();
   const theme = useTheme();
   const { format } = useCurrency();
@@ -122,27 +121,17 @@ export default function CategoryDetailScreen() {
   const handleEdit = useCallback(async (
     name: string,
     icon: CategoryIcon,
-    color: string,
-    monthlyBudget?: number
+    color: string
   ) => {
     if (!category) return;
-    await updateCategory(category.id, { name, icon, color, monthlyBudget });
+    await updateCategory(category.id, { name, icon, color });
     setIsEditModalVisible(false);
   }, [category, updateCategory]);
 
   if (!category) {
     return (
-      <View style={[styles.container, { paddingTop: insets.top }]}>
-        <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-            accessibilityRole="button"
-            accessibilityLabel={strings.common.back}
-          >
-            <Icon name="ArrowLeft" size={24} color={theme.text} />
-          </TouchableOpacity>
-        </View>
+      <View style={styles.container}>
+        <ScreenHeader onBack={() => router.back()} />
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyText}>{strings.categoryDetail.notFound}</Text>
         </View>
@@ -170,41 +159,27 @@ export default function CategoryDetailScreen() {
     </View>
   );
 
+  // Serif titles end in a period, category names included (spec 01 s2).
+  const categoryTitle = /\.$/.test(category.name) ? category.name : `${category.name}.`;
+
   return (
     <>
-      <Stack.Screen
-        options={{
-          headerShown: true,
-          headerTitle: '',
-          headerTransparent: true,
-          headerLeft: () => (
-            <TouchableOpacity
-              onPress={() => router.back()}
-              style={styles.backButton}
-              hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-              accessibilityRole="button"
-              accessibilityLabel={strings.common.back}
-            >
-              <Icon name="ArrowLeft" size={24} color={theme.text} />
-            </TouchableOpacity>
-          ),
-          headerRight: () => !category.isDefault ? (
-            <TouchableOpacity
-              onPress={() => setIsEditModalVisible(true)}
-              style={styles.editButton}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              accessibilityRole="button"
-              accessibilityLabel="Edit category"
-            >
-              <Icon name="Pencil" size={20} color={theme.text} />
-            </TouchableOpacity>
-          ) : null,
-        }}
-      />
-      <ScrollView
-        style={[styles.container, { paddingTop: insets.top + 44 }]}
-        contentContainerStyle={styles.scrollContent}
-      >
+      <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
+        <ScreenHeader
+          title={categoryTitle}
+          onBack={() => router.back()}
+          actions={
+            !category.isDefault
+              ? [
+                  {
+                    icon: 'Pencil',
+                    label: strings.categoryDetail.editCategoryLabel,
+                    onPress: () => setIsEditModalVisible(true),
+                  },
+                ]
+              : undefined
+          }
+        />
         {/* Header */}
         <View style={styles.headerSection}>
           <View style={[styles.iconContainer, { backgroundColor: category.color + '20' }]}>
@@ -214,15 +189,6 @@ export default function CategoryDetailScreen() {
               color={category.color}
             />
           </View>
-          {/* Serif titles end in a period, category names included (spec 01 s2). */}
-          <Text style={styles.title}>
-            {/\.$/.test(category.name) ? category.name : `${category.name}.`}
-          </Text>
-          {category.monthlyBudget && (
-            <Text style={styles.budgetText}>
-              {strings.categoryDetail.budget(format(category.monthlyBudget))}
-            </Text>
-          )}
         </View>
 
         {/* Summary Card */}
@@ -320,7 +286,7 @@ export default function CategoryDetailScreen() {
               </View>
             ))}
             {categoryExpenses.length === 0 && (
-              <Text style={styles.noTransactions}>{strings.categoryDetail.noTransactions}</Text>
+              <EmptyState body={strings.categoryDetail.noExpensesLogged} />
             )}
           </View>
         </View>
@@ -333,7 +299,6 @@ export default function CategoryDetailScreen() {
         initialName={category.name}
         initialIcon={category.icon}
         initialColor={category.color}
-        initialBudget={category.monthlyBudget ? category.monthlyBudget / 100 : undefined}
         isEditing
       />
     </>
@@ -347,20 +312,11 @@ function createStyles(theme: AppTheme) {
       backgroundColor: theme.background,
     },
     scrollContent: {
-      paddingHorizontal: 16,
+      // Matches ScreenHeader's own 20pt gutter (PATTERN_VOCABULARY.md: one
+      // 20pt horizontal gutter per screen) so the title lines up with the
+      // content below it now that both share the same header component.
+      paddingHorizontal: 20,
       paddingBottom: 100,
-    },
-    header: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingHorizontal: 16,
-      paddingVertical: 12,
-    },
-    backButton: {
-      padding: 4,
-    },
-    editButton: {
-      padding: 4,
     },
     emptyContainer: {
       flex: 1,
@@ -382,21 +338,6 @@ function createStyles(theme: AppTheme) {
       alignItems: 'center',
       justifyContent: 'center',
       marginBottom: 16,
-    },
-    // Serif screen title, like Today / Money / Insights.
-    title: {
-      fontSize: typeScale.screenTitle,
-      lineHeight: 40,
-      fontFamily: theme.fonts.display,
-      color: theme.ink,
-      includeFontPadding: false,
-      marginBottom: 6,
-    },
-    budgetText: {
-      fontSize: typeScale.body,
-      fontFamily: theme.fonts.ui,
-      color: theme.slate,
-      lineHeight: 22,
     },
     summaryCard: {
       backgroundColor: theme.surface,
@@ -557,12 +498,6 @@ function createStyles(theme: AppTheme) {
       fontSize: 15,
       fontWeight: '600',
       color: theme.text,
-    },
-    noTransactions: {
-      fontSize: 14,
-      color: theme.textSecondary,
-      textAlign: 'center',
-      paddingVertical: 20,
     },
   });
 }

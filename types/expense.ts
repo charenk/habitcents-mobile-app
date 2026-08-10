@@ -74,7 +74,7 @@ export type Expense = {
   id: string;
   title: string;
   amount: number;           // Cents (integer)
-  amountDisplay?: string;   // Deprecated: derive at render via useCurrency().format(amount, { signed: true })
+  amountDisplay?: string;   // Deprecated: derive at render via useCurrency().format(amount) (unsigned, ADA/U7)
   category: ExpenseCategory;
   categoryId?: string;      // Reference to Category.id
   class?: ExpenseClass;     // Defaults to 'spend' when absent (ADR 0006)
@@ -93,7 +93,7 @@ export type Expense = {
 };
 
 export type ExpenseSection = {
-  title: string;            // "Feb 14", "Feb 13 - Yesterday"
+  title: string;            // Stable per-day grouping key (e.g. "2026-7-10"), NOT display text: SpentList owns the visible label
   data: Expense[];
 };
 

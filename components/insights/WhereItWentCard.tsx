@@ -7,7 +7,7 @@
  */
 import { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { EmojiTile } from '@/components/ui';
+import { EmojiTile, EmptyState } from '@/components/ui';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { categoryEmoji, categoryIdentityColor } from '@/constants/categoryEmoji';
@@ -40,7 +40,9 @@ export function WhereItWentCard({ rows, rangeLabel }: WhereItWentCardProps) {
       </View>
 
       {sorted.length === 0 ? (
-        <Text style={styles.empty}>{strings.insights.whereItWentEmpty}</Text>
+        <View style={styles.emptyWrap}>
+          <EmptyState body={strings.insights.whereItWentEmpty} />
+        </View>
       ) : (
         sorted.map((row) => {
           const amount = format(row.amount);
@@ -142,11 +144,9 @@ function createStyles(theme: AppTheme) {
       borderRadius: 3,
       backgroundColor: theme.mist,
     },
-    empty: {
-      fontSize: typeScale.caption,
-      fontFamily: theme.fonts.ui,
-      color: theme.slate,
+    emptyWrap: {
       paddingTop: 4,
+      paddingBottom: 4,
     },
   });
 }

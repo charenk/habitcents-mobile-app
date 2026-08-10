@@ -36,14 +36,6 @@ export const BAND_MIDPOINTS: Record<FrequencyBand, number> = {
 
 export const FREQUENCY_BANDS: FrequencyBand[] = ['never', 'oneToTwo', 'threeToFive', 'daily'];
 
-export type SubscriptionPreset = {
-  id: SubscriptionChipId;
-  /** Display name (section 3.3 chip grid), regional-neutral, no brand names. */
-  name: string;
-  /** Monthly preset, integer cents. */
-  monthlyCents: number;
-};
-
 export type VicePreset = {
   id: ViceId;
   /** Display name (section 3.4 vice rows). */
@@ -91,32 +83,6 @@ const PRESET_TABLE: Record<CurrencyCode, CurrencyPresetTable> = {
   },
 };
 
-// Welcome screen positioning figure (section 3.1: "quietly costing you $100 a
-// month"). A fixed, localized headline number, not a computed projection.
-const WELCOME_POSITIONING_CENTS: Record<CurrencyCode, number> = {
-  USD: 10000,
-  EUR: 10000,
-  GBP: 10000,
-  JPY: 1500000,
-  CAD: 14000,
-  AUD: 15000,
-  INR: 830000,
-};
-
-export function welcomePositioningCents(currency: CurrencyCode): number {
-  return WELCOME_POSITIONING_CENTS[currency] ?? WELCOME_POSITIONING_CENTS.USD;
-}
-
-const SUBSCRIPTION_NAMES: Record<SubscriptionChipId, string> = {
-  video: 'Video streaming',
-  music: 'Music',
-  cloud: 'Cloud storage',
-  gaming: 'Gaming',
-  news: 'News',
-  fitness: 'Fitness',
-  dating: 'Dating',
-};
-
 const VICE_NAMES: Record<ViceId, string> = {
   coffee: 'Coffee or tea out',
   delivery: 'Food delivery',
@@ -137,28 +103,45 @@ export const VICE_CATEGORIES: Record<ViceId, ExpenseCategory> = {
   impulse: 'Shopping',
 };
 
-export const SUBSCRIPTION_CHIP_IDS: SubscriptionChipId[] = [
-  'video', 'music', 'cloud', 'gaming', 'news', 'fitness', 'dating',
-];
-
 export const VICE_IDS: ViceId[] = ['coffee', 'delivery', 'impulse'];
 
-/** Category every seeded subscription recurring expense writes to (ADR 0006). */
-export const AUDIT_SUBSCRIPTION_CATEGORY: ExpenseCategory = 'Software & Subscriptions';
+/**
+ * Own glyphs for the vice presets (build 8 release-gate punchlist item). Both
+ * coffee and delivery map to VICE_CATEGORIES.Food, so a habit seeded from
+ * either preset used to inherit categoryEmoji('Food') = the pizza slice: "Coffee
+ * or tea out" showed a pizza in Money > Habits and the Insights leak rows.
+ * Keyed by ViceId rather than the display name so a future copy edit to
+ * VICE_NAMES can't silently break the lookup.
+ */
+const VICE_GLYPHS: Record<ViceId, string> = {
+  coffee: '☕',
+  delivery: '🥡',
+  impulse: '🛍️',
+};
+
+/**
+ * Glyph for a leak/habit row, vice-preset-aware. `BreakHabitSheet` writes the
+ * chosen preset's id (e.g. 'coffee') as `DetectedHabit.merchantPattern` for
+ * every non-custom pick (app/(tabs)/index.tsx handleBreakSheetStart), which
+ * is also exactly the ViceId shape, so that field doubles as a reliable "was
+ * this seeded from a vice preset" signal without a new stored field. Anything
+ * else (organic detection, a custom-named break, or no merchantPattern at
+ * all) falls back to the category glyph the caller already resolved.
+ */
+export function habitLeakGlyph(
+  habit: { merchantPattern?: string },
+  categoryEmoji: string
+): string {
+  const pattern = habit.merchantPattern;
+  if (pattern && (VICE_IDS as string[]).includes(pattern)) {
+    return VICE_GLYPHS[pattern as ViceId];
+  }
+  return categoryEmoji;
+}
 
 /** Lookup: the preset table for the given currency (falls back to USD row shape). */
 function tableFor(currency: CurrencyCode): CurrencyPresetTable {
   return PRESET_TABLE[currency] ?? PRESET_TABLE.USD;
-}
-
-/** All 7 subscription presets for the active currency, in spec 3.3 order. */
-export function subscriptionPresets(currency: CurrencyCode): SubscriptionPreset[] {
-  const table = tableFor(currency);
-  return SUBSCRIPTION_CHIP_IDS.map((id) => ({
-    id,
-    name: SUBSCRIPTION_NAMES[id],
-    monthlyCents: table.subscriptions[id],
-  }));
 }
 
 /** All 3 vice presets for the active currency, in spec 3.4 order. */

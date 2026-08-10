@@ -23,6 +23,7 @@ import { PickOneSheet } from '@/components/habit-logging/PickOneSheet';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { categoryEmoji, categoryIdentityColor } from '@/constants/categoryEmoji';
+import { habitLeakGlyph } from '@/constants/onboardingPresets';
 import { hasFullMonthOfData } from '@/utils/recurring';
 import { isHabitLimitReached } from '@/utils/habitLogging';
 import { getEntitlement } from '@/utils/purchases';
@@ -101,7 +102,7 @@ export default function InsightsScreen() {
         const categoryName = nameFor(habit);
         return {
           habit,
-          emoji: categoryEmoji(categoryName),
+          emoji: habitLeakGlyph(habit, categoryEmoji(categoryName)),
           tint: categoryIdentityColor(categoryName),
         };
       });

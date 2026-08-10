@@ -18,3 +18,6 @@
 
 ## Capture / screenshots
 <!-- Required for needs-user-test: simulator screenshots or a short clip, before/after. -->
+
+## Design vocabulary
+- [ ] matches design/PATTERN_VOCABULARY.md: yes / deviation noted

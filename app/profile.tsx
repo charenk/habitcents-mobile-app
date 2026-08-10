@@ -1,33 +1,38 @@
 /**
- * Profile (design/header-unification U4, ADR 0019). The bottom sheet behind
- * Today's gear is gone; this pushed route is reachable from the same
- * top-right spot on all four tabs instead, so it always feels one tap away.
+ * Profile (design/header-unification U4, ADR 0019; regrouped design/
+ * profile-restructure U9). The bottom sheet behind Today's gear is gone;
+ * this pushed route is reachable from the same top-right spot on all four
+ * tabs instead, so it always feels one tap away.
  *
- * Everything below the title is migrated verbatim from the deleted
- * components/SettingsSheet.tsx: the SettingsRow sub-component, the group/
- * eyebrow/row styles, and every handler. The app has no accounts yet, so the
- * copy stays settings-shaped under a Profile name; nothing here promises an
- * identity feature.
+ * U9 reordered the page so weight follows importance: General (the rows a
+ * user actually checks: currency, plan, support) outranks More (legal links
+ * and start-over, a visually quieter tier). Restore purchases left the page
+ * entirely; it only lives on the paywall now. The plan line under the title
+ * is gone too, since Subscription already carries that status.
+ *
+ * Everything here traces back to the deleted components/SettingsSheet.tsx:
+ * the SettingsRow sub-component, the group/eyebrow/row styles, and every
+ * handler. The app has no accounts yet, so the copy stays settings-shaped
+ * under a Profile name; nothing here promises an identity feature.
  *
  * The paywall placement value stays 'settings' for funnel continuity even
  * though the entry point is now named Profile (ADR 0019).
  */
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
-  Alert,
   Linking,
   ScrollView,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import Constants from 'expo-constants';
-import { Stack, useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { DevMenuSection } from '@/components/dev/DevMenuSection';
+import { CurrencySheet } from '@/components/settings/CurrencySheet';
 import { SettingsRow } from '@/components/settings/SettingsRow';
-import { Icon } from '@/components/ui/Icon';
+import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
+import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { useToast } from '@/components/ui/Toast';
 import { typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
@@ -36,57 +41,49 @@ import { useCurrency } from '@/contexts/CurrencyContext';
 import { useOnboarding } from '@/contexts/OnboardingContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { settingsRowLabel } from '@/utils/a11y';
-import { CURRENCIES } from '@/utils/currency';
 import { DEV_MENU_ENABLED } from '@/utils/devMenu';
-import { getEntitlement, restore } from '@/utils/purchases';
 import { clearOnboarding } from '@/utils/storage';
 
 const PRIVACY_POLICY_URL = 'https://habitcents.com/privacy';
 const TERMS_OF_SERVICE_URL = 'https://habitcents.com/terms';
-const SUPPORT_URL = 'https://habitcents.com/support';
+const SUPPORT_MAILTO_URL = `mailto:${strings.settings.supportEmail}`;
 
 export default function ProfileScreen(): React.JSX.Element {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
-  const insets = useSafeAreaInsets();
   const router = useRouter();
   const { show } = useToast();
-  const { currency, setCurrency } = useCurrency();
+  const { currency } = useCurrency();
   const { resetOnboarding } = useOnboarding();
+  const [currencySheetVisible, setCurrencySheetVisible] = useState(false);
+  const [startOverConfirmVisible, setStartOverConfirmVisible] = useState(false);
 
-  // Entitlement is read at render time; mock mode always reports 'free', so the
-  // free line is the only one with ratified copy today.
-  const isFree = getEntitlement() === 'free';
-
-  // Ported verbatim from SettingsSheet: an alert listing every supported
-  // currency, tapping one persists it through CurrencyContext.
+  // Opens the house bottom sheet (design/selection-sheets U3), replacing the
+  // native Alert.alert this row used to open.
   const handleCurrencyPress = () => {
-    Alert.alert(strings.settings.currencyAlertTitle, strings.settings.currencyAlertMessage, [
-      ...CURRENCIES.map((c) => ({
-        text: strings.settings.currencyOption(c.name, c.symbol),
-        onPress: () => {
-          void setCurrency(c.code);
-        },
-      })),
-      { text: strings.common.cancel, style: 'cancel' as const },
-    ]);
+    setCurrencySheetVisible(true);
   };
 
   // Pushing the paywall on top of Profile reads naturally, so this does not
-  // back() first.
-  const handlePremiumPress = () => {
+  // back() first. Placement stays 'settings' for funnel continuity even
+  // though the row now reads Subscription (ADR 0019).
+  const handleSubscriptionPress = () => {
     router.push('/paywall?placement=settings');
   };
 
-  // Restore (BET-004, mock mode). Same outcome branching the old sheet used;
-  // reported in a toast rather than an alert.
-  const handleRestorePress = async () => {
-    const result = await restore();
-    show(
-      result.ok && result.entitlement === 'premium'
-        ? strings.settings.restoreDoneMessage
-        : strings.settings.restoreNoneMessage
-    );
+  // Legal rows leave the app for the browser (external-link affordance,
+  // design/row-affordances). A device with no browser handler, or a rejected
+  // universal link, used to fail silently; it now surfaces a toast so the tap
+  // is never a dead end.
+  const openExternal = (url: string, failureMessage: string) => {
+    Linking.openURL(url).catch(() => show(failureMessage));
+  };
+
+  // Start over (design/profile-restructure U9, replaces Sign out). Tapping
+  // the row only opens the shared ConfirmSheet; nothing runs until the user
+  // confirms there.
+  const handleStartOverPress = () => {
+    setStartOverConfirmVisible(true);
   };
 
   // No accounts, so nothing to sign out of server-side: reset the onboarding
@@ -94,48 +91,28 @@ export default function ProfileScreen(): React.JSX.Element {
   // the has-onboarded flag, then send the user to the welcome screen.
   // Popping Profile off the stack first (router.back()) means replace()
   // swaps out the tab underneath it instead of leaving it stranded below
-  // onboarding, so there is nothing to swipe back into after sign out.
-  const handleSignOutPress = async () => {
+  // onboarding, so there is nothing to swipe back into after start-over.
+  const confirmStartOver = async () => {
+    setStartOverConfirmVisible(false);
     await resetOnboarding();
     await clearOnboarding();
     router.back();
     router.replace('/onboarding/welcome');
-    show(strings.settings.signOutToast);
+    show(strings.settings.startOverToast);
   };
 
   const version = Constants.expoConfig?.version ?? strings.settings.versionValue;
 
   return (
     <>
-      <Stack.Screen
-        options={{
-          headerShown: true,
-          headerTitle: '',
-          headerTransparent: true,
-          headerLeft: () => (
-            <TouchableOpacity
-              onPress={() => router.back()}
-              style={styles.backButton}
-              accessibilityRole="button"
-              accessibilityLabel={strings.common.back}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <Icon name="ArrowLeft" size={24} color={theme.text} />
-            </TouchableOpacity>
-          ),
-        }}
-      />
       <ScrollView
-        style={[styles.container, { paddingTop: insets.top + 44 }]}
+        style={styles.container}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.title} accessibilityRole="header">
-          {strings.profile.title}
-        </Text>
-        {isFree ? <Text style={styles.plan}>{strings.settings.planFree}</Text> : null}
+        <ScreenHeader title={strings.profile.title} onBack={() => router.back()} />
 
-        <Text style={styles.eyebrow}>{strings.settings.groupPreferences}</Text>
+        <Text style={styles.eyebrow}>{strings.settings.groupGeneral}</Text>
         <View style={styles.group}>
           <SettingsRow
             styles={styles}
@@ -143,79 +120,96 @@ export default function ProfileScreen(): React.JSX.Element {
             label={strings.settings.currency}
             value={currency}
             onPress={handleCurrencyPress}
+            chevron
             accessibilityLabel={settingsRowLabel(strings.settings.currency, currency)}
           />
           <SettingsRow
             styles={styles}
             theme={theme}
-            label={strings.settings.premiumRow}
-            onPress={handlePremiumPress}
+            label={strings.settings.subscriptionRow}
+            value={strings.settings.subscriptionValueFree}
+            onPress={handleSubscriptionPress}
             chevron
+            accessibilityLabel={settingsRowLabel(
+              strings.settings.subscriptionRow,
+              strings.settings.subscriptionValueFree
+            )}
+          />
+          <SettingsRow
+            styles={styles}
+            theme={theme}
+            label={strings.profile.supportRow}
+            value={strings.settings.supportEmail}
+            onPress={() => {
+              openExternal(SUPPORT_MAILTO_URL, strings.settings.mailOpenFailed);
+            }}
+            accessibilityLabel={settingsRowLabel(
+              strings.profile.supportRow,
+              strings.settings.supportEmail
+            )}
             last
           />
         </View>
 
-        <Text style={styles.eyebrow}>{strings.settings.groupAbout}</Text>
+        <Text style={styles.eyebrow}>{strings.settings.groupMore}</Text>
         <View style={styles.group}>
           <SettingsRow
             styles={styles}
             theme={theme}
-            label={strings.settings.restoreRow}
-            onPress={() => {
-              void handleRestorePress();
-            }}
-          />
-          <SettingsRow
-            styles={styles}
-            theme={theme}
             label={strings.settings.privacyPolicy}
+            externalLink
+            muted
             onPress={() => {
-              Linking.openURL(PRIVACY_POLICY_URL).catch(() => {});
+              openExternal(PRIVACY_POLICY_URL, strings.settings.linkOpenFailed);
             }}
           />
           <SettingsRow
             styles={styles}
             theme={theme}
             label={strings.settings.termsOfService}
+            externalLink
+            muted
             onPress={() => {
-              Linking.openURL(TERMS_OF_SERVICE_URL).catch(() => {});
+              openExternal(TERMS_OF_SERVICE_URL, strings.settings.linkOpenFailed);
             }}
           />
           <SettingsRow
             styles={styles}
             theme={theme}
-            label={strings.profile.supportRow}
-            onPress={() => {
-              Linking.openURL(SUPPORT_URL).catch(() => {});
-            }}
-          />
-          <SettingsRow
-            styles={styles}
-            theme={theme}
-            label={strings.settings.signOutRow}
-            hint={strings.settings.signOutHint}
-            destructive
-            onPress={() => {
-              void handleSignOutPress();
-            }}
-          />
-          <SettingsRow
-            styles={styles}
-            theme={theme}
-            label={strings.settings.versionRow}
-            value={version}
-            accessibilityLabel={settingsRowLabel(strings.settings.versionRow, version)}
+            label={strings.settings.startOverRow}
+            hint={strings.settings.startOverHint}
+            muted
             last
+            onPress={handleStartOverPress}
           />
         </View>
 
+        <Text style={styles.versionFooter}>{strings.settings.versionFooter(version)}</Text>
+
         {/* Developer-only. Renders nothing unless the build carries the gate
             (utils/devMenu.ts), so production is untouched. Popping back before
-            restarting onboarding matches handleSignOutPress above. */}
+            restarting onboarding matches confirmStartOver above. */}
         {DEV_MENU_ENABLED ? (
           <DevMenuSection styles={styles} theme={theme} onClose={() => router.back()} />
         ) : null}
       </ScrollView>
+
+      <CurrencySheet
+        visible={currencySheetVisible}
+        onClose={() => setCurrencySheetVisible(false)}
+      />
+
+      <ConfirmSheet
+        visible={startOverConfirmVisible}
+        onClose={() => setStartOverConfirmVisible(false)}
+        onConfirm={() => {
+          void confirmStartOver();
+        }}
+        title={strings.settings.startOverConfirmTitle}
+        body={strings.settings.startOverConfirmBody}
+        confirmLabel={strings.settings.startOverConfirmCta}
+        cancelLabel={strings.settings.startOverConfirmCancel}
+      />
     </>
   );
 }
@@ -227,24 +221,11 @@ function createStyles(theme: AppTheme) {
       backgroundColor: theme.background,
     },
     content: {
-      paddingHorizontal: 16,
+      // Matches ScreenHeader's own 20pt gutter (PATTERN_VOCABULARY.md: one
+      // 20pt horizontal gutter per screen) so the title lines up with the
+      // rows below it now that both share the same header component.
+      paddingHorizontal: 20,
       paddingBottom: 100,
-    },
-    backButton: {
-      padding: 4,
-    },
-    title: {
-      fontSize: typeScale.screenTitle,
-      fontFamily: theme.fonts.display,
-      lineHeight: 40,
-      includeFontPadding: false,
-      color: theme.ink,
-    },
-    plan: {
-      fontFamily: theme.fonts.ui,
-      fontSize: typeScale.secondary,
-      color: theme.slate,
-      marginTop: 2,
     },
     eyebrow: {
       fontFamily: theme.fonts.uiSemibold,
@@ -282,6 +263,9 @@ function createStyles(theme: AppTheme) {
     rowLabelDestructive: {
       color: theme.coral,
     },
+    rowLabelMuted: {
+      color: theme.slate,
+    },
     rowTrailing: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -290,13 +274,20 @@ function createStyles(theme: AppTheme) {
     },
     rowValue: {
       fontFamily: theme.fonts.ui,
-      fontSize: typeScale.body,
+      fontSize: typeScale.secondary,
       color: theme.slate,
     },
     rowHint: {
       fontFamily: theme.fonts.ui,
       fontSize: 12,
       color: theme.mist,
+    },
+    versionFooter: {
+      fontFamily: theme.fonts.ui,
+      fontSize: 12,
+      color: theme.mist,
+      textAlign: 'center',
+      marginTop: 22,
     },
   });
 }

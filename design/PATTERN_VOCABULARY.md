@@ -10,7 +10,7 @@ Sources of truth this page compresses: `design/redesign-handoff/01-tokens-and-fo
 - Sage (`theme.primary` and `primaryDark`) means one thing: a kept outcome or the action that produces one (CTA, kept numbers, active tab tint, skip confirm). Sage never touches a spend figure, a border around one, or decoration.
 - Spend is never a win: spend figures are ink, spend bars are mist on snow.
 - Lavender = habit arc, chapters, premium. Amber = upcoming money. Coral = destructive only. A slip is never red.
-- The only gradient in the app is the premium upsell card's.
+- The only decorative gradient in the app is the premium upsell card's. Scroll-edge fades (a white fade over a clipped horizontal rail, signalling more content) are functional, not decorative, and allowed.
 
 ## Type
 
@@ -25,6 +25,16 @@ Sources of truth this page compresses: `design/redesign-handoff/01-tokens-and-fo
 - Buttons: primary sage (48 to 52pt min height), secondary white with cloud border, tertiary bare slate text, destructive coral. Pick from these four.
 - The dashed-border card is the app's "add another" affordance (add upcoming, break another habit). Reuse it for any add-an-item entry.
 - 40pt pill buttons with cloud borders are header chrome only, icons in slate, never sage.
+
+## Rows
+
+- Every tappable row carries some affordance in its trailing slot; a row that gives no hint what the tap does is the bug, not a style choice.
+- Chevron: the row opens something in-app, a screen or a sheet. It never means "leaves the app."
+- External-link icon (`ExternalLink` in the icon map): the row leaves the app for the browser. Wire the Linking failure path to a toast; a link that silently does nothing on a tap is a dead end, not a graceful fallback.
+- Right-aligned value in 13pt slate: the row's current status (Currency's code, Subscription's plan). Value and chevron combine, value on the left of the chevron.
+- A shown address (email, in slate, right-aligned like a value) means the row is a mail action: it opens the device's mail composer, not the browser. No chevron, no external-link icon; the address itself is the affordance.
+- A row with none of the above is an in-place async action: it keeps a pressed state but promises nothing about where the tap goes. This is the one deliberately open case in the vocabulary; do not paper over it with a chevron or external-link icon that would misdescribe it.
+- Rows have two label tiers: default ink for primary rows, muted slate for tier-two rows (legal links, start over). Muted is a weight statement, not a disabled state.
 
 ## Surfaces
 
@@ -58,6 +68,7 @@ Sources of truth this page compresses: `design/redesign-handoff/01-tokens-and-fo
 - [ ] No new color meanings, no sage near spend, no red slip
 - [ ] Type on the scale; serif only for titles and money; tabular numbers
 - [ ] Controls picked from the vocabulary above, not invented
+- [ ] Rows: exactly one trailing affordance (chevron / external-link / none), value in 13pt slate, no silent Linking failures
 - [ ] 20pt gutter, 12pt rhythm, radii from the set (10 / 14 / 20 / 999)
 - [ ] Motion inside the budget with a reduced-motion path, single driver
 - [ ] Header roles, tab roles, 44pt targets, Dynamic Type caps

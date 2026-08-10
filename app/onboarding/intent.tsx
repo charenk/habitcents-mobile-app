@@ -19,7 +19,6 @@ type IntentCard = {
   eyebrow: string;
   title: string;
   description: string;
-  route: string;
 };
 
 const CARDS: IntentCard[] = [
@@ -29,10 +28,6 @@ const CARDS: IntentCard[] = [
     eyebrow: strings.onboarding.intentTrackEyebrow,
     title: strings.onboarding.intentTrackTitle,
     description: strings.onboarding.intentTrackDescription,
-    // Door 1 (W2, "the app is the onboarding"): unused. handlePick's
-    // intent === 'track' branch below replaces straight into the tabs
-    // instead of pushing this route.
-    route: '',
   },
   {
     intent: 'scan',
@@ -40,7 +35,6 @@ const CARDS: IntentCard[] = [
     eyebrow: strings.onboarding.intentScanEyebrow,
     title: strings.onboarding.intentScanTitle,
     description: strings.onboarding.intentScanDescription,
-    route: '/leak-scan',
   },
   {
     intent: 'break',
@@ -48,10 +42,6 @@ const CARDS: IntentCard[] = [
     eyebrow: strings.onboarding.intentBreakEyebrow,
     title: strings.onboarding.intentBreakTitle,
     description: strings.onboarding.intentBreakDescription,
-    // Door 3 (W3, "the app is the onboarding" complete): unused, same as
-    // Door 1's route above. handlePick's intent === 'break' branch replaces
-    // straight into the tabs instead of pushing this route.
-    route: '',
   },
 ];
 
@@ -100,7 +90,7 @@ export default function OnboardingIntentScreen() {
     }
 
     // Scan only, from here down.
-    router.push(card.route);
+    router.push('/leak-scan');
   };
 
   const handleSkip = async () => {

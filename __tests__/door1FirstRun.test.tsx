@@ -2,17 +2,18 @@
  * Door 1 real-app first run (W2, "the app is the onboarding" redesign,
  * Charen 2026-08-04). intent.tsx's track card now lands straight on Today
  * with ?view=spent&firstLog=1 instead of pushing the retired guided-log
- * screen; Today opens the real LogExpenseSheet itself and completes
- * onboarding once that sheet is saved or dismissed.
+ * screen; Today opens the real ExpenseSheet (mode="log") itself and
+ * completes onboarding once that sheet is saved or dismissed.
  *
  * Provider wiring mirrors __tests__/todaySpentKept.test.tsx (HabitsContext,
  * ExpensesContext, CategoriesContext module-mocked). OnboardingContext is
  * additionally mocked here (unlike that file, which stubs it as always
  * complete) so isOnboardingComplete/completeStep/skipStep/completeOnboarding
- * are directly observable per test. LogExpenseSheet itself is the real
- * component, not mocked: these tests drive it the same way
- * __tests__/logExpenseSheet.test.tsx does (keypad taps, merchant field,
- * Save button, and the Sheet backdrop's "Close" for a dismiss-without-save).
+ * are directly observable per test. ExpenseSheet (mode="log") itself is the
+ * real component, not mocked: these tests drive it the same way
+ * __tests__/expenseSheet.test.tsx does (typing into the native AmountField,
+ * the merchant field, Save button, and the Sheet backdrop's "Close" for a
+ * dismiss-without-save).
  */
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock')
@@ -162,10 +163,13 @@ async function tap(element: Parameters<typeof fireEvent.press>[0]): Promise<void
   });
 }
 
-async function pressKeypad(view: View, digits: string): Promise<void> {
-  for (const digit of digits) {
-    await tap(view.getByLabelText(digit));
-  }
+/** Types an amount into the native AmountField (ADR 0023), found by its
+ *  stable "Amount, ..." accessibility label prefix (the suffix changes with
+ *  the current value, so only the prefix is matched). */
+async function typeAmount(view: View, amount: string): Promise<void> {
+  await act(async () => {
+    fireEvent.changeText(view.getByLabelText(/^Amount,/), amount);
+  });
 }
 
 async function typeMerchant(view: View, text: string): Promise<void> {
@@ -217,7 +221,7 @@ describe('Door 1 real-app first run: save completes onboarding', () => {
     mockParams = { view: 'spent', firstLog: '1' };
     const view = await renderToday();
 
-    await pressKeypad(view, '5');
+    await typeAmount(view, '5');
     await tap(view.getByText(strings.expenseSheet.saveExpense));
 
     expect(mockTrack).toHaveBeenCalledWith('first_log_saved', { guided: true });
@@ -267,7 +271,7 @@ describe('Door 1 real-app first run: watch-nudge', () => {
     mockParams = { view: 'spent', firstLog: '1' };
     const view = await renderToday();
 
-    await pressKeypad(view, '5');
+    await typeAmount(view, '5');
     await typeMerchant(view, 'Blue Bottle');
     await tap(view.getByText(strings.expenseSheet.saveExpense));
 
@@ -278,7 +282,7 @@ describe('Door 1 real-app first run: watch-nudge', () => {
     mockParams = { view: 'spent', firstLog: '1' };
     const view = await renderToday();
 
-    await pressKeypad(view, '5');
+    await typeAmount(view, '5');
     await tap(view.getByText(strings.expenseSheet.saveExpense));
 
     expect(view.queryByText(strings.today.watchLeakNudgeLabel)).toBeNull();
@@ -288,7 +292,7 @@ describe('Door 1 real-app first run: watch-nudge', () => {
     mockParams = { view: 'spent', firstLog: '1' };
     const view = await renderToday();
 
-    await pressKeypad(view, '5');
+    await typeAmount(view, '5');
     await typeMerchant(view, 'Blue Bottle');
     await tap(view.getByText(strings.expenseSheet.saveExpense));
 
@@ -314,7 +318,7 @@ describe('Door 1 real-app first run: watch-nudge', () => {
     mockParams = { view: 'spent', firstLog: '1' };
     const view = await renderToday();
 
-    await pressKeypad(view, '5');
+    await typeAmount(view, '5');
     await typeMerchant(view, 'Blue Bottle');
     await tap(view.getByText(strings.expenseSheet.saveExpense));
 

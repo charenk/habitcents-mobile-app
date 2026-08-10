@@ -39,27 +39,21 @@ export const strings = {
     savedConfirmation: 'Saved',
     all: 'All',
     editAccessibilityLabel: (title: string, amountLabel: string) => `Edit ${title}, ${amountLabel}`,
-    // Zero-expense empty state (spec 05 section 5.1).
-    emptyTitle: 'No expenses yet',
-    emptyBody: 'Log your first in about 10 seconds. Amount first, then tap a category.',
-    emptyCta: 'Add an expense',
   },
   upcoming: {
-    emptyTitle: 'Nothing upcoming',
-    emptySubtitle:
-      'Mark an expense as recurring (weekly or monthly) and its next occurrence shows up here.',
     totalLabel: (windowDays: number) => `NEXT ${windowDays} DAYS`,
     recurringCount: (count: number) =>
       `${count} recurring ${count === 1 ? 'expense' : 'expenses'}`,
   },
   habits: {
     title: 'Your Habits',
-    loading: 'Analyzing your spending patterns...',
+    loading: 'Loading.',
     // Pre-detection progress state (spec 05 section 5.2): shown on the Habits
     // tab empty state once logging has started but no leak has been detected
     // yet.
     spottingYourLeak: 'Spotting your leak',
     logsAtSamePlace: (n: number, threshold: number) => `${n} of ${threshold} logs`,
+    logsAtSamePlaceSuffix: ' at the same place',
     logsAtSamePlaceBody: 'Around 4 logs at one merchant is enough to see a pattern. Keep logging.',
   },
   // Habit logging v2 (docs/design-package-phase2/01-habit-logging-spec.md).
@@ -183,9 +177,9 @@ export const strings = {
     eventSkippedOne: (skipValue: string) => `Skipped one · +${skipValue}`,
     eventBoughtIt: 'Bought it',
     eventBoughtItPartial: (difference: string) => `Bought it · ${difference} kept`,
-    // Empty states (4.10)
-    emptyLeaksTitle: 'No leaks found yet',
-    emptyLeaksSubtitle: 'Keep logging expenses. Around 4 logs at the same place is enough to spot a pattern.',
+    // Empty states (4.10): the leaks-empty title/body live once at
+    // insights.leaksEmptyTitle/leaksEmptyBody now (was duplicated here
+    // byte-for-byte; collapsed in the empty-state pattern pass).
     logAnExpense: 'Log an expense',
     keptZeroCaption: 'your first skip starts this counter',
   },
@@ -246,12 +240,15 @@ export const strings = {
     title: 'Categories',
     defaultCategories: 'Default Categories',
     customCategories: 'Custom Categories',
-    loading: 'Loading categories...',
+    loading: 'Loading.',
     emptyTitle: 'No categories yet',
-    emptySubtitle: 'Tap the + button to add your first category',
-    deleteTitle: 'Delete Category',
-    deleteMessage: (name: string) =>
-      `Are you sure you want to delete "${name}"? Your existing expenses are kept; they'll just no longer show this category.`,
+    emptySubtitle: 'Tap Add category at the top to create your first one.',
+    // Delete confirm sheet (design/selection-sheets U3), replacing the native
+    // alert. deleteConfirmCta and deleteCancel are the sheet's two buttons.
+    deleteTitle: (name: string) => `Delete ${name}?`,
+    deleteMessage: "Your existing expenses are kept; they'll just no longer show this category.",
+    deleteConfirmCta: 'Delete category',
+    deleteCancel: 'Keep category',
     thisMonthSuffix: (amount: string) => `${amount} this month`,
     addCategoryLabel: 'Add category',
     // Redesign step 04: serif "Categories." title plus two eyebrow-labelled
@@ -263,7 +260,7 @@ export const strings = {
   },
   categoryDetail: {
     notFound: 'Category not found',
-    budget: (amount: string) => `Budget: ${amount}/month`,
+    editCategoryLabel: 'Edit category',
     thisMonth: 'this month',
     vsLastMonth: (percent: number) => `${percent}% vs last month`,
     transactions: 'transactions',
@@ -272,13 +269,15 @@ export const strings = {
     topMerchants: 'Top Merchants',
     transactionCount: (count: number) => `${count} transaction${count !== 1 ? 's' : ''}`,
     recentTransactions: 'Recent Transactions',
-    noTransactions: 'No transactions yet',
+    // Rewritten off "transactions" (house rule: the app calls things
+    // "expenses" or "logs", never "transactions").
+    noExpensesLogged: 'Nothing logged in this category yet.',
     transactionDate: (date: string, time: string) => `${date} at ${time}`,
   },
   reports: {
     title: 'Reports',
     subtitle: 'Your financial insights',
-    loading: 'Loading reports...',
+    loading: 'Loading.',
     total: 'Total',
     noSpendingData: 'No spending data',
     noActiveHabits: 'No active habits',
@@ -300,23 +299,44 @@ export const strings = {
     restorePurchases: 'Restore purchases',
     version: 'Version',
     versionValue: '1.0.0',
-    // Currency alert
-    currencyAlertTitle: 'Currency',
-    currencyAlertMessage: 'Choose your currency',
-    currencyOption: (name: string, symbol: string) => `${name} (${symbol})`,
+    // Currency sheet (design/selection-sheets U3): replaces the native alert.
+    // Row copy speaks the same vocabulary as the Profile row it opens from
+    // (the code, e.g. USD), not the symbol.
+    currencySheetTitle: 'Currency.',
+    currencyRowLabel: (name: string, code: string) => `${name} (${code})`,
     // Restore purchases (BET-004, mock mode). No purchases exist to restore yet.
-    restoreAlertTitle: 'Restore purchases',
+    // The row itself moved off Profile onto the paywall footer (design/
+    // profile-restructure U9); these two outcome messages stay here because
+    // the paywall's restore action still reads them.
     restoreNoneMessage: 'No previous purchases to restore.',
     restoreDoneMessage: 'Your purchases have been restored.',
-    planFree: 'Free plan · 1 habit',
-    groupPreferences: 'Preferences',
-    groupAbout: 'About',
-    premiumRow: 'Premium',
-    restoreRow: 'Restore purchases',
-    signOutRow: 'Sign out',
-    signOutHint: 'data stays on this device',
-    signOutToast: 'Signed out. Your data stays on this device.',
-    versionRow: 'Version',
+    // Profile grouping (design/profile-restructure U9): weight follows
+    // importance. General carries the rows with a status the user checks
+    // (currency, plan, support); More is the quieter tier for legal links and
+    // the start-over action.
+    groupGeneral: 'General',
+    groupMore: 'More',
+    subscriptionRow: 'Subscription',
+    subscriptionValueFree: 'Free',
+    // Start over (design/profile-restructure U9) replaces Sign out: there are
+    // no accounts, so nothing is signed out of. Slate, never coral: coral
+    // stays reserved for actions that destroy data, and this keeps all of it.
+    startOverRow: 'Start over',
+    startOverHint: 'data stays on this device',
+    startOverConfirmTitle: 'Start over?',
+    startOverConfirmBody: 'Takes you back to the start screens. Your data stays on this device.',
+    startOverConfirmCta: 'Start over',
+    startOverConfirmCancel: 'Keep going',
+    startOverToast: 'Starting over. Your data stays on this device.',
+    // Row affordance vocabulary (design/row-affordances): legal rows leave the
+    // app for the browser; a failed Linking.openURL now surfaces a toast
+    // instead of failing silently.
+    linkOpenFailed: 'Could not open the link.',
+    mailOpenFailed: 'Could not open mail.',
+    supportEmail: 'support@habitcents.com',
+    // Version footer (design/profile-restructure U9): no longer a row, a
+    // single muted centered line under the More card.
+    versionFooter: (value: string) => `Version ${value}`,
   },
   // Profile page (design/header-unification U4, ADR 0019). Settings moved from
   // a bottom sheet behind Today's gear to a pushed route reachable from every
@@ -328,15 +348,16 @@ export const strings = {
     supportRow: 'Support',
   },
   addCategoryModal: {
-    editCategory: 'Edit Category',
-    newCategory: 'New Category',
-    categoryNamePreview: 'Category Name',
+    // Sheet titles carry the trailing period, matching every other sheet
+    // (design/selection-sheets U3; converted off the raw Modal + budget
+    // field per D10, budgets removed from MVP).
+    editCategory: 'Edit category.',
+    newCategory: 'New category.',
+    categoryNamePreview: 'Category name',
     name: 'Name',
     namePlaceholder: 'Enter category name',
     icon: 'Icon',
     color: 'Color',
-    monthlyBudget: 'Monthly Budget (Optional)',
-    budgetPlaceholder: '0',
   },
   editExpenseModal: {
     cancelAccessibilityLabel: 'Cancel editing',
@@ -630,7 +651,7 @@ export const strings = {
     quickLogCategoryLabel: (name: string) => `Log a ${name} expense`,
     // Logged today list
     loggedTodayEyebrow: 'Logged today',
-    loggedTodayEmpty: 'Nothing logged today yet.',
+    loggedTodayEmpty: 'A quiet day so far. Anything you log lands here.',
     alreadyBreakingToast: "You're already breaking this habit.",
     editExpenseLabel: (title: string, amountLabel: string) => `Edit ${title}, ${amountLabel}`,
     // Break-another affordance (DI-6, ADR 0019): quiet, always-present at the
@@ -663,7 +684,10 @@ export const strings = {
     watchLeakNudgeDismiss: 'not now',
   },
 
-  // Log and edit expense sheets (spec 04 "Log / Edit sheets").
+  // Log and edit expense sheets (spec 04 "Log / Edit sheets"). Merged into one
+  // ExpenseSheet component (U2, the expense drawer rebuild); the mode
+  // ('log' | 'edit') only changes the eyebrow, this coach line, the primary
+  // button label, and edit's added delete row.
   expenseSheet: {
     logEyebrow: 'Log expense',
     editEyebrow: 'Edit expense',
@@ -673,6 +697,11 @@ export const strings = {
     // flow can ever produce a leak. The field label and placeholder are the
     // ones the old form used (strings.expenses.merchant*), reused as is.
     whereEyebrow: 'Where',
+    // U2/ADR 0023: the amount is now a real, full-width input, so the log
+    // sheet always carries this coach line (not only Door 1's first run,
+    // which still overrides it with its own richer copy via the coachLine
+    // prop). Edit mode never shows a coach line.
+    logCoachLine: 'Amount first. The rest takes one tap.',
     saveExpense: 'Save expense',
     saveChanges: 'Save changes',
     deleteExpense: 'Delete expense',
@@ -697,8 +726,14 @@ export const strings = {
       `${count} leak${count === 1 ? '' : 's'} found, none managed yet`,
     // Spent
     spentGroupHeader: (dayLabel: string, total: string) => `${dayLabel} · ${total}`,
+    // "Today" / "Yesterday" combined with a formatted date for the eyebrow,
+    // e.g. "Today · Aug 10" (SpentList dayLabelFor is the one place this runs).
+    spentDayLabel: (dayLabel: string, date: string) => `${dayLabel} · ${date}`,
     spentToday: 'Today',
     spentYesterday: 'Yesterday',
+    // Today section, no rows yet. Deliberately compact, one line, not the
+    // full EmptyState primitive, so past days stay visible below it.
+    spentTodayEmpty: "Nothing yet today. Add it if you spent, and enjoy it if you didn't.",
     spentEditHint: 'Tap a row to edit or delete it.',
     spentEmptyTitle: 'Nothing logged yet',
     spentEmptyBody: 'Log your first in about 10 seconds. Amount first, then tap a category.',
@@ -707,7 +742,7 @@ export const strings = {
     upcomingScheduledCount: (n: number) => `${n} scheduled`,
     upcomingAddAffordance: 'Add an upcoming expense',
     upcomingListEyebrow: 'Scheduled',
-    upcomingEmptyBody: 'Mark an expense as repeating and its next date shows up here.',
+    upcomingEmptyBody: "Mark an expense as repeating and we'll show its next date here.",
     multiPaymentPill: (count: number, monthLabel: string) => `${count} payments in ${monthLabel}`,
     // Schedule line under an upcoming row, assembled in utils/recurring.ts:
     // "Monthly · 1st · next Aug 1", "Every 2 weeks · next Aug 14".
@@ -776,7 +811,11 @@ export const strings = {
     leakActionBreak: 'Break it',
     leakActionBreaking: 'Breaking',
     leakActionWatch: 'Watch',
-    leaksEmptyTitle: 'No leaks found yet',
+    // Shared across LeaksCard, HabitsList, and the Today Kept view's no-leaks
+    // state (was duplicated as habitLogging.emptyLeaksTitle/Subtitle;
+    // collapsed to this one key). Body keeps the honest detection threshold
+    // verbatim (house rule: real detection window, not a rounded claim).
+    leaksEmptyTitle: 'Your leaks will show up here',
     leaksEmptyBody:
       'Keep logging expenses. Around 4 logs at the same place is enough to spot a pattern.',
     whereItWentTitle: 'Where it went',

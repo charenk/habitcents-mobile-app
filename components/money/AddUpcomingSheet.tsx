@@ -54,9 +54,9 @@ import type {
   Weekday,
 } from '@/types/expense';
 import { formatDate } from '@/utils/dates';
+import { toExpenseCategory } from '@/utils/expenseCategory';
 import { keypadValueToCents } from '@/utils/keypad';
 import { hapticSuccess } from '@/utils/motion';
-import { toExpenseCategory } from './CategoryTilePicker';
 
 export type AddUpcomingSheetProps = {
   visible: boolean;

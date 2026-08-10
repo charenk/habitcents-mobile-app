@@ -1,6 +1,10 @@
 /**
  * Rendered tests for ScreenHeader. Provider wiring mirrors
- * __tests__/uiPrimitives.test.tsx: the async-storage mock plus ThemeProvider.
+ * __tests__/uiPrimitives.test.tsx: the async-storage mock plus ThemeProvider,
+ * plus SafeAreaProvider now that the pushed-route (onBack) mode reads
+ * useSafeAreaInsets directly instead of trusting a parent container's
+ * padding (design/header-unification U1: that trust is what let the old
+ * native transparent header overlap the title).
  */
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock')
@@ -8,11 +12,22 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
+import { strings } from '@/constants/strings';
+
+const initialMetrics = {
+  frame: { x: 0, y: 0, width: 390, height: 844 },
+  insets: { top: 47, left: 0, right: 0, bottom: 34 },
+};
 
 function Providers({ children }: { children: React.ReactNode }) {
-  return <ThemeProvider>{children}</ThemeProvider>;
+  return (
+    <SafeAreaProvider initialMetrics={initialMetrics}>
+      <ThemeProvider>{children}</ThemeProvider>
+    </SafeAreaProvider>
+  );
 }
 
 describe('ScreenHeader', () => {
@@ -78,5 +93,49 @@ describe('ScreenHeader', () => {
     fireEvent.press(await view.findByRole('button', { name: 'Add' }));
     expect(onPressA).toHaveBeenCalledTimes(1);
     expect(onPressB).toHaveBeenCalledTimes(1);
+  });
+
+  // Pushed-route mode (profile, habit detail, category detail): the back
+  // pill button sits ahead of the title and fires onBack. This is the fix
+  // for the iPhone 13 overlap bug (design/header-unification U1) that used
+  // to live behind a native transparent Stack.Screen header.
+  it('renders a back button ahead of the title and fires onBack when onBack is passed', async () => {
+    const onBack = jest.fn();
+    const view = await render(
+      <Providers>
+        <ScreenHeader title="Profile." onBack={onBack} />
+      </Providers>
+    );
+
+    const backButton = await view.findByRole('button', { name: strings.common.back });
+    expect(backButton).toBeTruthy();
+    fireEvent.press(backButton);
+    expect(onBack).toHaveBeenCalledTimes(1);
+
+    const title = await view.findByText('Profile.');
+    expect(title.props.accessibilityRole).toBe('header');
+    expect(title.props.maxFontSizeMultiplier).toBe(1.5);
+  });
+
+  it('renders no back button when onBack is not passed', async () => {
+    const view = await render(
+      <Providers>
+        <ScreenHeader title="Today." />
+      </Providers>
+    );
+    expect(view.queryByLabelText(strings.common.back)).toBeNull();
+  });
+
+  it('renders a title-less back-only header, for not-found branches', async () => {
+    const onBack = jest.fn();
+    const view = await render(
+      <Providers>
+        <ScreenHeader onBack={onBack} />
+      </Providers>
+    );
+
+    const backButton = await view.findByRole('button', { name: strings.common.back });
+    fireEvent.press(backButton);
+    expect(onBack).toHaveBeenCalledTimes(1);
   });
 });

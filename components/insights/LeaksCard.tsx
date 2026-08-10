@@ -12,6 +12,7 @@ import { radii, typeScale, type AppTheme } from '@/constants/theme';
 import type { DetectedHabit } from '@/types/habit';
 import { strings } from '@/constants/strings';
 import { HabitLeakRow, type LeakRowData } from '@/components/habit-logging/HabitLeakRow';
+import { EmptyState } from '@/components/ui';
 
 export type { LeakRowData };
 
@@ -35,8 +36,7 @@ export function LeaksCard({ rows, onBreak, onOpenHabit }: LeaksCardProps) {
 
       {rows.length === 0 ? (
         <View style={styles.empty}>
-          <Text style={styles.emptyTitle}>{strings.insights.leaksEmptyTitle}</Text>
-          <Text style={styles.emptyBody}>{strings.insights.leaksEmptyBody}</Text>
+          <EmptyState title={strings.insights.leaksEmptyTitle} body={strings.insights.leaksEmptyBody} />
         </View>
       ) : (
         rows.map((row, index) => (
@@ -71,18 +71,7 @@ function createStyles(theme: AppTheme) {
     empty: {
       paddingTop: 8,
       paddingBottom: 4,
-    },
-    emptyTitle: {
-      fontSize: 14.5,
-      fontFamily: theme.fonts.uiSemibold,
-      color: theme.ink,
-    },
-    emptyBody: {
-      fontSize: typeScale.caption,
-      fontFamily: theme.fonts.ui,
-      color: theme.slate,
-      marginTop: 4,
-      lineHeight: 18,
+      alignItems: 'center',
     },
   });
 }
