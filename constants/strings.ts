@@ -302,7 +302,7 @@ export const strings = {
     // Currency sheet (design/selection-sheets U3): replaces the native alert.
     // Row copy speaks the same vocabulary as the Profile row it opens from
     // (the code, e.g. USD), not the symbol.
-    currencySheetTitle: 'Currency',
+    currencySheetTitle: 'Currency.',
     currencyRowLabel: (name: string, code: string) => `${name} (${code})`,
     // Restore purchases (BET-004, mock mode). No purchases exist to restore yet.
     restoreAlertTitle: 'Restore purchases',
