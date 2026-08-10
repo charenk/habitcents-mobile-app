@@ -16,6 +16,7 @@
 import { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { ExpenseRow } from '@/components/money/ExpenseRow';
+import { EmptyState } from '@/components/ui';
 import { strings } from '@/constants/strings';
 import { radii, typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
@@ -58,8 +59,7 @@ export function SpentList({ sections, onEditExpense }: SpentListProps): React.JS
   if (sections.length === 0) {
     return (
       <View style={styles.empty}>
-        <Text style={styles.emptyTitle}>{strings.money.spentEmptyTitle}</Text>
-        <Text style={styles.emptyBody}>{strings.money.spentEmptyBody}</Text>
+        <EmptyState title={strings.money.spentEmptyTitle} body={strings.money.spentEmptyBody} />
       </View>
     );
   }
@@ -135,20 +135,6 @@ function createStyles(theme: AppTheme) {
       paddingVertical: 40,
       paddingHorizontal: 24,
       alignItems: 'center',
-    },
-    emptyTitle: {
-      fontFamily: theme.fonts.uiSemibold,
-      fontSize: typeScale.body,
-      color: theme.ink,
-      textAlign: 'center',
-    },
-    emptyBody: {
-      fontFamily: theme.fonts.ui,
-      fontSize: typeScale.secondary,
-      color: theme.slate,
-      textAlign: 'center',
-      lineHeight: 20,
-      marginTop: 6,
     },
   });
 }

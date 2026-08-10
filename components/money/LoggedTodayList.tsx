@@ -8,6 +8,7 @@ import { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { ExpenseRow } from '@/components/money/ExpenseRow';
+import { EmptyState } from '@/components/ui';
 import { radii, typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import type { Expense } from '@/types/expense';
@@ -27,8 +28,8 @@ export function LoggedTodayList({ expenses, onEditExpense }: LoggedTodayListProp
         {strings.today.loggedTodayEyebrow.toUpperCase()}
       </Text>
       {expenses.length === 0 ? (
-        <View style={styles.loggedTodayCard}>
-          <Text style={styles.loggedTodayEmpty}>{strings.today.loggedTodayEmpty}</Text>
+        <View style={[styles.loggedTodayCard, styles.loggedTodayEmptyWrap]}>
+          <EmptyState body={strings.today.loggedTodayEmpty} />
         </View>
       ) : (
         <View style={styles.loggedTodayCard}>
@@ -66,10 +67,7 @@ function createStyles(theme: AppTheme) {
       borderTopWidth: 1,
       borderTopColor: theme.hairlineSubtle,
     },
-    loggedTodayEmpty: {
-      fontSize: typeScale.secondary,
-      fontFamily: theme.fonts.ui,
-      color: theme.mist,
+    loggedTodayEmptyWrap: {
       paddingVertical: 16,
     },
   });

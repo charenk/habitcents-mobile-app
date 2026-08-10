@@ -16,6 +16,7 @@ import { radii, typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
 import type { HabitLogEntry } from '@/types/habit';
 import { strings } from '@/constants/strings';
+import { EmptyState } from '@/components/ui';
 
 type EventHistoryProps = {
   dayLogs: HabitLogEntry[];
@@ -38,8 +39,8 @@ export function EventHistory({ dayLogs, skipValue }: EventHistoryProps) {
 
   if (events.length === 0) {
     return (
-      <View style={styles.card}>
-        <Text style={styles.empty}>{strings.habitDetailV2.eventHistoryEmpty}</Text>
+      <View style={[styles.card, styles.emptyWrap]}>
+        <EmptyState body={strings.habitDetailV2.eventHistoryEmpty} />
       </View>
     );
   }
@@ -95,10 +96,7 @@ function createStyles(theme: AppTheme) {
       color: theme.ink,
       fontVariant: ['tabular-nums'],
     },
-    empty: {
-      fontFamily: theme.fonts.ui,
-      fontSize: typeScale.secondary,
-      color: theme.mist,
+    emptyWrap: {
       paddingVertical: 18,
     },
   });

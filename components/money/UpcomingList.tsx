@@ -20,6 +20,7 @@
 import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { EmojiTile } from '@/components/ui/EmojiTile';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { Icon } from '@/components/ui/Icon';
 import { categoryEmoji, categoryIdentityColor } from '@/constants/categoryEmoji';
 import { strings } from '@/constants/strings';
@@ -68,7 +69,9 @@ export function UpcomingList({ items, windowDays, onAdd }: UpcomingListProps): R
     return (
       <View>
         {addAffordance}
-        <Text style={styles.emptyBody}>{strings.money.upcomingEmptyBody}</Text>
+        <View style={styles.emptyWrap}>
+          <EmptyState body={strings.money.upcomingEmptyBody} />
+        </View>
       </View>
     );
   }
@@ -292,12 +295,7 @@ function createStyles(theme: AppTheme) {
       color: theme.mist,
       marginTop: 2,
     },
-    emptyBody: {
-      fontFamily: theme.fonts.ui,
-      fontSize: typeScale.secondary,
-      color: theme.slate,
-      textAlign: 'center',
-      lineHeight: 20,
+    emptyWrap: {
       marginTop: 16,
       paddingHorizontal: 24,
     },

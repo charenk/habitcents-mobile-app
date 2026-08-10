@@ -9,6 +9,7 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Icon, categoryIconName } from '@/components/ui/Icon';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { useTheme } from '@/contexts/ThemeContext';
 import { formatDate } from '@/utils/dates';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -285,7 +286,7 @@ export default function CategoryDetailScreen() {
               </View>
             ))}
             {categoryExpenses.length === 0 && (
-              <Text style={styles.noTransactions}>{strings.categoryDetail.noTransactions}</Text>
+              <EmptyState body={strings.categoryDetail.noExpensesLogged} />
             )}
           </View>
         </View>
@@ -497,12 +498,6 @@ function createStyles(theme: AppTheme) {
       fontSize: 15,
       fontWeight: '600',
       color: theme.text,
-    },
-    noTransactions: {
-      fontSize: 14,
-      color: theme.textSecondary,
-      textAlign: 'center',
-      paddingVertical: 20,
     },
   });
 }

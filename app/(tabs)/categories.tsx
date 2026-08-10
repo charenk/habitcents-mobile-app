@@ -14,7 +14,7 @@ import React, { useMemo, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { ConfirmSheet, Icon, ScreenHeader } from '@/components/ui';
+import { ConfirmSheet, EmptyState, Icon, ScreenHeader } from '@/components/ui';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCategories } from '@/contexts/CategoriesContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
@@ -139,9 +139,11 @@ export default function CategoriesScreen() {
       >
         {sections.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Icon name="Folder" size={22} color={theme.mist} />
-            <Text style={styles.emptyText}>{strings.categories.emptyTitle}</Text>
-            <Text style={styles.emptySubtext}>{strings.categories.emptySubtitle}</Text>
+            <EmptyState
+              icon="Folder"
+              title={strings.categories.emptyTitle}
+              body={strings.categories.emptySubtitle}
+            />
           </View>
         ) : (
           sections.map((section) => (
@@ -236,18 +238,7 @@ function createStyles(theme: AppTheme) {
     emptyContainer: {
       alignItems: 'center',
       paddingTop: 60,
-      gap: 8,
-    },
-    emptyText: {
-      fontSize: 17,
-      fontFamily: theme.fonts.uiSemibold,
-      color: theme.ink,
-    },
-    emptySubtext: {
-      fontSize: typeScale.caption,
-      fontFamily: theme.fonts.ui,
-      color: theme.slate,
-      textAlign: 'center',
+      paddingHorizontal: 24,
     },
   });
 }
