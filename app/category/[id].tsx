@@ -10,6 +10,7 @@ import {
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon, categoryIconName } from '@/components/ui/Icon';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { useTheme } from '@/contexts/ThemeContext';
 import { formatDate } from '@/utils/dates';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -320,7 +321,7 @@ export default function CategoryDetailScreen() {
               </View>
             ))}
             {categoryExpenses.length === 0 && (
-              <Text style={styles.noTransactions}>{strings.categoryDetail.noTransactions}</Text>
+              <EmptyState body={strings.categoryDetail.noExpensesLogged} />
             )}
           </View>
         </View>
@@ -557,12 +558,6 @@ function createStyles(theme: AppTheme) {
       fontSize: 15,
       fontWeight: '600',
       color: theme.text,
-    },
-    noTransactions: {
-      fontSize: 14,
-      color: theme.textSecondary,
-      textAlign: 'center',
-      paddingVertical: 20,
     },
   });
 }

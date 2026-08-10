@@ -39,27 +39,21 @@ export const strings = {
     savedConfirmation: 'Saved',
     all: 'All',
     editAccessibilityLabel: (title: string, amountLabel: string) => `Edit ${title}, ${amountLabel}`,
-    // Zero-expense empty state (spec 05 section 5.1).
-    emptyTitle: 'No expenses yet',
-    emptyBody: 'Log your first in about 10 seconds. Amount first, then tap a category.',
-    emptyCta: 'Add an expense',
   },
   upcoming: {
-    emptyTitle: 'Nothing upcoming',
-    emptySubtitle:
-      'Mark an expense as recurring (weekly or monthly) and its next occurrence shows up here.',
     totalLabel: (windowDays: number) => `NEXT ${windowDays} DAYS`,
     recurringCount: (count: number) =>
       `${count} recurring ${count === 1 ? 'expense' : 'expenses'}`,
   },
   habits: {
     title: 'Your Habits',
-    loading: 'Analyzing your spending patterns...',
+    loading: 'Loading.',
     // Pre-detection progress state (spec 05 section 5.2): shown on the Habits
     // tab empty state once logging has started but no leak has been detected
     // yet.
     spottingYourLeak: 'Spotting your leak',
     logsAtSamePlace: (n: number, threshold: number) => `${n} of ${threshold} logs`,
+    logsAtSamePlaceSuffix: ' at the same place',
     logsAtSamePlaceBody: 'Around 4 logs at one merchant is enough to see a pattern. Keep logging.',
   },
   // Habit logging v2 (docs/design-package-phase2/01-habit-logging-spec.md).
@@ -183,9 +177,9 @@ export const strings = {
     eventSkippedOne: (skipValue: string) => `Skipped one · +${skipValue}`,
     eventBoughtIt: 'Bought it',
     eventBoughtItPartial: (difference: string) => `Bought it · ${difference} kept`,
-    // Empty states (4.10)
-    emptyLeaksTitle: 'No leaks found yet',
-    emptyLeaksSubtitle: 'Keep logging expenses. Around 4 logs at the same place is enough to spot a pattern.',
+    // Empty states (4.10): the leaks-empty title/body live once at
+    // insights.leaksEmptyTitle/leaksEmptyBody now (was duplicated here
+    // byte-for-byte; collapsed in the empty-state pattern pass).
     logAnExpense: 'Log an expense',
     keptZeroCaption: 'your first skip starts this counter',
   },
@@ -246,9 +240,9 @@ export const strings = {
     title: 'Categories',
     defaultCategories: 'Default Categories',
     customCategories: 'Custom Categories',
-    loading: 'Loading categories...',
+    loading: 'Loading.',
     emptyTitle: 'No categories yet',
-    emptySubtitle: 'Tap the + button to add your first category',
+    emptySubtitle: 'Tap Add category at the top to create your first one.',
     deleteTitle: 'Delete Category',
     deleteMessage: (name: string) =>
       `Are you sure you want to delete "${name}"? Your existing expenses are kept; they'll just no longer show this category.`,
@@ -272,13 +266,15 @@ export const strings = {
     topMerchants: 'Top Merchants',
     transactionCount: (count: number) => `${count} transaction${count !== 1 ? 's' : ''}`,
     recentTransactions: 'Recent Transactions',
-    noTransactions: 'No transactions yet',
+    // Rewritten off "transactions" (house rule: the app calls things
+    // "expenses" or "logs", never "transactions").
+    noExpensesLogged: 'Nothing logged in this category yet.',
     transactionDate: (date: string, time: string) => `${date} at ${time}`,
   },
   reports: {
     title: 'Reports',
     subtitle: 'Your financial insights',
-    loading: 'Loading reports...',
+    loading: 'Loading.',
     total: 'Total',
     noSpendingData: 'No spending data',
     noActiveHabits: 'No active habits',
@@ -630,7 +626,7 @@ export const strings = {
     quickLogCategoryLabel: (name: string) => `Log a ${name} expense`,
     // Logged today list
     loggedTodayEyebrow: 'Logged today',
-    loggedTodayEmpty: 'Nothing logged today yet.',
+    loggedTodayEmpty: 'A quiet day so far. Anything you log lands here.',
     alreadyBreakingToast: "You're already breaking this habit.",
     editExpenseLabel: (title: string, amountLabel: string) => `Edit ${title}, ${amountLabel}`,
     // Break-another affordance (DI-6, ADR 0019): quiet, always-present at the
@@ -707,7 +703,7 @@ export const strings = {
     upcomingScheduledCount: (n: number) => `${n} scheduled`,
     upcomingAddAffordance: 'Add an upcoming expense',
     upcomingListEyebrow: 'Scheduled',
-    upcomingEmptyBody: 'Mark an expense as repeating and its next date shows up here.',
+    upcomingEmptyBody: "Mark an expense as repeating and we'll show its next date here.",
     multiPaymentPill: (count: number, monthLabel: string) => `${count} payments in ${monthLabel}`,
     // Schedule line under an upcoming row, assembled in utils/recurring.ts:
     // "Monthly · 1st · next Aug 1", "Every 2 weeks · next Aug 14".
@@ -776,7 +772,11 @@ export const strings = {
     leakActionBreak: 'Break it',
     leakActionBreaking: 'Breaking',
     leakActionWatch: 'Watch',
-    leaksEmptyTitle: 'No leaks found yet',
+    // Shared across LeaksCard, HabitsList, and the Today Kept view's no-leaks
+    // state (was duplicated as habitLogging.emptyLeaksTitle/Subtitle;
+    // collapsed to this one key). Body keeps the honest detection threshold
+    // verbatim (house rule: real detection window, not a rounded claim).
+    leaksEmptyTitle: 'Your leaks will show up here',
     leaksEmptyBody:
       'Keep logging expenses. Around 4 logs at the same place is enough to spot a pattern.',
     whereItWentTitle: 'Where it went',

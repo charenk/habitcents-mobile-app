@@ -13,6 +13,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { radii, typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
+import { EmptyState } from '@/components/ui';
 
 export type PaceProjection = {
   /** Cents spent so far this calendar month. */
@@ -52,7 +53,9 @@ export function PaceCard({ monthLabel, projection, comparison }: PaceCardProps) 
         <Text style={styles.cardTitle} accessibilityRole="header">
           {title}
         </Text>
-        <Text style={styles.placeholder}>{strings.insights.pacePlaceholder}</Text>
+        <View style={styles.placeholderWrap}>
+          <EmptyState body={strings.insights.pacePlaceholder} />
+        </View>
       </View>
     );
   }
@@ -146,12 +149,8 @@ function createStyles(theme: AppTheme) {
       marginTop: 6,
       fontVariant: ['tabular-nums'],
     },
-    placeholder: {
-      fontSize: typeScale.caption,
-      fontFamily: theme.fonts.ui,
-      color: theme.slate,
+    placeholderWrap: {
       marginTop: 6,
-      lineHeight: 18,
     },
   });
 }

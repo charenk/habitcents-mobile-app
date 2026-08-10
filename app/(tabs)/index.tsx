@@ -15,6 +15,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
+import { Button } from '@/components/ui/Button';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useHabits } from '@/contexts/HabitsContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
@@ -848,25 +850,20 @@ export default function TodayScreen() {
                   </View>
                   <Text style={styles.progressCount}>
                     {strings.habits.logsAtSamePlace(detectionProgress.n, detectionProgress.threshold)}
-                    <Text style={styles.progressCountSuffix}> at the same place</Text>
+                    <Text style={styles.progressCountSuffix}>{strings.habits.logsAtSamePlaceSuffix}</Text>
                   </Text>
                   <Text style={styles.progressBody}>{strings.habits.logsAtSamePlaceBody}</Text>
                 </View>
               ) : (
-                <>
-                  <Icon
-                    name="ChartLine"
-                    size={64}
-                    color={theme.textTertiary}
-                    accessibilityElementsHidden
-                    importantForAccessibility="no-hide-descendants"
-                  />
-                  <Text style={styles.emptyTitle}>{strings.habitLogging.emptyLeaksTitle}</Text>
-                  <Text style={styles.emptySubtitle}>{strings.habitLogging.emptyLeaksSubtitle}</Text>
-                </>
+                <EmptyState
+                  icon="ChartLine"
+                  title={strings.insights.leaksEmptyTitle}
+                  body={strings.insights.leaksEmptyBody}
+                />
               )}
-              <TouchableOpacity
-                style={styles.emptyCta}
+              <Button
+                variant="secondary"
+                label={strings.habitLogging.logAnExpense}
                 // The quick-log card now lives on the Spent view, not the Money
                 // tab, so the CTA switches views in place rather than navigating
                 // away (was router.push('/(tabs)/money')). Routed through the
@@ -876,10 +873,8 @@ export default function TodayScreen() {
                   pagerInteracted.current = true;
                   setTodayView('spent');
                 }}
-                accessibilityRole="button"
-              >
-                <Text style={styles.emptyCtaText}>{strings.habitLogging.logAnExpense}</Text>
-              </TouchableOpacity>
+                style={styles.emptyCta}
+              />
               {firstLogCardId && (
                 <View style={styles.emptyCoachMoment}>
                   <CoachMomentSlot text={cardText(firstLogCardId)} />
@@ -1069,34 +1064,8 @@ function createStyles(theme: AppTheme) {
       paddingTop: 24,
       paddingBottom: 100,
     },
-    emptyTitle: {
-      fontSize: 20,
-      fontFamily: theme.fonts.uiSemibold,
-      color: theme.text,
-      marginTop: 20,
-      textAlign: 'center',
-    },
-    emptySubtitle: {
-      fontSize: 15,
-      fontFamily: theme.fonts.ui,
-      color: theme.textSecondary,
-      marginTop: 8,
-      textAlign: 'center',
-      lineHeight: 22,
-    },
     emptyCta: {
       marginTop: 20,
-      minHeight: 46,
-      paddingHorizontal: 20,
-      borderRadius: radii.control,
-      backgroundColor: theme.primary,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    emptyCtaText: {
-      fontSize: 15,
-      fontFamily: theme.fonts.uiSemibold,
-      color: theme.white,
     },
     emptyCoachMoment: {
       alignSelf: 'stretch',
