@@ -5,8 +5,17 @@
  * duplicate it. Serif title, one body line, a coral fill confirm and a
  * secondary "keep going" exit. Kept minimal on purpose: title, body, one
  * confirm action, one cancel action.
+ *
+ * Re-entrancy guard: the sheet stays interactive through Sheet's 220ms exit
+ * animation (constants/theme.ts motion.sheet), so a fast double tap on
+ * confirm could fire onConfirm twice before the sheet visually closed (for
+ * Profile's "Start over" caller, two router.back() calls). `confirmedRef`
+ * is set on the first confirm press and blocks every press after that,
+ * including cancel, until `visible` flips true again (the sheet reopening),
+ * which resets it. The API is unchanged; every caller is covered without
+ * having to add its own guard.
  */
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Button } from '@/components/ui/Button';
 import { Sheet } from '@/components/ui/Sheet';
@@ -35,6 +44,26 @@ export function ConfirmSheet({
 }: ConfirmSheetProps): React.JSX.Element {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
+  const confirmedRef = useRef(false);
+
+  useEffect(() => {
+    if (visible) {
+      confirmedRef.current = false;
+    }
+  }, [visible]);
+
+  const handleConfirm = () => {
+    if (confirmedRef.current) return;
+    confirmedRef.current = true;
+    onConfirm();
+  };
+
+  const handleCancel = () => {
+    // A confirm already in flight wins; a cancel that lands during the exit
+    // animation right after it is a stray tap, not a change of mind.
+    if (confirmedRef.current) return;
+    onClose();
+  };
 
   return (
     <Sheet visible={visible} onClose={onClose} accessibilityLabel={title}>
@@ -43,8 +72,8 @@ export function ConfirmSheet({
           {title}
         </Text>
         <Text style={styles.body}>{body}</Text>
-        <Button label={confirmLabel} variant="destructiveFill" onPress={onConfirm} />
-        <Button label={cancelLabel} variant="secondary" onPress={onClose} />
+        <Button label={confirmLabel} variant="destructiveFill" onPress={handleConfirm} />
+        <Button label={cancelLabel} variant="secondary" onPress={handleCancel} />
       </View>
     </Sheet>
   );
