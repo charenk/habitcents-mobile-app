@@ -187,10 +187,6 @@ export default function TodayScreen() {
     dismissRibbon: dismissDoor3Ribbon,
   } = useFirstRunRibbon(DOOR3_KEY);
 
-  // Five tiles plus a "more" affordance, per spec. Unused while showCategoryTiles
-  // stays false on QuickLogRow, kept computed so a one-line flip reactivates it.
-  const quickCategories = useMemo(() => getVisibleCategories().slice(0, 5), [getVisibleCategories]);
-
   const loggedToday = useMemo(() => {
     const start = atMidnight(new Date()).getTime();
     return expenses
@@ -773,7 +769,7 @@ export default function TodayScreen() {
               <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={theme.primary} />
             }
           >
-            <QuickLogRow onOpenSheet={openLogSheet} categories={quickCategories} />
+            <QuickLogRow onOpenSheet={openLogSheet} />
             <View style={styles.loggedTodaySpacer}>
               <LoggedTodayList expenses={loggedToday} onEditExpense={setEditingExpense} />
               {watchNudgeVisible ? (
