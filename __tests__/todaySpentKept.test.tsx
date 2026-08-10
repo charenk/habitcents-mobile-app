@@ -96,7 +96,7 @@ jest.mock('@/contexts/OnboardingContext', () => ({
 }));
 
 import React from 'react';
-import { act, cleanup, fireEvent, render } from '@testing-library/react-native';
+import { act, cleanup, fireEvent, render, within } from '@testing-library/react-native';
 import { Dimensions, StyleSheet } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '@/contexts/ThemeContext';
@@ -232,8 +232,12 @@ describe('Today: Spent/Kept chips', () => {
 
     const view = await renderToday();
 
-    expect(view.getByText(formatMoney(500))).toBeTruthy();
-    expect(view.getByText(formatMoney(700))).toBeTruthy();
+    // Scoped to the chip itself: since U7 made row amounts unsigned too
+    // (components/money/ExpenseRow.tsx), LoggedTodayList's row for this same
+    // expense now renders the identical "$5.00" text elsewhere in the tree,
+    // so an unscoped getByText would be ambiguous.
+    expect(within(view.getByTestId('spent-chip')).getByText(formatMoney(500))).toBeTruthy();
+    expect(within(view.getByTestId('kept-chip')).getByText(formatMoney(700))).toBeTruthy();
   });
 
   it('defaults to the Spent view with the quick-log control open', async () => {
@@ -334,8 +338,10 @@ describe('Today: Spent/Kept chips', () => {
 
     const view = await renderToday();
 
-    // Only the spend row counts: 500, not 800.
-    expect(view.getByText(formatMoney(500))).toBeTruthy();
+    // Only the spend row counts: 500, not 800. Scoped to the chip for the
+    // same reason as above: LoggedTodayList's own row also renders "$5.00"
+    // unsigned since U7.
+    expect(within(view.getByTestId('spent-chip')).getByText(formatMoney(500))).toBeTruthy();
     expect(view.queryByText(formatMoney(800))).toBeNull();
   });
 

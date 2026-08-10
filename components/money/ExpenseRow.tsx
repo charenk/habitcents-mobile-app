@@ -6,8 +6,10 @@
  * different objects. EmojiTile 36 for identity, name and subtitle stacked on
  * the left, the amount right-aligned in tabular figures.
  *
- * The amount always renders through useCurrency().format with { signed: true }:
- * a spend reads as a negative, and zero-decimal currencies stay correct.
+ * The amount renders unsigned (U7): every row in these lists is a spend, so a
+ * minus sign carried no information. Matches Upcoming's unsigned amounts
+ * (components/money/UpcomingList.tsx) so the drawer never mixes signed and
+ * unsigned figures.
  */
 import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -32,7 +34,7 @@ export function ExpenseRow({ expense, onPress, subtitle }: ExpenseRowProps): Rea
   const styles = useMemo(() => createStyles(theme), [theme]);
   const { format } = useCurrency();
 
-  const amountLabel = format(expense.amount, { signed: true });
+  const amountLabel = format(expense.amount);
   const secondary = subtitle ?? expense.time;
   const name = expense.title || expense.category;
 

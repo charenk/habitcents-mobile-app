@@ -24,43 +24,6 @@ export function parseAmountToCents(display: string): number {
 }
 
 /**
- * Check if two dates are the same day.
- */
-function isSameDay(d1: Date, d2: Date): boolean {
-  return (
-    d1.getFullYear() === d2.getFullYear() &&
-    d1.getMonth() === d2.getMonth() &&
-    d1.getDate() === d2.getDate()
-  );
-}
-
-/**
- * Check if date is today.
- */
-function isToday(date: Date): boolean {
-  return isSameDay(date, new Date());
-}
-
-/**
- * Check if date is yesterday.
- */
-function isYesterday(date: Date): boolean {
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  return isSameDay(date, yesterday);
-}
-
-/**
- * Format date header for section.
- */
-export function formatDateHeader(date: Date): string {
-  const monthDay = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  if (isToday(date)) return `${monthDay} - Today`;
-  if (isYesterday(date)) return `${monthDay} - Yesterday`;
-  return monthDay;
-}
-
-/**
  * Group expenses by date into sections.
  */
 export function groupExpensesByDate(expenses: Expense[]): ExpenseSection[] {
@@ -86,10 +49,13 @@ export function groupExpensesByDate(expenses: Expense[]): ExpenseSection[] {
   }
 
   const sections: ExpenseSection[] = [];
-  for (const [, data] of grouped) {
+  for (const [dateKey, data] of grouped) {
     if (data.length > 0) {
+      // title is a stable grouping key only, never display text: the one
+      // label pipeline lives in SpentList (dayLabelFor), locale-aware via
+      // utils/dates. No hardcoded locale here (ADA-008).
       sections.push({
-        title: formatDateHeader(data[0].date),
+        title: dateKey,
         data,
       });
     }
