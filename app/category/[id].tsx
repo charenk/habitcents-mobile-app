@@ -122,11 +122,10 @@ export default function CategoryDetailScreen() {
   const handleEdit = useCallback(async (
     name: string,
     icon: CategoryIcon,
-    color: string,
-    monthlyBudget?: number
+    color: string
   ) => {
     if (!category) return;
-    await updateCategory(category.id, { name, icon, color, monthlyBudget });
+    await updateCategory(category.id, { name, icon, color });
     setIsEditModalVisible(false);
   }, [category, updateCategory]);
 
@@ -218,11 +217,6 @@ export default function CategoryDetailScreen() {
           <Text style={styles.title}>
             {/\.$/.test(category.name) ? category.name : `${category.name}.`}
           </Text>
-          {category.monthlyBudget && (
-            <Text style={styles.budgetText}>
-              {strings.categoryDetail.budget(format(category.monthlyBudget))}
-            </Text>
-          )}
         </View>
 
         {/* Summary Card */}
@@ -333,7 +327,6 @@ export default function CategoryDetailScreen() {
         initialName={category.name}
         initialIcon={category.icon}
         initialColor={category.color}
-        initialBudget={category.monthlyBudget ? category.monthlyBudget / 100 : undefined}
         isEditing
       />
     </>
@@ -391,12 +384,6 @@ function createStyles(theme: AppTheme) {
       color: theme.ink,
       includeFontPadding: false,
       marginBottom: 6,
-    },
-    budgetText: {
-      fontSize: typeScale.body,
-      fontFamily: theme.fonts.ui,
-      color: theme.slate,
-      lineHeight: 22,
     },
     summaryCard: {
       backgroundColor: theme.surface,

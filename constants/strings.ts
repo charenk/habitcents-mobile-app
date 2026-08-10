@@ -249,9 +249,12 @@ export const strings = {
     loading: 'Loading categories...',
     emptyTitle: 'No categories yet',
     emptySubtitle: 'Tap the + button to add your first category',
-    deleteTitle: 'Delete Category',
-    deleteMessage: (name: string) =>
-      `Are you sure you want to delete "${name}"? Your existing expenses are kept; they'll just no longer show this category.`,
+    // Delete confirm sheet (design/selection-sheets U3), replacing the native
+    // alert. deleteConfirmCta and deleteCancel are the sheet's two buttons.
+    deleteTitle: (name: string) => `Delete ${name}?`,
+    deleteMessage: "Your existing expenses are kept; they'll just no longer show this category.",
+    deleteConfirmCta: 'Delete category',
+    deleteCancel: 'Keep category',
     thisMonthSuffix: (amount: string) => `${amount} this month`,
     addCategoryLabel: 'Add category',
     // Redesign step 04: serif "Categories." title plus two eyebrow-labelled
@@ -263,7 +266,6 @@ export const strings = {
   },
   categoryDetail: {
     notFound: 'Category not found',
-    budget: (amount: string) => `Budget: ${amount}/month`,
     thisMonth: 'this month',
     vsLastMonth: (percent: number) => `${percent}% vs last month`,
     transactions: 'transactions',
@@ -300,10 +302,11 @@ export const strings = {
     restorePurchases: 'Restore purchases',
     version: 'Version',
     versionValue: '1.0.0',
-    // Currency alert
-    currencyAlertTitle: 'Currency',
-    currencyAlertMessage: 'Choose your currency',
-    currencyOption: (name: string, symbol: string) => `${name} (${symbol})`,
+    // Currency sheet (design/selection-sheets U3): replaces the native alert.
+    // Row copy speaks the same vocabulary as the Profile row it opens from
+    // (the code, e.g. USD), not the symbol.
+    currencySheetTitle: 'Currency',
+    currencyRowLabel: (name: string, code: string) => `${name} (${code})`,
     // Restore purchases (BET-004, mock mode). No purchases exist to restore yet.
     restoreAlertTitle: 'Restore purchases',
     restoreNoneMessage: 'No previous purchases to restore.',
@@ -328,15 +331,16 @@ export const strings = {
     supportRow: 'Support',
   },
   addCategoryModal: {
-    editCategory: 'Edit Category',
-    newCategory: 'New Category',
-    categoryNamePreview: 'Category Name',
+    // Sheet titles carry the trailing period, matching every other sheet
+    // (design/selection-sheets U3; converted off the raw Modal + budget
+    // field per D10, budgets removed from MVP).
+    editCategory: 'Edit category.',
+    newCategory: 'New category.',
+    categoryNamePreview: 'Category name',
     name: 'Name',
     namePlaceholder: 'Enter category name',
     icon: 'Icon',
     color: 'Color',
-    monthlyBudget: 'Monthly Budget (Optional)',
-    budgetPlaceholder: '0',
   },
   editExpenseModal: {
     cancelAccessibilityLabel: 'Cancel editing',

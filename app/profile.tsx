@@ -12,9 +12,8 @@
  * The paywall placement value stays 'settings' for funnel continuity even
  * though the entry point is now named Profile (ADR 0019).
  */
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
-  Alert,
   Linking,
   ScrollView,
   StyleSheet,
@@ -26,6 +25,7 @@ import Constants from 'expo-constants';
 import { Stack, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DevMenuSection } from '@/components/dev/DevMenuSection';
+import { CurrencySheet } from '@/components/settings/CurrencySheet';
 import { SettingsRow } from '@/components/settings/SettingsRow';
 import { Icon } from '@/components/ui/Icon';
 import { useToast } from '@/components/ui/Toast';
@@ -36,7 +36,6 @@ import { useCurrency } from '@/contexts/CurrencyContext';
 import { useOnboarding } from '@/contexts/OnboardingContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { settingsRowLabel } from '@/utils/a11y';
-import { CURRENCIES } from '@/utils/currency';
 import { DEV_MENU_ENABLED } from '@/utils/devMenu';
 import { getEntitlement, restore } from '@/utils/purchases';
 import { clearOnboarding } from '@/utils/storage';
@@ -51,25 +50,18 @@ export default function ProfileScreen(): React.JSX.Element {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { show } = useToast();
-  const { currency, setCurrency } = useCurrency();
+  const { currency } = useCurrency();
   const { resetOnboarding } = useOnboarding();
+  const [currencySheetVisible, setCurrencySheetVisible] = useState(false);
 
   // Entitlement is read at render time; mock mode always reports 'free', so the
   // free line is the only one with ratified copy today.
   const isFree = getEntitlement() === 'free';
 
-  // Ported verbatim from SettingsSheet: an alert listing every supported
-  // currency, tapping one persists it through CurrencyContext.
+  // Opens the house bottom sheet (design/selection-sheets U3), replacing the
+  // native Alert.alert this row used to open.
   const handleCurrencyPress = () => {
-    Alert.alert(strings.settings.currencyAlertTitle, strings.settings.currencyAlertMessage, [
-      ...CURRENCIES.map((c) => ({
-        text: strings.settings.currencyOption(c.name, c.symbol),
-        onPress: () => {
-          void setCurrency(c.code);
-        },
-      })),
-      { text: strings.common.cancel, style: 'cancel' as const },
-    ]);
+    setCurrencySheetVisible(true);
   };
 
   // Pushing the paywall on top of Profile reads naturally, so this does not
@@ -216,6 +208,11 @@ export default function ProfileScreen(): React.JSX.Element {
           <DevMenuSection styles={styles} theme={theme} onClose={() => router.back()} />
         ) : null}
       </ScrollView>
+
+      <CurrencySheet
+        visible={currencySheetVisible}
+        onClose={() => setCurrencySheetVisible(false)}
+      />
     </>
   );
 }
