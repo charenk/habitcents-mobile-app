@@ -305,25 +305,38 @@ export const strings = {
     currencySheetTitle: 'Currency.',
     currencyRowLabel: (name: string, code: string) => `${name} (${code})`,
     // Restore purchases (BET-004, mock mode). No purchases exist to restore yet.
-    restoreAlertTitle: 'Restore purchases',
+    // The row itself moved off Profile onto the paywall footer (design/
+    // profile-restructure U9); these two outcome messages stay here because
+    // the paywall's restore action still reads them.
     restoreNoneMessage: 'No previous purchases to restore.',
     restoreDoneMessage: 'Your purchases have been restored.',
-    planFree: 'Free plan · 1 habit',
-    groupPreferences: 'Preferences',
-    groupAbout: 'About',
+    // Profile grouping (design/profile-restructure U9): weight follows
+    // importance. General carries the rows with a status the user checks
+    // (currency, plan, support); More is the quieter tier for legal links and
+    // the start-over action.
+    groupGeneral: 'General',
+    groupMore: 'More',
     subscriptionRow: 'Subscription',
     subscriptionValueFree: 'Free',
-    restoreRow: 'Restore purchases',
-    signOutRow: 'Sign out',
-    signOutHint: 'data stays on this device',
-    signOutToast: 'Signed out. Your data stays on this device.',
-    versionRow: 'Version',
+    // Start over (design/profile-restructure U9) replaces Sign out: there are
+    // no accounts, so nothing is signed out of. Slate, never coral: coral
+    // stays reserved for actions that destroy data, and this keeps all of it.
+    startOverRow: 'Start over',
+    startOverHint: 'data stays on this device',
+    startOverConfirmTitle: 'Start over?',
+    startOverConfirmBody: 'Takes you back to the start screens. Your data stays on this device.',
+    startOverConfirmCta: 'Start over',
+    startOverConfirmCancel: 'Keep going',
+    startOverToast: 'Starting over. Your data stays on this device.',
     // Row affordance vocabulary (design/row-affordances): legal rows leave the
     // app for the browser; a failed Linking.openURL now surfaces a toast
     // instead of failing silently.
     linkOpenFailed: 'Could not open the link.',
     mailOpenFailed: 'Could not open mail.',
     supportEmail: 'support@habitcents.com',
+    // Version footer (design/profile-restructure U9): no longer a row, a
+    // single muted centered line under the More card.
+    versionFooter: (value: string) => `Version ${value}`,
   },
   // Profile page (design/header-unification U4, ADR 0019). Settings moved from
   // a bottom sheet behind Today's gear to a pushed route reachable from every

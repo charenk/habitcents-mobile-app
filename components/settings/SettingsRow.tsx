@@ -19,6 +19,12 @@
  * pressed state, but nothing in the trailing slot promises where the tap
  * goes. Passing both chevron and externalLink is a caller error the type
  * system does not currently forbid; don't do it.
+ *
+ * Label tone (design/profile-restructure U9, a named deviation from PATTERN_
+ * VOCABULARY.md's Rows section, which does not yet cover label color tiers):
+ * `muted` steps the label down to slate for a visually quieter group (e.g.
+ * Profile's "More" tier), separate from `destructive`'s coral. The two are
+ * mutually exclusive; pass at most one.
  */
 import React from 'react';
 import {
@@ -42,6 +48,7 @@ export type SettingsRowStyles = {
   rowPressed: StyleProp<ViewStyle>;
   rowLabel: StyleProp<TextStyle>;
   rowLabelDestructive: StyleProp<TextStyle>;
+  rowLabelMuted: StyleProp<TextStyle>;
   rowTrailing: StyleProp<ViewStyle>;
   rowValue: StyleProp<TextStyle>;
   rowHint: StyleProp<TextStyle>;
@@ -61,6 +68,8 @@ export type SettingsRowProps = {
   /** Leaves the app for the browser. Mutually exclusive with chevron. */
   externalLink?: boolean;
   destructive?: boolean;
+  /** Steps the label down to slate for a visually quieter group. Mutually exclusive with destructive. */
+  muted?: boolean;
   /** Last row in its group: no separator below it. */
   last?: boolean;
   accessibilityLabel?: string;
@@ -76,13 +85,20 @@ export function SettingsRow({
   chevron,
   externalLink,
   destructive,
+  muted,
   last,
   accessibilityLabel,
 }: SettingsRowProps): React.JSX.Element {
   const rowStyle: StyleProp<ViewStyle> = [styles.row, last ? styles.rowLast : null];
   const body = (
     <>
-      <Text style={[styles.rowLabel, destructive ? styles.rowLabelDestructive : null]}>
+      <Text
+        style={[
+          styles.rowLabel,
+          muted ? styles.rowLabelMuted : null,
+          destructive ? styles.rowLabelDestructive : null,
+        ]}
+      >
         {label}
       </Text>
       <View style={styles.rowTrailing}>

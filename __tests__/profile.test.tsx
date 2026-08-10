@@ -1,23 +1,23 @@
 /**
  * Profile (design/header-unification U4, ADR 0019; back control unified onto
- * ScreenHeader U1). Mirrors the deleted __tests__/settingsSheet.test.tsx: it
- * renders the specced title, plan line and every row (now pushed as its own
- * screen rather than a bottom sheet), and pins the same two mutating
- * behaviors (Premium push, Sign out) plus the new Support row and both
- * restore-purchases outcomes.
+ * ScreenHeader U1; regrouped design/profile-restructure U9). Renders the
+ * specced title and the General/More grouping (now pushed as its own screen
+ * rather than a bottom sheet), and pins the mutating behaviors: Subscription
+ * push, Start over (only on confirm), and the Support/Privacy/Terms rows.
+ * Restore purchases no longer lives here (moved to the paywall footer); the
+ * plan line under the title is gone (Subscription carries that status now).
  *
- * Provider wiring mirrors the deleted test (SafeAreaProvider with
- * initialMetrics + ThemeProvider + ToastProvider), plus CurrencyProvider and
- * OnboardingProvider because the page reads both contexts.
+ * Provider wiring mirrors the deleted settingsSheet test (SafeAreaProvider
+ * with initialMetrics + ThemeProvider + ToastProvider), plus CurrencyProvider
+ * and OnboardingProvider because the page reads both contexts.
  *
- * Module mocks carry the seams: utils/storage (so the sign-out clear is
- * observable without touching AsyncStorage), utils/purchases (so both restore
- * outcomes are directly controllable) and expo-router (no navigator in a unit
- * test). The screen no longer renders a native Stack.Screen header (that was
- * the bug: a transparent floating header whose clearance could overlap the
- * title), so the back control asserted below is the real ScreenHeader pill
- * button, not a stub. Copy comes from the real constants/strings.ts, so a
- * reworded string moves the assertions with it.
+ * Module mocks carry the seams: utils/storage (so the start-over clear is
+ * observable without touching AsyncStorage) and expo-router (no navigator in
+ * a unit test). The screen no longer renders a native Stack.Screen header
+ * (that was the bug: a transparent floating header whose clearance could
+ * overlap the title), so the back control asserted below is the real
+ * ScreenHeader pill button, not a stub. Copy comes from the real
+ * constants/strings.ts, so a reworded string moves the assertions with it.
  */
 // Full-provider renders exceed jest's 5s default under CI worker load.
 jest.setTimeout(20000);
@@ -36,12 +36,6 @@ jest.mock('expo-router', () => ({
 jest.mock('@/utils/storage', () => {
   const actual = jest.requireActual('@/utils/storage');
   return { ...actual, clearOnboarding: jest.fn(async () => {}) };
-});
-
-const mockRestore = jest.fn();
-jest.mock('@/utils/purchases', () => {
-  const actual = jest.requireActual('@/utils/purchases');
-  return { ...actual, restore: (...args: unknown[]) => mockRestore(...args) };
 });
 
 import React from 'react';
@@ -93,8 +87,6 @@ beforeEach(() => {
   mockPush.mockClear();
   mockBack.mockClear();
   (clearOnboarding as jest.Mock).mockClear();
-  mockRestore.mockReset();
-  mockRestore.mockResolvedValue({ ok: true, mode: 'mock', entitlement: 'free' });
   jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
 });
 
@@ -104,7 +96,7 @@ afterEach(() => {
 });
 
 describe('Profile', () => {
-  it('renders the title, plan line and every row', async () => {
+  it('renders the title, the General/More grouping and every row, with no plan line', async () => {
     const view = await renderProfile();
 
     // The serif title is rendered by the shared ScreenHeader and carries the
@@ -112,9 +104,13 @@ describe('Profile', () => {
     const title = view.getByText(strings.profile.title);
     expect(title).toBeTruthy();
     expect(title.props.accessibilityRole).toBe('header');
-    expect(view.getByText(strings.settings.planFree)).toBeTruthy();
-    expect(view.getByText(strings.settings.groupPreferences)).toBeTruthy();
-    expect(view.getByText(strings.settings.groupAbout)).toBeTruthy();
+
+    // The standalone "Free plan" line is gone; Subscription is the single
+    // plan status now.
+    expect(view.queryByText('Free plan · 1 habit')).toBeNull();
+
+    expect(view.getByText(strings.settings.groupGeneral)).toBeTruthy();
+    expect(view.getByText(strings.settings.groupMore)).toBeTruthy();
 
     // Rows are found by their accessibility label, which is what VoiceOver reads.
     expect(view.getByLabelText('Currency, USD')).toBeTruthy();
@@ -123,16 +119,18 @@ describe('Profile', () => {
         settingsRowLabel(strings.settings.subscriptionRow, strings.settings.subscriptionValueFree)
       )
     ).toBeTruthy();
-    expect(view.getByLabelText(strings.settings.restoreRow)).toBeTruthy();
-    expect(view.getByLabelText(strings.settings.privacyPolicy)).toBeTruthy();
-    expect(view.getByLabelText(strings.settings.termsOfService)).toBeTruthy();
     expect(
       view.getByLabelText(settingsRowLabel(strings.profile.supportRow, strings.settings.supportEmail))
     ).toBeTruthy();
-    expect(view.getByLabelText(strings.settings.signOutRow)).toBeTruthy();
-    expect(view.getByLabelText('Version, 1.0.0')).toBeTruthy();
-    // The sign-out reassurance sits on the right of its row.
-    expect(view.getByText(strings.settings.signOutHint)).toBeTruthy();
+    expect(view.getByLabelText(strings.settings.privacyPolicy)).toBeTruthy();
+    expect(view.getByLabelText(strings.settings.termsOfService)).toBeTruthy();
+    expect(view.getByLabelText(strings.settings.startOverRow)).toBeTruthy();
+
+    // Restore purchases left Profile entirely; it only lives on the paywall now.
+    expect(view.queryByText(strings.paywall.restoreCta)).toBeNull();
+
+    // The start-over reassurance sits on the right of its row.
+    expect(view.getByText(strings.settings.startOverHint)).toBeTruthy();
     // Subscription mirrors Currency: a status value left of the chevron. The
     // dev menu's Entitlement row (gated on DEV_MENU_ENABLED) can render the
     // same "Free" text, so this only asserts the value renders at least once
@@ -140,6 +138,9 @@ describe('Profile', () => {
     expect(view.getAllByText(strings.settings.subscriptionValueFree).length).toBeGreaterThan(0);
     // Support shows the address it will mail to, right-aligned as the row's value.
     expect(view.getByText(strings.settings.supportEmail)).toBeTruthy();
+    // Version is a muted centered footer line, not a row.
+    expect(view.getByText(strings.settings.versionFooter('1.0.0'))).toBeTruthy();
+    expect(view.queryByLabelText('Version, 1.0.0')).toBeNull();
   });
 
   it('the shared header back button pops the screen', async () => {
@@ -152,17 +153,53 @@ describe('Profile', () => {
     expect(mockBack).toHaveBeenCalledTimes(1);
   });
 
-  it('sign out clears the local session, pops back, replaces to onboarding and toasts', async () => {
+  it('tapping Start over opens the confirm sheet without resetting anything', async () => {
     const view = await renderProfile();
 
     await act(async () => {
-      fireEvent.press(view.getByLabelText(strings.settings.signOutRow));
+      fireEvent.press(view.getByLabelText(strings.settings.startOverRow));
+    });
+
+    expect(view.getByText(strings.settings.startOverConfirmTitle)).toBeTruthy();
+    expect(view.getByText(strings.settings.startOverConfirmBody)).toBeTruthy();
+    expect(clearOnboarding).not.toHaveBeenCalled();
+    expect(mockBack).not.toHaveBeenCalled();
+    expect(mockReplace).not.toHaveBeenCalled();
+  });
+
+  it('keep going (cancel) leaves the confirm sheet without resetting anything', async () => {
+    const view = await renderProfile();
+
+    await act(async () => {
+      fireEvent.press(view.getByLabelText(strings.settings.startOverRow));
+    });
+    await act(async () => {
+      fireEvent.press(view.getByText(strings.settings.startOverConfirmCancel));
+    });
+
+    expect(clearOnboarding).not.toHaveBeenCalled();
+    expect(mockBack).not.toHaveBeenCalled();
+    expect(mockReplace).not.toHaveBeenCalled();
+  });
+
+  it('confirming Start over clears the local session, pops back, replaces to onboarding and toasts', async () => {
+    const view = await renderProfile();
+
+    await act(async () => {
+      fireEvent.press(view.getByLabelText(strings.settings.startOverRow));
+    });
+    await act(async () => {
+      // The confirm sheet's confirm button reuses the row's own label
+      // ("Start over"), so both are on screen at once; the sheet's copy is
+      // the one that renders last in the tree.
+      const matches = view.getAllByText(strings.settings.startOverConfirmCta);
+      fireEvent.press(matches[matches.length - 1]);
     });
 
     expect(clearOnboarding).toHaveBeenCalledTimes(1);
     expect(mockBack).toHaveBeenCalledTimes(1);
     expect(mockReplace).toHaveBeenCalledWith('/onboarding/welcome');
-    expect(view.getByText(strings.settings.signOutToast)).toBeTruthy();
+    expect(view.getByText(strings.settings.startOverToast)).toBeTruthy();
   });
 
   it('subscription row pushes the paywall with the settings placement, no back needed', async () => {
@@ -217,30 +254,8 @@ describe('Profile', () => {
     expect(await view.findByText(strings.settings.linkOpenFailed)).toBeTruthy();
   });
 
-  it('restore purchases reports no-purchases-found in a toast', async () => {
-    mockRestore.mockResolvedValueOnce({ ok: true, mode: 'mock', entitlement: 'free' });
+  it('renders the app version from Constants in the footer line', async () => {
     const view = await renderProfile();
-
-    await act(async () => {
-      fireEvent.press(view.getByLabelText(strings.settings.restoreRow));
-    });
-
-    expect(view.getByText(strings.settings.restoreNoneMessage)).toBeTruthy();
-  });
-
-  it('restore purchases reports a restored premium entitlement in a toast', async () => {
-    mockRestore.mockResolvedValueOnce({ ok: true, mode: 'mock', entitlement: 'premium' });
-    const view = await renderProfile();
-
-    await act(async () => {
-      fireEvent.press(view.getByLabelText(strings.settings.restoreRow));
-    });
-
-    expect(view.getByText(strings.settings.restoreDoneMessage)).toBeTruthy();
-  });
-
-  it('renders the app version from Constants', async () => {
-    const view = await renderProfile();
-    expect(view.getByLabelText('Version, 1.0.0')).toBeTruthy();
+    expect(view.getByText(strings.settings.versionFooter('1.0.0'))).toBeTruthy();
   });
 });
