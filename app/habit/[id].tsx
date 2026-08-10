@@ -13,6 +13,7 @@ import { EventHistory } from '@/components/habit-logging/EventHistory';
 import { PickOneSheet } from '@/components/habit-logging/PickOneSheet';
 import { PartialSlipSheet } from '@/components/habit-logging/PartialSlipSheet';
 import { Sheet } from '@/components/ui/Sheet';
+import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
 import { Button } from '@/components/ui/Button';
 import { AmountDisplay } from '@/components/ui/AmountDisplay';
 import { Keypad } from '@/components/ui/Keypad';
@@ -213,28 +214,17 @@ export default function HabitDetailScreen() {
         />
       )}
 
-      <Sheet
+      <ConfirmSheet
         visible={stopConfirmVisible}
         onClose={() => setStopConfirmVisible(false)}
-        accessibilityLabel={strings.habitLogging.stopBreakingConfirmTitle}
-      >
-        <View style={styles.confirmSheet}>
-          <Text style={styles.confirmTitle}>{strings.habitLogging.stopBreakingConfirmTitle}</Text>
-          <Text style={styles.confirmBody}>{strings.habitLogging.stopBreakingConfirmMessage}</Text>
-          <Button
-            label={strings.habitDetailV2.stopConfirmCta}
-            variant="destructiveFill"
-            onPress={() => {
-              void confirmStopBreaking();
-            }}
-          />
-          <Button
-            label={strings.habitDetailV2.stopConfirmKeepGoing}
-            variant="secondary"
-            onPress={() => setStopConfirmVisible(false)}
-          />
-        </View>
-      </Sheet>
+        onConfirm={() => {
+          void confirmStopBreaking();
+        }}
+        title={strings.habitLogging.stopBreakingConfirmTitle}
+        body={strings.habitLogging.stopBreakingConfirmMessage}
+        confirmLabel={strings.habitDetailV2.stopConfirmCta}
+        cancelLabel={strings.habitDetailV2.stopConfirmKeepGoing}
+      />
     </>
   );
 }
@@ -537,27 +527,6 @@ function createStyles(theme: AppTheme) {
     editSheetKeypad: {
       marginTop: 8,
       marginBottom: 8,
-    },
-    // Stop-breaking confirm (spec 04 habit detail).
-    confirmSheet: {
-      paddingHorizontal: 20,
-      paddingTop: 4,
-      paddingBottom: 12,
-      gap: 10,
-    },
-    confirmTitle: {
-      fontSize: 26,
-      lineHeight: 32,
-      fontFamily: theme.fonts.display,
-      color: theme.ink,
-      includeFontPadding: false,
-    },
-    confirmBody: {
-      fontSize: typeScale.body,
-      fontFamily: theme.fonts.ui,
-      color: theme.slate,
-      lineHeight: 22,
-      marginBottom: 6,
     },
     grabber: {
       width: 36,
