@@ -41,3 +41,6 @@ yarn-error.*
 # Leak Scan eval harness: Charen's sanitized real bank exports for local runs
 # only. Never committed (see __tests__/leakScanEval/README.md).
 __tests__/leakScanEval/private/
+
+# node_modules as a symlink (worktree setups); the trailing-slash pattern above misses links
+node_modules
