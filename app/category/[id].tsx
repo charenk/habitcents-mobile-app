@@ -16,7 +16,7 @@ import { useCurrency } from '@/contexts/CurrencyContext';
 import { useCategories } from '@/contexts/CategoriesContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
 import { AddCategoryModal } from '@/components/AddCategoryModal';
-import { typeScale, type AppTheme } from '@/constants/theme';
+import { type AppTheme } from '@/constants/theme';
 import type { CategoryIcon } from '@/types/category';
 import type { Expense } from '@/types/expense';
 import { strings } from '@/constants/strings';

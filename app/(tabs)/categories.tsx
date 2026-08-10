@@ -14,7 +14,7 @@ import React, { useMemo, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { ConfirmSheet, EmptyState, Icon, ScreenHeader } from '@/components/ui';
+import { ConfirmSheet, EmptyState, ScreenHeader } from '@/components/ui';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCategories } from '@/contexts/CategoriesContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
