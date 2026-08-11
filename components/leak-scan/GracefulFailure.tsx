@@ -13,6 +13,18 @@ type GracefulFailureProps = {
   /** Quiet ScreenHeader back pill (design/leakscan-migration, U12a): same
    *  reasoning as IntakeScreen's onBack, wired to router.back(). */
   onBack: () => void;
+  /**
+   * Whether the "Start with the 90-second Leak Audit" exit is offered
+   * (review fix, build 12 re-scan entry). That exit replaces to
+   * /onboarding/welcome, which is only a safe landing while onboarding is
+   * still in progress: welcome's resume effect routes a completed
+   * onboarding's doorChosen back into the intent picker or another
+   * onboarding screen, bouncing or stranding a user who reached this screen
+   * from the already-onboarded Insights re-scan entry. Callers pass this as
+   * false once onboarding is complete so the honest exits (try a different
+   * export, log by hand, back) are the only ones offered.
+   */
+  showAuditExit: boolean;
 };
 
 /**
@@ -26,6 +38,7 @@ export function GracefulFailure({
   onStartLeakAudit,
   onLogByHand,
   onBack,
+  showAuditExit,
 }: GracefulFailureProps) {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -44,11 +57,13 @@ export function GracefulFailure({
           <Button label={strings.leakScan.failureTryDifferentExport} onPress={onTryDifferentExport} />
           <Text style={styles.hint}>{strings.leakScan.failureTryDifferentExportHint}</Text>
 
-          <Button
-            label={strings.leakScan.failureStartLeakAudit}
-            onPress={onStartLeakAudit}
-            variant="secondary"
-          />
+          {showAuditExit && (
+            <Button
+              label={strings.leakScan.failureStartLeakAudit}
+              onPress={onStartLeakAudit}
+              variant="secondary"
+            />
+          )}
 
           <Button
             label={strings.leakScan.failureLogByHand}

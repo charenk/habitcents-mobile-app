@@ -556,6 +556,10 @@ export const strings = {
     // ladder, Charen 2026-08-04); this closes the leak-scan CTA punch-list item.
     bringInLastDays: (days: number) => `Bring in your last ${days} days`,
     savedToHabitCents: 'Saved to HabitCents.',
+    // Re-scan dedup (review fix, build 12 re-scan entry): honest disclosure
+    // when filterAlreadyImported (utils/leakScan/importWrite.ts) drops rows
+    // that were already brought in by an earlier import.
+    skippedAlreadyImported: (n: number) => `${n} already imported earlier, skipped.`,
     // Merchant review queue (spec 6/7, visual spec 10)
     reviewQueueTitle: (n: number) => `Quick check: ${n} merchant${n === 1 ? '' : 's'} we weren't sure about`,
     reviewQueueProgress: (done: number, n: number) => `${done} of ${n}`,

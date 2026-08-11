@@ -40,6 +40,21 @@ describe('QuickLogRow', () => {
     expect(flat.alignSelf).toBe('stretch');
   });
 
+  it('keeps a 12pt gap between the amount tap area and the plus button (review fix: flush underline)', async () => {
+    const view = await render(
+      <Providers>
+        <QuickLogRow onOpenSheet={() => {}} />
+      </Providers>
+    );
+    const number = await view.findByText('0.00');
+    // number Text -> AmountDisplay root -> quickLogAmountTap Pressable -> quickLogAmountRow View.
+    const amountRoot = number.parent?.parent;
+    const tapArea = amountRoot?.parent;
+    const row = tapArea?.parent;
+    const flat = StyleSheet.flatten(row?.props.style);
+    expect(flat.gap).toBe(12);
+  });
+
   it('keeps the tap target unchanged: both the amount card and the plus button open the sheet', async () => {
     const onOpenSheet = jest.fn();
     const view = await render(
