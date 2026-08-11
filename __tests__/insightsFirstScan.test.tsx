@@ -220,6 +220,23 @@ describe('Insights first scan segment', () => {
     expect(view.getByText(strings.insights.scanUpdatedCaption)).toBeTruthy();
   });
 
+  it('the footer\'s "Run a new scan" action pushes to the leak-scan route (build 12 re-scan entry)', async () => {
+    const summary = syntheticSummary();
+    mockGetScanSummary.mockResolvedValue(summary);
+    const view = await renderInsights();
+
+    await act(async () => {
+      fireEvent.press(view.getByLabelText(selectableLabel(strings.insights.scanSegment, false)));
+    });
+
+    const rerunButton = view.getByRole('button', { name: strings.insights.scanRerunAction });
+    await act(async () => {
+      fireEvent.press(rerunButton);
+    });
+
+    expect(mockPush).toHaveBeenCalledWith('/leak-scan');
+  });
+
   it('shows the observed-so-far leak line when the scan window is under the reliable-rate floor', async () => {
     const summary = syntheticSummary();
     summary.kpis.coveredDays = 5; // under MIN_SPAN_DAYS_FOR_RATE (14)

@@ -13,8 +13,9 @@
  * drill into, which a persisted snapshot does not carry (privacy: only the
  * rollup survives, never the raw rows).
  */
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { radii, typeScale, type AppTheme } from '@/constants/theme';
@@ -22,6 +23,7 @@ import { strings } from '@/constants/strings';
 import { formatDate } from '@/utils/dates';
 import { KpiRow } from '@/components/leak-scan/KpiRow';
 import { TierBadge } from '@/components/leak-scan/TierBadge';
+import { Button } from '@/components/ui';
 import { MIN_SPAN_DAYS_FOR_RATE } from '@/utils/habitDetection';
 import type { ScanSummary } from '@/types/scanSummary';
 
@@ -31,8 +33,18 @@ type ScanSnapshotCardProps = {
 
 export function ScanSnapshotCard({ summary }: ScanSnapshotCardProps) {
   const theme = useTheme();
+  const router = useRouter();
   const { format } = useCurrency();
   const styles = useMemo(() => createStyles(theme), [theme]);
+
+  // Re-scan entry (build 12): the only prior paths to /leak-scan were
+  // onboarding's own Door 2 pushes. useCompleteScanOnboarding is already
+  // guarded on isOnboardingComplete(), so re-entering here post-onboarding
+  // is a harmless no-op there; app/leak-scan.tsx's intake screen carries its
+  // own back pill and the results screen replaces this summary on success.
+  const handleRunNewScan = useCallback(() => {
+    router.push('/leak-scan');
+  }, [router]);
 
   const dateLabel = formatDate(summary.createdAt, { month: 'short', day: 'numeric' });
   const eyebrow = strings.insights.scanSnapshotEyebrow(dateLabel);
@@ -143,7 +155,15 @@ export function ScanSnapshotCard({ summary }: ScanSnapshotCardProps) {
         </View>
       )}
 
-      <Text style={styles.footer}>{strings.insights.scanUpdatedCaption}</Text>
+      <View style={styles.footer}>
+        <Text style={styles.footerCaption}>{strings.insights.scanUpdatedCaption}</Text>
+        <Button
+          label={strings.insights.scanRerunAction}
+          onPress={handleRunNewScan}
+          variant="tertiary"
+          style={styles.footerAction}
+        />
+      </View>
     </>
   );
 }
@@ -260,12 +280,17 @@ function createStyles(theme: AppTheme) {
       fontVariant: ['tabular-nums'],
     },
     footer: {
+      alignItems: 'center',
+      paddingTop: 2,
+    },
+    footerCaption: {
       fontSize: typeScale.caption,
       fontFamily: theme.fonts.ui,
       color: theme.mist,
       textAlign: 'center',
-      paddingTop: 2,
-      paddingBottom: 4,
+    },
+    footerAction: {
+      marginTop: 2,
     },
   });
 }
