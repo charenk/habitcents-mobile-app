@@ -394,7 +394,7 @@ export default function TodayScreen() {
   // does before navigating.
   const handleBreakSheetStartTrial = useCallback(() => {
     handleBreakSheetClose();
-    router.push('/paywall?placement=habit_gate');
+    router.push('/paywall?placement=habit_gate_today');
   }, [handleBreakSheetClose, router]);
 
   // Watch-nudge accept ("Buy this often? Watch it as a leak"): seeds an
@@ -610,7 +610,7 @@ export default function TodayScreen() {
   // /onboarding/welcome, is deleted; the sheet lives on Today now).
   const handleBreakAnother = useCallback(() => {
     if (freeTierBlocked) {
-      router.push('/paywall?placement=habit_gate');
+      router.push('/paywall?placement=habit_gate_today');
     } else {
       setBreakSheetVisible(true);
     }
@@ -917,7 +917,7 @@ export default function TodayScreen() {
         onStart={handleStart}
         onStartTrial={() => {
           setPickOneHabitId(null);
-          router.push('/paywall?placement=habit_gate');
+          router.push('/paywall?placement=habit_gate_today');
         }}
       />
 

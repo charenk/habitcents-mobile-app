@@ -61,7 +61,9 @@ import { formatDate } from '@/utils/dates';
 import { selectableLabel } from '@/utils/a11y';
 import { formatMoney } from '@/utils/currency';
 import { DEFAULT_CURRENCY } from '@/utils/currency';
+import { saveHabits } from '@/utils/storage';
 import type { ScanSummary } from '@/types/scanSummary';
+import type { DetectedHabit, HabitStatus } from '@/types/habit';
 
 const initialMetrics = {
   frame: { x: 0, y: 0, width: 390, height: 844 },
@@ -231,5 +233,64 @@ describe('Insights first scan segment', () => {
     expect(view.getByText(strings.insights.leakSummaryObserved(money(11000), 18))).toBeTruthy();
     // The extrapolated monthly line must not appear when evidence is thin.
     expect(view.queryByText(strings.insights.leakSummary(money(12000), 18))).toBeNull();
+  });
+});
+
+// categoryId 'default-3' is Food's id under CategoriesContext's
+// initializeDefaultCategories (DEFAULT_CATEGORIES index 3), matching the
+// fixture __tests__/moneyHabitsTab.test.tsx uses for the identical leak row.
+function habit(status: HabitStatus, overrides: Partial<DetectedHabit> = {}): DetectedHabit {
+  return {
+    id: 'h1',
+    name: 'Coffee Habit',
+    description: '$87 on coffee across 5 buys so far',
+    categoryId: 'default-3',
+    merchantPattern: 'coffee',
+    averageAmount: 900,
+    frequency: 'daily',
+    occurrencesPerPeriod: 1,
+    totalMonthlySpend: 4500,
+    observedTotal: 8700,
+    observedCount: 5,
+    spanDays: 39,
+    hasReliableRate: true,
+    medianAmount: 900,
+    minAmount: 400,
+    maxAmount: 1200,
+    trend: 'stable',
+    trendPercentage: 0,
+    triggers: [],
+    status,
+    sentiment: 'bad',
+    discoveredAt: new Date('2026-08-04T12:00:00Z'),
+    ...overrides,
+  };
+}
+
+describe('Insights leaks card: free-tier paywall gate', () => {
+  // U12b: pins this call site's placement value (habit_gate_insights), one of
+  // five habit-gate placements that used to share the bare 'habit_gate'
+  // string (utils/analytics.ts PaywallPlacement).
+  it('at the free habit limit, the gate CTA routes to the insights placement', async () => {
+    mockGetScanSummary.mockResolvedValue(null);
+    const active = habit('changing', { id: 'h-active', name: 'Rideshare Habit' });
+    const discovered = habit('discovered', { id: 'h-discovered', name: 'Coffee Habit' });
+    await saveHabits([active, discovered]);
+
+    const view = await renderInsights();
+
+    const breakButton = view.getByRole('button', {
+      name: `${strings.insights.leakActionBreak}, Coffee Habit`,
+    });
+    await act(async () => {
+      fireEvent.press(breakButton);
+    });
+
+    expect(view.getByText(strings.habitLogging.gateTitle)).toBeTruthy();
+    await act(async () => {
+      fireEvent.press(view.getByText(strings.habitLogging.gateUpgradeCta));
+    });
+
+    expect(mockPush).toHaveBeenCalledWith('/paywall?placement=habit_gate_insights');
   });
 });

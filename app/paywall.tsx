@@ -28,7 +28,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { radii, typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import { hapticSelection } from '@/utils/motion';
-import { track } from '@/utils/analytics';
+import { track, isPaywallPlacement } from '@/utils/analytics';
 import {
   purchase,
   restore,
@@ -55,7 +55,7 @@ export default function PaywallScreen() {
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   const params = useLocalSearchParams<{ placement?: string }>();
-  const placement = params.placement ?? 'unknown';
+  const placement = isPaywallPlacement(params.placement) ? params.placement : 'unknown';
 
   // Annual is the default, highlighted choice (annual-first pricing).
   const [selected, setSelected] = useState<ProductId>(PRODUCT_ANNUAL);

@@ -225,7 +225,7 @@ export default function InsightsScreen() {
         onStart={handleStart}
         onStartTrial={() => {
           setPickOneHabitId(null);
-          router.push('/paywall?placement=habit_gate');
+          router.push('/paywall?placement=habit_gate_insights');
         }}
       />
     </View>

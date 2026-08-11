@@ -154,7 +154,7 @@ export default function HabitDetailScreen() {
         onStart={handleStart}
         onStartTrial={() => {
           setPickOneVisible(false);
-          router.push('/paywall?placement=habit_gate');
+          router.push('/paywall?placement=habit_gate_detail');
         }}
       />
 

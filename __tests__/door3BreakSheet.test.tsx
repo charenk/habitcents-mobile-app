@@ -376,7 +376,7 @@ describe('Door 3 break sheet: free-tier gate', () => {
 
     await tap(view.getByText(strings.habitLogging.gateUpgradeCta));
 
-    expect(mockRouterPush).toHaveBeenCalledWith('/paywall?placement=habit_gate');
+    expect(mockRouterPush).toHaveBeenCalledWith('/paywall?placement=habit_gate_today');
     // Leaving for the paywall is still leaving without starting a habit, so
     // it completes onboarding the same way "Maybe later" would.
     expect(mockCompleteOnboarding).toHaveBeenCalledTimes(1);
