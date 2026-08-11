@@ -59,7 +59,7 @@ function createStyles(theme: AppTheme) {
     },
     label: {
       fontSize: 11,
-      fontWeight: '700',
+      fontFamily: theme.fonts.uiBold,
     },
     dotSolid: {
       width: 9,

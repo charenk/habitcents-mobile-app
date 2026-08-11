@@ -10,6 +10,7 @@ export const strings = {
     ok: 'OK',
     back: 'Back',
     keep: 'Keep',
+    close: 'Close',
   },
   // Tab bar (redesign step 02): Today / Money / Insights / Categories.
   tabs: {
@@ -539,6 +540,10 @@ export const strings = {
     undoImport: 'Undo this import',
     undoConfirmTitle: 'Undo this import?',
     undoConfirmMessage: 'This removes everything this import added.',
+    // Post-undo exit (U12a dead-end fix): this used to be a bare confirmation
+    // with no way out except the invisible iOS edge swipe.
+    undoneMessage: 'This import has been undone.',
+    undoneContinue: 'Continue to HabitCents',
     // Post-scan handoff (spec 5 post-scan, visual spec 12).
     // Spec 05 proposed "Continue to the app" here. Kept as a write-labeled verb
     // deliberately (Charen, 2026-07-31): this button writes expenses before it
