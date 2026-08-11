@@ -31,11 +31,11 @@ type PeriodStop = { location: number; color: string; alpha: number };
 function periodStops(theme: ReturnType<typeof useTheme>): PeriodStop[] {
   return [
     { location: 0.02, color: theme.lavender, alpha: 0 },
-    { location: 0.16, color: theme.lavender, alpha: 0.1 },
-    { location: 0.34, color: NEAR_WHITE_VIOLET, alpha: 0.16 },
-    { location: 0.52, color: theme.categoryColors.utility, alpha: 0.09 },
-    { location: 0.7, color: theme.categoryColors.transport, alpha: 0.07 },
-    { location: 0.86, color: NEAR_WHITE_VIOLET, alpha: 0.12 },
+    { location: 0.16, color: theme.lavender, alpha: 0.22 },
+    { location: 0.34, color: NEAR_WHITE_VIOLET, alpha: 0.2 },
+    { location: 0.52, color: theme.categoryColors.utility, alpha: 0.18 },
+    { location: 0.7, color: theme.categoryColors.transport, alpha: 0.14 },
+    { location: 0.86, color: NEAR_WHITE_VIOLET, alpha: 0.16 },
     { location: 0.98, color: theme.lavender, alpha: 0 },
   ];
 }
@@ -171,7 +171,8 @@ export function AuroraBackground() {
         style={StyleSheet.absoluteFill}
       />
       <LinearGradient
-        colors={[theme.snow, withAlpha(theme.snow, 0)]}
+        colors={[theme.snow, withAlpha(theme.snow, 0.55), withAlpha(theme.snow, 0)]}
+        locations={[0, 0.3, 0.62]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
         style={StyleSheet.absoluteFill}
