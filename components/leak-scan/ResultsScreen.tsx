@@ -29,7 +29,12 @@ import {
   runScan,
 } from '@/utils/leakScan';
 import { spendableRows } from '@/utils/leakScan/netting';
-import { seedLastDays, recurringToExpenses, toAddExpenseInput } from '@/utils/leakScan/importWrite';
+import {
+  seedLastDays,
+  recurringToExpenses,
+  toAddExpenseInput,
+  filterAlreadyImported,
+} from '@/utils/leakScan/importWrite';
 import { scanResultToSummary } from '@/utils/leakScan/summarize';
 import type { ScanFileInput } from '@/utils/leakScan';
 import type { PulseCell } from '@/utils/leakScan/spendPulse';
@@ -272,14 +277,24 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
   const handleSaveProjection = useCallback(
     async (remindBefore: Record<string, boolean>) => {
       const recurringExpenses = recurringToExpenses(result, { remindBefore });
+      // Re-scan dedup (review fix, build 12 re-scan entry): drop any
+      // recurring item already brought in by a prior import before writing,
+      // same guard as handleBringInDays below.
+      const toWrite = filterAlreadyImported(recurringExpenses, expenses);
+      const skipped = recurringExpenses.length - toWrite.length;
       // toAddExpenseInput (utils/leakScan/importWrite.ts) carries source and
       // importId through, not just the fields a manual log would set -- the
       // fix for undo previously removing nothing (see its own doc comment).
-      for (const exp of recurringExpenses) {
+      for (const exp of toWrite) {
         await addExpense(toAddExpenseInput(exp));
       }
+      // Save had no confirmation surface before; only speak up here when
+      // there's something the user wouldn't otherwise know, i.e. a skip.
+      if (skipped > 0) {
+        toast.show(strings.leakScan.skippedAlreadyImported(skipped));
+      }
     },
-    [result, addExpense]
+    [result, addExpense, expenses, toast]
   );
 
   const handleUndo = useCallback(async () => {
@@ -296,19 +311,30 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
 
   const handleBringInDays = useCallback(async () => {
     const seeded = seedLastDays(result, BRING_IN_DAYS);
-    for (const exp of seeded) {
+    // Re-scan dedup (review fix, build 12 re-scan entry): re-importing an
+    // overlapping statement (reachable via Insights' re-scan entry) used to
+    // write every overlapping row a second time with a fresh id, doubling
+    // recorded spend. Drop anything already brought in by a prior import.
+    const toWrite = filterAlreadyImported(seeded, expenses);
+    const skipped = seeded.length - toWrite.length;
+    for (const exp of toWrite) {
       await addExpense(toAddExpenseInput(exp));
     }
-    track('scan_seed_applied', { rows: seeded.length, days: BRING_IN_DAYS });
+    track('scan_seed_applied', { rows: toWrite.length, days: BRING_IN_DAYS });
     // This is the scan door's only exit into the app; it must complete
     // onboarding here or the user loops back into an empty scan on relaunch.
     await completeScanOnboarding();
     router.push('/(tabs)');
     // Every mutating action confirms itself (spec 01 section 5). This one
     // writes about 30 expenses, so landing on Today in silence left the user
-    // with no evidence the import happened.
-    toast.show(strings.leakScan.savedToHabitCents);
-  }, [result, addExpense, router, toast, completeScanOnboarding]);
+    // with no evidence the import happened. When some rows were skipped as
+    // already-imported duplicates, that's said too, honestly.
+    toast.show(
+      skipped > 0
+        ? `${strings.leakScan.savedToHabitCents} ${strings.leakScan.skippedAlreadyImported(skipped)}`
+        : strings.leakScan.savedToHabitCents
+    );
+  }, [result, addExpense, expenses, router, toast, completeScanOnboarding]);
 
   // Dashed expander (ADR 0020): mirrors CategoryList's "View more" analytics
   // pattern, fired once per expand.

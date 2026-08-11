@@ -281,6 +281,9 @@ export const typeScale = {
   statCard: 22,
   reveal: 64,
   body: 15,
+  // Form-field text (ui/TextField): sits between secondary and body so a
+  // typed value reads a touch smaller than prose but never as fine print.
+  control: 13.5,
   secondary: 13,
   caption: 12.5,
   eyebrow: 11,

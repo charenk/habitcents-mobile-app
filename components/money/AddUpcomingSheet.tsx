@@ -40,7 +40,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
   useWindowDimensions,
 } from 'react-native';
@@ -50,6 +49,7 @@ import { Chip } from '@/components/ui/Chip';
 import { Icon } from '@/components/ui/Icon';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { Sheet } from '@/components/ui/Sheet';
+import { TextField } from '@/components/ui/TextField';
 import { useToast } from '@/components/ui/Toast';
 import { strings } from '@/constants/strings';
 import { lightTheme, radii, typeScale } from '@/constants/theme';
@@ -576,13 +576,13 @@ export function AddUpcomingSheet({
               />
             ))}
           </View>
-          <TextInput
+          <TextField
             value={name}
             onChangeText={setName}
             placeholder={strings.addUpcoming.namePlaceholder}
-            placeholderTextColor={theme.mist}
             style={styles.nameField}
             accessibilityLabel={strings.addUpcoming.nameFieldLabel}
+            autoCapitalize="words"
             returnKeyType="done"
           />
 
@@ -820,15 +820,6 @@ function createStyles(theme: AppTheme) {
     },
     nameField: {
       marginTop: 10,
-      minHeight: 44,
-      borderRadius: radii.control,
-      borderWidth: 1,
-      borderColor: theme.cloud,
-      backgroundColor: theme.snow,
-      paddingHorizontal: 14,
-      fontFamily: theme.fonts.ui,
-      fontSize: typeScale.body,
-      color: theme.ink,
     },
     stepper: {
       flexDirection: 'row',

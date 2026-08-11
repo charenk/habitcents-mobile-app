@@ -224,3 +224,70 @@ describe('Leak Scan import write + undo (ADR 0024, U11)', () => {
     expect(afterUndo.find((e) => e.id === 'manual-1')).toBeDefined();
   });
 });
+
+describe('Leak Scan re-scan dedup (review fix, build 12 re-scan entry)', () => {
+  it('a second, overlapping bring-in-days import writes only the non-duplicate rows and reports the skip', async () => {
+    // A prior import already brought in "Coffee Shop" for today. A re-scan
+    // (Insights' re-scan entry) that reads an overlapping statement produces
+    // that same row again (fresh scan row id, but same day/amount/merchant)
+    // plus one genuinely new row; only the new one should land twice.
+    const today = new Date();
+    await saveExpenses([
+      {
+        id: 'imp-old-coffee',
+        title: 'Coffee Shop',
+        amount: 1200,
+        category: 'Food',
+        merchant: 'Coffee Shop',
+        date: today,
+        time: '9:00 AM',
+        isRecurring: false,
+        reminderEnabled: false,
+        source: 'import',
+        importId: 'imp-prior-scan',
+        iconVariant: 'yellow',
+      },
+    ]);
+
+    const result = makeScanResult({
+      importId: 'imp-second-scan',
+      recurring: [],
+      rows: [
+        makeSpendRow({ id: 'r-dup', date: today, dateISO: today.toISOString().slice(0, 10) }),
+        makeSpendRow({
+          id: 'r-new',
+          date: today,
+          dateISO: today.toISOString().slice(0, 10),
+          amountCents: -700,
+          rawDescription: 'Grocery Run',
+          merchantStem: 'groceryrun',
+          merchantDisplay: 'Grocery Run',
+          hash: 'h-new',
+        }),
+      ],
+    });
+    const view = await renderResults(result);
+
+    await act(async () => {
+      fireEvent.press(
+        view.getByRole('button', { name: strings.leakScan.bringInLastDays(30) })
+      );
+    });
+
+    const afterSeed = await getExpenses();
+    // Exactly one Coffee Shop row survives (the original import); the
+    // duplicate the re-scan produced was dropped, not written a second time.
+    expect(afterSeed.filter((e) => e.title === 'Coffee Shop')).toHaveLength(1);
+    expect(afterSeed.find((e) => e.title === 'Coffee Shop')?.importId).toBe('imp-prior-scan');
+    // The genuinely new row from this scan is written normally.
+    const groceryRow = afterSeed.find((e) => e.title === 'Grocery Run');
+    expect(groceryRow).toBeDefined();
+    expect(groceryRow?.importId).toBe('imp-second-scan');
+
+    // The skip is disclosed, not silent (the toast extends the existing
+    // saved-confirmation line with the skip count, one Text node).
+    expect(
+      view.getByText(`${strings.leakScan.savedToHabitCents} ${strings.leakScan.skippedAlreadyImported(1)}`)
+    ).toBeTruthy();
+  });
+});

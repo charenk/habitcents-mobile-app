@@ -19,6 +19,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { AddCategoryModal } from '@/components/AddCategoryModal';
 import { strings } from '@/constants/strings';
+import { COLOR_OPTIONS } from '@/types/category';
 
 const initialMetrics = {
   frame: { x: 0, y: 0, width: 390, height: 844 },
@@ -96,6 +97,68 @@ describe('AddCategoryModal', () => {
 
     expect(view.getByText(strings.addCategoryModal.editCategory)).toBeTruthy();
     expect(view.getByDisplayValue('Coffee')).toBeTruthy();
+  });
+
+  it('prepends a legacy stored color as the selected swatch, and picking a new color still works (review fix: orphaned swatch)', async () => {
+    const legacyColor = '#7E57C2'; // predates COLOR_OPTIONS' current palette (not a member of it)
+    expect(COLOR_OPTIONS).not.toContain(legacyColor);
+
+    const { view, onSave } = await renderModal({
+      isEditing: true,
+      initialName: 'Coffee',
+      initialIcon: 'cafe-outline',
+      initialColor: legacyColor,
+    });
+
+    const swatches = view.getAllByRole('button', { name: /^color option \d+$/ });
+    // Every house palette swatch, plus the one prepended legacy swatch.
+    expect(swatches).toHaveLength(COLOR_OPTIONS.length + 1);
+
+    // The legacy color is prepended first and rendered selected, same size,
+    // no special labeling (accessibilityLabel matches the normal pattern).
+    expect(swatches[0].props.accessibilityLabel).toBe('color option 1');
+    expect(swatches[0].props.accessibilityState?.selected).toBe(true);
+    // Nothing else is selected.
+    for (const swatch of swatches.slice(1)) {
+      expect(swatch.props.accessibilityState?.selected).toBe(false);
+    }
+
+    // Saving without touching color keeps the stored hex.
+    await act(async () => {
+      fireEvent.press(view.getByText(strings.common.save));
+    });
+    expect(onSave).toHaveBeenCalledWith('Coffee', 'cafe-outline', legacyColor);
+
+    onSave.mockClear();
+
+    // Picking a new (house-palette) color still works: the second swatch is
+    // COLOR_OPTIONS[0], now shifted one slot by the prepended legacy swatch.
+    const { view: view2, onSave: onSave2 } = await renderModal({
+      isEditing: true,
+      initialName: 'Coffee',
+      initialIcon: 'cafe-outline',
+      initialColor: legacyColor,
+    });
+    const swatches2 = view2.getAllByRole('button', { name: /^color option \d+$/ });
+    await act(async () => {
+      fireEvent.press(swatches2[1]);
+    });
+    await act(async () => {
+      fireEvent.press(view2.getByText(strings.common.save));
+    });
+    expect(onSave2).toHaveBeenCalledWith('Coffee', 'cafe-outline', COLOR_OPTIONS[0]);
+  });
+
+  it('does not prepend an extra swatch when the stored color is already in COLOR_OPTIONS', async () => {
+    const { view } = await renderModal({
+      isEditing: true,
+      initialName: 'Groceries',
+      initialColor: COLOR_OPTIONS[0],
+    });
+
+    const swatches = view.getAllByRole('button', { name: /^color option \d+$/ });
+    expect(swatches).toHaveLength(COLOR_OPTIONS.length);
+    expect(swatches[0].props.accessibilityState?.selected).toBe(true);
   });
 
   it('cancel closes without saving', async () => {

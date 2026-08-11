@@ -148,3 +148,42 @@ export function toAddExpenseInput(exp: Expense): AddExpenseInput {
 export function undoImport(expenses: Expense[], importId: string): Expense[] {
   return expenses.filter((e) => e.importId !== importId);
 }
+
+/** yyyy-m-d in the device's local calendar, not UTC: two rows on the same
+ *  local day must dedupe even if their UTC day differs near midnight. */
+function localDayKey(date: Date): string {
+  return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+}
+
+/** Merchant when present, else title (rowToExpense falls back to title when a
+ *  row has no merchant), lowercased and trimmed so casing/whitespace never
+ *  cause a false miss. */
+function merchantOrTitleKey(exp: Pick<Expense, 'merchant' | 'title'>): string {
+  return (exp.merchant || exp.title).trim().toLowerCase();
+}
+
+function dedupeKey(exp: Pick<Expense, 'date' | 'amount' | 'merchant' | 'title'>): string {
+  return `${localDayKey(exp.date)}|${exp.amount}|${merchantOrTitleKey(exp)}`;
+}
+
+/**
+ * Re-scan dedup (review fix, build 12 re-scan entry): the Insights "Run a new
+ * scan" entry point lets an already-onboarded user re-import a statement that
+ * overlaps a prior import, which used to double-record every overlapping row
+ * (fresh ids, no dedup). Drops any candidate whose (local calendar day,
+ * amount, normalized merchant-or-title) matches an existing expense already
+ * on record from a PRIOR import.
+ *
+ * Deliberately conservative: only expenses with source 'import' are matched
+ * against. A hand-logged row with the same day/amount/merchant is left alone
+ * on purpose -- a person can genuinely buy the same coffee they already
+ * logged by hand, and this helper has no way to tell that apart from a true
+ * duplicate, so it only ever removes rows it's confident are the same import
+ * data coming back through the pipeline twice.
+ */
+export function filterAlreadyImported(candidateRows: Expense[], existingExpenses: Expense[]): Expense[] {
+  const alreadyImportedKeys = new Set(
+    existingExpenses.filter((e) => e.source === 'import').map(dedupeKey)
+  );
+  return candidateRows.filter((c) => !alreadyImportedKeys.has(dedupeKey(c)));
+}

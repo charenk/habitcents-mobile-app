@@ -37,7 +37,7 @@ export function QuickLogRow({
           accessibilityRole="button"
           accessibilityLabel={strings.today.quickLogOpenLabel}
         >
-          <AmountDisplay valueCents={0} size={40} zeroAsPlaceholder />
+          <AmountDisplay valueCents={0} size={40} zeroAsPlaceholder fullWidth />
         </Pressable>
         <TouchableOpacity
           style={styles.quickLogPlus}
@@ -65,6 +65,10 @@ function createStyles(theme: AppTheme) {
       flexDirection: 'row',
       alignItems: 'flex-end',
       justifyContent: 'space-between',
+      // Review fix: the fullWidth amount's underline (AmountDisplay) was
+      // running flush against the plus button with no breathing room between
+      // the two tap targets.
+      gap: 12,
     },
     // Takes the row's free width so the whole left side of the card opens the
     // sheet, not just the glyphs. No visual change: the amount still sits on

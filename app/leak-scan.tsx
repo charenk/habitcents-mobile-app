@@ -5,6 +5,7 @@ import { IntakeScreen } from '@/components/leak-scan/IntakeScreen';
 import { ResultsScreen } from '@/components/leak-scan/ResultsScreen';
 import { GracefulFailure } from '@/components/leak-scan/GracefulFailure';
 import { useCompleteScanOnboarding } from '@/components/leak-scan/useCompleteScanOnboarding';
+import { useOnboarding } from '@/contexts/OnboardingContext';
 
 /**
  * The Leak Scan route (P2-1b, Door 2). Registered at the exact path
@@ -18,6 +19,7 @@ export default function LeakScanRoute() {
   const router = useRouter();
   const { state, pickAndScan, answerQuestion, reset } = useLeakScanIntake();
   const completeScanOnboarding = useCompleteScanOnboarding();
+  const { isOnboardingComplete } = useOnboarding();
 
   const handleTryDifferentExport = useCallback(() => {
     reset();
@@ -58,6 +60,16 @@ export default function LeakScanRoute() {
           onStartLeakAudit={handleStartLeakAudit}
           onLogByHand={handleLogByHand}
           onBack={handleBack}
+          // Review fix (build 12 re-scan entry): an already-onboarded user
+          // reaching graceful failure through Insights' re-scan entry must
+          // not be offered the audit exit. It replaces to
+          // /onboarding/welcome, whose resume effect only knows how to route
+          // an in-progress onboarding; a completed one with a non-statements
+          // doorChosen would land in the intent picker with no way back into
+          // the app, and even a statements doorChosen just bounces straight
+          // back to this same screen. Onboarding-time behavior (this option
+          // shown) is unchanged.
+          showAuditExit={!isOnboardingComplete()}
         />
       );
     }

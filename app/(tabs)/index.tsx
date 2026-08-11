@@ -613,7 +613,8 @@ export default function TodayScreen() {
   const pickOneHabit = pickOneHabitId ? getHabitById(pickOneHabitId) : null;
   // Entitlement touchpoint (ADR 0007, BET-004): blocked once the active-habit
   // count reaches the current entitlement's ceiling (free = 1, premium = 5).
-  const freeTierBlocked = isHabitLimitReached(activeHabits.length, getEntitlement());
+  const entitlement = getEntitlement();
+  const freeTierBlocked = isHabitLimitReached(activeHabits.length, entitlement);
 
   // Break-another affordance (DI-6, ADR 0019): same gate freeTierBlocked
   // already drives on PickOneSheet's "start" path, reused here so a second
@@ -653,18 +654,30 @@ export default function TodayScreen() {
   // Rendered once, reused at the bottom of both the populated (SectionList
   // footer) and empty Kept content; W3 consolidated the empty state's former
   // separate reAuditLink text link into this single affordance.
+  //
+  // Gating audit (build 12): the caption used to always read "1 habit on the
+  // free plan" (habitLogging.freeTierNote), even for a premium entitlement
+  // whose real ceiling is 5. Premium never blocks on this affordance until
+  // its 5th habit, so the free-plan nudge only belongs on the free tier.
+  const breakAnotherCaption = entitlement === 'premium' ? null : strings.habitLogging.freeTierNote;
   const breakAnotherAffordance = (
     <TouchableOpacity
       style={styles.breakAnother}
       onPress={handleBreakAnother}
       accessibilityRole="button"
-      accessibilityLabel={`${strings.today.breakAnotherHabitCta}, ${strings.habitLogging.freeTierNote}`}
+      accessibilityLabel={
+        breakAnotherCaption
+          ? `${strings.today.breakAnotherHabitCta}, ${breakAnotherCaption}`
+          : strings.today.breakAnotherHabitCta
+      }
       activeOpacity={0.7}
     >
       <Icon name="Plus" size={18} color={theme.primaryDark} />
       <View style={styles.breakAnotherText}>
         <Text style={styles.breakAnotherLabel}>{strings.today.breakAnotherHabitCta}</Text>
-        <Text style={styles.breakAnotherCaption}>{strings.habitLogging.freeTierNote}</Text>
+        {breakAnotherCaption ? (
+          <Text style={styles.breakAnotherCaption}>{breakAnotherCaption}</Text>
+        ) : null}
       </View>
     </TouchableOpacity>
   );

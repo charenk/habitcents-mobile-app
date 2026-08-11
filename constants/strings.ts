@@ -223,25 +223,11 @@ export const strings = {
   habitDetail: {
     notFound: 'Habit not found',
     sentimentHabit: (sentiment: string) => `${sentiment} Habit`,
-    perMonth: 'per month',
     perDay: 'day',
     perWeek: 'week',
     perMonthUnit: 'month',
     perUnit: (unit: string) => `per ${unit}`,
-    whenDoesThisHappen: 'When Does This Happen?',
-    confidence: (percent: number) => `${percent}% confidence`,
-    yourProgress: 'Your Progress',
-    savingsProgress: 'Savings Progress',
-    ofGoal: (goal: string) => `of ${goal} goal`,
-    milestones: 'Milestones',
-    dayStreak: (target: number) => `${target} day streak`,
     suggestions: 'Suggestions',
-    suggestionCoffee: 'Try preparing coffee at home to save on coffee shop visits.',
-    suggestionReminder: 'Set a reminder before your usual spending time.',
-    startTracking: 'Start Tracking This Habit',
-    logging: 'Logging...',
-    logTodayAsSuccess: 'Log Today as Success',
-    slippedToday: 'I slipped today',
   },
   categories: {
     title: 'Categories',
@@ -332,6 +318,10 @@ export const strings = {
     groupMore: 'More',
     subscriptionRow: 'Subscription',
     subscriptionValueFree: 'Free',
+    // Gating audit (build 12): the row used to hardcode Free regardless of
+    // getEntitlement(), so a completed mock purchase left Profile still
+    // claiming Free. This is the honest counterpart, shown once premium.
+    subscriptionValuePremium: 'Premium',
     // Start over (design/profile-restructure U9) replaces Sign out: there are
     // no accounts, so nothing is signed out of. Slate, never coral: coral
     // stays reserved for actions that destroy data, and this keeps all of it.
@@ -566,6 +556,10 @@ export const strings = {
     // ladder, Charen 2026-08-04); this closes the leak-scan CTA punch-list item.
     bringInLastDays: (days: number) => `Bring in your last ${days} days`,
     savedToHabitCents: 'Saved to HabitCents.',
+    // Re-scan dedup (review fix, build 12 re-scan entry): honest disclosure
+    // when filterAlreadyImported (utils/leakScan/importWrite.ts) drops rows
+    // that were already brought in by an earlier import.
+    skippedAlreadyImported: (n: number) => `${n} already imported earlier, skipped.`,
     // Merchant review queue (spec 6/7, visual spec 10)
     reviewQueueTitle: (n: number) => `Quick check: ${n} merchant${n === 1 ? '' : 's'} we weren't sure about`,
     reviewQueueProgress: (done: number, n: number) => `${done} of ${n}`,
@@ -926,6 +920,10 @@ export const strings = {
     scanLeaksCaption: 'Manage leaks from This month, above.',
     scanProjectionLockedInCaption: (amount: string) => `${amount} locked in from recurring`,
     scanUpdatedCaption: 'Updated when you run a new scan.',
+    // Re-scan entry (build 12): the footer caption above was informational
+    // only, with no path back to /leak-scan once onboarding finished. This
+    // is that path, a 44pt tertiary control below the caption.
+    scanRerunAction: 'Run a new scan',
   },
 
   // Habit detail redesign (spec 04 "Habit detail"). The arc, chapter and

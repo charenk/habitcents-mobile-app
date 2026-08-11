@@ -16,13 +16,13 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  TextInput,
   ScrollView,
   useWindowDimensions,
 } from 'react-native';
 import { Button } from '@/components/ui/Button';
 import { Icon, categoryIconName } from '@/components/ui/Icon';
 import { Sheet } from '@/components/ui/Sheet';
+import { TextField } from '@/components/ui/TextField';
 import { useTheme } from '@/contexts/ThemeContext';
 import { radii, typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
@@ -62,6 +62,18 @@ export function AddCategoryModal({
   const [name, setName] = useState(initialName);
   const [selectedIcon, setSelectedIcon] = useState<CategoryIcon>(initialIcon);
   const [selectedColor, setSelectedColor] = useState(initialColor);
+
+  // Review fix (orphaned swatch selection): a category saved before
+  // COLOR_OPTIONS' current palette landed can carry a stored hex the grid no
+  // longer offers, so editing it used to render no selected swatch at all.
+  // Prepend that stored color to the grid as the current swatch (selected,
+  // same size, no special labeling) so editing keeps visual continuity; not
+  // touching the color picker still saves the original stored hex, since
+  // selectedColor only ever changes on an explicit tap.
+  const colorOptions = useMemo(
+    () => (initialColor && !COLOR_OPTIONS.includes(initialColor) ? [initialColor, ...COLOR_OPTIONS] : COLOR_OPTIONS),
+    [initialColor]
+  );
 
   // Re-sync when the modal opens or targets a different category, so editing a
   // second category no longer shows the first one's values / resets its icon and
@@ -118,12 +130,11 @@ export function AddCategoryModal({
 
         {/* Name Input */}
         <Text style={styles.eyebrow}>{strings.addCategoryModal.name}</Text>
-        <TextInput
-          style={styles.input}
+        <TextField
           value={name}
           onChangeText={setName}
           placeholder={strings.addCategoryModal.namePlaceholder}
-          placeholderTextColor={theme.mist}
+          accessibilityLabel={strings.addCategoryModal.name}
           maxLength={30}
         />
 
@@ -154,7 +165,7 @@ export function AddCategoryModal({
         {/* Color Picker */}
         <Text style={styles.eyebrow}>{strings.addCategoryModal.color}</Text>
         <View style={styles.colorGrid}>
-          {COLOR_OPTIONS.map((color, index) => (
+          {colorOptions.map((color, index) => (
             <TouchableOpacity
               key={color}
               style={[
@@ -223,17 +234,6 @@ function createStyles(theme: AppTheme) {
       color: theme.mist,
       marginTop: 18,
       marginBottom: 8,
-    },
-    input: {
-      minHeight: 44,
-      borderRadius: radii.control,
-      borderWidth: 1,
-      borderColor: theme.cloud,
-      backgroundColor: theme.snow,
-      paddingHorizontal: 14,
-      fontFamily: theme.fonts.ui,
-      fontSize: typeScale.body,
-      color: theme.ink,
     },
     iconGrid: {
       flexDirection: 'row',

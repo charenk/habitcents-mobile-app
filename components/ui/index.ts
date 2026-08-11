@@ -20,3 +20,5 @@ export { ScreenHeader } from './ScreenHeader';
 export type { ScreenHeaderProps, ScreenHeaderAction } from './ScreenHeader';
 export { EmptyState } from './EmptyState';
 export type { EmptyStateProps } from './EmptyState';
+export { TextField } from './TextField';
+export type { TextFieldProps, TextFieldVariant } from './TextField';

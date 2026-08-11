@@ -107,6 +107,7 @@ import { strings } from '@/constants/strings';
 import { lightTheme } from '@/constants/theme';
 import { formatMoney } from '@/utils/currency';
 import { track } from '@/utils/analytics';
+import { setMockEntitlement } from '@/utils/purchases';
 import type { Expense } from '@/types/expense';
 import type { DetectedHabit, HabitChangeGoal } from '@/types/habit';
 
@@ -223,7 +224,12 @@ beforeEach(() => {
   mockTrack.mockClear();
 });
 
-afterEach(cleanup);
+afterEach(async () => {
+  cleanup();
+  // Gating audit (build 12) added a premium-entitlement test below; reset so
+  // it never leaks into a later test in this file, which all assume free.
+  await setMockEntitlement('free');
+});
 
 describe('Today: Spent/Kept chips', () => {
   it('renders both the spent and kept amounts', async () => {
@@ -420,5 +426,21 @@ describe('Today: break-another affordance (DI-6)', () => {
     await tap(view.getByLabelText(new RegExp(`^${strings.today.breakAnotherHabitCta}`)));
 
     expect(mockPush).toHaveBeenCalledWith('/paywall?placement=habit_gate_today');
+  });
+
+  // Gating audit (build 12): the caption used to always read "1 habit on the
+  // free plan" (habitLogging.freeTierNote) regardless of entitlement, which
+  // was dishonest once premium (ceiling 5) is granted.
+  it('hides the free-plan caption once premium', async () => {
+    await setMockEntitlement('premium');
+    mockHabits = [makeHabit({ id: 'h1', frequency: 'daily', status: 'changing' })];
+    mockGoals = [makeGoal({ id: 'g1', habitId: 'h1', dayLogs: [] })];
+
+    const view = await renderToday();
+
+    await tap(view.getByTestId('kept-chip'));
+
+    expect(view.getByText(strings.today.breakAnotherHabitCta)).toBeTruthy();
+    expect(view.queryByText(strings.habitLogging.freeTierNote)).toBeNull();
   });
 });

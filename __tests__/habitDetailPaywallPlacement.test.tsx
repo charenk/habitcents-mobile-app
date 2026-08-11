@@ -4,7 +4,7 @@
  * habit-gate entry points shared the bare 'habit_gate' placement string, so
  * the funnel could not tell one gate from another; each now carries its own
  * suffix (utils/analytics.ts PaywallPlacement). This screen's "Start
- * tracking" gate is habit_gate_detail.
+ * breaking it" gate is habit_gate_detail.
  *
  * Provider wiring mirrors __tests__/insightsFirstScan.test.tsx: HabitsContext
  * only depends on CurrencyContext (no Expenses/Categories needed here), plus
@@ -120,9 +120,9 @@ describe('Habit detail: free-tier paywall gate', () => {
 
     const view = await renderDetail();
 
-    const startTracking = view.getByText(strings.habitDetail.startTracking);
+    const startBreaking = view.getByText(strings.habitLogging.startBreakingIt);
     await act(async () => {
-      fireEvent.press(startTracking);
+      fireEvent.press(startBreaking);
     });
 
     expect(view.getByText(strings.habitLogging.gateTitle)).toBeTruthy();

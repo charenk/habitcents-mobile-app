@@ -128,6 +128,45 @@ beforeEach(async () => {
 afterEach(cleanup);
 
 describe('Leak scan graceful-failure exits', () => {
+  it('shows the Leak Audit exit and still replaces to welcome when onboarding is incomplete', async () => {
+    const view = await renderRoute();
+    expect(completeReader.current()).toBe(false);
+
+    expect(view.getByText(strings.leakScan.failureStartLeakAudit)).toBeTruthy();
+
+    await pressText(view, strings.leakScan.failureStartLeakAudit);
+
+    expect(mockReplace).toHaveBeenCalledWith('/onboarding/welcome');
+  });
+
+  it('hides the Leak Audit exit when onboarding is already complete (review fix: re-scan strand)', async () => {
+    // Pre-seed a completed onboarding, the state an Insights re-scan user is
+    // already in (@habitcents_onboarding_state, utils/storage.ts). Offering
+    // this exit here would replace to /onboarding/welcome, whose resume
+    // effect has no honest place to send an already-completed doorChosen
+    // back to; the remaining exits are the honest set for a re-scanner.
+    await AsyncStorage.setItem(
+      '@habitcents_onboarding_state',
+      JSON.stringify({
+        currentStep: 'welcome',
+        hasSeenWelcome: true,
+        hasSeenValueProps: true,
+        hasAddedFirstExpense: true,
+        skippedSteps: [],
+        doorChosen: 'statements',
+        completedAt: new Date().toISOString(),
+      })
+    );
+
+    const view = await renderRoute();
+    expect(completeReader.current()).toBe(true);
+
+    expect(view.queryByText(strings.leakScan.failureStartLeakAudit)).toBeNull();
+    // The other two exits are still offered.
+    expect(view.getByText(strings.leakScan.failureTryDifferentExport)).toBeTruthy();
+    expect(view.getByText(strings.leakScan.failureLogByHand)).toBeTruthy();
+  });
+
   it('completes onboarding and lands on Money when logging by hand', async () => {
     const view = await renderRoute();
     expect(completeReader.current()).toBe(false);

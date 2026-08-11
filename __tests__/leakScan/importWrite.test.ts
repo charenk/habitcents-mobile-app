@@ -7,12 +7,14 @@
  * ResultsScreen UI is covered in __tests__/leakScanImportUndo.test.tsx.
  */
 import {
+  filterAlreadyImported,
   recurringToExpenses,
   rowToExpense,
   seedLastDays,
   toAddExpenseInput,
 } from '@/utils/leakScan/importWrite';
 import type { RecurringItem, ScanResult, ScanRow } from '@/utils/leakScan/types';
+import type { Expense } from '@/types/expense';
 
 function makeScanRow(overrides: Partial<ScanRow> = {}): ScanRow {
   return {
@@ -119,5 +121,94 @@ describe('toAddExpenseInput', () => {
     const input = toAddExpenseInput(exp);
     expect(input.source).toBe('import');
     expect(input.importId).toBe(result.importId);
+  });
+});
+
+describe('filterAlreadyImported', () => {
+  function makeExpense(overrides: Partial<Expense> = {}): Expense {
+    return {
+      id: 'e1',
+      title: 'Coffee Shop',
+      amount: 1200,
+      category: 'Food',
+      merchant: 'Coffee Shop',
+      date: new Date('2026-06-01T09:00:00'),
+      time: '9:00 AM',
+      isRecurring: false,
+      reminderEnabled: false,
+      source: 'import',
+      importId: 'imp-old',
+      iconVariant: 'yellow',
+      ...overrides,
+    };
+  }
+
+  it('drops a candidate matching an existing imported row on day, amount, and merchant', () => {
+    const existing = [makeExpense()];
+    const candidate = makeExpense({ id: 'e2', importId: 'imp-new' });
+
+    expect(filterAlreadyImported([candidate], existing)).toEqual([]);
+  });
+
+  it('keeps a candidate on a different local calendar day', () => {
+    const existing = [makeExpense()];
+    const candidate = makeExpense({ id: 'e2', date: new Date('2026-06-02T09:00:00'), importId: 'imp-new' });
+
+    expect(filterAlreadyImported([candidate], existing)).toEqual([candidate]);
+  });
+
+  it('keeps a candidate with a different amount', () => {
+    const existing = [makeExpense()];
+    const candidate = makeExpense({ id: 'e2', amount: 1300, importId: 'imp-new' });
+
+    expect(filterAlreadyImported([candidate], existing)).toEqual([candidate]);
+  });
+
+  it('keeps a candidate with a different merchant/title', () => {
+    const existing = [makeExpense()];
+    const candidate = makeExpense({
+      id: 'e2',
+      title: 'Different Shop',
+      merchant: 'Different Shop',
+      importId: 'imp-new',
+    });
+
+    expect(filterAlreadyImported([candidate], existing)).toEqual([candidate]);
+  });
+
+  it('matches merchant/title case- and whitespace-insensitively', () => {
+    const existing = [makeExpense({ merchant: '  Coffee Shop  ' })];
+    const candidate = makeExpense({ id: 'e2', merchant: 'coffee shop', importId: 'imp-new' });
+
+    expect(filterAlreadyImported([candidate], existing)).toEqual([]);
+  });
+
+  it('falls back to title when merchant is absent, on both sides', () => {
+    const existing = [makeExpense({ merchant: undefined, title: 'Coffee Shop' })];
+    const candidate = makeExpense({ id: 'e2', merchant: undefined, title: 'Coffee Shop', importId: 'imp-new' });
+
+    expect(filterAlreadyImported([candidate], existing)).toEqual([]);
+  });
+
+  it('does NOT match a hand-logged (source manual) row, even with the same day/amount/merchant', () => {
+    // Conservative by design (see importWrite.ts header comment on
+    // filterAlreadyImported): a person can genuinely buy the same thing they
+    // already logged by hand, so only prior IMPORT rows count as duplicates.
+    const existing = [makeExpense({ source: 'manual', importId: undefined })];
+    const candidate = makeExpense({ id: 'e2', importId: 'imp-new' });
+
+    expect(filterAlreadyImported([candidate], existing)).toEqual([candidate]);
+  });
+
+  it('does not match a row with no source set (defaults to manual)', () => {
+    const existing = [makeExpense({ source: undefined, importId: undefined })];
+    const candidate = makeExpense({ id: 'e2', importId: 'imp-new' });
+
+    expect(filterAlreadyImported([candidate], existing)).toEqual([candidate]);
+  });
+
+  it('keeps every candidate when there is no existing data', () => {
+    const candidate = makeExpense({ id: 'e2', importId: 'imp-new' });
+    expect(filterAlreadyImported([candidate], [])).toEqual([candidate]);
   });
 });

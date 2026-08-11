@@ -12,6 +12,13 @@ type AmountDisplayProps = {
   size?: number;
   /** Render a zero amount in the placeholder (mist) color. */
   zeroAsPlaceholder?: boolean;
+  /**
+   * Stretch to the parent's full width instead of shrink-wrapping the
+   * digits, so the underline spans the container (matching AmountField)
+   * while the digits themselves stay left-aligned. Default false preserves
+   * every existing consumer pixel-identical.
+   */
+  fullWidth?: boolean;
 };
 
 /**
@@ -24,13 +31,15 @@ type AmountDisplayProps = {
  * decimal pad, across every amount-entry surface. QuickLogRow (components/
  * money/QuickLogRow.tsx) is the one remaining consumer, and it is
  * display-only there too: a tappable card that opens the log sheet, not
- * paired with any keypad.
+ * paired with any keypad. QuickLogRow passes fullWidth so the underline
+ * spans the card instead of hugging the digits.
  */
 export function AmountDisplay({
   valueCents,
   focused = false,
   size = 48,
   zeroAsPlaceholder = false,
+  fullWidth = false,
 }: AmountDisplayProps) {
   const theme = useTheme();
   const { currency } = useCurrency();
@@ -48,7 +57,7 @@ export function AmountDisplay({
     () =>
       StyleSheet.create({
         column: {
-          alignSelf: 'flex-start',
+          alignSelf: fullWidth ? 'stretch' : 'flex-start',
         },
         row: {
           flexDirection: 'row',
@@ -74,7 +83,7 @@ export function AmountDisplay({
           borderRadius: 999,
         },
       }),
-    [theme, size, focused]
+    [theme, size, focused, fullWidth]
   );
 
   return (
