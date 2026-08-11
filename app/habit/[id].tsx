@@ -15,10 +15,8 @@ import { PartialSlipSheet } from '@/components/habit-logging/PartialSlipSheet';
 import { Sheet } from '@/components/ui/Sheet';
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
 import { Button } from '@/components/ui/Button';
-import { AmountDisplay } from '@/components/ui/AmountDisplay';
-import { Keypad } from '@/components/ui/Keypad';
+import { AmountField } from '@/components/ui/AmountField';
 import { useToast } from '@/components/ui/Toast';
-import { applyKeypadKey, keypadValueToCents, centsToKeypadValue } from '@/utils/keypad';
 import { atMidnight, weekStats, isHabitLimitReached, displayChapter } from '@/utils/habitLogging';
 import { getEntitlement } from '@/utils/purchases';
 import type { CoachMomentCardId } from '@/utils/coachMoments';
@@ -314,8 +312,16 @@ function StatBlock({ label, value, tinted }: { label: string; value: string; tin
   );
 }
 
-/** "Edit one skip keeps" footer sheet (spec 01 §4.8): single-field amount edit. */
-function EditSkipValueSheet({
+/**
+ * "Edit one skip keeps" footer sheet (spec 01 §4.8): single-field amount
+ * edit. ADR 0023: a native-keyboard AmountField, auto-focused, since the
+ * whole point of opening this sheet is to change the number -- there is
+ * nothing else to look at first.
+ *
+ * Exported (not just a local closure) so it can be unit tested directly
+ * without standing up the full habit detail screen's provider stack.
+ */
+export function EditSkipValueSheet({
   visible,
   initialValue,
   onCancel,
@@ -327,29 +333,32 @@ function EditSkipValueSheet({
   onSave: (value: number) => void;
 }) {
   const theme = useTheme();
+  const { format } = useCurrency();
   const styles = useMemo(() => createStyles(theme), [theme]);
-  // Keypad-driven like every other amount in the redesign, so the number can
-  // be the display serif instead of a system-keyboard text field.
-  const [value, setValue] = useState(centsToKeypadValue(initialValue));
+  const [cents, setCents] = useState(initialValue);
 
   React.useEffect(() => {
-    if (visible) setValue(centsToKeypadValue(initialValue));
+    if (visible) setCents(initialValue);
   }, [visible, initialValue]);
-
-  const cents = keypadValueToCents(value);
 
   return (
     <Sheet
       visible={visible}
       onClose={onCancel}
+      avoidKeyboard
       accessibilityLabel={strings.habitDetailV2.skipValueSheetTitle}
     >
       <View style={styles.editSheetContainer}>
-        <Text style={styles.editSheetTitle}>{strings.habitDetailV2.skipValueSheetTitle}</Text>
-        <AmountDisplay valueCents={cents} focused={cents > 0} size={46} zeroAsPlaceholder />
-        <View style={styles.editSheetKeypad}>
-          <Keypad value={value} onChange={setValue} />
-        </View>
+        <Text style={styles.editSheetTitle} maxFontSizeMultiplier={1.5}>
+          {strings.habitDetailV2.skipValueSheetTitle}
+        </Text>
+        <AmountField
+          valueCents={cents}
+          onChangeCents={setCents}
+          autoFocus={visible}
+          size={48}
+          accessibilityLabel={`${strings.habitDetailV2.skipValueSheetTitle}, ${format(cents)}`}
+        />
         <Button
           label={strings.habitDetailV2.skipValueSave}
           onPress={() => onSave(cents)}
@@ -479,10 +488,6 @@ function createStyles(theme: AppTheme) {
       paddingTop: 4,
       paddingBottom: 12,
       gap: 8,
-    },
-    editSheetKeypad: {
-      marginTop: 8,
-      marginBottom: 8,
     },
     grabber: {
       width: 36,

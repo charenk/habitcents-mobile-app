@@ -1,69 +1,18 @@
 /**
- * Pure keypad logic for the amount-entry primitives (WP-2).
+ * Cents <-> decimal-string conversion for the amount-entry primitives (WP-2;
+ * ADR 0023).
  *
- * The keypad edits a human-typed decimal STRING (e.g. "6.50"), never cents.
- * Conversion to and from the integer-cents storage format lives here too so the
- * rules stay in one tested place. No React, no theme, no side effects.
+ * The retiring custom Keypad used to edit a human-typed decimal STRING
+ * (e.g. "6.50") one keypress at a time; that per-keypress editing (
+ * applyKeypadKey) is gone with it, but the string FORMAT it produced is not
+ * -- AmountField (components/ui/AmountField.tsx) still keeps its own raw
+ * typed text in this same shape, and utils/amountInput.ts still hands off to
+ * keypadValueToCents for the final string-to-cents conversion. This file is
+ * what's left of the shared conversion layer, so both stay in agreement. No
+ * React, no theme, no side effects.
  */
 
-export type KeypadKey =
-  | '0'
-  | '1'
-  | '2'
-  | '3'
-  | '4'
-  | '5'
-  | '6'
-  | '7'
-  | '8'
-  | '9'
-  | '.'
-  | 'backspace';
-
-const MAX_INTEGER_DIGITS = 6;
 const MAX_DECIMAL_DIGITS = 2;
-
-/**
- * Apply a single keypress to the current value string and return the next value.
- * Rules (all enforced here):
- * - one '.' max, further '.' presses are ignored.
- * - max 2 digits after the decimal point.
- * - max 6 digits before the decimal point.
- * - '.' on an empty value yields '0.'.
- * - a leading '0' is replaced by a following digit ('0' + '5' -> '5'), but
- *   '0' + '.' -> '0.'.
- * - backspace removes the last character; on a single-char or empty value it
- *   clears to ''.
- */
-export function applyKeypadKey(value: string, key: KeypadKey): string {
-  if (key === 'backspace') {
-    return value.length <= 1 ? '' : value.slice(0, -1);
-  }
-
-  if (key === '.') {
-    if (value === '') return '0.';
-    if (value.includes('.')) return value;
-    return value + '.';
-  }
-
-  // key is a digit '0'-'9'
-  const dotIndex = value.indexOf('.');
-
-  if (dotIndex === -1) {
-    // Editing the integer part.
-    if (value === '0') {
-      // Replace a lone leading zero unless another zero was pressed.
-      return key === '0' ? '0' : key;
-    }
-    if (value.length >= MAX_INTEGER_DIGITS) return value;
-    return value + key;
-  }
-
-  // Editing the decimal part.
-  const decimals = value.length - dotIndex - 1;
-  if (decimals >= MAX_DECIMAL_DIGITS) return value;
-  return value + key;
-}
 
 /**
  * Convert a keypad value string to integer cents (hundredths of the major unit).

@@ -820,6 +820,9 @@ export const strings = {
     everyNDaysDecrease: 'Fewer days',
     everyNDaysIncrease: 'More days',
     save: 'Add to upcoming',
+    // ADR 0023: AmountField's accessibility label, same shape as
+    // strings.expenseSheet.amountLabel.
+    amountLabel: (formattedAmount: string) => `Amount, ${formattedAmount}`,
   },
 
   // Insights tab (spec 04 "Insights").

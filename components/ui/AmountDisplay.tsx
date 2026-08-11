@@ -6,7 +6,7 @@ import { currencyMeta } from '@/utils/currency';
 
 type AmountDisplayProps = {
   valueCents: number;
-  /** Sage underline + treatment while the paired keypad is active. */
+  /** Sage underline + treatment for an active/focused-looking state. */
   focused?: boolean;
   /** Numeral font size; the symbol renders at ~60% of this. Default 48. */
   size?: number;
@@ -17,7 +17,14 @@ type AmountDisplayProps = {
 /**
  * The shared amount-first display look: a currency symbol plus a serif tabular
  * number over a 1.5px underline (design/redesign-handoff/01-tokens-and-
- * foundations.md, §5). Display only, never a TextInput; a Keypad drives it.
+ * foundations.md, §5). Display only, never a TextInput.
+ *
+ * ADR 0023 retired this component's editable pairing (AmountDisplay + the
+ * custom Keypad) in favor of AmountField, a real TextInput on the native
+ * decimal pad, across every amount-entry surface. QuickLogRow (components/
+ * money/QuickLogRow.tsx) is the one remaining consumer, and it is
+ * display-only there too: a tappable card that opens the log sheet, not
+ * paired with any keypad.
  */
 export function AmountDisplay({
   valueCents,

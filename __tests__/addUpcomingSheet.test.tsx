@@ -10,6 +10,11 @@
  * own frequency chips didn't offer 'annual' before U8, so an item Leak Scan
  * imported with an annual rule could never be edited without losing its
  * cadence; this pins that round-trip too.
+ *
+ * Amount entry (ADR 0023): the sheet's AmountField is a real TextInput on the
+ * native decimal pad, so tests type a full amount string via changeText
+ * rather than tapping digit-labeled Keypad buttons (see
+ * __tests__/expenseSheet.test.tsx, the sibling pattern this borrows).
  */
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock')
@@ -136,6 +141,14 @@ async function tap(element: Parameters<typeof fireEvent.press>[0]): Promise<void
   });
 }
 
+/** Types a full amount string into the native AmountField in one change,
+ *  the way a decimal-pad keystroke stream ultimately resolves to a value. */
+async function typeAmount(view: View, amount: string): Promise<void> {
+  await act(async () => {
+    fireEvent.changeText(view.getByLabelText(/^Amount,/), amount);
+  });
+}
+
 beforeEach(() => {
   mockExpenses = [];
   mockAddExpense.mockClear();
@@ -151,8 +164,7 @@ describe('AddUpcomingSheet add mode (regression)', () => {
   it('still writes a fresh monthly schedule the way it did before U8', async () => {
     const view = await renderAdd();
 
-    await tap(view.getByLabelText('1'));
-    await tap(view.getByLabelText('2'));
+    await typeAmount(view, '12');
     await tap(view.getByLabelText('Gym, not selected'));
     await tap(view.getByRole('button', { name: strings.addUpcoming.save }));
 
@@ -166,7 +178,7 @@ describe('AddUpcomingSheet add mode (regression)', () => {
   it('offers a Yearly frequency chip that writes an annual rule', async () => {
     const view = await renderAdd();
 
-    await tap(view.getByLabelText('5'));
+    await typeAmount(view, '5');
     await tap(view.getByLabelText('Yearly, not selected'));
     await tap(view.getByRole('button', { name: strings.addUpcoming.save }));
 
@@ -204,12 +216,8 @@ describe('AddUpcomingSheet edit mode: prefill and untouched-schedule round trip'
     const expense = makeExpense({ id: 'e1', amount: 1200 }); // "12.00"
     const view = await renderEdit(expense);
 
-    // Clear the prefilled "12.00" and type a new amount.
-    for (let i = 0; i < 6; i++) {
-      await tap(view.getByLabelText('delete'));
-    }
-    await tap(view.getByLabelText('9'));
-    await tap(view.getByLabelText('9'));
+    // Replaces the prefilled "12.00" with a freshly typed amount.
+    await typeAmount(view, '99');
 
     await tap(view.getByRole('button', { name: strings.addUpcoming.saveChanges }));
 

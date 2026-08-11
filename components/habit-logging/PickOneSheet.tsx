@@ -4,16 +4,17 @@
  * section 4.3).
  *
  * The commitment moment: the leak's name, the evidence, and the one number the
- * whole habit runs on. Amount first, like every other amount in the app, so the
- * skip value is entered on the same keypad as an expense rather than in a
- * lonely text field.
+ * whole habit runs on. Amount first, like every other amount in the app: a
+ * native-keyboard AmountField (ADR 0023), prefilled from the detected median
+ * and not auto-focused, since the amount already has a real value the user
+ * only edits if it's wrong.
  *
  * Nothing is created until "Start breaking it" is tapped; "Not this one"
  * creates nothing.
  *
  * PROPS ARE FROZEN. Today, habit detail, Insights, onboarding reveal/success
  * and the Leak Scan results screen all render this sheet; the internals were
- * rebuilt on Sheet + AmountDisplay + Keypad without touching the signature.
+ * rebuilt on Sheet + AmountField without touching the signature.
  *
  * Two changes from device feedback (2026-08-04):
  * 1. Evidence and prefill come from the habit's observed fields. The `occurrences`
@@ -21,22 +22,20 @@
  *    the sheet now uses habit.observedCount, and shows no monthly projection at
  *    all until habit.hasReliableRate is true.
  * 2. The gated state is a different screen, not the same screen with the button
- *    greyed out. No amount, no keypad, no daily-question note: all three are
+ *    greyed out. No amount, no field, no daily-question note: all three are
  *    inert while gated. The user sees the leak, the situation, the price, and a
  *    live way out.
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
-import { AmountDisplay } from '@/components/ui/AmountDisplay';
+import { AmountField } from '@/components/ui/AmountField';
 import { Button } from '@/components/ui/Button';
-import { Keypad } from '@/components/ui/Keypad';
 import { Sheet } from '@/components/ui/Sheet';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { radii, typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
 import type { DetectedHabit, HabitFrequency } from '@/types/habit';
-import { centsToKeypadValue, keypadValueToCents } from '@/utils/keypad';
 import { strings } from '@/constants/strings';
 
 type PickOneSheetProps = {
@@ -97,16 +96,15 @@ export function PickOneSheet({
   // compares cents against that prefill so the analytics field stays true
   // regardless of how the string was typed.
   const prefillCents = habit?.medianAmount ?? habit?.averageAmount ?? 0;
-  const [value, setValue] = useState(() => centsToKeypadValue(prefillCents));
+  const [cents, setCents] = useState(prefillCents);
 
   useEffect(() => {
-    if (visible) setValue(centsToKeypadValue(prefillCents));
+    if (visible) setCents(prefillCents);
   }, [visible, habit?.id, prefillCents]);
 
   if (!habit) return null;
 
   const isDaily = habit.frequency === 'daily';
-  const cents = keypadValueToCents(value);
   const valueEdited = cents !== prefillCents;
   // A monthly rate is only shown once detection has watched the leak long
   // enough to have one (utils/habitDetection.ts MIN_SPAN_DAYS_FOR_RATE).
@@ -121,7 +119,7 @@ export function PickOneSheet({
 
   const header = (
     <>
-      <Text style={styles.title} accessibilityRole="header">{titleCase(habit.name)}</Text>
+      <Text style={styles.title} accessibilityRole="header" maxFontSizeMultiplier={1.5}>{titleCase(habit.name)}</Text>
       <Text style={styles.cadence}>
         {strings.habitLogging.pickOneNewLeak} · {cadenceLabel(habit.frequency)}
       </Text>
@@ -172,53 +170,64 @@ export function PickOneSheet({
   }
 
   return (
-    <Sheet visible={visible} onClose={onCancel} accessibilityLabel={habit.name}>
-      <ScrollView
-        style={{ maxHeight: height * 0.86 }}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-        {header}
-        <Text style={styles.paragraph}>{strings.habitLogging.pickOneValueLine}</Text>
+    <Sheet visible={visible} onClose={onCancel} avoidKeyboard accessibilityLabel={habit.name}>
+      <View style={[styles.body, { maxHeight: height * 0.86 }]}>
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {header}
+          <Text style={styles.paragraph}>{strings.habitLogging.pickOneValueLine}</Text>
 
-        <Text style={styles.eyebrow}>{strings.habitLogging.pickOneFieldLabel}</Text>
-        {hasRange && (
-          <Text style={styles.hint}>
-            {strings.habitLogging.pickOneRangeHint(format(habit.minAmount), format(habit.maxAmount))}
+          <Text style={styles.eyebrow}>{strings.habitLogging.pickOneFieldLabel}</Text>
+          {hasRange && (
+            <Text style={styles.hint}>
+              {strings.habitLogging.pickOneRangeHint(format(habit.minAmount), format(habit.maxAmount))}
+            </Text>
+          )}
+          <AmountField
+            valueCents={cents}
+            onChangeCents={setCents}
+            size={48}
+            accessibilityLabel={`${strings.habitLogging.pickOneFieldLabel}, ${format(cents)}`}
+          />
+
+          <Text style={styles.cadenceNote}>
+            {isDaily ? strings.habitLogging.pickOneCadenceNoteDaily : strings.habitLogging.pickOneCadenceNoteEvent}
           </Text>
-        )}
-        {/* Wrapped so VoiceOver reads one labelled value instead of the
-            currency symbol and the number as two bare nodes. */}
-        <View accessible accessibilityLabel={`${strings.habitLogging.pickOneFieldLabel}, ${format(cents)}`}>
-          <AmountDisplay valueCents={cents} focused size={46} zeroAsPlaceholder />
+        </ScrollView>
+
+        <View style={styles.footer}>
+          <Button
+            label={strings.habitLogging.startBreakingIt}
+            onPress={() => onStart(cents, valueEdited)}
+          />
+          <Button label={strings.habitLogging.notThisOne} variant="tertiary" onPress={onCancel} />
         </View>
-
-        <View style={styles.keypad}>
-          <Keypad value={value} onChange={setValue} />
-        </View>
-
-        <Text style={styles.cadenceNote}>
-          {isDaily ? strings.habitLogging.pickOneCadenceNoteDaily : strings.habitLogging.pickOneCadenceNoteEvent}
-        </Text>
-
-        <Button
-          label={strings.habitLogging.startBreakingIt}
-          onPress={() => onStart(cents, valueEdited)}
-          style={styles.primary}
-        />
-        <Button label={strings.habitLogging.notThisOne} variant="tertiary" onPress={onCancel} />
-      </ScrollView>
+      </View>
     </Sheet>
   );
 }
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
+    body: {
+      flexShrink: 1,
+    },
+    scroll: {
+      flexShrink: 1,
+    },
     content: {
       paddingTop: 10,
       paddingHorizontal: 20,
       paddingBottom: 16,
+    },
+    footer: {
+      paddingHorizontal: 20,
+      paddingTop: 12,
+      gap: 8,
     },
     title: {
       fontFamily: theme.fonts.display,
@@ -248,9 +257,6 @@ function createStyles(theme: AppTheme) {
       color: theme.mist,
       marginTop: 14,
       marginBottom: 6,
-    },
-    keypad: {
-      marginTop: 18,
     },
     cadenceNote: {
       fontFamily: theme.fonts.ui,

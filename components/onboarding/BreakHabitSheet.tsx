@@ -12,18 +12,19 @@
  * logging today's expense, and completing onboarding, the same split
  * PickOneSheet already uses.
  *
- * Amount-first, like every other amount in the app (AmountDisplay + Keypad).
- * The honest yearly line is pure arithmetic from what the user just typed
- * (365/52/12 by cadence), never an invented rate. Bought-today defaults to
- * "Not today" (ADR 0020): only an explicit Yes ever asks the caller to write
- * an expense.
+ * Amount-first, like every other amount in the app: a native-keyboard
+ * AmountField (ADR 0023), prefilled from the picked preset and not
+ * auto-focused, so a chip pick alone never pops the keyboard the user hasn't
+ * asked for. The honest yearly line is pure arithmetic from what the user
+ * just typed (365/52/12 by cadence), never an invented rate. Bought-today
+ * defaults to "Not today" (ADR 0020): only an explicit Yes ever asks the
+ * caller to write an expense.
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
-import { AmountDisplay } from '@/components/ui/AmountDisplay';
+import { AmountField } from '@/components/ui/AmountField';
 import { Button } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
-import { Keypad } from '@/components/ui/Keypad';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { Sheet } from '@/components/ui/Sheet';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -31,7 +32,6 @@ import { useCurrency } from '@/contexts/CurrencyContext';
 import { radii, typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
 import { vicePresets, VICE_IDS, type ViceId } from '@/constants/onboardingPresets';
-import { centsToKeypadValue, keypadValueToCents } from '@/utils/keypad';
 import type { HabitFrequency } from '@/types/habit';
 import { strings } from '@/constants/strings';
 
@@ -116,7 +116,7 @@ export function BreakHabitSheet({
 
   const [selectedChip, setSelectedChip] = useState<BreakChipId | null>(null);
   const [customName, setCustomName] = useState('');
-  const [value, setValue] = useState('');
+  const [amountCents, setAmountCents] = useState(0);
   const [cadence, setCadence] = useState<HabitFrequency>('daily');
   const [boughtToday, setBoughtToday] = useState<'no' | 'yes'>('no');
 
@@ -126,7 +126,7 @@ export function BreakHabitSheet({
     if (!visible) return;
     setSelectedChip(null);
     setCustomName('');
-    setValue('');
+    setAmountCents(0);
     setCadence('daily');
     setBoughtToday('no');
   }, [visible]);
@@ -136,13 +136,12 @@ export function BreakHabitSheet({
     if (id === CUSTOM_CHIP_ID) {
       // No stated price to prefill from; the user types both the name and
       // the amount.
-      setValue('');
+      setAmountCents(0);
     } else {
-      setValue(centsToKeypadValue(presetCentsById.get(id) ?? 0));
+      setAmountCents(presetCentsById.get(id) ?? 0);
     }
   };
 
-  const amountCents = keypadValueToCents(value);
   const prefillCents = selectedChip && selectedChip !== CUSTOM_CHIP_ID ? presetCentsById.get(selectedChip) ?? 0 : 0;
   const valueEdited = amountCents !== prefillCents;
 
@@ -181,7 +180,7 @@ export function BreakHabitSheet({
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.title} accessibilityRole="header">
+          <Text style={styles.title} accessibilityRole="header" maxFontSizeMultiplier={1.5}>
             {strings.onboarding.breakSheetTitle}
           </Text>
           <Text style={styles.caption}>{strings.onboarding.breakSheetCaption}</Text>
@@ -213,90 +212,100 @@ export function BreakHabitSheet({
       avoidKeyboard
       accessibilityLabel={strings.onboarding.breakSheetTitle}
     >
-      <ScrollView
-        style={{ maxHeight: height * 0.86 }}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-        <Text style={styles.title} accessibilityRole="header">
-          {strings.onboarding.breakSheetTitle}
-        </Text>
-        <Text style={styles.caption}>{strings.onboarding.breakSheetCaption}</Text>
-
-        <View style={styles.chipRow}>
-          {VICE_IDS.map((id) => (
-            <Chip
-              key={id}
-              label={presetNameById.get(id) ?? id}
-              selected={selectedChip === id}
-              onPress={() => selectChip(id)}
-            />
-          ))}
-          <Chip
-            label={strings.onboarding.somethingElse}
-            selected={selectedChip === CUSTOM_CHIP_ID}
-            onPress={() => selectChip(CUSTOM_CHIP_ID)}
-          />
-        </View>
-
-        {selectedChip === CUSTOM_CHIP_ID && (
-          <TextInput
-            value={customName}
-            onChangeText={setCustomName}
-            placeholder={strings.onboarding.somethingElseNamePlaceholder}
-            placeholderTextColor={theme.textTertiary}
-            style={styles.customNameInput}
-            accessibilityLabel={strings.onboarding.somethingElseNamePlaceholder}
-          />
-        )}
-
-        <Text style={styles.eyebrow}>{strings.habitLogging.pickOneFieldLabel}</Text>
-        <View
-          accessible
-          accessibilityLabel={`${strings.habitLogging.pickOneFieldLabel}, ${format(amountCents)}`}
+      <View style={[styles.body, { maxHeight: height * 0.86 }]}>
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
-          <AmountDisplay valueCents={amountCents} focused size={40} zeroAsPlaceholder />
+          <Text style={styles.title} accessibilityRole="header" maxFontSizeMultiplier={1.5}>
+            {strings.onboarding.breakSheetTitle}
+          </Text>
+          <Text style={styles.caption}>{strings.onboarding.breakSheetCaption}</Text>
+
+          <View style={styles.chipRow}>
+            {VICE_IDS.map((id) => (
+              <Chip
+                key={id}
+                label={presetNameById.get(id) ?? id}
+                selected={selectedChip === id}
+                onPress={() => selectChip(id)}
+              />
+            ))}
+            <Chip
+              label={strings.onboarding.somethingElse}
+              selected={selectedChip === CUSTOM_CHIP_ID}
+              onPress={() => selectChip(CUSTOM_CHIP_ID)}
+            />
+          </View>
+
+          {selectedChip === CUSTOM_CHIP_ID && (
+            <TextInput
+              value={customName}
+              onChangeText={setCustomName}
+              placeholder={strings.onboarding.somethingElseNamePlaceholder}
+              placeholderTextColor={theme.textTertiary}
+              style={styles.customNameInput}
+              accessibilityLabel={strings.onboarding.somethingElseNamePlaceholder}
+            />
+          )}
+
+          <Text style={styles.eyebrow}>{strings.habitLogging.pickOneFieldLabel}</Text>
+          <AmountField
+            valueCents={amountCents}
+            onChangeCents={setAmountCents}
+            size={48}
+            accessibilityLabel={`${strings.habitLogging.pickOneFieldLabel}, ${format(amountCents)}`}
+          />
+
+          <Text style={styles.eyebrow}>{strings.onboarding.breakSheetCadenceLabel}</Text>
+          <SegmentedControl
+            options={CADENCE_OPTIONS}
+            value={cadence}
+            onChange={setCadence}
+            accessibilityLabel={strings.onboarding.breakSheetCadenceLabel}
+          />
+
+          <Text style={styles.yearlyLine}>{yearlyLine}</Text>
+
+          <Text style={styles.eyebrow}>{strings.onboarding.breakSheetBoughtTodayLabel}</Text>
+          <SegmentedControl
+            options={BOUGHT_OPTIONS}
+            value={boughtToday}
+            onChange={setBoughtToday}
+            accessibilityLabel={strings.onboarding.breakSheetBoughtTodayLabel}
+          />
+        </ScrollView>
+
+        <View style={styles.footer}>
+          <Button
+            label={strings.habitLogging.startBreakingIt}
+            onPress={handleStart}
+            disabled={!canStart}
+          />
         </View>
-        <View style={styles.keypad}>
-          <Keypad value={value} onChange={setValue} />
-        </View>
-
-        <Text style={styles.eyebrow}>{strings.onboarding.breakSheetCadenceLabel}</Text>
-        <SegmentedControl
-          options={CADENCE_OPTIONS}
-          value={cadence}
-          onChange={setCadence}
-          accessibilityLabel={strings.onboarding.breakSheetCadenceLabel}
-        />
-
-        <Text style={styles.yearlyLine}>{yearlyLine}</Text>
-
-        <Text style={styles.eyebrow}>{strings.onboarding.breakSheetBoughtTodayLabel}</Text>
-        <SegmentedControl
-          options={BOUGHT_OPTIONS}
-          value={boughtToday}
-          onChange={setBoughtToday}
-          accessibilityLabel={strings.onboarding.breakSheetBoughtTodayLabel}
-        />
-
-        <Button
-          label={strings.habitLogging.startBreakingIt}
-          onPress={handleStart}
-          disabled={!canStart}
-          style={styles.primary}
-        />
-      </ScrollView>
+      </View>
     </Sheet>
   );
 }
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
+    body: {
+      flexShrink: 1,
+    },
+    scroll: {
+      flexShrink: 1,
+    },
     content: {
       paddingTop: 10,
       paddingHorizontal: 20,
       paddingBottom: 16,
+    },
+    footer: {
+      paddingHorizontal: 20,
+      paddingTop: 12,
     },
     title: {
       fontFamily: theme.fonts.display,
@@ -336,9 +345,6 @@ function createStyles(theme: AppTheme) {
       color: theme.mist,
       marginTop: 18,
       marginBottom: 8,
-    },
-    keypad: {
-      marginTop: 14,
     },
     yearlyLine: {
       fontFamily: theme.fonts.ui,

@@ -238,7 +238,7 @@ describe('Door 3 break sheet: auto-open', () => {
 });
 
 describe('Door 3 break sheet: chip selection', () => {
-  it('selecting a chip prefills the amount with its per-currency preset', async () => {
+  it('selecting a chip prefills the amount with its per-currency preset, not auto-focused', async () => {
     mockParams = { view: 'kept', breakEntry: '1' };
     const view = await renderToday();
 
@@ -247,6 +247,38 @@ describe('Door 3 break sheet: chip selection', () => {
     expect(
       view.getByLabelText(`${strings.habitLogging.pickOneFieldLabel}, ${formatMoney(delivery.perItemCents)}`)
     ).toBeTruthy();
+  });
+});
+
+// ADR 0023: the field is a real TextInput on the native decimal pad, so these
+// exercise it the same way __tests__/expenseSheet.test.tsx's typeAmount
+// helper does (a single changeText call, the way a keystroke stream or a
+// paste ultimately resolves to a value).
+describe('Door 3 break sheet: native amount field', () => {
+  it('reads a pasted-shaped amount correctly through the field', async () => {
+    mockParams = { view: 'kept', breakEntry: '1' };
+    const view = await renderToday();
+
+    await tap(view.getByText(coffee.name));
+    await act(async () => {
+      fireEvent.changeText(view.getByLabelText(/^One skip keeps,/), '1,234.56');
+    });
+    await tap(view.getByText(strings.habitLogging.startBreakingIt));
+
+    expect(mockSeedDiscoveredHabit.mock.calls[0][0]).toMatchObject({ averageAmount: 123456 });
+  });
+
+  it('never lets a stray minus sign produce a negative cents value', async () => {
+    mockParams = { view: 'kept', breakEntry: '1' };
+    const view = await renderToday();
+
+    await tap(view.getByText(coffee.name));
+    await act(async () => {
+      fireEvent.changeText(view.getByLabelText(/^One skip keeps,/), '-5.00');
+    });
+    await tap(view.getByText(strings.habitLogging.startBreakingIt));
+
+    expect(mockSeedDiscoveredHabit.mock.calls[0][0]).toMatchObject({ averageAmount: 500 });
   });
 });
 

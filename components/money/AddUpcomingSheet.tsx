@@ -44,11 +44,10 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
-import { AmountDisplay } from '@/components/ui/AmountDisplay';
+import { AmountField } from '@/components/ui/AmountField';
 import { Button } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
 import { Icon } from '@/components/ui/Icon';
-import { Keypad } from '@/components/ui/Keypad';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { Sheet } from '@/components/ui/Sheet';
 import { useToast } from '@/components/ui/Toast';
@@ -56,6 +55,7 @@ import { strings } from '@/constants/strings';
 import { lightTheme, radii, typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
 import { useCategories } from '@/contexts/CategoriesContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import type {
@@ -68,7 +68,6 @@ import type {
 } from '@/types/expense';
 import { formatDate } from '@/utils/dates';
 import { toExpenseCategory } from '@/utils/expenseCategory';
-import { centsToKeypadValue, keypadValueToCents } from '@/utils/keypad';
 import { hapticSuccess } from '@/utils/motion';
 import { resolveRule } from '@/utils/recurring';
 
@@ -274,7 +273,7 @@ function buildSchedule(draft: ScheduleDraft, today: Date): { rule: RecurrenceRul
   return { rule: { type: 'custom', everyNDays }, date: addDays(today, everyNDays) };
 }
 
-type ScheduleDraftFields = ScheduleDraft & { value: string; nameChipKey: string | null; name: string };
+type ScheduleDraftFields = ScheduleDraft & { cents: number; nameChipKey: string | null; name: string };
 
 /**
  * Reconstruct the sheet's fields from an existing row, for edit mode. Always
@@ -291,7 +290,7 @@ function draftFromExpense(expense: Expense): ScheduleDraftFields {
   const rawDate = expense.date instanceof Date ? expense.date : new Date(expense.date);
 
   const base: ScheduleDraftFields = {
-    value: centsToKeypadValue(expense.amount),
+    cents: expense.amount,
     nameChipKey: chip?.key ?? null,
     name: expense.title || '',
     scheduleType: rule.type === 'once' ? 'once' : 'repeats',
@@ -329,12 +328,13 @@ export function AddUpcomingSheet({
   const styles = useMemo(() => createStyles(theme), [theme]);
   const { height } = useWindowDimensions();
   const { show } = useToast();
+  const { format } = useCurrency();
   const { getVisibleCategories } = useCategories();
   const { addExpense, updateExpense, deleteExpense, restoreExpense, expenses } = useExpenses();
 
   const categories = getVisibleCategories();
 
-  const [value, setValue] = useState('');
+  const [cents, setCents] = useState(0);
   const [nameChipKey, setNameChipKey] = useState<string | null>(null);
   const [name, setName] = useState('');
   const [scheduleType, setScheduleType] = useState<ScheduleType>('repeats');
@@ -359,7 +359,7 @@ export function AddUpcomingSheet({
 
     if (mode === 'edit' && expense) {
       const draft = draftFromExpense(expense);
-      setValue(draft.value);
+      setCents(draft.cents);
       setNameChipKey(draft.nameChipKey);
       setName(draft.name);
       setScheduleType(draft.scheduleType);
@@ -372,7 +372,7 @@ export function AddUpcomingSheet({
       return;
     }
 
-    setValue('');
+    setCents(0);
     setNameChipKey(null);
     setName('');
     setScheduleType('repeats');
@@ -384,8 +384,6 @@ export function AddUpcomingSheet({
     setEveryNDays(DEFAULT_EVERY_N_DAYS);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible, mode, expense]);
-
-  const cents = keypadValueToCents(value);
 
   const pickNameChip = (key: string) => {
     const chip = NAME_CHIPS.find((c) => c.key === key);
@@ -512,186 +510,192 @@ export function AddUpcomingSheet({
 
   return (
     <Sheet visible={visible} onClose={onClose} avoidKeyboard accessibilityLabel={title}>
-      <ScrollView
-        style={{ maxHeight: height * 0.82 }}
-        contentContainerStyle={styles.content}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        <Text style={styles.title} accessibilityRole="header">
-          {title}
-        </Text>
+      <View style={[styles.body, { maxHeight: height * 0.82 }]}>
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <Text style={styles.title} accessibilityRole="header" maxFontSizeMultiplier={1.5}>
+            {title}
+          </Text>
 
-        <AmountDisplay valueCents={cents} focused size={44} zeroAsPlaceholder />
-
-        <View style={styles.keypad}>
-          <Keypad value={value} onChange={setValue} />
-        </View>
-
-        <Text style={styles.eyebrow}>{strings.addUpcoming.whatIsIt}</Text>
-        <View style={styles.chipRow}>
-          {NAME_CHIPS.map((chip) => (
-            <Chip
-              key={chip.key}
-              label={chip.label}
-              emoji={chip.emoji}
-              tint={chip.tint}
-              selected={nameChipKey === chip.key}
-              onPress={() => pickNameChip(chip.key)}
-            />
-          ))}
-        </View>
-        <TextInput
-          value={name}
-          onChangeText={setName}
-          placeholder={strings.addUpcoming.namePlaceholder}
-          placeholderTextColor={theme.mist}
-          style={styles.nameField}
-          accessibilityLabel={strings.addUpcoming.nameFieldLabel}
-          returnKeyType="done"
-        />
-
-        <Text style={styles.eyebrow}>{strings.addUpcoming.schedule}</Text>
-        <SegmentedControl<ScheduleType>
-          options={[
-            { value: 'once', label: strings.addUpcoming.oneTime },
-            { value: 'repeats', label: strings.addUpcoming.repeats },
-          ]}
-          value={scheduleType}
-          onChange={handleScheduleTypeChange}
-          accessibilityLabel={strings.addUpcoming.scheduleSegmentLabel}
-        />
-
-        {scheduleType === 'once' ? (
-          <>
-            <Text style={styles.subLabel}>{strings.addUpcoming.when}</Text>
-            <View style={styles.chipRow}>
-              {(
-                [
-                  ['tomorrow', strings.addUpcoming.whenTomorrow],
-                  ['nextWeek', strings.addUpcoming.whenNextWeek],
-                  ['inTwoWeeks', strings.addUpcoming.whenInTwoWeeks],
-                  ['nextMonth', strings.addUpcoming.whenNextMonth],
-                ] as ReadonlyArray<[OnceWhen, string]>
-              ).map(([key, label]) => (
-                <Chip
-                  key={key}
-                  label={label}
-                  selected={onceWhen === key}
-                  onPress={() => handleOnceWhenChange(key)}
-                />
-              ))}
-            </View>
-          </>
-        ) : (
-          <>
-            <View style={styles.chipRowTop}>
-              {(
-                [
-                  ['weekly', strings.addUpcoming.frequencyWeekly],
-                  ['biweekly', strings.addUpcoming.frequencyBiweekly],
-                  ['monthly', strings.addUpcoming.frequencyMonthly],
-                  ['annual', strings.addUpcoming.frequencyAnnual],
-                  ['custom', strings.addUpcoming.frequencyCustom],
-                ] as ReadonlyArray<[Frequency, string]>
-              ).map(([key, label]) => (
-                <Chip
-                  key={key}
-                  label={label}
-                  selected={frequency === key}
-                  onPress={() => handleFrequencyChange(key)}
-                />
-              ))}
-            </View>
-
-            {frequency === 'weekly' || frequency === 'biweekly' ? (
-              <>
-                <Text style={styles.subLabel}>{strings.addUpcoming.onWhichDay}</Text>
-                <View style={styles.chipRow}>
-                  {WEEKDAY_ORDER.map((day) => (
-                    <Chip
-                      key={day}
-                      label={weekdayShortLabel(day)}
-                      selected={weekday === day}
-                      onPress={() => handleWeekdayChange(day)}
-                    />
-                  ))}
-                </View>
-              </>
-            ) : null}
-
-            {frequency === 'biweekly' ? (
-              <>
-                <Text style={styles.subLabel}>{strings.addUpcoming.starting}</Text>
-                <View style={styles.chipRow}>
-                  {(
-                    [
-                      ['this', strings.addUpcoming.startingThisWeek],
-                      ['next', strings.addUpcoming.startingNextWeek],
-                    ] as ReadonlyArray<[BiweekStart, string]>
-                  ).map(([key, label]) => (
-                    <Chip
-                      key={key}
-                      label={label}
-                      selected={biweekStart === key}
-                      onPress={() => handleBiweekStartChange(key)}
-                    />
-                  ))}
-                </View>
-              </>
-            ) : null}
-
-            {frequency === 'monthly' ? (
-              <>
-                <Text style={styles.subLabel}>{strings.addUpcoming.onThe}</Text>
-                <View style={styles.chipRow}>
-                  {MONTH_DAY_CHIPS.map((option) => (
-                    <Chip
-                      key={option.value}
-                      label={option.label}
-                      selected={monthDay === option.value}
-                      onPress={() => handleMonthDayChange(option.value)}
-                    />
-                  ))}
-                </View>
-              </>
-            ) : null}
-
-            {frequency === 'custom' ? (
-              <>
-                <Text style={styles.subLabel}>{strings.addUpcoming.everyNDaysLabel}</Text>
-                <View style={styles.stepper}>
-                  <StepperButton
-                    icon="Minus"
-                    label={strings.addUpcoming.everyNDaysDecrease}
-                    disabled={everyNDays <= MIN_EVERY_N_DAYS}
-                    onPress={() => handleEveryNDaysChange(clampEveryNDays(everyNDays - 1))}
-                  />
-                  <Text style={styles.stepperValue} accessibilityLiveRegion="polite">
-                    {strings.addUpcoming.everyNDaysValue(everyNDays)}
-                  </Text>
-                  <StepperButton
-                    icon="Plus"
-                    label={strings.addUpcoming.everyNDaysIncrease}
-                    disabled={everyNDays >= MAX_EVERY_N_DAYS}
-                    onPress={() => handleEveryNDaysChange(clampEveryNDays(everyNDays + 1))}
-                  />
-                </View>
-              </>
-            ) : null}
-          </>
-        )}
-
-        <Button label={saveLabel} onPress={handleSave} variant="primary" style={styles.save} />
-        {mode === 'edit' ? (
-          <Button
-            label={strings.addUpcoming.deleteUpcoming}
-            onPress={handleDelete}
-            variant="destructive"
-            style={styles.delete}
+          <AmountField
+            valueCents={cents}
+            onChangeCents={setCents}
+            autoFocus={mode === 'add' && visible}
+            size={48}
+            accessibilityLabel={strings.addUpcoming.amountLabel(format(cents))}
           />
-        ) : null}
-      </ScrollView>
+
+          <Text style={styles.eyebrow}>{strings.addUpcoming.whatIsIt}</Text>
+          <View style={styles.chipRow}>
+            {NAME_CHIPS.map((chip) => (
+              <Chip
+                key={chip.key}
+                label={chip.label}
+                emoji={chip.emoji}
+                tint={chip.tint}
+                selected={nameChipKey === chip.key}
+                onPress={() => pickNameChip(chip.key)}
+              />
+            ))}
+          </View>
+          <TextInput
+            value={name}
+            onChangeText={setName}
+            placeholder={strings.addUpcoming.namePlaceholder}
+            placeholderTextColor={theme.mist}
+            style={styles.nameField}
+            accessibilityLabel={strings.addUpcoming.nameFieldLabel}
+            returnKeyType="done"
+          />
+
+          <Text style={styles.eyebrow}>{strings.addUpcoming.schedule}</Text>
+          <SegmentedControl<ScheduleType>
+            options={[
+              { value: 'once', label: strings.addUpcoming.oneTime },
+              { value: 'repeats', label: strings.addUpcoming.repeats },
+            ]}
+            value={scheduleType}
+            onChange={handleScheduleTypeChange}
+            accessibilityLabel={strings.addUpcoming.scheduleSegmentLabel}
+          />
+
+          {scheduleType === 'once' ? (
+            <>
+              <Text style={styles.subLabel}>{strings.addUpcoming.when}</Text>
+              <View style={styles.chipRow}>
+                {(
+                  [
+                    ['tomorrow', strings.addUpcoming.whenTomorrow],
+                    ['nextWeek', strings.addUpcoming.whenNextWeek],
+                    ['inTwoWeeks', strings.addUpcoming.whenInTwoWeeks],
+                    ['nextMonth', strings.addUpcoming.whenNextMonth],
+                  ] as ReadonlyArray<[OnceWhen, string]>
+                ).map(([key, label]) => (
+                  <Chip
+                    key={key}
+                    label={label}
+                    selected={onceWhen === key}
+                    onPress={() => handleOnceWhenChange(key)}
+                  />
+                ))}
+              </View>
+            </>
+          ) : (
+            <>
+              <View style={styles.chipRowTop}>
+                {(
+                  [
+                    ['weekly', strings.addUpcoming.frequencyWeekly],
+                    ['biweekly', strings.addUpcoming.frequencyBiweekly],
+                    ['monthly', strings.addUpcoming.frequencyMonthly],
+                    ['annual', strings.addUpcoming.frequencyAnnual],
+                    ['custom', strings.addUpcoming.frequencyCustom],
+                  ] as ReadonlyArray<[Frequency, string]>
+                ).map(([key, label]) => (
+                  <Chip
+                    key={key}
+                    label={label}
+                    selected={frequency === key}
+                    onPress={() => handleFrequencyChange(key)}
+                  />
+                ))}
+              </View>
+
+              {frequency === 'weekly' || frequency === 'biweekly' ? (
+                <>
+                  <Text style={styles.subLabel}>{strings.addUpcoming.onWhichDay}</Text>
+                  <View style={styles.chipRow}>
+                    {WEEKDAY_ORDER.map((day) => (
+                      <Chip
+                        key={day}
+                        label={weekdayShortLabel(day)}
+                        selected={weekday === day}
+                        onPress={() => handleWeekdayChange(day)}
+                      />
+                    ))}
+                  </View>
+                </>
+              ) : null}
+
+              {frequency === 'biweekly' ? (
+                <>
+                  <Text style={styles.subLabel}>{strings.addUpcoming.starting}</Text>
+                  <View style={styles.chipRow}>
+                    {(
+                      [
+                        ['this', strings.addUpcoming.startingThisWeek],
+                        ['next', strings.addUpcoming.startingNextWeek],
+                      ] as ReadonlyArray<[BiweekStart, string]>
+                    ).map(([key, label]) => (
+                      <Chip
+                        key={key}
+                        label={label}
+                        selected={biweekStart === key}
+                        onPress={() => handleBiweekStartChange(key)}
+                      />
+                    ))}
+                  </View>
+                </>
+              ) : null}
+
+              {frequency === 'monthly' ? (
+                <>
+                  <Text style={styles.subLabel}>{strings.addUpcoming.onThe}</Text>
+                  <View style={styles.chipRow}>
+                    {MONTH_DAY_CHIPS.map((option) => (
+                      <Chip
+                        key={option.value}
+                        label={option.label}
+                        selected={monthDay === option.value}
+                        onPress={() => handleMonthDayChange(option.value)}
+                      />
+                    ))}
+                  </View>
+                </>
+              ) : null}
+
+              {frequency === 'custom' ? (
+                <>
+                  <Text style={styles.subLabel}>{strings.addUpcoming.everyNDaysLabel}</Text>
+                  <View style={styles.stepper}>
+                    <StepperButton
+                      icon="Minus"
+                      label={strings.addUpcoming.everyNDaysDecrease}
+                      disabled={everyNDays <= MIN_EVERY_N_DAYS}
+                      onPress={() => handleEveryNDaysChange(clampEveryNDays(everyNDays - 1))}
+                    />
+                    <Text style={styles.stepperValue} accessibilityLiveRegion="polite">
+                      {strings.addUpcoming.everyNDaysValue(everyNDays)}
+                    </Text>
+                    <StepperButton
+                      icon="Plus"
+                      label={strings.addUpcoming.everyNDaysIncrease}
+                      disabled={everyNDays >= MAX_EVERY_N_DAYS}
+                      onPress={() => handleEveryNDaysChange(clampEveryNDays(everyNDays + 1))}
+                    />
+                  </View>
+                </>
+              ) : null}
+            </>
+          )}
+        </ScrollView>
+
+        <View style={styles.footer}>
+          <Button label={saveLabel} onPress={handleSave} variant="primary" style={styles.save} />
+          {mode === 'edit' ? (
+            <Button
+              label={strings.addUpcoming.deleteUpcoming}
+              onPress={handleDelete}
+              variant="destructive"
+              style={styles.delete}
+            />
+          ) : null}
+        </View>
+      </View>
     </Sheet>
   );
 }
@@ -734,10 +738,16 @@ function StepperButton({
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
+    body: {
+      flexShrink: 1,
+    },
+    scroll: {
+      flexShrink: 1,
+    },
     content: {
       paddingTop: 10,
       paddingHorizontal: 20,
-      paddingBottom: 24,
+      paddingBottom: 16,
     },
     title: {
       fontFamily: theme.fonts.display,
@@ -746,9 +756,6 @@ function createStyles(theme: AppTheme) {
       color: theme.ink,
       includeFontPadding: false,
       marginBottom: 12,
-    },
-    keypad: {
-      marginTop: 16,
     },
     eyebrow: {
       fontFamily: theme.fonts.uiSemibold,
@@ -819,11 +826,16 @@ function createStyles(theme: AppTheme) {
       minWidth: 110,
       textAlign: 'center',
     },
+    footer: {
+      paddingHorizontal: 20,
+      paddingTop: 12,
+      gap: 8,
+    },
     save: {
-      marginTop: 20,
+      marginTop: 0,
     },
     delete: {
-      marginTop: 8,
+      marginTop: 0,
     },
   });
 }
