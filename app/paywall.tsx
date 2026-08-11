@@ -140,9 +140,9 @@ export default function PaywallScreen() {
           onPress={handleClose}
           accessibilityRole="button"
           accessibilityLabel={strings.paywall.closeLabel}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          hitSlop={{ top: 2, bottom: 2, left: 2, right: 2 }}
         >
-          <Icon name="X" size={26} color={theme.textSecondary} />
+          <Icon name="X" size={18} color={theme.slate} />
         </TouchableOpacity>
       </View>
 
@@ -153,7 +153,7 @@ export default function PaywallScreen() {
         {/* One of two decorative gradients the app allows; see the list in
             design/PATTERN_VOCABULARY.md "Color" (spec 01 section 1). */}
         <LinearGradient
-          colors={[theme.lavender, theme.primary]}
+          colors={[theme.lavender, theme.categoryColors.utility]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.hero}
@@ -260,9 +260,15 @@ function createStyles(theme: AppTheme) {
       paddingHorizontal: 12,
       paddingBottom: 4,
     },
+    // House header-chrome pill (matches ScreenHeader's actionButton /
+    // backButton: components/ui/ScreenHeader.tsx), not a hand-rolled control.
     closeButton: {
-      width: 44,
-      height: 44,
+      width: 40,
+      height: 40,
+      borderRadius: radii.pill,
+      backgroundColor: theme.white,
+      borderWidth: 1,
+      borderColor: theme.cloud,
       alignItems: 'center',
       justifyContent: 'center',
     },
@@ -270,7 +276,7 @@ function createStyles(theme: AppTheme) {
       paddingHorizontal: 24,
       paddingTop: 4,
     },
-    // Gradient hero: white type on lavender-to-sage. One of the two
+    // Gradient hero: white type on lavender-to-indigo. One of the two
     // decorative gradients the app allows (design/PATTERN_VOCABULARY.md "Color").
     hero: {
       borderRadius: radii.feature,
