@@ -22,20 +22,25 @@ const DRIFT_DURATION_MS = 60000;
 type PeriodStop = { location: number; color: string; alpha: number };
 
 /**
- * Colors and alphas here are a first pass, not a final call: the lead
- * session tunes these live in the simulator (both against the real snow
- * background and against KeptHero's lavender) before this ships. Alphas
- * intentionally sit at the low end of the approved 0.06-0.18 range; it is
- * easier to turn an aurora up than to notice it was too loud.
+ * Tuned live in the simulator against Charen's device screenshot (the first
+ * two passes read as near-white on a real display). Peaks alternate with
+ * near-transparent valleys so the field reads as distinct tilted light
+ * shafts, the reference look, rather than one blended wash. Contrast note:
+ * the strongest peak (lavender 0.38 over snow) still leaves the ink
+ * headline far above AA; the aurora lives behind type, never over it.
  */
 function periodStops(theme: ReturnType<typeof useTheme>): PeriodStop[] {
   return [
     { location: 0.02, color: theme.lavender, alpha: 0 },
-    { location: 0.16, color: theme.lavender, alpha: 0.22 },
-    { location: 0.34, color: NEAR_WHITE_VIOLET, alpha: 0.2 },
-    { location: 0.52, color: theme.categoryColors.utility, alpha: 0.18 },
-    { location: 0.7, color: theme.categoryColors.transport, alpha: 0.14 },
-    { location: 0.86, color: NEAR_WHITE_VIOLET, alpha: 0.16 },
+    { location: 0.1, color: theme.lavender, alpha: 0.38 },
+    { location: 0.2, color: NEAR_WHITE_VIOLET, alpha: 0.08 },
+    { location: 0.3, color: theme.categoryColors.utility, alpha: 0.3 },
+    { location: 0.4, color: NEAR_WHITE_VIOLET, alpha: 0.06 },
+    { location: 0.5, color: theme.categoryColors.transport, alpha: 0.24 },
+    { location: 0.6, color: NEAR_WHITE_VIOLET, alpha: 0.3 },
+    { location: 0.72, color: theme.lavender, alpha: 0.28 },
+    { location: 0.82, color: NEAR_WHITE_VIOLET, alpha: 0.06 },
+    { location: 0.92, color: theme.categoryColors.utility, alpha: 0.2 },
     { location: 0.98, color: theme.lavender, alpha: 0 },
   ];
 }
@@ -94,7 +99,7 @@ export function AuroraBackground() {
   // Full snow reached at 60% of the aurora's own height, expressed as a
   // fraction of the SCREEN height (the vertical mask spans the full screen
   // so anything below the aurora is already background-colored anyway).
-  const verticalFullSnowLocation = Math.min(1, (stripHeight * 0.6) / height);
+  const verticalFullSnowLocation = Math.min(1, (stripHeight * 0.72) / height);
 
   useEffect(() => {
     // Reduced motion: render the first (static) frame, never start the loop
@@ -171,8 +176,8 @@ export function AuroraBackground() {
         style={StyleSheet.absoluteFill}
       />
       <LinearGradient
-        colors={[theme.snow, withAlpha(theme.snow, 0.55), withAlpha(theme.snow, 0)]}
-        locations={[0, 0.3, 0.62]}
+        colors={[withAlpha(theme.snow, 0.85), withAlpha(theme.snow, 0.35), withAlpha(theme.snow, 0)]}
+        locations={[0, 0.28, 0.55]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
         style={StyleSheet.absoluteFill}
