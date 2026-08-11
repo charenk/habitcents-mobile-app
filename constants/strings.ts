@@ -2,6 +2,12 @@
 // Pure relocation: values must match the exact original wording. Do not reword.
 // Import with: import { strings } from '@/constants/strings';
 
+// Today quote rotation (U6): a single quote, plain text plus an optional
+// attribution. `by` is omitted for the unattributed lines rather than set to
+// an empty string, so ViewQuote's "attribution when present" check
+// (components/today/ViewQuote.tsx) is a plain truthiness check.
+export type TodayQuote = { text: string; by?: string };
+
 export const strings = {
   common: {
     save: 'Save',
@@ -668,7 +674,13 @@ export const strings = {
     quickLogMoreLabel: 'More categories',
     quickLogCategoryLabel: (name: string) => `Log a ${name} expense`,
     // Logged today list
-    loggedTodayEyebrow: 'Logged today',
+    // Renamed (decision D3, U6): "Logged today" -> "Today's log". Component
+    // uppercases it (components/money/LoggedTodayList.tsx).
+    loggedTodayEyebrow: "Today's log",
+    // View all (U6, decided fix c): trailing link on the Today's log eyebrow
+    // row, navigating to Money's Spent segment. Shown only when today has at
+    // least one logged expense (LoggedTodayList's onViewAll prop).
+    loggedTodayViewAll: 'View all',
     loggedTodayEmpty: 'A quiet day so far. Anything you log lands here.',
     alreadyBreakingToast: "You're already breaking this habit.",
     editExpenseLabel: (title: string, amountLabel: string) => `Edit ${title}, ${amountLabel}`,
@@ -700,6 +712,25 @@ export const strings = {
     // stated cadence); it never claims to "create a habit".
     watchLeakNudgeLabel: 'Buy this often? Watch it as a leak',
     watchLeakNudgeDismiss: 'not now',
+    // Quote rotation (U6, components/today/ViewQuote.tsx + useViewQuote.ts).
+    // Spent view closes with one of these, Kept view opens with one of
+    // these; each array rotates independently (its own persisted counter).
+    // Historical quotes keep their own original capitalization and
+    // punctuation; nothing here is reworded. No em dash appears in any of
+    // them, by the house content rule.
+    spentQuotes: [
+      { text: 'Beware of little expenses; a small leak will sink a great ship.', by: 'Benjamin Franklin' },
+      { text: 'Whatever you have, spend less.', by: 'Samuel Johnson' },
+      { text: 'Take care of the pence, and the pounds will take care of themselves.', by: 'William Lowndes' },
+      { text: "The cheapest thing you'll buy today is the one you don't." },
+      { text: "A habit doesn't feel expensive. That's how it stays one." },
+    ] as TodayQuote[],
+    keptQuotes: [
+      { text: 'What you skip today is still yours tomorrow.' },
+      { text: 'A skipped purchase is the quietest way to get paid.' },
+      { text: "If you know how to spend less than you get, you have the philosopher's stone.", by: 'Benjamin Franklin' },
+      { text: 'Habit is a cable; we weave a thread of it each day.', by: 'Horace Mann' },
+    ] as TodayQuote[],
   },
 
   // Log and edit expense sheets (spec 04 "Log / Edit sheets"). Merged into one

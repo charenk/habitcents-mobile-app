@@ -33,6 +33,8 @@ import { QuickLogRow } from '@/components/money/QuickLogRow';
 import { LoggedTodayList } from '@/components/money/LoggedTodayList';
 import { FirstRunRibbon } from '@/components/onboarding/FirstRunRibbon';
 import { useFirstRunRibbon } from '@/components/onboarding/useFirstRunRibbon';
+import { ViewQuote } from '@/components/today/ViewQuote';
+import { useViewQuote } from '@/components/today/useViewQuote';
 import { BreakHabitSheet, type BreakHabitStartData } from '@/components/onboarding/BreakHabitSheet';
 import { useCategories } from '@/contexts/CategoriesContext';
 import { VICE_CATEGORIES } from '@/constants/onboardingPresets';
@@ -425,12 +427,22 @@ export default function TodayScreen() {
   }, [resolveNudge]);
 
   const watchNudgeVisible = !!firstLogSavedInfo?.merchant && !nudgeResolved;
-  // The two ribbons share one storage record (useFirstRunRibbon), so at most
-  // one is ever pending; whichever it is drives the single render slot below.
-  const ribbonPending = door1RibbonPending || door3RibbonPending;
-  const ribbonMessageKey = door1RibbonPending ? door1MessageKey : door3RibbonPending ? door3MessageKey : null;
-  const dismissRibbon = door1RibbonPending ? dismissDoor1Ribbon : dismissDoor3Ribbon;
-  const ribbonLine = ribbonMessageKey ? FIRST_RUN_RIBBON_LINES[ribbonMessageKey] ?? null : null;
+  // U6: the two ribbons used to share a single render slot above the pager
+  // (both panes saw whichever door was pending). They now render inside
+  // their own pane instead -- door1 in Spent, door3 in Kept -- so each door's
+  // line is resolved independently rather than picking one winner.
+  const door1RibbonLine = door1MessageKey ? FIRST_RUN_RIBBON_LINES[door1MessageKey] ?? null : null;
+  const door3RibbonLine = door3MessageKey ? FIRST_RUN_RIBBON_LINES[door3MessageKey] ?? null : null;
+
+  // U6 quote rotation (components/today/useViewQuote.ts): one hook instance
+  // per pane, `active` tracks which pane todayView currently points at so
+  // the counter advances on activation, not on mount.
+  const spentQuote = useViewQuote('spent', todayView === 'spent');
+  const keptQuote = useViewQuote('kept', todayView === 'kept');
+
+  const handleViewAllExpenses = useCallback(() => {
+    router.push('/(tabs)/money');
+  }, [router]);
 
   const handleTodayViewChange = useCallback((view: SpentKeptView) => {
     pagerInteracted.current = true;
@@ -721,12 +733,6 @@ export default function TodayScreen() {
         />
       </View>
 
-      {ribbonPending && ribbonLine ? (
-        <View style={styles.ribbonWrap}>
-          <FirstRunRibbon line={ribbonLine} onDismiss={dismissRibbon} />
-        </View>
-      ) : null}
-
       {/*
         DI-7 pager (ADR 0019): a plain horizontal ScrollView, pagingEnabled,
         native scrolling only. No react-native-gesture-handler, no
@@ -756,6 +762,7 @@ export default function TodayScreen() {
       >
         <View
           style={{ width: screenWidth }}
+          testID="spent-pane"
           // Both panes stay mounted for the pager, so the off-screen one must
           // be hidden from assistive tech or VoiceOver walks into content the
           // eye cannot see.
@@ -770,9 +777,21 @@ export default function TodayScreen() {
               <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={theme.primary} />
             }
           >
+            {/* U6: door1's ribbon used to render once above the pager on
+                both panes; it renders only here now, at the top of Spent,
+                the same spot its old global slot occupied visually. */}
+            {door1RibbonPending && door1RibbonLine ? (
+              <View style={styles.ribbonWrapInline}>
+                <FirstRunRibbon line={door1RibbonLine} onDismiss={dismissDoor1Ribbon} />
+              </View>
+            ) : null}
             <QuickLogRow onOpenSheet={openLogSheet} />
             <View style={styles.loggedTodaySpacer}>
-              <LoggedTodayList expenses={loggedToday} onEditExpense={setEditingExpense} />
+              <LoggedTodayList
+                expenses={loggedToday}
+                onEditExpense={setEditingExpense}
+                onViewAll={handleViewAllExpenses}
+              />
               {watchNudgeVisible ? (
                 // The watch-nudge (W2 item 3): UpcomingList's dashed-card
                 // grammar (components/money/UpcomingList.tsx `add`), one-shot
@@ -806,14 +825,29 @@ export default function TodayScreen() {
                 </View>
               ) : null}
             </View>
+            {/* U6: Spent closes with a quote, below the logged-today block
+                and the watch-nudge (Charen-approved live preview placement). */}
+            <ViewQuote quote={spentQuote} style={styles.spentQuoteWrap} testID="spent-quote" />
           </ScrollView>
         </View>
 
         <View
           style={{ width: screenWidth }}
+          testID="kept-pane"
           accessibilityElementsHidden={todayView !== 'kept'}
           importantForAccessibility={todayView !== 'kept' ? 'no-hide-descendants' : 'auto'}
         >
+          {/* U6: door3's ribbon used to render once above the pager on both
+              panes; it renders only here now, above the opening quote, the
+              same spot its old global slot occupied visually. */}
+          {door3RibbonPending && door3RibbonLine ? (
+            <View style={styles.ribbonWrap}>
+              <FirstRunRibbon line={door3RibbonLine} onDismiss={dismissDoor3Ribbon} />
+            </View>
+          ) : null}
+          {/* U6: Kept opens with a quote, above the KeptHero band
+              (Charen-approved live preview placement). */}
+          <ViewQuote quote={keptQuote} style={styles.keptQuoteWrap} testID="kept-quote" />
           {/* DI-6 gutter fix: the band renders full-bleed by default (see
               onboarding success, which supplies its own padded container
               instead); Today has no such wrapper, so it passes the same 20pt
@@ -972,10 +1006,17 @@ function createStyles(theme: AppTheme) {
       marginTop: 8,
       marginBottom: 12,
     },
-    // FirstRunRibbon (W2, Door 1 real-app first run): shares the chips row's
-    // gutter, sits under it on both panes since the pager starts below this.
+    // FirstRunRibbon, door3 (U6): the Kept pane's top-level View carries no
+    // ambient horizontal padding (KeptHero gets its own via keptHeroGutter
+    // below), so this style supplies the screen's 20pt gutter directly.
     ribbonWrap: {
       paddingHorizontal: 20,
+      marginBottom: 12,
+    },
+    // FirstRunRibbon, door1 (U6): renders inside spentScrollContent, which
+    // already carries the 20pt gutter for every child, so this only adds the
+    // bottom spacing, not a second horizontal inset.
+    ribbonWrapInline: {
       marginBottom: 12,
     },
     // DI-7: the pager fills whatever vertical space is left below the chips
@@ -987,6 +1028,21 @@ function createStyles(theme: AppTheme) {
     // use below, so the band no longer renders full-bleed on Today.
     keptHeroGutter: {
       marginHorizontal: 20,
+    },
+    // U6 opening quote (Kept): the Kept pane's top-level View has no ambient
+    // padding, so ViewQuote's own 20pt gutter is the only inset it needs;
+    // this only adds the space above KeptHero below it.
+    keptQuoteWrap: {
+      marginBottom: 14,
+    },
+    // U6 closing quote (Spent): spentScrollContent already carries the
+    // screen's 20pt gutter for every child, and ViewQuote applies its own
+    // 20pt gutter too, so this negative margin cancels the ambient one --
+    // otherwise the quote would sit at a 40pt inset instead of the 20pt
+    // every other pane edge uses, including the Kept opening quote above.
+    spentQuoteWrap: {
+      marginHorizontal: -20,
+      marginTop: 20,
     },
     spentScroll: {
       flex: 1,
