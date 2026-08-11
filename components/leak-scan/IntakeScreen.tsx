@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, ScrollView } from 'react-native';
 import { Button, Icon } from '@/components/ui';
+import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { useTheme } from '@/contexts/ThemeContext';
 import { radii, typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
@@ -12,6 +13,14 @@ type IntakeScreenProps = {
   state: IntakeState;
   onChooseFiles: () => void;
   onAnswer: (question: ScanQuestion, answer: 'march' | 'april' | 'yes' | 'no') => void;
+  /**
+   * Door 2's only visible exit before a scan produces results (design/
+   * leakscan-migration, U12a): previously the invisible iOS edge swipe was
+   * the sole way out. A quiet ScreenHeader back pill, wired to router.back()
+   * by the caller. Deliberately not offered on ResultsScreen: a finished
+   * scan reads forward (its own CTAs), not back (see ResultsScreen.tsx).
+   */
+  onBack: () => void;
 };
 
 /**
@@ -21,74 +30,86 @@ type IntakeScreenProps = {
  * enforced by the intake hook, which reports skipped files here for a
  * plain-language notice.
  */
-export function IntakeScreen({ state, onChooseFiles, onAnswer }: IntakeScreenProps) {
+export function IntakeScreen({ state, onChooseFiles, onAnswer, onBack }: IntakeScreenProps) {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   if (state.stage === 'question' && state.pendingQuestion) {
     return (
-      <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>{strings.leakScan.intakeTitle}</Text>
-        <QuestionCard question={state.pendingQuestion} onAnswer={onAnswer} />
-      </ScrollView>
+      <View style={styles.screen}>
+        <ScreenHeader onBack={onBack} />
+        <ScrollView contentContainerStyle={styles.container}>
+          <Text style={styles.title}>{strings.leakScan.intakeTitle}</Text>
+          <QuestionCard question={state.pendingQuestion} onAnswer={onAnswer} />
+        </ScrollView>
+      </View>
     );
   }
 
   if (state.stage === 'scanning' || state.stage === 'picking') {
     return (
-      <View style={[styles.container, styles.centered]}>
-        <ActivityIndicator size="large" color={theme.primary} />
-        <Text style={styles.scanningTitle}>{strings.leakScan.scanningTitle}</Text>
-        <Text style={styles.scanningSubtitle}>{strings.leakScan.scanningSubtitle}</Text>
+      <View style={styles.screen}>
+        <ScreenHeader onBack={onBack} />
+        <View style={[styles.container, styles.centered]}>
+          <ActivityIndicator size="large" color={theme.primary} />
+          <Text style={styles.scanningTitle}>{strings.leakScan.scanningTitle}</Text>
+          <Text style={styles.scanningSubtitle}>{strings.leakScan.scanningSubtitle}</Text>
+        </View>
       </View>
     );
   }
 
   return (
-    <View style={[styles.container, styles.centered]}>
-      <Text style={styles.title}>{strings.leakScan.intakeTitle}</Text>
-      <Text style={styles.subtitle}>{strings.leakScan.intakeSubtitle}</Text>
+    <View style={styles.screen}>
+      <ScreenHeader onBack={onBack} />
+      <View style={[styles.container, styles.centered]}>
+        <Text style={styles.title}>{strings.leakScan.intakeTitle}</Text>
+        <Text style={styles.subtitle}>{strings.leakScan.intakeSubtitle}</Text>
 
-      {state.fileNames.length > 0 && (
-        <View style={styles.fileChips}>
-          {state.fileNames.map((name) => (
-            <View key={name} style={styles.fileChip}>
-              <Icon name="FileText" size={16} color={theme.slate} />
-              <Text style={styles.fileChipText} numberOfLines={1}>
-                {name}
-              </Text>
-            </View>
-          ))}
-          <Text style={styles.filesChosen}>
-            {strings.leakScan.filesChosenCount(state.fileNames.length)}
-          </Text>
-        </View>
-      )}
-
-      {state.skippedFileMessages.length > 0 && (
-        <View style={styles.noticeBox}>
-          {state.skippedFileMessages.map((msg, i) => (
-            <Text key={i} style={styles.noticeText}>
-              {msg === 'too-many-files' ? strings.leakScan.tooManyFiles : strings.leakScan.fileTooLarge(msg)}
+        {state.fileNames.length > 0 && (
+          <View style={styles.fileChips}>
+            {state.fileNames.map((name) => (
+              <View key={name} style={styles.fileChip}>
+                <Icon name="FileText" size={16} color={theme.slate} />
+                <Text style={styles.fileChipText} numberOfLines={1}>
+                  {name}
+                </Text>
+              </View>
+            ))}
+            <Text style={styles.filesChosen}>
+              {strings.leakScan.filesChosenCount(state.fileNames.length)}
             </Text>
-          ))}
-        </View>
-      )}
+          </View>
+        )}
 
-      <Button
-        label={strings.leakScan.chooseFiles}
-        onPress={onChooseFiles}
-        style={styles.primaryButton}
-      />
+        {state.skippedFileMessages.length > 0 && (
+          <View style={styles.noticeBox}>
+            {state.skippedFileMessages.map((msg, i) => (
+              <Text key={i} style={styles.noticeText}>
+                {msg === 'too-many-files' ? strings.leakScan.tooManyFiles : strings.leakScan.fileTooLarge(msg)}
+              </Text>
+            ))}
+          </View>
+        )}
+
+        <Button
+          label={strings.leakScan.chooseFiles}
+          onPress={onChooseFiles}
+          style={styles.primaryButton}
+        />
+      </View>
     </View>
   );
 }
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
+    screen: {
+      flex: 1,
+      backgroundColor: theme.background,
+    },
     container: {
       flexGrow: 1,
-      backgroundColor: theme.background,
       padding: 24,
     },
     centered: {

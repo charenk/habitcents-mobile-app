@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
-import type { AppTheme } from '@/constants/theme';
+import { radii, typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import type { ScanQuestion } from '@/utils/leakScan/types';
 
@@ -71,16 +71,17 @@ export function QuestionCard({ question, onAnswer }: QuestionCardProps) {
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     card: {
-      backgroundColor: theme.surface,
-      borderRadius: 14,
-      borderWidth: 0.5,
-      borderColor: theme.border,
+      backgroundColor: theme.white,
+      borderRadius: radii.card,
+      borderWidth: 1,
+      borderColor: theme.cloud,
       padding: 16,
       marginBottom: 12,
     },
     question: {
-      fontSize: 15,
-      color: theme.text,
+      fontSize: typeScale.body,
+      fontFamily: theme.fonts.ui,
+      color: theme.ink,
       marginBottom: 12,
       lineHeight: 21,
     },
@@ -91,17 +92,17 @@ function createStyles(theme: AppTheme) {
     chip: {
       flex: 1,
       minHeight: 44,
-      borderRadius: 12,
+      borderRadius: radii.control,
       borderWidth: 1,
-      borderColor: theme.border,
-      backgroundColor: theme.background,
+      borderColor: theme.cloud,
+      backgroundColor: theme.snow,
       alignItems: 'center',
       justifyContent: 'center',
     },
     chipText: {
-      fontSize: 14,
-      fontWeight: '600',
-      color: theme.text,
+      fontSize: typeScale.secondary,
+      fontFamily: theme.fonts.uiSemibold,
+      color: theme.ink,
     },
   });
 }

@@ -1,8 +1,10 @@
 import React, { useMemo, useState } from 'react';
-import { Modal, View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, useWindowDimensions } from 'react-native';
+import { Button } from '@/components/ui/Button';
+import { Sheet } from '@/components/ui/Sheet';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
-import type { AppTheme } from '@/constants/theme';
+import { radii, typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import { TierBadge } from './TierBadge';
 import { categoryDisplayLabel } from '@/utils/leakScanBridge';
@@ -37,10 +39,17 @@ type ReviewQueueSheetProps = {
  * fires scan_correction (structural only: stage + fromTier, never the
  * merchant string or amount). A persistent Done/Skip-the-rest exit; never a
  * wall the user cannot leave.
+ *
+ * House Sheet (design/leakscan-migration, U12a): was a pageSheet Modal
+ * drawing its own fake grab handle under the OS one; now the shared bottom
+ * Sheet supplies the real handle and scrim. Capped at 82% of window height so
+ * a full 10-item queue scrolls under a docked footer button rather than
+ * pushing it off-screen, matching ExpenseSheet's own sizing.
  */
 export function ReviewQueueSheet({ visible, items, onCorrect, onClose }: ReviewQueueSheetProps) {
   const theme = useTheme();
   const { format } = useCurrency();
+  const { height } = useWindowDimensions();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [doneStems, setDoneStems] = useState<Set<string>>(new Set());
 
@@ -54,13 +63,20 @@ export function ReviewQueueSheet({ visible, items, onCorrect, onClose }: ReviewQ
   };
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
-      <View style={styles.container}>
-        <View style={styles.grabber} />
-        <Text style={styles.title}>{strings.leakScan.reviewQueueTitle(items.length)}</Text>
-        <Text style={styles.progress}>{strings.leakScan.reviewQueueProgress(doneCount, items.length)}</Text>
+    <Sheet
+      visible={visible}
+      onClose={onClose}
+      accessibilityLabel={strings.leakScan.reviewQueueTitle(items.length)}
+    >
+      <View style={[styles.body, { maxHeight: height * 0.82 }]}>
+        <View style={styles.header}>
+          <Text style={styles.title} accessibilityRole="header">
+            {strings.leakScan.reviewQueueTitle(items.length)}
+          </Text>
+          <Text style={styles.progress}>{strings.leakScan.reviewQueueProgress(doneCount, items.length)}</Text>
+        </View>
 
-        <ScrollView style={styles.list}>
+        <ScrollView style={styles.scroll} contentContainerStyle={styles.listContent}>
           {remaining.map((item) => (
             <View key={item.merchantStem} style={styles.itemCard}>
               <View
@@ -95,52 +111,49 @@ export function ReviewQueueSheet({ visible, items, onCorrect, onClose }: ReviewQ
           ))}
         </ScrollView>
 
-        <View style={styles.footerButtons}>
-          <TouchableOpacity style={styles.doneButton} onPress={onClose} accessibilityRole="button">
-            <Text style={styles.doneButtonText}>
-              {remaining.length === 0 ? strings.leakScan.reviewQueueDone : strings.leakScan.reviewQueueSkipRest}
-            </Text>
-          </TouchableOpacity>
+        <View style={styles.footer}>
+          <Button
+            label={remaining.length === 0 ? strings.leakScan.reviewQueueDone : strings.leakScan.reviewQueueSkipRest}
+            onPress={onClose}
+          />
         </View>
       </View>
-    </Modal>
+    </Sheet>
   );
 }
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: theme.surface,
-      paddingHorizontal: 20,
-      paddingTop: 12,
-      paddingBottom: 20,
+    body: {
+      flexShrink: 1,
     },
-    grabber: {
-      width: 36,
-      height: 5,
-      borderRadius: 3,
-      backgroundColor: theme.border,
-      alignSelf: 'center',
-      marginBottom: 14,
+    header: {
+      paddingHorizontal: 20,
+      paddingTop: 4,
     },
     title: {
       fontSize: 18,
-      fontWeight: '700',
-      color: theme.text,
+      fontFamily: theme.fonts.uiBold,
+      color: theme.ink,
     },
     progress: {
-      fontSize: 13,
-      color: theme.textSecondary,
+      fontSize: typeScale.secondary,
+      fontFamily: theme.fonts.ui,
+      color: theme.slate,
       marginTop: 4,
-      marginBottom: 12,
+      marginBottom: 4,
     },
-    list: {
-      flex: 1,
+    scroll: {
+      flexShrink: 1,
+    },
+    listContent: {
+      paddingHorizontal: 20,
+      paddingTop: 8,
+      paddingBottom: 4,
     },
     itemCard: {
-      backgroundColor: theme.background,
-      borderRadius: 14,
+      backgroundColor: theme.snow,
+      borderRadius: radii.card,
       padding: 14,
       marginBottom: 12,
     },
@@ -151,19 +164,21 @@ function createStyles(theme: AppTheme) {
       marginBottom: 6,
     },
     merchantName: {
-      fontSize: 15,
-      fontWeight: '700',
-      color: theme.text,
+      fontSize: typeScale.body,
+      fontFamily: theme.fonts.uiBold,
+      color: theme.ink,
     },
     amount: {
       fontSize: 16,
-      fontWeight: '700',
-      color: theme.text,
+      fontFamily: theme.fonts.uiBold,
+      color: theme.ink,
       marginBottom: 4,
+      fontVariant: ['tabular-nums'],
     },
     guessLabel: {
-      fontSize: 12,
-      color: theme.textSecondary,
+      fontSize: typeScale.caption,
+      fontFamily: theme.fonts.ui,
+      color: theme.slate,
       marginBottom: 10,
     },
     chipRow: {
@@ -174,30 +189,20 @@ function createStyles(theme: AppTheme) {
     chip: {
       paddingHorizontal: 10,
       paddingVertical: 6,
-      borderRadius: 999,
+      borderRadius: radii.pill,
       borderWidth: 1,
       borderColor: theme.chipBorder,
       backgroundColor: theme.chipInactiveBg,
     },
     chipText: {
-      fontSize: 12,
-      fontWeight: '600',
+      fontSize: typeScale.caption,
+      fontFamily: theme.fonts.uiSemibold,
       color: theme.chipInactiveText,
     },
-    footerButtons: {
-      marginTop: 12,
-    },
-    doneButton: {
-      minHeight: 46,
-      borderRadius: 12,
-      backgroundColor: theme.primary,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    doneButtonText: {
-      fontSize: 15,
-      fontWeight: '700',
-      color: theme.white,
+    footer: {
+      paddingHorizontal: 20,
+      paddingTop: 12,
+      paddingBottom: 4,
     },
   });
 }

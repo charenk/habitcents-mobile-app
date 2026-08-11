@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
-import type { AppTheme } from '@/constants/theme';
+import { radii, typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import { buildSpendPulse } from '@/utils/leakScan/spendPulse';
 import type { PulseCell, PulseGranularity } from '@/utils/leakScan/spendPulse';
@@ -177,7 +177,7 @@ function LegendSwatch({
       ) : (
         <View style={{ width: 13, height: 13, borderRadius: 3, backgroundColor: color }} />
       )}
-      <Text style={{ fontSize: 11, color: theme.textSecondary }}>{label}</Text>
+      <Text style={{ fontSize: typeScale.eyebrow, fontFamily: theme.fonts.ui, color: theme.slate }}>{label}</Text>
     </View>
   );
 }
@@ -185,10 +185,10 @@ function LegendSwatch({
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     container: {
-      backgroundColor: theme.surface,
-      borderRadius: 14,
-      borderWidth: 0.5,
-      borderColor: theme.border,
+      backgroundColor: theme.white,
+      borderRadius: radii.card,
+      borderWidth: 1,
+      borderColor: theme.cloud,
       padding: 14,
     },
     toggleRow: {
@@ -199,7 +199,7 @@ function createStyles(theme: AppTheme) {
     toggleChip: {
       paddingHorizontal: 10,
       paddingVertical: 5,
-      borderRadius: 999,
+      borderRadius: radii.pill,
       backgroundColor: theme.chipInactiveBg,
       borderWidth: 1,
       borderColor: theme.chipBorder,
@@ -209,8 +209,8 @@ function createStyles(theme: AppTheme) {
       borderColor: theme.chipActiveBg,
     },
     toggleChipText: {
-      fontSize: 12,
-      fontWeight: '600',
+      fontSize: typeScale.caption,
+      fontFamily: theme.fonts.uiSemibold,
       color: theme.chipInactiveText,
     },
     toggleChipTextActive: {
@@ -230,8 +230,9 @@ function createStyles(theme: AppTheme) {
       marginTop: 12,
     },
     caption: {
-      fontSize: 12,
-      color: theme.textSecondary,
+      fontSize: typeScale.caption,
+      fontFamily: theme.fonts.ui,
+      color: theme.slate,
       marginTop: 10,
     },
   });
