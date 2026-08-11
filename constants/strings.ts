@@ -406,8 +406,14 @@ export const strings = {
       'one skipped impulse buy keeps $12.50',
     ],
     // 3.2 Intent picker (redesign step 03, screen 2; replaces the two-door fork)
-    intentTitle: 'What brings you here?',
-    intentSub: 'Pick one. You can do all three later.',
+    // Build 8 decision: action-framed title ("How would you like to start?"
+    // replaces "What brings you here?"); subtitle drops "You can do all three
+    // later." entirely. This title is a question, not a statement, so it
+    // keeps its question mark rather than taking the serif screen-title
+    // period (PATTERN_VOCABULARY.md's period rule assumes a declarative
+    // title; it does not apply to an interrogative one).
+    intentTitle: 'How would you like to start?',
+    intentSub: 'Pick one.',
     // Eyebrows are stored sentence case and rendered uppercase by the style, so
     // screen readers announce them as sentences.
     intentTrackEyebrow: '10 seconds to start',
