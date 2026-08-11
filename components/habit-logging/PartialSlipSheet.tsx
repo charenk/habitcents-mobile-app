@@ -5,22 +5,22 @@
  * "Spent less than usual?" The day stays a slip and total skips do not move;
  * max(0, skipValue - amount) is credited to Kept. The whole point is that being
  * honest about a smaller purchase still counts for something, so the sheet is
- * one amount and a Save, on the same keypad as everything else.
+ * one amount and a Save, on the same native-keyboard field as everything else
+ * (ADR 0023). The amount spent is a fresh fact each open, never prefilled, so
+ * the field auto-focuses: there's nothing to check before typing.
  *
  * PROPS ARE FROZEN: Today and habit detail both render this sheet; only the
- * internals were rebuilt on Sheet + AmountDisplay + Keypad.
+ * internals were rebuilt on Sheet + AmountField.
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
-import { AmountDisplay } from '@/components/ui/AmountDisplay';
+import { AmountField } from '@/components/ui/AmountField';
 import { Button } from '@/components/ui/Button';
-import { Keypad } from '@/components/ui/Keypad';
 import { Sheet } from '@/components/ui/Sheet';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
-import { keypadValueToCents } from '@/utils/keypad';
 import { strings } from '@/constants/strings';
 
 type PartialSlipSheetProps = {
@@ -35,56 +35,70 @@ export function PartialSlipSheet({ visible, skipValue, onCancel, onSave }: Parti
   const { format } = useCurrency();
   const { height } = useWindowDimensions();
   const styles = useMemo(() => createStyles(theme), [theme]);
-  const [value, setValue] = useState('');
+  const [cents, setCents] = useState(0);
 
   // Every open starts empty: the amount spent is a fresh fact each time, never
   // a leftover from the last slip.
   useEffect(() => {
-    if (visible) setValue('');
+    if (visible) setCents(0);
   }, [visible]);
-
-  const cents = keypadValueToCents(value);
 
   return (
     <Sheet
       visible={visible}
       onClose={onCancel}
+      avoidKeyboard
       accessibilityLabel={strings.habitLogging.partialSheetTitle}
     >
-      <ScrollView
-        style={{ maxHeight: height * 0.86 }}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-        <Text style={styles.title} accessibilityRole="header">
-          {strings.habitLogging.partialSheetTitle}
-        </Text>
-        <Text style={styles.subtitle}>
-          {strings.habitLogging.partialSheetSubtitle(format(skipValue))}
-        </Text>
+      <View style={[styles.body, { maxHeight: height * 0.86 }]}>
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <Text style={styles.title} accessibilityRole="header" maxFontSizeMultiplier={1.5}>
+            {strings.habitLogging.partialSheetTitle}
+          </Text>
+          <Text style={styles.subtitle}>
+            {strings.habitLogging.partialSheetSubtitle(format(skipValue))}
+          </Text>
 
-        <View accessible accessibilityLabel={`${strings.habitLogging.partialAmountLabel}, ${format(cents)}`}>
-          <AmountDisplay valueCents={cents} focused size={46} zeroAsPlaceholder />
+          <AmountField
+            valueCents={cents}
+            onChangeCents={setCents}
+            autoFocus={visible}
+            size={48}
+            accessibilityLabel={`${strings.habitLogging.partialAmountLabel}, ${format(cents)}`}
+          />
+        </ScrollView>
+
+        <View style={styles.footer}>
+          <Button label={strings.common.save} onPress={() => onSave(cents)} />
+          <Button label={strings.common.cancel} variant="tertiary" onPress={onCancel} />
         </View>
-
-        <View style={styles.keypad}>
-          <Keypad value={value} onChange={setValue} />
-        </View>
-
-        <Button label={strings.common.save} onPress={() => onSave(cents)} style={styles.primary} />
-        <Button label={strings.common.cancel} variant="tertiary" onPress={onCancel} />
-      </ScrollView>
+      </View>
     </Sheet>
   );
 }
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
+    body: {
+      flexShrink: 1,
+    },
+    scroll: {
+      flexShrink: 1,
+    },
     content: {
       paddingTop: 10,
       paddingHorizontal: 20,
       paddingBottom: 16,
+    },
+    footer: {
+      paddingHorizontal: 20,
+      paddingTop: 12,
+      gap: 8,
     },
     title: {
       fontFamily: theme.fonts.display,
@@ -99,12 +113,6 @@ function createStyles(theme: AppTheme) {
       color: theme.slate,
       marginTop: 4,
       marginBottom: 20,
-    },
-    keypad: {
-      marginTop: 20,
-    },
-    primary: {
-      marginTop: 18,
     },
   });
 }

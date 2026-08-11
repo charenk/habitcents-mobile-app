@@ -8,6 +8,13 @@
  * Door 1: the user chose to go back, not into the app, so this must NOT
  * complete onboarding.
  *
+ * design/leakscan-migration (U12a) additionally pins two follow-on fixes:
+ * the Leak Audit exit now uses router.replace, not push, so a repeat visit
+ * through this same fork can't stack welcome > intent > leak-scan > welcome;
+ * and GracefulFailure now exposes a visible ScreenHeader back pill (the
+ * invisible iOS edge swipe used to be the only way out), wired to
+ * router.back().
+ *
  * useLeakScanIntake is mocked to land directly on the graceful-failure result
  * (its own file-parsing/scan-pipeline behavior is exercised elsewhere); this
  * test is only about what each exit does to onboarding state. Provider wiring
@@ -19,8 +26,9 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 
 const mockPush = jest.fn();
 const mockReplace = jest.fn();
+const mockBack = jest.fn();
 jest.mock('expo-router', () => ({
-  useRouter: () => ({ push: mockPush, replace: mockReplace }),
+  useRouter: () => ({ push: mockPush, replace: mockReplace, back: mockBack }),
 }));
 
 jest.mock('@/utils/analytics', () => ({ track: jest.fn() }));
@@ -110,6 +118,7 @@ beforeEach(async () => {
   trackMock.mockClear();
   mockPush.mockClear();
   mockReplace.mockClear();
+  mockBack.mockClear();
   mockReset.mockClear();
   // The async-storage mock persists across tests in this file; clear it so
   // one test's completed state can't leak into the next test's provider mount.
@@ -136,7 +145,23 @@ describe('Leak scan graceful-failure exits', () => {
     await pressText(view, strings.leakScan.failureStartLeakAudit);
 
     expect(completeReader.current()).toBe(false);
-    expect(mockPush).toHaveBeenCalledWith('/onboarding/welcome');
+    // replace, not push (U12a dead-end fix): a push here let the stack grow
+    // welcome > intent > leak-scan > welcome on a repeat visit.
+    expect(mockReplace).toHaveBeenCalledWith('/onboarding/welcome');
+    expect(mockPush).not.toHaveBeenCalledWith('/onboarding/welcome');
     expect(trackMock.mock.calls.filter(([event]) => event === 'onboarding_completed')).toHaveLength(0);
+  });
+
+  it('exposes a visible back pill that calls router.back() (U12a)', async () => {
+    const view = await renderRoute();
+
+    // Previously the invisible iOS edge swipe was the only way out of the
+    // graceful-failure screen; ScreenHeader's back pill has no visible text,
+    // so it is queried by its accessibility label (strings.common.back).
+    await act(async () => {
+      fireEvent.press(view.getByLabelText(strings.common.back));
+    });
+
+    expect(mockBack).toHaveBeenCalledTimes(1);
   });
 });

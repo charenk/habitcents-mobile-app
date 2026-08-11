@@ -17,7 +17,7 @@ import type { AppTheme } from '@/constants/theme';
 import { radii, shadows } from '@/constants/theme';
 import { selectableLabel } from '@/utils/a11y';
 
-export type SegmentedControlProps<T extends string> = {
+export type SegmentedControlProps<T extends string | number> = {
   options: ReadonlyArray<{ value: T; label: string }>;
   value: T;
   onChange: (v: T) => void;
@@ -25,7 +25,7 @@ export type SegmentedControlProps<T extends string> = {
   accessibilityLabel?: string;
 };
 
-export function SegmentedControl<T extends string>({
+export function SegmentedControl<T extends string | number>({
   options,
   value,
   onChange,

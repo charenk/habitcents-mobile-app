@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { Button, Icon } from '@/components/ui';
+import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { useTheme } from '@/contexts/ThemeContext';
 import { radii, typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
@@ -9,6 +10,9 @@ type GracefulFailureProps = {
   onTryDifferentExport: () => void;
   onStartLeakAudit: () => void;
   onLogByHand: () => void;
+  /** Quiet ScreenHeader back pill (design/leakscan-migration, U12a): same
+   *  reasoning as IntakeScreen's onBack, wired to router.back(). */
+  onBack: () => void;
 };
 
 /**
@@ -21,43 +25,50 @@ export function GracefulFailure({
   onTryDifferentExport,
   onStartLeakAudit,
   onLogByHand,
+  onBack,
 }: GracefulFailureProps) {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.mark}>
-        <Icon name="Sprout" size={22} color={theme.primaryDark} />
-      </View>
-      <Text style={styles.title}>{strings.leakScan.failureTitle}</Text>
-      <Text style={styles.body}>{strings.leakScan.failureBody}</Text>
+    <View style={styles.screen}>
+      <ScreenHeader onBack={onBack} />
+      <ScrollView contentContainerStyle={styles.container}>
+        <View style={styles.mark}>
+          <Icon name="Sprout" size={22} color={theme.primaryDark} />
+        </View>
+        <Text style={styles.title}>{strings.leakScan.failureTitle}</Text>
+        <Text style={styles.body}>{strings.leakScan.failureBody}</Text>
 
-      <View style={styles.actions}>
-        <Button label={strings.leakScan.failureTryDifferentExport} onPress={onTryDifferentExport} />
-        <Text style={styles.hint}>{strings.leakScan.failureTryDifferentExportHint}</Text>
+        <View style={styles.actions}>
+          <Button label={strings.leakScan.failureTryDifferentExport} onPress={onTryDifferentExport} />
+          <Text style={styles.hint}>{strings.leakScan.failureTryDifferentExportHint}</Text>
 
-        <Button
-          label={strings.leakScan.failureStartLeakAudit}
-          onPress={onStartLeakAudit}
-          variant="secondary"
-        />
+          <Button
+            label={strings.leakScan.failureStartLeakAudit}
+            onPress={onStartLeakAudit}
+            variant="secondary"
+          />
 
-        <Button
-          label={strings.leakScan.failureLogByHand}
-          onPress={onLogByHand}
-          variant="tertiary"
-        />
-      </View>
-    </ScrollView>
+          <Button
+            label={strings.leakScan.failureLogByHand}
+            onPress={onLogByHand}
+            variant="tertiary"
+          />
+        </View>
+      </ScrollView>
+    </View>
   );
 }
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
+    screen: {
+      flex: 1,
+      backgroundColor: theme.background,
+    },
     container: {
       flexGrow: 1,
-      backgroundColor: theme.background,
       padding: 24,
       justifyContent: 'center',
     },

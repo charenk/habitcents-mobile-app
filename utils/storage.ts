@@ -8,11 +8,17 @@ import type { OnboardingState, ProgressiveFeatureState, AuditAnswers } from '@/t
 import type { ScanSummary } from '@/types/scanSummary';
 import { type CurrencyCode, DEFAULT_CURRENCY, isCurrencyCode } from '@/utils/currency';
 import { type CoachMomentState, createInitialCoachMomentState } from '@/utils/coachMoments';
+import {
+  DEFAULT_UPCOMING_WINDOW_DAYS,
+  isUpcomingWindowDays,
+  type UpcomingWindowDays,
+} from '@/utils/upcomingWindow';
 
 // Storage keys
 const ONBOARDING_KEY = '@habitcents_onboarded';
 const THEME_MODE_KEY = '@habitcents_theme_mode';
 const CURRENCY_KEY = '@habitcents_currency';
+const UPCOMING_WINDOW_KEY = '@habitcents_upcoming_window';
 const EXPENSES_KEY = '@habitcents_expenses';
 const CATEGORIES_KEY = '@habitcents_categories';
 const HABITS_KEY = '@habitcents_habits';
@@ -31,6 +37,10 @@ const AUDIT_ANSWERS_KEY = '@habitcents_audit_answers';
 // Leak Scan summary snapshot (OB-4, ADR 0020): survives navigation so a later
 // Insights segment can read the last scan without re-running the pipeline.
 const SCAN_SUMMARY_KEY = '@habitcents_scan_summary';
+// Recurring materializer delete-child tombstones (ADR 0024, U11). See
+// utils/materializer.ts planMaterialization's header comment for why this
+// exists instead of "plan only forward from the newest child".
+const RECURRING_TOMBSTONES_KEY = '@habitcents_recurring_tombstones';
 
 // =====================
 // SAFE LOAD HELPERS
@@ -178,6 +188,35 @@ export async function setCurrency(code: CurrencyCode): Promise<void> {
 }
 
 /**
+ * Get the persisted Upcoming window selection (U8: the 2 weeks / 1 month / 3
+ * months picker on Money > Upcoming). Defaults to
+ * DEFAULT_UPCOMING_WINDOW_DAYS when nothing is stored or the stored value is
+ * not one of the valid presets (utils/upcomingWindow.ts), so a corrupt or
+ * stale value degrades to the default rather than a nonsense window.
+ */
+export async function getUpcomingWindowDays(): Promise<UpcomingWindowDays> {
+  try {
+    const value = await AsyncStorage.getItem(UPCOMING_WINDOW_KEY);
+    const parsed = value === null ? NaN : Number(value);
+    return isUpcomingWindowDays(parsed) ? parsed : DEFAULT_UPCOMING_WINDOW_DAYS;
+  } catch (error) {
+    console.error('Error reading upcoming window:', error);
+    return DEFAULT_UPCOMING_WINDOW_DAYS;
+  }
+}
+
+/**
+ * Persist the Upcoming window selection.
+ */
+export async function setUpcomingWindowDays(days: UpcomingWindowDays): Promise<void> {
+  try {
+    await AsyncStorage.setItem(UPCOMING_WINDOW_KEY, String(days));
+  } catch (error) {
+    console.error('Error saving upcoming window:', error);
+  }
+}
+
+/**
  * Get persisted expenses
  */
 export async function getExpenses(): Promise<Expense[]> {
@@ -197,6 +236,35 @@ export async function saveExpenses(expenses: Expense[]): Promise<void> {
     await AsyncStorage.setItem(EXPENSES_KEY, JSON.stringify(expenses));
   } catch (error) {
     console.error('Error saving expenses:', error);
+  }
+}
+
+/**
+ * Get the recurring-materializer tombstone set: one composite
+ * `${parentId}|${YYYY-MM-DD}` key per occurrence the user explicitly deleted,
+ * so a later planning pass never resurrects exactly the row they removed.
+ * Returns [] (never throws) on missing or unreadable data, same degrade-safe
+ * shape as every other getter in this file -- a lost tombstone at worst
+ * regenerates one already-deleted row, never crashes app start.
+ */
+export async function getRecurringTombstones(): Promise<string[]> {
+  try {
+    const value = await AsyncStorage.getItem(RECURRING_TOMBSTONES_KEY);
+    if (!value) return [];
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed.filter((v): v is string => typeof v === 'string') : [];
+  } catch (error) {
+    console.error('Error reading recurring tombstones:', error);
+    return [];
+  }
+}
+
+/** Persist the recurring-materializer tombstone set. */
+export async function saveRecurringTombstones(keys: string[]): Promise<void> {
+  try {
+    await AsyncStorage.setItem(RECURRING_TOMBSTONES_KEY, JSON.stringify(keys));
+  } catch (error) {
+    console.error('Error saving recurring tombstones:', error);
   }
 }
 
@@ -589,4 +657,54 @@ export async function saveScanSummary(summary: ScanSummary | null): Promise<void
   } catch (error) {
     console.error('Error saving scan summary:', error);
   }
+}
+
+// =====================
+// TODAY QUOTE ROTATION (U6, components/today/useViewQuote.ts)
+// =====================
+// One small counter per Today pane: incremented once each time that pane
+// becomes active, read modulo the quote array's length. Two keys, not one,
+// so Spent and Kept rotate independently of each other.
+const QUOTE_SEQ_SPENT_KEY = '@habitcents_quote_seq_spent';
+const QUOTE_SEQ_KEPT_KEY = '@habitcents_quote_seq_kept';
+
+/** Shared getter: an unreadable or missing value defaults to 0, never throws. */
+async function getQuoteSeq(key: string): Promise<number> {
+  try {
+    const value = await AsyncStorage.getItem(key);
+    if (value === null) return 0;
+    const parsed = Number(value);
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
+  } catch (error) {
+    console.error(`Error reading quote sequence ${key}:`, error);
+    return 0;
+  }
+}
+
+async function setQuoteSeq(key: string, value: number): Promise<void> {
+  try {
+    await AsyncStorage.setItem(key, String(value));
+  } catch (error) {
+    console.error(`Error saving quote sequence ${key}:`, error);
+  }
+}
+
+/** Get the persisted Spent-view quote counter. Defaults to 0. */
+export function getSpentQuoteSeq(): Promise<number> {
+  return getQuoteSeq(QUOTE_SEQ_SPENT_KEY);
+}
+
+/** Persist the Spent-view quote counter. */
+export function setSpentQuoteSeq(value: number): Promise<void> {
+  return setQuoteSeq(QUOTE_SEQ_SPENT_KEY, value);
+}
+
+/** Get the persisted Kept-view quote counter. Defaults to 0. */
+export function getKeptQuoteSeq(): Promise<number> {
+  return getQuoteSeq(QUOTE_SEQ_KEPT_KEY);
+}
+
+/** Persist the Kept-view quote counter. */
+export function setKeptQuoteSeq(value: number): Promise<void> {
+  return setQuoteSeq(QUOTE_SEQ_KEPT_KEY, value);
 }

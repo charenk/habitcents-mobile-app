@@ -39,7 +39,7 @@ export function CurrencySheet({ visible, onClose }: CurrencySheetProps): React.J
   return (
     <Sheet visible={visible} onClose={onClose} accessibilityLabel={strings.settings.currencySheetTitle}>
       <View style={styles.content}>
-        <Text style={styles.title} accessibilityRole="header">
+        <Text style={styles.title} accessibilityRole="header" maxFontSizeMultiplier={1.5}>
           {strings.settings.currencySheetTitle}
         </Text>
 

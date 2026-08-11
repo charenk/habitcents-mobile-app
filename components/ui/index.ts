@@ -7,7 +7,6 @@ export type { IconName } from './Icon';
 export { EmojiTile } from './EmojiTile';
 export { AmountDisplay } from './AmountDisplay';
 export { AmountField } from './AmountField';
-export { Keypad } from './Keypad';
 export { Button } from './Button';
 export { Sheet } from './Sheet';
 export { ConfirmSheet } from './ConfirmSheet';

@@ -131,10 +131,10 @@ describe('PickOneSheet ungated', () => {
     expect(view.getByText('Your buys ranged $4.00 to $44.00.')).toBeTruthy();
   });
 
-  it('keeps the keypad and the real primary action', async () => {
+  it('keeps the native amount field and the real primary action', async () => {
     const view = await renderSheet();
 
-    expect(view.getByLabelText('5')).toBeTruthy();
+    expect(view.getByLabelText(/^One skip keeps,/)).toBeTruthy();
     expect(view.getByText(strings.habitLogging.pickOneCadenceNoteDaily)).toBeTruthy();
     const start = view.getByRole('button', { name: strings.habitLogging.startBreakingIt });
     expect(start.props.accessibilityState?.disabled).toBeFalsy();

@@ -102,7 +102,7 @@ export function AddCategoryModal({
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.title} accessibilityRole="header">
+        <Text style={styles.title} accessibilityRole="header" maxFontSizeMultiplier={1.5}>
           {title}
         </Text>
 

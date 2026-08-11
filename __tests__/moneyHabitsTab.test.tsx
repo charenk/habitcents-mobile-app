@@ -172,6 +172,28 @@ describe('Money > Habits tab', () => {
     expect(view.getByRole('button', { name: strings.habitLogging.startBreakingIt })).toBeTruthy();
   });
 
+  // U12b: pins this call site's placement value (habit_gate_money), one of
+  // five habit-gate placements that used to share the bare 'habit_gate'
+  // string (utils/analytics.ts PaywallPlacement).
+  it('at the free habit limit, the gate CTA routes to the money placement', async () => {
+    const active = habit('changing', { id: 'h-active', name: 'Rideshare Habit' });
+    const discovered = habit('discovered', { id: 'h-discovered', name: 'Coffee Habit' });
+    await saveHabits([active, discovered]);
+
+    const view = await renderMoney();
+    await openHabitsSegment(view);
+
+    const breakButton = view.getByRole('button', {
+      name: `${strings.insights.leakActionBreak}, Coffee Habit`,
+    });
+    await tap(breakButton);
+
+    expect(view.getByText(strings.habitLogging.gateTitle)).toBeTruthy();
+    await tap(view.getByText(strings.habitLogging.gateUpgradeCta));
+
+    expect(mockPush).toHaveBeenCalledWith('/paywall?placement=habit_gate_money');
+  });
+
   it('pushes the habit detail route when Breaking is tapped', async () => {
     const changing = habit('changing', { id: 'h-changing', name: 'Rideshare Habit' });
     await saveHabits([changing]);

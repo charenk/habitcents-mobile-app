@@ -17,7 +17,7 @@
  * The two tabs deliberately show the same rows: Money is where you manage a
  * leak, Insights is where you notice it.
  */
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -43,11 +43,47 @@ import type { Expense } from '@/types/expense';
 import { groupExpensesByDate } from '@/data/expensesMock';
 import { isHabitLimitReached } from '@/utils/habitLogging';
 import { getEntitlement } from '@/utils/purchases';
-import { computeUpcoming } from '@/utils/recurring';
+import { computeUpcoming, type UpcomingItem } from '@/utils/recurring';
+import { getUpcomingWindowDays, setUpcomingWindowDays } from '@/utils/storage';
+import { DEFAULT_UPCOMING_WINDOW_DAYS, type UpcomingWindowDays } from '@/utils/upcomingWindow';
 
-const UPCOMING_WINDOW_DAYS = 60;
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 type MoneyView = 'spent' | 'upcoming' | 'habits';
+
+/**
+ * Upcoming advances past a due-today occurrence (ADR 0024, U11): by the time
+ * this screen renders, the materializer (contexts/ExpensesContext.tsx) has
+ * already turned any occurrence due today into a real Spent row, so showing
+ * it again here would resurrect the pre-ADR-0024 "same row in both tabs" bug.
+ *
+ * `computeUpcoming` itself stays untouched (it's pure and its own tests pin
+ * "on/after from" -- this is a display-only adjustment, not a projection
+ * change): an item whose earliest occurrence is today gets re-pointed at its
+ * next occurrence already present in `occurrencesInWindow` (nothing here
+ * re-projects anything), or dropped if today's was its only occurrence in the
+ * window. `nextDate`/`daysUntil` stay relative to real "today" throughout, so
+ * the "Tomorrow" / "in N days" pill keeps meaning what it says. Re-pointing
+ * also trims `occurrencesInWindow` down to future dates only, which is the
+ * same list #95's payments count sums over -- so "how many payments" now
+ * counts only future ones for free, without touching upcomingWindowTotal/
+ * upcomingWindowPaymentsCount themselves.
+ */
+function advancePastToday(items: UpcomingItem[], todayMid: number): UpcomingItem[] {
+  const out: UpcomingItem[] = [];
+  for (const item of items) {
+    if (item.nextDate.getTime() > todayMid) {
+      out.push(item);
+      continue;
+    }
+    const future = item.occurrencesInWindow.filter((d) => d.getTime() > todayMid);
+    if (future.length === 0) continue; // today's due date was the only one in the window
+    const nextDate = future[0];
+    const daysUntil = Math.round((nextDate.getTime() - todayMid) / MS_PER_DAY);
+    out.push({ ...item, nextDate, daysUntil, occurrencesInWindow: future });
+  }
+  return out;
+}
 
 export default function MoneyScreen() {
   const insets = useSafeAreaInsets();
@@ -67,7 +103,28 @@ export default function MoneyScreen() {
   const [view, setView] = useState<MoneyView>('spent');
   const [editing, setEditing] = useState<Expense | null>(null);
   const [addUpcomingVisible, setAddUpcomingVisible] = useState(false);
+  const [editingUpcoming, setEditingUpcoming] = useState<Expense | null>(null);
   const [pickOneHabitId, setPickOneHabitId] = useState<string | null>(null);
+  // The 2 weeks / 1 month / 3 months window (U8). Starts at the default and is
+  // replaced by the persisted value once storage answers, so the very first
+  // paint (before that async read resolves) already shows a real preset
+  // rather than a placeholder state.
+  const [windowDays, setWindowDays] = useState<UpcomingWindowDays>(DEFAULT_UPCOMING_WINDOW_DAYS);
+
+  useEffect(() => {
+    let cancelled = false;
+    getUpcomingWindowDays().then((days) => {
+      if (!cancelled) setWindowDays(days);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const handleWindowDaysChange = useCallback((days: UpcomingWindowDays) => {
+    setWindowDays(days);
+    void setUpcomingWindowDays(days);
+  }, []);
 
   // Spent is history only: everything dated after the end of today belongs to
   // Upcoming, where the projection engine owns it.
@@ -79,10 +136,18 @@ export default function MoneyScreen() {
     );
   }, [expenses]);
 
-  const upcoming = useMemo(
-    () => computeUpcoming(expenses, UPCOMING_WINDOW_DAYS),
-    [expenses]
-  );
+  const upcoming = useMemo(() => {
+    const todayMid = new Date();
+    todayMid.setHours(0, 0, 0, 0);
+    return advancePastToday(computeUpcoming(expenses, windowDays), todayMid.getTime());
+  }, [expenses, windowDays]);
+
+  const upcomingSheetVisible = addUpcomingVisible || editingUpcoming !== null;
+
+  const closeUpcomingSheet = useCallback(() => {
+    setAddUpcomingVisible(false);
+    setEditingUpcoming(null);
+  }, []);
 
   // Habits: every leak worth an action, biggest monthly drain first. Built
   // identically to Insights' leakRows (app/(tabs)/insights.tsx) so the two
@@ -159,8 +224,10 @@ export default function MoneyScreen() {
         {view === 'upcoming' && (
           <UpcomingList
             items={upcoming}
-            windowDays={UPCOMING_WINDOW_DAYS}
+            windowDays={windowDays}
+            onWindowDaysChange={handleWindowDaysChange}
             onAdd={() => setAddUpcomingVisible(true)}
+            onEditItem={(expense) => setEditingUpcoming(expense)}
           />
         )}
         {view === 'habits' && (
@@ -180,8 +247,10 @@ export default function MoneyScreen() {
         onClose={() => setEditing(null)}
       />
       <AddUpcomingSheet
-        visible={addUpcomingVisible}
-        onClose={() => setAddUpcomingVisible(false)}
+        mode={editingUpcoming ? 'edit' : 'add'}
+        visible={upcomingSheetVisible}
+        expense={editingUpcoming}
+        onClose={closeUpcomingSheet}
       />
       <PickOneSheet
         visible={!!pickOneHabit}
@@ -193,7 +262,7 @@ export default function MoneyScreen() {
         onStart={handleStart}
         onStartTrial={() => {
           setPickOneHabitId(null);
-          router.push('/paywall?placement=habit_gate');
+          router.push('/paywall?placement=habit_gate_money');
         }}
       />
     </View>

@@ -68,7 +68,7 @@ export function ConfirmSheet({
   return (
     <Sheet visible={visible} onClose={onClose} accessibilityLabel={title}>
       <View style={styles.content}>
-        <Text style={styles.title} accessibilityRole="header">
+        <Text style={styles.title} accessibilityRole="header" maxFontSizeMultiplier={1.5}>
           {title}
         </Text>
         <Text style={styles.body}>{body}</Text>

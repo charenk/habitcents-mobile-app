@@ -17,8 +17,9 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 
 const mockPush = jest.fn();
 const mockReplace = jest.fn();
+const mockBack = jest.fn();
 jest.mock('expo-router', () => ({
-  useRouter: () => ({ push: mockPush, replace: mockReplace }),
+  useRouter: () => ({ push: mockPush, replace: mockReplace, back: mockBack }),
 }));
 
 jest.mock('@/utils/analytics', () => ({ track: jest.fn() }));
@@ -84,6 +85,7 @@ beforeEach(() => {
   trackMock.mockClear();
   mockPush.mockClear();
   mockReplace.mockClear();
+  mockBack.mockClear();
 });
 
 afterEach(cleanup);
@@ -131,5 +133,14 @@ describe('Onboarding intent picker', () => {
     await pressText(view, strings.onboarding.skipForNow);
     expect(trackMock).toHaveBeenCalledWith('onboarding_intent_skipped', {});
     expect(mockReplace).toHaveBeenCalledWith('/(tabs)');
+  });
+
+  // Build 8 decision: this screen was previously only reachable back to
+  // welcome via the invisible edge swipe. It now carries the house back
+  // affordance (ScreenHeader's 40pt pill), which calls router.back().
+  it('the back pill calls router.back()', async () => {
+    const view = await renderScreen();
+    await pressLabel(view, strings.common.back);
+    expect(mockBack).toHaveBeenCalledTimes(1);
   });
 });

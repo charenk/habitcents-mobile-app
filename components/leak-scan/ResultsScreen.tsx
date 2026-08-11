@@ -29,7 +29,7 @@ import {
   runScan,
 } from '@/utils/leakScan';
 import { spendableRows } from '@/utils/leakScan/netting';
-import { seedLastDays, recurringToExpenses } from '@/utils/leakScan/importWrite';
+import { seedLastDays, recurringToExpenses, toAddExpenseInput } from '@/utils/leakScan/importWrite';
 import { scanResultToSummary } from '@/utils/leakScan/summarize';
 import type { ScanFileInput } from '@/utils/leakScan';
 import type { PulseCell } from '@/utils/leakScan/spendPulse';
@@ -272,17 +272,11 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
   const handleSaveProjection = useCallback(
     async (remindBefore: Record<string, boolean>) => {
       const recurringExpenses = recurringToExpenses(result, { remindBefore });
+      // toAddExpenseInput (utils/leakScan/importWrite.ts) carries source and
+      // importId through, not just the fields a manual log would set -- the
+      // fix for undo previously removing nothing (see its own doc comment).
       for (const exp of recurringExpenses) {
-        await addExpense({
-          title: exp.title,
-          amount: exp.amount,
-          category: exp.category,
-          merchant: exp.merchant,
-          date: exp.date,
-          isRecurring: exp.isRecurring,
-          recurrence: exp.recurrence,
-          reminderEnabled: exp.reminderEnabled,
-        });
+        await addExpense(toAddExpenseInput(exp));
       }
     },
     [result, addExpense]
@@ -303,15 +297,7 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
   const handleBringInDays = useCallback(async () => {
     const seeded = seedLastDays(result, BRING_IN_DAYS);
     for (const exp of seeded) {
-      await addExpense({
-        title: exp.title,
-        amount: exp.amount,
-        category: exp.category,
-        merchant: exp.merchant,
-        date: exp.date,
-        isRecurring: false,
-        reminderEnabled: false,
-      });
+      await addExpense(toAddExpenseInput(exp));
     }
     track('scan_seed_applied', { rows: seeded.length, days: BRING_IN_DAYS });
     // This is the scan door's only exit into the app; it must complete
@@ -335,9 +321,19 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
   }, []);
 
   if (undone) {
+    // Dead-end fix (design/leakscan-migration, U12a): this used to be a bare
+    // confirmation with no exit except the invisible iOS edge swipe. The
+    // confirmation line is unchanged; the only addition is a way out.
+    // router.replace (not push) so a repeat visit to this state never stacks
+    // another copy of the tab navigator underneath.
     return (
       <View style={[styles.screen, styles.undoneCenter]}>
-        <Text style={styles.undoneText}>This import has been undone.</Text>
+        <Text style={styles.undoneText}>{strings.leakScan.undoneMessage}</Text>
+        <Button
+          label={strings.leakScan.undoneContinue}
+          onPress={() => router.replace('/(tabs)')}
+          style={styles.undoneButton}
+        />
       </View>
     );
   }
@@ -489,7 +485,7 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
         onStartTrial={() => {
           setPickOneHabit(null);
           setPickOneCandidate(null);
-          router.push('/paywall?placement=habit_gate');
+          router.push('/paywall?placement=habit_gate_scan');
         }}
       />
     </View>
@@ -572,11 +568,17 @@ function createStyles(theme: AppTheme) {
     undoneCenter: {
       alignItems: 'center',
       justifyContent: 'center',
+      paddingHorizontal: 24,
     },
     undoneText: {
       fontSize: typeScale.body,
       fontFamily: theme.fonts.ui,
       color: theme.slate,
+      textAlign: 'center',
+      marginBottom: 20,
+    },
+    undoneButton: {
+      alignSelf: 'stretch',
     },
   });
 }

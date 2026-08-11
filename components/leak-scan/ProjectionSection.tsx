@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Switch } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { formatDate } from '@/utils/dates';
 import { useCurrency } from '@/contexts/CurrencyContext';
-import type { AppTheme } from '@/constants/theme';
+import { radii, typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import { TierBadge } from './TierBadge';
 import { categoryDisplayLabel } from '@/utils/leakScanBridge';
@@ -123,30 +123,31 @@ export function ProjectionSection({ summary, onSave }: ProjectionSectionProps) {
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     container: {
-      backgroundColor: theme.surface,
-      borderRadius: 14,
-      borderWidth: 0.5,
-      borderColor: theme.border,
+      backgroundColor: theme.white,
+      borderRadius: radii.card,
+      borderWidth: 1,
+      borderColor: theme.cloud,
       padding: 14,
     },
     title: {
-      fontSize: 15,
-      fontWeight: '700',
-      color: theme.text,
+      fontSize: typeScale.body,
+      fontFamily: theme.fonts.uiBold,
+      color: theme.ink,
       marginBottom: 10,
     },
     placeholder: {
-      fontSize: 13,
-      color: theme.textSecondary,
+      fontSize: typeScale.secondary,
+      fontFamily: theme.fonts.ui,
+      color: theme.slate,
     },
     group: {
       marginBottom: 14,
     },
     groupLabel: {
-      // Readable section header, so textSecondary meets the 4.5:1 floor (spec 09 §1.5).
-      fontSize: 11,
-      fontWeight: '700',
-      color: theme.textSecondary,
+      // Readable section header, so slate meets the 4.5:1 floor (spec 09 §1.5).
+      fontSize: typeScale.eyebrow,
+      fontFamily: theme.fonts.uiBold,
+      color: theme.slate,
       textTransform: 'uppercase',
       letterSpacing: 0.4,
       marginBottom: 8,
@@ -157,33 +158,34 @@ function createStyles(theme: AppTheme) {
       alignItems: 'flex-start',
       paddingVertical: 8,
       borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: theme.border,
+      borderBottomColor: theme.hairlineSubtle,
     },
     itemInfo: {
       flex: 1,
     },
     itemName: {
-      fontSize: 14,
-      fontWeight: '600',
-      color: theme.text,
+      fontSize: typeScale.secondary,
+      fontFamily: theme.fonts.uiSemibold,
+      color: theme.ink,
     },
     itemNext: {
-      // Next payment date is informational, so textSecondary for AA contrast (spec 09 §1.5).
-      fontSize: 11,
-      color: theme.textSecondary,
+      // Next payment date is informational, so slate for AA contrast (spec 09 §1.5).
+      fontSize: typeScale.eyebrow,
+      fontFamily: theme.fonts.ui,
+      color: theme.slate,
       marginTop: 2,
     },
     flagPill: {
       backgroundColor: theme.tierLikelyBg,
       paddingHorizontal: 8,
       paddingVertical: 3,
-      borderRadius: 999,
+      borderRadius: radii.pill,
       alignSelf: 'flex-start',
       marginTop: 4,
     },
     flagPillText: {
       fontSize: 10.5,
-      fontWeight: '700',
+      fontFamily: theme.fonts.uiBold,
       color: theme.tierLikelyInk,
     },
     itemActions: {
@@ -191,9 +193,9 @@ function createStyles(theme: AppTheme) {
       gap: 4,
     },
     itemAmount: {
-      fontSize: 14,
-      fontWeight: '600',
-      color: theme.text,
+      fontSize: typeScale.secondary,
+      fontFamily: theme.fonts.uiSemibold,
+      color: theme.ink,
       fontVariant: ['tabular-nums'],
     },
     remindRow: {
@@ -202,25 +204,27 @@ function createStyles(theme: AppTheme) {
       gap: 6,
     },
     remindLabel: {
-      // Toggle label is readable copy, so textSecondary for AA contrast (spec 09 §1.5).
+      // Toggle label is readable copy, so slate for AA contrast (spec 09 §1.5).
       fontSize: 10.5,
-      color: theme.textSecondary,
+      fontFamily: theme.fonts.ui,
+      color: theme.slate,
     },
     buffer: {
-      fontSize: 12,
-      color: theme.textSecondary,
+      fontSize: typeScale.caption,
+      fontFamily: theme.fonts.ui,
+      color: theme.slate,
       marginBottom: 12,
     },
     saveButton: {
       backgroundColor: theme.primary,
       minHeight: 46,
-      borderRadius: 12,
+      borderRadius: radii.control,
       alignItems: 'center',
       justifyContent: 'center',
     },
     saveButtonText: {
       fontSize: 15,
-      fontWeight: '700',
+      fontFamily: theme.fonts.uiBold,
       color: theme.white,
     },
   });
