@@ -8,7 +8,7 @@
  * a manual log (id, valid date, category, amount cents).
  */
 
-import type { Expense, ExpenseCategory, RecurrenceFrequency } from '@/types/expense';
+import type { AddExpenseInput, Expense, ExpenseCategory, RecurrenceFrequency } from '@/types/expense';
 import type { RecurringItem, ScanResult, ScanRow } from './types';
 import { spendableRows } from './netting';
 
@@ -107,6 +107,37 @@ export function recurringToExpenses(
       iconVariant: 'yellow',
     };
   });
+}
+
+/**
+ * Maps an Expense this file already built (rowToExpense / recurringToExpenses)
+ * onto the AddExpenseInput shape ExpensesContext.addExpense expects. The
+ * results screen write sites (handleSaveProjection, handleBringInDays) call
+ * this instead of hand-listing fields, which is the fix for a real bug: both
+ * write sites used to list only a subset of fields (title/amount/category/
+ * merchant/date/isRecurring/recurrence/reminderEnabled), silently dropping
+ * `source` and `importId` on the way into storage. Every row written that way
+ * defaulted to source 'manual' with no importId, so ResultsScreen's undo
+ * (which filters expenses by importId, see undoImport below) could never find
+ * them -- "Undo this import" removed nothing. `class` isn't carried here: the
+ * write path doesn't support it yet (AddExpenseInput has no `class` field),
+ * an existing gap outside this fix's scope.
+ */
+export function toAddExpenseInput(exp: Expense): AddExpenseInput {
+  return {
+    title: exp.title,
+    amount: exp.amount,
+    category: exp.category,
+    categoryId: exp.categoryId,
+    merchant: exp.merchant,
+    date: exp.date,
+    isRecurring: exp.isRecurring,
+    recurrence: exp.recurrence,
+    recurrenceRule: exp.recurrenceRule,
+    reminderEnabled: exp.reminderEnabled,
+    source: exp.source,
+    importId: exp.importId,
+  };
 }
 
 /**

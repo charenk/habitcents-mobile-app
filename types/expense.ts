@@ -29,7 +29,12 @@ export type ExpenseClass = 'spend' | 'transfer' | 'income' | 'cash';
 // rows come from the onboarding Leak Audit (P2-1, spec 02 section 5): a
 // selected subscription chip seeds one recurring expense tagged this way, so
 // re-running the audit can match on source + chip id rather than duplicate.
-export type ExpenseSource = 'manual' | 'import' | 'audit';
+// 'recurring' rows are written by the materializer (ADR 0024, U11, see
+// utils/materializer.ts): a real expense record for one due occurrence of a
+// recurring parent, carrying `parentId`. Never itself recurring (no
+// isRecurring/recurrenceRule), so the materializer's own output can never be
+// mistaken for a schedule to plan from.
+export type ExpenseSource = 'manual' | 'import' | 'audit' | 'recurring';
 
 // How often a recurring expense repeats. Drives the real Upcoming projection.
 // biweekly and annual are import-only cadences surfaced by the Leak Scan
@@ -89,6 +94,12 @@ export type Expense = {
   remindBefore?: boolean;   // Leak Scan intent capture: reminder the day before (no delivery in v1)
   source?: ExpenseSource;   // Defaults to 'manual' when absent
   importId?: string;        // Set on rows written by a Leak Scan import, for undo
+  // Set on a materialized recurring child (source 'recurring'): the id of the
+  // recurring parent row this occurrence belongs to (ADR 0024, U11). Absent on
+  // every other row. Deleting the parent leaves children with their parentId
+  // pointing at a now-gone id, which is fine: they are history, not a live
+  // reference that needs to resolve.
+  parentId?: string;
   iconVariant: 'yellow' | 'green';
 };
 
@@ -110,6 +121,15 @@ export type AddExpenseInput = {
   reminderEnabled: boolean;
   reminderTime?: string;
   // Defaults to 'manual' when absent (ADR 0006). The onboarding Leak Audit
-  // (P2-1) passes 'audit' when seeding a chip as a recurring expense.
+  // (P2-1) passes 'audit' when seeding a chip as a recurring expense; the
+  // materializer (ADR 0024) passes 'recurring' with `parentId` set.
   source?: ExpenseSource;
+  // Set on rows a Leak Scan import writes, so undo (filtering on importId)
+  // can find them. Carried here so the results-screen write sites no longer
+  // have to hand-list every AddExpenseInput field (see
+  // utils/leakScan/importWrite.ts toAddExpenseInput).
+  importId?: string;
+  // Set by the materializer on a child it writes (ADR 0024, U11); see
+  // Expense.parentId.
+  parentId?: string;
 };

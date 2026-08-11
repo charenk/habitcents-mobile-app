@@ -25,6 +25,14 @@ const FALLBACK_EVERY_N_DAYS = 30;
 /** Iteration caps, so a far-past date with a bad clock can never loop forever. */
 const MAX_ADVANCE_STEPS = 1000;
 const MAX_OCCURRENCES = 400;
+/**
+ * Materializer catch-up cap (ADR 0024, U11): generous headroom for a parent
+ * that hasn't run in a long time (e.g. a weekly bill untouched for years),
+ * while still bounding a corrupt/looping rule. Higher than MAX_OCCURRENCES
+ * (a display-window cap) because catch-up walks from the parent's own date,
+ * which can be arbitrarily old, not from a bounded "next N days" window.
+ */
+const MAX_MATERIALIZE_OCCURRENCES = 2000;
 
 export type UpcomingItem = {
   expense: Expense;
@@ -274,6 +282,54 @@ export function occurrencesWithin(expense: Expense, from: Date, withinDays: numb
     cursor = advance(cursor, rule);
   }
   return out;
+}
+
+/**
+ * Every occurrence of a recurring expense strictly after its OWN stored date
+ * (the historical first spend) and not after `today` (ADR 0024, U11): each
+ * one becomes a real written expense record in Money > Spent. A 'once'
+ * schedule or a plain non-recurring spend never materializes anything -- its
+ * own row already IS the full history. `today` defaults to now so a caller
+ * that doesn't care about a fixed clock can omit it, matching this file's
+ * other "now unless told otherwise" functions.
+ *
+ * PURE: reuses the exact `startFor`/`advance` stepping every projection in
+ * this file uses, so a materialized child's date is byte-identical to what
+ * `nextOccurrence` would have projected for that same cycle. Calling this
+ * twice with the same `expense`/`today` always returns the same dates --
+ * idempotency against duplicate writes is the CALLER's job (see
+ * utils/materializer.ts planMaterialization, which dedupes against already-
+ * materialized children and tombstones before this list is ever turned into
+ * a write).
+ */
+export function occurrencesToMaterialize(expense: Expense, today: Date = new Date()): Date[] {
+  const rule = resolveRule(expense);
+  if (!rule || rule.type === 'once') return [];
+
+  const parentTime = atMidnight(expense.date).getTime();
+  const todayTime = atMidnight(today).getTime();
+  const out: Date[] = [];
+
+  let cursor = startFor(expense, rule);
+  for (let i = 0; i < MAX_MATERIALIZE_OCCURRENCES; i++) {
+    if (cursor.getTime() > todayTime) break;
+    if (cursor.getTime() > parentTime) out.push(cursor);
+    cursor = advance(cursor, rule);
+  }
+  return out;
+}
+
+/**
+ * Whether a Spent-ledger row should carry the small cycle indicator (ADR
+ * 0024, U11): a materialized recurring child (source 'recurring'), or a
+ * parent row whose own schedule is still active (a resolvable rule that
+ * isn't 'once' -- the historical first spend of a recurring bill). A plain
+ * user-added spend or a one-time upcoming item shows nothing.
+ */
+export function isRecurringLedgerRow(expense: Expense): boolean {
+  if (expense.source === 'recurring') return true;
+  const rule = resolveRule(expense);
+  return !!rule && rule.type !== 'once';
 }
 
 /**

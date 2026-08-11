@@ -735,6 +735,10 @@ export const strings = {
     // full EmptyState primitive, so past days stay visible below it.
     spentTodayEmpty: "Nothing yet today. Add it if you spent, and enjoy it if you didn't.",
     spentEditHint: 'Tap a row to edit or delete it.',
+    // Cycle indicator (ADR 0024, U11): appended to a Spent/Today row's own
+    // accessible label so the glyph's meaning survives VoiceOver rather than
+    // relying on shape alone being noticed.
+    recurringRowSuffix: 'recurring',
     spentEmptyTitle: 'Nothing logged yet',
     spentEmptyBody: 'Log your first in about 10 seconds. Amount first, then tap a category.',
     // Upcoming

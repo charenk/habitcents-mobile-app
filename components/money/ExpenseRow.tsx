@@ -10,10 +10,17 @@
  * minus sign carried no information. Matches Upcoming's unsigned amounts
  * (components/money/UpcomingList.tsx) so the drawer never mixes signed and
  * unsigned figures.
+ *
+ * ADR 0024 (U11): a row that's part of a recurring schedule -- a materialized
+ * child OR the parent's own historical-first-spend row -- carries a small
+ * cycle glyph in the trailing area, next to the amount. Shape, not color
+ * alone (a Repeat icon, not a tint), and the row's accessible label spells it
+ * out too, so the meaning survives VoiceOver.
  */
 import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { EmojiTile } from '@/components/ui/EmojiTile';
+import { Icon } from '@/components/ui/Icon';
 import { categoryEmoji, categoryIdentityColor } from '@/constants/categoryEmoji';
 import { typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
@@ -21,6 +28,7 @@ import { strings } from '@/constants/strings';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import type { Expense } from '@/types/expense';
+import { isRecurringLedgerRow } from '@/utils/recurring';
 
 export type ExpenseRowProps = {
   expense: Expense;
@@ -37,6 +45,14 @@ export function ExpenseRow({ expense, onPress, subtitle }: ExpenseRowProps): Rea
   const amountLabel = format(expense.amount);
   const secondary = subtitle ?? expense.time;
   const name = expense.title || expense.category;
+  const recurring = isRecurringLedgerRow(expense);
+
+  const baseLabel = onPress
+    ? strings.today.editExpenseLabel(name, amountLabel)
+    : `${name}, ${amountLabel}`;
+  const accessibilityLabel = recurring
+    ? `${baseLabel}, ${strings.money.recurringRowSuffix}`
+    : baseLabel;
 
   const body = (
     <>
@@ -55,6 +71,11 @@ export function ExpenseRow({ expense, onPress, subtitle }: ExpenseRowProps): Rea
           </Text>
         ) : null}
       </View>
+      {/* Decorative: the row's own accessibilityLabel above already spells
+          out "recurring" in words, so this glyph doesn't need its own
+          accessible node -- the parent's `accessible` + accessibilityLabel
+          already collapses everything below it into one VoiceOver stop. */}
+      {recurring ? <Icon name="Repeat" size={14} color={theme.slate} /> : null}
       <Text style={styles.amount} numberOfLines={1}>
         {amountLabel}
       </Text>
@@ -63,7 +84,7 @@ export function ExpenseRow({ expense, onPress, subtitle }: ExpenseRowProps): Rea
 
   if (!onPress) {
     return (
-      <View style={styles.row} accessible accessibilityLabel={`${name}, ${amountLabel}`}>
+      <View style={styles.row} accessible accessibilityLabel={accessibilityLabel}>
         {body}
       </View>
     );
@@ -73,7 +94,7 @@ export function ExpenseRow({ expense, onPress, subtitle }: ExpenseRowProps): Rea
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={strings.today.editExpenseLabel(name, amountLabel)}
+      accessibilityLabel={accessibilityLabel}
       style={({ pressed }) => [styles.row, pressed ? styles.rowPressed : null]}
     >
       {body}
