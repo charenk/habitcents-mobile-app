@@ -30,7 +30,10 @@ export default function LeakScanRoute() {
     // (P2-1 onboarding two-door fork), not yet registered. Routing to the
     // fork's own entry keeps this a stable anchor regardless of that build's
     // internal step routing.
-    router.push('/onboarding/welcome');
+    // router.replace, not push (design/leakscan-migration, U12a dead-end
+    // fix): a push here let the stack grow welcome > intent > leak-scan >
+    // welcome on a repeat visit through this same fork; replace keeps it flat.
+    router.replace('/onboarding/welcome');
   }, [router]);
 
   const handleLogByHand = useCallback(async () => {
@@ -40,6 +43,13 @@ export default function LeakScanRoute() {
     router.push('/(tabs)/money');
   }, [router, completeScanOnboarding]);
 
+  // The leak-scan flow's only visible back affordance before a scan produces
+  // results (design/leakscan-migration, U12a): previously the invisible iOS
+  // edge swipe was the sole way out of intake or graceful failure.
+  const handleBack = useCallback(() => {
+    router.back();
+  }, [router]);
+
   if (state.stage === 'done' && state.result) {
     if (state.result.gracefulFailure) {
       return (
@@ -47,11 +57,14 @@ export default function LeakScanRoute() {
           onTryDifferentExport={handleTryDifferentExport}
           onStartLeakAudit={handleStartLeakAudit}
           onLogByHand={handleLogByHand}
+          onBack={handleBack}
         />
       );
     }
     return <ResultsScreen result={state.result} files={state.files} />;
   }
 
-  return <IntakeScreen state={state} onChooseFiles={pickAndScan} onAnswer={answerQuestion} />;
+  return (
+    <IntakeScreen state={state} onChooseFiles={pickAndScan} onAnswer={answerQuestion} onBack={handleBack} />
+  );
 }

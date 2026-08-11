@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useOnboarding } from '@/contexts/OnboardingContext';
-import { Button, Icon } from '@/components/ui';
+import { Button, Icon, ScreenHeader } from '@/components/ui';
 import type { IconName } from '@/components/ui';
 import type { AppTheme } from '@/constants/theme';
 import { radii, typeScale } from '@/constants/theme';
@@ -102,7 +102,14 @@ export default function OnboardingIntentScreen() {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+    <View style={[styles.container, { paddingBottom: insets.bottom }]}>
+      {/* House back affordance (ScreenHeader's 40pt pill pattern, same as every
+          other pushed route): welcome.tsx pushes this screen, so there was
+          previously no visible way back besides the invisible edge swipe.
+          No title prop here on purpose, the serif title below stays part of
+          the screen content per the existing layout; ScreenHeader supplies
+          only the back pill and its own top inset. */}
+      <ScreenHeader onBack={() => router.back()} />
       <View style={styles.content}>
         <Text style={styles.title} accessibilityRole="header">
           {strings.onboarding.intentTitle}

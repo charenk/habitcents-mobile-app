@@ -2,6 +2,12 @@
 // Pure relocation: values must match the exact original wording. Do not reword.
 // Import with: import { strings } from '@/constants/strings';
 
+// Today quote rotation (U6): a single quote, plain text plus an optional
+// attribution. `by` is omitted for the unattributed lines rather than set to
+// an empty string, so ViewQuote's "attribution when present" check
+// (components/today/ViewQuote.tsx) is a plain truthiness check.
+export type TodayQuote = { text: string; by?: string };
+
 export const strings = {
   common: {
     save: 'Save',
@@ -10,6 +16,7 @@ export const strings = {
     ok: 'OK',
     back: 'Back',
     keep: 'Keep',
+    close: 'Close',
   },
   // Tab bar (redesign step 02): Today / Money / Insights / Categories.
   tabs: {
@@ -263,16 +270,23 @@ export const strings = {
     editCategoryLabel: 'Edit category',
     thisMonth: 'this month',
     vsLastMonth: (percent: number) => `${percent}% vs last month`,
-    transactions: 'transactions',
-    avgTransaction: 'avg transaction',
-    sixMonthTrend: '6-Month Trend',
-    topMerchants: 'Top Merchants',
-    transactionCount: (count: number) => `${count} transaction${count !== 1 ? 's' : ''}`,
-    recentTransactions: 'Recent Transactions',
+    // U12b: off "transactions" (house rule: the app calls things "expenses"
+    // or "logs", never "transactions"). The count stat reads "logs"; the
+    // mean-amount stat reads "average" ("average log" read oddly paired with
+    // a dollar figure, so the noun was dropped).
+    logsStat: 'logs',
+    averageStat: 'average',
+    // Eyebrows (section headers below): all-caps via the style, sentence
+    // case here so VoiceOver reads them as words (design/PATTERN_VOCABULARY.md).
+    sixMonthTrend: '6-month trend',
+    topMerchants: 'Top merchants',
+    logCount: (count: number) => `${count} log${count !== 1 ? 's' : ''}`,
+    recentLogs: 'Recent logs',
     // Rewritten off "transactions" (house rule: the app calls things
     // "expenses" or "logs", never "transactions").
     noExpensesLogged: 'Nothing logged in this category yet.',
-    transactionDate: (date: string, time: string) => `${date} at ${time}`,
+    trendEmpty: 'No spending to chart yet.',
+    logTimestamp: (date: string, time: string) => `${date} at ${time}`,
   },
   reports: {
     title: 'Reports',
@@ -406,8 +420,14 @@ export const strings = {
       'one skipped impulse buy keeps $12.50',
     ],
     // 3.2 Intent picker (redesign step 03, screen 2; replaces the two-door fork)
-    intentTitle: 'What brings you here?',
-    intentSub: 'Pick one. You can do all three later.',
+    // Build 8 decision: action-framed title ("How would you like to start?"
+    // replaces "What brings you here?"); subtitle drops "You can do all three
+    // later." entirely. This title is a question, not a statement, so it
+    // keeps its question mark rather than taking the serif screen-title
+    // period (PATTERN_VOCABULARY.md's period rule assumes a declarative
+    // title; it does not apply to an interrogative one).
+    intentTitle: 'How would you like to start?',
+    intentSub: 'Pick one.',
     // Eyebrows are stored sentence case and rendered uppercase by the style, so
     // screen readers announce them as sentences.
     intentTrackEyebrow: '10 seconds to start',
@@ -533,6 +553,10 @@ export const strings = {
     undoImport: 'Undo this import',
     undoConfirmTitle: 'Undo this import?',
     undoConfirmMessage: 'This removes everything this import added.',
+    // Post-undo exit (U12a dead-end fix): this used to be a bare confirmation
+    // with no way out except the invisible iOS edge swipe.
+    undoneMessage: 'This import has been undone.',
+    undoneContinue: 'Continue to HabitCents',
     // Post-scan handoff (spec 5 post-scan, visual spec 12).
     // Spec 05 proposed "Continue to the app" here. Kept as a write-labeled verb
     // deliberately (Charen, 2026-07-31): this button writes expenses before it
@@ -650,7 +674,13 @@ export const strings = {
     quickLogMoreLabel: 'More categories',
     quickLogCategoryLabel: (name: string) => `Log a ${name} expense`,
     // Logged today list
-    loggedTodayEyebrow: 'Logged today',
+    // Renamed (decision D3, U6): "Logged today" -> "Today's log". Component
+    // uppercases it (components/money/LoggedTodayList.tsx).
+    loggedTodayEyebrow: "Today's log",
+    // View all (U6, decided fix c): trailing link on the Today's log eyebrow
+    // row, navigating to Money's Spent segment. Shown only when today has at
+    // least one logged expense (LoggedTodayList's onViewAll prop).
+    loggedTodayViewAll: 'View all',
     loggedTodayEmpty: 'A quiet day so far. Anything you log lands here.',
     alreadyBreakingToast: "You're already breaking this habit.",
     editExpenseLabel: (title: string, amountLabel: string) => `Edit ${title}, ${amountLabel}`,
@@ -682,6 +712,25 @@ export const strings = {
     // stated cadence); it never claims to "create a habit".
     watchLeakNudgeLabel: 'Buy this often? Watch it as a leak',
     watchLeakNudgeDismiss: 'not now',
+    // Quote rotation (U6, components/today/ViewQuote.tsx + useViewQuote.ts).
+    // Spent view closes with one of these, Kept view opens with one of
+    // these; each array rotates independently (its own persisted counter).
+    // Historical quotes keep their own original capitalization and
+    // punctuation; nothing here is reworded. No em dash appears in any of
+    // them, by the house content rule.
+    spentQuotes: [
+      { text: 'Beware of little expenses; a small leak will sink a great ship.', by: 'Benjamin Franklin' },
+      { text: 'Whatever you have, spend less.', by: 'Samuel Johnson' },
+      { text: 'Take care of the pence, and the pounds will take care of themselves.', by: 'William Lowndes' },
+      { text: "The cheapest thing you'll buy today is the one you don't." },
+      { text: "A habit doesn't feel expensive. That's how it stays one." },
+    ] as TodayQuote[],
+    keptQuotes: [
+      { text: 'What you skip today is still yours tomorrow.' },
+      { text: 'A skipped purchase is the quietest way to get paid.' },
+      { text: "If you know how to spend less than you get, you have the philosopher's stone.", by: 'Benjamin Franklin' },
+      { text: 'Habit is a cable; we weave a thread of it each day.', by: 'Horace Mann' },
+    ] as TodayQuote[],
   },
 
   // Log and edit expense sheets (spec 04 "Log / Edit sheets"). Merged into one

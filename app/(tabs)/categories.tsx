@@ -36,7 +36,6 @@ export default function CategoriesScreen() {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   // deleteTarget stays set through the sheet's close animation (only
   // deleteConfirmVisible toggles), so the title/body never go blank mid-exit.
   const [deleteTarget, setDeleteTarget] = useState<Category | null>(null);
@@ -46,7 +45,6 @@ export default function CategoriesScreen() {
     categories,
     isLoading,
     addCategory,
-    updateCategory,
     deleteCategory,
     getDefaultCategories,
     getCustomCategories,
@@ -70,18 +68,17 @@ export default function CategoriesScreen() {
     return result;
   }, [categories, getDefaultCategories, getCustomCategories]);
 
+  // U12b: this handler used to also branch on editingCategory, but that state
+  // was only ever set to null, so the AddCategoryModal edit branch was
+  // unreachable from this tab (custom categories are edited via category
+  // detail's pencil instead, app/category/[id].tsx). This tab only ever adds.
   const handleAddCategory = useCallback(async (
     name: string,
     icon: CategoryIcon,
     color: string
   ) => {
-    if (editingCategory) {
-      await updateCategory(editingCategory.id, { name, icon, color });
-      setEditingCategory(null);
-    } else {
-      await addCategory(name, icon, color);
-    }
-  }, [editingCategory, addCategory, updateCategory]);
+    await addCategory(name, icon, color);
+  }, [addCategory]);
 
   const handleDeleteCategory = useCallback((category: Category) => {
     hapticWarning();
@@ -101,7 +98,6 @@ export default function CategoriesScreen() {
 
   const handleCloseModal = useCallback(() => {
     setIsModalVisible(false);
-    setEditingCategory(null);
   }, []);
 
   const getCategorySpend = useCallback((category: Category): number => {
@@ -171,10 +167,6 @@ export default function CategoriesScreen() {
         visible={isModalVisible}
         onClose={handleCloseModal}
         onSave={handleAddCategory}
-        initialName={editingCategory?.name}
-        initialIcon={editingCategory?.icon}
-        initialColor={editingCategory?.color}
-        isEditing={!!editingCategory}
       />
 
       <ConfirmSheet

@@ -1,8 +1,10 @@
 import React, { useMemo } from 'react';
-import { Modal, View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { Icon } from '@/components/ui/Icon';
+import { Sheet } from '@/components/ui/Sheet';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
-import type { AppTheme } from '@/constants/theme';
+import { typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import type { PulseCell } from '@/utils/leakScan/spendPulse';
 import type { ScanRow } from '@/utils/leakScan/types';
@@ -19,6 +21,11 @@ type PulseDayDetailSheetProps = {
  * Pulse cell tap detail sheet (spec 5.3): date/period, total, merchant list.
  * Rendered for spend cells; a zero-spend or out-of-coverage cell tap shows
  * the same sheet with an explanatory empty state rather than nothing.
+ *
+ * House Sheet (design/leakscan-migration, U12a): was a centered fade Modal
+ * with a hardcoded rgba scrim, dismissed only by an OK button. Now the shared
+ * bottom Sheet (dismiss via scrim tap) plus a quiet tertiary close (bare X,
+ * never a filled OK button per PATTERN_VOCABULARY's controls list).
  */
 export function PulseDayDetailSheet({ cell, rows, onClose }: PulseDayDetailSheetProps) {
   const theme = useTheme();
@@ -28,105 +35,98 @@ export function PulseDayDetailSheet({ cell, rows, onClose }: PulseDayDetailSheet
   if (!cell) return null;
 
   return (
-    <Modal visible={!!cell} animationType="fade" transparent onRequestClose={onClose}>
-      <View style={styles.backdrop}>
-        <View style={styles.card}>
-          <Text style={styles.date}>{cell.key}</Text>
-
-          {cell.state === 'out-of-coverage' && (
-            <Text style={styles.emptyText}>{strings.leakScan.pulseLegendOutOfCoverage}</Text>
-          )}
-          {cell.state === 'zero-spend' && (
-            <Text style={styles.emptyText}>{strings.leakScan.pulseLegendZero}</Text>
-          )}
-          {cell.state === 'spend' && (
-            <>
-              <Text style={styles.total}>{format(cell.totalCents)}</Text>
-              <ScrollView style={styles.list}>
-                {rows.map((row) => (
-                  <View key={row.id} style={styles.row}>
-                    <Text style={styles.merchant}>{row.merchantDisplay || row.rawDescription}</Text>
-                    <Text style={styles.amount}>{format(Math.abs(row.amountCents))}</Text>
-                  </View>
-                ))}
-              </ScrollView>
-            </>
-          )}
-
-          <TouchableOpacity style={styles.closeButton} onPress={onClose} accessibilityRole="button">
-            <Text style={styles.closeButtonText}>{strings.common.ok}</Text>
+    <Sheet visible={!!cell} onClose={onClose} accessibilityLabel={cell.key}>
+      <View style={styles.content}>
+        <View style={styles.headerRow}>
+          <Text style={styles.date} accessibilityRole="header">
+            {cell.key}
+          </Text>
+          <TouchableOpacity
+            onPress={onClose}
+            accessibilityRole="button"
+            accessibilityLabel={strings.common.close}
+            hitSlop={{ top: 13, bottom: 13, left: 13, right: 13 }}
+          >
+            <Icon name="X" size={18} color={theme.slate} />
           </TouchableOpacity>
         </View>
+
+        {cell.state === 'out-of-coverage' && (
+          <Text style={styles.emptyText}>{strings.leakScan.pulseLegendOutOfCoverage}</Text>
+        )}
+        {cell.state === 'zero-spend' && (
+          <Text style={styles.emptyText}>{strings.leakScan.pulseLegendZero}</Text>
+        )}
+        {cell.state === 'spend' && (
+          <>
+            <Text style={styles.total}>{format(cell.totalCents)}</Text>
+            <ScrollView style={styles.list}>
+              {rows.map((row) => (
+                <View key={row.id} style={styles.row}>
+                  <Text style={styles.merchant}>{row.merchantDisplay || row.rawDescription}</Text>
+                  <Text style={styles.amount}>{format(Math.abs(row.amountCents))}</Text>
+                </View>
+              ))}
+            </ScrollView>
+          </>
+        )}
       </View>
-    </Modal>
+    </Sheet>
   );
 }
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
-    backdrop: {
-      flex: 1,
-      backgroundColor: 'rgba(0,0,0,0.4)',
-      justifyContent: 'center',
-      alignItems: 'center',
-      padding: 24,
+    content: {
+      paddingHorizontal: 20,
+      paddingTop: 4,
+      paddingBottom: 20,
     },
-    card: {
-      backgroundColor: theme.surface,
-      borderRadius: 16,
-      padding: 20,
-      width: '100%',
-      maxWidth: 340,
-      maxHeight: '70%',
+    headerRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 8,
     },
     date: {
-      fontSize: 15,
-      fontWeight: '700',
-      color: theme.text,
-      marginBottom: 8,
+      fontSize: typeScale.body,
+      fontFamily: theme.fonts.uiBold,
+      color: theme.ink,
     },
     total: {
       fontSize: 22,
-      fontWeight: '700',
-      color: theme.text,
+      fontFamily: theme.fonts.uiBold,
+      color: theme.ink,
       marginBottom: 12,
+      fontVariant: ['tabular-nums'],
     },
     emptyText: {
-      fontSize: 13,
-      color: theme.textSecondary,
-      marginBottom: 16,
+      fontSize: typeScale.secondary,
+      fontFamily: theme.fonts.ui,
+      color: theme.slate,
+      marginBottom: 4,
     },
     list: {
-      marginBottom: 16,
+      maxHeight: 320,
     },
     row: {
       flexDirection: 'row',
       justifyContent: 'space-between',
-      paddingVertical: 6,
+      paddingVertical: 8,
       borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: theme.border,
+      borderBottomColor: theme.hairlineSubtle,
     },
     merchant: {
-      fontSize: 13,
-      color: theme.text,
+      fontSize: typeScale.secondary,
+      fontFamily: theme.fonts.ui,
+      color: theme.ink,
       flex: 1,
     },
     amount: {
-      fontSize: 13,
-      color: theme.text,
+      fontSize: typeScale.secondary,
+      fontFamily: theme.fonts.ui,
+      color: theme.ink,
       fontVariant: ['tabular-nums'],
-    },
-    closeButton: {
-      minHeight: 44,
-      borderRadius: 12,
-      backgroundColor: theme.primary,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    closeButtonText: {
-      fontSize: 14,
-      fontWeight: '700',
-      color: theme.white,
     },
   });
 }

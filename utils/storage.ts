@@ -658,3 +658,53 @@ export async function saveScanSummary(summary: ScanSummary | null): Promise<void
     console.error('Error saving scan summary:', error);
   }
 }
+
+// =====================
+// TODAY QUOTE ROTATION (U6, components/today/useViewQuote.ts)
+// =====================
+// One small counter per Today pane: incremented once each time that pane
+// becomes active, read modulo the quote array's length. Two keys, not one,
+// so Spent and Kept rotate independently of each other.
+const QUOTE_SEQ_SPENT_KEY = '@habitcents_quote_seq_spent';
+const QUOTE_SEQ_KEPT_KEY = '@habitcents_quote_seq_kept';
+
+/** Shared getter: an unreadable or missing value defaults to 0, never throws. */
+async function getQuoteSeq(key: string): Promise<number> {
+  try {
+    const value = await AsyncStorage.getItem(key);
+    if (value === null) return 0;
+    const parsed = Number(value);
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
+  } catch (error) {
+    console.error(`Error reading quote sequence ${key}:`, error);
+    return 0;
+  }
+}
+
+async function setQuoteSeq(key: string, value: number): Promise<void> {
+  try {
+    await AsyncStorage.setItem(key, String(value));
+  } catch (error) {
+    console.error(`Error saving quote sequence ${key}:`, error);
+  }
+}
+
+/** Get the persisted Spent-view quote counter. Defaults to 0. */
+export function getSpentQuoteSeq(): Promise<number> {
+  return getQuoteSeq(QUOTE_SEQ_SPENT_KEY);
+}
+
+/** Persist the Spent-view quote counter. */
+export function setSpentQuoteSeq(value: number): Promise<void> {
+  return setQuoteSeq(QUOTE_SEQ_SPENT_KEY, value);
+}
+
+/** Get the persisted Kept-view quote counter. Defaults to 0. */
+export function getKeptQuoteSeq(): Promise<number> {
+  return getQuoteSeq(QUOTE_SEQ_KEPT_KEY);
+}
+
+/** Persist the Kept-view quote counter. */
+export function setKeptQuoteSeq(value: number): Promise<void> {
+  return setQuoteSeq(QUOTE_SEQ_KEPT_KEY, value);
+}

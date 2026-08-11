@@ -321,9 +321,19 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
   }, []);
 
   if (undone) {
+    // Dead-end fix (design/leakscan-migration, U12a): this used to be a bare
+    // confirmation with no exit except the invisible iOS edge swipe. The
+    // confirmation line is unchanged; the only addition is a way out.
+    // router.replace (not push) so a repeat visit to this state never stacks
+    // another copy of the tab navigator underneath.
     return (
       <View style={[styles.screen, styles.undoneCenter]}>
-        <Text style={styles.undoneText}>This import has been undone.</Text>
+        <Text style={styles.undoneText}>{strings.leakScan.undoneMessage}</Text>
+        <Button
+          label={strings.leakScan.undoneContinue}
+          onPress={() => router.replace('/(tabs)')}
+          style={styles.undoneButton}
+        />
       </View>
     );
   }
@@ -475,7 +485,7 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
         onStartTrial={() => {
           setPickOneHabit(null);
           setPickOneCandidate(null);
-          router.push('/paywall?placement=habit_gate');
+          router.push('/paywall?placement=habit_gate_scan');
         }}
       />
     </View>
@@ -558,11 +568,17 @@ function createStyles(theme: AppTheme) {
     undoneCenter: {
       alignItems: 'center',
       justifyContent: 'center',
+      paddingHorizontal: 24,
     },
     undoneText: {
       fontSize: typeScale.body,
       fontFamily: theme.fonts.ui,
       color: theme.slate,
+      textAlign: 'center',
+      marginBottom: 20,
+    },
+    undoneButton: {
+      alignSelf: 'stretch',
     },
   });
 }
