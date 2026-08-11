@@ -1,6 +1,7 @@
 /**
  * Type definitions for category data model.
  */
+import { lightTheme } from '@/constants/theme';
 
 export type CategoryIcon =
   | 'home-outline'
@@ -81,17 +82,24 @@ export const ICON_OPTIONS: CategoryIcon[] = [
   'ellipsis-horizontal-outline',
 ];
 
+// Category picker palette (design/textfield-palette, build 12): replaces the
+// legacy Material-palette swatches with 12 colors drawn from the house
+// families (constants/theme.ts categoryColors, plus lavender and amber),
+// distinct and calm. Sage is excluded on purpose: sage means a kept outcome
+// (PATTERN_VOCABULARY.md "Color"), never a category identity. Stored custom
+// categories keep whatever hex they already picked; only the offered set
+// changes here.
 export const COLOR_OPTIONS: string[] = [
-  '#7E57C2', // Purple
-  '#FFA726', // Orange
-  '#42A5F5', // Blue
-  '#66BB6A', // Green
-  '#EC407A', // Pink
-  '#26C6DA', // Cyan
-  '#EF5350', // Red
-  '#8D6E63', // Brown
-  '#9E9E9E', // Grey
-  '#FFD54F', // Yellow
-  '#AB47BC', // Deep Purple
-  '#26A69A', // Teal
+  lightTheme.categoryColors.food, // coral red
+  lightTheme.categoryColors.groceries, // orange
+  lightTheme.categoryColors.transport, // sky blue
+  lightTheme.lavender, // lavender purple (also housing's identity)
+  lightTheme.amber, // amber (also entertainment's identity)
+  lightTheme.categoryColors.shopping, // pink
+  lightTheme.categoryColors.subscriptions, // cyan
+  lightTheme.categoryColors.health, // teal green
+  lightTheme.categoryColors.transit, // brown
+  lightTheme.categoryColors.utility, // indigo
+  lightTheme.categoryColors.neutral, // slate grey
+  lightTheme.amberInk, // deep amber/bronze
 ];

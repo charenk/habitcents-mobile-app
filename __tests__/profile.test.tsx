@@ -50,6 +50,7 @@ import ProfileScreen from '@/app/profile';
 import { clearOnboarding } from '@/utils/storage';
 import { strings } from '@/constants/strings';
 import { settingsRowLabel } from '@/utils/a11y';
+import { setMockEntitlement } from '@/utils/purchases';
 
 // Non-zero frame + insets so useSafeAreaInsets resolves without a live layout.
 const initialMetrics = {
@@ -90,9 +91,12 @@ beforeEach(() => {
   jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
 });
 
-afterEach(() => {
+afterEach(async () => {
   cleanup();
   jest.restoreAllMocks();
+  // Gating audit (build 12) added a premium-entitlement test below; reset so
+  // it never leaks into a later test in this file, which all assume free.
+  await setMockEntitlement('free');
 });
 
 describe('Profile', () => {
@@ -215,6 +219,22 @@ describe('Profile', () => {
 
     expect(mockPush).toHaveBeenCalledWith('/paywall?placement=settings');
     expect(mockBack).not.toHaveBeenCalled();
+  });
+
+  // Gating audit (build 12): the row used to hardcode subscriptionValueFree
+  // regardless of getEntitlement(), so a completed (mock) purchase left the
+  // row still claiming Free. isPremium() is the same source every habit gate
+  // already reads.
+  it('subscription row reads Premium once entitled', async () => {
+    await setMockEntitlement('premium');
+    const view = await renderProfile();
+
+    expect(
+      view.getByLabelText(
+        settingsRowLabel(strings.settings.subscriptionRow, strings.settings.subscriptionValuePremium)
+      )
+    ).toBeTruthy();
+    expect(view.queryByText(strings.settings.subscriptionValueFree)).toBeNull();
   });
 
   it('support row opens the mail composer at the shown address', async () => {

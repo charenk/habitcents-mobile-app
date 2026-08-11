@@ -47,15 +47,16 @@
  * to do instead of leaving a dead control with no explanation.
  */
 import { useEffect, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { AmountField } from '@/components/ui/AmountField';
 import { Button } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
 import { Icon } from '@/components/ui/Icon';
 import { Sheet } from '@/components/ui/Sheet';
+import { TextField } from '@/components/ui/TextField';
 import { useToast } from '@/components/ui/Toast';
 import { strings } from '@/constants/strings';
-import { radii, typeScale } from '@/constants/theme';
+import { typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
 import { useCategories } from '@/contexts/CategoriesContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -124,7 +125,6 @@ export function ExpenseSheet({
   const [cents, setCents] = useState(0);
   const [category, setCategory] = useState<ExpenseCategory | null>(null);
   const [merchant, setMerchant] = useState('');
-  const [merchantFocused, setMerchantFocused] = useState(false);
 
   // Every open starts from a clean slate for the row it's actually editing
   // (or a blank one, for log), so a dismissed half-typed field never leaks
@@ -313,14 +313,11 @@ export function ExpenseSheet({
               ))}
             </View>
           ) : null}
-          <TextInput
+          <TextField
             value={merchant}
             onChangeText={setMerchant}
-            onFocus={() => setMerchantFocused(true)}
-            onBlur={() => setMerchantFocused(false)}
             placeholder={strings.expenses.merchantPlaceholder}
-            placeholderTextColor={theme.mist}
-            style={[styles.merchantField, merchantFocused ? styles.merchantFieldFocused : null]}
+            style={styles.merchantField}
             accessibilityLabel={strings.expenses.merchantFieldLabel}
             autoCapitalize="words"
             autoCorrect={false}
@@ -389,19 +386,6 @@ function createStyles(theme: AppTheme) {
     },
     merchantField: {
       marginTop: 10,
-      minHeight: 44,
-      borderRadius: radii.control,
-      borderWidth: 1,
-      borderColor: theme.cloud,
-      backgroundColor: theme.snow,
-      paddingHorizontal: 14,
-      fontFamily: theme.fonts.ui,
-      fontSize: typeScale.body,
-      color: theme.ink,
-    },
-    merchantFieldFocused: {
-      borderWidth: 1.5,
-      borderColor: theme.primary,
     },
     footer: {
       paddingHorizontal: 20,

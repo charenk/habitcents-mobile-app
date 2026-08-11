@@ -318,6 +318,10 @@ export const strings = {
     groupMore: 'More',
     subscriptionRow: 'Subscription',
     subscriptionValueFree: 'Free',
+    // Gating audit (build 12): the row used to hardcode Free regardless of
+    // getEntitlement(), so a completed mock purchase left Profile still
+    // claiming Free. This is the honest counterpart, shown once premium.
+    subscriptionValuePremium: 'Premium',
     // Start over (design/profile-restructure U9) replaces Sign out: there are
     // no accounts, so nothing is signed out of. Slate, never coral: coral
     // stays reserved for actions that destroy data, and this keeps all of it.
@@ -912,6 +916,10 @@ export const strings = {
     scanLeaksCaption: 'Manage leaks from This month, above.',
     scanProjectionLockedInCaption: (amount: string) => `${amount} locked in from recurring`,
     scanUpdatedCaption: 'Updated when you run a new scan.',
+    // Re-scan entry (build 12): the footer caption above was informational
+    // only, with no path back to /leak-scan once onboarding finished. This
+    // is that path, a 44pt tertiary control below the caption.
+    scanRerunAction: 'Run a new scan',
   },
 
   // Habit detail redesign (spec 04 "Habit detail"). The arc, chapter and

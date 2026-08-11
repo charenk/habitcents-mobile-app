@@ -43,6 +43,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { settingsRowLabel } from '@/utils/a11y';
 import { DEV_MENU_ENABLED } from '@/utils/devMenu';
 import { clearOnboarding } from '@/utils/storage';
+import { isPremium } from '@/utils/purchases';
 
 const PRIVACY_POLICY_URL = 'https://habitcents.com/privacy';
 const TERMS_OF_SERVICE_URL = 'https://habitcents.com/terms';
@@ -57,6 +58,12 @@ export default function ProfileScreen(): React.JSX.Element {
   const { resetOnboarding } = useOnboarding();
   const [currencySheetVisible, setCurrencySheetVisible] = useState(false);
   const [startOverConfirmVisible, setStartOverConfirmVisible] = useState(false);
+  // Gating audit (build 12): the row used to always read Free, even after a
+  // completed (mock) purchase. isPremium() reads getEntitlement() directly,
+  // the same source every habit gate already trusts.
+  const subscriptionValue = isPremium()
+    ? strings.settings.subscriptionValuePremium
+    : strings.settings.subscriptionValueFree;
 
   // Opens the house bottom sheet (design/selection-sheets U3), replacing the
   // native Alert.alert this row used to open.
@@ -127,13 +134,10 @@ export default function ProfileScreen(): React.JSX.Element {
             styles={styles}
             theme={theme}
             label={strings.settings.subscriptionRow}
-            value={strings.settings.subscriptionValueFree}
+            value={subscriptionValue}
             onPress={handleSubscriptionPress}
             chevron
-            accessibilityLabel={settingsRowLabel(
-              strings.settings.subscriptionRow,
-              strings.settings.subscriptionValueFree
-            )}
+            accessibilityLabel={settingsRowLabel(strings.settings.subscriptionRow, subscriptionValue)}
           />
           <SettingsRow
             styles={styles}

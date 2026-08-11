@@ -21,12 +21,13 @@
  * caller to write an expense.
  */
 import React, { useEffect, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { AmountField } from '@/components/ui/AmountField';
 import { Button } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { Sheet } from '@/components/ui/Sheet';
+import { TextField } from '@/components/ui/TextField';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { radii, typeScale } from '@/constants/theme';
@@ -241,11 +242,11 @@ export function BreakHabitSheet({
           </View>
 
           {selectedChip === CUSTOM_CHIP_ID && (
-            <TextInput
+            <TextField
+              variant="white"
               value={customName}
               onChangeText={setCustomName}
               placeholder={strings.onboarding.somethingElseNamePlaceholder}
-              placeholderTextColor={theme.textTertiary}
               style={styles.customNameInput}
               accessibilityLabel={strings.onboarding.somethingElseNamePlaceholder}
             />
@@ -328,14 +329,6 @@ function createStyles(theme: AppTheme) {
     },
     customNameInput: {
       marginTop: 10,
-      minHeight: 44,
-      borderWidth: 1.5,
-      borderColor: theme.primary,
-      borderRadius: radii.control,
-      paddingHorizontal: 14,
-      fontFamily: theme.fonts.uiSemibold,
-      fontSize: 15,
-      color: theme.ink,
     },
     eyebrow: {
       fontFamily: theme.fonts.uiSemibold,
