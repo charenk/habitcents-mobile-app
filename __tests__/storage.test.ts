@@ -3,13 +3,22 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 );
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getExpenses, getHabitGoals, getScanSummary, saveScanSummary } from '@/utils/storage';
+import {
+  getExpenses,
+  getHabitGoals,
+  getScanSummary,
+  getUpcomingWindowDays,
+  saveScanSummary,
+  setUpcomingWindowDays,
+} from '@/utils/storage';
 import { dayStateFor } from '@/utils/habitLogging';
+import { DEFAULT_UPCOMING_WINDOW_DAYS } from '@/utils/upcomingWindow';
 import type { ScanSummary } from '@/types/scanSummary';
 
 const EXPENSES_KEY = '@habitcents_expenses';
 const GOALS_KEY = '@habitcents_habit_goals';
 const SCAN_SUMMARY_KEY = '@habitcents_scan_summary';
+const UPCOMING_WINDOW_KEY = '@habitcents_upcoming_window';
 
 beforeEach(async () => {
   await AsyncStorage.clear();
@@ -229,5 +238,26 @@ describe('scan summary storage', () => {
     // Only ever one summary on device: no array, no accumulation.
     const raw = await AsyncStorage.getItem(SCAN_SUMMARY_KEY);
     expect(JSON.parse(raw!).evidence.rowCount).toBe(99);
+  });
+});
+
+describe('Upcoming window persistence (U8)', () => {
+  it('defaults to DEFAULT_UPCOMING_WINDOW_DAYS when nothing is stored', async () => {
+    expect(await getUpcomingWindowDays()).toBe(DEFAULT_UPCOMING_WINDOW_DAYS);
+  });
+
+  it('round-trips each valid preset', async () => {
+    for (const days of [14, 30, 90] as const) {
+      await setUpcomingWindowDays(days);
+      expect(await getUpcomingWindowDays()).toBe(days);
+    }
+  });
+
+  it('falls back to the default on a corrupt or out-of-range stored value', async () => {
+    await AsyncStorage.setItem(UPCOMING_WINDOW_KEY, '60');
+    expect(await getUpcomingWindowDays()).toBe(DEFAULT_UPCOMING_WINDOW_DAYS);
+
+    await AsyncStorage.setItem(UPCOMING_WINDOW_KEY, 'not-a-number');
+    expect(await getUpcomingWindowDays()).toBe(DEFAULT_UPCOMING_WINDOW_DAYS);
   });
 });

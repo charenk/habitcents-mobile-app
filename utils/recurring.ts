@@ -279,10 +279,16 @@ export function occurrencesWithin(expense: Expense, from: Date, withinDays: numb
 /**
  * Upcoming recurring expenses within `withinDays`, sorted soonest-first.
  * One row per recurring expense (its next occurrence).
+ *
+ * `withinDays` is required, not defaulted: the valid windows and their
+ * default live in ONE place (utils/upcomingWindow.ts), read by
+ * app/(tabs)/money.tsx and utils/storage.ts. A default here would be a second
+ * source of truth for "how far ahead is upcoming" that this function's own
+ * callers never actually exercise.
  */
 export function computeUpcoming(
   expenses: Expense[],
-  withinDays = 60,
+  withinDays: number,
   from: Date = new Date()
 ): UpcomingItem[] {
   const fromMid = atMidnight(from);
@@ -320,6 +326,17 @@ export function upcomingWindowTotal(items: UpcomingItem[]): number {
     (sum, i) => sum + i.expense.amount * Math.max(1, i.occurrencesInWindow.length),
     0
   );
+}
+
+/**
+ * Payments due inside the window: the exact same denominator
+ * `upcomingWindowTotal` sums over (`Math.max(1, occurrencesInWindow.length)`
+ * per item), so a summary showing both can never disagree about what they are
+ * counting. A weekly bill due nine times contributes nine payments here, same
+ * as it contributes nine occurrences to the total above.
+ */
+export function upcomingWindowPaymentsCount(items: UpcomingItem[]): number {
+  return items.reduce((sum, i) => sum + Math.max(1, i.occurrencesInWindow.length), 0);
 }
 
 /** "in 6 days" / "Today" / "Tomorrow" label. */

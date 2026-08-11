@@ -13,6 +13,7 @@ import {
   occurrencesWithin,
   resolveRule,
   upcomingTotal,
+  upcomingWindowPaymentsCount,
   upcomingWindowTotal,
 } from '@/utils/recurring';
 import { formatDate } from '@/utils/dates';
@@ -512,6 +513,28 @@ describe('upcomingTotal versus upcomingWindowTotal', () => {
 
   it('is zero for an empty list', () => {
     expect(upcomingWindowTotal([])).toBe(0);
+  });
+});
+
+describe('upcomingWindowPaymentsCount (U8: agrees with upcomingWindowTotal)', () => {
+  const weekly = legacy('weekly', '2026-06-29T00:00:00', { id: 'w1', amount: 1599 });
+  const monthly = legacy('monthly', '2026-06-15T00:00:00', { id: 'm1', amount: 5000 });
+
+  it('counts every occurrence, the same denominator the total sums over', () => {
+    const items = computeUpcoming([weekly, monthly], 60, FROM);
+    // 9 weekly + 2 monthly occurrences (same fixture as the total test above),
+    // versus 2 distinct bills -- the two numbers a summary can honestly show.
+    expect(upcomingWindowPaymentsCount(items)).toBe(11);
+    expect(items).toHaveLength(2);
+  });
+
+  it('equals the item count when nothing repeats inside the window', () => {
+    const items = computeUpcoming([monthly], 40, FROM);
+    expect(upcomingWindowPaymentsCount(items)).toBe(items.length);
+  });
+
+  it('is zero for an empty list', () => {
+    expect(upcomingWindowPaymentsCount([])).toBe(0);
   });
 });
 

@@ -1,9 +1,21 @@
 /**
- * AddUpcomingSheet (design/redesign-handoff/04-screens.md, "Add-upcoming sheet").
+ * AddUpcomingSheet (design/redesign-handoff/04-screens.md, "Add-upcoming sheet";
+ * U8 added edit mode).
  *
  * The one place a user can author a schedule by hand. Amount first, then what
  * it is, then when: the same order as the log sheet, so the two never feel like
  * different apps.
+ *
+ * U8: one component with a `mode`, mirroring how ExpenseSheet merges log/edit.
+ * Edit prefills every field from the row's own data (amount, name, and the
+ * schedule reconstructed from `resolveRule`) and adds a delete action with the
+ * house no-confirm-plus-undo pattern (ExpenseSheet's handleDelete, verbatim
+ * shape). The one non-obvious rule: editing amount or name alone must NOT
+ * silently reschedule the bill. `scheduleTouched` tracks whether the user
+ * actually touched a schedule control since the sheet opened; Save only rebuilds
+ * date + rule from the draft when it's true (or in add mode, where there is no
+ * "original" to preserve). Untouched, the original `expense.date` and
+ * `recurrenceRule` are written back unchanged.
  *
  * The write contract matters more than the layout here (types/expense.ts,
  * RecurrenceRule):
@@ -14,10 +26,10 @@
  * 2. `recurrenceRule` carries the real schedule.
  * 3. The legacy mirrors are written too: `isRecurring = rule.type !== 'once'`
  *    and `recurrence` set to the matching legacy string, so a reader written
- *    before step 04 still projects weekly / bi-weekly / monthly items. 'once'
- *    and 'custom' have no legacy equivalent and leave `recurrence` undefined,
- *    which those readers correctly treat as "no legacy schedule" rather than
- *    guessing one.
+ *    before step 04 still projects weekly / bi-weekly / monthly / annual items.
+ *    'once' and 'custom' have no legacy equivalent and leave `recurrence`
+ *    undefined, which those readers correctly treat as "no legacy schedule"
+ *    rather than guessing one.
  *
  * The date math below mirrors `startFor` in utils/recurring.ts exactly, so
  * `nextOccurrence` returns the stored date unchanged on the very first read.
@@ -47,6 +59,7 @@ import { useCategories } from '@/contexts/CategoriesContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import type {
+  Expense,
   ExpenseCategory,
   MonthDayOption,
   RecurrenceFrequency,
@@ -55,16 +68,22 @@ import type {
 } from '@/types/expense';
 import { formatDate } from '@/utils/dates';
 import { toExpenseCategory } from '@/utils/expenseCategory';
-import { keypadValueToCents } from '@/utils/keypad';
+import { centsToKeypadValue, keypadValueToCents } from '@/utils/keypad';
 import { hapticSuccess } from '@/utils/motion';
+import { resolveRule } from '@/utils/recurring';
+
+export type AddUpcomingSheetMode = 'add' | 'edit';
 
 export type AddUpcomingSheetProps = {
+  mode: AddUpcomingSheetMode;
   visible: boolean;
   onClose: () => void;
+  /** Edit mode only. The row being edited; deleted/renders nothing until set. */
+  expense?: Expense | null;
 };
 
 type ScheduleType = 'once' | 'repeats';
-type Frequency = 'weekly' | 'biweekly' | 'monthly' | 'custom';
+type Frequency = 'weekly' | 'biweekly' | 'monthly' | 'annual' | 'custom';
 type OnceWhen = 'tomorrow' | 'nextWeek' | 'inTwoWeeks' | 'nextMonth';
 type BiweekStart = 'this' | 'next';
 
@@ -175,6 +194,7 @@ function legacyRecurrence(rule: RecurrenceRule): RecurrenceFrequency | undefined
   if (rule.type === 'weekly') return 'weekly';
   if (rule.type === 'biweekly') return 'biweekly';
   if (rule.type === 'monthly') return 'monthly';
+  if (rule.type === 'annual') return 'annual';
   return undefined;
 }
 
@@ -240,18 +260,77 @@ function buildSchedule(draft: ScheduleDraft, today: Date): { rule: RecurrenceRul
     return { rule: { type: 'monthly', monthDay: draft.monthDay }, date };
   }
 
+  if (draft.frequency === 'annual') {
+    // Same month/day as today, one year out -- matches `advance()`'s own
+    // annual step in utils/recurring.ts exactly, so the first stored
+    // occurrence is what that function would compute as "the next one" too.
+    const date = new Date(today);
+    date.setFullYear(date.getFullYear() + 1);
+    return { rule: { type: 'annual' }, date };
+  }
+
   // Custom: the first payment is one full cadence away, not today.
   const everyNDays = clampEveryNDays(draft.everyNDays);
   return { rule: { type: 'custom', everyNDays }, date: addDays(today, everyNDays) };
 }
 
-export function AddUpcomingSheet({ visible, onClose }: AddUpcomingSheetProps): React.JSX.Element {
+type ScheduleDraftFields = ScheduleDraft & { value: string; nameChipKey: string | null; name: string };
+
+/**
+ * Reconstruct the sheet's fields from an existing row, for edit mode. Always
+ * succeeds: `resolveRule` returns null only for a plain (non-recurring) spend,
+ * and UpcomingRow only ever opens this sheet for a row that already resolved
+ * to a rule (computeUpcoming's own invariant), so the 'once' fallback below is
+ * defensive, not a real path.
+ */
+function draftFromExpense(expense: Expense): ScheduleDraftFields {
+  const rule = resolveRule(expense) ?? { type: 'once' as const };
+  const chip = NAME_CHIPS.find(
+    (c) => c.label.toLowerCase() === (expense.title || '').trim().toLowerCase()
+  );
+  const rawDate = expense.date instanceof Date ? expense.date : new Date(expense.date);
+
+  const base: ScheduleDraftFields = {
+    value: centsToKeypadValue(expense.amount),
+    nameChipKey: chip?.key ?? null,
+    name: expense.title || '',
+    scheduleType: rule.type === 'once' ? 'once' : 'repeats',
+    onceWhen: 'tomorrow',
+    frequency: 'monthly',
+    weekday: rawDate.getDay() as Weekday,
+    biweekStart: 'this',
+    monthDay: '1',
+    everyNDays: DEFAULT_EVERY_N_DAYS,
+  };
+
+  switch (rule.type) {
+    case 'weekly':
+      return { ...base, frequency: 'weekly', weekday: rule.weekday };
+    case 'biweekly':
+      return { ...base, frequency: 'biweekly', weekday: rule.weekday };
+    case 'monthly':
+      return { ...base, frequency: 'monthly', monthDay: rule.monthDay ?? '1' };
+    case 'annual':
+      return { ...base, frequency: 'annual' };
+    case 'custom':
+      return { ...base, frequency: 'custom', everyNDays: clampEveryNDays(rule.everyNDays) };
+    default:
+      return base;
+  }
+}
+
+export function AddUpcomingSheet({
+  mode,
+  visible,
+  onClose,
+  expense = null,
+}: AddUpcomingSheetProps): React.JSX.Element {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const { height } = useWindowDimensions();
   const { show } = useToast();
   const { getVisibleCategories } = useCategories();
-  const { addExpense } = useExpenses();
+  const { addExpense, updateExpense, deleteExpense, restoreExpense, expenses } = useExpenses();
 
   const categories = getVisibleCategories();
 
@@ -265,10 +344,34 @@ export function AddUpcomingSheet({ visible, onClose }: AddUpcomingSheetProps): R
   const [biweekStart, setBiweekStart] = useState<BiweekStart>('this');
   const [monthDay, setMonthDay] = useState<MonthDayOption>('1');
   const [everyNDays, setEveryNDays] = useState(DEFAULT_EVERY_N_DAYS);
+  // Edit mode only: whether the user has touched a schedule control since the
+  // sheet opened. Editing amount or name alone must not silently reschedule
+  // the bill, so Save only rebuilds date + rule from the draft when this is
+  // true; otherwise it writes the original date/rule back unchanged.
+  const [scheduleTouched, setScheduleTouched] = useState(false);
 
-  // Every open starts clean, so an abandoned draft never becomes the next bill.
+  // Every open starts from a clean slate for the row it's actually editing (or
+  // a blank one, for add), so a dismissed half-typed field never leaks into
+  // the next open.
   useEffect(() => {
     if (!visible) return;
+    setScheduleTouched(false);
+
+    if (mode === 'edit' && expense) {
+      const draft = draftFromExpense(expense);
+      setValue(draft.value);
+      setNameChipKey(draft.nameChipKey);
+      setName(draft.name);
+      setScheduleType(draft.scheduleType);
+      setOnceWhen(draft.onceWhen);
+      setFrequency(draft.frequency);
+      setWeekday(draft.weekday);
+      setBiweekStart(draft.biweekStart);
+      setMonthDay(draft.monthDay);
+      setEveryNDays(draft.everyNDays);
+      return;
+    }
+
     setValue('');
     setNameChipKey(null);
     setName('');
@@ -279,7 +382,8 @@ export function AddUpcomingSheet({ visible, onClose }: AddUpcomingSheetProps): R
     setBiweekStart('this');
     setMonthDay('1');
     setEveryNDays(DEFAULT_EVERY_N_DAYS);
-  }, [visible]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible, mode, expense]);
 
   const cents = keypadValueToCents(value);
 
@@ -292,6 +396,38 @@ export function AddUpcomingSheet({ visible, onClose }: AddUpcomingSheetProps): R
     setName(chip.label);
   };
 
+  // Wrap every schedule setter so touching ANY of these controls flips
+  // scheduleTouched, which is what tells Save (edit mode) to rebuild the date
+  // and rule from the draft instead of preserving the row's original ones.
+  const handleScheduleTypeChange = (v: ScheduleType) => {
+    setScheduleType(v);
+    setScheduleTouched(true);
+  };
+  const handleOnceWhenChange = (v: OnceWhen) => {
+    setOnceWhen(v);
+    setScheduleTouched(true);
+  };
+  const handleFrequencyChange = (v: Frequency) => {
+    setFrequency(v);
+    setScheduleTouched(true);
+  };
+  const handleWeekdayChange = (v: Weekday) => {
+    setWeekday(v);
+    setScheduleTouched(true);
+  };
+  const handleBiweekStartChange = (v: BiweekStart) => {
+    setBiweekStart(v);
+    setScheduleTouched(true);
+  };
+  const handleMonthDayChange = (v: MonthDayOption) => {
+    setMonthDay(v);
+    setScheduleTouched(true);
+  };
+  const handleEveryNDaysChange = (v: number) => {
+    setEveryNDays(v);
+    setScheduleTouched(true);
+  };
+
   const handleSave = () => {
     if (cents <= 0) {
       show(strings.toasts.enterAmountFirst);
@@ -299,14 +435,38 @@ export function AddUpcomingSheet({ visible, onClose }: AddUpcomingSheetProps): R
     }
 
     const chip = NAME_CHIPS.find((c) => c.key === nameChipKey);
-    const category: ExpenseCategory = chip?.category ?? 'Other';
+    // Edit mode with no chip selected keeps the row's own category rather than
+    // falling back to 'Other', so recategorizing was never a silent side
+    // effect of, say, just fixing a typo in the name.
+    const fallbackCategory: ExpenseCategory = mode === 'edit' && expense ? expense.category : 'Other';
+    const category: ExpenseCategory = chip?.category ?? fallbackCategory;
     const match = categories.find((c) => toExpenseCategory(c.name) === category);
     const title = name.trim() || chip?.label || match?.name || category;
 
-    const { rule, date } = buildSchedule(
-      { scheduleType, onceWhen, frequency, weekday, biweekStart, monthDay, everyNDays },
-      startOfToday()
-    );
+    const original = mode === 'edit' && expense ? resolveRule(expense) : null;
+    const { rule, date } =
+      mode === 'edit' && expense && !scheduleTouched && original
+        ? { rule: original, date: expense.date }
+        : buildSchedule(
+            { scheduleType, onceWhen, frequency, weekday, biweekStart, monthDay, everyNDays },
+            startOfToday()
+          );
+
+    if (mode === 'edit' && expense) {
+      void updateExpense(expense.id, {
+        title,
+        amount: cents,
+        category,
+        categoryId: match?.id,
+        date,
+        isRecurring: rule.type !== 'once',
+        recurrence: legacyRecurrence(rule),
+        recurrenceRule: rule,
+      });
+      show(strings.toasts.saved);
+      onClose();
+      return;
+    }
 
     void addExpense({
       title,
@@ -326,13 +486,32 @@ export function AddUpcomingSheet({ visible, onClose }: AddUpcomingSheetProps): R
     onClose();
   };
 
+  const handleDelete = () => {
+    if (!expense) return;
+    const removed = expense;
+    // Capture the position BEFORE the delete: undo has to put the row back
+    // where it was, same shape as ExpenseSheet.handleDelete.
+    const index = expenses.findIndex((e) => e.id === removed.id);
+
+    onClose();
+    void deleteExpense(removed.id);
+    show(strings.toasts.deleted, {
+      action: {
+        label: strings.toasts.undo,
+        onPress: () => {
+          void restoreExpense(removed, index < 0 ? 0 : index).then(() => {
+            show(strings.toasts.restored);
+          });
+        },
+      },
+    });
+  };
+
+  const title = mode === 'edit' ? strings.addUpcoming.editTitle : strings.addUpcoming.title;
+  const saveLabel = mode === 'edit' ? strings.addUpcoming.saveChanges : strings.addUpcoming.save;
+
   return (
-    <Sheet
-      visible={visible}
-      onClose={onClose}
-      avoidKeyboard
-      accessibilityLabel={strings.addUpcoming.title}
-    >
+    <Sheet visible={visible} onClose={onClose} avoidKeyboard accessibilityLabel={title}>
       <ScrollView
         style={{ maxHeight: height * 0.82 }}
         contentContainerStyle={styles.content}
@@ -340,7 +519,7 @@ export function AddUpcomingSheet({ visible, onClose }: AddUpcomingSheetProps): R
         showsVerticalScrollIndicator={false}
       >
         <Text style={styles.title} accessibilityRole="header">
-          {strings.addUpcoming.title}
+          {title}
         </Text>
 
         <AmountDisplay valueCents={cents} focused size={44} zeroAsPlaceholder />
@@ -379,7 +558,7 @@ export function AddUpcomingSheet({ visible, onClose }: AddUpcomingSheetProps): R
             { value: 'repeats', label: strings.addUpcoming.repeats },
           ]}
           value={scheduleType}
-          onChange={setScheduleType}
+          onChange={handleScheduleTypeChange}
           accessibilityLabel={strings.addUpcoming.scheduleSegmentLabel}
         />
 
@@ -399,7 +578,7 @@ export function AddUpcomingSheet({ visible, onClose }: AddUpcomingSheetProps): R
                   key={key}
                   label={label}
                   selected={onceWhen === key}
-                  onPress={() => setOnceWhen(key)}
+                  onPress={() => handleOnceWhenChange(key)}
                 />
               ))}
             </View>
@@ -412,6 +591,7 @@ export function AddUpcomingSheet({ visible, onClose }: AddUpcomingSheetProps): R
                   ['weekly', strings.addUpcoming.frequencyWeekly],
                   ['biweekly', strings.addUpcoming.frequencyBiweekly],
                   ['monthly', strings.addUpcoming.frequencyMonthly],
+                  ['annual', strings.addUpcoming.frequencyAnnual],
                   ['custom', strings.addUpcoming.frequencyCustom],
                 ] as ReadonlyArray<[Frequency, string]>
               ).map(([key, label]) => (
@@ -419,7 +599,7 @@ export function AddUpcomingSheet({ visible, onClose }: AddUpcomingSheetProps): R
                   key={key}
                   label={label}
                   selected={frequency === key}
-                  onPress={() => setFrequency(key)}
+                  onPress={() => handleFrequencyChange(key)}
                 />
               ))}
             </View>
@@ -433,7 +613,7 @@ export function AddUpcomingSheet({ visible, onClose }: AddUpcomingSheetProps): R
                       key={day}
                       label={weekdayShortLabel(day)}
                       selected={weekday === day}
-                      onPress={() => setWeekday(day)}
+                      onPress={() => handleWeekdayChange(day)}
                     />
                   ))}
                 </View>
@@ -454,7 +634,7 @@ export function AddUpcomingSheet({ visible, onClose }: AddUpcomingSheetProps): R
                       key={key}
                       label={label}
                       selected={biweekStart === key}
-                      onPress={() => setBiweekStart(key)}
+                      onPress={() => handleBiweekStartChange(key)}
                     />
                   ))}
                 </View>
@@ -470,7 +650,7 @@ export function AddUpcomingSheet({ visible, onClose }: AddUpcomingSheetProps): R
                       key={option.value}
                       label={option.label}
                       selected={monthDay === option.value}
-                      onPress={() => setMonthDay(option.value)}
+                      onPress={() => handleMonthDayChange(option.value)}
                     />
                   ))}
                 </View>
@@ -485,7 +665,7 @@ export function AddUpcomingSheet({ visible, onClose }: AddUpcomingSheetProps): R
                     icon="Minus"
                     label={strings.addUpcoming.everyNDaysDecrease}
                     disabled={everyNDays <= MIN_EVERY_N_DAYS}
-                    onPress={() => setEveryNDays((n) => clampEveryNDays(n - 1))}
+                    onPress={() => handleEveryNDaysChange(clampEveryNDays(everyNDays - 1))}
                   />
                   <Text style={styles.stepperValue} accessibilityLiveRegion="polite">
                     {strings.addUpcoming.everyNDaysValue(everyNDays)}
@@ -494,7 +674,7 @@ export function AddUpcomingSheet({ visible, onClose }: AddUpcomingSheetProps): R
                     icon="Plus"
                     label={strings.addUpcoming.everyNDaysIncrease}
                     disabled={everyNDays >= MAX_EVERY_N_DAYS}
-                    onPress={() => setEveryNDays((n) => clampEveryNDays(n + 1))}
+                    onPress={() => handleEveryNDaysChange(clampEveryNDays(everyNDays + 1))}
                   />
                 </View>
               </>
@@ -502,12 +682,15 @@ export function AddUpcomingSheet({ visible, onClose }: AddUpcomingSheetProps): R
           </>
         )}
 
-        <Button
-          label={strings.addUpcoming.save}
-          onPress={handleSave}
-          variant="primary"
-          style={styles.save}
-        />
+        <Button label={saveLabel} onPress={handleSave} variant="primary" style={styles.save} />
+        {mode === 'edit' ? (
+          <Button
+            label={strings.addUpcoming.deleteUpcoming}
+            onPress={handleDelete}
+            variant="destructive"
+            style={styles.delete}
+          />
+        ) : null}
       </ScrollView>
     </Sheet>
   );
@@ -638,6 +821,9 @@ function createStyles(theme: AppTheme) {
     },
     save: {
       marginTop: 20,
+    },
+    delete: {
+      marginTop: 8,
     },
   });
 }

@@ -8,11 +8,17 @@ import type { OnboardingState, ProgressiveFeatureState, AuditAnswers } from '@/t
 import type { ScanSummary } from '@/types/scanSummary';
 import { type CurrencyCode, DEFAULT_CURRENCY, isCurrencyCode } from '@/utils/currency';
 import { type CoachMomentState, createInitialCoachMomentState } from '@/utils/coachMoments';
+import {
+  DEFAULT_UPCOMING_WINDOW_DAYS,
+  isUpcomingWindowDays,
+  type UpcomingWindowDays,
+} from '@/utils/upcomingWindow';
 
 // Storage keys
 const ONBOARDING_KEY = '@habitcents_onboarded';
 const THEME_MODE_KEY = '@habitcents_theme_mode';
 const CURRENCY_KEY = '@habitcents_currency';
+const UPCOMING_WINDOW_KEY = '@habitcents_upcoming_window';
 const EXPENSES_KEY = '@habitcents_expenses';
 const CATEGORIES_KEY = '@habitcents_categories';
 const HABITS_KEY = '@habitcents_habits';
@@ -174,6 +180,35 @@ export async function setCurrency(code: CurrencyCode): Promise<void> {
     await AsyncStorage.setItem(CURRENCY_KEY, code);
   } catch (error) {
     console.error('Error saving currency:', error);
+  }
+}
+
+/**
+ * Get the persisted Upcoming window selection (U8: the 2 weeks / 1 month / 3
+ * months picker on Money > Upcoming). Defaults to
+ * DEFAULT_UPCOMING_WINDOW_DAYS when nothing is stored or the stored value is
+ * not one of the valid presets (utils/upcomingWindow.ts), so a corrupt or
+ * stale value degrades to the default rather than a nonsense window.
+ */
+export async function getUpcomingWindowDays(): Promise<UpcomingWindowDays> {
+  try {
+    const value = await AsyncStorage.getItem(UPCOMING_WINDOW_KEY);
+    const parsed = value === null ? NaN : Number(value);
+    return isUpcomingWindowDays(parsed) ? parsed : DEFAULT_UPCOMING_WINDOW_DAYS;
+  } catch (error) {
+    console.error('Error reading upcoming window:', error);
+    return DEFAULT_UPCOMING_WINDOW_DAYS;
+  }
+}
+
+/**
+ * Persist the Upcoming window selection.
+ */
+export async function setUpcomingWindowDays(days: UpcomingWindowDays): Promise<void> {
+  try {
+    await AsyncStorage.setItem(UPCOMING_WINDOW_KEY, String(days));
+  } catch (error) {
+    console.error('Error saving upcoming window:', error);
   }
 }
 

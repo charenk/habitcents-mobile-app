@@ -739,7 +739,21 @@ export const strings = {
     spentEmptyBody: 'Log your first in about 10 seconds. Amount first, then tap a category.',
     // Upcoming
     upcomingWindowEyebrow: (days: number) => `Next ${days} days`,
-    upcomingScheduledCount: (n: number) => `${n} scheduled`,
+    // U8: the window presets picker (2 weeks / 1 month / 3 months).
+    upcomingWindowSegmentLabel: 'Upcoming window',
+    upcomingWindowTwoWeeks: '2 weeks',
+    upcomingWindowOneMonth: '1 month',
+    upcomingWindowThreeMonths: '3 months',
+    // The total sums every occurrence in the window (upcomingWindowTotal), so
+    // this line counts the same thing: payments, not distinct bills. When a
+    // bill repeats inside the window the two numbers differ ("11 payments
+    // from 3 bills"); when nothing repeats they're the same count, so the
+    // second number would only repeat the first ("3 payments").
+    upcomingPaymentsCount: (payments: number, bills: number) => {
+      const paymentLabel = `${payments} payment${payments === 1 ? '' : 's'}`;
+      if (payments === bills) return paymentLabel;
+      return `${paymentLabel} from ${bills} bill${bills === 1 ? '' : 's'}`;
+    },
     upcomingAddAffordance: 'Add an upcoming expense',
     upcomingListEyebrow: 'Scheduled',
     upcomingEmptyBody: "Mark an expense as repeating and we'll show its next date here.",
@@ -757,9 +771,13 @@ export const strings = {
     scheduleNext: (date: string) => `next ${date}`,
   },
 
-  // Add-upcoming sheet (spec 04 "Add-upcoming sheet").
+  // Add-upcoming sheet (spec 04 "Add-upcoming sheet"; U8 added edit mode,
+  // mirroring ExpenseSheet's log/edit split).
   addUpcoming: {
     title: 'Add upcoming.',
+    editTitle: 'Edit upcoming.',
+    saveChanges: 'Save changes',
+    deleteUpcoming: 'Delete upcoming expense',
     whatIsIt: 'What is it?',
     namePlaceholder: 'Name it',
     nameFieldLabel: 'Name',
@@ -784,6 +802,10 @@ export const strings = {
     frequencyBiweekly: 'Bi-weekly',
     frequencyMonthly: 'Monthly',
     frequencyCustom: 'Custom',
+    // Yearly (U8): only reachable by editing an item Leak Scan imported with
+    // an annual rule (recurring.ts advance()) -- the add flow's chip row
+    // exposes it too now, so an edit round-trips without losing the cadence.
+    frequencyAnnual: 'Yearly',
     onWhichDay: 'On which day?',
     starting: 'Starting',
     startingThisWeek: 'This week',

@@ -17,7 +17,7 @@
  * The two tabs deliberately show the same rows: Money is where you manage a
  * leak, Insights is where you notice it.
  */
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -44,8 +44,8 @@ import { groupExpensesByDate } from '@/data/expensesMock';
 import { isHabitLimitReached } from '@/utils/habitLogging';
 import { getEntitlement } from '@/utils/purchases';
 import { computeUpcoming } from '@/utils/recurring';
-
-const UPCOMING_WINDOW_DAYS = 60;
+import { getUpcomingWindowDays, setUpcomingWindowDays } from '@/utils/storage';
+import { DEFAULT_UPCOMING_WINDOW_DAYS, type UpcomingWindowDays } from '@/utils/upcomingWindow';
 
 type MoneyView = 'spent' | 'upcoming' | 'habits';
 
@@ -67,7 +67,28 @@ export default function MoneyScreen() {
   const [view, setView] = useState<MoneyView>('spent');
   const [editing, setEditing] = useState<Expense | null>(null);
   const [addUpcomingVisible, setAddUpcomingVisible] = useState(false);
+  const [editingUpcoming, setEditingUpcoming] = useState<Expense | null>(null);
   const [pickOneHabitId, setPickOneHabitId] = useState<string | null>(null);
+  // The 2 weeks / 1 month / 3 months window (U8). Starts at the default and is
+  // replaced by the persisted value once storage answers, so the very first
+  // paint (before that async read resolves) already shows a real preset
+  // rather than a placeholder state.
+  const [windowDays, setWindowDays] = useState<UpcomingWindowDays>(DEFAULT_UPCOMING_WINDOW_DAYS);
+
+  useEffect(() => {
+    let cancelled = false;
+    getUpcomingWindowDays().then((days) => {
+      if (!cancelled) setWindowDays(days);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const handleWindowDaysChange = useCallback((days: UpcomingWindowDays) => {
+    setWindowDays(days);
+    void setUpcomingWindowDays(days);
+  }, []);
 
   // Spent is history only: everything dated after the end of today belongs to
   // Upcoming, where the projection engine owns it.
@@ -80,9 +101,16 @@ export default function MoneyScreen() {
   }, [expenses]);
 
   const upcoming = useMemo(
-    () => computeUpcoming(expenses, UPCOMING_WINDOW_DAYS),
-    [expenses]
+    () => computeUpcoming(expenses, windowDays),
+    [expenses, windowDays]
   );
+
+  const upcomingSheetVisible = addUpcomingVisible || editingUpcoming !== null;
+
+  const closeUpcomingSheet = useCallback(() => {
+    setAddUpcomingVisible(false);
+    setEditingUpcoming(null);
+  }, []);
 
   // Habits: every leak worth an action, biggest monthly drain first. Built
   // identically to Insights' leakRows (app/(tabs)/insights.tsx) so the two
@@ -159,8 +187,10 @@ export default function MoneyScreen() {
         {view === 'upcoming' && (
           <UpcomingList
             items={upcoming}
-            windowDays={UPCOMING_WINDOW_DAYS}
+            windowDays={windowDays}
+            onWindowDaysChange={handleWindowDaysChange}
             onAdd={() => setAddUpcomingVisible(true)}
+            onEditItem={(expense) => setEditingUpcoming(expense)}
           />
         )}
         {view === 'habits' && (
@@ -180,8 +210,10 @@ export default function MoneyScreen() {
         onClose={() => setEditing(null)}
       />
       <AddUpcomingSheet
-        visible={addUpcomingVisible}
-        onClose={() => setAddUpcomingVisible(false)}
+        mode={editingUpcoming ? 'edit' : 'add'}
+        visible={upcomingSheetVisible}
+        expense={editingUpcoming}
+        onClose={closeUpcomingSheet}
       />
       <PickOneSheet
         visible={!!pickOneHabit}

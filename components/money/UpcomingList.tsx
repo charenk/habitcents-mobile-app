@@ -1,13 +1,21 @@
 /**
- * UpcomingList (design/redesign-handoff/04-screens.md, "Money" > Upcoming).
+ * UpcomingList (design/redesign-handoff/04-screens.md, "Money" > Upcoming;
+ * U8 redesign).
  *
- * A centered "next 60 days" total, the dashed add affordance, then the
- * scheduled rows. Every number here is projected by `utils/recurring.ts`, so
- * nothing on this screen is invented:
+ * A left-aligned "next N days" total (matching Spent's and Habits'
+ * left-aligned eyebrows -- centering was the one outlier in the Money tab),
+ * the window picker that decides N, a compact add affordance beside the
+ * total, then the scheduled rows, each one now pressable to edit or delete.
+ * Every number here is projected by `utils/recurring.ts`, so nothing on this
+ * screen is invented:
  *
- * - the header total is `upcomingWindowTotal`, which counts EVERY occurrence in
- *   the window. A weekly bill due nine times in 60 days contributes nine
+ * - the header total is `upcomingWindowTotal`, which counts EVERY occurrence
+ *   in the window. A weekly bill due nine times in 60 days contributes nine
  *   payments, not one, which is the honest answer to "what is coming".
+ * - the count line under it is `upcomingWindowPaymentsCount`, the exact same
+ *   denominator the total sums over, so the two numbers can never disagree
+ *   about what they're counting (U8: they used to -- the total summed
+ *   occurrences while the count line counted distinct expenses).
  * - the schedule line under each row is `describeSchedule`, never hand-built
  *   text, so the row and the engine can never disagree.
  * - the amber pill is `multiPaymentMonth`: the month where three or more
@@ -16,95 +24,149 @@
  *
  * Amounts render unsigned. Nothing here has been spent yet, so a minus sign
  * would read as history rather than as a bill that is coming.
+ *
+ * The window itself (2 weeks / 1 month / 3 months) is defined once in
+ * utils/upcomingWindow.ts; this component only zips those day counts with
+ * their labels to build the SegmentedControl options.
  */
 import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { EmojiTile } from '@/components/ui/EmojiTile';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Icon } from '@/components/ui/Icon';
+import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { categoryEmoji, categoryIdentityColor } from '@/constants/categoryEmoji';
 import { strings } from '@/constants/strings';
 import { radii, typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import type { Expense } from '@/types/expense';
 import {
   daysUntilLabel,
   describeSchedule,
   multiPaymentMonth,
   resolveRule,
+  upcomingWindowPaymentsCount,
   upcomingWindowTotal,
   type UpcomingItem,
 } from '@/utils/recurring';
+import { UPCOMING_WINDOW_PRESETS, type UpcomingWindowDays } from '@/utils/upcomingWindow';
 import { withAlpha } from '@/utils/color';
+
+const WINDOW_LABELS: Record<UpcomingWindowDays, string> = {
+  14: strings.money.upcomingWindowTwoWeeks,
+  30: strings.money.upcomingWindowOneMonth,
+  90: strings.money.upcomingWindowThreeMonths,
+};
+
+const WINDOW_OPTIONS = UPCOMING_WINDOW_PRESETS.map((days) => ({
+  value: days,
+  label: WINDOW_LABELS[days],
+}));
 
 export type UpcomingListProps = {
   items: UpcomingItem[];
   /** The projection window these items were computed for, in days. */
-  windowDays: number;
+  windowDays: UpcomingWindowDays;
+  /** Changes the window; the caller owns persisting the selection. */
+  onWindowDaysChange: (days: UpcomingWindowDays) => void;
   /** Opens the add-upcoming sheet. */
   onAdd: () => void;
+  /** Opens the add-upcoming sheet in edit mode for this row's expense. */
+  onEditItem: (expense: Expense) => void;
 };
 
-export function UpcomingList({ items, windowDays, onAdd }: UpcomingListProps): React.JSX.Element {
+export function UpcomingList({
+  items,
+  windowDays,
+  onWindowDaysChange,
+  onAdd,
+  onEditItem,
+}: UpcomingListProps): React.JSX.Element {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const { format } = useCurrency();
 
   const windowTotal = useMemo(() => upcomingWindowTotal(items), [items]);
+  const paymentsCount = useMemo(() => upcomingWindowPaymentsCount(items), [items]);
 
   const addAffordance = (
     <Pressable
       onPress={onAdd}
       accessibilityRole="button"
       accessibilityLabel={strings.money.upcomingAddAffordance}
-      style={({ pressed }) => [styles.add, pressed ? styles.addPressed : null]}
+      style={({ pressed }) => [styles.addCompact, pressed ? styles.addCompactPressed : null]}
     >
-      <Icon name="Plus" size={18} color={theme.primaryDark} />
-      <Text style={styles.addLabel}>{strings.money.upcomingAddAffordance}</Text>
+      <Icon name="Plus" size={20} color={theme.primaryDark} />
     </Pressable>
   );
-
-  if (items.length === 0) {
-    return (
-      <View>
-        {addAffordance}
-        <View style={styles.emptyWrap}>
-          <EmptyState body={strings.money.upcomingEmptyBody} />
-        </View>
-      </View>
-    );
-  }
 
   return (
     <View>
       <View style={styles.totalCard}>
-        <Text style={styles.totalEyebrow}>
-          {strings.money.upcomingWindowEyebrow(windowDays)}
-        </Text>
-        <Text style={styles.totalAmount} accessibilityRole="header">
-          {format(windowTotal)}
-        </Text>
-        <Text style={styles.totalCount}>
-          {strings.money.upcomingScheduledCount(items.length)}
-        </Text>
+        <View style={styles.windowSegment}>
+          <SegmentedControl<UpcomingWindowDays>
+            options={WINDOW_OPTIONS}
+            value={windowDays}
+            onChange={onWindowDaysChange}
+            accessibilityLabel={strings.money.upcomingWindowSegmentLabel}
+          />
+        </View>
+        <View style={styles.totalHeaderRow}>
+          <View style={styles.totalTextBlock} testID="upcoming-total-text">
+            <Text style={styles.totalEyebrow}>
+              {strings.money.upcomingWindowEyebrow(windowDays)}
+            </Text>
+            {items.length > 0 ? (
+              <>
+                <Text style={styles.totalAmount} accessibilityRole="header">
+                  {format(windowTotal)}
+                </Text>
+                <Text style={styles.totalCount}>
+                  {strings.money.upcomingPaymentsCount(paymentsCount, items.length)}
+                </Text>
+              </>
+            ) : null}
+          </View>
+          {addAffordance}
+        </View>
       </View>
 
-      {addAffordance}
-
-      <Text style={styles.eyebrow} accessibilityRole="header">
-        {strings.money.upcomingListEyebrow}
-      </Text>
-      <View style={styles.card}>
-        {items.map((item, index) => (
-          <UpcomingRow key={item.expense.id} item={item} isFirst={index === 0} />
-        ))}
-      </View>
+      {items.length === 0 ? (
+        <View style={styles.emptyWrap}>
+          <EmptyState body={strings.money.upcomingEmptyBody} />
+        </View>
+      ) : (
+        <>
+          <Text style={styles.eyebrow} accessibilityRole="header">
+            {strings.money.upcomingListEyebrow}
+          </Text>
+          <View style={styles.card}>
+            {items.map((item, index) => (
+              <UpcomingRow
+                key={item.expense.id}
+                item={item}
+                isFirst={index === 0}
+                onPress={() => onEditItem(item.expense)}
+              />
+            ))}
+          </View>
+        </>
+      )}
     </View>
   );
 }
 
-function UpcomingRow({ item, isFirst }: { item: UpcomingItem; isFirst: boolean }) {
+function UpcomingRow({
+  item,
+  isFirst,
+  onPress,
+}: {
+  item: UpcomingItem;
+  isFirst: boolean;
+  onPress: () => void;
+}) {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const { format } = useCurrency();
@@ -126,10 +188,15 @@ function UpcomingRow({ item, isFirst }: { item: UpcomingItem; isFirst: boolean }
   const spoken = [name, pillLabel, amountLabel, scheduleLine].filter(Boolean).join(', ');
 
   return (
-    <View
-      style={[styles.row, isFirst ? styles.rowFirst : null]}
-      accessible
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
       accessibilityLabel={spoken}
+      style={({ pressed }) => [
+        styles.row,
+        isFirst ? styles.rowFirst : null,
+        pressed ? styles.rowPressed : null,
+      ]}
     >
       <EmojiTile
         emoji={categoryEmoji(expense.category)}
@@ -161,7 +228,14 @@ function UpcomingRow({ item, isFirst }: { item: UpcomingItem; isFirst: boolean }
           {cadenceLabel}
         </Text>
       </View>
-    </View>
+      <Icon
+        name="ChevronRight"
+        size={16}
+        color={theme.mist}
+        importantForAccessibility="no-hide-descendants"
+        accessibilityElementsHidden
+      />
+    </Pressable>
   );
 }
 
@@ -174,7 +248,18 @@ function createStyles(theme: AppTheme) {
       borderRadius: radii.feature,
       paddingVertical: 18,
       paddingHorizontal: 18,
-      alignItems: 'center',
+    },
+    windowSegment: {
+      marginBottom: 14,
+    },
+    totalHeaderRow: {
+      flexDirection: 'row',
+      alignItems: 'flex-end',
+      justifyContent: 'space-between',
+    },
+    totalTextBlock: {
+      alignItems: 'flex-start',
+      flexShrink: 1,
     },
     totalEyebrow: {
       fontFamily: theme.fonts.uiSemibold,
@@ -198,26 +283,20 @@ function createStyles(theme: AppTheme) {
       color: theme.slate,
       marginTop: 4,
     },
-    add: {
-      flexDirection: 'row',
+    addCompact: {
+      width: 44,
+      height: 44,
       alignItems: 'center',
       justifyContent: 'center',
-      gap: 8,
-      minHeight: 48,
-      borderRadius: radii.card,
+      borderRadius: radii.control,
       borderWidth: 1.5,
       borderStyle: 'dashed',
       borderColor: theme.cloudDashed,
       backgroundColor: theme.white,
-      marginTop: 12,
+      marginLeft: 12,
     },
-    addPressed: {
+    addCompactPressed: {
       backgroundColor: theme.snow,
-    },
-    addLabel: {
-      fontFamily: theme.fonts.uiSemibold,
-      fontSize: 14,
-      color: theme.primaryDark,
     },
     eyebrow: {
       fontFamily: theme.fonts.uiSemibold,
@@ -247,6 +326,9 @@ function createStyles(theme: AppTheme) {
     },
     rowFirst: {
       borderTopWidth: 0,
+    },
+    rowPressed: {
+      opacity: 0.6,
     },
     rowText: {
       flex: 1,
