@@ -14,7 +14,7 @@ Sources of truth this page compresses: `design/redesign-handoff/01-tokens-and-fo
 
 ## Type
 
-- Instrument Serif appears in exactly two places: screen titles ending in a period and money (hero, stat, keypad, reveal amounts). Never body, never buttons.
+- Instrument Serif appears in exactly three places: screen titles ending in a period, money (hero, stat, reveal amounts), and the Today view quotes (italic, with their small attribution line). Never body, never buttons.
 - Everything else is Inter, on the typeScale steps. No sizes off the scale.
 - Eyebrows are the only all-caps: 11pt, semibold, letterSpacing .88, uppercased by the component. Strings stay sentence case.
 - Every number that can sit above another number is tabular: `fontVariant: ['tabular-nums']`.
