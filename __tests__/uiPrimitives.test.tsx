@@ -1,7 +1,8 @@
 /**
  * Rendered tests for the WP-2 shared primitives (Button, EmojiTile,
- * AmountDisplay). Provider wiring mirrors __tests__/renderedA11y.test.tsx:
- * the async-storage mock plus ThemeProvider > CurrencyProvider.
+ * AmountDisplay, TextField). Provider wiring mirrors
+ * __tests__/renderedA11y.test.tsx: the async-storage mock plus
+ * ThemeProvider > CurrencyProvider.
  */
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock')
@@ -9,12 +10,14 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 
 import React from 'react';
 import { StyleSheet } from 'react-native';
-import { render, fireEvent } from '@testing-library/react-native';
+import { act, render, fireEvent } from '@testing-library/react-native';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { Button, type ButtonVariant } from '@/components/ui/Button';
 import { EmojiTile } from '@/components/ui/EmojiTile';
 import { AmountDisplay } from '@/components/ui/AmountDisplay';
+import { TextField } from '@/components/ui/TextField';
+import { lightTheme } from '@/constants/theme';
 import { withAlpha } from '@/utils/color';
 
 function Providers({ children }: { children: React.ReactNode }) {
@@ -120,5 +123,59 @@ describe('AmountDisplay', () => {
       </Providers>
     );
     expect(await view.findByText('0.00')).toBeTruthy();
+  });
+});
+
+describe('TextField', () => {
+  it('renders its value', async () => {
+    const view = await render(
+      <Providers>
+        <TextField value="Starbucks" onChangeText={() => {}} accessibilityLabel="Merchant" />
+      </Providers>
+    );
+    expect(await view.findByDisplayValue('Starbucks')).toBeTruthy();
+  });
+
+  it('carries a cloud border at rest and turns it sage on focus', async () => {
+    const view = await render(
+      <Providers>
+        <TextField value="" onChangeText={() => {}} accessibilityLabel="Merchant" />
+      </Providers>
+    );
+    const field = await view.findByLabelText('Merchant');
+
+    const resting = StyleSheet.flatten(field.props.style);
+    expect(resting.borderColor).toBe(lightTheme.cloud);
+    expect(resting.borderWidth).toBe(1.5);
+
+    await act(async () => {
+      fireEvent(field, 'focus');
+    });
+    const focused = StyleSheet.flatten(field.props.style);
+    expect(focused.borderColor).toBe(lightTheme.primary);
+    // Border width never changes between states, so focus never nudges layout.
+    expect(focused.borderWidth).toBe(1.5);
+
+    await act(async () => {
+      fireEvent(field, 'blur');
+    });
+    const blurred = StyleSheet.flatten(field.props.style);
+    expect(blurred.borderColor).toBe(lightTheme.cloud);
+  });
+
+  it('uses the mist token for placeholder text, ignoring any caller override', async () => {
+    const view = await render(
+      <Providers>
+        <TextField
+          value=""
+          onChangeText={() => {}}
+          placeholder="Enter category name"
+          placeholderTextColor="#FF0000"
+          accessibilityLabel="Category name"
+        />
+      </Providers>
+    );
+    const field = await view.findByLabelText('Category name');
+    expect(field.props.placeholderTextColor).toBe(lightTheme.mist);
   });
 });

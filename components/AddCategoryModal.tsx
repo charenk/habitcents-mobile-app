@@ -16,13 +16,13 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  TextInput,
   ScrollView,
   useWindowDimensions,
 } from 'react-native';
 import { Button } from '@/components/ui/Button';
 import { Icon, categoryIconName } from '@/components/ui/Icon';
 import { Sheet } from '@/components/ui/Sheet';
+import { TextField } from '@/components/ui/TextField';
 import { useTheme } from '@/contexts/ThemeContext';
 import { radii, typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
@@ -118,12 +118,11 @@ export function AddCategoryModal({
 
         {/* Name Input */}
         <Text style={styles.eyebrow}>{strings.addCategoryModal.name}</Text>
-        <TextInput
-          style={styles.input}
+        <TextField
           value={name}
           onChangeText={setName}
           placeholder={strings.addCategoryModal.namePlaceholder}
-          placeholderTextColor={theme.mist}
+          accessibilityLabel={strings.addCategoryModal.name}
           maxLength={30}
         />
 
@@ -223,17 +222,6 @@ function createStyles(theme: AppTheme) {
       color: theme.mist,
       marginTop: 18,
       marginBottom: 8,
-    },
-    input: {
-      minHeight: 44,
-      borderRadius: radii.control,
-      borderWidth: 1,
-      borderColor: theme.cloud,
-      backgroundColor: theme.snow,
-      paddingHorizontal: 14,
-      fontFamily: theme.fonts.ui,
-      fontSize: typeScale.body,
-      color: theme.ink,
     },
     iconGrid: {
       flexDirection: 'row',
