@@ -7,6 +7,7 @@ import { useOnboarding } from '@/contexts/OnboardingContext';
 import { Button, Icon } from '@/components/ui';
 import type { IconName } from '@/components/ui';
 import { KeptHero } from '@/components/habit-logging/KeptHero';
+import { AuroraBackground } from '@/components/onboarding/AuroraBackground';
 import { useReducedMotion } from '@/utils/motion';
 import type { AppTheme } from '@/constants/theme';
 import { typeScale } from '@/constants/theme';
@@ -145,6 +146,7 @@ export default function OnboardingWelcomeScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+      <AuroraBackground />
       <View style={styles.content}>
         <View style={styles.brandRow}>
           <View style={styles.brandMark}>

@@ -150,7 +150,8 @@ export default function PaywallScreen() {
         contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 24 }]}
         showsVerticalScrollIndicator={false}
       >
-        {/* The one gradient allowed in the app (spec 01 section 1). */}
+        {/* One of two decorative gradients the app allows; see the list in
+            design/PATTERN_VOCABULARY.md "Color" (spec 01 section 1). */}
         <LinearGradient
           colors={[theme.lavender, theme.primary]}
           start={{ x: 0, y: 0 }}
@@ -269,7 +270,8 @@ function createStyles(theme: AppTheme) {
       paddingHorizontal: 24,
       paddingTop: 4,
     },
-    // Gradient hero: white type on lavender-to-sage, the only gradient surface.
+    // Gradient hero: white type on lavender-to-sage. One of the two
+    // decorative gradients the app allows (design/PATTERN_VOCABULARY.md "Color").
     hero: {
       borderRadius: radii.feature,
       paddingHorizontal: 20,
