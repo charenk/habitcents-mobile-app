@@ -43,11 +43,47 @@ import type { Expense } from '@/types/expense';
 import { groupExpensesByDate } from '@/data/expensesMock';
 import { isHabitLimitReached } from '@/utils/habitLogging';
 import { getEntitlement } from '@/utils/purchases';
-import { computeUpcoming } from '@/utils/recurring';
+import { computeUpcoming, type UpcomingItem } from '@/utils/recurring';
 import { getUpcomingWindowDays, setUpcomingWindowDays } from '@/utils/storage';
 import { DEFAULT_UPCOMING_WINDOW_DAYS, type UpcomingWindowDays } from '@/utils/upcomingWindow';
 
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
 type MoneyView = 'spent' | 'upcoming' | 'habits';
+
+/**
+ * Upcoming advances past a due-today occurrence (ADR 0024, U11): by the time
+ * this screen renders, the materializer (contexts/ExpensesContext.tsx) has
+ * already turned any occurrence due today into a real Spent row, so showing
+ * it again here would resurrect the pre-ADR-0024 "same row in both tabs" bug.
+ *
+ * `computeUpcoming` itself stays untouched (it's pure and its own tests pin
+ * "on/after from" -- this is a display-only adjustment, not a projection
+ * change): an item whose earliest occurrence is today gets re-pointed at its
+ * next occurrence already present in `occurrencesInWindow` (nothing here
+ * re-projects anything), or dropped if today's was its only occurrence in the
+ * window. `nextDate`/`daysUntil` stay relative to real "today" throughout, so
+ * the "Tomorrow" / "in N days" pill keeps meaning what it says. Re-pointing
+ * also trims `occurrencesInWindow` down to future dates only, which is the
+ * same list #95's payments count sums over -- so "how many payments" now
+ * counts only future ones for free, without touching upcomingWindowTotal/
+ * upcomingWindowPaymentsCount themselves.
+ */
+function advancePastToday(items: UpcomingItem[], todayMid: number): UpcomingItem[] {
+  const out: UpcomingItem[] = [];
+  for (const item of items) {
+    if (item.nextDate.getTime() > todayMid) {
+      out.push(item);
+      continue;
+    }
+    const future = item.occurrencesInWindow.filter((d) => d.getTime() > todayMid);
+    if (future.length === 0) continue; // today's due date was the only one in the window
+    const nextDate = future[0];
+    const daysUntil = Math.round((nextDate.getTime() - todayMid) / MS_PER_DAY);
+    out.push({ ...item, nextDate, daysUntil, occurrencesInWindow: future });
+  }
+  return out;
+}
 
 export default function MoneyScreen() {
   const insets = useSafeAreaInsets();
@@ -100,10 +136,11 @@ export default function MoneyScreen() {
     );
   }, [expenses]);
 
-  const upcoming = useMemo(
-    () => computeUpcoming(expenses, windowDays),
-    [expenses, windowDays]
-  );
+  const upcoming = useMemo(() => {
+    const todayMid = new Date();
+    todayMid.setHours(0, 0, 0, 0);
+    return advancePastToday(computeUpcoming(expenses, windowDays), todayMid.getTime());
+  }, [expenses, windowDays]);
 
   const upcomingSheetVisible = addUpcomingVisible || editingUpcoming !== null;
 

@@ -1,8 +1,15 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef, useMemo } from 'react';
-import { getExpenses, saveExpenses } from '@/utils/storage';
+import { AppState, type AppStateStatus } from 'react-native';
+import {
+  getExpenses,
+  saveExpenses,
+  getRecurringTombstones,
+  saveRecurringTombstones,
+} from '@/utils/storage';
 import type { Expense, AddExpenseInput, ExpenseCategory } from '@/types/expense';
 import { track } from '@/utils/analytics';
 import { formatTime as formatTimeLocalized } from '@/utils/dates';
+import { occurrenceKey, planMaterialization, toChildInput } from '@/utils/materializer';
 
 function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -60,6 +67,11 @@ function createExpense(input: AddExpenseInput): Expense {
     reminderEnabled: input.reminderEnabled,
     reminderTime: input.reminderTime,
     source: input.source ?? 'manual',
+    // Leak Scan import undo (importId) and the materializer's own child rows
+    // (parentId, ADR 0024 U11) both need to survive the write, not just the
+    // fields a manual log ever sets.
+    importId: input.importId,
+    parentId: input.parentId,
     iconVariant,
   };
 }
@@ -73,6 +85,17 @@ export function ExpensesProvider({ children }: { children: React.ReactNode }) {
   // edit-then-delete) each build on the previous result, not a stale copy.
   const expensesRef = useRef<Expense[]>([]);
   const loadedRef = useRef(false);
+  // Recurring materializer state (ADR 0024, U11). tombstonesRef mirrors
+  // expensesRef's pattern: in-memory source of truth, persisted on write,
+  // loaded once at hydration. materializeChainRef serializes overlapping
+  // materialize() calls (mount + a foreground event landing close together,
+  // or two foreground events in a row) onto ONE queue, so a second call
+  // always plans against the first call's already-committed result rather
+  // than the same pre-commit snapshot -- the mechanism that makes "same-tick
+  // double invocation" produce zero duplicates rather than relying on luck.
+  const tombstonesRef = useRef<Set<string>>(new Set());
+  const materializeChainRef = useRef<Promise<void>>(Promise.resolve());
+  const appStateRef = useRef(AppState.currentState);
 
   const commit = useCallback(async (next: Expense[]): Promise<void> => {
     expensesRef.current = next;
@@ -80,16 +103,63 @@ export function ExpensesProvider({ children }: { children: React.ReactNode }) {
     await saveExpenses(next);
   }, []);
 
+  // Plans and writes every due-but-unmaterialized recurring occurrence
+  // (ADR 0024, U11: utils/materializer.ts). Safe to call as often as it
+  // likes -- planMaterialization is a no-op once everything through `today`
+  // is already written -- so both the hydration call below and the
+  // foreground listener just call it unconditionally rather than trying to
+  // decide "is it worth checking".
+  const runMaterializer = useCallback(async (): Promise<void> => {
+    const prior = materializeChainRef.current;
+    const run = prior
+      .then(async () => {
+        if (!loadedRef.current) return;
+        const plan = planMaterialization(expensesRef.current, tombstonesRef.current, new Date());
+        if (plan.length === 0) return;
+        const children = plan.map((p) => createExpense(toChildInput(p)));
+        await commit([...expensesRef.current, ...children]);
+      })
+      .catch((error) => {
+        console.error('Error running recurring materializer:', error);
+      });
+    materializeChainRef.current = run;
+    await run;
+  }, [commit]);
+
   useEffect(() => {
     async function loadExpenses() {
-      const stored = await getExpenses();
+      const [stored, tombstones] = await Promise.all([getExpenses(), getRecurringTombstones()]);
       expensesRef.current = stored;
-      setExpenses(stored);
+      tombstonesRef.current = new Set(tombstones);
       loadedRef.current = true;
+      // Runs before the first paint of stored data: catch-up materialization
+      // is part of what "loaded" means under ADR 0024, not a second pass that
+      // flashes a pre-materialized Spent list first. runMaterializer's own
+      // commit() call already does the setExpenses when it writes anything;
+      // the explicit setExpenses below covers the (usual) case where nothing
+      // was due, since commit is never called in that branch.
+      await runMaterializer();
+      setExpenses(expensesRef.current);
       setIsLoading(false);
     }
     loadExpenses();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Re-run on every background -> active transition (mirrors
+  // app/_layout.tsx's AnalyticsLifecycle AppState pattern): the day can have
+  // turned over while the app was backgrounded, and a relaunch alone
+  // wouldn't otherwise catch that until the next cold start.
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (next: AppStateStatus) => {
+      const prev = appStateRef.current;
+      appStateRef.current = next;
+      if (prev.match(/inactive|background/) && next === 'active') {
+        void runMaterializer();
+      }
+    });
+    return () => sub.remove();
+  }, [runMaterializer]);
 
   const addExpense = useCallback(async (input: AddExpenseInput): Promise<Expense> => {
     const newExpense = createExpense(input);
@@ -121,6 +191,18 @@ export function ExpensesProvider({ children }: { children: React.ReactNode }) {
   }, [commit]);
 
   const deleteExpense = useCallback(async (id: string): Promise<void> => {
+    // A materialized child (ADR 0024, U11) gets tombstoned before it's
+    // removed: without this, the next materializer run would recompute the
+    // exact same (parentId, date) occurrence from the parent's schedule and
+    // silently resurrect the row the user just deleted.
+    const target = expensesRef.current.find((exp) => exp.id === id);
+    if (target?.source === 'recurring' && target.parentId) {
+      const key = occurrenceKey(target.parentId, target.date);
+      const next = new Set(tombstonesRef.current);
+      next.add(key);
+      tombstonesRef.current = next;
+      void saveRecurringTombstones(Array.from(next));
+    }
     await commit(expensesRef.current.filter(exp => exp.id !== id));
     track('expense_deleted', {});
   }, [commit]);

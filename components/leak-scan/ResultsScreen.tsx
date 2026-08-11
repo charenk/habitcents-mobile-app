@@ -29,7 +29,7 @@ import {
   runScan,
 } from '@/utils/leakScan';
 import { spendableRows } from '@/utils/leakScan/netting';
-import { seedLastDays, recurringToExpenses } from '@/utils/leakScan/importWrite';
+import { seedLastDays, recurringToExpenses, toAddExpenseInput } from '@/utils/leakScan/importWrite';
 import { scanResultToSummary } from '@/utils/leakScan/summarize';
 import type { ScanFileInput } from '@/utils/leakScan';
 import type { PulseCell } from '@/utils/leakScan/spendPulse';
@@ -272,17 +272,11 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
   const handleSaveProjection = useCallback(
     async (remindBefore: Record<string, boolean>) => {
       const recurringExpenses = recurringToExpenses(result, { remindBefore });
+      // toAddExpenseInput (utils/leakScan/importWrite.ts) carries source and
+      // importId through, not just the fields a manual log would set -- the
+      // fix for undo previously removing nothing (see its own doc comment).
       for (const exp of recurringExpenses) {
-        await addExpense({
-          title: exp.title,
-          amount: exp.amount,
-          category: exp.category,
-          merchant: exp.merchant,
-          date: exp.date,
-          isRecurring: exp.isRecurring,
-          recurrence: exp.recurrence,
-          reminderEnabled: exp.reminderEnabled,
-        });
+        await addExpense(toAddExpenseInput(exp));
       }
     },
     [result, addExpense]
@@ -303,15 +297,7 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
   const handleBringInDays = useCallback(async () => {
     const seeded = seedLastDays(result, BRING_IN_DAYS);
     for (const exp of seeded) {
-      await addExpense({
-        title: exp.title,
-        amount: exp.amount,
-        category: exp.category,
-        merchant: exp.merchant,
-        date: exp.date,
-        isRecurring: false,
-        reminderEnabled: false,
-      });
+      await addExpense(toAddExpenseInput(exp));
     }
     track('scan_seed_applied', { rows: seeded.length, days: BRING_IN_DAYS });
     // This is the scan door's only exit into the app; it must complete

@@ -189,3 +189,53 @@ describe('SpentList: one number language', () => {
     expect(view.getByText(expectedEyebrow)).toBeTruthy();
   });
 });
+
+describe('SpentList: recurring cycle indicator (ADR 0024, U11)', () => {
+  it('appends "recurring" to a materialized child row\'s accessible label', async () => {
+    const today = sectionFor([
+      makeExpense({
+        id: 'child-1',
+        date: new Date(),
+        source: 'recurring',
+        parentId: 'parent-1',
+      }),
+    ]);
+    const view = await renderSpent([today]);
+
+    expect(view.getByLabelText(/^Edit Coffee,.*recurring$/)).toBeTruthy();
+  });
+
+  it('appends "recurring" to the parent\'s own historical-first-spend row too', async () => {
+    const today = sectionFor([
+      makeExpense({
+        id: 'parent-1',
+        date: new Date(),
+        isRecurring: true,
+        recurrence: 'monthly',
+      }),
+    ]);
+    const view = await renderSpent([today]);
+
+    expect(view.getByLabelText(/^Edit Coffee,.*recurring$/)).toBeTruthy();
+  });
+
+  it('never appends "recurring" to a plain manual (non-recurring) row', async () => {
+    const today = sectionFor([makeExpense({ id: 'manual-1', date: new Date() })]);
+    const view = await renderSpent([today]);
+
+    expect(view.queryByLabelText(/recurring/)).toBeNull();
+  });
+
+  it("a 'once' schedule (a single upcoming item, not a repeating one) carries no indicator either", async () => {
+    const today = sectionFor([
+      makeExpense({
+        id: 'once-1',
+        date: new Date(),
+        recurrenceRule: { type: 'once' },
+      }),
+    ]);
+    const view = await renderSpent([today]);
+
+    expect(view.queryByLabelText(/recurring/)).toBeNull();
+  });
+});

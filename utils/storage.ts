@@ -37,6 +37,10 @@ const AUDIT_ANSWERS_KEY = '@habitcents_audit_answers';
 // Leak Scan summary snapshot (OB-4, ADR 0020): survives navigation so a later
 // Insights segment can read the last scan without re-running the pipeline.
 const SCAN_SUMMARY_KEY = '@habitcents_scan_summary';
+// Recurring materializer delete-child tombstones (ADR 0024, U11). See
+// utils/materializer.ts planMaterialization's header comment for why this
+// exists instead of "plan only forward from the newest child".
+const RECURRING_TOMBSTONES_KEY = '@habitcents_recurring_tombstones';
 
 // =====================
 // SAFE LOAD HELPERS
@@ -232,6 +236,35 @@ export async function saveExpenses(expenses: Expense[]): Promise<void> {
     await AsyncStorage.setItem(EXPENSES_KEY, JSON.stringify(expenses));
   } catch (error) {
     console.error('Error saving expenses:', error);
+  }
+}
+
+/**
+ * Get the recurring-materializer tombstone set: one composite
+ * `${parentId}|${YYYY-MM-DD}` key per occurrence the user explicitly deleted,
+ * so a later planning pass never resurrects exactly the row they removed.
+ * Returns [] (never throws) on missing or unreadable data, same degrade-safe
+ * shape as every other getter in this file -- a lost tombstone at worst
+ * regenerates one already-deleted row, never crashes app start.
+ */
+export async function getRecurringTombstones(): Promise<string[]> {
+  try {
+    const value = await AsyncStorage.getItem(RECURRING_TOMBSTONES_KEY);
+    if (!value) return [];
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed.filter((v): v is string => typeof v === 'string') : [];
+  } catch (error) {
+    console.error('Error reading recurring tombstones:', error);
+    return [];
+  }
+}
+
+/** Persist the recurring-materializer tombstone set. */
+export async function saveRecurringTombstones(keys: string[]): Promise<void> {
+  try {
+    await AsyncStorage.setItem(RECURRING_TOMBSTONES_KEY, JSON.stringify(keys));
+  } catch (error) {
+    console.error('Error saving recurring tombstones:', error);
   }
 }
 
