@@ -144,40 +144,19 @@ export default function OnboardingWelcomeScreen() {
     router.push('/onboarding/intent');
   };
 
+  // DESIGN EXPLORATION (Charen, 2026-08-10): the splash reduces to aurora,
+  // headline, and the single CTA. The retired block (brand row, KeptHero at
+  // zero, value rows, privacy line) lives in this file's git history. NOTE
+  // before this ships for real: the zero-state KeptHero on welcome was an
+  // ADR 0022 ruling (the honest-zero hero); removing it here is Charen's
+  // live exploration, to be ratified or reverted when the design lands.
   return (
     <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <AuroraBackground />
       <View style={styles.content}>
-        <View style={styles.brandRow}>
-          <View style={styles.brandMark}>
-            <Icon name="Sprout" size={18} color={theme.white} />
-          </View>
-          <Text style={styles.brandName}>{strings.onboarding.brandName}</Text>
-        </View>
-
         <Text style={styles.headline} accessibilityRole="header">
           {strings.onboarding.welcomeHeadline}
         </Text>
-
-        <View style={styles.heroSection}>
-          {/* Content column already carries the screen's 24pt gutter, so the
-              hero is not full-bleed here; no extra gutter style needed. */}
-          <KeptHero cents={0} />
-          <ExampleCaption theme={theme} styles={styles} />
-        </View>
-
-        <View style={styles.valueProps}>
-          {VALUE_ROWS.map(row => (
-            <View key={row.text} style={styles.valueRow}>
-              <View style={styles.valueTile}>
-                <Icon name={row.icon} size={16} color={theme.primaryDark} />
-              </View>
-              <Text style={styles.valueText}>{row.text}</Text>
-            </View>
-          ))}
-        </View>
-
-        <Text style={styles.privacy}>{strings.onboarding.welcomeSub}</Text>
       </View>
 
       <View style={styles.footer}>
