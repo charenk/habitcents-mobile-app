@@ -263,16 +263,23 @@ export const strings = {
     editCategoryLabel: 'Edit category',
     thisMonth: 'this month',
     vsLastMonth: (percent: number) => `${percent}% vs last month`,
-    transactions: 'transactions',
-    avgTransaction: 'avg transaction',
-    sixMonthTrend: '6-Month Trend',
-    topMerchants: 'Top Merchants',
-    transactionCount: (count: number) => `${count} transaction${count !== 1 ? 's' : ''}`,
-    recentTransactions: 'Recent Transactions',
+    // U12b: off "transactions" (house rule: the app calls things "expenses"
+    // or "logs", never "transactions"). The count stat reads "logs"; the
+    // mean-amount stat reads "average" ("average log" read oddly paired with
+    // a dollar figure, so the noun was dropped).
+    logsStat: 'logs',
+    averageStat: 'average',
+    // Eyebrows (section headers below): all-caps via the style, sentence
+    // case here so VoiceOver reads them as words (design/PATTERN_VOCABULARY.md).
+    sixMonthTrend: '6-month trend',
+    topMerchants: 'Top merchants',
+    logCount: (count: number) => `${count} log${count !== 1 ? 's' : ''}`,
+    recentLogs: 'Recent logs',
     // Rewritten off "transactions" (house rule: the app calls things
     // "expenses" or "logs", never "transactions").
     noExpensesLogged: 'Nothing logged in this category yet.',
-    transactionDate: (date: string, time: string) => `${date} at ${time}`,
+    trendEmpty: 'No spending to chart yet.',
+    logTimestamp: (date: string, time: string) => `${date} at ${time}`,
   },
   reports: {
     title: 'Reports',

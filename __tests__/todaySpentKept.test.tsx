@@ -419,6 +419,6 @@ describe('Today: break-another affordance (DI-6)', () => {
     await tap(view.getByTestId('kept-chip'));
     await tap(view.getByLabelText(new RegExp(`^${strings.today.breakAnotherHabitCta}`)));
 
-    expect(mockPush).toHaveBeenCalledWith('/paywall?placement=habit_gate');
+    expect(mockPush).toHaveBeenCalledWith('/paywall?placement=habit_gate_today');
   });
 });

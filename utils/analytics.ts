@@ -33,6 +33,41 @@ import type PostHog from 'posthog-react-native';
 export type AnalyticsProps = Record<string, string | number | boolean>;
 
 /**
+ * Paywall entry points (U12b). Every gate used to push the bare 'habit_gate'
+ * placement except settings, so the funnel could not tell a Today gate from
+ * an Insights gate from a Leak Scan gate. Each call site now carries its own
+ * suffix; the 'habit_gate' prefix stays for continuity. Dashboards segmenting
+ * on the old bare 'habit_gate' value should switch to prefix matching
+ * ('habit_gate_*') to keep picking up all five habit-gate placements.
+ */
+export type PaywallPlacement =
+  | 'habit_gate_today'
+  | 'habit_gate_money'
+  | 'habit_gate_insights'
+  | 'habit_gate_detail'
+  | 'habit_gate_scan'
+  | 'settings';
+
+const PAYWALL_PLACEMENTS: readonly PaywallPlacement[] = [
+  'habit_gate_today',
+  'habit_gate_money',
+  'habit_gate_insights',
+  'habit_gate_detail',
+  'habit_gate_scan',
+  'settings',
+];
+
+/**
+ * Narrows the /paywall route's untyped `placement` query param. Every in-app
+ * link supplies a value from PaywallPlacement, but the param itself is just a
+ * string (expo-router does not validate query params), so app/paywall.tsx
+ * runs it through this guard rather than casting.
+ */
+export function isPaywallPlacement(value: string | undefined): value is PaywallPlacement {
+  return !!value && (PAYWALL_PLACEMENTS as readonly string[]).includes(value);
+}
+
+/**
  * The full event catalog. Some events (coach_moment_shown, paywall_*, import_*)
  * are wired by later Phase 2/3 tasks (P2-2, P2-1b, P3-1); they live here now so
  * the taxonomy is defined in one place and stays consistent across the app.
@@ -91,8 +126,8 @@ export interface AnalyticsEventMap {
     card_id: string;
   };
   // Monetization (P3-1)
-  paywall_shown: { placement: string };
-  paywall_dismissed: { placement: string };
+  paywall_shown: { placement: PaywallPlacement | 'unknown' };
+  paywall_dismissed: { placement: PaywallPlacement | 'unknown' };
   purchase_completed: { product: string };
   trial_started: { product: string };
 

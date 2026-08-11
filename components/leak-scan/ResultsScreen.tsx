@@ -489,7 +489,7 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
         onStartTrial={() => {
           setPickOneHabit(null);
           setPickOneCandidate(null);
-          router.push('/paywall?placement=habit_gate');
+          router.push('/paywall?placement=habit_gate_scan');
         }}
       />
     </View>

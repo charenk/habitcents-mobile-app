@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  FlatList,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Icon, categoryIconName } from '@/components/ui/Icon';
@@ -16,7 +15,8 @@ import { useCurrency } from '@/contexts/CurrencyContext';
 import { useCategories } from '@/contexts/CategoriesContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
 import { AddCategoryModal } from '@/components/AddCategoryModal';
-import { type AppTheme } from '@/constants/theme';
+import { withAlpha } from '@/utils/color';
+import { radii, typeScale, type AppTheme } from '@/constants/theme';
 import type { CategoryIcon } from '@/types/category';
 import type { Expense } from '@/types/expense';
 import { strings } from '@/constants/strings';
@@ -49,8 +49,8 @@ export default function CategoryDetailScreen() {
         total: 0,
         thisMonth: 0,
         lastMonth: 0,
-        transactionCount: categoryExpenses.length,
-        avgTransaction: 0,
+        logCount: categoryExpenses.length,
+        average: 0,
         topMerchants: [] as { name: string; count: number; total: number }[],
       };
     }
@@ -89,8 +89,8 @@ export default function CategoryDetailScreen() {
       total,
       thisMonth,
       lastMonth,
-      transactionCount: categoryExpenses.length,
-      avgTransaction: Math.round(total / categoryExpenses.length),
+      logCount: categoryExpenses.length,
+      average: Math.round(total / categoryExpenses.length),
       topMerchants,
     };
   }, [categoryExpenses]);
@@ -143,19 +143,23 @@ export default function CategoryDetailScreen() {
     ? Math.round(((stats.thisMonth - stats.lastMonth) / stats.lastMonth) * 100)
     : 0;
 
+  // Empty trend bars used to always draw (minHeight stubs, a chart of
+  // nothing) when the range has zero spend everywhere. The house EmptyState
+  // primitive covers that case now instead (U12b).
+  const hasTrendData = trendData.some(d => d.amount > 0);
   const maxTrendAmount = Math.max(...trendData.map(d => d.amount), 1);
 
-  const renderTransaction = ({ item }: { item: Expense }) => (
-    <View style={styles.transactionRow}>
-      <View style={styles.transactionContent}>
-        <Text style={styles.transactionTitle} numberOfLines={1}>
+  const renderLogRow = ({ item }: { item: Expense }) => (
+    <View style={styles.logRow}>
+      <View style={styles.logContent}>
+        <Text style={styles.logTitle} numberOfLines={1}>
           {item.title}
         </Text>
-        <Text style={styles.transactionDate}>
-          {strings.categoryDetail.transactionDate(item.date.toLocaleDateString(), item.time)}
+        <Text style={styles.logDate}>
+          {strings.categoryDetail.logTimestamp(item.date.toLocaleDateString(), item.time)}
         </Text>
       </View>
-      <Text style={styles.transactionAmount}>{format(item.amount, { signed: true })}</Text>
+      <Text style={styles.logAmount}>{format(item.amount, { signed: true })}</Text>
     </View>
   );
 
@@ -182,7 +186,7 @@ export default function CategoryDetailScreen() {
         />
         {/* Header */}
         <View style={styles.headerSection}>
-          <View style={[styles.iconContainer, { backgroundColor: category.color + '20' }]}>
+          <View style={[styles.iconContainer, { backgroundColor: withAlpha(category.color, 0.12) }]}>
             <Icon
               name={categoryIconName(category.icon)}
               size={40}
@@ -219,12 +223,12 @@ export default function CategoryDetailScreen() {
         {/* Stats Grid */}
         <View style={styles.statsGrid}>
           <View style={styles.statCard}>
-            <Text style={styles.statValue}>{stats.transactionCount}</Text>
-            <Text style={styles.statLabel}>{strings.categoryDetail.transactions}</Text>
+            <Text style={styles.statValue}>{stats.logCount}</Text>
+            <Text style={styles.statLabel}>{strings.categoryDetail.logsStat}</Text>
           </View>
           <View style={styles.statCard}>
-            <Text style={styles.statValue}>{format(stats.avgTransaction)}</Text>
-            <Text style={styles.statLabel}>{strings.categoryDetail.avgTransaction}</Text>
+            <Text style={styles.statValue}>{format(stats.average)}</Text>
+            <Text style={styles.statLabel}>{strings.categoryDetail.averageStat}</Text>
           </View>
         </View>
 
@@ -232,22 +236,26 @@ export default function CategoryDetailScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{strings.categoryDetail.sixMonthTrend}</Text>
           <View style={styles.trendCard}>
-            <View style={styles.trendChart}>
-              {trendData.map((item, index) => (
-                <View key={index} style={styles.trendBar}>
-                  <View
-                    style={[
-                      styles.trendBarFill,
-                      {
-                        height: `${(item.amount / maxTrendAmount) * 100}%`,
-                        backgroundColor: category.color,
-                      },
-                    ]}
-                  />
-                  <Text style={styles.trendLabel}>{item.month}</Text>
-                </View>
-              ))}
-            </View>
+            {hasTrendData ? (
+              <View style={styles.trendChart}>
+                {trendData.map((item, index) => (
+                  <View key={index} style={styles.trendBar}>
+                    <View
+                      style={[
+                        styles.trendBarFill,
+                        {
+                          height: `${(item.amount / maxTrendAmount) * 100}%`,
+                          backgroundColor: category.color,
+                        },
+                      ]}
+                    />
+                    <Text style={styles.trendLabel}>{item.month}</Text>
+                  </View>
+                ))}
+              </View>
+            ) : (
+              <EmptyState body={strings.categoryDetail.trendEmpty} />
+            )}
           </View>
         </View>
 
@@ -257,7 +265,10 @@ export default function CategoryDetailScreen() {
             <Text style={styles.sectionTitle}>{strings.categoryDetail.topMerchants}</Text>
             <View style={styles.merchantsCard}>
               {stats.topMerchants.map((merchant, index) => (
-                <View key={index} style={styles.merchantRow}>
+                <View
+                  key={index}
+                  style={[styles.merchantRow, index === 0 && styles.rowNoBorder]}
+                >
                   <View style={styles.merchantRank}>
                     <Text style={styles.merchantRankText}>{index + 1}</Text>
                   </View>
@@ -266,7 +277,7 @@ export default function CategoryDetailScreen() {
                       {merchant.name}
                     </Text>
                     <Text style={styles.merchantCount}>
-                      {strings.categoryDetail.transactionCount(merchant.count)}
+                      {strings.categoryDetail.logCount(merchant.count)}
                     </Text>
                   </View>
                   <Text style={styles.merchantTotal}>{format(merchant.total)}</Text>
@@ -276,13 +287,13 @@ export default function CategoryDetailScreen() {
           </View>
         )}
 
-        {/* Recent Transactions */}
+        {/* Recent logs */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{strings.categoryDetail.recentTransactions}</Text>
-          <View style={styles.transactionsCard}>
-            {categoryExpenses.slice(0, 10).map((expense) => (
-              <View key={expense.id}>
-                {renderTransaction({ item: expense })}
+          <Text style={styles.sectionTitle}>{strings.categoryDetail.recentLogs}</Text>
+          <View style={styles.logsCard}>
+            {categoryExpenses.slice(0, 10).map((expense, index) => (
+              <View key={expense.id} style={index === 0 ? styles.rowNoBorder : undefined}>
+                {renderLogRow({ item: expense })}
               </View>
             ))}
             {categoryExpenses.length === 0 && (
@@ -324,8 +335,9 @@ function createStyles(theme: AppTheme) {
       alignItems: 'center',
     },
     emptyText: {
-      fontSize: 16,
-      color: theme.textSecondary,
+      fontSize: typeScale.body,
+      fontFamily: theme.fonts.ui,
+      color: theme.slate,
     },
     headerSection: {
       alignItems: 'center',
@@ -334,14 +346,16 @@ function createStyles(theme: AppTheme) {
     iconContainer: {
       width: 80,
       height: 80,
-      borderRadius: 20,
+      borderRadius: radii.feature,
       alignItems: 'center',
       justifyContent: 'center',
       marginBottom: 16,
     },
     summaryCard: {
-      backgroundColor: theme.surface,
-      borderRadius: 16,
+      backgroundColor: theme.white,
+      borderWidth: 1,
+      borderColor: theme.cloud,
+      borderRadius: radii.feature,
       padding: 20,
       alignItems: 'center',
       marginBottom: 16,
@@ -350,22 +364,26 @@ function createStyles(theme: AppTheme) {
       alignItems: 'center',
       marginBottom: 8,
     },
+    // Money, hero scale: the display serif with tabular figures
+    // (design/PATTERN_VOCABULARY.md, "Instrument Serif ... money").
     summaryAmount: {
       fontSize: 36,
-      fontWeight: '700',
-      color: theme.text,
+      fontFamily: theme.fonts.display,
+      fontVariant: ['tabular-nums'],
+      color: theme.ink,
     },
     summaryLabel: {
-      fontSize: 15,
-      color: theme.textSecondary,
+      fontSize: typeScale.body,
+      fontFamily: theme.fonts.ui,
+      color: theme.slate,
     },
     summaryTrend: {
       flexDirection: 'row',
       alignItems: 'center',
     },
     summaryTrendText: {
-      fontSize: 14,
-      fontWeight: '500',
+      fontSize: typeScale.secondary,
+      fontFamily: theme.fonts.uiMedium,
       marginLeft: 4,
     },
     statsGrid: {
@@ -375,35 +393,45 @@ function createStyles(theme: AppTheme) {
     },
     statCard: {
       flex: 1,
-      backgroundColor: theme.surface,
-      borderRadius: 12,
+      backgroundColor: theme.white,
+      borderWidth: 1,
+      borderColor: theme.cloud,
+      borderRadius: radii.card,
       padding: 16,
       alignItems: 'center',
     },
+    // Stat numbers are currency or counts, so they take the display serif
+    // with tabular figures (same convention as app/habit/[id].tsx statValue).
     statValue: {
-      fontSize: 20,
-      fontWeight: '700',
-      color: theme.text,
+      fontSize: typeScale.statCard,
+      fontFamily: theme.fonts.display,
+      fontVariant: ['tabular-nums'],
+      color: theme.ink,
     },
     statLabel: {
-      fontSize: 13,
-      color: theme.textSecondary,
+      fontSize: 11,
+      fontFamily: theme.fonts.ui,
+      color: theme.slate,
       marginTop: 4,
     },
     section: {
       marginBottom: 24,
     },
+    // Eyebrow: all-caps via the style, stored sentence case
+    // (design/PATTERN_VOCABULARY.md).
     sectionTitle: {
-      fontSize: 14,
-      fontWeight: '600',
-      color: theme.textSecondary,
+      fontSize: typeScale.eyebrow,
+      fontFamily: theme.fonts.uiSemibold,
+      letterSpacing: typeScale.eyebrowLetterSpacing,
       textTransform: 'uppercase',
-      letterSpacing: 0.5,
+      color: theme.mist,
       marginBottom: 12,
     },
     trendCard: {
-      backgroundColor: theme.surface,
-      borderRadius: 16,
+      backgroundColor: theme.white,
+      borderWidth: 1,
+      borderColor: theme.cloud,
+      borderRadius: radii.feature,
       padding: 16,
     },
     trendChart: {
@@ -423,81 +451,95 @@ function createStyles(theme: AppTheme) {
       minHeight: 4,
     },
     trendLabel: {
-      fontSize: 10,
-      color: theme.textSecondary,
+      fontSize: typeScale.caption,
+      fontFamily: theme.fonts.ui,
+      color: theme.slate,
       marginTop: 8,
     },
     merchantsCard: {
-      backgroundColor: theme.surface,
-      borderRadius: 16,
-      padding: 16,
+      backgroundColor: theme.white,
+      borderWidth: 1,
+      borderColor: theme.cloud,
+      borderRadius: radii.card,
+      paddingHorizontal: 16,
     },
     merchantRow: {
       flexDirection: 'row',
       alignItems: 'center',
       paddingVertical: 10,
-      borderBottomWidth: 1,
-      borderBottomColor: theme.border,
+      borderTopWidth: 1,
+      borderTopColor: theme.hairlineSubtle,
+    },
+    // First row in a card carries no top hairline (matches
+    // components/money/SpentList.tsx's rowWrapFirst).
+    rowNoBorder: {
+      borderTopWidth: 0,
     },
     merchantRank: {
       width: 28,
       height: 28,
-      borderRadius: 14,
-      backgroundColor: theme.background,
+      borderRadius: radii.pill,
+      backgroundColor: theme.snow,
       alignItems: 'center',
       justifyContent: 'center',
       marginRight: 12,
     },
     merchantRankText: {
-      fontSize: 13,
-      fontWeight: '600',
-      color: theme.textSecondary,
+      fontSize: typeScale.secondary,
+      fontFamily: theme.fonts.uiSemibold,
+      color: theme.slate,
     },
     merchantContent: {
       flex: 1,
     },
     merchantName: {
-      fontSize: 15,
-      fontWeight: '500',
-      color: theme.text,
+      fontSize: typeScale.body,
+      fontFamily: theme.fonts.uiMedium,
+      color: theme.ink,
     },
     merchantCount: {
-      fontSize: 13,
-      color: theme.textSecondary,
+      fontSize: typeScale.secondary,
+      fontFamily: theme.fonts.ui,
+      color: theme.slate,
     },
     merchantTotal: {
-      fontSize: 15,
-      fontWeight: '600',
-      color: theme.text,
+      fontSize: typeScale.body,
+      fontFamily: theme.fonts.uiSemibold,
+      color: theme.ink,
+      fontVariant: ['tabular-nums'],
     },
-    transactionsCard: {
-      backgroundColor: theme.surface,
-      borderRadius: 16,
-      padding: 16,
+    logsCard: {
+      backgroundColor: theme.white,
+      borderWidth: 1,
+      borderColor: theme.cloud,
+      borderRadius: radii.card,
+      paddingHorizontal: 16,
     },
-    transactionRow: {
+    logRow: {
       flexDirection: 'row',
       alignItems: 'center',
       paddingVertical: 10,
-      borderBottomWidth: 1,
-      borderBottomColor: theme.border,
+      borderTopWidth: 1,
+      borderTopColor: theme.hairlineSubtle,
     },
-    transactionContent: {
+    logContent: {
       flex: 1,
     },
-    transactionTitle: {
-      fontSize: 15,
-      fontWeight: '500',
-      color: theme.text,
+    logTitle: {
+      fontSize: typeScale.body,
+      fontFamily: theme.fonts.uiMedium,
+      color: theme.ink,
     },
-    transactionDate: {
-      fontSize: 13,
-      color: theme.textSecondary,
+    logDate: {
+      fontSize: typeScale.secondary,
+      fontFamily: theme.fonts.ui,
+      color: theme.slate,
     },
-    transactionAmount: {
-      fontSize: 15,
-      fontWeight: '600',
-      color: theme.text,
+    logAmount: {
+      fontSize: typeScale.body,
+      fontFamily: theme.fonts.uiSemibold,
+      color: theme.ink,
+      fontVariant: ['tabular-nums'],
     },
   });
 }

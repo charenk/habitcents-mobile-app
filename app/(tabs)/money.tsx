@@ -193,7 +193,7 @@ export default function MoneyScreen() {
         onStart={handleStart}
         onStartTrial={() => {
           setPickOneHabitId(null);
-          router.push('/paywall?placement=habit_gate');
+          router.push('/paywall?placement=habit_gate_money');
         }}
       />
     </View>
