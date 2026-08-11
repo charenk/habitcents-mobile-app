@@ -269,6 +269,67 @@ describe('AddUpcomingSheet edit mode: actually changing the schedule', () => {
   });
 });
 
+describe('AddUpcomingSheet edit mode: materialized-child collision (queue2 review P1)', () => {
+  // The reviewer's repro: a schedule rebuild anchors at today, and when the
+  // materializer has already written a child for today, saving the parent
+  // onto the same day would double-count that occurrence. The first test
+  // captures the date a rebuild naturally produces (sequential on purpose:
+  // a mid-test cleanup() corrupts act tracking, see U11's RTL note); the
+  // second plants a child on exactly that day and proves the save advances.
+  let capturedNaturalDate: Date | null = null;
+
+  it('captures the natural rebuilt date with no children present', async () => {
+    const parent = makeExpense({ id: 'e1' });
+    const view = await renderEdit(parent);
+
+    await tap(view.getByLabelText('Weekly, not selected'));
+    await tap(view.getByRole('button', { name: strings.addUpcoming.saveChanges }));
+
+    capturedNaturalDate = mockUpdateExpense.mock.calls[0][1].date as Date;
+    expect(capturedNaturalDate).toBeInstanceOf(Date);
+  });
+
+  it('never writes the parent onto a day owned by one of its children', async () => {
+    expect(capturedNaturalDate).not.toBeNull();
+    const parent = makeExpense({ id: 'e1' });
+    const child = makeExpense({
+      id: 'c1',
+      date: new Date(capturedNaturalDate as Date),
+      isRecurring: false,
+      recurrence: undefined,
+      recurrenceRule: undefined,
+      source: 'recurring',
+      parentId: 'e1',
+    });
+    mockExpenses = [parent, child];
+
+    const view = await renderEdit(parent);
+    await tap(view.getByLabelText('Weekly, not selected'));
+    await tap(view.getByRole('button', { name: strings.addUpcoming.saveChanges }));
+
+    const updates = mockUpdateExpense.mock.calls[0][1];
+    const saved = updates.date as Date;
+    const natural = capturedNaturalDate as Date;
+    const sameDay = (a: Date, b: Date) =>
+      a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+    expect(sameDay(saved, natural)).toBe(false);
+    expect(saved.getTime()).toBeGreaterThan(natural.getTime());
+    expect(updates.recurrenceRule!.type).toBe('weekly');
+  });
+
+  it('re-selecting the already-active schedule value is not a reschedule', async () => {
+    const parent = makeExpense({ id: 'e1' }); // monthly, the 15th
+    const view = await renderEdit(parent);
+
+    await tap(view.getByLabelText('Monthly, selected'));
+    await tap(view.getByRole('button', { name: strings.addUpcoming.saveChanges }));
+
+    const updates = mockUpdateExpense.mock.calls[0][1];
+    expect(updates.date).toEqual(parent.date);
+    expect(updates.recurrenceRule).toEqual({ type: 'monthly', monthDay: '15' });
+  });
+});
+
 describe('AddUpcomingSheet edit mode: delete with undo', () => {
   it('deletes with no confirmation and offers an undo toast', async () => {
     const expense = makeExpense({ id: 'e1' });

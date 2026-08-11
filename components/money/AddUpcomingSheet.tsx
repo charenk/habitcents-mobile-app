@@ -68,8 +68,9 @@ import type {
 } from '@/types/expense';
 import { formatDate } from '@/utils/dates';
 import { toExpenseCategory } from '@/utils/expenseCategory';
+import { atMidnight } from '@/utils/habitLogging';
 import { hapticSuccess } from '@/utils/motion';
-import { resolveRule } from '@/utils/recurring';
+import { nextOccurrence, resolveRule } from '@/utils/recurring';
 
 export type AddUpcomingSheetMode = 'add' | 'edit';
 
@@ -394,36 +395,38 @@ export function AddUpcomingSheet({
     setName(chip.label);
   };
 
-  // Wrap every schedule setter so touching ANY of these controls flips
+  // Wrap every schedule setter so CHANGING any of these controls flips
   // scheduleTouched, which is what tells Save (edit mode) to rebuild the date
   // and rule from the draft instead of preserving the row's original ones.
+  // Re-selecting the already-active value is deliberately a no-op: a stray
+  // tap on the current chip must not count as a reschedule (queue2 review P1).
   const handleScheduleTypeChange = (v: ScheduleType) => {
+    if (v !== scheduleType) setScheduleTouched(true);
     setScheduleType(v);
-    setScheduleTouched(true);
   };
   const handleOnceWhenChange = (v: OnceWhen) => {
+    if (v !== onceWhen) setScheduleTouched(true);
     setOnceWhen(v);
-    setScheduleTouched(true);
   };
   const handleFrequencyChange = (v: Frequency) => {
+    if (v !== frequency) setScheduleTouched(true);
     setFrequency(v);
-    setScheduleTouched(true);
   };
   const handleWeekdayChange = (v: Weekday) => {
+    if (v !== weekday) setScheduleTouched(true);
     setWeekday(v);
-    setScheduleTouched(true);
   };
   const handleBiweekStartChange = (v: BiweekStart) => {
+    if (v !== biweekStart) setScheduleTouched(true);
     setBiweekStart(v);
-    setScheduleTouched(true);
   };
   const handleMonthDayChange = (v: MonthDayOption) => {
+    if (v !== monthDay) setScheduleTouched(true);
     setMonthDay(v);
-    setScheduleTouched(true);
   };
   const handleEveryNDaysChange = (v: number) => {
+    if (v !== everyNDays) setScheduleTouched(true);
     setEveryNDays(v);
-    setScheduleTouched(true);
   };
 
   const handleSave = () => {
@@ -450,13 +453,44 @@ export function AddUpcomingSheet({
             startOfToday()
           );
 
+    // INVARIANT (queue2 review P1): a parent's date must never land on a
+    // calendar day already owned by one of its materialized children. A
+    // schedule rebuild anchors at today, and if today's occurrence has
+    // already materialized, writing the parent to today would double that
+    // day's spend (parent row + child row, both real). While the candidate
+    // collides, advance it one period under the NEW rule. Terminates:
+    // children only exist for dates up to today, so the walk clears the
+    // collision set within a period or two; the guard is a hard stop.
+    let safeDate = date;
+    if (mode === 'edit' && expense && scheduleTouched) {
+      const childDays = new Set(
+        expenses
+          .filter((e) => e.parentId === expense.id && e.source === 'recurring')
+          .map((e) => atMidnight(e.date).getTime())
+      );
+      const probe: Expense = {
+        ...expense,
+        isRecurring: rule.type !== 'once',
+        recurrence: legacyRecurrence(rule),
+        recurrenceRule: rule,
+      };
+      let guard = 0;
+      while (childDays.has(atMidnight(safeDate).getTime()) && guard < 400) {
+        const dayAfter = new Date(safeDate);
+        dayAfter.setDate(dayAfter.getDate() + 1);
+        const next = nextOccurrence({ ...probe, date: safeDate }, dayAfter);
+        safeDate = next ?? dayAfter;
+        guard += 1;
+      }
+    }
+
     if (mode === 'edit' && expense) {
       void updateExpense(expense.id, {
         title,
         amount: cents,
         category,
         categoryId: match?.id,
-        date,
+        date: safeDate,
         isRecurring: rule.type !== 'once',
         recurrence: legacyRecurrence(rule),
         recurrenceRule: rule,

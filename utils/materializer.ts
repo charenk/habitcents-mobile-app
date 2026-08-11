@@ -142,5 +142,9 @@ export function toChildInput(plan: MaterializedChildPlan): AddExpenseInput {
     reminderEnabled: false,
     source: 'recurring',
     parentId: parent.id,
+    // Children of an imported parent inherit its importId so "Undo this
+    // import" removes everything the import caused, including occurrences
+    // materialized after the write (queue2 review P2).
+    importId: parent.importId,
   };
 }

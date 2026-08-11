@@ -296,3 +296,19 @@ describe('occurrenceKey', () => {
     expect(occurrenceKey('p1', date)).not.toBe(occurrenceKey('p2', date));
   });
 });
+
+
+describe('toChildInput import inheritance (queue2 review P2)', () => {
+  it('children inherit the parent importId so import undo removes them too', () => {
+    const parent = expense({
+      id: 'p-import',
+      date: new Date('2026-08-03T00:00:00'),
+      isRecurring: true,
+      recurrenceRule: { type: 'weekly', weekday: 1 },
+      importId: 'import-42',
+    });
+    const plan = planMaterialization([parent], new Set(), new Date('2026-08-11T00:00:00'));
+    expect(plan.length).toBeGreaterThan(0);
+    expect(toChildInput(plan[0]).importId).toBe('import-42');
+  });
+});
