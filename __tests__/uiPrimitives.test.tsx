@@ -121,4 +121,29 @@ describe('AmountDisplay', () => {
     );
     expect(await view.findByText('0.00')).toBeTruthy();
   });
+
+  it('shrink-wraps the digits by default (alignSelf flex-start)', async () => {
+    const view = await render(
+      <Providers>
+        <AmountDisplay valueCents={0} zeroAsPlaceholder />
+      </Providers>
+    );
+    const number = await view.findByText('0.00');
+    // number Text -> row View -> column View (the component's own root).
+    const column = number.parent?.parent;
+    const flat = StyleSheet.flatten(column?.props.style);
+    expect(flat.alignSelf).toBe('flex-start');
+  });
+
+  it('stretches to the parent width when fullWidth is set, so the underline spans the container', async () => {
+    const view = await render(
+      <Providers>
+        <AmountDisplay valueCents={0} zeroAsPlaceholder fullWidth />
+      </Providers>
+    );
+    const number = await view.findByText('0.00');
+    const column = number.parent?.parent;
+    const flat = StyleSheet.flatten(column?.props.style);
+    expect(flat.alignSelf).toBe('stretch');
+  });
 });

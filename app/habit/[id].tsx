@@ -1,7 +1,6 @@
 import React, { useMemo, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
-import { Icon } from '@/components/ui/Icon';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -132,14 +131,11 @@ export default function HabitDetailScreen() {
           />
         ) : (
           <View style={styles.actionsSection}>
-            <TouchableOpacity
-              style={styles.primaryButton}
+            <Button
+              label={strings.habitLogging.startBreakingIt}
               onPress={() => setPickOneVisible(true)}
-              accessibilityRole="button"
-            >
-              <Icon name="Flag" size={20} color={theme.white} />
-              <Text style={styles.primaryButtonText}>{strings.habitDetail.startTracking}</Text>
-            </TouchableOpacity>
+              variant="primary"
+            />
           </View>
         )}
       </ScrollView>
@@ -445,20 +441,6 @@ function createStyles(theme: AppTheme) {
     actionsSection: {
       gap: 12,
       marginTop: 8,
-    },
-    primaryButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: theme.primary,
-      paddingVertical: 16,
-      borderRadius: radii.control,
-      gap: 8,
-    },
-    primaryButtonText: {
-      fontSize: 16,
-      fontFamily: theme.fonts.uiSemibold,
-      color: theme.white,
     },
     secondaryButton: {
       alignItems: 'center',

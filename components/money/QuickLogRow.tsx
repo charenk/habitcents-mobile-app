@@ -37,7 +37,7 @@ export function QuickLogRow({
           accessibilityRole="button"
           accessibilityLabel={strings.today.quickLogOpenLabel}
         >
-          <AmountDisplay valueCents={0} size={40} zeroAsPlaceholder />
+          <AmountDisplay valueCents={0} size={40} zeroAsPlaceholder fullWidth />
         </Pressable>
         <TouchableOpacity
           style={styles.quickLogPlus}
