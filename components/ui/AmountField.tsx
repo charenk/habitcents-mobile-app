@@ -102,7 +102,7 @@ export function AmountField({
         symbol: {
           fontFamily: theme.fonts.display,
           fontSize: Math.round(size * 0.6),
-          color: theme.mist,
+          color: theme.mistText,
           marginRight: 2,
           includeFontPadding: false,
           // Nudges the symbol down to the numeral's baseline, matching
@@ -142,7 +142,7 @@ export function AmountField({
           onBlur={handleBlur}
           keyboardType="decimal-pad"
           placeholder={(0).toFixed(meta.decimals)}
-          placeholderTextColor={theme.mist}
+          placeholderTextColor={theme.mistText}
           style={styles.input}
           allowFontScaling
           maxFontSizeMultiplier={1.3}

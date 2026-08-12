@@ -51,7 +51,7 @@ export function AmountDisplay({
   const major = (Number.isFinite(valueCents) ? valueCents : 0) / 100;
   const numberText = Math.abs(major).toFixed(meta.decimals);
 
-  const numberColor = placeholder ? theme.mist : theme.ink;
+  const numberColor = placeholder ? theme.mistText : theme.ink;
 
   const styles = useMemo(
     () =>
@@ -66,7 +66,7 @@ export function AmountDisplay({
         symbol: {
           fontFamily: theme.fonts.display,
           fontSize: Math.round(size * 0.6),
-          color: theme.mist,
+          color: theme.mistText,
           marginRight: 2,
           includeFontPadding: false,
         },

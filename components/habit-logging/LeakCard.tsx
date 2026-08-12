@@ -113,7 +113,7 @@ function createStyles(theme: AppTheme) {
     evidenceHint: {
       fontFamily: theme.fonts.ui,
       fontSize: typeScale.caption,
-      color: theme.mist,
+      color: theme.mistText,
       marginBottom: 14,
       lineHeight: 18,
     },

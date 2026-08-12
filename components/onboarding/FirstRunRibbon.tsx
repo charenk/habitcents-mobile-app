@@ -39,7 +39,7 @@ export function FirstRunRibbon({ line, onDismiss }: FirstRunRibbonProps): React.
         accessibilityLabel="Dismiss"
         style={styles.dismiss}
       >
-        <Icon name="X" size={14} color={theme.mist} />
+        <Icon name="X" size={14} color={theme.mistText} />
       </Pressable>
     </View>
   );

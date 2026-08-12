@@ -146,7 +146,7 @@ function createStyles(theme: AppTheme) {
       fontSize: typeScale.eyebrow,
       fontFamily: theme.fonts.uiSemibold,
       letterSpacing: typeScale.eyebrowLetterSpacing,
-      color: theme.mist,
+      color: theme.mistText,
       textTransform: 'uppercase',
     },
     actions: {

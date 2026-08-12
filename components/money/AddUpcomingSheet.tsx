@@ -765,7 +765,7 @@ function StepperButton({
         pressed && !disabled ? styles.stepperButtonPressed : null,
       ]}
     >
-      <Icon name={icon} size={16} color={disabled ? theme.mist : theme.ink} />
+      <Icon name={icon} size={16} color={disabled ? theme.mistText : theme.ink} />
     </Pressable>
   );
 }
@@ -796,7 +796,7 @@ function createStyles(theme: AppTheme) {
       fontSize: typeScale.eyebrow,
       letterSpacing: typeScale.eyebrowLetterSpacing,
       textTransform: 'uppercase',
-      color: theme.mist,
+      color: theme.mistText,
       marginTop: 18,
       marginBottom: 8,
     },

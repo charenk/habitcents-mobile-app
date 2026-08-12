@@ -87,7 +87,7 @@ function createStyles(theme: AppTheme) {
     date: {
       fontFamily: theme.fonts.ui,
       fontSize: typeScale.secondary,
-      color: theme.mist,
+      color: theme.mistText,
       fontVariant: ['tabular-nums'],
     },
     detail: {

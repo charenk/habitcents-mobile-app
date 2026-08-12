@@ -168,7 +168,7 @@ function createStyles(theme: AppTheme) {
       fontFamily: theme.fonts.ui,
       fontSize: typeScale.caption,
       lineHeight: 18,
-      color: theme.mist,
+      color: theme.mistText,
       marginTop: 6,
       fontVariant: ['tabular-nums'],
     },
@@ -196,7 +196,7 @@ function createStyles(theme: AppTheme) {
     trackLabel: {
       fontFamily: theme.fonts.ui,
       fontSize: 10.5,
-      color: theme.mist,
+      color: theme.mistText,
     },
     trackLabelActive: {
       fontFamily: theme.fonts.uiSemibold,

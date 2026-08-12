@@ -212,7 +212,7 @@ function createStyles(theme: AppTheme) {
       fontFamily: theme.fonts.uiSemibold,
       letterSpacing: typeScale.eyebrowLetterSpacing,
       textTransform: 'uppercase',
-      color: theme.mist,
+      color: theme.mistText,
       paddingHorizontal: 2,
     },
     card: {

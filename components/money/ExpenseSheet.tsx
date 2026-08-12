@@ -359,7 +359,7 @@ function createStyles(theme: AppTheme) {
       fontSize: typeScale.eyebrow,
       letterSpacing: typeScale.eyebrowLetterSpacing,
       textTransform: 'uppercase',
-      color: theme.mist,
+      color: theme.mistText,
       marginBottom: 6,
       marginTop: 18,
     },

@@ -56,7 +56,7 @@ export function TextField({
         setFocused(false);
         onBlur?.(event);
       }}
-      placeholderTextColor={theme.mist}
+      placeholderTextColor={theme.mistText}
       maxFontSizeMultiplier={maxFontSizeMultiplier ?? 1.5}
       style={[styles.field, focused ? styles.fieldFocused : null, style]}
     />

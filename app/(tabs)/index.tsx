@@ -1123,12 +1123,12 @@ function createStyles(theme: AppTheme) {
     watchNudgeSeparator: {
       fontFamily: theme.fonts.ui,
       fontSize: 14,
-      color: theme.mist,
+      color: theme.mistText,
     },
     watchNudgeDismissText: {
       fontFamily: theme.fonts.ui,
       fontSize: 14,
-      color: theme.mist,
+      color: theme.mistText,
     },
     listContent: {
       paddingHorizontal: 20,
@@ -1145,7 +1145,7 @@ function createStyles(theme: AppTheme) {
       fontSize: typeScale.eyebrow,
       fontFamily: theme.fonts.uiSemibold,
       letterSpacing: typeScale.eyebrowLetterSpacing,
-      color: theme.mist,
+      color: theme.mistText,
       textTransform: 'uppercase',
     },
     loadingContainer: {

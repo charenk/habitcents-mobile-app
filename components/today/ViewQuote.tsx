@@ -73,7 +73,7 @@ function createStyles(theme: AppTheme) {
     attribution: {
       fontFamily: theme.fonts.ui,
       fontSize: 12,
-      color: theme.mist,
+      color: theme.mistText,
       marginTop: 4,
     },
   });

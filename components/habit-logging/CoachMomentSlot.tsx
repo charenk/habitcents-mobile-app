@@ -39,7 +39,7 @@ export function CoachMomentSlot({ text, tint, headline, tone = 'snow' }: CoachMo
   const cardStyle =
     resolved === 'lavender' ? styles.cardLavender : resolved === 'sage' ? styles.cardSage : styles.cardSnow;
   const iconColor =
-    resolved === 'lavender' ? theme.lavender : resolved === 'sage' ? theme.primaryDark : theme.mist;
+    resolved === 'lavender' ? theme.lavender : resolved === 'sage' ? theme.primaryDark : theme.mistText;
 
   return (
     <View>
@@ -76,10 +76,13 @@ function createStyles(theme: AppTheme) {
       paddingVertical: 5,
       marginTop: 12,
     },
+    // UX-005: ink on the lavender tint, not lavender on lavender. Same fix as
+    // LongArc's chapter pill: lavender text on this 14% lavender background
+    // was 2.9:1, below AA at this size.
     pillText: {
       fontFamily: theme.fonts.uiSemibold,
       fontSize: typeScale.secondary,
-      color: theme.lavender,
+      color: theme.ink,
       fontVariant: ['tabular-nums'],
     },
     card: {

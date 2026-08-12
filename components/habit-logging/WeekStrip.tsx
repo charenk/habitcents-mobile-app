@@ -68,7 +68,8 @@ export function WeekStrip({ dayLogs, trackingStart, skipValue, today = new Date(
                   unanswered && !isTodayOpen && styles.dotOpen,
                 ]}
               >
-                {cell.state === 'skipped' && <Icon name="Check" size={14} color={theme.white} />}
+                {/* UX-001: white on sage was 2.71:1, below the 3:1 icon floor. */}
+                {cell.state === 'skipped' && <Icon name="Check" size={14} color={theme.ink} />}
               </View>
               <Text style={styles.dayLabel}>{DAY_LABELS[i]}</Text>
             </View>
@@ -128,7 +129,7 @@ function createStyles(theme: AppTheme) {
     dayLabel: {
       fontSize: 9,
       fontFamily: theme.fonts.uiBold,
-      color: theme.mist,
+      color: theme.mistText,
     },
     summary: {
       fontSize: typeScale.caption,

@@ -79,7 +79,7 @@ function createStyles(theme: AppTheme) {
       fontSize: typeScale.eyebrow,
       fontFamily: theme.fonts.uiSemibold,
       letterSpacing: typeScale.eyebrowLetterSpacing,
-      color: theme.mist,
+      color: theme.mistText,
     },
     // Tertiary text link (design/PATTERN_VOCABULARY.md controls: "tertiary
     // bare slate text"), sentence case, not an eyebrow.

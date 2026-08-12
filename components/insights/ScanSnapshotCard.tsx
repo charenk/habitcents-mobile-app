@@ -178,7 +178,7 @@ function createStyles(theme: AppTheme) {
       fontFamily: theme.fonts.uiSemibold,
       letterSpacing: typeScale.eyebrowLetterSpacing,
       textTransform: 'uppercase',
-      color: theme.mist,
+      color: theme.mistText,
     },
     evidenceLine: {
       fontSize: typeScale.caption,
@@ -286,7 +286,7 @@ function createStyles(theme: AppTheme) {
     footerCaption: {
       fontSize: typeScale.caption,
       fontFamily: theme.fonts.ui,
-      color: theme.mist,
+      color: theme.mistText,
       textAlign: 'center',
     },
     footerAction: {

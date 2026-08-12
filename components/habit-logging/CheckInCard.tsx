@@ -185,7 +185,7 @@ export function CheckInCard({
           </View>
         )}
         <View style={styles.headerSpacer} />
-        {onOpenDetail && <Icon name="ChevronRight" size={16} color={theme.mist} />}
+        {onOpenDetail && <Icon name="ChevronRight" size={16} color={theme.mistText} />}
       </Pressable>
 
       {isDaily && <WeekStrip dayLogs={goal.dayLogs} trackingStart={goal.trackingStart} skipValue={goal.skipValue} />}
@@ -418,10 +418,13 @@ function ConfirmationBlock({
   return (
     <Animated.View style={[styles.confirmationRow, skipped ? pulseStyle : null]}>
       <View style={[styles.badge, skipped ? styles.badgeSkip : styles.badgeSlip]}>
+        {/* UX-001: the skip badge is sage (theme.primary); white on sage was
+            2.71:1, below the 3:1 icon floor. The slip badge is cloud, so
+            mistText there is unaffected. */}
         <Icon
           name={skipped ? 'Check' : 'Minus'}
           size={20}
-          color={skipped ? theme.white : theme.mist}
+          color={skipped ? theme.ink : theme.mistText}
         />
       </View>
       <View style={styles.confirmationText}>
@@ -462,10 +465,13 @@ function createStyles(theme: AppTheme) {
       paddingHorizontal: 8,
       paddingVertical: 3,
     },
+    // UX-005: ink on the lavender tint, not lavender on lavender. Same fix as
+    // LongArc's chapter pill: lavender text on this 14% lavender background
+    // was 2.9:1, below AA at this size.
     cadencePillText: {
       fontFamily: theme.fonts.uiSemibold,
       fontSize: 11,
-      color: theme.lavender,
+      color: theme.ink,
     },
     questionBlock: {
       marginTop: 14,

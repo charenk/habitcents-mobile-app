@@ -146,7 +146,7 @@ export default function OnboardingIntentScreen() {
                 <Text style={styles.cardTitle}>{card.title}</Text>
                 <Text style={styles.cardDescription}>{card.description}</Text>
               </View>
-              <Icon name="ChevronRight" size={18} color={theme.mist} />
+              <Icon name="ChevronRight" size={18} color={theme.mistText} />
             </Pressable>
           ))}
         </View>

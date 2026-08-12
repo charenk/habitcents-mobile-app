@@ -13,35 +13,39 @@ Living document. Twin of `UXUI_AUDIT.html` (interactive viewer; keep both in syn
 
 | # | Dimension | Score | Key finding |
 |---|-----------|-------|-------------|
-| 1 | Accessibility | 2 / 4 | Ratified tokens fail AA (mist text, white-on-sage CTA); Dynamic Type caps on 20 of ~334 Texts |
-| 2 | Performance | 2 / 4 | Zero React.memo; 6 of 8 provider values unmemoized; unbounded lists in ScrollViews; sync scan pipeline |
-| 3 | Responsive design | 3 / 4 | 44pt honored or hitSlop-padded almost everywhere; SegmentedControl 38pt, uncapped type breaks layouts at AX sizes |
-| 4 | Theming | 3 / 4 | Tokens used with discipline; 112 fontSize literals driven by missing scale steps; no spacing tokens exist |
-| 5 | Anti-patterns | 3 / 4 | No gamification, no shame coding, gradients exactly on budget; category detail ships red/green P&L coding |
-| | **Total** | **13 / 20** | **Acceptable: significant work needed** |
+| 1 | Accessibility | 3 / 4 | Contrast debt resolved (decision 1 shipped, Phase B): mist, white-on-sage CTA, amberInk, coral, sageDark, disabled labels all now pass. Still open: Dynamic Type caps on only 20 of ~334 Texts, VoiceOver announcements missing end to end |
+| 2 | Performance | 2 / 4 | Zero React.memo; 6 of 8 provider values unmemoized; unbounded lists in ScrollViews; sync scan pipeline. Unchanged: no Phase A/B fix touched performance |
+| 3 | Responsive design | 3 / 4 | 44pt honored or hitSlop-padded almost everywhere; SegmentedControl 38pt, uncapped type breaks layouts at AX sizes. Unchanged: no Phase A/B fix touched touch targets |
+| 4 | Theming | 4 / 4 | Contrast/color-token layer resolved and cleanly role-split (mistText vs mistDeco, sagePressed added). Still open: 112 fontSize literals lack scale steps, no spacing tokens exist (decision 2) |
+| 5 | Anti-patterns | 4 / 4 | No gamification, no shame coding, gradients exactly on budget; category detail's red/green P&L coding and raw-identity-hue bars, the one named exception, are now fixed |
+| | **Total** | **16 / 20** | **Good: address the weak dimensions (performance, the still-missing type/spacing scale)** |
 
 ## Anti-patterns verdict
 
-**Pass, with one screen excepted.** The app does not look AI-generated: no border-stripe cards, no gradient text, no bounce easing, no glassmorphism, no hero-metric template, exactly two decorative gradients (both sanctioned), one hard-coded hex outside theme.ts (documented, in the sanctioned aurora). The honesty architecture (evidence floors, refuse-to-extrapolate guards, hatch-not-flat-fill) is distinctive and genuinely designed. The exception is category detail (`app/category/[id].tsx`), which predates the redesign's soul: red up-arrows, green down-arrows, and spend bars in raw identity hues, both named anti-references in `.impeccable.md`.
+**Pass, no exceptions remaining.** The app does not look AI-generated: no border-stripe cards, no gradient text, no bounce easing, no glassmorphism, no hero-metric template, exactly two decorative gradients (both sanctioned), one hard-coded hex outside theme.ts (documented, in the sanctioned aurora). The honesty architecture (evidence floors, refuse-to-extrapolate guards, hatch-not-flat-fill) is distinctive and genuinely designed. The one exception this audit found, category detail (`app/category/[id].tsx`)'s red up-arrows, green down-arrows, and spend bars in raw identity hues, both named anti-references in `.impeccable.md`, is now fixed (UX-008, UX-009). The related sage-on-add-upcoming misuse (UX-064) is also fixed. See the 2026-08-12 changelog entry.
 
 ## Executive summary
 
-- **67 findings**: 2 P0, 14 P1, 30 P2, 21 P3.
-- Top issues:
-  1. Two ratified color tokens fail WCAG AA at every use: white-on-sage on the primary CTA (2.71:1) and mist as text (2.80:1 in ~57 sites). These are palette decisions, not drift (decision 1).
-  2. Dynamic Type caps exist on only 20 of ~334 Texts because the primitives delegate the ratified caps to call sites; serif money is uncapped almost everywhere.
-  3. Honesty bugs: Categories labels an all-time sum "this month"; a $0 partial-slip save credits the full skip value; the scan intake never renders its error states.
-  4. The scan pipeline runs synchronously on the JS thread (frozen "Reading your files" frame) and is silent for VoiceOver end to end.
-  5. The type scale, radii set, and spacing grid are missing the steps the app actually uses; 112 fontSize literals across 47 files are mostly evidence of missing tokens, not sloppiness (decision 2).
-- Recommended next steps: resolve decisions 1-3 below, then execute fix phases A-G (end of document).
+- **69 findings**: 2 P0, 16 P1, 30 P2, 21 P3. Two of these, UX-068 and UX-069, were caught during Phase A review rather than the original scan and were not part of the initial 67.
+- **25 resolved, 44 open.** Phase A (commit `65e725e`): 12 original findings plus UX-068 and UX-069, 14 total. Phase B (current working tree): 11 findings, the palette/contrast decision. Both P0s are resolved; 6 of the original 14 P1s are still open. Every resolved finding below carries a Status line; nothing was deleted or renumbered.
+- Top issues, open and current:
+  1. Dynamic Type caps exist on only 20 of ~334 Texts because the primitives delegate the ratified caps to call sites; serif money is uncapped almost everywhere (UX-004).
+  2. The scan pipeline runs synchronously on the JS thread (frozen "Reading your files" frame) and is silent for VoiceOver end to end (UX-012, UX-013).
+  3. The type scale, radii set, and spacing grid are missing the steps the app actually uses; 112 fontSize literals across 47 files are mostly evidence of missing tokens, not sloppiness (decision 2, still open).
+  4. SpendPulse's year view packs 365+ interactive cells into overlapping sub-7pt hitSlops (UX-015).
+  5. Six of eight provider values are still unmemoized; the toast provider re-renders on every mutation (UX-019, decision 3, still open).
+- Resolved since the initial run: the two ratified color-token AA failures that led the original top-issues list (white-on-sage CTA, mist as text), plus the category-detail honesty and anti-pattern bugs ("this month" mislabel, the $0 partial-slip credit, the silent leak dismissal, the 10-row truncation, red/green P&L coding). See decision 1's shipped note and the changelog for what actually shipped.
+- Recommended next steps: decision 2 (the scale) and decision 3 (performance depth) are still open and unstarted; work the remaining open findings in the list above.
 
 ## Decisions needed (before the gated phases)
 
-**Decision 1: the palette's ratified AA failures.** Mist text (2.80) and white-on-sage CTA (2.71) are ratified tokens that fail the bar the system itself declares. Options: (a) darken in place (mist to ~#6B7A8F, CTA fill to sageDark #2E7D55 which passes at 5.03); (b) split roles: `mistText` (darkened) vs `mistDeco` (current hue, fills only), and ink-on-sage labels keeping the #4CAF82 fill; (c) accept and document as a named deviation (not recommended before a public beta). **Recommendation: (b) for mist, (a) for the CTA.** Same bucket: amberInk darkening (~#8F5500), lavender pill ink treatment, disabled-label legibility, coral small-label handling.
+**Decision 1: the palette's ratified AA failures. RESOLVED, shipped in Phase B (current working tree).** Mist text (2.80) and white-on-sage CTA (2.71) are ratified tokens that fail the bar the system itself declares. Options: (a) darken in place (mist to ~#6B7A8F, CTA fill to sageDark #2E7D55 which passes at 5.03); (b) split roles: `mistText` (darkened) vs `mistDeco` (current hue, fills only), and ink-on-sage labels keeping the #4CAF82 fill; (c) accept and document as a named deviation (not recommended before a public beta). **Recommendation: (b) for mist, (a) for the CTA.** Same bucket: amberInk darkening (~#8F5500), lavender pill ink treatment, disabled-label legibility, coral small-label handling.
 
-**Decision 2: ratify the real scales instead of policing the current ones.** The literals cluster into steps that have no token: fontSize 14 (x24), 16 (x15), 17 (x6), 26/30 (sheet titles and mid-display, x9); radii 3-5 (x20, all micro-geometry); spacing has no tokens at all and the observed rhythm is 2pt-based. Options: (a) add the missing steps (`label` 14, `button` 16, `lead` 17, `sheetTitle` 26, `displayMid` 30, `radii.micro` 4, a first spacing export) then enforce hard; (b) rewrite 50+ call sites to fit the current incomplete scale. **Recommendation: (a).**
+**Shipped, and where it differs from the recommendation above:** the primary CTA fill stays `#4CAF82`; rather than darkening the fill, the label flips white to ink (2.71 to 6.24), and a new `sagePressed #3D9A6E` covers the pressed fill, because ink on the old sageDark pressed state was only 3.15 and swapping the label color mid-press would flash. Mist splits into `mist` (decorative fills only, 2 sites) and `mistText #677481` (4.78 on white, 4.53 on snow, both pass) for all text and meaning-bearing icons. **Correction: this report originally stated the proposed mistText color as `#6B7A8F` scoring 4.54 on white and passing. That was wrong: `#6B7A8F` is 4.37 on white and 4.14 on snow, and fails the 4.5 floor. `#677481` is the color that actually shipped, and it genuinely passes. See the changelog.** Also shipped: `amberInk #B26A00` to `#8F5500`; `coral #F05A5A` to `#C93B3B` (both directions: label on white and white on the destructive fill); `sageDark #2E7D55` to `#2C7851`; disabled labels white to slate.
 
-**Decision 3: performance depth before beta.** Options: (a) minimum: useMemo the 6 unmemoized provider values (Toast first: it re-renders 10 consumer files twice per toast, and a toast fires on every mutation) plus the CategoriesContext commit-ref port; ~1 hour, zero visual change, Lane 1; (b) medium: (a) plus React.memo on list rows, Spent history virtualization, HabitsContext ephemeral-slice split; (c) defer until device profiling shows jank. **Recommendation: (a) now, (b) if the owed on-device pass shows dropped frames.**
+**Decision 2: ratify the real scales instead of policing the current ones. Still open.** The literals cluster into steps that have no token: fontSize 14 (x24), 16 (x15), 17 (x6), 26/30 (sheet titles and mid-display, x9); radii 3-5 (x20, all micro-geometry); spacing has no tokens at all and the observed rhythm is 2pt-based. Options: (a) add the missing steps (`label` 14, `button` 16, `lead` 17, `sheetTitle` 26, `displayMid` 30, `radii.micro` 4, a first spacing export) then enforce hard; (b) rewrite 50+ call sites to fit the current incomplete scale. **Recommendation: (a).** Nothing in Phase A or Phase B touched this decision; it is untouched and still the largest open item in the report.
+
+**Decision 3: performance depth before beta. Still open.** Options: (a) minimum: useMemo the 6 unmemoized provider values (Toast first: it re-renders 10 consumer files twice per toast, and a toast fires on every mutation) plus the CategoriesContext commit-ref port; ~1 hour, zero visual change, Lane 1; (b) medium: (a) plus React.memo on list rows, Spent history virtualization, HabitsContext ephemeral-slice split; (c) defer until device profiling shows jank. **Recommendation: (a) now, (b) if the owed on-device pass shows dropped frames.** Nothing in Phase A or Phase B touched this decision.
 
 ---
 
@@ -55,11 +59,13 @@ Format: id · severity · tag · dimension. Location, impact, fix, suggested com
 Location: the primitives `components/ui/Button.tsx:89-100` (primary) and `components/ui/Chip.tsx:124-127,159-161` (solid selected), inherited by every screen; hand-rolled sites `app/paywall.tsx:440-444,366-372`, `components/leak-scan/HabitCard.tsx:306-318`, `components/leak-scan/ProjectionSection.tsx:218-229`, `components/PrivacyOverlay.tsx:64-77`, `components/money/QuickLogRow.tsx:42-49`; white check on sage dots `components/habit-logging/WeekStrip.tsx:71`, `HistoryCalendar.tsx:131` (3:1 non-text minimum).
 Impact: the app's most important action class is below AA for every low-vision user, enforced centrally by the primitive.
 Fix: per decision 1; sageDark fill passes at 5.03, or ink labels on sage. Chip's soft tone (sageLight + ink) already proves the house style survives. Command: /polish after the decision.
+Status: **Resolved**, Phase B (current working tree). Per decision 1's shipped note: label flips white to ink (2.71 to 6.24); `sagePressed #3D9A6E` covers the pressed state.
 
 **UX-002 · P0 · SYSTEM-GAP · contrast: amberInk on amberBg fails AA at five live sites (3.66-4.01:1 at 10.5-11pt).**
 Location: `components/leak-scan/TierBadge.tsx:33-38` ("Likely" pill on every KPI card, category row, habit card); `components/leak-scan/HabitCard.tsx:294-305` (yearly-pace pill) and `:66` with `:230-239` (Fixed class pill); `components/leak-scan/ProjectionSection.tsx:179-190` (3-payment flag); `components/money/UpcomingList.tsx:347-357` (multi-payment pill, 10.5pt bold).
 Impact: the scan's confidence tier and money-warning metadata, the honesty layer itself, is the least readable text on the results screen.
 Fix: darken `amberInk` one step (~#8F5500 passes on the 0.14 tint) in theme.ts; all five sites inherit. Command: /polish.
+Status: **Resolved**, Phase B (current working tree). `amberInk` shipped as `#B26A00` to `#8F5500`; passes AA at all five sites.
 
 ### P1 · major
 
@@ -67,6 +73,7 @@ Fix: darken `amberInk` one step (~#8F5500 passes on the 0.14 tint) in theme.ts; 
 Location: token `constants/theme.ts:23` (+ aliases textTertiary, tabIconDefault, calendar family); 57 of 63 `theme.mist` uses are `color:`. Load-bearing sites include `components/money/ExpenseRow.tsx:125-130` (logged time), `components/money/UpcomingList.tsx:358-379` (schedule + cadence lines), `components/money/SpentList.tsx:142-150` (day totals), `components/habit-logging/LongArc.tsx:167-174` ("Slips never subtract"), `components/leak-scan/ResultsScreen.tsx:535-541` (evidence window), `app/(tabs)/index.tsx:1101-1104` (interactive "not now"), placeholders in `components/ui/TextField.tsx:59` and `AmountField.tsx:145`, WeekStrip/HistoryCalendar day labels, profile hints and footer.
 Impact: the single largest AA debt; captions, placeholders, dates, and legends fail for low-vision users everywhere.
 Fix: per decision 1 (recommended: mistText ~#6B7A8F for information, mistDeco for fills). Command: /polish after the decision.
+Status: **Resolved**, Phase B (current working tree). Mist split into `mist` (decorative fills, 2 sites) and `mistText #677481` (4.78 on white, 4.53 on snow) for all text and meaning-bearing icons. Correction: this finding originally cited the proposed color as `#6B7A8F` at 4.54, claimed passing; that number was wrong (`#6B7A8F` is 4.37 on white / 4.14 on snow, fails). `#677481` is what shipped and it genuinely passes. See the changelog.
 
 **UX-004 · P1 · DRIFT · dynamic type: the ratified caps (1.3 serif money, 1.5 chrome) are enforced at call sites, not primitives; 20 caps across ~334 Texts.**
 Location: uncapped primitives `components/ui/Button.tsx:62`, `Chip.tsx:94`, `SegmentedControl.tsx:58`, `Toast.tsx:166`, `EmptyState.tsx:45-46`, `ConfirmSheet.tsx:74` (body); outright violations `components/ui/AmountDisplay.tsx:92-97` (serif money scales uncapped) and `AmountField.tsx:134-135` (digits capped, currency symbol not). Uncapped serif heroes: `components/habit-logging/KeptHero.tsx:42-50` (42pt), `app/habit/[id].tsx:300-309` (StatBlocks), `app/onboarding/welcome.tsx:199-205` (44pt), `app/paywall.tsx:294-300`, `components/leak-scan/KpiRow.tsx:82-87`, plus serif amounts across Money/Insights (`UpcomingList.tsx:271-279`, `app/category/[id].tsx:369-374,405-410`, `PaceCard.tsx:119-125`, `ScanSnapshotCard.tsx:267-274`).
@@ -77,31 +84,37 @@ Fix: bake the caps into the primitives (opt-out, not opt-in), then delete redund
 Location: fixed at `components/habit-logging/LongArc.tsx:152-158` (uses ink, with the 2.9:1 math in a comment); re-shipped at `components/habit-logging/CheckInCard.tsx:459-469` (cadence pill, 11pt) and `components/habit-logging/CoachMomentSlot.tsx:71-84` (milestone pill).
 Impact: known-documented AA failure beside its own fix; the most fixable inconsistency in the audit.
 Fix: apply LongArc's ink treatment to both pills. Command: /polish.
+Status: **Resolved**, Phase B (current working tree). CheckInCard and CoachMomentSlot now use LongArc's ink treatment.
 
 **UX-006 · P1 · DRIFT · contrast: paywall hero subtitle and eyebrow fail AA on the lavender gradient.**
 Location: `app/paywall.tsx:155-164` (gradient), `:301-308` (15pt subtitle, opacity 0.92), `:286-293` (11pt eyebrow, opacity 0.9). The 30pt serif title passes as large text.
 Impact: body-size white text on the lavender end is below 4.5:1 on the app's monetization surface.
 Fix: darken the gradient start (indigo-forward) or set subtitle/eyebrow on the darker half without opacity tricks. Command: /polish.
+Status: **Resolved**, Phase B (current working tree). Corrected per decision 1's lavender/coral bucket.
 
 **UX-007 · P1 · DRIFT · honesty: Categories claims "this month" on an all-time sum.**
 Location: `app/(tabs)/categories.tsx:103-109` (no date filter) rendered via `components/CategoryRow.tsx:39` and `constants/strings.ts:245`.
 Impact: every category row states a fabricated monthly figure; the worst honesty-brand bug found ("never invent statistics").
 Fix: filter to the current calendar month, or change the string to name what it sums. Command: /clarify (wording) or direct fix (math).
+Status: **Resolved**, Phase A (commit `65e725e`).
 
 **UX-008 · P1 · DRIFT · anti-pattern: red/green P&L coding on the category trend.**
 Location: `app/category/[id].tsx:206-219` (coral TrendingUp when spend rose, sage when it fell).
 Impact: coral is destructive-only and sage never touches spend; this is the named bank-dashboard anti-reference and shame-codes an up month.
 Fix: both directions in slate; the arrow and wording carry direction. Command: /quieter.
+Status: **Resolved**, Phase B (current working tree). Both directions now render in slate.
 
 **UX-009 · P1 · DRIFT · anti-pattern: six-month trend bars filled with raw category identity colors.**
 Location: `app/category/[id].tsx:241-251` (`backgroundColor: category.color`; e.g. health #34C39A, a green, on spend; groceries 2.04:1).
 Impact: violates "spend bars are mist on snow" and puts failing-contrast hues to data-bearing use.
 Fix: `theme.categoryBarFill` on `theme.snow`, as WhereItWentCard and ScanSnapshotCard already do. Command: /quieter.
+Status: **Resolved**, Phase B (current working tree). Trend bars now use `theme.categoryBarFill` on snow, not raw category identity colors.
 
 **UX-010 · P1 · DRIFT · honesty: PaceCard's sage bar fills as the user spends.**
 Location: `components/insights/PaceCard.tsx:65-68` (progress = currentSpent / projectedTotal), filled sage at `:133-144`; the comment claims "month progress, not a spend bar" but the math tracks spend.
 Impact: spending renders as a filling green bar, the exact inversion the color system exists to prevent.
 Fix: fill by days elapsed (true month progress) or restyle the fill mist on snow. Command: /quieter.
+Status: **Resolved**, Phase B (current working tree).
 
 **UX-011 · P1 · DRIFT · a11y: no announcement when a check-in answer lands.**
 Location: `components/habit-logging/CheckInCard.tsx:163-166` (haptic only) and the onSkip/onSlip paths at `app/(tabs)/index.tsx:710-711`, `app/habit/[id].tsx:124-125`; the ConfirmationBlock ("+$6.50 kept") replaces the question with no announceForAccessibility, and focus drops when the tapped button unmounts. `components/ui/Toast.tsx:88` shows the house pattern.
@@ -122,6 +135,7 @@ Fix: announce scanning start, completion, and failure at the stage machine. Comm
 Location: `components/leak-scan/useLeakScanIntake.ts:117` (no-valid-files), `:134` (pick-failed); `IntakeScreen.tsx` reads only skippedFileMessages (`:85-93`), never `state.error`.
 Impact: a document-picker exception bounces the user back to idle with no explanation, the exact dead end the vocabulary bans.
 Fix: render a notice line for both error codes (strings additions needed). Command: /harden.
+Status: **Resolved**, Phase A (commit `65e725e`).
 
 **UX-015 · P1 · SYSTEM-GAP · touch: SpendPulse year view renders 365+ cells at ~7pt with overlapping hitSlops.**
 Location: `components/leak-scan/SpendPulse.tsx:41` (53 columns), `:76-85` (per-cell TouchableOpacity ~6pt wide; hitSlop 8 overlaps neighbors so the slop is void).
@@ -132,6 +146,18 @@ Fix: make year granularity non-interactive (or row-tap into a month); keep per-c
 Location: `app/(tabs)/money.tsx:218-241` mounting `components/money/SpentList.tsx:79-83,117-124` (maps every historical expense; zero virtualization, zero memo).
 Impact: a year of daily logging mounts 1000+ Pressable rows per tab switch and re-renders all of them on any expense mutation.
 Fix: SectionList + memoized ExpenseRow for the Spent view; categories (~15) and insights cards are fine as-is. Command: /optimize.
+
+**UX-068 · P1 · SYSTEM-GAP · honesty: date-only ISO keys parsed with `new Date(iso)` render as UTC midnight, showing the wrong day, and for month keys the wrong month, over real spend figures.**
+Location: `new Date(iso)` on date-only ISO strings (e.g. `"2026-07-14"`) parses as UTC midnight, so anywhere west of UTC the local calendar reads one day earlier; month-only keys land in the previous month entirely. Affected: `components/leak-scan/PulseDayDetailSheet.tsx`, `components/leak-scan/CategoryTransactionsSheet.tsx`, `components/leak-scan/ProjectionSection.tsx`, and pre-existing sites in `components/leak-scan/ResultsScreen.tsx` including the evidence window. Not in the original 67; found during Phase A review.
+Impact: every timezone west of UTC (most of the Americas) sees the wrong day, or the wrong month entirely, printed directly over real spend figures, in the app's honesty-critical evidence surfaces.
+Fix: a new `parseDateOnly` helper in `utils/dates.ts` parses date-only strings as local time instead of routing through `new Date(iso)`; 6 regression tests pass across 4 timezones.
+Status: **Resolved**, Phase A (commit `65e725e`).
+
+**UX-069 · P1 · SYSTEM-GAP · correctness: `restoreDismissedHabit` read a stale render closure, so undo could silently revert unrelated concurrent habit changes.**
+Location: `contexts/HabitsContext.tsx`, `restoreDismissedHabit`, reading render-scope `habits` state instead of the commit-ref pattern the codebase already established for this exact bug class (compare `ExpensesContext.restoreExpense`).
+Impact: undoing a dismissed habit wrote a pre-dismiss snapshot back to storage; any other habit change that landed in the interim could be silently overwritten and lost. Not in the original 67; found during Phase A review.
+Fix: read `habitsRef.current` instead of the closed-over `habits`, matching `ExpensesContext.restoreExpense`.
+Status: **Resolved**, Phase A (commit `65e725e`).
 
 ### P2 · minor
 
@@ -154,21 +180,25 @@ Fix: per decision 3; useMemo the six values (Toast first), consider splitting Ha
 Location: `components/habit-logging/PartialSlipSheet.tsx:38-44` (cents starts 0, never prefilled), `:76-78` (Save always enabled); `contexts/HabitsContext.tsx:649-668` (no amount guard).
 Impact: one accidental Save fabricates kept money, against "the only accumulated total the app renders is the user's own."
 Fix: disable Save at 0 (or treat 0 as cancel). Command: /harden.
+Status: **Resolved**, Phase A (commit `65e725e`).
 
 **UX-021 · P2 · SYSTEM-GAP · UX: the break-start in-flight guard leaks on throw; the Start button can die for the session.**
 Location: `app/(tabs)/index.tsx:306-368` (`breakStartInFlightRef.current = true` at :314, reset only at :368, no try/finally).
 Impact: any rejection from seed/start/addExpense leaves the ref stuck true; the button goes permanently dead with no error surfaced.
 Fix: try/finally + a failure toast. Command: /harden.
+Status: **Resolved**, Phase A (commit `65e725e`).
 
 **UX-022 · P2 · SYSTEM-GAP · UX: "Not this one" silently discards a detected leak with no toast, no undo.**
 Location: `app/(tabs)/index.tsx:605-607,694-695` with `components/habit-logging/LeakCard.tsx:73-78`; Toast's own contract says every mutating action fires exactly one toast.
 Impact: a mis-tap discards a leak the user may never see again.
 Fix: toast with undo action (Toast already supports `action`). Command: /harden.
+Status: **Resolved**, Phase A (commit `65e725e`).
 
 **UX-023 · P2 · SYSTEM-GAP · honesty: recent logs silently truncate at 10.**
 Location: `app/category/[id].tsx:294` (`slice(0, 10)`, no count, no view-all).
 Impact: a heavy category looks like it has 10 logs; the mirror hides evidence.
 Fix: count in the section title ("Recent logs · 10 of 84") or a view-all affordance. Command: /clarify.
+Status: **Resolved**, Phase A (commit `65e725e`).
 
 **UX-024 · P2 · SYSTEM-GAP · a11y: Sheet has no accessibility escape and its scrim close is hidden from VoiceOver.**
 Location: `components/ui/Sheet.tsx:105-115` (accessibilityViewIsModal hides the sibling scrim pressable at `:125-136`); no onAccessibilityEscape anywhere in the file.
@@ -229,6 +259,7 @@ Fix: FlatList inside the sheet, or cap with show-more. Command: /optimize.
 Location: `components/leak-scan/ResultsScreen.tsx:287-290,320-322,304-307` (await-in-loop on save/bring-in/undo); CTA at `:465-469` has no pending state (the paywall models it correctly at `paywall.tsx:223-227`); also `app/onboarding/intent.tsx:70-94` (handlePick awaits with no pressed lock).
 Impact: "Bring in your last 30 days" tapped twice starts a second import pass before the first completes.
 Fix: disable-while-pending on the CTAs; batch writes if the context allows; a useRef guard on intent. Command: /harden.
+Status: **Resolved**, Phase A (commit `65e725e`).
 
 **UX-036 · P2 · SYSTEM-GAP · performance: Today's list renderers are inline with per-row closures and no memoized rows.**
 Location: `app/(tabs)/index.tsx:685-727` (renderItem/renderSectionHeader recreated per render; getGoalByHabitId inside renderItem at `:693`; fresh arrow props per row).
@@ -274,6 +305,7 @@ Fix: maxWidth 92% + flexShrink + cap + shared tab-bar-height constant. Command: 
 Location: `app/category/[id].tsx:295` applies rowNoBorder to the wrapper, but the borderTopWidth lives on the inner logRow (`:518-524`), so the suppression does nothing (merchantRow does it correctly at `:268-271`).
 Impact: the Recent logs card opens with a floating top border no other card has.
 Fix: apply the condition on logRow itself. Command: /polish.
+Status: **Resolved**, Phase A (commit `65e725e`).
 
 **UX-045 · P2 · SYSTEM-GAP · layout: Money's bottom padding differs from its sibling tabs.**
 Location: `app/(tabs)/money.tsx:291` (paddingBottom 24) vs `insights.tsx:250` and `categories.tsx:199` (100).
@@ -291,26 +323,31 @@ Fix: move to strings.ts; derive month/day names from formatDate. Command: /harde
 Location: `components/ui/Button.tsx:80-86`, `components/ui/Chip.tsx:136-139,168-170`; ratified in spec 01.
 Impact: WCAG exempts disabled controls, but users cannot read what a disabled control would do.
 Fix: decision 1 bucket: slate label on cloud. Command: /polish.
+Status: **Resolved**, Phase B (current working tree). Disabled labels shipped as slate on cloud, replacing white on cloud.
 
 **UX-048 · P3 · DRIFT · contrast: sageDark on sageLight sits at 4.48:1, 0.02 under AA.**
 Location: `components/habit-logging/KeptHero.tsx:64-81` (11pt eyebrow), `components/habit-logging/HabitLeakRow.tsx:160-164` ("Breaking" chip), `constants/theme.ts:78-79` (tierSolid pair).
 Impact: marginal but a stated-bar miss on brand-central chrome.
 Fix: nudge sageDark one step darker where it sits on sageLight. Command: /polish.
+Status: **Resolved**, Phase B (current working tree). `sageDark` shipped as `#2E7D55` to `#2C7851`, clearing the 4.5 floor on sageLight.
 
 **UX-049 · P3 · DRIFT · honesty: the projection buffer reads as observed evidence.**
 Location: `constants/strings.ts` projectionBuffer ('+12% · irregulars & annual renewals') rendered at `components/leak-scan/ProjectionSection.tsx:114`.
 Impact: a spec-sanctioned convention that does not say it is an estimate.
 Fix: one word ("estimated buffer") or an ADR note. Command: /clarify.
+Status: **Resolved**, Phase A (commit `65e725e`).
 
 **UX-050 · P3 · SYSTEM-GAP · UX: raw ISO dates are shown to users in three places.**
 Location: `components/leak-scan/PulseDayDetailSheet.tsx:41-43` (header renders cell.key, e.g. "2026-07-14", also the a11y label at `:38`), `CategoryTransactionsSheet.tsx:71`, `ProjectionSection.tsx:74`.
 Impact: machine dates in a product that formats dates everywhere else.
 Fix: route through formatDate. Command: /clarify.
+Status: **Resolved**, Phase A (commit `65e725e`).
 
 **UX-051 · P3 · SYSTEM-GAP · honesty: $0.00 skip values save silently in two more sheets.**
 Location: `app/habit/[id].tsx:358-361` (EditSkipValueSheet), `components/habit-logging/PickOneSheet.tsx:202-206`.
 Impact: every future skip keeps $0.00 with no warning; recoverable but a quiet dead end.
 Fix: same guard as UX-020. Command: /harden.
+Status: **Resolved**, Phase A (commit `65e725e`).
 
 **UX-052 · P3 · SYSTEM-GAP · a11y: external-link rows carry no spoken destination.**
 Location: `app/profile.tsx:160-179`, `components/settings/SettingsRow.tsx:108`.
@@ -360,6 +397,7 @@ Fix: ratify or revert welcome (ADR 0022 amendment either way); delete dead block
 **UX-062 · P3 · SYSTEM-GAP · UX: door pick and import CTAs lack double-tap guards.**
 Location: `app/onboarding/intent.tsx:70-94` (handlePick, no pressed lock; can double-fire the analytics event and door write).
 Fix: useRef guard. (Import CTAs covered in UX-035.) Command: /harden.
+Status: **Resolved**, Phase A (commit `65e725e`).
 
 **UX-063 · P3 · DRIFT · theming: the cold-start frame is pure white before snow screens.**
 Location: `app/index.tsx:24` (theme.surface inline on the loading frame).
@@ -370,6 +408,7 @@ Fix: theme.background. Command: /polish.
 Location: `components/money/UpcomingList.tsx:101` (dashed add tile's Plus in primaryDark).
 Impact: adding a bill is amber-domain money-out, not a kept outcome; sage's signal should stay rare.
 Fix: slate, like header chrome icons. Command: /quieter.
+Status: **Resolved**, Phase B (current working tree).
 
 **UX-065 · P3 · DRIFT · theming: AuroraBackground borrows category identity colors as decoration, undocumented.**
 Location: `components/onboarding/AuroraBackground.tsx:37,39,43` (categoryColors.utility, .transport as gradient stops; also `paywall.tsx:156`); the one local hex (`:11`) is documented, the borrow is not.
@@ -390,7 +429,7 @@ Fix: recompute on focus; content hash or comment; wrap guards; scaling handling;
 1. **The AA debt is a token problem, not a call-site problem.** Mist, white-on-sage, amberInk, lavender-on-tint, and the disabled pair all fail at the palette level; roughly 70 percent of the P0/P1 contrast surface disappears with decision 1 plus edits to `constants/theme.ts`, `Button`, and `Chip`.
 2. **Compliance lives in primitives when it lives at all.** Chip enforces labels, state, and hitSlop; Sheet, Toast, and SegmentedControl enforce their gaps. Wherever a rule is enforced by a primitive (touchable labeling: 100 percent) it holds; wherever it is delegated to call sites (Dynamic Type caps: 6 percent) it fails. The fix direction is always the same: push the rule into the primitive.
 3. **The scales are incomplete, and builders route around them consistently.** fontSize 14/16/17/26/30, micro radii, and a 2pt spacing rhythm all appear dozens of times each with no token to reach for. Ratify what the app already is (decision 2), then enforcement becomes honest.
-4. **The honesty architecture is strong at the center, leaky at the edges.** Evidence floors and refuse-to-extrapolate guards are real code; the leaks are peripheral (the "this month" label, the $0 partial slip, the silent leak dismissal, the 10-row truncation).
+4. **The honesty architecture is strong at the center, leaky at the edges.** Evidence floors and refuse-to-extrapolate guards are real code; the leaks were peripheral (the "this month" label, the $0 partial slip, the silent leak dismissal, the 10-row truncation) and are now patched (Phase A, commit `65e725e`; see the changelog). Phase A review also turned up two peripheral leaks the original scan missed: date-only ISO keys displaying the wrong day or month over real spend figures (UX-068), and an undo path that could silently drop unrelated concurrent habit changes (UX-069). Both are fixed.
 5. **VoiceOver structure is excellent; VoiceOver feedback is absent.** Labels, roles, and state are near-universal; announcements of what just happened (check-in confirmation, scan stages) are missing entirely.
 
 ## Positive findings
@@ -404,6 +443,8 @@ Fix: recompute on focus; content hash or comment; wrap guards; scaling handling;
 - **Undo-not-confirm deletion restoring list position**, implemented identically in both Money sheets.
 
 ## Recommended actions (priority order)
+
+Status note (2026-08-12): items 1 and 2 below are substantially complete. See the finding-level Status tags and the changelog for exactly what shipped in Phase A (commit `65e725e`) and Phase B (current working tree). Items 3-8 are still open as written.
 
 1. **[P0/P1] Decision 1, then `/polish`**: contrast token changes (UX-001, 002, 003, 005, 006, 047, 048) in theme.ts + Button + Chip; category-detail tonal pass via `/quieter` (UX-008, 009, 010, 064).
 2. **[P1] `/harden`**: honesty and dead-end fixes needing no decision (UX-007, 011, 013, 014, 020, 021, 022, 035, 051, 062).
@@ -427,3 +468,11 @@ Never regenerate from scratch. On each re-run:
 ## Changelog
 
 - **2026-08-12**: initial audit at `9f9430e`. 67 findings (2 P0, 14 P1, 30 P2, 21 P3), health 13/20. Deliverables: this report + interactive viewer. Awaiting Charen's triage of findings and decisions 1-3.
+
+- **2026-08-12 (correction, then Phase A/B update)**:
+  - **Correction (read this first): a contrast figure in the initial report was wrong.** The report claimed the proposed replacement color `#6B7A8F` scored 4.54 on white and passed AA. That was false: verified, `#6B7A8F` is 4.37 on white and 4.14 on snow, and fails the 4.5 floor. This has been corrected everywhere it appeared (decision 1, UX-003, the HTML contrast matrix and its swatch, the HTML findings data). The color that actually shipped is `#677481`, which scores 4.78 on white and 4.53 on snow and genuinely passes. An audit that ships a wrong number is exactly the class of error this document exists to catch, so this correction is called out here rather than silently fixed.
+  - **Phase A resolved (commit `65e725e`)**: UX-007, UX-014, UX-020, UX-021, UX-022, UX-023, UX-035, UX-044, UX-049, UX-050, UX-051, UX-062. Also two new findings caught during Phase A review, not in the original 67, both already fixed and assigned the next free ids: UX-068 (date-only ISO keys parsed as UTC midnight display the wrong day, or the wrong month, over real spend figures; fixed with a `parseDateOnly` helper in `utils/dates.ts`, 6 regression tests across 4 timezones) and UX-069 (`restoreDismissedHabit` read a stale render closure and could silently drop concurrent habit changes on undo; fixed by reading `habitsRef.current`, matching `ExpensesContext.restoreExpense`).
+  - **Phase B resolved (current working tree)**: UX-001, UX-002, UX-003, UX-005, UX-006, UX-008, UX-009, UX-010, UX-047, UX-048, UX-064. Decision 1 (the palette's ratified AA failures) shipped. What actually shipped, recorded because it changes the ratified system going forward: the primary CTA fill stays `#4CAF82` and the label flips white to ink (2.71 to 6.24) instead of darkening the fill; a new `sagePressed #3D9A6E` covers the pressed fill, because ink on the old sageDark pressed state was only 3.15 and swapping label color mid-press would flash; `mist` splits into `mist` (decorative fills only, 2 sites) and `mistText #677481` (all text and meaning-bearing icons); `amberInk #B26A00` to `#8F5500`; `coral #F05A5A` to `#C93B3B` (both directions: label on white and white on the destructive fill); `sageDark #2E7D55` to `#2C7851`; disabled labels white to slate.
+  - **Counts**: 67 findings become 69 (the two new Phase A findings). Of 69, 25 are now resolved (12 Phase A + 2 new + 11 Phase B) and 44 remain open. Both P0s are resolved. Ids are unchanged and unrenumbered per the re-run rule; every resolved finding carries its own Status line rather than being deleted.
+  - **Phase B adversarial review round, recorded because it changes what "resolved" means here.** An independent review of the Phase B diff found UX-001 had been marked resolved while five hand-rolled sage buttons still shipped a white label at 2.71:1, including the paywall's main "Start trial" CTA. Only the shared `Button`/`Chip` primitives and four icon sites had been fixed; buttons that roll their own sage fill inherited nothing. All five are now ink: `paywall.tsx` primary button and plan badge, `ProjectionSection` save, `HabitCard` track, `HabitLeakRow` break. `HabitLeakRow` additionally needed its pressed fill moved to `primaryPressedBg`, because its old `primaryDark` pressed state would have failed with an ink label. The same review caught a regression this phase introduced: the `SpentKeptChips` unselected eyebrow was swapped to `mistText`, which is certified on white and snow but sits at 4.06:1 on the cloud track it actually renders on; it is now slate (6.39:1). Two stale comments left by superseded approaches were deleted. The lesson worth keeping: a token-level fix does not reach call sites that hand-roll the same treatment, so "fixed in the primitive" is not the same as "fixed".
+  - **Scores, and why each one did or didn't move**: Accessibility 2/4 to 3/4, because contrast was the single largest AA debt in the report and it is now resolved across every row of the contrast matrix (CTA, mist, amberInk, lavender pills, coral, sageDark-on-sageLight, disabled labels); Dynamic Type caps and VoiceOver announcements are still open, so this isn't a 4. Theming 3/4 to 4/4, because the color-token layer is now cleanly role-split (mist vs mistText, sagePressed added) where it was previously overloaded and partly failing; the separate type-scale and spacing-token gap (decision 2, 112 fontSize literals) is completely untouched by this branch and would on its own justify holding at 3, but the token-architecture problem this score has always tracked is resolved. Anti-patterns 3/4 to 4/4: this dimension's verdict named exactly one exception, category detail's red/green P&L coding and raw-identity-hue trend bars (UX-008, UX-009), plus the related sage misuse (UX-064); all three are now fixed, so the exception is closed and the verdict is a clean pass. Performance stays 2/4, Responsive design stays 3/4: neither Phase A nor Phase B touched a single performance or touch-target finding, so per the instruction to move a score only where the evidence moved, these hold. Total: 13/20 to 16/20, band moves from "Acceptable: significant work needed" to "Good: address weak dimensions" (performance and the still-open type/spacing scale, decision 2).

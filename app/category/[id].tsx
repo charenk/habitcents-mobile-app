@@ -210,16 +210,20 @@ export default function CategoryDetailScreen() {
             <Text style={styles.summaryLabel}>{strings.categoryDetail.thisMonth}</Text>
           </View>
           {stats.lastMonth > 0 && (
+            // UX-008: both directions render in theme.slate. Coral/sage
+            // (red/green P&L coding) shame-coded a month where someone spent
+            // more; the arrow direction and the wording already carry the
+            // meaning, color should not add judgment on top.
             <View style={styles.summaryTrend}>
               <Icon
                 name={trendPercentage > 0 ? 'TrendingUp' : 'TrendingDown'}
                 size={18}
-                color={trendPercentage > 0 ? theme.danger : theme.primary}
+                color={theme.slate}
               />
               <Text
                 style={[
                   styles.summaryTrendText,
-                  { color: trendPercentage > 0 ? theme.danger : theme.primary },
+                  { color: theme.slate },
                 ]}
               >
                 {strings.categoryDetail.vsLastMonth(Math.abs(trendPercentage))}
@@ -248,15 +252,17 @@ export default function CategoryDetailScreen() {
               <View style={styles.trendChart}>
                 {trendData.map((item, index) => (
                   <View key={index} style={styles.trendBar}>
-                    <View
-                      style={[
-                        styles.trendBarFill,
-                        {
-                          height: `${(item.amount / maxTrendAmount) * 100}%`,
-                          backgroundColor: category.color,
-                        },
-                      ]}
-                    />
+                    {/* UX-009: spend bars are mist on snow, never the raw
+                        category identity color. Matches the track/fill
+                        approach in WhereItWentCard and ScanSnapshotCard. */}
+                    <View style={styles.trendBarTrack}>
+                      <View
+                        style={[
+                          styles.trendBarFill,
+                          { height: `${(item.amount / maxTrendAmount) * 100}%` },
+                        ]}
+                      />
+                    </View>
                     <Text style={styles.trendLabel}>{item.month}</Text>
                   </View>
                 ))}
@@ -437,7 +443,7 @@ function createStyles(theme: AppTheme) {
       fontFamily: theme.fonts.uiSemibold,
       letterSpacing: typeScale.eyebrowLetterSpacing,
       textTransform: 'uppercase',
-      color: theme.mist,
+      color: theme.mistText,
       marginBottom: 12,
     },
     trendCard: {
@@ -450,7 +456,10 @@ function createStyles(theme: AppTheme) {
     trendChart: {
       flexDirection: 'row',
       height: 100,
-      alignItems: 'flex-end',
+      // UX-009: stretch (not flex-end) so each column gets the full chart
+      // height, letting trendBarTrack reserve real, visible space to sit in
+      // as unfilled mist rather than only the filled portion having geometry.
+      alignItems: 'stretch',
       justifyContent: 'space-between',
     },
     trendBar: {
@@ -458,10 +467,22 @@ function createStyles(theme: AppTheme) {
       alignItems: 'center',
       marginHorizontal: 4,
     },
+    // UX-009: spend bars are mist on snow (never sage, never the category's
+    // raw identity color). Track reserves the full column height; fill grows
+    // from the bottom within it.
+    trendBarTrack: {
+      flex: 1,
+      width: '100%',
+      borderRadius: 4,
+      backgroundColor: theme.categoryBarTrack,
+      justifyContent: 'flex-end',
+      overflow: 'hidden',
+    },
     trendBarFill: {
       width: '100%',
       borderRadius: 4,
       minHeight: 4,
+      backgroundColor: theme.categoryBarFill,
     },
     trendLabel: {
       fontSize: typeScale.caption,

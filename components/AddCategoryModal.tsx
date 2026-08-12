@@ -231,7 +231,7 @@ function createStyles(theme: AppTheme) {
       fontSize: typeScale.eyebrow,
       letterSpacing: typeScale.eyebrowLetterSpacing,
       textTransform: 'uppercase',
-      color: theme.mist,
+      color: theme.mistText,
       marginTop: 18,
       marginBottom: 8,
     },

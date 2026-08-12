@@ -144,7 +144,10 @@ function createStyles(theme: AppTheme) {
       fontSize: typeScale.eyebrow,
       fontFamily: theme.fonts.uiSemibold,
       letterSpacing: typeScale.eyebrowLetterSpacing,
-      color: theme.mist,
+      // Slate, not mistText: the UNSELECTED segment is transparent over the
+      // cloud track, where mistText is only 4.06:1. mistText is certified on
+      // white and snow, not on cloud. Slate is 6.39:1 there. UX-003.
+      color: theme.slate,
     },
     eyebrowSpentSelected: {
       color: theme.ink,

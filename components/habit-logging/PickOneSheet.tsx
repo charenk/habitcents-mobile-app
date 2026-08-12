@@ -268,7 +268,7 @@ function createStyles(theme: AppTheme) {
       fontSize: typeScale.eyebrow,
       letterSpacing: typeScale.eyebrowLetterSpacing,
       textTransform: 'uppercase',
-      color: theme.mist,
+      color: theme.mistText,
       marginTop: 14,
       marginBottom: 6,
     },
@@ -276,7 +276,7 @@ function createStyles(theme: AppTheme) {
       fontFamily: theme.fonts.ui,
       fontSize: typeScale.caption,
       lineHeight: 18,
-      color: theme.mist,
+      color: theme.mistText,
       marginTop: 14,
     },
     // Quiet second line: the keep-logging note and the buy-range hint.
@@ -284,7 +284,7 @@ function createStyles(theme: AppTheme) {
       fontFamily: theme.fonts.ui,
       fontSize: typeScale.caption,
       lineHeight: 18,
-      color: theme.mist,
+      color: theme.mistText,
       marginBottom: 8,
     },
     gateCard: {
@@ -301,7 +301,7 @@ function createStyles(theme: AppTheme) {
       fontSize: typeScale.eyebrow,
       letterSpacing: typeScale.eyebrowLetterSpacing,
       textTransform: 'uppercase',
-      color: theme.mist,
+      color: theme.mistText,
       marginBottom: 6,
     },
     gateTitle: {
@@ -321,7 +321,7 @@ function createStyles(theme: AppTheme) {
       fontFamily: theme.fonts.ui,
       fontSize: typeScale.caption,
       lineHeight: 17,
-      color: theme.mist,
+      color: theme.mistText,
       marginTop: 10,
     },
     primary: {

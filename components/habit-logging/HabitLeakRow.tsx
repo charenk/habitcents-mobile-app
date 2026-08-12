@@ -140,12 +140,15 @@ function createStyles(theme: AppTheme) {
       backgroundColor: theme.primary,
     },
     breakButtonPressed: {
-      backgroundColor: theme.primaryDark,
+      // primaryPressedBg, not primaryDark: the label below is now ink, and ink
+      // on primaryDark is 3.15:1. This follows the shared Button primitive so
+      // the label clears AA in BOTH the resting and pressed states. UX-001.
+      backgroundColor: theme.primaryPressedBg,
     },
     breakLabel: {
       fontSize: 13,
       fontFamily: theme.fonts.uiSemibold,
-      color: theme.white,
+      color: theme.ink,
     },
     breakingChip: {
       minHeight: 38,

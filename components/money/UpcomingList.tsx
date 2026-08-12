@@ -98,7 +98,9 @@ export function UpcomingList({
       accessibilityLabel={strings.money.upcomingAddAffordance}
       style={({ pressed }) => [styles.addCompact, pressed ? styles.addCompactPressed : null]}
     >
-      <Icon name="Plus" size={20} color={theme.primaryDark} />
+      {/* UX-064: adding a bill is amber-domain money-out, not a kept
+          outcome, so this is slate like header chrome icons, never sage. */}
+      <Icon name="Plus" size={20} color={theme.slate} />
     </Pressable>
   );
 
@@ -231,7 +233,7 @@ function UpcomingRow({
       <Icon
         name="ChevronRight"
         size={16}
-        color={theme.mist}
+        color={theme.mistText}
         importantForAccessibility="no-hide-descendants"
         accessibilityElementsHidden
       />
@@ -266,7 +268,7 @@ function createStyles(theme: AppTheme) {
       fontSize: typeScale.eyebrow,
       letterSpacing: typeScale.eyebrowLetterSpacing,
       textTransform: 'uppercase',
-      color: theme.mist,
+      color: theme.mistText,
     },
     totalAmount: {
       fontFamily: theme.fonts.display,
@@ -303,7 +305,7 @@ function createStyles(theme: AppTheme) {
       fontSize: typeScale.eyebrow,
       letterSpacing: typeScale.eyebrowLetterSpacing,
       textTransform: 'uppercase',
-      color: theme.mist,
+      color: theme.mistText,
       marginTop: 16,
       marginBottom: 6,
       marginLeft: 4,
@@ -358,7 +360,7 @@ function createStyles(theme: AppTheme) {
     schedule: {
       fontFamily: theme.fonts.ui,
       fontSize: 12,
-      color: theme.mist,
+      color: theme.mistText,
       marginTop: 2,
     },
     rowAmount: {
@@ -374,7 +376,7 @@ function createStyles(theme: AppTheme) {
     cadence: {
       fontFamily: theme.fonts.ui,
       fontSize: 12,
-      color: theme.mist,
+      color: theme.mistText,
       marginTop: 2,
     },
     emptyWrap: {

@@ -45,7 +45,8 @@ export function QuickLogRow({
           accessibilityRole="button"
           accessibilityLabel={strings.today.quickLogOpenLabel}
         >
-          <Icon name="Plus" size={22} color={theme.white} />
+          {/* UX-001: white on sage was 2.71:1, below the 3:1 icon floor. */}
+          <Icon name="Plus" size={22} color={theme.ink} />
         </TouchableOpacity>
       </View>
     </View>

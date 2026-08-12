@@ -82,7 +82,10 @@ function createStyles(theme: AppTheme) {
       borderWidth: 0,
     },
     disabledLabel: {
-      color: theme.white,
+      // Slate, not white: white on cloud is 1.18:1, so a disabled button could
+      // not be read at all. WCAG exempts disabled controls, but a user still
+      // has to know what the button would do. UX-047.
+      color: theme.slate,
     },
 
     // primary
@@ -91,10 +94,12 @@ function createStyles(theme: AppTheme) {
       minHeight: 50,
     },
     primaryPressed: {
-      backgroundColor: theme.primaryDark,
+      backgroundColor: theme.primaryPressedBg,
     },
     primaryLabel: {
-      color: theme.white,
+      // Ink on the unchanged brand sage: 6.24:1, where white was 2.71:1.
+      // Charen's call (2026-08-12): keep the green, darken the label. UX-001.
+      color: theme.ink,
       fontFamily: theme.fonts.uiSemibold,
       fontSize: 16,
     },

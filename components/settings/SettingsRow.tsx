@@ -104,8 +104,8 @@ export function SettingsRow({
       <View style={styles.rowTrailing}>
         {value ? <Text style={styles.rowValue}>{value}</Text> : null}
         {hint ? <Text style={styles.rowHint}>{hint}</Text> : null}
-        {chevron ? <Icon name="ChevronRight" size={16} color={theme.mist} /> : null}
-        {externalLink ? <Icon name="ExternalLink" size={16} color={theme.mist} /> : null}
+        {chevron ? <Icon name="ChevronRight" size={16} color={theme.mistText} /> : null}
+        {externalLink ? <Icon name="ExternalLink" size={16} color={theme.mistText} /> : null}
       </View>
     </>
   );

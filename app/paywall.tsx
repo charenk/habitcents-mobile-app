@@ -151,9 +151,13 @@ export default function PaywallScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* One of two decorative gradients the app allows; see the list in
-            design/PATTERN_VOCABULARY.md "Color" (spec 01 section 1). */}
+            design/PATTERN_VOCABULARY.md "Color" (spec 01 section 1).
+            UX-006: full-strength lavender under white text was 3.32:1, below
+            AA, and the 11pt eyebrow and 15pt subtitle also carried opacity
+            that cut it further. Both stops are now real tokens dark enough to
+            hold white text (5.29 and 4.86) and the opacity is gone. */}
         <LinearGradient
-          colors={[theme.lavender, theme.categoryColors.utility]}
+          colors={[theme.lavenderDeep, theme.categoryColors.utility]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.hero}
@@ -278,6 +282,8 @@ function createStyles(theme: AppTheme) {
     },
     // Gradient hero: white type on lavender-to-indigo. One of the two
     // decorative gradients the app allows (design/PATTERN_VOCABULARY.md "Color").
+    // UX-006: both stops are tokens dark enough to carry white text; see the
+    // render-side comment for the contrast math.
     hero: {
       borderRadius: radii.feature,
       paddingHorizontal: 20,
@@ -288,7 +294,8 @@ function createStyles(theme: AppTheme) {
       fontFamily: theme.fonts.uiSemibold,
       letterSpacing: typeScale.eyebrowLetterSpacing,
       color: theme.white,
-      opacity: 0.9,
+      // UX-006: the opacity trick lowered effective contrast for no design
+      // gain; removed now that the gradient itself clears 4.5:1.
       marginBottom: 8,
     },
     title: {
@@ -302,7 +309,8 @@ function createStyles(theme: AppTheme) {
       fontSize: typeScale.body,
       fontFamily: theme.fonts.ui,
       color: theme.white,
-      opacity: 0.92,
+      // UX-006: the opacity trick lowered effective contrast for no design
+      // gain; removed now that the gradient itself clears 4.5:1.
       lineHeight: 21,
       marginTop: 8,
     },
@@ -363,10 +371,11 @@ function createStyles(theme: AppTheme) {
       paddingHorizontal: 8,
       paddingVertical: 2,
     },
+    // UX-001: ink on the sage badge; white was 2.71:1 at 11pt uppercase.
     planBadgeText: {
       fontSize: 11,
       fontFamily: theme.fonts.uiBold,
-      color: theme.white,
+      color: theme.ink,
       textTransform: 'uppercase',
       letterSpacing: 0.3,
     },
@@ -440,7 +449,10 @@ function createStyles(theme: AppTheme) {
     primaryButtonText: {
       fontSize: 16,
       fontFamily: theme.fonts.uiSemibold,
-      color: theme.white,
+      // Ink, matching the shared Button primitive: white on sage is 2.71:1.
+      // This is the screen's main CTA, so it cannot be the one that misses.
+      // UX-001.
+      color: theme.ink,
     },
     restoreButton: {
       minHeight: 44,

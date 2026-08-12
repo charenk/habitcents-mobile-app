@@ -236,7 +236,7 @@ function createStyles(theme: AppTheme) {
       fontSize: typeScale.eyebrow,
       letterSpacing: typeScale.eyebrowLetterSpacing,
       textTransform: 'uppercase',
-      color: theme.mist,
+      color: theme.mistText,
       marginTop: 22,
       marginBottom: 2,
     },
@@ -284,12 +284,12 @@ function createStyles(theme: AppTheme) {
     rowHint: {
       fontFamily: theme.fonts.ui,
       fontSize: 12,
-      color: theme.mist,
+      color: theme.mistText,
     },
     versionFooter: {
       fontFamily: theme.fonts.ui,
       fontSize: 12,
-      color: theme.mist,
+      color: theme.mistText,
       textAlign: 'center',
       marginTop: 22,
     },

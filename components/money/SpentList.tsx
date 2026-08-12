@@ -144,7 +144,7 @@ function createStyles(theme: AppTheme) {
       fontSize: typeScale.eyebrow,
       letterSpacing: typeScale.eyebrowLetterSpacing,
       textTransform: 'uppercase',
-      color: theme.mist,
+      color: theme.mistText,
       marginBottom: 6,
       marginLeft: 4,
     },
@@ -180,7 +180,7 @@ function createStyles(theme: AppTheme) {
     hint: {
       fontFamily: theme.fonts.ui,
       fontSize: typeScale.caption,
-      color: theme.mist,
+      color: theme.mistText,
       textAlign: 'center',
       marginTop: 24,
     },

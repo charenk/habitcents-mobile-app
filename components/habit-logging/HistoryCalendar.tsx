@@ -128,7 +128,8 @@ export function HistoryCalendar({ dayLogs, trackingStart, today = new Date(), on
                   state === 'no-log' && styles.dotNoLog,
                 ]}
               >
-                {state === 'skipped' && <Icon name="Check" size={12} color={theme.white} />}
+                {/* UX-001: white on sage was 2.71:1, below the 3:1 icon floor. */}
+                {state === 'skipped' && <Icon name="Check" size={12} color={theme.ink} />}
               </TouchableOpacity>
             </View>
           );
@@ -154,7 +155,7 @@ function LegendItem({ color, outline, label, theme }: { color?: string; outline?
           outline ? { borderWidth: 1.5, borderColor: theme.cloud, backgroundColor: 'transparent' } : null,
         ]}
       />
-      <Text style={[legendStyles.label, { color: theme.mist, fontFamily: theme.fonts.ui }]}>{label}</Text>
+      <Text style={[legendStyles.label, { color: theme.mistText, fontFamily: theme.fonts.ui }]}>{label}</Text>
     </View>
   );
 }
@@ -199,7 +200,7 @@ function createStyles(theme: AppTheme) {
       fontFamily: theme.fonts.uiBold,
       fontSize: 9,
       letterSpacing: 0.6,
-      color: theme.mist,
+      color: theme.mistText,
       marginBottom: 8,
     },
     cellSlot: {

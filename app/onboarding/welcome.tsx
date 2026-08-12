@@ -215,7 +215,7 @@ function createStyles(theme: AppTheme) {
     examplePrefix: {
       fontSize: typeScale.caption,
       fontFamily: theme.fonts.ui,
-      color: theme.mist,
+      color: theme.mistText,
     },
     exampleFragment: {
       fontSize: typeScale.caption,
@@ -249,7 +249,7 @@ function createStyles(theme: AppTheme) {
     privacy: {
       fontSize: typeScale.secondary,
       fontFamily: theme.fonts.ui,
-      color: theme.mist,
+      color: theme.mistText,
       lineHeight: 19,
     },
     footer: {
