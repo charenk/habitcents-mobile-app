@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { memo, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { EmojiTile, Icon } from '@/components/ui';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -40,7 +40,7 @@ type HabitCardProps = {
  * tracking CTA, only a tip card. The Track CTA is wired by the caller to
  * open the identical Decision-1 pick-one sheet Door 1 uses.
  */
-export function HabitCard({
+function HabitCardImpl({
   rank,
   candidate,
   month,
@@ -195,6 +195,15 @@ export function HabitCard({
     </View>
   );
 }
+
+/**
+ * Memoized: HabitCard renders once per ranked leak (capped at 5, ResultsScreen
+ * RANKED_LEAKS_CAP) on the leak-scan results ladder. Effective at that call
+ * site because ResultsScreen wraps it in HabitCardItem, which builds a
+ * per-candidate stable callback via useCallback instead of the inline arrows
+ * the old .map() body used.
+ */
+export const HabitCard = memo(HabitCardImpl);
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({

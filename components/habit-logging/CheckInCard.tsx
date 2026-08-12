@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { memo, useEffect, useMemo, useRef } from 'react';
 import {
   Animated,
   Easing,
@@ -70,7 +70,7 @@ function chapterCopy(chapter: ReturnType<typeof chapterForTotal>): string {
  * 1). Reduced motion swaps it for an opacity fade. Nothing else animates, and
  * a slip never animates at all.
  */
-export function CheckInCard({
+function CheckInCardImpl({
   habit,
   goal,
   milestoneJustHit,
@@ -330,6 +330,21 @@ export function CheckInCard({
     </View>
   );
 }
+
+/**
+ * Memoized: CheckInCard renders once per habit being actively broken, on
+ * both Today's "Breaking now" section and the habit detail screen. NOTE
+ * (perf phase, see PR body): Today's SectionList call site
+ * (app/(tabs)/index.tsx renderItem) still builds onSkip/onSlip/onChangeAnswer/
+ * onBackfill/onOpenPartial/onOpenDetail as fresh inline arrows every render,
+ * and the underlying HabitsContext mutators (answerToday etc.) also change
+ * identity on every goals/habits mutation regardless of the call site, so the
+ * memo does not fully bail there yet. Stabilizing that chain was skipped as
+ * too risky for a zero-visible-change pass (see report); the detail screen
+ * (app/habit/[id].tsx) renders a single instance, so it isn't a "hot list"
+ * concern there either way.
+ */
+export const CheckInCard = memo(CheckInCardImpl);
 
 function isSameCalendarMinute(a: Date, b: Date): boolean {
   // Weekly/monthly events don't have a persistent "today's answer"; treat the

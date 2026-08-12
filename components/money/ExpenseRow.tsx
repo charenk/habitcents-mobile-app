@@ -17,7 +17,7 @@
  * alone (a Repeat icon, not a tint), and the row's accessible label spells it
  * out too, so the meaning survives VoiceOver.
  */
-import { useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { EmojiTile } from '@/components/ui/EmojiTile';
 import { Icon } from '@/components/ui/Icon';
@@ -37,7 +37,7 @@ export type ExpenseRowProps = {
   subtitle?: string;
 };
 
-export function ExpenseRow({ expense, onPress, subtitle }: ExpenseRowProps): React.JSX.Element {
+function ExpenseRowImpl({ expense, onPress, subtitle }: ExpenseRowProps): React.JSX.Element {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const { format } = useCurrency();
@@ -101,6 +101,16 @@ export function ExpenseRow({ expense, onPress, subtitle }: ExpenseRowProps): Rea
     </Pressable>
   );
 }
+
+/**
+ * Memoized: ExpenseRow is the row rendered inside both LoggedTodayList and
+ * SpentList, so a single expense mutation elsewhere in the tree (e.g. a toast
+ * on an unrelated row) must not re-render every visible row. Only effective
+ * when `onPress` is referentially stable; call sites wrap it in useCallback
+ * (LoggedTodayList, SpentList) so a re-render of the parent doesn't hand
+ * every row a fresh function and defeat the memo.
+ */
+export const ExpenseRow = memo(ExpenseRowImpl);
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({

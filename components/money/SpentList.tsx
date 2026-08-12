@@ -15,9 +15,25 @@
  *
  * This component renders history only. The caller is responsible for excluding
  * anything scheduled in the future: a bill due next month is not money spent.
+ *
+ * UX-016/034: after a year of daily logging this list can carry 1000+ rows.
+ * It renders as a SectionList (app/(tabs)/index.tsx's own convention) rather
+ * than mapping every row inside a plain ScrollView, so only the rows actually
+ * on screen mount, and an edit to one expense re-renders one row instead of
+ * the whole history. The visual output is unchanged: each day is still one
+ * bordered card of ExpenseRow rows with hairline separators between them.
+ * SectionList has no "wrap this section's items in one card" primitive, so
+ * that card border is rebuilt per-item below (cardRow/cardRowFirst/
+ * cardRowLast, plus an inner rowHairline): every row gets the card's left/right border,
+ * only the first item in a section gets the top edge (with top corner
+ * radius), only the last gets the bottom edge (with bottom corner radius),
+ * and every non-first item gets the same internal hairline the old nested
+ * rowWrap/rowWrapFirst View pair drew. Adjacent rows sit with no gap between
+ * them (SectionList's default), so the seam is invisible and the result is
+ * pixel-identical to the single big bordered box the old version rendered.
  */
-import { useMemo } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { memo, useCallback, useMemo } from 'react';
+import { SectionList, StyleSheet, Text, View } from 'react-native';
 import { ExpenseRow } from '@/components/money/ExpenseRow';
 import { EmptyState } from '@/components/ui';
 import { strings } from '@/constants/strings';
@@ -33,6 +49,29 @@ export type SpentListProps = {
   /** Opens the edit sheet for a row. */
   onEditExpense: (expense: Expense) => void;
 };
+
+/**
+ * ExpenseRow is React.memo'd (see components/money/ExpenseRow.tsx), which
+ * only pays off if `onPress` is referentially stable. This wrapper builds a
+ * per-expense handler once via useCallback instead of the inline
+ * `() => onEditExpense(item)` arrow SectionList's renderItem would otherwise
+ * recreate for every visible row on every render.
+ */
+const SpentExpenseRow = memo(function SpentExpenseRow({
+  expense,
+  onEditExpense,
+}: {
+  expense: Expense;
+  onEditExpense: (e: Expense) => void;
+}) {
+  const handlePress = useCallback(() => onEditExpense(expense), [expense, onEditExpense]);
+  return <ExpenseRow expense={expense} onPress={handlePress} />;
+});
+
+// Sentinel section title for the synthetic "Today, nothing logged yet"
+// section (see below): never collides with a real grouping key, which is
+// always `${year}-${month}-${date}` (data/expensesMock.ts groupExpensesByDate).
+const TODAY_EMPTY_KEY = '__today_empty__';
 
 function isSameDay(a: Date, b: Date): boolean {
   return (
@@ -65,79 +104,113 @@ function totalFor(section: ExpenseSection): number {
   return section.data.reduce((sum, e) => sum + e.amount, 0);
 }
 
-function DayCard({
-  section,
-  onEditExpense,
-  styles,
-}: {
-  section: ExpenseSection;
-  onEditExpense: (expense: Expense) => void;
-  styles: ReturnType<typeof createStyles>;
-}) {
-  return (
-    <View style={styles.card}>
-      {section.data.map((expense, index) => (
-        <View key={expense.id} style={[styles.rowWrap, index === 0 ? styles.rowWrapFirst : null]}>
-          <ExpenseRow expense={expense} onPress={() => onEditExpense(expense)} />
-        </View>
-      ))}
-    </View>
-  );
-}
-
 export function SpentList({ sections, onEditExpense }: SpentListProps): React.JSX.Element {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const { format } = useCurrency();
 
   const today = new Date();
-  const todaySection = sections.find((section) => isSameDay(section.data[0].date, today));
-  const pastSections = sections.filter((section) => section !== todaySection);
   // No expenses ever, today included: the whole-list EmptyState renders
   // below the (empty) Today block rather than replacing it.
   const neverLogged = sections.length === 0;
 
-  return (
-    <View>
-      <View style={styles.group}>
-        <Text style={styles.eyebrow} accessibilityRole="header">
-          {todaySection
-            ? strings.money.spentGroupHeader(dayLabelFor(today), format(totalFor(todaySection)))
-            : dayLabelFor(today)}
-        </Text>
-        {todaySection ? (
-          <DayCard section={todaySection} onEditExpense={onEditExpense} styles={styles} />
-        ) : (
-          <View style={styles.todayEmptyCard}>
-            <Text style={styles.todayEmptyText}>{strings.money.spentTodayEmpty}</Text>
-          </View>
-        )}
+  // Today is always the first section, synthesized empty if nothing was
+  // logged yet today, exactly as the old find/filter split did.
+  //
+  // dayKey is a real dependency, not a formality: `sections` only changes
+  // identity when an expense mutates, so memoizing on it alone would keep
+  // yesterday's section pinned as the head after midnight, with no empty
+  // Today block above it, until the next write. The old uncached find/filter
+  // could not go stale that way.
+  const dayKey = today.toDateString();
+  const listSections: ExpenseSection[] = useMemo(() => {
+    const todaySection = sections.find((section) => isSameDay(section.data[0].date, today));
+    const pastSections = sections.filter((section) => section !== todaySection);
+    const head: ExpenseSection = todaySection ?? { title: TODAY_EMPTY_KEY, data: [] };
+    return [head, ...pastSections];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sections, dayKey]);
+
+  const renderItem = ({
+    item,
+    index,
+    section,
+  }: {
+    item: Expense;
+    index: number;
+    section: ExpenseSection;
+  }) => {
+    const isFirst = index === 0;
+    const isLast = index === section.data.length - 1;
+    return (
+      <View style={[styles.cardRow, isFirst && styles.cardRowFirst, isLast && styles.cardRowLast]}>
+        {/* The hairline lives on an INNER view, inside cardRow's horizontal
+            padding. Putting it on cardRow itself draws the border across the
+            full border box, so separators ran edge to edge into the side
+            borders instead of sitting inset like the old card's rowWrap. */}
+        <View style={!isFirst ? styles.rowHairline : undefined}>
+          <SpentExpenseRow expense={item} onEditExpense={onEditExpense} />
+        </View>
       </View>
+    );
+  };
 
-      {pastSections.map((section) => (
-        <View key={section.title} style={styles.group}>
-          <Text style={styles.eyebrow} accessibilityRole="header">
-            {strings.money.spentGroupHeader(dayLabelFor(section.data[0].date), format(totalFor(section)))}
-          </Text>
-          <DayCard section={section} onEditExpense={onEditExpense} styles={styles} />
-        </View>
-      ))}
+  const renderSectionHeader = ({ section }: { section: ExpenseSection }) => (
+    <Text style={styles.eyebrow} accessibilityRole="header">
+      {section.data.length > 0
+        ? strings.money.spentGroupHeader(dayLabelFor(section.data[0].date), format(totalFor(section)))
+        : dayLabelFor(today)}
+    </Text>
+  );
 
-      {neverLogged ? (
-        <View style={styles.empty}>
-          <EmptyState title={strings.money.spentEmptyTitle} body={strings.money.spentEmptyBody} />
+  // The empty-today compact card, and the 14pt gap the old `group` wrapper
+  // put after every section (populated or not) before the next one starts.
+  const renderSectionFooter = ({ section }: { section: ExpenseSection }) => (
+    <View style={styles.sectionFooter}>
+      {section.title === TODAY_EMPTY_KEY ? (
+        <View style={styles.todayEmptyCard}>
+          <Text style={styles.todayEmptyText}>{strings.money.spentTodayEmpty}</Text>
         </View>
-      ) : (
-        <Text style={styles.hint}>{strings.money.spentEditHint}</Text>
-      )}
+      ) : null}
     </View>
+  );
+
+  const listFooter = neverLogged ? (
+    <View style={styles.empty}>
+      <EmptyState title={strings.money.spentEmptyTitle} body={strings.money.spentEmptyBody} />
+    </View>
+  ) : (
+    <Text style={styles.hint}>{strings.money.spentEditHint}</Text>
+  );
+
+  return (
+    <SectionList<Expense, ExpenseSection>
+      sections={listSections}
+      keyExtractor={(item) => item.id}
+      renderItem={renderItem}
+      renderSectionHeader={renderSectionHeader}
+      renderSectionFooter={renderSectionFooter}
+      ListFooterComponent={listFooter}
+      style={styles.container}
+      contentContainerStyle={styles.listContent}
+      stickySectionHeadersEnabled={false}
+      showsVerticalScrollIndicator={false}
+    />
   );
 }
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
-    group: {
-      marginBottom: 14,
+    // Matches money.tsx's old outer ScrollView (style: flex:1, contentContainerStyle:
+    // paddingHorizontal 20 / paddingTop 12 / paddingBottom 24), now owned here
+    // since this list is its own scroll container instead of nesting inside one.
+    container: {
+      flex: 1,
+    },
+    listContent: {
+      paddingHorizontal: 20,
+      paddingTop: 12,
+      paddingBottom: 24,
     },
     eyebrow: {
       fontFamily: theme.fonts.uiSemibold,
@@ -152,19 +225,35 @@ function createStyles(theme: AppTheme) {
       // above another number.
       fontVariant: ['tabular-nums'],
     },
-    card: {
+    // The outer "card" border, split across every row in a section (see file
+    // header comment): left/right always on, top only on the first row (with
+    // top corner radius), bottom only on the last row (with bottom corner
+    // radius) -- the exact box the old single wrapping `card` View drew.
+    cardRow: {
       backgroundColor: theme.white,
-      borderWidth: 1,
       borderColor: theme.cloud,
-      borderRadius: radii.card,
+      borderLeftWidth: 1,
+      borderRightWidth: 1,
       paddingHorizontal: 16,
     },
-    rowWrap: {
+    cardRowFirst: {
+      borderTopWidth: 1,
+      borderTopLeftRadius: radii.card,
+      borderTopRightRadius: radii.card,
+    },
+    cardRowLast: {
+      borderBottomWidth: 1,
+      borderBottomLeftRadius: radii.card,
+      borderBottomRightRadius: radii.card,
+    },
+    // The internal separator between rows (old rowWrap): every row except the
+    // first gets this instead of the card's own (cloud) top border.
+    rowHairline: {
       borderTopWidth: 1,
       borderTopColor: theme.hairlineSubtle,
     },
-    rowWrapFirst: {
-      borderTopWidth: 0,
+    sectionFooter: {
+      marginBottom: 14,
     },
     // Deliberately not the EmptyState primitive: one compact line so past
     // days stay visible below it, not a full centered empty treatment.

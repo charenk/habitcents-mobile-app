@@ -13,6 +13,7 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -93,8 +94,17 @@ export function ToastProvider({
 
   useEffect(() => clearTimer, [clearTimer]);
 
+  // `show` is already a stable useCallback, so [show] is the complete dep
+  // list: this object only needs to change if `show` itself is ever
+  // recreated (it never is, in practice, since its own deps are stable).
+  // Without this, every show()/auto-dismiss re-render of ToastProvider (which
+  // happens on nearly every mutating action in the app) handed all 10
+  // useToast() consumer files a new object identity, re-rendering all of them
+  // twice per toast for no reason.
+  const value = useMemo(() => ({ show }), [show]);
+
   return (
-    <ToastContext.Provider value={{ show }}>
+    <ToastContext.Provider value={value}>
       {children}
       <ToastHost toast={toast} onDismiss={hide} />
     </ToastContext.Provider>

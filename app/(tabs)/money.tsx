@@ -215,30 +215,41 @@ export default function MoneyScreen() {
         />
       </View>
 
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {view === 'spent' && <SpentList sections={sections} onEditExpense={setEditing} />}
-        {view === 'upcoming' && (
-          <UpcomingList
-            items={upcoming}
-            windowDays={windowDays}
-            onWindowDaysChange={handleWindowDaysChange}
-            onAdd={() => setAddUpcomingVisible(true)}
-            onEditItem={(expense) => setEditingUpcoming(expense)}
-          />
-        )}
-        {view === 'habits' && (
-          <HabitsList
-            rows={habitRows}
-            managedMonthlyTotal={managedMonthlyTotal}
-            onBreak={(habit) => setPickOneHabitId(habit.id)}
-            onOpenHabit={(habitId) => router.push(`/habit/${habitId}`)}
-          />
-        )}
-      </ScrollView>
+      {/*
+        UX-016: Spent renders as its own SectionList (components/money/
+        SpentList.tsx) rather than nesting inside this ScrollView, since a
+        SectionList already owns its own scrolling and virtualizes -- nesting
+        it inside another scroll container would fight that (and re-render/
+        mount every row anyway, defeating the point). Upcoming and Habits
+        (both bounded lists, ~15 items or fewer) keep the plain ScrollView.
+      */}
+      {view === 'spent' ? (
+        <SpentList sections={sections} onEditExpense={setEditing} />
+      ) : (
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {view === 'upcoming' && (
+            <UpcomingList
+              items={upcoming}
+              windowDays={windowDays}
+              onWindowDaysChange={handleWindowDaysChange}
+              onAdd={() => setAddUpcomingVisible(true)}
+              onEditItem={(expense) => setEditingUpcoming(expense)}
+            />
+          )}
+          {view === 'habits' && (
+            <HabitsList
+              rows={habitRows}
+              managedMonthlyTotal={managedMonthlyTotal}
+              onBreak={(habit) => setPickOneHabitId(habit.id)}
+              onOpenHabit={(habitId) => router.push(`/habit/${habitId}`)}
+            />
+          )}
+        </ScrollView>
+      )}
 
       <ExpenseSheet
         mode="edit"
