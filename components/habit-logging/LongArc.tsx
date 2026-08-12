@@ -160,7 +160,9 @@ function createStyles(theme: AppTheme) {
     },
     identityLine: {
       fontFamily: theme.fonts.displayItalic,
-      fontSize: 20,
+      // Batch 2: token, was a literal 20. Unifies with ViewQuote's identical
+      // displayItalic use, which moves from 19 to this same quote (20).
+      fontSize: typeScale.quote,
       lineHeight: 26,
       color: theme.ink,
     },

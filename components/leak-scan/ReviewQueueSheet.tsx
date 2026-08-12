@@ -81,9 +81,11 @@ export function ReviewQueueSheet({ visible, items, onCorrect, onClose }: ReviewQ
             <View key={item.merchantStem} style={styles.itemCard}>
               <View
                 accessible
-                accessibilityLabel={`${item.merchantDisplay}, we guessed ${categoryDisplayLabel(
-                  item.guessedCategory
-                )}, ${strings.leakScan.tierReview}`}
+                accessibilityLabel={strings.leakScan.reviewQueueGuessedLabel(
+                  item.merchantDisplay,
+                  categoryDisplayLabel(item.guessedCategory),
+                  strings.leakScan.tierReview
+                )}
               >
                 <View style={styles.itemHeader}>
                   <Text style={styles.merchantName}>{item.merchantDisplay}</Text>
@@ -91,7 +93,7 @@ export function ReviewQueueSheet({ visible, items, onCorrect, onClose }: ReviewQ
                 </View>
                 <Text style={styles.amount}>{format(item.totalCents)}</Text>
                 <Text style={styles.guessLabel}>
-                  Guessed: {categoryDisplayLabel(item.guessedCategory)}
+                  {strings.leakScan.reviewQueueGuessedCaption(categoryDisplayLabel(item.guessedCategory))}
                 </Text>
               </View>
               <View style={styles.chipRow}>
@@ -131,8 +133,10 @@ function createStyles(theme: AppTheme) {
       paddingHorizontal: 20,
       paddingTop: 4,
     },
+    // BATCH 2: literal 18 -> typeScale.titleSm, the compact bold sheet-title
+    // step the token sweep ratified for exactly this kind of data sheet.
     title: {
-      fontSize: 18,
+      fontSize: typeScale.titleSm,
       fontFamily: theme.fonts.uiBold,
       color: theme.ink,
     },

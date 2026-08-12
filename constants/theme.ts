@@ -379,14 +379,30 @@ export const layout = {
 
 export const typeScale = {
   screenTitle: 34,
+  // Serif money hero on a card, between displayMid and the kept hero. Batch 2:
+  // the first sweep left this size at two sites (category detail total,
+  // upcoming total) and an exact duplicate is a token gap, not drift.
+  displayLarge: 36,
   // Mid-size display serif: bigger than a stat card, smaller than the kept
-  // hero. Ratified from the design audit (UX-018 scale gap).
+  // hero. Ratified from the design audit (UX-018 scale gap). Batch 2 also
+  // makes this the ONE size for decision-moment sheet titles (partial slip,
+  // pick one, break habit), which had drifted to 32, 32 and 28. Two ranks now
+  // exist and mean something: sheetTitle 26 for utility sheets, displayMid 30
+  // for the sheets that ask you to decide something.
   displayMid: 30,
   keptHero: 42,
   statCard: 22,
   reveal: 64,
   // Sheet headers. Ratified from the design audit (UX-018 scale gap).
   sheetTitle: 26,
+  // Display italic, used for the Today quotes and the habit arc's identity
+  // line. Batch 2: those two sat 1pt apart (19 and 20), which nobody can read
+  // as intent, so they unify here.
+  quote: 20,
+  // Compact bold title for data sheets and the wordmark: the leak-scan review
+  // and transaction sheets deliberately head themselves in Inter rather than
+  // the serif utility-sheet treatment. Batch 2, four sites.
+  titleSm: 18,
   body: 15,
   // Welcome/intent/paywall lead text. Ratified from the design audit
   // (UX-018 scale gap).
@@ -407,5 +423,9 @@ export const typeScale = {
   secondary: 13,
   caption: 12.5,
   eyebrow: 11,
+  // Fine print below the eyebrow: the day-of-week letter strips on the week
+  // row and the history calendar. Batch 2, two sites, deliberately the only
+  // step under 11 so it stays hard to reach for by accident.
+  micro: 9,
   eyebrowLetterSpacing: 0.88,
 } as const;

@@ -310,7 +310,12 @@ function createStyles(theme: AppTheme) {
     },
     title: {
       fontFamily: theme.fonts.display,
-      fontSize: 28,
+      // Batch 2: the third decision-moment sheet title. It sat at 28 while the
+      // partial-slip and pick-one sheets sat at 32, a spread nobody can read
+      // as intent. All three now share displayMid, leaving two ranks that mean
+      // something: sheetTitle 26 for utility sheets, displayMid 30 for the
+      // sheets that ask you to decide something. UX-018.
+      fontSize: typeScale.displayMid,
       lineHeight: 34,
       color: theme.ink,
     },

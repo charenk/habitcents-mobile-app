@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import React, { useEffect, useMemo } from 'react';
+import { AccessibilityInfo, View, Text, StyleSheet, ScrollView } from 'react-native';
 import { Button, Icon } from '@/components/ui';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -43,6 +43,14 @@ export function GracefulFailure({
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
+  // UX-013: app/leak-scan.tsx swaps IntakeScreen for this screen as a
+  // conditional render, not a real navigation push, so VoiceOver never shifts
+  // focus here on its own. Announce arrival on mount (house pattern:
+  // components/ui/Toast.tsx, ~:88).
+  useEffect(() => {
+    AccessibilityInfo.announceForAccessibility(strings.leakScan.failureTitle);
+  }, []);
+
   return (
     <View style={styles.screen}>
       <ScreenHeader onBack={onBack} />
@@ -50,7 +58,11 @@ export function GracefulFailure({
         <View style={styles.mark}>
           <Icon name="Sprout" size={22} color={theme.primaryDark} />
         </View>
-        <Text style={styles.title}>{strings.leakScan.failureTitle}</Text>
+        {/* UX-026: this is the failure screen's title; give it header role so
+            it shows up in VoiceOver's rotor. */}
+        <Text style={styles.title} accessibilityRole="header">
+          {strings.leakScan.failureTitle}
+        </Text>
         <Text style={styles.body}>{strings.leakScan.failureBody}</Text>
 
         <View style={styles.actions}>

@@ -157,6 +157,9 @@ export default function ProfileScreen(): React.JSX.Element {
 
         <Text style={styles.eyebrow}>{strings.settings.groupMore}</Text>
         <View style={styles.group}>
+          {/* SettingsRow applies strings.settings.opensInBrowserHint to every
+              externalLink row automatically, so these two rows below need no
+              accessibilityHint of their own. */}
           <SettingsRow
             styles={styles}
             theme={theme}

@@ -2,6 +2,7 @@ import React, { memo, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { radii, typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import { buildSpendPulse } from '@/utils/leakScan/spendPulse';
@@ -18,7 +19,14 @@ type SpendPulseProps = {
 
 type Styles = ReturnType<typeof createStyles>;
 
-const GRANULARITIES: PulseGranularity[] = ['day', 'month', 'year'];
+// UX-037: standalone chips were a third switcher; the pattern vocabulary has
+// exactly one (the cloud-track SegmentedControl). Options built once, not
+// re-templated per render, mirroring the HATCH_LINE_TOPS treatment below.
+const GRANULARITY_OPTIONS: { value: PulseGranularity; label: string }[] = [
+  { value: 'day', label: strings.leakScan.pulseGranularityDay },
+  { value: 'month', label: strings.leakScan.pulseGranularityMonth },
+  { value: 'year', label: strings.leakScan.pulseGranularityYear },
+];
 
 // UX-033: the hatch pattern's 4 lines sit at fixed offsets that never change
 // across renders (only the index they come from is fixed), so this is
@@ -46,7 +54,22 @@ function SpendPulseImpl({ result, onCellPress }: SpendPulseProps) {
     [result, granularity, autoData]
   );
 
-  const columns = data.granularity === 'year' ? 53 : 10;
+  // UX-070: the year column count was 53, a GitHub-contribution-grid width,
+  // but the data layer does not emit a grid of days at year granularity: it
+  // aggregates by `yyyy` (utils/leakScan/spendPulse.ts aggregateCells +
+  // yearKey), so it emits ONE cell per calendar year, and year view only
+  // engages past ~14 months of coverage. Two to four cells laid out in 53
+  // columns rendered as ~6pt slivers with most of the row empty. Sizing the
+  // grid to the cells it actually has makes the year view legible again.
+  //
+  // UX-015 was filed against the same constant but assumed 365+ daily cells,
+  // and therefore a field of overlapping sub-target buttons. That premise was
+  // wrong; the real defect is this layout mismatch. Year cells stay
+  // non-interactive regardless: a whole calendar year has no single day to
+  // open, so a tap has nothing to show.
+  const columns =
+    data.granularity === 'year' ? Math.min(Math.max(data.cells.length, 1), 10) : 10;
+  const cellsAreInteractive = data.granularity !== 'year';
 
   const handleCellPress = (cell: PulseCell) => {
     track('scan_pulse_day_opened', {});
@@ -55,43 +78,45 @@ function SpendPulseImpl({ result, onCellPress }: SpendPulseProps) {
 
   return (
     <View style={styles.container}>
+      {/* UX-037: was a standalone third switcher (chips with
+          accessibilityRole="button"); swapped for the house SegmentedControl,
+          which also brings the correct tablist/tab roles for free. */}
       <View style={styles.toggleRow}>
-        {GRANULARITIES.map((g) => {
-          const active = g === granularity;
-          const label =
-            g === 'day'
-              ? strings.leakScan.pulseGranularityDay
-              : g === 'month'
-              ? strings.leakScan.pulseGranularityMonth
-              : strings.leakScan.pulseGranularityYear;
-          return (
-            <TouchableOpacity
-              key={g}
-              onPress={() => setGranularity(g)}
-              style={[styles.toggleChip, active && styles.toggleChipActive]}
-              accessibilityRole="button"
-              accessibilityState={{ selected: active }}
-              hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
-            >
-              <Text style={[styles.toggleChipText, active && styles.toggleChipTextActive]}>{label}</Text>
-            </TouchableOpacity>
-          );
-        })}
+        <SegmentedControl
+          options={GRANULARITY_OPTIONS}
+          value={granularity}
+          onChange={setGranularity}
+          accessibilityLabel={strings.leakScan.pulseGranularityLabel}
+        />
       </View>
 
       <View style={styles.grid}>
-        {data.cells.map((cell) => (
-          <TouchableOpacity
-            key={cell.key}
-            style={[styles.cellWrap, { width: `${100 / columns}%` }]}
-            onPress={() => handleCellPress(cell)}
-            accessibilityRole="button"
-            accessibilityLabel={cellA11yLabel(cell, format)}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <PulseCellView cell={cell} theme={theme} styles={styles} />
-          </TouchableOpacity>
-        ))}
+        {data.cells.map((cell) =>
+          cellsAreInteractive ? (
+            <TouchableOpacity
+              key={cell.key}
+              style={[styles.cellWrap, { width: `${100 / columns}%` }]}
+              onPress={() => handleCellPress(cell)}
+              accessibilityRole="button"
+              accessibilityLabel={cellA11yLabel(cell, format)}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <PulseCellView cell={cell} theme={theme} styles={styles} />
+            </TouchableOpacity>
+          ) : (
+            // UX-015: year granularity is non-interactive; a plain View
+            // (not a Pressable/TouchableOpacity, and hidden from the
+            // accessibility tree) so it never reads as a button.
+            <View
+              key={cell.key}
+              style={[styles.cellWrap, { width: `${100 / columns}%` }]}
+              accessible={false}
+              importantForAccessibility="no-hide-descendants"
+            >
+              <PulseCellView cell={cell} theme={theme} styles={styles} />
+            </View>
+          )
+        )}
       </View>
 
       <View style={styles.legend}>
@@ -111,7 +136,7 @@ function SpendPulseImpl({ result, onCellPress }: SpendPulseProps) {
  * Memoized: props are `result` (only changes when a scan re-runs) and
  * `onCellPress` (already the stable `setOpenPulseCell` setter at the only
  * call site, ResultsScreen.tsx), so this bails cleanly on unrelated
- * ResultsScreen re-renders instead of re-laying-out a 365-cell year grid.
+ * ResultsScreen re-renders instead of re-laying-out the whole grid.
  */
 export const SpendPulse = memo(SpendPulseImpl);
 
@@ -184,30 +209,10 @@ function createStyles(theme: AppTheme) {
       borderColor: theme.cloud,
       padding: 14,
     },
+    // UX-037: SegmentedControl stretches and lays itself out; this wrapper
+    // only carries the gap below it now.
     toggleRow: {
-      flexDirection: 'row',
-      gap: 8,
       marginBottom: 12,
-    },
-    toggleChip: {
-      paddingHorizontal: 10,
-      paddingVertical: 5,
-      borderRadius: radii.pill,
-      backgroundColor: theme.chipInactiveBg,
-      borderWidth: 1,
-      borderColor: theme.chipBorder,
-    },
-    toggleChipActive: {
-      backgroundColor: theme.chipActiveBg,
-      borderColor: theme.chipActiveBg,
-    },
-    toggleChipText: {
-      fontSize: typeScale.caption,
-      fontFamily: theme.fonts.uiSemibold,
-      color: theme.chipInactiveText,
-    },
-    toggleChipTextActive: {
-      color: theme.chipActiveText,
     },
     grid: {
       flexDirection: 'row',

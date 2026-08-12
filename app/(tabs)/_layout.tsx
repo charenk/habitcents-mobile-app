@@ -1,4 +1,5 @@
 import { Tabs } from 'expo-router';
+import { Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/ui/Icon';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -39,6 +40,23 @@ export default function TabLayout() {
           // has to come from the family itself (Inter 600).
           fontFamily: theme.fonts.uiSemibold,
         },
+        // UX-067: the default tabBarLabel scales with Dynamic Type
+        // unbounded, and the bar's height is fixed (layout.tabBarHeight),
+        // so a large accessibility size clips. Cap at 1.5x, matching the
+        // pattern vocabulary's chrome/eyebrow Dynamic Type ceiling.
+        tabBarLabel: ({ color, children }) => (
+          <Text
+            style={{
+              fontSize: typeScale.eyebrow,
+              fontFamily: theme.fonts.uiSemibold,
+              color,
+            }}
+            maxFontSizeMultiplier={1.5}
+            numberOfLines={1}
+          >
+            {children}
+          </Text>
+        ),
       }}
     >
       <Tabs.Screen

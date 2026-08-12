@@ -261,7 +261,7 @@ describe('Door 1 real-app first run: close without saving', () => {
     await tap(view.getByLabelText('Close'));
 
     expect(view.getByText(strings.today.firstRunRibbonGentle)).toBeTruthy();
-    await tap(view.getByLabelText('Dismiss'));
+    await tap(view.getByLabelText(strings.common.dismiss));
     expect(view.queryByText(strings.today.firstRunRibbonGentle)).toBeNull();
   });
 });

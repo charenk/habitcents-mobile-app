@@ -86,6 +86,11 @@ export function SpentKeptChips({
         <Text
           style={[styles.amount, spentSelected ? styles.spentAmountSelected : null]}
           maxFontSizeMultiplier={1.3}
+          // UX-067: without a line cap a long formatted amount could wrap and
+          // misalign the Spent/Kept pair; adjustsFontSizeToFit shrinks the
+          // glyphs to fit the one line instead.
+          numberOfLines={1}
+          adjustsFontSizeToFit
         >
           {formattedSpent}
         </Text>
@@ -113,6 +118,9 @@ export function SpentKeptChips({
         <Text
           style={[styles.amount, keptSelected ? styles.keptAmountSelected : null]}
           maxFontSizeMultiplier={1.3}
+          // UX-067: same fix as the Spent amount above.
+          numberOfLines={1}
+          adjustsFontSizeToFit
         >
           {formattedKept}
         </Text>

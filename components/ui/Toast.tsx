@@ -177,11 +177,19 @@ function ToastHost({
           {rendered.message}
         </Text>
         {rendered.action ? (
+          // UX-031: the pressable's text-only bounds plus hitSlop 8 landed
+          // around 33pt effective, short of the 44pt floor, on a control that
+          // is only reachable for 2.5s. minWidth on the wrapper covers the
+          // horizontal side and hitSlop extends the vertical reach to 44pt,
+          // neither of which grows the pill's own layout height (hitSlop
+          // never participates in layout; the pill's height still tracks the
+          // message text).
           <Pressable
             onPress={handleAction}
             accessibilityRole="button"
             accessibilityLabel={rendered.action.label}
-            hitSlop={8}
+            style={styles.actionHitArea}
+            hitSlop={{ top: 13, bottom: 13, left: 8, right: 8 }}
           >
             <Text style={styles.action} numberOfLines={1} maxFontSizeMultiplier={1.5}>
               {rendered.action.label}
@@ -220,11 +228,19 @@ function createStyles(theme: AppTheme) {
       fontFamily: theme.fonts.uiSemibold,
       flexShrink: 1,
     },
+    // UX-031: minWidth covers the horizontal 44pt floor; the vertical 44pt is
+    // reached via hitSlop on the Pressable above instead, since hitSlop does
+    // not affect layout and so cannot inflate the pill's height.
+    actionHitArea: {
+      minWidth: 44,
+      marginLeft: 14,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
     action: {
       color: theme.toastAction,
       fontSize: typeScale.control,
       fontFamily: theme.fonts.uiBold,
-      marginLeft: 14,
     },
   });
 }

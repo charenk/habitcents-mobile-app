@@ -15,11 +15,34 @@ import { useCurrency } from '@/contexts/CurrencyContext';
 import { useCategories } from '@/contexts/CategoriesContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
 import { AddCategoryModal } from '@/components/AddCategoryModal';
-import { withAlpha } from '@/utils/color';
+import { withAlpha, compositeOver, mixHex, contrastRatio } from '@/utils/color';
 import { radii, typeScale, layout, type AppTheme } from '@/constants/theme';
 import type { CategoryIcon } from '@/types/category';
 import type { Expense } from '@/types/expense';
 import { strings } from '@/constants/strings';
+
+// UX-067: the 40pt category identity icon renders in the raw category hue on
+// its own 12% tint. Several category colors are light enough (e.g. groceries
+// #FF9F43) that the icon can sit near the 3:1 non-text contrast floor
+// against that tint. Rather than adding a new hex per category, compute the
+// tint the icon actually sits on (the color composited at 12% over the
+// screen background) and, only if that hue does not clear 3:1 there, blend
+// the icon toward ink in steps until it does. A category whose color already
+// clears 3:1 renders completely unchanged.
+// (hexToRgb/rgbToHex/compositeOver/mixHex are general color maths with no
+// policy of their own, so they live in utils/color.ts; the 3:1 threshold and
+// the step-toward-ink search below are this screen's own policy and stay.)
+
+/** The category's own hue, darkened toward ink only as far as needed to clear 3:1 on its 12% tint. */
+function accessibleIdentityColor(categoryColor: string, screenBg: string, ink: string): string {
+  const tint = compositeOver(categoryColor, 0.12, screenBg);
+  if (contrastRatio(categoryColor, tint) >= 3) return categoryColor;
+  for (let t = 0.15; t <= 0.75; t += 0.15) {
+    const candidate = mixHex(categoryColor, ink, t);
+    if (contrastRatio(candidate, tint) >= 3) return candidate;
+  }
+  return ink;
+}
 
 export default function CategoryDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -143,6 +166,10 @@ export default function CategoryDetailScreen() {
     ? Math.round(((stats.thisMonth - stats.lastMonth) / stats.lastMonth) * 100)
     : 0;
 
+  // UX-067: darkened toward ink only if the category's raw hue does not
+  // already clear 3:1 on its own 12% tint; see accessibleIdentityColor above.
+  const identityIconColor = accessibleIdentityColor(category.color, theme.background, theme.ink);
+
   // Empty trend bars used to always draw (minHeight stubs, a chart of
   // nothing) when the range has zero spend everywhere. The house EmptyState
   // primitive covers that case now instead (U12b).
@@ -198,7 +225,7 @@ export default function CategoryDetailScreen() {
             <Icon
               name={categoryIconName(category.icon)}
               size={40}
-              color={category.color}
+              color={identityIconColor}
             />
           </View>
         </View>
@@ -250,8 +277,11 @@ export default function CategoryDetailScreen() {
           <View style={styles.trendCard}>
             {hasTrendData ? (
               <View style={styles.trendChart}>
-                {trendData.map((item, index) => (
-                  <View key={index} style={styles.trendBar}>
+                {/* UX-056: keyed by index before; the 6 months in this
+                    window are always distinct, so the month label is a
+                    stable, non-positional key. */}
+                {trendData.map((item) => (
+                  <View key={item.month} style={styles.trendBar}>
                     {/* UX-009: spend bars are mist on snow, never the raw
                         category identity color. Matches the track/fill
                         approach in WhereItWentCard and ScanSnapshotCard. */}
@@ -278,9 +308,12 @@ export default function CategoryDetailScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>{strings.categoryDetail.topMerchants}</Text>
             <View style={styles.merchantsCard}>
+              {/* UX-056: keyed by index before; merchant.name is already
+                  the merchantMap key upstream, so it is guaranteed unique
+                  within topMerchants. */}
               {stats.topMerchants.map((merchant, index) => (
                 <View
-                  key={index}
+                  key={merchant.name}
                   style={[styles.merchantRow, index === 0 && styles.rowNoBorder]}
                 >
                   <View style={styles.merchantRank}>
@@ -386,7 +419,8 @@ function createStyles(theme: AppTheme) {
     // Money, hero scale: the display serif with tabular figures
     // (design/PATTERN_VOCABULARY.md, "Instrument Serif ... money").
     summaryAmount: {
-      fontSize: 36,
+      // Batch 2 token pass: literal 36 -> typeScale.displayLarge.
+      fontSize: typeScale.displayLarge,
       fontFamily: theme.fonts.display,
       fontVariant: ['tabular-nums'],
       color: theme.ink,

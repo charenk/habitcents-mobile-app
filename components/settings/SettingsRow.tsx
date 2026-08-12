@@ -36,6 +36,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { Icon } from '@/components/ui/Icon';
+import { strings } from '@/constants/strings';
 import type { AppTheme } from '@/constants/theme';
 
 /**
@@ -73,6 +74,14 @@ export type SettingsRowProps = {
   /** Last row in its group: no separator below it. */
   last?: boolean;
   accessibilityLabel?: string;
+  /**
+   * VoiceOver hint spoken after the label/value. Callers only need this for
+   * a bespoke case; the externalLink row's own hint (strings.settings.
+   * opensInBrowserHint, "opens in your browser") is applied automatically
+   * below rather than repeated at every call site, so an explicit value
+   * passed here overrides that default instead of being dropped.
+   */
+  accessibilityHint?: string;
 };
 
 export function SettingsRow({
@@ -88,8 +97,22 @@ export function SettingsRow({
   muted,
   last,
   accessibilityLabel,
+  accessibilityHint,
 }: SettingsRowProps): React.JSX.Element {
   const rowStyle: StyleProp<ViewStyle> = [styles.row, last ? styles.rowLast : null];
+  // UX-029: hint (the reassurance line, e.g. "data stays on this device") used
+  // to be silently dropped whenever a caller relied on the default label
+  // instead of passing an explicit accessibilityLabel, because the fallback
+  // below was bare `label`. Fold hint into the default so it is never
+  // spoken-over unless a caller deliberately overrides the whole label.
+  const defaultAccessibilityLabel = hint ? `${label}, ${hint}` : label;
+  // UX-029/UX-052: an externalLink row leaves the app for the browser; the
+  // ExternalLink icon tells sighted users that, but VoiceOver needs the same
+  // information said aloud. Applied here once for every externalLink row
+  // instead of at each call site, so a caller can still override it with an
+  // explicit accessibilityHint when a row needs bespoke wording.
+  const effectiveAccessibilityHint =
+    accessibilityHint ?? (externalLink ? strings.settings.opensInBrowserHint : undefined);
   const body = (
     <>
       <Text
@@ -112,7 +135,11 @@ export function SettingsRow({
 
   if (!onPress) {
     return (
-      <View style={rowStyle} accessible accessibilityLabel={accessibilityLabel ?? label}>
+      <View
+        style={rowStyle}
+        accessible
+        accessibilityLabel={accessibilityLabel ?? defaultAccessibilityLabel}
+      >
         {body}
       </View>
     );
@@ -122,7 +149,8 @@ export function SettingsRow({
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel ?? label}
+      accessibilityLabel={accessibilityLabel ?? defaultAccessibilityLabel}
+      accessibilityHint={effectiveAccessibilityHint}
       style={({ pressed }) => [rowStyle, pressed ? styles.rowPressed : null]}
     >
       {body}

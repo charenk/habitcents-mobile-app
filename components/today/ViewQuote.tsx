@@ -67,7 +67,11 @@ function createStyles(theme: AppTheme) {
     },
     quote: {
       fontFamily: theme.fonts.displayItalic,
-      fontSize: 19,
+      // Batch 2: token, was a literal 19. Deliberate 1pt move to quote (20),
+      // unifying with LongArc's identity line, which sat 1pt apart for no
+      // reason anyone could point to. Visible change: this quote renders
+      // fractionally larger than before.
+      fontSize: typeScale.quote,
       lineHeight: 26,
       color: theme.ink,
     },

@@ -74,11 +74,17 @@ function createStyles(theme: AppTheme) {
     wordmarkDotText: {
       color: theme.white,
       fontSize: typeScale.statCard,
-      fontWeight: '800',
+      // UX-042: no fontFamily meant this fell back to system San Francisco
+      // instead of Inter, on the one surface every app-switcher glance sees.
+      // theme.fonts.uiBold carries the weight; a loaded font family ignores
+      // fontWeight on Android anyway.
+      fontFamily: theme.fonts.uiBold,
     },
     wordmarkText: {
-      fontSize: 18,
-      fontWeight: '800',
+      // Batch 2 token pass: literal 18 -> typeScale.titleSm.
+      fontSize: typeScale.titleSm,
+      // UX-042: see wordmarkDotText above.
+      fontFamily: theme.fonts.uiBold,
       color: theme.text,
     },
   });

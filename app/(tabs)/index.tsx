@@ -216,9 +216,21 @@ export default function TodayScreen() {
 
   // Eyebrow date line, locale-aware (ADA-008): "Thursday, July 24".
   // ScreenHeader uppercases it, so this stays sentence case.
-  const todayLabel = useMemo(
-    () => formatDate(new Date(), { weekday: 'long', month: 'long', day: 'numeric' }),
-    []
+  //
+  // UX-067: was useMemo(..., []), computed once at mount and never again, so
+  // the header date went stale across midnight while the card logic below
+  // (todayState, keptTodayCents, etc.) recomputes `new Date()` on every
+  // render and could disagree with it. State + the focus effect below
+  // recompute it whenever Today comes back into focus, the same freshness
+  // boundary the rest of the screen's "today" already gets for free from
+  // re-rendering on focus.
+  const [todayLabel, setTodayLabel] = useState(() =>
+    formatDate(new Date(), { weekday: 'long', month: 'long', day: 'numeric' })
+  );
+  useFocusEffect(
+    useCallback(() => {
+      setTodayLabel(formatDate(new Date(), { weekday: 'long', month: 'long', day: 'numeric' }));
+    }, [])
   );
 
   // Deep link support: an onboarding flow can land Today on a specific view
@@ -516,6 +528,19 @@ export default function TodayScreen() {
     }, [clearLastCoachMoment, clearLastMilestone])
   );
 
+  // UX-067: keyed on expenses.length, not a content hash, on purpose. Editing
+  // an existing expense's amount or merchant (no length change) will not
+  // re-run detection from this effect; that is the accepted gap, not fixed
+  // here. A content-derived key (e.g. summing amounts or hashing
+  // merchant+amount pairs) would recompute on every render whenever any
+  // expense mutates elsewhere in the tree that also touches this array's
+  // identity, and refreshHabits does real work (habit detection over the
+  // whole expense list) that this screen should not be re-running on
+  // unrelated re-renders. length is the cheap, stable proxy for "something
+  // was added", which is the case detection actually needs to react to;
+  // edits to existing expenses reach detection the next time a length-
+  // changing action fires (or the pull-to-refresh path below, which always
+  // re-runs regardless of length).
   useEffect(() => {
     if (expenses.length > 0) {
       refreshHabits(expenses);
@@ -846,6 +871,10 @@ export default function TodayScreen() {
                     accessibilityRole="button"
                     accessibilityLabel={strings.today.watchLeakNudgeLabel}
                     activeOpacity={0.7}
+                    // UX-031: ~41pt effective (12pt vertical padding either
+                    // side of the 14pt label) without this. The accept
+                    // control anxious users reach for clears 44 now.
+                    hitSlop={{ top: 14, bottom: 14, left: 8, right: 8 }}
                   >
                     <Text style={styles.watchNudgeLabel} numberOfLines={1}>
                       {strings.today.watchLeakNudgeLabel}
@@ -854,7 +883,8 @@ export default function TodayScreen() {
                   <Text style={styles.watchNudgeSeparator}>·</Text>
                   <TouchableOpacity
                     onPress={handleDismissWatchNudge}
-                    hitSlop={{ top: 12, bottom: 12, left: 8, right: 12 }}
+                    // UX-031: 12/12 was ~41pt effective; 14/14 clears 44.
+                    hitSlop={{ top: 14, bottom: 14, left: 8, right: 12 }}
                     accessibilityRole="button"
                     accessibilityLabel={strings.today.watchLeakNudgeDismiss}
                   >

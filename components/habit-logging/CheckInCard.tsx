@@ -1,5 +1,6 @@
 import React, { memo, useEffect, useMemo, useRef } from 'react';
 import {
+  AccessibilityInfo,
   Animated,
   Easing,
   Pressable,
@@ -48,6 +49,18 @@ type CheckInCardProps = {
 
 /** Style carrying the pulse: a native-driven scale, or an opacity fade under reduced motion. */
 type PulseStyle = Animated.WithAnimatedValue<StyleProp<ViewStyle>>;
+
+/**
+ * UX-011: the last answer already spoken aloud, per goal id.
+ *
+ * The same goal's CheckInCard can be mounted twice at once (Today stays
+ * mounted under a habit-detail push), and both instances observe the same
+ * state change, so without this both would call announceForAccessibility for
+ * one answer. Module scope is deliberate: it is the only place two sibling
+ * component instances can agree on. Bounded by the habit cap, so it cannot
+ * grow unbounded.
+ */
+const lastAnnouncedAnswerByGoal = new Map<string, string>();
 
 function chapterCopy(chapter: ReturnType<typeof chapterForTotal>): string {
   switch (chapter) {
@@ -165,6 +178,83 @@ function CheckInCardImpl({
     onSkip();
   };
 
+  // UX-011: the skip/slip confirmation replaces the question block, and the
+  // tapped button unmounts with it, so a VoiceOver user hears nothing about
+  // what just happened (WCAG 4.1.3). House pattern from components/ui/
+  // Toast.tsx: AccessibilityInfo.announceForAccessibility with the same
+  // headline the confirmation renders, via confirmationCopy so the spoken
+  // and visible text can never drift apart. Fired only when the headline
+  // actually changes after the first render, never on mount, so returning to
+  // an already-answered card (e.g. navigating back to Today) stays silent.
+  const activeConfirmationHeadline =
+    isDaily && answered
+      ? confirmationCopy({
+          isDaily: true,
+          state: todayState,
+          firstEver: todayState === 'skipped' && goal.totalSkips === 1,
+          skipValueLabel,
+          weekSkips: wk?.skips ?? 0,
+          weekAnswered: wk?.answered ?? 0,
+          keptTotal: format(goal.kept),
+          keptIsZero: goal.kept === 0,
+          partialAmount: todayEntry?.partialAmount,
+          skipValue: goal.skipValue,
+          format,
+        }).headline
+      : !isDaily && showEventConfirmation && lastEntry
+        ? confirmationCopy({
+            isDaily: false,
+            state: lastEntry.state,
+            firstEver: lastEntry.state === 'skipped' && goal.totalSkips === 1,
+            skipValueLabel,
+            weekSkips: periodSkipCount(goal),
+            weekAnswered: 0,
+            keptTotal: format(goal.kept),
+            keptIsZero: goal.kept === 0,
+            partialAmount: undefined,
+            skipValue: goal.skipValue,
+            format,
+          }).headline
+        : null;
+
+  // UX-011: speak the confirmation, because the core loop's primary feedback
+  // was otherwise silent for VoiceOver (WCAG 4.1.3).
+  //
+  // Two things this has to get right, both found in review:
+  //
+  // 1. Speak ONCE per answer. Today renders a CheckInCard per habit and habit
+  //    detail renders one for the same goal; opening detail is a stack push,
+  //    so Today stays mounted and both instances fire, which on iOS
+  //    interrupts the utterance mid-word and on TalkBack queues it twice. The
+  //    guard is the module-level map below rather than a focus check, because
+  //    a card should not have to know about routing to be correct, and
+  //    requiring a navigation context would make this component unrenderable
+  //    in isolation.
+  // 2. Dedupe on the ANSWER EVENT, not on the headline text. A weekly habit
+  //    allows several skips in a period and every repeat resolves to the same
+  //    string ("+$5.00 kept."), so comparing headlines swallowed every skip
+  //    after the first. answerToken moves whenever an answer lands: a skip
+  //    bumps totalSkips and kept, a slip appends a log, a partial changes
+  //    kept, a corrected answer moves totalSkips. Same idea the pulse effect
+  //    above uses, and for the same reason.
+  const answerToken = `${goal.dayLogs.length}:${goal.totalSkips}:${goal.kept}`;
+  const announcedOnceRef = useRef(false);
+  const lastAnswerTokenRef = useRef(answerToken);
+  useEffect(() => {
+    const answered = answerToken !== lastAnswerTokenRef.current;
+    lastAnswerTokenRef.current = answerToken;
+    const wasFirstRender = !announcedOnceRef.current;
+    announcedOnceRef.current = true;
+    if (wasFirstRender || !answered) return;
+    if (!activeConfirmationHeadline) return;
+    // Cross-instance guard, see note above: whichever mounted card runs its
+    // effect first speaks; the other sees the same token already claimed and
+    // stays quiet.
+    if (lastAnnouncedAnswerByGoal.get(goal.id) === answerToken) return;
+    lastAnnouncedAnswerByGoal.set(goal.id, answerToken);
+    AccessibilityInfo.announceForAccessibility(activeConfirmationHeadline);
+  }, [answerToken, activeConfirmationHeadline, goal.id]);
+
   return (
     <View style={styles.card}>
       <Pressable
@@ -260,7 +350,10 @@ function CheckInCardImpl({
             <Pressable
               onPress={onChangeAnswer}
               accessibilityRole="button"
-              hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
+              // UX-031: was 12/12, ~41pt effective on the 14pt semibold
+              // label. 14/14 clears the 44pt minimum on the controls anxious
+              // users reach for most (change answer, spent less than usual).
+              hitSlop={{ top: 14, bottom: 14, left: 8, right: 8 }}
             >
               <Text style={styles.linkText}>{strings.habitLogging.changeAnswer}</Text>
             </Pressable>
@@ -268,7 +361,8 @@ function CheckInCardImpl({
               <Pressable
                 onPress={onOpenPartial}
                 accessibilityRole="button"
-                hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
+                // UX-031: same 44pt correction as "change answer" above.
+                hitSlop={{ top: 14, bottom: 14, left: 8, right: 8 }}
               >
                 <Text style={styles.linkText}>{strings.habitLogging.spentLessThanUsual}</Text>
               </Pressable>
@@ -380,12 +474,26 @@ type ConfirmationBlockProps = {
   theme: AppTheme;
 };
 
+type ConfirmationCopyArgs = {
+  isDaily: boolean;
+  state: 'skipped' | 'slipped' | 'no-log';
+  firstEver: boolean;
+  skipValueLabel: string;
+  weekSkips: number;
+  weekAnswered: number;
+  keptTotal: string;
+  keptIsZero: boolean;
+  partialAmount: number | undefined;
+  skipValue: number;
+  format: (cents: number) => string;
+};
+
 /**
- * The confirmation slot: a 40px badge plus one or two lines. A skip is a sage
- * circle-check, a slip is a cloud circle-minus. The slip badge is deliberately
- * neutral: a slip is not a failure and never subtracts from kept.
+ * UX-011: pulled out of ConfirmationBlock so CheckInCardImpl's announce
+ * effect and the confirmation's own render always resolve the exact same
+ * text, never two copies that can drift apart.
  */
-function ConfirmationBlock({
+function confirmationCopy({
   isDaily,
   state,
   firstEver,
@@ -397,10 +505,7 @@ function ConfirmationBlock({
   partialAmount,
   skipValue,
   format,
-  pulseStyle,
-  styles,
-  theme,
-}: ConfirmationBlockProps) {
+}: ConfirmationCopyArgs): { headline: string; detail: string | null } {
   const skipped = state === 'skipped';
 
   let headline: string;
@@ -429,6 +534,45 @@ function ConfirmationBlock({
   } else {
     headline = strings.habitLogging.slipConfirmationWeekly(keptTotal);
   }
+
+  return { headline, detail };
+}
+
+/**
+ * The confirmation slot: a 40px badge plus one or two lines. A skip is a sage
+ * circle-check, a slip is a cloud circle-minus. The slip badge is deliberately
+ * neutral: a slip is not a failure and never subtracts from kept.
+ */
+function ConfirmationBlock({
+  isDaily,
+  state,
+  firstEver,
+  skipValueLabel,
+  weekSkips,
+  weekAnswered,
+  keptTotal,
+  keptIsZero,
+  partialAmount,
+  skipValue,
+  format,
+  pulseStyle,
+  styles,
+  theme,
+}: ConfirmationBlockProps) {
+  const skipped = state === 'skipped';
+  const { headline, detail } = confirmationCopy({
+    isDaily,
+    state,
+    firstEver,
+    skipValueLabel,
+    weekSkips,
+    weekAnswered,
+    keptTotal,
+    keptIsZero,
+    partialAmount,
+    skipValue,
+    format,
+  });
 
   return (
     <Animated.View style={[styles.confirmationRow, skipped ? pulseStyle : null]}>

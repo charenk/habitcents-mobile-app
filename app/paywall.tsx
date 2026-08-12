@@ -140,7 +140,10 @@ export default function PaywallScreen() {
           onPress={handleClose}
           accessibilityRole="button"
           accessibilityLabel={strings.paywall.closeLabel}
-          hitSlop={{ top: 2, bottom: 2, left: 2, right: 2 }}
+          // UX-053: was hitSlop 2 (40pt + 2 = exactly 44); the house
+          // ScreenHeader pill (components/ui/ScreenHeader.tsx) uses hitSlop
+          // 4, matched here.
+          hitSlop={4}
         >
           <Icon name="X" size={18} color={theme.slate} />
         </TouchableOpacity>
@@ -163,7 +166,11 @@ export default function PaywallScreen() {
           style={styles.hero}
         >
           <Text style={styles.heroEyebrow}>{strings.paywall.heroEyebrow.toUpperCase()}</Text>
-          <Text style={styles.title}>{strings.paywall.title}</Text>
+          {/* UX-026: this is the paywall's screen title; give it header role
+              so it shows up in VoiceOver's rotor. */}
+          <Text style={styles.title} accessibilityRole="header">
+            {strings.paywall.title}
+          </Text>
           <Text style={styles.subtitle}>{strings.paywall.subtitle}</Text>
         </LinearGradient>
 
@@ -176,7 +183,9 @@ export default function PaywallScreen() {
           ))}
         </View>
 
-        <View style={styles.plans}>
+        {/* UX-025: iOS announces radio buttons poorly without a containing
+            radiogroup and a `checked` state per card. */}
+        <View style={styles.plans} accessibilityRole="radiogroup">
           {plans.map((plan) => {
             const isSelected = plan.id === selected;
             return (
@@ -185,8 +194,12 @@ export default function PaywallScreen() {
                 style={[styles.planCard, isSelected && styles.planCardSelected]}
                 onPress={() => { hapticSelection(); setSelected(plan.id); }}
                 accessibilityRole="radio"
-                accessibilityState={{ selected: isSelected }}
-                accessibilityLabel={`${plan.name}, ${plan.price} ${plan.period}${plan.badge ? `, ${plan.badge}` : ''}`}
+                accessibilityState={{ checked: isSelected }}
+                accessibilityLabel={strings.paywall.planSelectedLabel(
+                  plan.name,
+                  `${plan.price} ${plan.period}${plan.badge ? `, ${plan.badge}` : ''}`,
+                  isSelected
+                )}
               >
                 <View style={styles.planRadioColumn}>
                   <Icon

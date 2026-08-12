@@ -17,6 +17,7 @@ import React from 'react';
 import { act, cleanup, fireEvent, render } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '@/contexts/ThemeContext';
+import { ToastProvider } from '@/components/ui/Toast';
 import { AddCategoryModal } from '@/components/AddCategoryModal';
 import { strings } from '@/constants/strings';
 import { COLOR_OPTIONS } from '@/types/category';
@@ -29,7 +30,9 @@ const initialMetrics = {
 function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SafeAreaProvider initialMetrics={initialMetrics}>
-      <ThemeProvider>{children}</ThemeProvider>
+      <ThemeProvider>
+        <ToastProvider>{children}</ToastProvider>
+      </ThemeProvider>
     </SafeAreaProvider>
   );
 }
@@ -61,14 +64,18 @@ describe('AddCategoryModal', () => {
     expect(view.queryByText(/budget/i)).toBeNull();
   });
 
-  it('save is disabled until a name is entered, and calls onSave with no budget argument', async () => {
+  it('save stays live on an empty name and toasts instead of saving, then calls onSave with no budget argument once named', async () => {
+    // UX-021-adjacent: Save used to be disabled until a name was entered
+    // (dead button, no explanation). It is now always live, matching the
+    // house pattern (ExpenseSheet): an empty-name press toasts instead of
+    // silently doing nothing.
     const { view, onSave, onClose } = await renderModal();
 
-    // Empty name: Save is disabled, so pressing it does nothing.
     await act(async () => {
       fireEvent.press(view.getByText(strings.common.save));
     });
     expect(onSave).not.toHaveBeenCalled();
+    expect(view.getByText(strings.toasts.enterCategoryNameFirst)).toBeTruthy();
 
     await act(async () => {
       fireEvent.changeText(
@@ -110,12 +117,15 @@ describe('AddCategoryModal', () => {
       initialColor: legacyColor,
     });
 
-    const swatches = view.getAllByRole('button', { name: /^color option \d+$/ });
+    // UX-028: named swatches now carry hue-name labels ("coral red color"),
+    // not "color option N", so swatches are selected by testID instead.
+    const swatches = view.getAllByTestId(/^color-swatch-/);
     // Every house palette swatch, plus the one prepended legacy swatch.
     expect(swatches).toHaveLength(COLOR_OPTIONS.length + 1);
 
-    // The legacy color is prepended first and rendered selected, same size,
-    // no special labeling (accessibilityLabel matches the normal pattern).
+    // The legacy color is prepended first and rendered selected, same size.
+    // It has no hue name in the lookup (it predates COLOR_OPTIONS), so it
+    // keeps the old positional fallback label rather than claiming a hue.
     expect(swatches[0].props.accessibilityLabel).toBe('color option 1');
     expect(swatches[0].props.accessibilityState?.selected).toBe(true);
     // Nothing else is selected.
@@ -139,7 +149,7 @@ describe('AddCategoryModal', () => {
       initialIcon: 'cafe-outline',
       initialColor: legacyColor,
     });
-    const swatches2 = view2.getAllByRole('button', { name: /^color option \d+$/ });
+    const swatches2 = view2.getAllByTestId(/^color-swatch-/);
     await act(async () => {
       fireEvent.press(swatches2[1]);
     });
@@ -156,7 +166,7 @@ describe('AddCategoryModal', () => {
       initialColor: COLOR_OPTIONS[0],
     });
 
-    const swatches = view.getAllByRole('button', { name: /^color option \d+$/ });
+    const swatches = view.getAllByTestId(/^color-swatch-/);
     expect(swatches).toHaveLength(COLOR_OPTIONS.length);
     expect(swatches[0].props.accessibilityState?.selected).toBe(true);
   });

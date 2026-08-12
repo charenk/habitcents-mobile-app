@@ -23,17 +23,63 @@ import { Button } from '@/components/ui/Button';
 import { Icon, categoryIconName } from '@/components/ui/Icon';
 import { Sheet } from '@/components/ui/Sheet';
 import { TextField } from '@/components/ui/TextField';
+import { useToast } from '@/components/ui/Toast';
 import { useTheme } from '@/contexts/ThemeContext';
 import { radii, typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
 import type { CategoryIcon } from '@/types/category';
 import { ICON_OPTIONS, COLOR_OPTIONS } from '@/types/category';
 import { strings } from '@/constants/strings';
-import { withAlpha } from '@/utils/color';
+import { withAlpha, contrastRatio } from '@/utils/color';
 
 // "home-outline" -> "home icon" (spec 09 §2, icon-grid label).
 function iconOptionLabel(icon: string): string {
   return `${icon.replace(/-outline$/, '').replace(/-/g, ' ')} icon`;
+}
+
+// UX-028: hue names for the color grid's accessibility labels, in the exact
+// order types/category.ts defines COLOR_OPTIONS (that file's own inline
+// comments name each hue; this mirrors them so a VoiceOver user picking a
+// category color hears what hue they are choosing instead of "color option
+// 3" with zero color information).
+const COLOR_OPTION_HUE_NAMES = [
+  'coral red',
+  'orange',
+  'sky blue',
+  'lavender purple',
+  'amber',
+  'pink',
+  'cyan',
+  'teal green',
+  'brown',
+  'indigo',
+  'slate grey',
+  'deep amber',
+];
+
+const colorHueNameByHex = new Map<string, string>(
+  COLOR_OPTIONS.map((hex, i) => [hex, COLOR_OPTION_HUE_NAMES[i]])
+);
+
+// A stored-but-orphaned legacy swatch (see colorOptions below) has no hue
+// name in the map above, so it keeps the old positional fallback rather than
+// claiming a hue that was never named for it.
+function colorOptionLabel(hex: string, index: number): string {
+  const hue = colorHueNameByHex.get(hex);
+  return hue ? `${hue} color` : `color option ${index + 1}`;
+}
+
+// UX carried from Phase B: a white Check renders on every selected swatch
+// regardless of how light that swatch is (groceries #FF9F43 against white is
+// 2.04:1), so the check can be nearly invisible. Pick whichever of ink/white
+// actually contrasts more against this specific swatch, using WCAG relative
+// luminance (utils/color.ts). This helper itself stays local: it is
+// component-specific policy (which two colors to compare, which one wins),
+// not general color maths.
+function checkIconColor(swatchHex: string, theme: AppTheme): string {
+  const inkContrast = contrastRatio(swatchHex, theme.ink);
+  const whiteContrast = contrastRatio(swatchHex, theme.white);
+  return inkContrast >= whiteContrast ? theme.ink : theme.white;
 }
 
 type AddCategoryModalProps = {
@@ -58,6 +104,7 @@ export function AddCategoryModal({
   const theme = useTheme();
   const { height } = useWindowDimensions();
   const styles = useMemo(() => createStyles(theme), [theme]);
+  const { show } = useToast();
 
   const [name, setName] = useState(initialName);
   const [selectedIcon, setSelectedIcon] = useState<CategoryIcon>(initialIcon);
@@ -86,8 +133,15 @@ export function AddCategoryModal({
     }
   }, [visible, initialName, initialIcon, initialColor]);
 
+  // UX-021-adjacent: this used to disable Save on an empty name, a dead
+  // button with no explanation. The house pattern (ExpenseSheet.tsx
+  // handleSave, ~:182-186) keeps the primary button live and toasts an
+  // explanation instead.
   const handleSave = () => {
-    if (!name.trim()) return;
+    if (!name.trim()) {
+      show(strings.toasts.enterCategoryNameFirst);
+      return;
+    }
     onSave(name.trim(), selectedIcon, selectedColor);
     resetForm();
     onClose();
@@ -176,9 +230,16 @@ export function AddCategoryModal({
               onPress={() => setSelectedColor(color)}
               accessibilityRole="button"
               accessibilityState={{ selected: selectedColor === color }}
-              accessibilityLabel={`color option ${index + 1}`}
+              // UX-028: named hue instead of a bare ordinal.
+              accessibilityLabel={colorOptionLabel(color, index)}
+              testID={`color-swatch-${index}`}
             >
-              {selectedColor === color && <Icon name="Check" size={20} color={theme.white} />}
+              {selectedColor === color && (
+                // Carried from Phase B: pick ink or white per swatch instead
+                // of a fixed white check, so the mark stays legible on light
+                // swatches (e.g. groceries #FF9F43, where white was 2.04:1).
+                <Icon name="Check" size={20} color={checkIconColor(color, theme)} />
+              )}
             </TouchableOpacity>
           ))}
         </View>
@@ -186,7 +247,6 @@ export function AddCategoryModal({
         <Button
           label={strings.common.save}
           onPress={handleSave}
-          disabled={!name.trim()}
           style={styles.save}
         />
         <Button label={strings.common.cancel} variant="tertiary" onPress={handleClose} />
@@ -223,7 +283,8 @@ function createStyles(theme: AppTheme) {
     },
     previewName: {
       fontFamily: theme.fonts.uiSemibold,
-      fontSize: 18,
+      // Batch 2 token pass: literal 18 -> typeScale.titleSm.
+      fontSize: typeScale.titleSm,
       color: theme.ink,
     },
     eyebrow: {

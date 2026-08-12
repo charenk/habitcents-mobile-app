@@ -18,8 +18,17 @@ export function keptHeroLabel(formattedAmount: string): string {
   return `Kept so far, ${formattedAmount}, money you didn't spend`;
 }
 
-/** A week-strip dot: "{weekday}, {state}" (spec 09 §2, "Check-in card"). */
-export function weekDotLabel(weekday: string, state: DayState, isToday: boolean): string {
+/**
+ * A week-strip dot: "{weekday}, {state}" (spec 09 §2, "Check-in card").
+ *
+ * `reachable` (UX-027) covers the strip's two non-answerable cells: a future
+ * day and a day before the habit's tracking start. Both read "not yet"
+ * rather than a fabricated "no log", since the user was never able to answer
+ * either. Defaults to true so every existing 3-arg call site (and its tests)
+ * is unaffected.
+ */
+export function weekDotLabel(weekday: string, state: DayState, isToday: boolean, reachable = true): string {
+  if (!reachable) return `${weekday}, not yet`;
   const stateWord =
     state === 'skipped' ? 'skipped' : state === 'slipped' ? 'slipped' : isToday ? 'today' : 'no log';
   return `${weekday}, ${stateWord}`;

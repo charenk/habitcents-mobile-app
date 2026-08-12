@@ -17,6 +17,7 @@ export const strings = {
     back: 'Back',
     keep: 'Keep',
     close: 'Close',
+    dismiss: 'Dismiss',
   },
   // Tab bar (redesign step 02): Today / Money / Insights / Categories.
   tabs: {
@@ -181,9 +182,19 @@ export const strings = {
     legendSkipped: 'Skipped',
     legendSlipped: 'Slipped',
     legendNoLog: 'No log',
+    // UX-046: was hardcoded on the TouchableOpacity labels directly.
+    calendarPreviousMonth: 'Previous month',
+    calendarNextMonth: 'Next month',
+    // UX-054: today's cell is the only calendar cell that does anything on
+    // tap (it opens change-answer); the hint says so instead of leaving a
+    // VoiceOver user to guess what activating it does.
+    calendarTodayCellHint: 'Opens change answer',
     eventSkippedOne: (skipValue: string) => `Skipped one · +${skipValue}`,
     eventBoughtIt: 'Bought it',
     eventBoughtItPartial: (difference: string) => `Bought it · ${difference} kept`,
+    // UX-058: EventHistory caps its list rather than rendering every event a
+    // long-running weekly/monthly habit has ever logged.
+    eventHistoryShowAll: (count: number) => `Show all ${count}`,
     // Empty states (4.10): the leaks-empty title/body live once at
     // insights.leaksEmptyTitle/leaksEmptyBody now (was duplicated here
     // byte-for-byte; collapsed in the empty-state pattern pass).
@@ -294,6 +305,9 @@ export const strings = {
     weekOf: (dateLabel: string) => `Week of ${dateLabel}`,
   },
   settings: {
+    // UX-052: the external-link icon tells sighted users the row leaves the
+    // app; without this hint VoiceOver users got strictly less information.
+    opensInBrowserHint: 'Opens in your browser.',
     preferences: 'Preferences',
     currency: 'Currency',
     about: 'About',
@@ -476,6 +490,14 @@ export const strings = {
     startScan: 'Start scan',
     scanningTitle: 'Reading your files',
     scanningSubtitle: 'On this device. Usually a few seconds.',
+    // UX-037: the spend pulse's granularity switcher is now the ratified
+    // SegmentedControl, which needs an accessible name for its tablist.
+    pulseGranularityLabel: 'Spend view',
+    // UX-046: strings that were living as literals in components.
+    moreOptionsLabel: 'More options',
+    reviewQueueGuessedCaption: (category: string) => `Guessed: ${category}`,
+    reviewQueueGuessedLabel: (merchant: string, category: string, tier: string) =>
+      `${merchant}, we guessed ${category}, ${tier}`,
     // UX-014: the intake hook sets these two error codes but nothing rendered
     // them, so a failed pick bounced back to idle with no explanation.
     errorNoValidFiles: 'None of those files could be read. CSV files only.',
@@ -645,6 +667,10 @@ export const strings = {
     // UX-021: the start path can throw. Say so plainly and invite a retry;
     // never leave the button dead with no explanation.
     startHabitFailed: 'That did not start. Try again.',
+    // UX-021-adjacent: AddCategoryModal used to disable Save on an empty name.
+    // The house pattern is a live button plus an explanatory toast, so the
+    // control never goes dead with no reason given.
+    enterCategoryNameFirst: 'Enter a category name first.',
   },
 
   // Today tab (spec 04 "Today").

@@ -1,7 +1,7 @@
 import React, { memo, useCallback, useMemo, useRef, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { AccessibilityInfo, View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Button } from '@/components/ui';
+import { Button, Icon } from '@/components/ui';
 import { useToast } from '@/components/ui/Toast';
 import { useTheme } from '@/contexts/ThemeContext';
 import { formatDate, parseDateOnly } from '@/utils/dates';
@@ -194,6 +194,14 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
 
   React.useEffect(() => {
     getScanRules().then(setRulesState);
+  }, []);
+
+  // UX-013: app/leak-scan.tsx swaps IntakeScreen for this screen as a
+  // conditional render, not a real navigation push, so VoiceOver never shifts
+  // focus here on its own. Announce arrival on mount (house pattern:
+  // components/ui/Toast.tsx, ~:88).
+  React.useEffect(() => {
+    AccessibilityInfo.announceForAccessibility(strings.leakScan.resultsTitle);
   }, []);
 
   const rerun = useCallback(
@@ -479,7 +487,11 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
           {evidenceWindow ? <Text style={styles.eyebrow}>{evidenceWindow}</Text> : null}
-          <Text style={styles.screenTitle}>{strings.leakScan.resultsTitle}</Text>
+          {/* UX-026: results is one of the longest screens in the flow; give
+              its title header role so it shows up in VoiceOver's rotor. */}
+          <Text style={styles.screenTitle} accessibilityRole="header">
+            {strings.leakScan.resultsTitle}
+          </Text>
         </View>
 
         {hasFinding && topCandidate && (
@@ -568,6 +580,15 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
               <Text style={styles.reviewQueueBannerText}>
                 {strings.leakScan.reviewQueueTitle(reviewQueue.length)}
               </Text>
+              {/* UX-038: this row opens the review-queue sheet; the rows rule
+                  says a chevron names that ("opens something in-app"). */}
+              <Icon
+                name="ChevronRight"
+                size={16}
+                color={theme.mistText}
+                importantForAccessibility="no-hide-descendants"
+                accessibilityElementsHidden
+              />
             </TouchableOpacity>
           </>
         )}
@@ -696,8 +717,14 @@ function createStyles(theme: AppTheme) {
       borderWidth: 1,
       borderColor: theme.cloud,
       padding: 14,
+      // UX-038: chevron trailing slot added; row goes horizontal to sit it
+      // at the end without disturbing the text's own layout.
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
     },
     reviewQueueBannerText: {
+      flex: 1,
       fontSize: typeScale.label,
       fontFamily: theme.fonts.uiMedium,
       color: theme.ink,

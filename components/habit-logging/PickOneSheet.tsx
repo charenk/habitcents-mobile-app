@@ -245,7 +245,10 @@ function createStyles(theme: AppTheme) {
     },
     title: {
       fontFamily: theme.fonts.display,
-      fontSize: 32,
+      // Batch 2: token, was a literal 32. displayMid (30) is now the one
+      // size for every decision-moment sheet title (partial slip, pick one,
+      // break habit).
+      fontSize: typeScale.displayMid,
       lineHeight: 38,
       color: theme.ink,
     },

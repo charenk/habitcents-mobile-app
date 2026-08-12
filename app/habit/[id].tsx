@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -19,7 +19,7 @@ import { useToast } from '@/components/ui/Toast';
 import { atMidnight, weekStats, isHabitLimitReached, displayChapter } from '@/utils/habitLogging';
 import { getEntitlement } from '@/utils/purchases';
 import type { CoachMomentCardId } from '@/utils/coachMoments';
-import { radii, typeScale, layout, type AppTheme } from '@/constants/theme';
+import { typeScale, layout, type AppTheme } from '@/constants/theme';
 import type { DetectedHabit, HabitChangeGoal } from '@/types/habit';
 import { strings } from '@/constants/strings';
 import { hapticWarning } from '@/utils/motion';
@@ -111,9 +111,13 @@ export default function HabitDetailScreen() {
     <>
       <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
         <ScreenHeader title={habitTitle} onBack={() => router.back()} />
-        <View style={styles.headerSection}>
-          <Text style={styles.description}>{habit.description}</Text>
-        </View>
+        {/* UX-061: seeded habits (the break-a-habit flow) carry description
+            '', which used to render as an always-present empty block. */}
+        {habit.description ? (
+          <View style={styles.headerSection}>
+            <Text style={styles.description}>{habit.description}</Text>
+          </View>
+        ) : null}
 
         {goal ? (
           <HabitDetailBreaking
@@ -271,17 +275,32 @@ function HabitDetailBreaking({
       )}
 
       <View style={styles.footerActions}>
-        <TouchableOpacity style={styles.secondaryButton} onPress={onEditSkipValue} accessibilityRole="button">
-          <Text style={styles.secondaryButtonText}>{strings.habitLogging.editSkipValue(format(goal.skipValue))}</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.plainButton}
+        {/* UX-039: was a hand-rolled secondaryButton (no minHeight), now the
+            shared vocabulary's secondary variant. */}
+        <Button
+          variant="secondary"
+          label={strings.habitLogging.editSkipValue(format(goal.skipValue))}
+          onPress={onEditSkipValue}
+        />
+        {/*
+          UX-039: was a hand-rolled plainButton; now the shared tertiary
+          variant (bare, slate text), which is the closest vocabulary match
+          to the look this trigger has always had.
+
+          NOTE (discrepancy, not fixed here): theme.ts documents "stop
+          breaking" (theme.danger/theme.coral) as the app's one destructive
+          action, but this trigger has always rendered as a muted, tier-two
+          slate link, never coral. That may be a deliberate lower-emphasis
+          choice (breaking a habit is reversible, "history is kept"), but it
+          is a live contradiction with theme.ts's own comment. Flagging per
+          the audit instruction rather than silently recoloring it to coral
+          or rewriting theme.ts's comment.
+        */}
+        <Button
+          variant="tertiary"
+          label={strings.habitLogging.stopBreakingHabit}
           onPress={onStopBreaking}
-          accessibilityRole="button"
-          hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
-        >
-          <Text style={styles.plainButtonText}>{strings.habitLogging.stopBreakingHabit}</Text>
-        </TouchableOpacity>
+        />
       </View>
     </View>
   );
@@ -453,65 +472,24 @@ function createStyles(theme: AppTheme) {
       gap: 12,
       marginTop: 8,
     },
-    secondaryButton: {
-      alignItems: 'center',
-      justifyContent: 'center',
-      paddingVertical: 14,
-      borderRadius: radii.control,
-      borderWidth: 1,
-      borderColor: theme.border,
-    },
-    secondaryButtonText: {
-      fontSize: typeScale.body,
-      fontFamily: theme.fonts.uiSemibold,
-      color: theme.text,
-    },
-    plainButton: {
-      alignItems: 'center',
-      justifyContent: 'center',
-      paddingVertical: 12,
-    },
-    plainButtonText: {
-      fontSize: typeScale.label,
-      fontFamily: theme.fonts.ui,
-      color: theme.textSecondary,
-    },
+    // UX-039: secondaryButton/secondaryButtonText and plainButton/
+    // plainButtonText removed; the footer actions now render on the shared
+    // Button component (variant="secondary" / variant="tertiary").
     editSheetContainer: {
       paddingHorizontal: 20,
       paddingTop: 4,
       paddingBottom: 12,
       gap: 8,
     },
-    grabber: {
-      width: 36,
-      height: 5,
-      borderRadius: 3,
-      backgroundColor: theme.border,
-      alignSelf: 'center',
-      marginBottom: 14,
-    },
+    // UX-061: grabber, inputRow and input removed. Sheet (components/ui/
+    // Sheet.tsx) renders its own grab handle, and EditSkipValueSheet has used
+    // AmountField, not a plain TextInput, since ADR 0023; none of the three
+    // styles had a call site left.
     editSheetTitle: {
       fontSize: typeScale.secondary,
       fontFamily: theme.fonts.uiSemibold,
       color: theme.textSecondary,
       marginBottom: 8,
-    },
-    inputRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      borderWidth: 1,
-      borderColor: theme.border,
-      // UX-018: 12 drifted from the control radius every other input uses.
-      borderRadius: radii.control,
-      paddingHorizontal: 12,
-      paddingVertical: 10,
-      marginBottom: 16,
-    },
-    input: {
-      flex: 1,
-      fontSize: typeScale.lead,
-      fontWeight: '600',
-      color: theme.text,
     },
   });
 }

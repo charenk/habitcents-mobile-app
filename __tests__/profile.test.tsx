@@ -52,6 +52,12 @@ import { strings } from '@/constants/strings';
 import { settingsRowLabel } from '@/utils/a11y';
 import { setMockEntitlement } from '@/utils/purchases';
 
+// UX-029: SettingsRow now folds `hint` into its default accessible label
+// (label, hint), so the Start over row's spoken label is no longer the bare
+// row label; it carries the reassurance too, matching what SettingsRow.tsx
+// actually composes.
+const startOverAccessibleLabel = `${strings.settings.startOverRow}, ${strings.settings.startOverHint}`;
+
 // Non-zero frame + insets so useSafeAreaInsets resolves without a live layout.
 const initialMetrics = {
   frame: { x: 0, y: 0, width: 390, height: 844 },
@@ -128,7 +134,7 @@ describe('Profile', () => {
     ).toBeTruthy();
     expect(view.getByLabelText(strings.settings.privacyPolicy)).toBeTruthy();
     expect(view.getByLabelText(strings.settings.termsOfService)).toBeTruthy();
-    expect(view.getByLabelText(strings.settings.startOverRow)).toBeTruthy();
+    expect(view.getByLabelText(startOverAccessibleLabel)).toBeTruthy();
 
     // Restore purchases left Profile entirely; it only lives on the paywall now.
     expect(view.queryByText(strings.paywall.restoreCta)).toBeNull();
@@ -161,7 +167,7 @@ describe('Profile', () => {
     const view = await renderProfile();
 
     await act(async () => {
-      fireEvent.press(view.getByLabelText(strings.settings.startOverRow));
+      fireEvent.press(view.getByLabelText(startOverAccessibleLabel));
     });
 
     expect(view.getByText(strings.settings.startOverConfirmTitle)).toBeTruthy();
@@ -175,7 +181,7 @@ describe('Profile', () => {
     const view = await renderProfile();
 
     await act(async () => {
-      fireEvent.press(view.getByLabelText(strings.settings.startOverRow));
+      fireEvent.press(view.getByLabelText(startOverAccessibleLabel));
     });
     await act(async () => {
       fireEvent.press(view.getByText(strings.settings.startOverConfirmCancel));
@@ -190,7 +196,7 @@ describe('Profile', () => {
     const view = await renderProfile();
 
     await act(async () => {
-      fireEvent.press(view.getByLabelText(strings.settings.startOverRow));
+      fireEvent.press(view.getByLabelText(startOverAccessibleLabel));
     });
     await act(async () => {
       // The confirm sheet's confirm button reuses the row's own label

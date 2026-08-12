@@ -1,5 +1,6 @@
 import React, { memo, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Icon } from '@/components/ui';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { radii, typeScale, type AppTheme } from '@/constants/theme';
@@ -46,8 +47,19 @@ function CategoryListImpl({ categories, onCategoryPress }: CategoryListProps) {
           accessibilityRole="button"
         >
           <View style={styles.rowHeader}>
-            <Text style={styles.categoryName}>{categoryDisplayLabel(c.category)}</Text>
-            <TierBadge tier={c.tier} />
+            <View style={styles.rowHeaderLeft}>
+              <Text style={styles.categoryName}>{categoryDisplayLabel(c.category)}</Text>
+              <TierBadge tier={c.tier} />
+            </View>
+            {/* UX-038: this row opens CategoryTransactionsSheet; the rows
+                rule says a chevron names that ("opens something in-app"). */}
+            <Icon
+              name="ChevronRight"
+              size={16}
+              color={theme.mistText}
+              importantForAccessibility="no-hide-descendants"
+              accessibilityElementsHidden
+            />
           </View>
           <View style={styles.rowStats}>
             <Text style={styles.amount}>{format(c.totalCents)}</Text>
@@ -111,6 +123,14 @@ function createStyles(theme: AppTheme) {
       justifyContent: 'space-between',
       alignItems: 'center',
       marginBottom: 4,
+    },
+    // UX-038: groups the name and tier badge so the chevron can sit at the
+    // row's true trailing edge instead of splitting three ways.
+    rowHeaderLeft: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
     },
     categoryName: {
       fontSize: typeScale.label,

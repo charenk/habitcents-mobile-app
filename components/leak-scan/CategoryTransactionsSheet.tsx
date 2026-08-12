@@ -141,8 +141,10 @@ function createStyles(theme: AppTheme) {
     body: {
       flexShrink: 1,
     },
+    // BATCH 2: literal 18 -> typeScale.titleSm, the compact bold sheet-title
+    // step the token sweep ratified for exactly this kind of data sheet.
     title: {
-      fontSize: 18,
+      fontSize: typeScale.titleSm,
       fontFamily: theme.fonts.uiBold,
       color: theme.ink,
       paddingHorizontal: 20,

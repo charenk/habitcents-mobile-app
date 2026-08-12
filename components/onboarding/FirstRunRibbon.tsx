@@ -11,6 +11,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Icon } from '@/components/ui/Icon';
 import { useTheme } from '@/contexts/ThemeContext';
 import { radii, typeScale, type AppTheme } from '@/constants/theme';
+import { strings } from '@/constants/strings';
 import { withAlpha } from '@/utils/color';
 
 export type FirstRunRibbonProps = {
@@ -34,9 +35,11 @@ export function FirstRunRibbon({ line, onDismiss }: FirstRunRibbonProps): React.
       </View>
       <Pressable
         onPress={onDismiss}
-        hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+        // UX-053: was hitSlop 12 (14pt icon + 24 = ~38pt effective); raised
+        // to clear the 44pt floor without growing the visible icon.
+        hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
         accessibilityRole="button"
-        accessibilityLabel="Dismiss"
+        accessibilityLabel={strings.common.dismiss}
         style={styles.dismiss}
       >
         <Icon name="X" size={14} color={theme.mistText} />
