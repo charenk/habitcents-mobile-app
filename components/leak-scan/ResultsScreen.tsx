@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { memo, useCallback, useMemo, useRef, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Button } from '@/components/ui';
@@ -39,6 +39,7 @@ import { scanResultToSummary } from '@/utils/leakScan/summarize';
 import type { ScanFileInput } from '@/utils/leakScan';
 import type { PulseCell } from '@/utils/leakScan/spendPulse';
 import type { GovernClass, HabitCandidate, ScanResult } from '@/utils/leakScan/types';
+import type { CategorySummary } from '@/utils/leakScan/resultsSummary';
 import type { ExpenseCategory } from '@/types/expense';
 import {
   getScanRules,
@@ -92,6 +93,66 @@ function monthLabel(dateISO: string): string {
 function monthlyCostCents(candidate: HabitCandidate, windowDays: number): number {
   return Math.round((candidate.totalCents / windowDays) * 30);
 }
+
+type HabitCardItemProps = {
+  rank: number;
+  candidate: HabitCandidate;
+  month: string;
+  monthTotalCents: number;
+  coveredDays: number;
+  tipMonth: string;
+  tipAmountCents: number | undefined;
+  onTrack: (candidate: HabitCandidate) => void;
+  onMonitor: (candidate: HabitCandidate) => void;
+  onNotAHabit: (candidate: HabitCandidate) => void;
+  onWrongDetails: (category: ExpenseCategory) => void;
+};
+
+/**
+ * HabitCard is React.memo'd; this wrapper is what makes that memo effective.
+ * The old .map() body built onTrack/onMonitor/onNotAHabit/onWrongDetails as
+ * fresh inline arrows per candidate on every ResultsScreen render. Here each
+ * handler is built once per candidate via useCallback, keyed on the already-
+ * stable ResultsScreen callbacks (handleTrackLeak etc.) plus the candidate
+ * itself, so HabitCard only re-renders when its own candidate's data (or one
+ * of the stats computed for it) actually changes.
+ */
+const HabitCardItem = memo(function HabitCardItem({
+  rank,
+  candidate,
+  month,
+  monthTotalCents,
+  coveredDays,
+  tipMonth,
+  tipAmountCents,
+  onTrack,
+  onMonitor,
+  onNotAHabit,
+  onWrongDetails,
+}: HabitCardItemProps) {
+  const handleTrack = useCallback(() => onTrack(candidate), [onTrack, candidate]);
+  const handleMonitor = useCallback(() => onMonitor(candidate), [onMonitor, candidate]);
+  const handleNotAHabit = useCallback(() => onNotAHabit(candidate), [onNotAHabit, candidate]);
+  const handleWrongDetails = useCallback(
+    () => onWrongDetails(candidate.category),
+    [onWrongDetails, candidate.category]
+  );
+  return (
+    <HabitCard
+      rank={rank}
+      candidate={candidate}
+      month={month}
+      monthTotalCents={monthTotalCents}
+      coveredDays={coveredDays}
+      tipMonth={tipMonth}
+      tipAmountCents={tipAmountCents}
+      onTrack={handleTrack}
+      onMonitor={handleMonitor}
+      onNotAHabit={handleNotAHabit}
+      onWrongDetails={handleWrongDetails}
+    />
+  );
+});
 
 /**
  * Results screen orchestrator (leak-scan-spec.md section 5, visual spec).
@@ -381,6 +442,10 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
     }
   }, [result, addExpense, expenses, router, toast, completeScanOnboarding, bringingInDays]);
 
+  // UX-033: CategoryList is React.memo'd; this is what makes that memo
+  // effective (the old inline arrow was recreated every render).
+  const handleCategoryPress = useCallback((c: CategorySummary) => setOpenCategory(c.category), []);
+
   // Dashed expander (ADR 0020): mirrors CategoryList's "View more" analytics
   // pattern, fired once per expand.
   const handleToggleLadder = useCallback(() => {
@@ -446,7 +511,7 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
             <KpiRow kpi={kpi} />
 
             <View style={styles.spacer} />
-            <CategoryList categories={categories} onCategoryPress={(c) => setOpenCategory(c.category)} />
+            <CategoryList categories={categories} onCategoryPress={handleCategoryPress} />
 
             <View style={styles.spacer} />
             <SpendPulse result={result} onCellPress={setOpenPulseCell} />
@@ -464,7 +529,7 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
                   // amount (nextMonthHits already reflects the 3-hit month).
                   const tipAmountCents = recurringMatch ? recurringMatch.amountCents : undefined;
                   return (
-                    <HabitCard
+                    <HabitCardItem
                       key={candidate.merchantStem}
                       rank={i + 1}
                       candidate={candidate}
@@ -473,10 +538,10 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
                       coveredDays={result.coverage?.coveredDays ?? 0}
                       tipMonth={upcomingMonthLabel}
                       tipAmountCents={tipAmountCents}
-                      onTrack={() => handleTrackLeak(candidate)}
-                      onMonitor={() => handleMonitor(candidate)}
-                      onNotAHabit={() => handleNotAHabit(candidate)}
-                      onWrongDetails={() => setOpenCategory(candidate.category)}
+                      onTrack={handleTrackLeak}
+                      onMonitor={handleMonitor}
+                      onNotAHabit={handleNotAHabit}
+                      onWrongDetails={setOpenCategory}
                     />
                   );
                 })}

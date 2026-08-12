@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { getCategories, saveCategories } from '@/utils/storage';
 import type { Category, CategoryIcon } from '@/types/category';
 import { DEFAULT_CATEGORIES } from '@/types/category';
@@ -36,20 +36,39 @@ export function CategoriesProvider({ children }: { children: React.ReactNode }) 
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  // UX-057: mirror of `categories` for same-tick read-after-write, same
+  // commit pattern as ExpensesContext.expensesRef / commit(). A rapid add
+  // followed immediately by a rename each ran off the `categories` render
+  // closure before this: the rename's setCategories([...])  could commit
+  // before React re-rendered the add's setCategories, so the rename's map()
+  // (built from the pre-add closure) silently dropped the just-added
+  // category when it persisted. Every mutator now reads/writes through
+  // categoriesRef via commit(), so each call always builds on the previous
+  // call's already-committed result.
+  const categoriesRef = useRef<Category[]>([]);
+
   useEffect(() => {
     async function loadCategories() {
       const stored = await getCategories();
       if (stored.length === 0) {
         // Initialize with defaults
         const defaults = initializeDefaultCategories();
+        categoriesRef.current = defaults;
         await saveCategories(defaults);
         setCategories(defaults);
       } else {
+        categoriesRef.current = stored;
         setCategories(stored);
       }
       setIsLoading(false);
     }
     loadCategories();
+  }, []);
+
+  const commit = useCallback(async (next: Category[]): Promise<void> => {
+    categoriesRef.current = next;
+    setCategories(next);
+    await saveCategories(next);
   }, []);
 
   const addCategory = useCallback(async (
@@ -68,32 +87,29 @@ export function CategoriesProvider({ children }: { children: React.ReactNode }) 
       createdAt: new Date(),
       monthlyBudget,
     };
-    const updated = [...categories, newCategory];
-    setCategories(updated);
-    await saveCategories(updated);
+    const updated = [...categoriesRef.current, newCategory];
+    await commit(updated);
     return newCategory;
-  }, [categories]);
+  }, [commit]);
 
   const updateCategory = useCallback(async (
     id: string,
     updates: Partial<Omit<Category, 'id' | 'isDefault' | 'createdAt'>>
   ): Promise<void> => {
-    const updated = categories.map(cat =>
+    const updated = categoriesRef.current.map(cat =>
       cat.id === id ? { ...cat, ...updates } : cat
     );
-    setCategories(updated);
-    await saveCategories(updated);
-  }, [categories]);
+    await commit(updated);
+  }, [commit]);
 
   const deleteCategory = useCallback(async (id: string): Promise<void> => {
-    const category = categories.find(c => c.id === id);
+    const category = categoriesRef.current.find(c => c.id === id);
     if (category?.isDefault) {
       throw new Error('Cannot delete default categories');
     }
-    const updated = categories.filter(cat => cat.id !== id);
-    setCategories(updated);
-    await saveCategories(updated);
-  }, [categories]);
+    const updated = categoriesRef.current.filter(cat => cat.id !== id);
+    await commit(updated);
+  }, [commit]);
 
   const hideCategory = useCallback(async (id: string): Promise<void> => {
     await updateCategory(id, { isHidden: true });
@@ -103,6 +119,9 @@ export function CategoriesProvider({ children }: { children: React.ReactNode }) 
     await updateCategory(id, { isHidden: false });
   }, [updateCategory]);
 
+  // Getters stay read-through-state (not the ref): they back render decisions
+  // (e.g. list filters), so they should reflect the same `categories` value
+  // the rest of a render sees, matching ExpensesContext's getExpenseById etc.
   const getCategoryById = useCallback((id: string): Category | undefined => {
     return categories.find(c => c.id === id);
   }, [categories]);
@@ -123,23 +142,26 @@ export function CategoriesProvider({ children }: { children: React.ReactNode }) 
     return categories.filter(c => !c.isDefault);
   }, [categories]);
 
+  const value = useMemo(() => ({
+    categories,
+    isLoading,
+    addCategory,
+    updateCategory,
+    deleteCategory,
+    hideCategory,
+    showCategory,
+    getCategoryById,
+    getCategoryByName,
+    getVisibleCategories,
+    getDefaultCategories,
+    getCustomCategories,
+  }), [
+    categories, isLoading, addCategory, updateCategory, deleteCategory, hideCategory, showCategory,
+    getCategoryById, getCategoryByName, getVisibleCategories, getDefaultCategories, getCustomCategories,
+  ]);
+
   return (
-    <CategoriesContext.Provider
-      value={{
-        categories,
-        isLoading,
-        addCategory,
-        updateCategory,
-        deleteCategory,
-        hideCategory,
-        showCategory,
-        getCategoryById,
-        getCategoryByName,
-        getVisibleCategories,
-        getDefaultCategories,
-        getCustomCategories,
-      }}
-    >
+    <CategoriesContext.Provider value={value}>
       {children}
     </CategoriesContext.Provider>
   );

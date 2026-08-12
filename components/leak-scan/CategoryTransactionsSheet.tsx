@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, useWindowDimensions } from 'react-native';
+import React, { useCallback, useMemo, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, useWindowDimensions } from 'react-native';
 import { Button } from '@/components/ui/Button';
 import { Sheet } from '@/components/ui/Sheet';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -63,6 +63,54 @@ export function CategoryTransactionsSheet({
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [openChipFor, setOpenChipFor] = useState<string | null>(null);
 
+  // UX-016/034: a category can carry every transaction in it, which used to
+  // all mount at once inside a plain ScrollView. FlatList virtualizes so only
+  // the rows on screen (plus a small overscan buffer) actually mount.
+  const renderRow = useCallback(
+    ({ item: row }: { item: ScanRow }) => (
+      <View style={styles.row}>
+        <View style={styles.rowInfo}>
+          <Text style={styles.merchantName}>{row.merchantDisplay || row.rawDescription}</Text>
+          {/* UX-050: dateISO was rendered raw; route it through the app's
+              locale-aware date formatter. Parsed as a local calendar day,
+              not a UTC instant, so the label cannot slip to the day
+              before west of UTC. */}
+          <Text style={styles.rowDate}>{formatRowDate(row.dateISO)}</Text>
+        </View>
+        <Text style={styles.amount}>{format(Math.abs(row.amountCents))}</Text>
+        <TouchableOpacity
+          style={styles.chipButton}
+          onPress={() => setOpenChipFor(openChipFor === row.id ? null : row.id)}
+          accessibilityRole="button"
+          hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
+        >
+          <Text style={styles.chipButtonText}>{categoryDisplayLabel(row.category)}</Text>
+        </TouchableOpacity>
+        {openChipFor === row.id && (
+          <View style={styles.chipRow}>
+            {CATEGORY_OPTIONS.map((cat) => (
+              <TouchableOpacity
+                key={cat}
+                style={styles.chip}
+                onPress={() => {
+                  onCorrect(row.merchantStem, cat);
+                  setOpenChipFor(null);
+                }}
+                accessibilityRole="button"
+                hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
+              >
+                <Text style={styles.chipText}>{categoryDisplayLabel(cat)}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+      </View>
+    ),
+    [styles, format, openChipFor, onCorrect]
+  );
+
+  const keyExtractor = useCallback((row: ScanRow) => row.id, []);
+
   if (!category) return null;
 
   return (
@@ -72,47 +120,13 @@ export function CategoryTransactionsSheet({
           {categoryDisplayLabel(category)}
         </Text>
 
-        <ScrollView style={styles.scroll} contentContainerStyle={styles.listContent}>
-          {rows.map((row) => (
-            <View key={row.id} style={styles.row}>
-              <View style={styles.rowInfo}>
-                <Text style={styles.merchantName}>{row.merchantDisplay || row.rawDescription}</Text>
-                {/* UX-050: dateISO was rendered raw; route it through the app's
-                    locale-aware date formatter. Parsed as a local calendar day,
-                    not a UTC instant, so the label cannot slip to the day
-                    before west of UTC. */}
-                <Text style={styles.rowDate}>{formatRowDate(row.dateISO)}</Text>
-              </View>
-              <Text style={styles.amount}>{format(Math.abs(row.amountCents))}</Text>
-              <TouchableOpacity
-                style={styles.chipButton}
-                onPress={() => setOpenChipFor(openChipFor === row.id ? null : row.id)}
-                accessibilityRole="button"
-                hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
-              >
-                <Text style={styles.chipButtonText}>{categoryDisplayLabel(row.category)}</Text>
-              </TouchableOpacity>
-              {openChipFor === row.id && (
-                <View style={styles.chipRow}>
-                  {CATEGORY_OPTIONS.map((cat) => (
-                    <TouchableOpacity
-                      key={cat}
-                      style={styles.chip}
-                      onPress={() => {
-                        onCorrect(row.merchantStem, cat);
-                        setOpenChipFor(null);
-                      }}
-                      accessibilityRole="button"
-                      hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
-                    >
-                      <Text style={styles.chipText}>{categoryDisplayLabel(cat)}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              )}
-            </View>
-          ))}
-        </ScrollView>
+        <FlatList
+          data={rows}
+          keyExtractor={keyExtractor}
+          renderItem={renderRow}
+          style={styles.scroll}
+          contentContainerStyle={styles.listContent}
+        />
 
         <View style={styles.footer}>
           <Button label={strings.common.ok} onPress={onClose} />

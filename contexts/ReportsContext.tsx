@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import { getDashboardConfig, saveDashboardConfig } from '@/utils/storage';
 import { strings } from '@/constants/strings';
 import { formatDate } from '@/utils/dates';
@@ -296,22 +296,28 @@ export function ReportsProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
+  // Every field is either plain state (config, isLoading) or a useCallback
+  // already listed here, so this deps list is exhaustive.
+  const value = useMemo(() => ({
+    config,
+    isLoading,
+    reorderWidgets,
+    toggleWidgetVisibility,
+    updateWidgetTimeRange,
+    addWidget,
+    removeWidget,
+    resetToDefaults,
+    calculateSpendingByCategory,
+    calculateSpendingOverTime,
+    calculateMonthlyProjection,
+  }), [
+    config, isLoading, reorderWidgets, toggleWidgetVisibility, updateWidgetTimeRange,
+    addWidget, removeWidget, resetToDefaults, calculateSpendingByCategory,
+    calculateSpendingOverTime, calculateMonthlyProjection,
+  ]);
+
   return (
-    <ReportsContext.Provider
-      value={{
-        config,
-        isLoading,
-        reorderWidgets,
-        toggleWidgetVisibility,
-        updateWidgetTimeRange,
-        addWidget,
-        removeWidget,
-        resetToDefaults,
-        calculateSpendingByCategory,
-        calculateSpendingOverTime,
-        calculateMonthlyProjection,
-      }}
-    >
+    <ReportsContext.Provider value={value}>
       {children}
     </ReportsContext.Provider>
   );

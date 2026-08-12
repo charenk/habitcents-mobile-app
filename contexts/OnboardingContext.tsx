@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import {
   getOnboardingState,
   saveOnboardingState,
@@ -290,30 +290,38 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     return progressiveState.pendingReveals[0] || null;
   }, [progressiveState]);
 
+  // Every field is either plain state (onboardingState, progressiveState,
+  // auditAnswers, isLoading) or a useCallback already listed here, so this
+  // deps list is exhaustive.
+  const value = useMemo(() => ({
+    onboardingState,
+    progressiveState,
+    auditAnswers,
+    isLoading,
+    completeStep,
+    skipStep,
+    chooseDoor,
+    saveAudit,
+    markHabitStarted,
+    completeOnboarding,
+    resetOnboarding,
+    incrementExpenseCount,
+    updateDaysActive,
+    checkFeatureReveals,
+    dismissReveal,
+    isFeatureRevealed,
+    getCurrentStep,
+    isOnboardingComplete,
+    getPendingReveal,
+  }), [
+    onboardingState, progressiveState, auditAnswers, isLoading, completeStep, skipStep,
+    chooseDoor, saveAudit, markHabitStarted, completeOnboarding, resetOnboarding,
+    incrementExpenseCount, updateDaysActive, checkFeatureReveals, dismissReveal,
+    isFeatureRevealed, getCurrentStep, isOnboardingComplete, getPendingReveal,
+  ]);
+
   return (
-    <OnboardingContext.Provider
-      value={{
-        onboardingState,
-        progressiveState,
-        auditAnswers,
-        isLoading,
-        completeStep,
-        skipStep,
-        chooseDoor,
-        saveAudit,
-        markHabitStarted,
-        completeOnboarding,
-        resetOnboarding,
-        incrementExpenseCount,
-        updateDaysActive,
-        checkFeatureReveals,
-        dismissReveal,
-        isFeatureRevealed,
-        getCurrentStep,
-        isOnboardingComplete,
-        getPendingReveal,
-      }}
-    >
+    <OnboardingContext.Provider value={value}>
       {children}
     </OnboardingContext.Provider>
   );

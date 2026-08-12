@@ -1,4 +1,4 @@
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useMemo } from 'react';
 import { lightTheme } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
 
@@ -19,8 +19,12 @@ type ThemeContextValue = {
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  // lightTheme is a module-level constant that never changes, so an empty
+  // deps array is correct: this object only needs to be created once, not
+  // recreated (and re-render every consumer) on every ThemeProvider render.
+  const value = useMemo(() => ({ theme: lightTheme }), []);
   return (
-    <ThemeContext.Provider value={{ theme: lightTheme }}>
+    <ThemeContext.Provider value={value}>
       {children}
     </ThemeContext.Provider>
   );

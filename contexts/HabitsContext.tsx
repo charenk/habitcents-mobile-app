@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import {
   getHabits,
   saveHabits,
@@ -727,37 +727,55 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
     return habits.filter(h => h.status === 'discovered' && !h.dismissedAt);
   }, [habits]);
 
+  // These were inline arrows in the provider value object below (a fresh
+  // function identity every render). setLastMilestone/setLastCoachMoment are
+  // React state setters, which are referentially stable forever, so an empty
+  // deps array is correct: these two never need to be recreated.
+  const clearLastMilestone = useCallback(() => setLastMilestone(null), []);
+  const clearLastCoachMoment = useCallback(() => setLastCoachMoment(null), []);
+
+  // Every field here is either plain state (habits, goals, isLoading,
+  // lastMilestone, lastCoachMoment) or a useCallback already listed in the
+  // deps array above it, so this deps list is exhaustive: the memo only
+  // recomputes when one of the 25 fields it actually returns changes.
+  const value = useMemo(() => ({
+    habits,
+    goals,
+    isLoading,
+    refreshHabits,
+    dismissHabit,
+    restoreDismissedHabit,
+    addScanHabit,
+    startBreakingHabit,
+    seedDiscoveredHabit,
+    answerToday,
+    answerEvent,
+    changeTodayAnswer,
+    backfillYesterday,
+    savePartialSlip,
+    updateSkipValue,
+    stopBreakingHabit,
+    getHabitById,
+    getGoalByHabitId,
+    getActiveHabits,
+    getDiscoveredHabits,
+    lastMilestone,
+    clearLastMilestone,
+    lastCoachMoment,
+    clearLastCoachMoment,
+    maybeShowDetectionMoment,
+    maybeShowFirstLogMoment,
+  }), [
+    habits, goals, isLoading, refreshHabits, dismissHabit, restoreDismissedHabit,
+    addScanHabit, startBreakingHabit, seedDiscoveredHabit, answerToday, answerEvent,
+    changeTodayAnswer, backfillYesterday, savePartialSlip, updateSkipValue, stopBreakingHabit,
+    getHabitById, getGoalByHabitId, getActiveHabits, getDiscoveredHabits,
+    lastMilestone, clearLastMilestone, lastCoachMoment, clearLastCoachMoment,
+    maybeShowDetectionMoment, maybeShowFirstLogMoment,
+  ]);
+
   return (
-    <HabitsContext.Provider
-      value={{
-        habits,
-        goals,
-        isLoading,
-        refreshHabits,
-        dismissHabit,
-        restoreDismissedHabit,
-        addScanHabit,
-        startBreakingHabit,
-        seedDiscoveredHabit,
-        answerToday,
-        answerEvent,
-        changeTodayAnswer,
-        backfillYesterday,
-        savePartialSlip,
-        updateSkipValue,
-        stopBreakingHabit,
-        getHabitById,
-        getGoalByHabitId,
-        getActiveHabits,
-        getDiscoveredHabits,
-        lastMilestone,
-        clearLastMilestone: () => setLastMilestone(null),
-        lastCoachMoment,
-        clearLastCoachMoment: () => setLastCoachMoment(null),
-        maybeShowDetectionMoment,
-        maybeShowFirstLogMoment,
-      }}
-    >
+    <HabitsContext.Provider value={value}>
       {children}
     </HabitsContext.Provider>
   );
