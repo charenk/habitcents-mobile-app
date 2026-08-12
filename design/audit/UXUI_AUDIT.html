@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HabitCents UX/UI audit</title>
+<style>
+  :root {
+    --sage: #4CAF82; --sage-dark: #2E7D55; --sage-light: #E8F5EE;
+    --ink: #1A1D23; --slate: #4A5568; --mist: #8898AA;
+    --cloud: #E8EDF2; --snow: #F7F9FC; --white: #FFFFFF; --hairline: #F1F4F8;
+    --lavender: #8E7CF3; --amber: #F5A623; --amber-ink: #8F5500; --coral: #C93B3B;
+    --p0: #C93B3B; --p0-bg: #FBEAEA;
+    --p1: #8F5500; --p1-bg: #FBF0DE;
+    --p2: #4A5568; --p2-bg: #EDF1F5;
+    --p3: #6B7A8F; --p3-bg: #F1F4F8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--snow); color: var(--ink);
+    font: 15px/1.55 -apple-system, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+    padding-bottom: 96px;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 0 20px; }
+  header.page { padding: 44px 0 8px; }
+  h1 { font-family: Georgia, "Times New Roman", serif; font-weight: 400; font-size: 34px; line-height: 1.15; }
+  h1 .dot { color: var(--sage); }
+  .meta { color: var(--slate); font-size: 13px; margin-top: 8px; }
+  .meta code { background: var(--white); border: 1px solid var(--cloud); border-radius: 6px; padding: 1px 6px; font-size: 12px; }
+  h2 { font-family: Georgia, serif; font-weight: 400; font-size: 23px; margin: 40px 0 14px; }
+  h2:first-child { margin-top: 0; }
+
+  .scorebar { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px; }
+  .scorecard { background: var(--white); border: 1px solid var(--cloud); border-radius: 14px; padding: 12px 16px; flex: 1; min-width: 130px; }
+  .scorecard .val { font-family: Georgia, serif; font-size: 26px; font-variant-numeric: tabular-nums; }
+  .scorecard .val small { font-size: 14px; color: var(--mist); }
+  .scorecard .lbl { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--slate); font-weight: 600; margin-top: 2px; }
+  .scorecard.total { background: var(--ink); color: var(--white); border-color: var(--ink); }
+  .scorecard.total .lbl { color: #AEB9C6; }
+  .scorecard.total .band { font-size: 12px; color: #AEB9C6; margin-top: 2px; }
+
+  .card { background: var(--white); border: 1px solid var(--cloud); border-radius: 14px; padding: 18px 20px; margin-bottom: 12px; }
+  .decision h3 { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+  .decision p { color: var(--slate); font-size: 14px; }
+  .decision .rec { margin-top: 8px; font-size: 13px; color: var(--sage-dark); background: var(--sage-light); border-radius: 8px; padding: 6px 10px; display: inline-block; }
+
+  /* contrast matrix */
+  table.contrast { width: 100%; border-collapse: collapse; background: var(--white); border: 1px solid var(--cloud); border-radius: 14px; overflow: hidden; font-size: 13px; }
+  .contrast-scroll { overflow-x: auto; border-radius: 14px; }
+  table.contrast th, table.contrast td { text-align: left; padding: 8px 12px; border-top: 1px solid var(--hairline); white-space: nowrap; }
+  table.contrast thead th { border-top: 0; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--slate); }
+  .swatch { display: inline-flex; align-items: center; justify-content: center; width: 88px; height: 28px; border-radius: 6px; border: 1px solid var(--cloud); font-weight: 600; font-size: 12px; }
+  td.ratio { font-variant-numeric: tabular-nums; font-weight: 600; }
+  .verdict { font-size: 11px; font-weight: 700; letter-spacing: .05em; border-radius: 999px; padding: 2px 9px; }
+  .verdict.fail { color: var(--p0); background: var(--p0-bg); }
+  .verdict.pass { color: var(--sage-dark); background: var(--sage-light); }
+
+  /* filters */
+  .filters { position: sticky; top: 0; z-index: 5; background: var(--snow); padding: 12px 0; border-bottom: 1px solid var(--cloud); margin-bottom: 16px; }
+  .filters .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .filters .row + .row { margin-top: 8px; }
+  .chip {
+    border: 1px solid var(--cloud); background: var(--white); color: var(--slate);
+    border-radius: 999px; padding: 5px 13px; font-size: 13px; font-weight: 500; cursor: pointer;
+  }
+  .chip.on { background: var(--ink); border-color: var(--ink); color: var(--white); }
+  .chip.sev-P0.on { background: var(--p0); border-color: var(--p0); }
+  .chip.sev-P1.on { background: var(--p1); border-color: var(--p1); }
+  select, input[type="search"] {
+    border: 1px solid var(--cloud); background: var(--white); color: var(--ink);
+    border-radius: 10px; padding: 6px 10px; font-size: 13px; font-family: inherit;
+  }
+  input[type="search"] { flex: 1; min-width: 160px; }
+  .count { font-size: 13px; color: var(--slate); margin-left: auto; }
+
+  /* findings */
+  .finding { background: var(--white); border: 1px solid var(--cloud); border-radius: 14px; padding: 14px 18px; margin-bottom: 10px; }
+  .finding .top { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+  .fid { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 13px; color: var(--slate); }
+  .pill { font-size: 11px; font-weight: 700; border-radius: 999px; padding: 2px 9px; letter-spacing: .04em; }
+  .pill.P0 { color: var(--p0); background: var(--p0-bg); }
+  .pill.P1 { color: var(--p1); background: var(--p1-bg); }
+  .pill.P2 { color: var(--p2); background: var(--p2-bg); }
+  .pill.P3 { color: var(--p3); background: var(--p3-bg); }
+  .pill.tag-DRIFT { color: var(--lavender); background: #F0EDFD; }
+  .pill.tag-GAP { color: var(--slate); background: var(--hairline); }
+  .pill.dim { color: var(--slate); background: transparent; border: 1px solid var(--cloud); font-weight: 500; }
+  .finding h3 { font-size: 15px; font-weight: 600; margin: 6px 0 4px; }
+  .finding .loc { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12px; color: var(--slate); background: var(--snow); border-radius: 8px; padding: 6px 10px; margin: 6px 0; overflow-x: auto; white-space: nowrap; }
+  .finding .impact, .finding .fix { font-size: 13.5px; color: var(--slate); margin-top: 4px; }
+  .finding .impact b, .finding .fix b { color: var(--ink); font-weight: 600; }
+  .finding .cmd { font-family: ui-monospace, Menlo, monospace; font-size: 12px; color: var(--sage-dark); }
+
+  /* triage */
+  .triage { display: flex; gap: 6px; margin-top: 10px; }
+  .tbtn { border: 1px solid var(--cloud); background: var(--white); color: var(--slate); border-radius: 8px; padding: 4px 12px; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+  .tbtn.on-fix { background: var(--sage-light); color: var(--sage-dark); border-color: var(--sage); }
+  .tbtn.on-defer { background: var(--p1-bg); color: var(--p1); border-color: var(--amber); }
+  .tbtn.on-accept { background: var(--p2-bg); color: var(--p2); border-color: var(--slate); }
+  .finding.t-fix { border-left-color: var(--cloud); }
+  .finding.t-accept { opacity: .62; }
+
+  .summary {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 10;
+    background: var(--ink); color: var(--white);
+    box-shadow: 0 -8px 24px rgba(26,29,35,.18);
+  }
+  .summary .wrap { display: flex; align-items: center; gap: 16px; padding: 12px 20px; }
+  .summary .stat { font-size: 13px; color: #AEB9C6; }
+  .summary .stat b { color: var(--white); font-variant-numeric: tabular-nums; }
+  .summary button { margin-left: auto; background: #7FD4A8; color: var(--ink); border: 0; border-radius: 8px; padding: 8px 14px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .summary button:active { opacity: .85; }
+
+  ul.plain { list-style: none; }
+  ul.plain li { padding: 8px 0 8px 26px; position: relative; color: var(--slate); font-size: 14px; border-top: 1px solid var(--hairline); }
+  ul.plain li:first-child { border-top: 0; }
+  ul.plain li::before { content: "+"; position: absolute; left: 4px; color: var(--sage-dark); font-weight: 700; }
+  footer { margin-top: 48px; color: var(--mist); font-size: 12.5px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="page">
+    <h1>HabitCents UX/UI audit<span class="dot">.</span></h1>
+    <div class="meta">2026-08-12 · main <code>9f9430e</code> · branch <code>design/audit</code> · 67 findings · twin of <code>UXUI_AUDIT.md</code></div>
+    <div class="scorebar">
+      <div class="scorecard"><div class="val">2<small> /4</small></div><div class="lbl">Accessibility</div></div>
+      <div class="scorecard"><div class="val">2<small> /4</small></div><div class="lbl">Performance</div></div>
+      <div class="scorecard"><div class="val">3<small> /4</small></div><div class="lbl">Responsive</div></div>
+      <div class="scorecard"><div class="val">3<small> /4</small></div><div class="lbl">Theming</div></div>
+      <div class="scorecard"><div class="val">3<small> /4</small></div><div class="lbl">Anti-patterns</div></div>
+      <div class="scorecard total"><div class="val">13<small> /20</small></div><div class="lbl">Health</div><div class="band">Acceptable: significant work needed</div></div>
+    </div>
+  </header>
+
+  <h2>Three decisions before the gated fixes</h2>
+  <div class="card decision">
+    <h3>1 · The palette's ratified AA failures</h3>
+    <p>Mist text (2.80:1) and white-on-sage CTAs (2.71:1) are ratified tokens that fail the bar the system itself declares. Options: darken in place; split roles (mistText vs mistDeco, ink-on-sage labels); or accept and document.</p>
+    <div class="rec">Recommended: split mist into mistText ~#6B7A8F and mistDeco; CTA fill to sageDark #2E7D55 (5.03:1)</div>
+  </div>
+  <div class="card decision">
+    <h3>2 · Ratify the real scales instead of policing the current ones</h3>
+    <p>fontSize 14 (x24), 16 (x15), 17, 26, 30 have no token; micro radii (3-5, x20) have no token; spacing has no tokens at all and the observed rhythm is 2pt-based. Add the missing steps then enforce hard, or rewrite 50+ call sites to fit the incomplete scale.</p>
+    <div class="rec">Recommended: add label 14, button 16, lead 17, sheetTitle 26, displayMid 30, radii.micro 4, and a spacing export</div>
+  </div>
+  <div class="card decision">
+    <h3>3 · Performance depth before beta</h3>
+    <p>Minimum: useMemo the 6 unmemoized provider values (Toast first: 10 files re-render twice per toast, and a toast fires on every mutation) plus the CategoriesContext commit-ref port. Medium adds React.memo on rows, Spent virtualization, and a HabitsContext slice split.</p>
+    <div class="rec">Recommended: minimum now (Lane 1, ~1 hour, zero visual change); medium if the device pass shows dropped frames</div>
+  </div>
+
+  <h2>Contrast matrix (the failing pairs that matter)</h2>
+  <div class="contrast-scroll"><table class="contrast">
+    <thead><tr><th>Sample</th><th>Pair</th><th>Ratio</th><th>Needs</th><th></th><th>Findings</th></tr></thead>
+    <tbody>
+      <tr><td><span class="swatch" style="background:#4CAF82;color:#fff">Break it</span></td><td>white on sage (primary CTA)</td><td class="ratio">2.71</td><td>4.5</td><td><span class="verdict fail">FAIL</span></td><td>UX-001</td></tr>
+      <tr><td><span class="swatch" style="background:#fff;color:#8898AA">Caption</span></td><td>mist on white (text, 57 sites)</td><td class="ratio">2.95</td><td>4.5</td><td><span class="verdict fail">FAIL</span></td><td>UX-003</td></tr>
+      <tr><td><span class="swatch" style="background:#F7F9FC;color:#8898AA">Caption</span></td><td>mist on snow</td><td class="ratio">2.80</td><td>4.5</td><td><span class="verdict fail">FAIL</span></td><td>UX-003</td></tr>
+      <tr><td><span class="swatch" style="background:#FDF2E2;color:#B26A00">Likely</span></td><td>amberInk on amberBg (tier pills)</td><td class="ratio">3.66</td><td>4.5</td><td><span class="verdict fail">FAIL</span></td><td>UX-002</td></tr>
+      <tr><td><span class="swatch" style="background:#F1EEFE;color:#8E7CF3">weekly</span></td><td>lavender on its .14 tint</td><td class="ratio">2.74</td><td>4.5</td><td><span class="verdict fail">FAIL</span></td><td>UX-005</td></tr>
+      <tr><td><span class="swatch" style="background:#fff;color:#8E7CF3">Premium</span></td><td>lavender on white</td><td class="ratio">3.32</td><td>4.5</td><td><span class="verdict fail">FAIL</span></td><td>UX-005, 006</td></tr>
+      <tr><td><span class="swatch" style="background:#fff;color:#F05A5A">Delete</span></td><td>coral on white (destructive label)</td><td class="ratio">3.33</td><td>4.5</td><td><span class="verdict fail">FAIL</span></td><td>decision 1</td></tr>
+      <tr><td><span class="swatch" style="background:#E8F5EE;color:#2E7D55">Breaking</span></td><td>sageDark on sageLight</td><td class="ratio">4.48</td><td>4.5</td><td><span class="verdict fail">FAIL</span></td><td>UX-048</td></tr>
+      <tr><td><span class="swatch" style="background:#E8EDF2;color:#fff">Disabled</span></td><td>white on cloud (disabled label)</td><td class="ratio">1.18</td><td>4.5</td><td><span class="verdict fail">FAIL</span></td><td>UX-047</td></tr>
+      <tr><td><span class="swatch" style="background:#2E7D55;color:#fff">Break it</span></td><td>white on sageDark (the fix)</td><td class="ratio">5.03</td><td>4.5</td><td><span class="verdict pass">PASS</span></td><td>decision 1</td></tr>
+      <tr><td><span class="swatch" style="background:#fff;color:#6B7A8F">Caption</span></td><td>proposed mistText #6B7A8F on white</td><td class="ratio">4.54</td><td>4.5</td><td><span class="verdict pass">PASS</span></td><td>decision 1</td></tr>
+      <tr><td><span class="swatch" style="background:#fff;color:#4A5568">Secondary</span></td><td>slate on white (already ratified)</td><td class="ratio">7.53</td><td>4.5</td><td><span class="verdict pass">PASS</span></td><td></td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="findings">Findings</h2>
+  <div class="filters">
+    <div class="row">
+      <button class="chip sev-P0 on" data-sev="P0">P0 · 2</button>
+      <button class="chip sev-P1 on" data-sev="P1">P1 · 14</button>
+      <button class="chip on" data-sev="P2">P2 · 30</button>
+      <button class="chip on" data-sev="P3">P3 · 21</button>
+      <button class="chip on" data-tag="DRIFT">Drift</button>
+      <button class="chip on" data-tag="GAP">System gap</button>
+      <span class="count" id="count"></span>
+    </div>
+    <div class="row">
+      <select id="dim"><option value="">All dimensions</option></select>
+      <select id="scr"><option value="">All screens</option></select>
+      <select id="tri"><option value="">Any triage</option><option value="fix">Marked fix</option><option value="defer">Marked defer</option><option value="accept">Marked accept</option><option value="none">Untriaged</option></select>
+      <input type="search" id="q" placeholder="Search title, file, impact...">
+    </div>
+  </div>
+  <div id="list"></div>
+
+  <h2>What is genuinely working</h2>
+  <div class="card"><ul class="plain">
+    <li>Motion and crash discipline: every animated component has a reduced-motion branch on a single driver, with a comment trail back to the release-crash postmortems.</li>
+    <li>Honesty guards are real code paths in at least six components: evidence floors, refuse-to-extrapolate, unearned-credit refusal, median prefills, the rise-only arc.</li>
+    <li>The primitive layer genuinely enforces: Chip (label + state + hitSlop), SegmentedControl roles, EmojiTile decorative handling, Icon fallback glyph, ConfirmSheet re-entrancy guard.</li>
+    <li>ExpensesContext concurrency is unusually good for a v1: commit-ref pattern, serialized materializer, tombstones, pre-hydration guard.</li>
+    <li>Strings centralization is ~99 percent real, and the row-affordance vocabulary is implemented, not just documented.</li>
+    <li>AuroraBackground is a model decorative layer; undo-not-confirm deletion restores list position, implemented identically twice.</li>
+  </ul></div>
+
+  <footer>Every finding carries file:line evidence verified against <code>9f9430e</code>; nothing is estimated. Triage marks are stored in this browser (localStorage) and exported with the button below. Re-run rules live in UXUI_AUDIT.md.</footer>
+</div>
+
+<div class="summary"><div class="wrap">
+  <span class="stat">Triage: <b id="s-fix">0</b> fix · <b id="s-defer">0</b> defer · <b id="s-accept">0</b> accept · <b id="s-none">67</b> left</span>
+  <button id="export">Copy triage as markdown</button>
+</div></div>
+
+<script>
+const F = [
+{id:"UX-001",sev:"P0",tag:"GAP",dim:"contrast",scr:["system"],t:"White-on-sage fails AA on every primary CTA (2.71:1)",loc:"ui/Button.tsx:89-100 · ui/Chip.tsx:124-127 · paywall.tsx:440,366 · leak-scan/HabitCard.tsx:306 · ProjectionSection.tsx:218 · PrivacyOverlay.tsx:64 · QuickLogRow.tsx:42 · WeekStrip.tsx:71 · HistoryCalendar.tsx:131",imp:"The app's most important action class is below AA for every low-vision user, enforced centrally by the primitive.",fix:"Decision 1: sageDark fill (5.03 passes) or ink labels on sage.",cmd:"/polish"},
+{id:"UX-002",sev:"P0",tag:"GAP",dim:"contrast",scr:["leak-scan","money"],t:"amberInk on amberBg fails AA at five live sites (3.66-4.01)",loc:"TierBadge.tsx:33-38 · HabitCard.tsx:294,66,230 · ProjectionSection.tsx:179 · UpcomingList.tsx:347-357",imp:"The scan's confidence tiers and money warnings, the honesty layer itself, are the least readable text on results.",fix:"Darken amberInk (~#8F5500) in theme.ts; all sites inherit.",cmd:"/polish"},
+{id:"UX-003",sev:"P1",tag:"GAP",dim:"contrast",scr:["system"],t:"Mist carries functional text at 2.80:1 in ~57 sites",loc:"theme.ts:23 + textTertiary/tabIconDefault aliases · ExpenseRow.tsx:125 · UpcomingList.tsx:358-379 · SpentList.tsx:142 · LongArc.tsx:167 · ResultsScreen.tsx:535 · index.tsx:1101 · TextField.tsx:59 · AmountField.tsx:145 · profile.tsx:234-295",imp:"Captions, placeholders, dates, legends, and the arc's core promise fail AA everywhere.",fix:"Decision 1: mistText ~#6B7A8F for information, mistDeco for fills.",cmd:"/polish"},
+{id:"UX-004",sev:"P1",tag:"DRIFT",dim:"type",scr:["system"],t:"Dynamic Type caps enforced at call sites, not primitives: 20 caps across ~334 Texts",loc:"Uncapped: Button.tsx:62 · Chip.tsx:94 · SegmentedControl.tsx:58 · Toast.tsx:166 · EmptyState.tsx:45 · AmountDisplay.tsx:92 (serif money uncapped, violates ratified 1.3) · AmountField symbol · KeptHero.tsx:42 · habit/[id].tsx:300 · welcome.tsx:199 · KpiRow.tsx:82",imp:"At iOS accessibility sizes the kept hero renders ~130pt; text+amount rows and the KPI row break irrecoverably.",fix:"Bake 1.3/1.5 caps into the primitives (opt-out), sweep serif heroes.",cmd:"/typeset"},
+{id:"UX-005",sev:"P1",tag:"DRIFT",dim:"contrast",scr:["today"],t:"The lavender pill AA failure LongArc documents and fixes still ships in two siblings",loc:"Fixed: LongArc.tsx:152-158 · re-shipped: CheckInCard.tsx:459-469 · CoachMomentSlot.tsx:71-84",imp:"Known, documented AA failure beside its own fix; the most fixable inconsistency found.",fix:"Apply LongArc's ink treatment to both pills.",cmd:"/polish"},
+{id:"UX-006",sev:"P1",tag:"DRIFT",dim:"contrast",scr:["paywall"],t:"Paywall hero subtitle and eyebrow fail AA on the lavender gradient",loc:"paywall.tsx:155-164, 301-308 (15pt, opacity .92), 286-293 (11pt, opacity .9)",imp:"Body-size white text on the lavender end is below 4.5:1 on the monetization surface.",fix:"Darken the gradient start or set text on the darker half without opacity tricks.",cmd:"/polish"},
+{id:"UX-007",sev:"P1",tag:"DRIFT",dim:"honesty",scr:["categories"],t:"Categories claims 'this month' on an all-time sum",loc:"categories.tsx:103-109 · CategoryRow.tsx:39 · strings.ts:245",imp:"Every category row states a fabricated monthly figure; the worst honesty-brand bug found.",fix:"Filter to the calendar month, or change the string to name what it sums.",cmd:"/clarify"},
+{id:"UX-008",sev:"P1",tag:"DRIFT",dim:"honesty",scr:["category-detail"],t:"Red/green P&L coding on the category trend",loc:"category/[id].tsx:206-219 (coral up-arrow, sage down-arrow)",imp:"Coral is destructive-only and sage never touches spend; the named bank-dashboard anti-reference, shame-coding an up month.",fix:"Both directions in slate; arrow and wording carry direction.",cmd:"/quieter"},
+{id:"UX-009",sev:"P1",tag:"DRIFT",dim:"honesty",scr:["category-detail"],t:"Six-month trend bars filled with raw category identity colors",loc:"category/[id].tsx:241-251 (backgroundColor: category.color)",imp:"Violates 'spend bars are mist on snow' and puts failing-contrast hues to data-bearing use (groceries 2.04).",fix:"theme.categoryBarFill on snow, as WhereItWentCard already does.",cmd:"/quieter"},
+{id:"UX-010",sev:"P1",tag:"DRIFT",dim:"honesty",scr:["insights"],t:"PaceCard's sage bar fills as the user spends",loc:"PaceCard.tsx:65-68 (progress = spent/projected), fill at 133-144",imp:"Spending renders as a filling green bar, the exact inversion the color system exists to prevent.",fix:"Fill by days elapsed, or restyle the fill mist on snow.",cmd:"/quieter"},
+{id:"UX-011",sev:"P1",tag:"DRIFT",dim:"a11y",scr:["today","habit-detail"],t:"No announcement when a check-in answer lands",loc:"CheckInCard.tsx:163-166 · index.tsx:710 · habit/[id].tsx:124 (house pattern exists at Toast.tsx:88)",imp:"The core loop's primary feedback ('+$6.50 kept') is silent for VoiceOver; focus drops when the button unmounts (WCAG 4.1.3).",fix:"Announce the confirmation headline on skip and slip paths.",cmd:"/harden"},
+{id:"UX-012",sev:"P1",tag:"GAP",dim:"perf",scr:["leak-scan"],t:"Scan pipeline runs sync on the JS thread; 'Reading your files' is a frozen frame",loc:"useLeakScanIntake.ts:46,132,154 · ResultsScreen.tsx:123 · spinner at IntakeScreen.tsx:54",imp:"At the hook's own caps (5 files x 50k rows) the UI freezes and VoiceOver focus hangs during the biggest data moment.",fix:"Yield before scanning so the spinner paints; chunk runScan.",cmd:"/optimize"},
+{id:"UX-013",sev:"P1",tag:"GAP",dim:"a11y",scr:["leak-scan"],t:"The entire scan flow is silent for VoiceOver",loc:"Zero announceForAccessibility / live regions in scope · stages at IntakeScreen.tsx:37-60",imp:"A VoiceOver user taps 'Choose CSV files' and hears nothing until they explore manually.",fix:"Announce scanning start, completion, and failure at the stage machine.",cmd:"/harden"},
+{id:"UX-014",sev:"P1",tag:"GAP",dim:"honesty",scr:["leak-scan"],t:"IntakeScreen never renders its error states; a failed pick fails silently",loc:"useLeakScanIntake.ts:117 (no-valid-files), :134 (pick-failed) · IntakeScreen reads only skippedFileMessages (:85-93)",imp:"A picker exception bounces the user to idle with no explanation, the exact dead end the vocabulary bans.",fix:"Render a notice line for both error codes.",cmd:"/harden"},
+{id:"UX-015",sev:"P1",tag:"GAP",dim:"touch",scr:["leak-scan"],t:"SpendPulse year view: 365+ cells at ~7pt with overlapping hitSlops",loc:"SpendPulse.tsx:41 (53 columns), 76-85 (~6pt cells; hitSlop 8 overlaps, so void)",imp:"Motor-impaired users cannot reliably open a day; hundreds of sub-target buttons.",fix:"Make year granularity non-interactive; keep per-cell taps for day/month.",cmd:"/adapt"},
+{id:"UX-016",sev:"P1",tag:"GAP",dim:"perf",scr:["money"],t:"Spent history is unbounded inside a plain ScrollView",loc:"money.tsx:218-241 · SpentList.tsx:79-83,117-124",imp:"A year of daily logging mounts 1000+ rows per tab switch and re-renders all of them on any expense mutation.",fix:"SectionList + memoized ExpenseRow for the Spent view.",cmd:"/optimize"},
+{id:"UX-017",sev:"P2",tag:"GAP",dim:"type",scr:["system"],t:"The type scale is missing the steps the app actually uses: 112 literals in 47 files",loc:"14 x24 · 16 x15 (incl. Button.tsx:99,115) · 17 x6 · 26/28/30/32 sheet titles (ConfirmSheet:91, CurrencySheet:88, AddUpcomingSheet:788, paywall:295, PickOneSheet:234...) · drift: 13 x7, 15 x7, 11 x7, 12 x10",imp:"'No sizes off the scale' is unenforceable while the scale lacks its four most common needs; the primitives are offenders.",fix:"Decision 2: add label/button/lead/sheetTitle/displayMid, migrate primitives first, sweep.",cmd:"/typeset"},
+{id:"UX-018",sev:"P2",tag:"GAP",dim:"layout",scr:["system"],t:"Layout token families are incomplete; most 'violations' are missing tokens, not drift",loc:"No spacing export in theme.ts · radii 3-5 x20 (missing radii.micro) · true gutter drift: 16 x12, 24 x8 (ResultsScreen:527, IntakeScreen:113, welcome:178, paywall:276) · 6 true radius drifts (Toast:194, HistoryCalendar:213, welcome:189, QuickLogRow:84, habit:493, intent:195)",imp:"Without tokens, drift detection is noise; the observed rhythm is 2pt-based and unratified.",fix:"Decision 2: spacing export + radii.micro, then sweep the true drifts.",cmd:"/layout"},
+{id:"UX-019",sev:"P2",tag:"GAP",dim:"perf",scr:["system"],t:"6 of 8 provider values unmemoized; the toast provider bites on every mutation",loc:"_layout.tsx:89-124 · ThemeContext:23 · CategoriesContext:127 · HabitsContext:704-731 · ReportsContext:300 · OnboardingContext:294 · Toast.tsx:97 value={{show}}",imp:"Every toast re-renders 10 consumer files twice; clearing a coach moment re-renders the 1200-line Today screen.",fix:"Decision 3: useMemo the six values (Toast first); consider splitting Habits ephemeral slices.",cmd:"/optimize"},
+{id:"UX-020",sev:"P2",tag:"GAP",dim:"honesty",scr:["today"],t:"A partial slip saves $0.00 by default and credits the full skip value",loc:"PartialSlipSheet.tsx:38-44, 76-78 · HabitsContext.tsx:649-668 (no guard)",imp:"One accidental Save fabricates kept money, against 'the only total the app renders is the user's own.'",fix:"Disable Save at 0, or treat 0 as cancel.",cmd:"/harden"},
+{id:"UX-021",sev:"P2",tag:"GAP",dim:"hygiene",scr:["today"],t:"Break-start in-flight guard leaks on throw; the Start button can die for the session",loc:"index.tsx:306-368 (ref set at :314, reset only at :368, no try/finally)",imp:"Any rejection leaves the ref stuck; the button goes permanently dead with no error surfaced.",fix:"try/finally + a failure toast.",cmd:"/harden"},
+{id:"UX-022",sev:"P2",tag:"GAP",dim:"honesty",scr:["today"],t:"'Not this one' silently discards a detected leak; no toast, no undo",loc:"index.tsx:605-607,694-695 · LeakCard.tsx:73-78",imp:"A mis-tap discards a leak the user may never see again; Toast's own contract says every mutation fires one toast.",fix:"Toast with undo action (Toast already supports action).",cmd:"/harden"},
+{id:"UX-023",sev:"P2",tag:"GAP",dim:"honesty",scr:["category-detail"],t:"Recent logs silently truncate at 10",loc:"category/[id].tsx:294 (slice(0,10), no count, no view-all)",imp:"A heavy category looks like it has 10 logs; the mirror hides evidence.",fix:"Count in the title ('10 of 84') or a view-all affordance.",cmd:"/clarify"},
+{id:"UX-024",sev:"P2",tag:"GAP",dim:"a11y",scr:["system"],t:"Sheet has no accessibility escape; its scrim close is hidden from VoiceOver",loc:"Sheet.tsx:105-115 (accessibilityViewIsModal hides scrim pressable :125-136); no onAccessibilityEscape",imp:"Two-finger-Z does nothing; dismissal depends on each sheet's cancel button.",fix:"onAccessibilityEscape={onClose} on the panel.",cmd:"/harden"},
+{id:"UX-025",sev:"P2",tag:"GAP",dim:"a11y",scr:["paywall"],t:"Plan picker: radio roles without a radiogroup, 'selected' instead of 'checked'",loc:"paywall.tsx:175-212 · strings.paywall.planSelectedLabel unused (:185)",imp:"iOS announces the radios poorly; selection state under-conveyed.",fix:"radiogroup container, state={{checked}}, use the strings entry.",cmd:"/harden"},
+{id:"UX-026",sev:"P2",tag:"DRIFT",dim:"a11y",scr:["leak-scan","paywall"],t:"Five screen titles missing accessibilityRole='header'",loc:"IntakeScreen.tsx:42,66 · ResultsScreen.tsx:372 · GracefulFailure.tsx:53 · paywall.tsx:162",imp:"VoiceOver loses rotor header navigation on exactly the long screens that need it.",fix:"Add the role at all five sites.",cmd:"/harden"},
+{id:"UX-027",sev:"P2",tag:"GAP",dim:"a11y",scr:["today"],t:"WeekStrip hand-rolls VoiceOver labels, bypassing the unit-tested builder",loc:"WeekStrip.tsx:23-30,59-63 vs utils/a11y.ts:22-26 (wording diverges)",imp:"Spoken wording differs between surfaces and drifts from the tested matrix.",fix:"Call weekDotLabel, extend for the out-of-range case.",cmd:"/harden"},
+{id:"UX-028",sev:"P2",tag:"GAP",dim:"a11y",scr:["categories"],t:"Color swatches are unnamed for VoiceOver",loc:"AddCategoryModal.tsx:179 ('color option ' + index)",imp:"Picking a category color gives no hue information at all.",fix:"Name the hues in a lookup beside COLOR_OPTIONS.",cmd:"/harden"},
+{id:"UX-029",sev:"P2",tag:"GAP",dim:"a11y",scr:["profile"],t:"The start-over reassurance ('data stays on this device') is never spoken",loc:"profile.tsx:180-188 · SettingsRow.tsx:115,125 (falls back to bare label)",imp:"The one row where reassurance matters most is silent for VoiceOver.",fix:"Fold hint into SettingsRow's default accessible label.",cmd:"/harden"},
+{id:"UX-030",sev:"P2",tag:"DRIFT",dim:"touch",scr:["system"],t:"SegmentedControl segments are 38pt with no hitSlop",loc:"SegmentedControl.tsx:83 (minHeight 38), Pressables :46-57",imp:"The ONE ratified switching pattern sits below the 44pt bar the vocabulary itself sets.",fix:"hitSlop top/bottom 3 per segment. One line.",cmd:"/polish"},
+{id:"UX-031",sev:"P2",tag:"DRIFT",dim:"touch",scr:["today","system"],t:"Sub-44 targets on the toast action and correction links",loc:"Toast.tsx:167-176 (~33pt, 2.5s window) · CheckInCard.tsx:259-276 (~41pt) · index.tsx:815-838 (~41pt)",imp:"Correction affordances, the ones anxious users reach for, miss the ratified bar.",fix:"Raise hitSlops; 44pt min-height wrapper on the toast action.",cmd:"/polish"},
+{id:"UX-032",sev:"P2",tag:"GAP",dim:"a11y",scr:["leak-scan"],t:"HabitCard overflow menu: no expanded state, exactly 44pt effective",loc:"HabitCard.tsx:122-130 (minHeight 32 + hitSlop 6; no accessibilityState expanded)",imp:"Menu state invisible to VoiceOver; the target has zero margin.",fix:"Add expanded state; minHeight 40 + hitSlop 4 like siblings.",cmd:"/harden"},
+{id:"UX-033",sev:"P2",tag:"GAP",dim:"perf",scr:["leak-scan"],t:"ResultsScreen re-renders its full tree per sheet open; SpendPulse has 8 inline styles",loc:"ResultsScreen.tsx:104-113 · SpendPulse.tsx:108-148,163-180 (365+ cells; hatch cells = 4 Views each)",imp:"Every sheet interaction re-renders hundreds of cells and every HabitCard.",fix:"React.memo on SpendPulse/HabitCard/CategoryList/ProjectionSection; hoist inline styles.",cmd:"/optimize"},
+{id:"UX-034",sev:"P2",tag:"GAP",dim:"perf",scr:["leak-scan"],t:"CategoryTransactionsSheet maps unbounded rows in a plain ScrollView",loc:"CategoryTransactionsSheet.tsx:67-101 (every row + conditional 10-chip correction row)",imp:"Hundreds of rows for a big category, inside a sheet.",fix:"FlatList in the sheet, or cap with show-more.",cmd:"/optimize"},
+{id:"UX-035",sev:"P2",tag:"GAP",dim:"hygiene",scr:["leak-scan","onboarding"],t:"Sequential awaited writes with no busy state; a double tap can double-import",loc:"ResultsScreen.tsx:287-290,320-322,304-307 · CTA :465-469 · intent.tsx:70-94 (paywall models the fix at :223-227)",imp:"'Bring in your last 30 days' tapped twice starts a second import before the first completes.",fix:"Disable-while-pending; batch writes; useRef guard on intent.",cmd:"/harden"},
+{id:"UX-036",sev:"P2",tag:"GAP",dim:"perf",scr:["today"],t:"Today's list renderers are inline with per-row closures and no memoized rows",loc:"index.tsx:685-727 (renderItem recreated per render; getGoalByHabitId inside :693)",imp:"Every Today state change re-renders every card including all WeekStrip date math; tolerable at 5 habits, wasteful by design.",fix:"React.memo on LeakCard/CheckInCard + stable per-id callbacks.",cmd:"/optimize"},
+{id:"UX-037",sev:"P2",tag:"DRIFT",dim:"vocabulary",scr:["leak-scan"],t:"SpendPulse's granularity toggle invents a third switcher",loc:"SpendPulse.tsx:60-70 (standalone chips, role button, not the cloud track, not tablist)",imp:"Violates 'do not invent a third switcher' and misses the switcher roles.",fix:"Swap to SegmentedControl (small scale); roles come free.",cmd:"/distill"},
+{id:"UX-038",sev:"P2",tag:"DRIFT",dim:"vocabulary",scr:["leak-scan"],t:"Tappable rows that open sheets carry no trailing affordance",loc:"CategoryList.tsx:42-67 · ResultsScreen.tsx:453-461 (review-queue banner)",imp:"The rows rule says chevron = opens in-app; these rows promise nothing.",fix:"Add the chevron trailing slot to both.",cmd:"/polish"},
+{id:"UX-039",sev:"P2",tag:"DRIFT",dim:"vocabulary",scr:["habit-detail"],t:"Habit detail hand-rolls a fifth and sixth button style",loc:"habit/[id].tsx:273-285,445-467 (bespoke secondaryButton, plainButton); slate stop-breaking vs theme.ts:33 coral undocumented",imp:"The four-button vocabulary becomes six on one screen.",fix:"Swap to shared Button; name the slate-vs-coral choice in an ADR note.",cmd:"/distill"},
+{id:"UX-040",sev:"P2",tag:"GAP",dim:"vocabulary",scr:["money","system"],t:"Sibling sheets open with two different header patterns",loc:"ExpenseSheet.tsx:277 (eyebrow head) vs AddUpcomingSheet:554, AddCategoryModal:117, CurrencySheet:42 (serif 26 title)",imp:"The two Money sheets visibly disagree; the vocabulary has no ruling.",fix:"Pick one (serif title is the majority) and ratify it.",cmd:"/polish"},
+{id:"UX-041",sev:"P2",tag:"GAP",dim:"vocabulary",scr:["system"],t:"The grab handle promises a swipe the sheet cannot do",loc:"Sheet.tsx:112,169-177 (handle, no pan gesture) · index.tsx:286 documents dismiss paths that do not all exist",imp:"An affordance that lies: 'every tappable thing declares what it does.'",fix:"Decision: add swipe-to-dismiss or drop the handle.",cmd:"/animate or /distill"},
+{id:"UX-042",sev:"P2",tag:"DRIFT",dim:"theming",scr:["system"],t:"PrivacyOverlay's wordmark renders in the system font",loc:"PrivacyOverlay.tsx:73-82 (fontWeight 800, no fontFamily)",imp:"The surface every app-switcher glance sees is off-brand San Francisco.",fix:"theme.fonts.uiBold, drop fontWeight.",cmd:"/polish"},
+{id:"UX-043",sev:"P2",tag:"GAP",dim:"layout",scr:["system"],t:"The toast pill can exceed screen width and hardcodes tab-bar geometry",loc:"Toast.tsx:189-198 (no maxWidth) · :145 (bottom = 56 + inset, duplicated from _layout.tsx:31) · :166 (uncapped message)",imp:"Longest ratified toast + Undo overflows at large type; the 56 breaks silently if the bar changes.",fix:"maxWidth 92% + flexShrink + cap + shared tab-bar constant.",cmd:"/harden"},
+{id:"UX-044",sev:"P2",tag:"GAP",dim:"hygiene",scr:["category-detail"],t:"The first recent-log row draws a stray hairline",loc:"category/[id].tsx:295 (rowNoBorder on wrapper; borderTop lives on inner logRow :518-524)",imp:"The Recent logs card opens with a floating top border no other card has.",fix:"Apply the condition on logRow itself (merchantRow does it right at :268).",cmd:"/polish"},
+{id:"UX-045",sev:"P2",tag:"GAP",dim:"layout",scr:["money"],t:"Money's bottom padding differs from its sibling tabs",loc:"money.tsx:291 (24) vs insights.tsx:250 and categories.tsx:199 (100)",imp:"If 100 clears the floating tab bar, the last Spent rows sit underneath it.",fix:"Shared constant derived from the tab-bar inset.",cmd:"/layout"},
+{id:"UX-046",sev:"P2",tag:"DRIFT",dim:"hygiene",scr:["system","today"],t:"Nine user-facing strings live outside strings.ts; the calendar is permanently English",loc:"Sheet.tsx:134 · HabitCard.tsx:126 · HistoryCalendar.tsx:84,94,27-31 · WeekStrip.tsx:11-12,23-30 · FirstRunRibbon.tsx:39 · ReviewQueueSheet.tsx:84-95",imp:"Violates the strings rule; the calendar ignores locale while the rest of the app formats dates properly.",fix:"Move to strings.ts; derive month/day names from formatDate.",cmd:"/harden"},
+{id:"UX-047",sev:"P3",tag:"GAP",dim:"contrast",scr:["system"],t:"Disabled Button/Chip is a white label on cloud at 1.18:1, effectively invisible",loc:"Button.tsx:80-86 · Chip.tsx:136-139,168-170 (ratified in spec 01)",imp:"WCAG exempts disabled controls, but users cannot read what a disabled control would do.",fix:"Decision 1 bucket: slate label on cloud.",cmd:"/polish"},
+{id:"UX-048",sev:"P3",tag:"DRIFT",dim:"contrast",scr:["today","system"],t:"sageDark on sageLight sits at 4.48:1, 0.02 under AA",loc:"KeptHero.tsx:64-81 (11pt eyebrow) · HabitLeakRow.tsx:160-164 · theme.ts:78-79 (tierSolid)",imp:"Marginal, but a stated-bar miss on brand-central chrome.",fix:"Nudge sageDark one step darker where it sits on sageLight.",cmd:"/polish"},
+{id:"UX-049",sev:"P3",tag:"DRIFT",dim:"honesty",scr:["leak-scan"],t:"The projection buffer reads as observed evidence",loc:"strings.ts projectionBuffer ('+12% · irregulars & annual renewals') at ProjectionSection.tsx:114",imp:"A spec-sanctioned convention that does not say it is an estimate.",fix:"One word: 'estimated buffer', or an ADR note.",cmd:"/clarify"},
+{id:"UX-050",sev:"P3",tag:"GAP",dim:"hygiene",scr:["leak-scan"],t:"Raw ISO dates shown to users in three places",loc:"PulseDayDetailSheet.tsx:41-43,38 · CategoryTransactionsSheet.tsx:71 · ProjectionSection.tsx:74",imp:"Machine dates in a product that formats dates everywhere else.",fix:"Route through formatDate.",cmd:"/clarify"},
+{id:"UX-051",sev:"P3",tag:"GAP",dim:"honesty",scr:["habit-detail","today"],t:"$0.00 skip values save silently in two more sheets",loc:"habit/[id].tsx:358-361 (EditSkipValueSheet) · PickOneSheet.tsx:202-206",imp:"Every future skip keeps $0.00 with no warning; recoverable but a quiet dead end.",fix:"Same guard as UX-020.",cmd:"/harden"},
+{id:"UX-052",sev:"P3",tag:"GAP",dim:"a11y",scr:["profile"],t:"External-link rows carry no spoken destination",loc:"profile.tsx:160-179 · SettingsRow.tsx:108",imp:"The ExternalLink icon informs sighted users only.",fix:"accessibilityHint 'Opens in your browser'.",cmd:"/harden"},
+{id:"UX-053",sev:"P3",tag:"DRIFT",dim:"touch",scr:["onboarding","paywall"],t:"FirstRunRibbon dismiss is ~38pt; paywall close is exactly 44",loc:"FirstRunRibbon.tsx:35-43 (14pt icon + hitSlop 12) · paywall.tsx:138-146 (40 + hitSlop 2; house pill uses 4)",imp:"Two chrome targets under or at the bar with zero margin.",fix:"hitSlop 16 on the ribbon; hitSlop 4 on the close.",cmd:"/polish"},
+{id:"UX-054",sev:"P3",tag:"GAP",dim:"a11y",scr:["today"],t:"The calendar's today cell gives no action hint",loc:"HistoryCalendar.tsx:116-133 (labeled 'August 11, no log' only)",imp:"Nothing tells VoiceOver that activating opens change-answer.",fix:"accessibilityHint.",cmd:"/harden"},
+{id:"UX-055",sev:"P3",tag:"GAP",dim:"a11y",scr:["money"],t:"Two adjacent controls announce identically in QuickLogRow",loc:"QuickLogRow.tsx:34-49 (amount area and plus button, same label, same action)",imp:"VoiceOver hears the same button twice in a row.",fix:"Merge into one accessible element.",cmd:"/harden"},
+{id:"UX-056",sev:"P3",tag:"GAP",dim:"perf",scr:["money","category-detail"],t:"UpcomingList creates a stylesheet per row; index keys on trend bars and merchants",loc:"UpcomingList.tsx:170-172 · category/[id].tsx:242,269",imp:"Cheap waste per row; index keys risk stale rows on reorder.",fix:"Hoist row styles; key merchants by name.",cmd:"/optimize"},
+{id:"UX-057",sev:"P3",tag:"GAP",dim:"hygiene",scr:["system"],t:"CategoriesContext mutations close over render-scope state",loc:"CategoriesContext.tsx:55-96 vs the commit-ref pattern in ExpensesContext.tsx:86-104, HabitsContext.tsx:169",imp:"A rapid add + rename can drop the add; a bug class the codebase already fixed twice elsewhere.",fix:"Port the commit-ref pattern.",cmd:"/optimize"},
+{id:"UX-058",sev:"P3",tag:"GAP",dim:"perf",scr:["habit-detail"],t:"EventHistory renders unbounded rows",loc:"EventHistory.tsx:50-61 (~100 rows after two years of a weekly habit)",imp:"Fine now; grows without a cap.",fix:"Cap with show-all if it grows.",cmd:"/optimize"},
+{id:"UX-059",sev:"P3",tag:"DRIFT",dim:"type",scr:["leak-scan","habit-detail"],t:"Serif appears off-charter in three places while one stat slot uses Inter",loc:"HabitCard.tsx:224-229 (rank digit) · CategoryList.tsx:117-122 (row amounts) · PulseDayDetailSheet.tsx:96-102 (stat money in Inter) · LongArc.tsx:91,161-166 (4th serif place, docs disagree)",imp:"The three-places serif charter frays at the edges.",fix:"Rank to Inter; one treatment for stat money; amend the vocabulary for LongArc or name the deviation.",cmd:"/typeset"},
+{id:"UX-060",sev:"P3",tag:"DRIFT",dim:"hygiene",scr:["today","money"],t:"Casing rules broken in two spots",loc:"strings.ts:71 ('KEPT SO FAR' stored uppercase; KeptHero renders raw) · LoggedTodayList.tsx:36 (JS toUpperCase)",imp:"The vocabulary says strings stay sentence case; components uppercase via style.",fix:"Sentence case in strings; textTransform in styles.",cmd:"/polish"},
+{id:"UX-061",sev:"P3",tag:"DRIFT",dim:"hygiene",scr:["onboarding","habit-detail"],t:"Dead code and knowingly off-ADR state on two screens",loc:"welcome.tsx:147-166 (ratify-or-revert comment; dead :59-103, :42-45, ~10 orphaned styles :180-254) · habit/[id].tsx:474-504 (dead styles), :113-116,391-393 (empty description block)",imp:"The welcome exploration must be ratified or reverted before shipping (ADR 0022); dead styles carry dormant AA failures.",fix:"Ratify or revert; delete dead blocks; conditional description.",cmd:"/distill"},
+{id:"UX-062",sev:"P3",tag:"GAP",dim:"hygiene",scr:["onboarding"],t:"Door pick lacks a double-tap guard",loc:"intent.tsx:70-94 (handlePick awaits with no pressed lock)",imp:"A fast double tap can fire the analytics event and door write twice.",fix:"useRef guard.",cmd:"/harden"},
+{id:"UX-063",sev:"P3",tag:"DRIFT",dim:"theming",scr:["onboarding"],t:"The cold-start frame is pure white before snow screens",loc:"app/index.tsx:24 (theme.surface on the loading frame)",imp:"A white flash against 'never pure white pages.'",fix:"theme.background.",cmd:"/polish"},
+{id:"UX-064",sev:"P3",tag:"DRIFT",dim:"theming",scr:["money"],t:"Sage on the add-upcoming affordance",loc:"UpcomingList.tsx:101 (dashed add tile's Plus in primaryDark)",imp:"Adding a bill is amber-domain money-out, not a kept outcome; sage's signal should stay rare.",fix:"Slate, like header chrome icons.",cmd:"/quieter"},
+{id:"UX-065",sev:"P3",tag:"DRIFT",dim:"theming",scr:["onboarding","paywall"],t:"AuroraBackground borrows category identity colors as decoration, undocumented",loc:"AuroraBackground.tsx:37,39,43 (categoryColors.utility, .transport) · paywall.tsx:156",imp:"The one local hex is documented; the borrow is not.",fix:"A comment naming the borrow, or promote the hues to decorative tokens.",cmd:"/polish"},
+{id:"UX-066",sev:"P3",tag:"DRIFT",dim:"type",scr:["leak-scan","money","system"],t:"Micro type hygiene cluster",loc:"ProjectionSection.tsx:146-154 (eyebrow ls 0.4 uiBold vs 0.88 semibold spec) · SpentList.tsx:105,120 (stacked totals without tabular-nums) · Toast.tsx:201,206 (13.5 literal = typeScale.control)",imp:"Three one-line divergences from ratified type rules.",fix:"Three one-liners.",cmd:"/typeset"},
+{id:"UX-067",sev:"P3",tag:"GAP",dim:"hygiene",scr:["today","category-detail","system"],t:"Edge cases cluster",loc:"index.tsx:218-221 (date eyebrow stale across midnight) · :503-507 (refreshHabits keyed on expenses.length) · SpentKeptChips.tsx:86-118 (amounts can wrap at max cap) · _layout.tsx:35-40 (tab labels clip at AX sizes) · category/[id].tsx:189-195 (identity icon can hit 2.04 on its tint)",imp:"Five small honest-mirror or robustness gaps.",fix:"Recompute on focus; content hash or comment; wrap guards; scaling handling; darker identity ramp.",cmd:"/harden"}
+];
+
+const DIMS = {contrast:"Contrast", type:"Typography", a11y:"A11y flow", honesty:"Honesty", perf:"Performance", touch:"Touch", vocabulary:"Vocabulary", layout:"Layout", theming:"Theming", hygiene:"Hygiene"};
+const SCREENS = {system:"System / primitives", today:"Today", "habit-detail":"Habit detail", money:"Money", insights:"Insights", categories:"Categories", "category-detail":"Category detail", profile:"Profile", onboarding:"Onboarding", "leak-scan":"Leak scan", paywall:"Paywall"};
+
+const state = { sev:{P0:true,P1:true,P2:true,P3:true}, tag:{DRIFT:true,GAP:true}, dim:"", scr:"", tri:"", q:"" };
+const LS = "habitcents-uxaudit-triage-v1";
+let triage = {};
+try { triage = JSON.parse(localStorage.getItem(LS) || "{}"); } catch (e) { triage = {}; }
+
+const dimSel = document.getElementById("dim"), scrSel = document.getElementById("scr");
+Object.entries(DIMS).forEach(([k,v]) => dimSel.add(new Option(v,k)));
+Object.entries(SCREENS).forEach(([k,v]) => scrSel.add(new Option(v,k)));
+
+function matches(f) {
+  if (!state.sev[f.sev] || !state.tag[f.tag]) return false;
+  if (state.dim && f.dim !== state.dim) return false;
+  if (state.scr && !f.scr.includes(state.scr)) return false;
+  const tr = triage[f.id] || "none";
+  if (state.tri && tr !== state.tri) return false;
+  if (state.q) {
+    const hay = (f.id+" "+f.t+" "+f.loc+" "+f.imp+" "+f.fix).toLowerCase();
+    if (!hay.includes(state.q.toLowerCase())) return false;
+  }
+  return true;
+}
+
+function render() {
+  const list = document.getElementById("list");
+  const rows = F.filter(matches);
+  list.innerHTML = rows.map(f => {
+    const tr = triage[f.id] || "";
+    return `<article class="finding t-${tr}" id="${f.id}">
+      <div class="top">
+        <span class="fid">${f.id}</span>
+        <span class="pill ${f.sev}">${f.sev}</span>
+        <span class="pill tag-${f.tag}">${f.tag === "GAP" ? "system gap" : "drift"}</span>
+        <span class="pill dim">${DIMS[f.dim]}</span>
+        <span class="pill dim">${f.scr.map(s => SCREENS[s]).join(" · ")}</span>
+      </div>
+      <h3>${f.t}</h3>
+      <div class="loc">${f.loc}</div>
+      <div class="impact"><b>Impact:</b> ${f.imp}</div>
+      <div class="fix"><b>Fix:</b> ${f.fix} <span class="cmd">${f.cmd}</span></div>
+      <div class="triage">
+        ${["fix","defer","accept"].map(k =>
+          `<button class="tbtn ${tr === k ? "on-" + k : ""}" data-id="${f.id}" data-k="${k}">${k[0].toUpperCase()+k.slice(1)}</button>`).join("")}
+      </div>
+    </article>`;
+  }).join("") || `<div class="card" style="color:var(--slate)">No findings match the current filters.</div>`;
+  document.getElementById("count").textContent = rows.length + " of " + F.length + " shown";
+  const c = {fix:0, defer:0, accept:0};
+  F.forEach(f => { const t = triage[f.id]; if (c[t] !== undefined) c[t]++; });
+  document.getElementById("s-fix").textContent = c.fix;
+  document.getElementById("s-defer").textContent = c.defer;
+  document.getElementById("s-accept").textContent = c.accept;
+  document.getElementById("s-none").textContent = F.length - c.fix - c.defer - c.accept;
+}
+
+document.querySelector(".filters").addEventListener("click", e => {
+  const b = e.target.closest(".chip"); if (!b) return;
+  if (b.dataset.sev) state.sev[b.dataset.sev] = !state.sev[b.dataset.sev];
+  if (b.dataset.tag) state.tag[b.dataset.tag] = !state.tag[b.dataset.tag];
+  b.classList.toggle("on");
+  render();
+});
+dimSel.onchange = () => { state.dim = dimSel.value; render(); };
+scrSel.onchange = () => { state.scr = scrSel.value; render(); };
+document.getElementById("tri").onchange = e => { state.tri = e.target.value; render(); };
+document.getElementById("q").oninput = e => { state.q = e.target.value; render(); };
+
+document.getElementById("list").addEventListener("click", e => {
+  const b = e.target.closest(".tbtn"); if (!b) return;
+  const { id, k } = b.dataset;
+  triage[id] = triage[id] === k ? "" : k;
+  if (!triage[id]) delete triage[id];
+  localStorage.setItem(LS, JSON.stringify(triage));
+  render();
+});
+
+document.getElementById("export").onclick = () => {
+  const lines = ["# UX/UI audit triage · " + new Date().toISOString().slice(0,10), ""];
+  ["fix","defer","accept"].forEach(k => {
+    const rows = F.filter(f => triage[f.id] === k);
+    if (!rows.length) return;
+    lines.push("## " + k[0].toUpperCase()+k.slice(1) + " (" + rows.length + ")");
+    rows.forEach(f => lines.push("- " + f.id + " " + f.sev + " · " + f.t));
+    lines.push("");
+  });
+  const left = F.filter(f => !triage[f.id]);
+  if (left.length) { lines.push("## Untriaged (" + left.length + ")"); left.forEach(f => lines.push("- " + f.id + " " + f.sev + " · " + f.t)); }
+  const text = lines.join("\n");
+  const done = () => { const b = document.getElementById("export"); b.textContent = "Copied"; setTimeout(() => b.textContent = "Copy triage as markdown", 1500); };
+  if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(text).then(done, () => fallbackCopy(text, done)); }
+  else fallbackCopy(text, done);
+  function fallbackCopy(t, cb) { const ta = document.createElement("textarea"); ta.value = t; document.body.appendChild(ta); ta.select(); try { document.execCommand("copy"); } catch (e) {} document.body.removeChild(ta); cb(); }
+};
+
+render();
+</script>
+</body>
+</html>
