@@ -104,7 +104,7 @@ function createStyles(theme: AppTheme) {
       marginBottom: 4,
     },
     categoryName: {
-      fontSize: 14,
+      fontSize: typeScale.label,
       fontFamily: theme.fonts.uiMedium,
       color: theme.ink,
     },
@@ -115,6 +115,11 @@ function createStyles(theme: AppTheme) {
       marginBottom: 6,
     },
     amount: {
+      // Deliberately a literal, not typeScale.button. This is serif money in a
+      // list row, and the scale has no step for that yet: borrowing the button
+      // token would couple a money figure to button-label sizing, so retuning
+      // buttons would silently resize money. Awaiting a serif money step in the
+      // second scale ratification. UX-018.
       fontSize: 16,
       fontFamily: theme.fonts.display,
       color: theme.ink,

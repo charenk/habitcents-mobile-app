@@ -455,7 +455,7 @@ function createStyles(theme: AppTheme) {
     },
     name: {
       fontFamily: theme.fonts.uiSemibold,
-      fontSize: 16,
+      fontSize: typeScale.button,
       color: theme.ink,
       flexShrink: 1,
     },
@@ -470,7 +470,7 @@ function createStyles(theme: AppTheme) {
     // was 2.9:1, below AA at this size.
     cadencePillText: {
       fontFamily: theme.fonts.uiSemibold,
-      fontSize: 11,
+      fontSize: typeScale.eyebrow,
       color: theme.ink,
     },
     questionBlock: {
@@ -567,7 +567,7 @@ function createStyles(theme: AppTheme) {
     },
     linkText: {
       fontFamily: theme.fonts.uiSemibold,
-      fontSize: 14,
+      fontSize: typeScale.label,
       color: theme.slate,
     },
     backfillBlock: {

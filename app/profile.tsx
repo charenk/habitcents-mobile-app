@@ -34,7 +34,7 @@ import { SettingsRow } from '@/components/settings/SettingsRow';
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { useToast } from '@/components/ui/Toast';
-import { typeScale } from '@/constants/theme';
+import { typeScale, layout } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -229,7 +229,7 @@ function createStyles(theme: AppTheme) {
       // 20pt horizontal gutter per screen) so the title lines up with the
       // rows below it now that both share the same header component.
       paddingHorizontal: 20,
-      paddingBottom: 100,
+      paddingBottom: layout.screenBottomClearance,
     },
     eyebrow: {
       fontFamily: theme.fonts.uiSemibold,
@@ -283,12 +283,12 @@ function createStyles(theme: AppTheme) {
     },
     rowHint: {
       fontFamily: theme.fonts.ui,
-      fontSize: 12,
+      fontSize: typeScale.caption,
       color: theme.mistText,
     },
     versionFooter: {
       fontFamily: theme.fonts.ui,
-      fontSize: 12,
+      fontSize: typeScale.caption,
       color: theme.mistText,
       textAlign: 'center',
       marginTop: 22,

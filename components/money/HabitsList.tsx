@@ -98,7 +98,7 @@ function createStyles(theme: AppTheme) {
       paddingVertical: 10,
     },
     emptyTitle: {
-      fontSize: 14.5,
+      fontSize: typeScale.label,
       fontFamily: theme.fonts.uiSemibold,
       color: theme.ink,
     },

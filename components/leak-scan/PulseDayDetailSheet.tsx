@@ -117,7 +117,7 @@ function createStyles(theme: AppTheme) {
       color: theme.ink,
     },
     total: {
-      fontSize: 22,
+      fontSize: typeScale.statCard,
       fontFamily: theme.fonts.uiBold,
       color: theme.ink,
       marginBottom: 12,

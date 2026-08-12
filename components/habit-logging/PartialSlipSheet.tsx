@@ -123,7 +123,7 @@ function createStyles(theme: AppTheme) {
     },
     subtitle: {
       fontFamily: theme.fonts.ui,
-      fontSize: 14,
+      fontSize: typeScale.label,
       lineHeight: 20,
       color: theme.slate,
       marginTop: 4,

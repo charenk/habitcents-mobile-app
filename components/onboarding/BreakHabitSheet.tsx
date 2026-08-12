@@ -316,7 +316,7 @@ function createStyles(theme: AppTheme) {
     },
     caption: {
       fontFamily: theme.fonts.ui,
-      fontSize: 14,
+      fontSize: typeScale.label,
       lineHeight: 20,
       color: theme.slate,
       marginTop: 4,
@@ -341,7 +341,7 @@ function createStyles(theme: AppTheme) {
     },
     yearlyLine: {
       fontFamily: theme.fonts.ui,
-      fontSize: 14,
+      fontSize: typeScale.label,
       lineHeight: 20,
       color: theme.slate,
       marginTop: 12,
@@ -368,7 +368,7 @@ function createStyles(theme: AppTheme) {
     },
     gateTitle: {
       fontFamily: theme.fonts.uiSemibold,
-      fontSize: 16,
+      fontSize: typeScale.button,
       lineHeight: 22,
       color: theme.ink,
     },

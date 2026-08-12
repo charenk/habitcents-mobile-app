@@ -16,7 +16,7 @@ import { useCategories } from '@/contexts/CategoriesContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
 import { AddCategoryModal } from '@/components/AddCategoryModal';
 import { withAlpha } from '@/utils/color';
-import { radii, typeScale, type AppTheme } from '@/constants/theme';
+import { radii, typeScale, layout, type AppTheme } from '@/constants/theme';
 import type { CategoryIcon } from '@/types/category';
 import type { Expense } from '@/types/expense';
 import { strings } from '@/constants/strings';
@@ -346,7 +346,7 @@ function createStyles(theme: AppTheme) {
       // 20pt horizontal gutter per screen) so the title lines up with the
       // content below it now that both share the same header component.
       paddingHorizontal: 20,
-      paddingBottom: 100,
+      paddingBottom: layout.screenBottomClearance,
     },
     emptyContainer: {
       flex: 1,
@@ -428,7 +428,7 @@ function createStyles(theme: AppTheme) {
       color: theme.ink,
     },
     statLabel: {
-      fontSize: 11,
+      fontSize: typeScale.eyebrow,
       fontFamily: theme.fonts.ui,
       color: theme.slate,
       marginTop: 4,

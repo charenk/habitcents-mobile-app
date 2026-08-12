@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import type { AppTheme } from '@/constants/theme';
-import { radii } from '@/constants/theme';
+import { radii, typeScale } from '@/constants/theme';
 
 export type ButtonVariant =
   | 'primary'
@@ -59,7 +59,10 @@ export function Button({
         style,
       ]}
     >
-      <Text style={[styles.baseLabel, labelStyle, disabled ? styles.disabledLabel : null]}>
+      <Text
+        style={[styles.baseLabel, labelStyle, disabled ? styles.disabledLabel : null]}
+        maxFontSizeMultiplier={1.5}
+      >
         {label}
       </Text>
     </Pressable>
@@ -101,7 +104,7 @@ function createStyles(theme: AppTheme) {
       // Charen's call (2026-08-12): keep the green, darken the label. UX-001.
       color: theme.ink,
       fontFamily: theme.fonts.uiSemibold,
-      fontSize: 16,
+      fontSize: typeScale.button,
     },
 
     // secondary
@@ -117,7 +120,7 @@ function createStyles(theme: AppTheme) {
     secondaryLabel: {
       color: theme.ink,
       fontFamily: theme.fonts.uiSemibold,
-      fontSize: 16,
+      fontSize: typeScale.button,
     },
 
     // tertiary
@@ -131,7 +134,7 @@ function createStyles(theme: AppTheme) {
     tertiaryLabel: {
       color: theme.slate,
       fontFamily: theme.fonts.uiSemibold,
-      fontSize: 14,
+      fontSize: typeScale.label,
     },
 
     // destructive (bare)
@@ -145,7 +148,7 @@ function createStyles(theme: AppTheme) {
     destructiveLabel: {
       color: theme.coral,
       fontFamily: theme.fonts.uiSemibold,
-      fontSize: 16,
+      fontSize: typeScale.button,
     },
 
     // destructiveFill
@@ -159,7 +162,7 @@ function createStyles(theme: AppTheme) {
     destructiveFillLabel: {
       color: theme.white,
       fontFamily: theme.fonts.uiSemibold,
-      fontSize: 16,
+      fontSize: typeScale.button,
     },
   });
 }

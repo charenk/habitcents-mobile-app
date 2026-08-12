@@ -87,7 +87,11 @@ export function Chip({
     >
       <View style={styles.inner}>
         {emoji ? (
-          <Text style={styles.emoji} importantForAccessibility="no">
+          <Text
+            style={styles.emoji}
+            importantForAccessibility="no"
+            maxFontSizeMultiplier={1.5}
+          >
             {emoji}
           </Text>
         ) : null}
@@ -99,6 +103,7 @@ export function Chip({
             disabled ? styles.labelDisabled : null,
           ]}
           numberOfLines={1}
+          maxFontSizeMultiplier={1.5}
         >
           {label}
         </Text>
@@ -146,12 +151,12 @@ function createStyles(theme: AppTheme) {
       gap: 6,
     },
     emoji: {
-      fontSize: 14,
+      fontSize: typeScale.label,
       includeFontPadding: false,
     },
     label: {
       fontFamily: theme.fonts.uiSemibold,
-      fontSize: 14,
+      fontSize: typeScale.label,
     },
     labelPill: {
       fontSize: typeScale.caption,

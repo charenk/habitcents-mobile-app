@@ -147,6 +147,10 @@ function createStyles(theme: AppTheme) {
       color: theme.mistText,
       marginBottom: 6,
       marginLeft: 4,
+      // UX-066: the day total lives in this string (spentGroupHeader), so it
+      // needs the same tabular treatment as every other number that can sit
+      // above another number.
+      fontVariant: ['tabular-nums'],
     },
     card: {
       backgroundColor: theme.white,

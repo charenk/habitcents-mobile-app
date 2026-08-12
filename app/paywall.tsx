@@ -25,7 +25,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/ui/Icon';
 import { useToast } from '@/components/ui/Toast';
 import { useTheme } from '@/contexts/ThemeContext';
-import { radii, typeScale, type AppTheme } from '@/constants/theme';
+import { radii, typeScale, spacing, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import { hapticSelection } from '@/utils/motion';
 import { track, isPaywallPlacement } from '@/utils/analytics';
@@ -277,7 +277,8 @@ function createStyles(theme: AppTheme) {
       justifyContent: 'center',
     },
     scrollContent: {
-      paddingHorizontal: 24,
+      // UX-018: 24 drifted from the ratified 20pt screen gutter.
+      paddingHorizontal: spacing.gutter,
       paddingTop: 4,
     },
     // Gradient hero: white type on lavender-to-indigo. One of the two
@@ -286,7 +287,7 @@ function createStyles(theme: AppTheme) {
     // render-side comment for the contrast math.
     hero: {
       borderRadius: radii.feature,
-      paddingHorizontal: 20,
+      paddingHorizontal: spacing.gutter,
       paddingVertical: 24,
     },
     heroEyebrow: {
@@ -299,7 +300,7 @@ function createStyles(theme: AppTheme) {
       marginBottom: 8,
     },
     title: {
-      fontSize: 30,
+      fontSize: typeScale.displayMid,
       lineHeight: 36,
       fontFamily: theme.fonts.display,
       color: theme.white,
@@ -324,7 +325,7 @@ function createStyles(theme: AppTheme) {
       gap: 10,
     },
     featureText: {
-      fontSize: 15,
+      fontSize: typeScale.body,
       fontFamily: theme.fonts.ui,
       color: theme.text,
       flex: 1,
@@ -361,7 +362,7 @@ function createStyles(theme: AppTheme) {
       gap: 8,
     },
     planName: {
-      fontSize: 16,
+      fontSize: typeScale.button,
       fontFamily: theme.fonts.uiBold,
       color: theme.text,
     },
@@ -373,14 +374,14 @@ function createStyles(theme: AppTheme) {
     },
     // UX-001: ink on the sage badge; white was 2.71:1 at 11pt uppercase.
     planBadgeText: {
-      fontSize: 11,
+      fontSize: typeScale.eyebrow,
       fontFamily: theme.fonts.uiBold,
       color: theme.ink,
       textTransform: 'uppercase',
       letterSpacing: 0.3,
     },
     planCaption: {
-      fontSize: 13,
+      fontSize: typeScale.secondary,
       fontFamily: theme.fonts.ui,
       color: theme.textSecondary,
       marginTop: 3,
@@ -390,13 +391,13 @@ function createStyles(theme: AppTheme) {
       marginLeft: 12,
     },
     planPrice: {
-      fontSize: 17,
+      fontSize: typeScale.lead,
       fontFamily: theme.fonts.uiBold,
       fontVariant: ['tabular-nums'],
       color: theme.text,
     },
     planPeriod: {
-      fontSize: 12,
+      fontSize: typeScale.caption,
       fontFamily: theme.fonts.ui,
       fontVariant: ['tabular-nums'],
       color: theme.textSecondary,
@@ -416,20 +417,21 @@ function createStyles(theme: AppTheme) {
     },
     plannedBannerText: {
       flex: 1,
-      fontSize: 12,
+      fontSize: typeScale.caption,
       fontFamily: theme.fonts.ui,
       color: theme.textSecondary,
       lineHeight: 17,
     },
     footer: {
-      paddingHorizontal: 24,
+      // UX-018: 24 drifted from the ratified 20pt screen gutter.
+      paddingHorizontal: spacing.gutter,
       paddingTop: 12,
       borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: theme.border,
       backgroundColor: theme.background,
     },
     trialLine: {
-      fontSize: 13,
+      fontSize: typeScale.secondary,
       fontFamily: theme.fonts.ui,
       color: theme.textSecondary,
       textAlign: 'center',
@@ -447,7 +449,7 @@ function createStyles(theme: AppTheme) {
       opacity: 0.6,
     },
     primaryButtonText: {
-      fontSize: 16,
+      fontSize: typeScale.button,
       fontFamily: theme.fonts.uiSemibold,
       // Ink, matching the shared Button primitive: white on sage is 2.71:1.
       // This is the screen's main CTA, so it cannot be the one that misses.
@@ -461,12 +463,12 @@ function createStyles(theme: AppTheme) {
       marginTop: 4,
     },
     restoreText: {
-      fontSize: 14,
+      fontSize: typeScale.label,
       fontFamily: theme.fonts.uiSemibold,
       color: theme.primary,
     },
     stayFreeText: {
-      fontSize: 14,
+      fontSize: typeScale.label,
       fontFamily: theme.fonts.uiSemibold,
       color: theme.slate,
     },

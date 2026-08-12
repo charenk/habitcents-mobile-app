@@ -258,7 +258,7 @@ function createStyles(theme: AppTheme) {
     },
     paragraph: {
       fontFamily: theme.fonts.ui,
-      fontSize: 14,
+      fontSize: typeScale.label,
       lineHeight: 20,
       color: theme.slate,
       marginBottom: 8,
@@ -306,7 +306,7 @@ function createStyles(theme: AppTheme) {
     },
     gateTitle: {
       fontFamily: theme.fonts.uiSemibold,
-      fontSize: 16,
+      fontSize: typeScale.button,
       lineHeight: 22,
       color: theme.ink,
     },

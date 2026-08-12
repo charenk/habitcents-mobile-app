@@ -98,7 +98,7 @@ function createStyles(theme: AppTheme) {
       marginBottom: 18,
     },
     title: {
-      fontSize: 30,
+      fontSize: typeScale.displayMid,
       fontFamily: theme.fonts.display,
       color: theme.ink,
       textAlign: 'center',
@@ -106,7 +106,7 @@ function createStyles(theme: AppTheme) {
       marginBottom: 12,
     },
     body: {
-      fontSize: 14,
+      fontSize: typeScale.label,
       fontFamily: theme.fonts.ui,
       color: theme.slate,
       textAlign: 'center',

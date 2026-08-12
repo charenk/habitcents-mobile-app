@@ -121,7 +121,7 @@ function createStyles(theme: AppTheme) {
       flex: 1,
     },
     rowName: {
-      fontSize: 14.5,
+      fontSize: typeScale.label,
       fontFamily: theme.fonts.uiSemibold,
       color: theme.ink,
     },
@@ -146,7 +146,7 @@ function createStyles(theme: AppTheme) {
       backgroundColor: theme.primaryPressedBg,
     },
     breakLabel: {
-      fontSize: 13,
+      fontSize: typeScale.secondary,
       fontFamily: theme.fonts.uiSemibold,
       color: theme.ink,
     },
@@ -161,12 +161,12 @@ function createStyles(theme: AppTheme) {
       opacity: 0.7,
     },
     breakingLabel: {
-      fontSize: 13,
+      fontSize: typeScale.secondary,
       fontFamily: theme.fonts.uiSemibold,
       color: theme.primaryDark,
     },
     watchLabel: {
-      fontSize: 13,
+      fontSize: typeScale.secondary,
       fontFamily: theme.fonts.uiSemibold,
       color: theme.slate,
       paddingHorizontal: 14,

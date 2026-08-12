@@ -18,6 +18,7 @@
 import { useMemo } from 'react';
 import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
+import { typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
 import type { TodayQuote } from '@/constants/strings';
 
@@ -72,7 +73,7 @@ function createStyles(theme: AppTheme) {
     },
     attribution: {
       fontFamily: theme.fonts.ui,
-      fontSize: 12,
+      fontSize: typeScale.caption,
       color: theme.mistText,
       marginTop: 4,
     },

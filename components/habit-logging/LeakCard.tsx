@@ -94,7 +94,7 @@ function createStyles(theme: AppTheme) {
     },
     name: {
       fontFamily: theme.fonts.uiSemibold,
-      fontSize: 16,
+      fontSize: typeScale.button,
       color: theme.ink,
     },
     evidence: {

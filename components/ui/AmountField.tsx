@@ -131,7 +131,7 @@ export function AmountField({
   return (
     <View style={styles.column}>
       <View style={styles.row}>
-        <Text style={styles.symbol} allowFontScaling>
+        <Text style={styles.symbol} allowFontScaling maxFontSizeMultiplier={1.3}>
           {meta.symbol}
         </Text>
         <TextInput

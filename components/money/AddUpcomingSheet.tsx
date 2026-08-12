@@ -785,7 +785,7 @@ function createStyles(theme: AppTheme) {
     },
     title: {
       fontFamily: theme.fonts.display,
-      fontSize: 26,
+      fontSize: typeScale.sheetTitle,
       lineHeight: 32,
       color: theme.ink,
       includeFontPadding: false,
@@ -802,7 +802,7 @@ function createStyles(theme: AppTheme) {
     },
     subLabel: {
       fontFamily: theme.fonts.ui,
-      fontSize: 12,
+      fontSize: typeScale.caption,
       color: theme.slate,
       marginTop: 12,
       marginBottom: 8,

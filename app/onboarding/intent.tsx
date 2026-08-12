@@ -171,13 +171,13 @@ function createStyles(theme: AppTheme) {
       paddingTop: 24,
     },
     title: {
-      fontSize: 30,
+      fontSize: typeScale.displayMid,
       lineHeight: 34,
       fontFamily: theme.fonts.display,
       color: theme.ink,
     },
     sub: {
-      fontSize: 14,
+      fontSize: typeScale.label,
       fontFamily: theme.fonts.ui,
       color: theme.slate,
       lineHeight: 20,
@@ -204,7 +204,9 @@ function createStyles(theme: AppTheme) {
     cardTile: {
       width: 40,
       height: 40,
-      borderRadius: 12,
+      // UX-018: matches EmojiTile's own 40px-tile radius (components/ui/
+      // EmojiTile.tsx: size <= 40 -> radii.control).
+      borderRadius: radii.control,
       backgroundColor: theme.primaryLight,
       alignItems: 'center',
       justifyContent: 'center',
@@ -221,12 +223,12 @@ function createStyles(theme: AppTheme) {
       marginBottom: 4,
     },
     cardTitle: {
-      fontSize: 17,
+      fontSize: typeScale.lead,
       fontFamily: theme.fonts.uiSemibold,
       color: theme.ink,
     },
     cardDescription: {
-      fontSize: 14,
+      fontSize: typeScale.label,
       fontFamily: theme.fonts.ui,
       color: theme.slate,
       lineHeight: 20,

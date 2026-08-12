@@ -10,7 +10,7 @@ import { KeptHero } from '@/components/habit-logging/KeptHero';
 import { AuroraBackground } from '@/components/onboarding/AuroraBackground';
 import { useReducedMotion } from '@/utils/motion';
 import type { AppTheme } from '@/constants/theme';
-import { typeScale } from '@/constants/theme';
+import { radii, typeScale, spacing } from '@/constants/theme';
 import type { OnboardingStep } from '@/types/onboarding';
 import { strings } from '@/constants/strings';
 
@@ -175,7 +175,8 @@ function createStyles(theme: AppTheme) {
     content: {
       flex: 1,
       justifyContent: 'center',
-      paddingHorizontal: 24,
+      // UX-018: 24 drifted from the ratified 20pt screen gutter.
+      paddingHorizontal: spacing.gutter,
     },
     brandRow: {
       flexDirection: 'row',
@@ -186,13 +187,15 @@ function createStyles(theme: AppTheme) {
     brandMark: {
       width: 34,
       height: 34,
-      borderRadius: 17,
+      // UX-018: was a hardcoded half-of-34 circle; radii.pill renders
+      // identically while using the ratified token.
+      borderRadius: radii.pill,
       backgroundColor: theme.primary,
       alignItems: 'center',
       justifyContent: 'center',
     },
     brandName: {
-      fontSize: 17,
+      fontSize: typeScale.lead,
       fontFamily: theme.fonts.uiBold,
       color: theme.ink,
     },
@@ -253,7 +256,8 @@ function createStyles(theme: AppTheme) {
       lineHeight: 19,
     },
     footer: {
-      paddingHorizontal: 24,
+      // UX-018: 24 drifted from the ratified 20pt screen gutter.
+      paddingHorizontal: spacing.gutter,
       paddingBottom: 16,
     },
   });

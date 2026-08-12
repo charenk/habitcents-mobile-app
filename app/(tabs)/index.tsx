@@ -46,7 +46,7 @@ import { progressTowardDetection } from '@/utils/habitDetection';
 import { formatDate } from '@/utils/dates';
 import { track } from '@/utils/analytics';
 import { useReducedMotion } from '@/utils/motion';
-import { radii, typeScale, type AppTheme } from '@/constants/theme';
+import { radii, typeScale, layout, type AppTheme } from '@/constants/theme';
 import type { DetectedHabit, HabitChangeGoal } from '@/types/habit';
 import { strings } from '@/constants/strings';
 import { useToast } from '@/components/ui/Toast';
@@ -1090,7 +1090,7 @@ function createStyles(theme: AppTheme) {
     spentScrollContent: {
       paddingHorizontal: 20,
       paddingTop: 16,
-      paddingBottom: 100,
+      paddingBottom: layout.screenBottomClearance,
     },
     loggedTodaySpacer: {
       marginTop: 12,
@@ -1117,22 +1117,22 @@ function createStyles(theme: AppTheme) {
     },
     watchNudgeLabel: {
       fontFamily: theme.fonts.uiSemibold,
-      fontSize: 14,
+      fontSize: typeScale.label,
       color: theme.primaryDark,
     },
     watchNudgeSeparator: {
       fontFamily: theme.fonts.ui,
-      fontSize: 14,
+      fontSize: typeScale.label,
       color: theme.mistText,
     },
     watchNudgeDismissText: {
       fontFamily: theme.fonts.ui,
-      fontSize: 14,
+      fontSize: typeScale.label,
       color: theme.mistText,
     },
     listContent: {
       paddingHorizontal: 20,
-      paddingBottom: 100,
+      paddingBottom: layout.screenBottomClearance,
     },
     sectionHeader: {
       marginTop: 20,
@@ -1154,7 +1154,7 @@ function createStyles(theme: AppTheme) {
       alignItems: 'center',
     },
     loadingText: {
-      fontSize: 16,
+      fontSize: typeScale.button,
       fontFamily: theme.fonts.ui,
       color: theme.textSecondary,
     },
@@ -1164,7 +1164,7 @@ function createStyles(theme: AppTheme) {
       alignItems: 'center',
       paddingHorizontal: 20,
       paddingTop: 24,
-      paddingBottom: 100,
+      paddingBottom: layout.screenBottomClearance,
     },
     emptyCoachMoment: {
       alignSelf: 'stretch',
@@ -1194,7 +1194,7 @@ function createStyles(theme: AppTheme) {
       flex: 1,
     },
     breakAnotherLabel: {
-      fontSize: 14,
+      fontSize: typeScale.label,
       fontFamily: theme.fonts.uiSemibold,
       color: theme.primaryDark,
     },
@@ -1223,7 +1223,7 @@ function createStyles(theme: AppTheme) {
       alignItems: 'flex-start',
     },
     progressTitle: {
-      fontSize: 17,
+      fontSize: typeScale.lead,
       fontFamily: theme.fonts.uiSemibold,
       color: theme.text,
     },
@@ -1241,18 +1241,18 @@ function createStyles(theme: AppTheme) {
       backgroundColor: theme.primary,
     },
     progressCount: {
-      fontSize: 15,
+      fontSize: typeScale.body,
       fontFamily: theme.fonts.uiBold,
       color: theme.text,
       marginTop: 12,
     },
     progressCountSuffix: {
-      fontSize: 15,
+      fontSize: typeScale.body,
       fontFamily: theme.fonts.ui,
       color: theme.textSecondary,
     },
     progressBody: {
-      fontSize: 14,
+      fontSize: typeScale.label,
       fontFamily: theme.fonts.ui,
       color: theme.textSecondary,
       marginTop: 6,

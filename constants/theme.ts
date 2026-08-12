@@ -308,7 +308,41 @@ export type ThemeMode = 'light' | 'dark' | 'system';
  * section 4). Shape, depth, motion, and the type scale do not change between
  * light and dark, so they live here as standalone exports.
  */
-export const radii = { control: 10, card: 14, feature: 20, frame: 28, pill: 999 } as const;
+export const radii = {
+  // Micro-geometry: progress bars, legend dots, pulse cells, tier badges.
+  // Ratified from the design audit (UX-018) where 20 sites had no token.
+  micro: 4,
+  control: 10,
+  card: 14,
+  feature: 20,
+  frame: 28,
+  pill: 999,
+} as const;
+
+/**
+ * Spacing rhythm (design audit, ratified). The app had no spacing tokens at
+ * all; this is the observed rhythm as it actually is, not a borrowed 4pt
+ * convention. A grep across app/ and components/ for padding, margin, and
+ * gap literals shows the values cluster on 2pt steps (2, 4, 6, 8, 10, 12,
+ * 14, 16, 18, 20, 24, 28), not 4pt multiples: 6/10/14/18 alone account for
+ * 108 hits. `gutter` (20) and `stack` (12) are the two the pattern
+ * vocabulary already names (one screen horizontal gutter, one vertical
+ * rhythm gap inside a view); the rest fill in the same 2pt scale.
+ */
+export const spacing = {
+  hairline: 2, // icon-to-label gaps, tightest inline separators
+  tight: 4,
+  xs: 6,
+  sm: 8,
+  control: 10, // control-interior padding (pairs with radii.control)
+  stack: 12, // vertical rhythm inside a view (ratified, pattern vocabulary)
+  md: 14,
+  lg: 16,
+  xl: 18,
+  gutter: 20, // screen horizontal gutter (ratified, pattern vocabulary)
+  xxl: 24,
+  section: 28, // separation between major sections
+} as const;
 
 export const shadows = {
   card: { shadowColor: '#1A1D23', shadowOffset: { width: 0, height: 4 }, shadowRadius: 8, shadowOpacity: 0.04, elevation: 2 },
@@ -318,15 +352,58 @@ export const shadows = {
 
 export const motion = { tap: 120, sheet: 220, toast: 220, screen: 360, pulse: 280, easing: [0.22, 1, 0.36, 1] as const } as const;
 
+/**
+ * Shared chrome metrics, so screens stop repeating the literals.
+ *
+ * `tabBarHeight` is the tab bar's base content height (app/(tabs)/_layout.tsx
+ * adds the device's safe-area inset on top). Toast positions itself above the
+ * bar and genuinely derives from this.
+ */
+export const layout = {
+  tabBarHeight: 56,
+  /**
+   * End-of-scroll breathing room at the bottom of a screen's content.
+   *
+   * NOT tab-bar clearance, despite how it reads. The tab bar does not float:
+   * app/(tabs)/_layout.tsx sets no `position: absolute`, so React Navigation
+   * already reserves the bar's space and content can never scroll under it.
+   * 100 is simply the convention the app arrived at, repeated at nine sites
+   * including profile, habit detail and category detail, which are pushed
+   * screens with no tab bar at all. That consistency is why the value is kept
+   * here rather than re-derived: centralising it first makes it a one-line
+   * change if it turns out to be too generous on device. It is unverified and
+   * worth a look during the Lane 2 pass. UX-045.
+   */
+  screenBottomClearance: 100,
+} as const;
+
 export const typeScale = {
   screenTitle: 34,
+  // Mid-size display serif: bigger than a stat card, smaller than the kept
+  // hero. Ratified from the design audit (UX-018 scale gap).
+  displayMid: 30,
   keptHero: 42,
   statCard: 22,
   reveal: 64,
+  // Sheet headers. Ratified from the design audit (UX-018 scale gap).
+  sheetTitle: 26,
   body: 15,
-  // Form-field text (ui/TextField): sits between secondary and body so a
-  // typed value reads a touch smaller than prose but never as fine print.
+  // Welcome/intent/paywall lead text. Ratified from the design audit
+  // (UX-018 scale gap).
+  lead: 17,
+  // Primary/secondary button labels, list titles. Ratified from the design
+  // audit (UX-018 scale gap).
+  button: 16,
+  // Compact UI text: form fields (ui/TextField), toast copy, coach prose.
+  // Sits between secondary and body so it reads a touch smaller than prose but
+  // never as fine print. Named for its original form-control use; the name is
+  // kept because renaming it would churn every call site, but the meaning is
+  // the size, not the widget, so retuning it moves toasts and coach moments
+  // too. UX-018.
   control: 13.5,
+  // Row labels, tertiary buttons, chip labels. Ratified from the design
+  // audit (UX-018 scale gap).
+  label: 14,
   secondary: 13,
   caption: 12.5,
   eyebrow: 11,

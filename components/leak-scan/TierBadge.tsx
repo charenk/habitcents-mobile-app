@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
+import { typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import type { ConfidenceTier } from '@/utils/leakScan/types';
@@ -58,7 +59,7 @@ function createStyles(theme: AppTheme) {
       alignSelf: 'flex-start',
     },
     label: {
-      fontSize: 11,
+      fontSize: typeScale.eyebrow,
       fontFamily: theme.fonts.uiBold,
     },
     dotSolid: {

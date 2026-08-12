@@ -3,6 +3,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/ui/Icon';
 import { useTheme } from '@/contexts/ThemeContext';
 import { strings } from '@/constants/strings';
+import { layout, typeScale } from '@/constants/theme';
 
 /**
  * Tab bar (redesign step 02, design/redesign-handoff/02-navigation.md plus the
@@ -28,12 +29,12 @@ export default function TabLayout() {
           backgroundColor: theme.white,
           borderTopWidth: 1,
           borderTopColor: theme.border,
-          height: 56 + tabBarBottomPad,
+          height: layout.tabBarHeight + tabBarBottomPad,
           paddingTop: 8,
           paddingBottom: tabBarBottomPad,
         },
         tabBarLabelStyle: {
-          fontSize: 11,
+          fontSize: typeScale.eyebrow,
           // Loaded font families ignore fontWeight on Android, so the weight
           // has to come from the family itself (Inter 600).
           fontFamily: theme.fonts.uiSemibold,

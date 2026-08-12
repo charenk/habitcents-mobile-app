@@ -42,7 +42,16 @@ export function EmptyState({ title, body, icon, cta }: EmptyStateProps) {
           importantForAccessibility="no-hide-descendants"
         />
       ) : null}
-      {title ? <Text style={styles.title}>{title}</Text> : null}
+      {title ? (
+        <Text style={styles.title} maxFontSizeMultiplier={1.5}>
+          {title}
+        </Text>
+      ) : null}
+      {/* Deliberately UNCAPPED. The ratified caps cover chrome and eyebrows;
+          an empty state's body is content, and often the only explanation of
+          what a screen is for and how to get started. Capping it at 1.5 would
+          hand a low-vision user 19.5pt where iOS offered them about 40pt,
+          which is an accessibility regression dressed up as polish. */}
       <Text style={styles.body}>{body}</Text>
       {cta ? (
         <Button variant="secondary" label={cta.label} onPress={cta.onPress} style={styles.cta} />

@@ -108,7 +108,7 @@ function createStyles(theme: AppTheme) {
     text: {
       flex: 1,
       fontFamily: theme.fonts.ui,
-      fontSize: 13.5,
+      fontSize: typeScale.control,
       color: theme.slate,
       lineHeight: 19,
     },

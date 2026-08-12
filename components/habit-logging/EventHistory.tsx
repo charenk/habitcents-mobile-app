@@ -92,7 +92,7 @@ function createStyles(theme: AppTheme) {
     },
     detail: {
       fontFamily: theme.fonts.uiMedium,
-      fontSize: 14,
+      fontSize: typeScale.label,
       color: theme.ink,
       fontVariant: ['tabular-nums'],
     },

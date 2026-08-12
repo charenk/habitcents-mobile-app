@@ -85,7 +85,7 @@ function createStyles(theme: AppTheme) {
     },
     title: {
       fontFamily: theme.fonts.display,
-      fontSize: 26,
+      fontSize: typeScale.sheetTitle,
       lineHeight: 32,
       color: theme.ink,
       includeFontPadding: false,

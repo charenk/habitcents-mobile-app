@@ -14,7 +14,7 @@ import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import type { AppTheme } from '@/constants/theme';
-import { radii, shadows } from '@/constants/theme';
+import { radii, shadows, typeScale } from '@/constants/theme';
 import { selectableLabel } from '@/utils/a11y';
 
 export type SegmentedControlProps<T extends string | number> = {
@@ -58,6 +58,7 @@ export function SegmentedControl<T extends string | number>({
             <Text
               style={[styles.label, selected ? styles.labelSelected : null]}
               numberOfLines={1}
+              maxFontSizeMultiplier={1.5}
             >
               {option.label}
             </Text>
@@ -95,7 +96,7 @@ function createStyles(theme: AppTheme) {
     },
     label: {
       fontFamily: theme.fonts.uiSemibold,
-      fontSize: 13,
+      fontSize: typeScale.secondary,
       color: theme.slate,
     },
     labelSelected: {

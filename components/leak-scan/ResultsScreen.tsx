@@ -7,7 +7,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { formatDate, parseDateOnly } from '@/utils/dates';
 import { useExpenses } from '@/contexts/ExpensesContext';
 import { useHabits } from '@/contexts/HabitsContext';
-import { radii, typeScale, type AppTheme } from '@/constants/theme';
+import { radii, typeScale, spacing, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import { KpiRow } from './KpiRow';
 import { CategoryList } from './CategoryList';
@@ -571,7 +571,10 @@ function createStyles(theme: AppTheme) {
       backgroundColor: theme.background,
     },
     scrollContent: {
-      padding: 16,
+      // UX-018: was a flat 16 in both directions; the horizontal gutter
+      // becomes the ratified 20, vertical padding is untouched.
+      paddingHorizontal: spacing.gutter,
+      paddingVertical: 16,
       paddingBottom: 40,
     },
     header: {
@@ -618,7 +621,7 @@ function createStyles(theme: AppTheme) {
     },
     ladderExpanderText: {
       fontFamily: theme.fonts.uiSemibold,
-      fontSize: 14,
+      fontSize: typeScale.label,
       color: theme.primaryDark,
       textAlign: 'center',
     },
@@ -630,7 +633,7 @@ function createStyles(theme: AppTheme) {
       padding: 14,
     },
     reviewQueueBannerText: {
-      fontSize: 14,
+      fontSize: typeScale.label,
       fontFamily: theme.fonts.uiMedium,
       color: theme.ink,
     },
@@ -640,7 +643,8 @@ function createStyles(theme: AppTheme) {
     undoneCenter: {
       alignItems: 'center',
       justifyContent: 'center',
-      paddingHorizontal: 24,
+      // UX-018: 24 drifted from the ratified 20pt screen gutter.
+      paddingHorizontal: spacing.gutter,
     },
     undoneText: {
       fontSize: typeScale.body,

@@ -141,7 +141,7 @@ function createStyles(theme: AppTheme) {
     },
     title: {
       fontFamily: theme.fonts.uiSemibold,
-      fontSize: 15,
+      fontSize: typeScale.body,
       color: theme.ink,
     },
     pill: {
@@ -154,7 +154,7 @@ function createStyles(theme: AppTheme) {
     // lavender-on-14%-lavender pill text is 2.9:1, below AA for this size.
     pillText: {
       fontFamily: theme.fonts.uiSemibold,
-      fontSize: 11.5,
+      fontSize: typeScale.eyebrow,
       color: theme.ink,
       fontVariant: ['tabular-nums'],
     },
@@ -195,7 +195,7 @@ function createStyles(theme: AppTheme) {
     },
     trackLabel: {
       fontFamily: theme.fonts.ui,
-      fontSize: 10.5,
+      fontSize: typeScale.eyebrow,
       color: theme.mistText,
     },
     trackLabelActive: {

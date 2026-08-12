@@ -170,11 +170,13 @@ function createStyles(theme: AppTheme) {
     },
     groupLabel: {
       // Readable section header, so slate meets the 4.5:1 floor (spec 09 §1.5).
+      // UX-066: the eyebrow spec is 0.88 letterSpacing + semibold; this drifted
+      // to 0.4 + bold.
       fontSize: typeScale.eyebrow,
-      fontFamily: theme.fonts.uiBold,
+      fontFamily: theme.fonts.uiSemibold,
       color: theme.slate,
       textTransform: 'uppercase',
-      letterSpacing: 0.4,
+      letterSpacing: typeScale.eyebrowLetterSpacing,
       marginBottom: 8,
     },
     itemRow: {
@@ -209,7 +211,7 @@ function createStyles(theme: AppTheme) {
       marginTop: 4,
     },
     flagPillText: {
-      fontSize: 10.5,
+      fontSize: typeScale.eyebrow,
       fontFamily: theme.fonts.uiBold,
       color: theme.tierLikelyInk,
     },
@@ -230,7 +232,7 @@ function createStyles(theme: AppTheme) {
     },
     remindLabel: {
       // Toggle label is readable copy, so slate for AA contrast (spec 09 §1.5).
-      fontSize: 10.5,
+      fontSize: typeScale.eyebrow,
       fontFamily: theme.fonts.ui,
       color: theme.slate,
     },
@@ -255,7 +257,7 @@ function createStyles(theme: AppTheme) {
     // UX-001: ink on the sage fill; white was 2.71:1, and the disabled
     // opacity 0.6 pushed it lower still.
     saveButtonText: {
-      fontSize: 15,
+      fontSize: typeScale.body,
       fontFamily: theme.fonts.uiBold,
       color: theme.ink,
     },

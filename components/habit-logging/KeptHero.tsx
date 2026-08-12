@@ -67,6 +67,9 @@ function createStyles(theme: AppTheme) {
       letterSpacing: typeScale.eyebrowLetterSpacing,
       color: theme.primaryDark,
       textAlign: 'center',
+      // UX-060: the string stays sentence case (constants/strings.ts); this
+      // eyebrow uppercases via style, matching the rest of the vocabulary.
+      textTransform: 'uppercase',
     },
     // Kept is the hero currency number, so it carries the display serif
     // (spec 01 section 2) with tabular figures. Sage-dark rather than sage:

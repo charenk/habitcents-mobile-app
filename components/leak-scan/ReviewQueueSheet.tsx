@@ -169,7 +169,7 @@ function createStyles(theme: AppTheme) {
       color: theme.ink,
     },
     amount: {
-      fontSize: 16,
+      fontSize: typeScale.button,
       fontFamily: theme.fonts.uiBold,
       color: theme.ink,
       marginBottom: 4,

@@ -72,7 +72,7 @@ function createStyles(theme: AppTheme) {
       gap: 6,
     },
     row: {
-      fontSize: 11.5,
+      fontSize: typeScale.eyebrow,
       fontFamily: theme.fonts.ui,
       fontVariant: ['tabular-nums'],
       color: theme.slate,

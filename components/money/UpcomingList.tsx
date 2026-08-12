@@ -354,12 +354,12 @@ function createStyles(theme: AppTheme) {
     },
     pillLabel: {
       fontFamily: theme.fonts.uiBold,
-      fontSize: 10.5,
+      fontSize: typeScale.eyebrow,
       color: theme.amberInk,
     },
     schedule: {
       fontFamily: theme.fonts.ui,
-      fontSize: 12,
+      fontSize: typeScale.caption,
       color: theme.mistText,
       marginTop: 2,
     },
@@ -375,7 +375,7 @@ function createStyles(theme: AppTheme) {
     },
     cadence: {
       fontFamily: theme.fonts.ui,
-      fontSize: 12,
+      fontSize: typeScale.caption,
       color: theme.mistText,
       marginTop: 2,
     },

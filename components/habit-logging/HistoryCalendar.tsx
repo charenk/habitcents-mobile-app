@@ -183,7 +183,7 @@ function createStyles(theme: AppTheme) {
     },
     monthLabel: {
       fontFamily: theme.fonts.uiSemibold,
-      fontSize: 15,
+      fontSize: typeScale.body,
       color: theme.ink,
     },
     navRow: {
@@ -211,7 +211,10 @@ function createStyles(theme: AppTheme) {
     dot: {
       width: 26,
       height: 26,
-      borderRadius: 13,
+      // UX-018: was a hardcoded half-of-26 circle; radii.pill renders
+      // identically (RN clips to min(width,height)/2) while using the
+      // ratified token.
+      borderRadius: radii.pill,
       alignItems: 'center',
       justifyContent: 'center',
     },

@@ -68,7 +68,7 @@ export const strings = {
   // subtracts from Kept. Never reword to streak/success/completed language.
   habitLogging: {
     // Kept hero (4.1)
-    keptSoFar: 'KEPT SO FAR',
+    keptSoFar: 'Kept so far',
     keptCaption: "money you didn't spend",
     // Leaks found section + leak card (4.10, unchanged from v1)
     leaksFoundSection: 'Leaks found',

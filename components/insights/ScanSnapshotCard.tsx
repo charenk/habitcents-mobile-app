@@ -247,7 +247,7 @@ function createStyles(theme: AppTheme) {
       flex: 1,
     },
     leakName: {
-      fontSize: 14.5,
+      fontSize: typeScale.label,
       fontFamily: theme.fonts.uiSemibold,
       color: theme.ink,
     },
@@ -265,7 +265,7 @@ function createStyles(theme: AppTheme) {
       marginTop: 8,
     },
     projectionAmount: {
-      fontSize: 30,
+      fontSize: typeScale.displayMid,
       fontFamily: theme.fonts.display,
       color: theme.ink,
       fontVariant: ['tabular-nums'],

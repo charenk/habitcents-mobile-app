@@ -124,7 +124,7 @@ function createStyles(theme: AppTheme) {
     },
     subtitle: {
       fontFamily: theme.fonts.ui,
-      fontSize: 12,
+      fontSize: typeScale.caption,
       color: theme.mistText,
       marginTop: 1,
     },

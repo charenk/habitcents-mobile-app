@@ -259,7 +259,7 @@ function createStyles(theme: AppTheme) {
       flex: 1,
     },
     title: {
-      fontSize: 16,
+      fontSize: typeScale.button,
       fontFamily: theme.fonts.uiSemibold,
       color: theme.ink,
     },

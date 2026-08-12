@@ -131,7 +131,7 @@ function createStyles(theme: AppTheme) {
       alignItems: 'center',
     },
     title: {
-      fontSize: 34,
+      fontSize: typeScale.screenTitle,
       fontFamily: theme.fonts.display,
       color: theme.ink,
       textAlign: 'center',
@@ -139,7 +139,7 @@ function createStyles(theme: AppTheme) {
       marginBottom: 8,
     },
     subtitle: {
-      fontSize: 14,
+      fontSize: typeScale.label,
       fontFamily: theme.fonts.ui,
       color: theme.slate,
       textAlign: 'center',
@@ -195,7 +195,7 @@ function createStyles(theme: AppTheme) {
       alignSelf: 'stretch',
     },
     scanningTitle: {
-      fontSize: 17,
+      fontSize: typeScale.lead,
       fontFamily: theme.fonts.uiSemibold,
       color: theme.ink,
       marginTop: 18,

@@ -20,7 +20,7 @@ import { useCategories } from '@/contexts/CategoriesContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
 import { CategoryRow } from '@/components/CategoryRow';
 import { AddCategoryModal } from '@/components/AddCategoryModal';
-import { radii, typeScale, type AppTheme } from '@/constants/theme';
+import { layout, radii, typeScale, type AppTheme } from '@/constants/theme';
 import type { Category, CategoryIcon } from '@/types/category';
 import { strings } from '@/constants/strings';
 import { hapticWarning } from '@/utils/motion';
@@ -201,7 +201,7 @@ function createStyles(theme: AppTheme) {
     scrollContent: {
       paddingHorizontal: 20,
       paddingTop: 14,
-      paddingBottom: 100,
+      paddingBottom: layout.screenBottomClearance,
       gap: 20,
     },
     section: {

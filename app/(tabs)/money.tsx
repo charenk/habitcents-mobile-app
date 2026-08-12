@@ -33,7 +33,7 @@ import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { categoryEmoji, categoryIdentityColor } from '@/constants/categoryEmoji';
 import { habitLeakGlyph } from '@/constants/onboardingPresets';
 import { strings } from '@/constants/strings';
-import type { AppTheme } from '@/constants/theme';
+import { layout, type AppTheme } from '@/constants/theme';
 import { useCategories } from '@/contexts/CategoriesContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
 import { useHabits } from '@/contexts/HabitsContext';
@@ -288,7 +288,7 @@ function createStyles(theme: AppTheme) {
     scrollContent: {
       paddingHorizontal: 20,
       paddingTop: 12,
-      paddingBottom: 24,
+      paddingBottom: layout.screenBottomClearance,
     },
   });
 }

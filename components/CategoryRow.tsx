@@ -114,7 +114,7 @@ function createStyles(theme: AppTheme) {
       color: theme.ink,
     },
     spent: {
-      fontSize: 12,
+      fontSize: typeScale.caption,
       fontFamily: theme.fonts.ui,
       color: theme.mistText,
       marginTop: 2,

@@ -19,7 +19,7 @@ import { useToast } from '@/components/ui/Toast';
 import { atMidnight, weekStats, isHabitLimitReached, displayChapter } from '@/utils/habitLogging';
 import { getEntitlement } from '@/utils/purchases';
 import type { CoachMomentCardId } from '@/utils/coachMoments';
-import { radii, typeScale, type AppTheme } from '@/constants/theme';
+import { radii, typeScale, layout, type AppTheme } from '@/constants/theme';
 import type { DetectedHabit, HabitChangeGoal } from '@/types/habit';
 import { strings } from '@/constants/strings';
 import { hapticWarning } from '@/utils/motion';
@@ -387,7 +387,7 @@ function createStyles(theme: AppTheme) {
       // 20pt horizontal gutter per screen) so the title lines up with the
       // content below it now that both share the same header component.
       paddingHorizontal: 20,
-      paddingBottom: 100,
+      paddingBottom: layout.screenBottomClearance,
     },
     emptyContainer: {
       flex: 1,
@@ -395,7 +395,7 @@ function createStyles(theme: AppTheme) {
       alignItems: 'center',
     },
     emptyText: {
-      fontSize: 16,
+      fontSize: typeScale.button,
       fontFamily: theme.fonts.ui,
       color: theme.textSecondary,
     },
@@ -440,7 +440,7 @@ function createStyles(theme: AppTheme) {
       color: theme.ink,
     },
     statLabel: {
-      fontSize: 11,
+      fontSize: typeScale.eyebrow,
       fontFamily: theme.fonts.ui,
       color: theme.slate,
       marginTop: 2,
@@ -462,7 +462,7 @@ function createStyles(theme: AppTheme) {
       borderColor: theme.border,
     },
     secondaryButtonText: {
-      fontSize: 15,
+      fontSize: typeScale.body,
       fontFamily: theme.fonts.uiSemibold,
       color: theme.text,
     },
@@ -472,7 +472,7 @@ function createStyles(theme: AppTheme) {
       paddingVertical: 12,
     },
     plainButtonText: {
-      fontSize: 14,
+      fontSize: typeScale.label,
       fontFamily: theme.fonts.ui,
       color: theme.textSecondary,
     },
@@ -491,7 +491,7 @@ function createStyles(theme: AppTheme) {
       marginBottom: 14,
     },
     editSheetTitle: {
-      fontSize: 13,
+      fontSize: typeScale.secondary,
       fontFamily: theme.fonts.uiSemibold,
       color: theme.textSecondary,
       marginBottom: 8,
@@ -501,14 +501,15 @@ function createStyles(theme: AppTheme) {
       alignItems: 'center',
       borderWidth: 1,
       borderColor: theme.border,
-      borderRadius: 12,
+      // UX-018: 12 drifted from the control radius every other input uses.
+      borderRadius: radii.control,
       paddingHorizontal: 12,
       paddingVertical: 10,
       marginBottom: 16,
     },
     input: {
       flex: 1,
-      fontSize: 17,
+      fontSize: typeScale.lead,
       fontWeight: '600',
       color: theme.text,
     },

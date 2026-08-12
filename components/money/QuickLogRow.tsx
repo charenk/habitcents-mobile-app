@@ -82,7 +82,9 @@ function createStyles(theme: AppTheme) {
     quickLogPlus: {
       width: 44,
       height: 44,
-      borderRadius: 22,
+      // UX-018: was a hardcoded half-of-44 circle; radii.pill renders
+      // identically while using the ratified token.
+      borderRadius: radii.pill,
       backgroundColor: theme.primary,
       alignItems: 'center',
       justifyContent: 'center',

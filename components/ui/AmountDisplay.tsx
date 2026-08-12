@@ -89,10 +89,14 @@ export function AmountDisplay({
   return (
     <View style={styles.column}>
       <View style={styles.row}>
-        <Text style={styles.symbol} allowFontScaling>
+        <Text style={styles.symbol} allowFontScaling maxFontSizeMultiplier={1.3}>
           {meta.symbol}
         </Text>
-        <Text style={[styles.number, { color: numberColor }]} allowFontScaling>
+        <Text
+          style={[styles.number, { color: numberColor }]}
+          allowFontScaling
+          maxFontSizeMultiplier={1.3}
+        >
           {numberText}
         </Text>
       </View>

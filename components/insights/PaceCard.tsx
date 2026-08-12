@@ -123,7 +123,7 @@ function createStyles(theme: AppTheme) {
       marginTop: 6,
     },
     projected: {
-      fontSize: 30,
+      fontSize: typeScale.displayMid,
       fontFamily: theme.fonts.display,
       color: theme.ink,
       fontVariant: ['tabular-nums'],

@@ -156,7 +156,7 @@ function createStyles(theme: AppTheme) {
       color: theme.ink,
     },
     rowDate: {
-      fontSize: 11,
+      fontSize: typeScale.eyebrow,
       fontFamily: theme.fonts.ui,
       color: theme.slate,
       marginTop: 2,
@@ -178,7 +178,7 @@ function createStyles(theme: AppTheme) {
       borderColor: theme.chipBorder,
     },
     chipButtonText: {
-      fontSize: 11.5,
+      fontSize: typeScale.eyebrow,
       fontFamily: theme.fonts.uiSemibold,
       color: theme.slate,
     },

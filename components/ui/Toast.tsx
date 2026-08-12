@@ -27,7 +27,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/contexts/ThemeContext';
-import { motion, shadows } from '@/constants/theme';
+import { layout, motion, radii, shadows, typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
 import { useReducedMotion } from '@/utils/motion';
 
@@ -142,7 +142,7 @@ function ToastHost({
 
   if (!rendered) return null;
 
-  const bottom = 56 + Math.max(insets.bottom, 8) + 24;
+  const bottom = layout.tabBarHeight + Math.max(insets.bottom, 8) + 24;
   const translateY = progress.interpolate({
     inputRange: [0, 1],
     outputRange: [8, 0],
@@ -163,7 +163,9 @@ function ToastHost({
         style={[styles.pill, { bottom }, animatedStyle]}
         accessibilityLiveRegion="polite"
       >
-        <Text style={styles.message}>{rendered.message}</Text>
+        <Text style={styles.message} numberOfLines={2} maxFontSizeMultiplier={1.5}>
+          {rendered.message}
+        </Text>
         {rendered.action ? (
           <Pressable
             onPress={handleAction}
@@ -171,7 +173,9 @@ function ToastHost({
             accessibilityLabel={rendered.action.label}
             hitSlop={8}
           >
-            <Text style={styles.action}>{rendered.action.label}</Text>
+            <Text style={styles.action} numberOfLines={1} maxFontSizeMultiplier={1.5}>
+              {rendered.action.label}
+            </Text>
           </Pressable>
         ) : null}
       </Animated.View>
@@ -191,19 +195,24 @@ function createStyles(theme: AppTheme) {
       flexDirection: 'row',
       alignItems: 'center',
       backgroundColor: theme.toastBg,
-      borderRadius: 12,
+      borderRadius: radii.card,
       paddingVertical: 12,
       paddingHorizontal: 18,
+      // The longest toast message plus an Undo action can overflow at large
+      // Dynamic Type without a width ceiling; the text below is left to
+      // shrink inside it rather than pushing the pill off-screen. UX-043.
+      maxWidth: '92%',
       ...shadows.toast,
     },
     message: {
       color: theme.white,
-      fontSize: 13.5,
+      fontSize: typeScale.control,
       fontFamily: theme.fonts.uiSemibold,
+      flexShrink: 1,
     },
     action: {
       color: theme.toastAction,
-      fontSize: 13.5,
+      fontSize: typeScale.control,
       fontFamily: theme.fonts.uiBold,
       marginLeft: 14,
     },
