@@ -82,6 +82,20 @@ export function IntakeScreen({ state, onChooseFiles, onAnswer, onBack }: IntakeS
           </View>
         )}
 
+        {/* UX-014: a document-picker exception or an all-invalid file set used
+            to bounce back to idle with zero explanation (state.error went
+            unread here). Reuses the same notice-box styling as the skipped-
+            file messages below rather than a new pattern. */}
+        {state.error && (
+          <View style={styles.noticeBox}>
+            <Text style={styles.noticeText}>
+              {state.error === 'no-valid-files'
+                ? strings.leakScan.errorNoValidFiles
+                : strings.leakScan.errorPickFailed}
+            </Text>
+          </View>
+        )}
+
         {state.skippedFileMessages.length > 0 && (
           <View style={styles.noticeBox}>
             {state.skippedFileMessages.map((msg, i) => (

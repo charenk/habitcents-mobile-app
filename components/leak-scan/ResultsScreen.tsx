@@ -1,10 +1,10 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Button } from '@/components/ui';
 import { useToast } from '@/components/ui/Toast';
 import { useTheme } from '@/contexts/ThemeContext';
-import { formatDate } from '@/utils/dates';
+import { formatDate, parseDateOnly } from '@/utils/dates';
 import { useExpenses } from '@/contexts/ExpensesContext';
 import { useHabits } from '@/contexts/HabitsContext';
 import { radii, typeScale, type AppTheme } from '@/constants/theme';
@@ -64,15 +64,25 @@ const RANKED_LEAKS_CAP = 5;
  *  days and promoted to the primary CTA. */
 const BRING_IN_DAYS = 30;
 
+/** UX-050: coverage bounds are calendar days, not instants. `new Date(iso)`
+ *  parses a date-only string as UTC midnight, which formats to the previous
+ *  day west of UTC; the evidence window is the scan's honesty metadata, so it
+ *  has to name the days the statements actually cover. */
+function formatDayOnly(dateISO: string): string {
+  const parsed = parseDateOnly(dateISO);
+  return parsed ? formatDate(parsed, { month: 'short', day: 'numeric' }) : dateISO;
+}
+
 function evidenceWindowLabel(result: ScanResult, nAccounts: number): string {
   if (!result.coverage) return '';
-  const start = formatDate(new Date(result.coverage.startISO), { month: 'short', day: 'numeric' });
-  const end = formatDate(new Date(result.coverage.endISO), { month: 'short', day: 'numeric' });
+  const start = formatDayOnly(result.coverage.startISO);
+  const end = formatDayOnly(result.coverage.endISO);
   return strings.leakScan.kpiEvidenceWindow(start, end, nAccounts);
 }
 
 function monthLabel(dateISO: string): string {
-  return formatDate(new Date(dateISO), { month: 'long' });
+  const parsed = parseDateOnly(dateISO);
+  return parsed ? formatDate(parsed, { month: 'long' }) : dateISO;
 }
 
 /** Monthly-equivalent cost used to rank the leaks list below the biggest-leak
@@ -108,6 +118,15 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
   const [openCategory, setOpenCategory] = useState<ExpenseCategory | null>(null);
   const [openPulseCell, setOpenPulseCell] = useState<PulseCell | null>(null);
   const [undone, setUndone] = useState(false);
+  // UX-035: busy flags for the two CTAs whose write-loops previously had no
+  // pending state, so a double tap could start a second import pass before
+  // the first finished (mirrors app/paywall.tsx's `purchasing` pattern).
+  const [savingProjection, setSavingProjection] = useState(false);
+  const [bringingInDays, setBringingInDays] = useState(false);
+  // UX-035: handleUndo's trigger (ResultsFooter's ConfirmSheet) lives in a
+  // file this pass does not own, so it can't be visually disabled from here.
+  // A ref guard still stops a second delete pass from firing.
+  const undoInFlightRef = useRef(false);
   // Finding-first ladder (ADR 0020): collapsed on first render, local state so
   // a re-visit within this session (i.e. this mount) keeps it expanded.
   const [ladderExpanded, setLadderExpanded] = useState(false);
@@ -276,65 +295,91 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
 
   const handleSaveProjection = useCallback(
     async (remindBefore: Record<string, boolean>) => {
-      const recurringExpenses = recurringToExpenses(result, { remindBefore });
-      // Re-scan dedup (review fix, build 12 re-scan entry): drop any
-      // recurring item already brought in by a prior import before writing,
-      // same guard as handleBringInDays below.
-      const toWrite = filterAlreadyImported(recurringExpenses, expenses);
-      const skipped = recurringExpenses.length - toWrite.length;
-      // toAddExpenseInput (utils/leakScan/importWrite.ts) carries source and
-      // importId through, not just the fields a manual log would set -- the
-      // fix for undo previously removing nothing (see its own doc comment).
-      for (const exp of toWrite) {
-        await addExpense(toAddExpenseInput(exp));
-      }
-      // Save had no confirmation surface before; only speak up here when
-      // there's something the user wouldn't otherwise know, i.e. a skip.
-      if (skipped > 0) {
-        toast.show(strings.leakScan.skippedAlreadyImported(skipped));
+      // UX-035: guards ProjectionSection's Save CTA against a double tap
+      // starting a second write pass before the first completes.
+      if (savingProjection) return;
+      setSavingProjection(true);
+      try {
+        const recurringExpenses = recurringToExpenses(result, { remindBefore });
+        // Re-scan dedup (review fix, build 12 re-scan entry): drop any
+        // recurring item already brought in by a prior import before writing,
+        // same guard as handleBringInDays below.
+        const toWrite = filterAlreadyImported(recurringExpenses, expenses);
+        const skipped = recurringExpenses.length - toWrite.length;
+        // toAddExpenseInput (utils/leakScan/importWrite.ts) carries source and
+        // importId through, not just the fields a manual log would set -- the
+        // fix for undo previously removing nothing (see its own doc comment).
+        for (const exp of toWrite) {
+          await addExpense(toAddExpenseInput(exp));
+        }
+        // Save had no confirmation surface before; only speak up here when
+        // there's something the user wouldn't otherwise know, i.e. a skip.
+        if (skipped > 0) {
+          toast.show(strings.leakScan.skippedAlreadyImported(skipped));
+        }
+      } finally {
+        setSavingProjection(false);
       }
     },
-    [result, addExpense, expenses, toast]
+    [result, addExpense, expenses, toast, savingProjection]
   );
 
   const handleUndo = useCallback(async () => {
-    // undoImport is the pure filter the pipeline exports (acceptance 14); applied
-    // here via per-item deleteExpense calls so ExpensesContext's own persistence
-    // and analytics stay the single write path (no parallel storage write).
-    const toDelete = expenses.filter((e) => e.importId === result.importId);
-    for (const exp of toDelete) {
-      await deleteExpense(exp.id);
+    // UX-035: ResultsFooter's ConfirmSheet confirm button isn't owned by this
+    // pass, so it can't be visually disabled here; this ref guard still stops
+    // a double confirm-tap from deleting the same import twice.
+    if (undoInFlightRef.current) return;
+    undoInFlightRef.current = true;
+    try {
+      // undoImport is the pure filter the pipeline exports (acceptance 14); applied
+      // here via per-item deleteExpense calls so ExpensesContext's own persistence
+      // and analytics stay the single write path (no parallel storage write).
+      const toDelete = expenses.filter((e) => e.importId === result.importId);
+      for (const exp of toDelete) {
+        await deleteExpense(exp.id);
+      }
+      track('scan_undone', {});
+      setUndone(true);
+    } finally {
+      undoInFlightRef.current = false;
     }
-    track('scan_undone', {});
-    setUndone(true);
   }, [expenses, result.importId, deleteExpense]);
 
   const handleBringInDays = useCallback(async () => {
-    const seeded = seedLastDays(result, BRING_IN_DAYS);
-    // Re-scan dedup (review fix, build 12 re-scan entry): re-importing an
-    // overlapping statement (reachable via Insights' re-scan entry) used to
-    // write every overlapping row a second time with a fresh id, doubling
-    // recorded spend. Drop anything already brought in by a prior import.
-    const toWrite = filterAlreadyImported(seeded, expenses);
-    const skipped = seeded.length - toWrite.length;
-    for (const exp of toWrite) {
-      await addExpense(toAddExpenseInput(exp));
+    // UX-035: guards the "Bring in your last N days" CTA against a double
+    // tap starting a second ~30-expense import pass before the first
+    // completes.
+    if (bringingInDays) return;
+    setBringingInDays(true);
+    try {
+      const seeded = seedLastDays(result, BRING_IN_DAYS);
+      // Re-scan dedup (review fix, build 12 re-scan entry): re-importing an
+      // overlapping statement (reachable via Insights' re-scan entry) used to
+      // write every overlapping row a second time with a fresh id, doubling
+      // recorded spend. Drop anything already brought in by a prior import.
+      const toWrite = filterAlreadyImported(seeded, expenses);
+      const skipped = seeded.length - toWrite.length;
+      for (const exp of toWrite) {
+        await addExpense(toAddExpenseInput(exp));
+      }
+      track('scan_seed_applied', { rows: toWrite.length, days: BRING_IN_DAYS });
+      // This is the scan door's only exit into the app; it must complete
+      // onboarding here or the user loops back into an empty scan on relaunch.
+      await completeScanOnboarding();
+      router.push('/(tabs)');
+      // Every mutating action confirms itself (spec 01 section 5). This one
+      // writes about 30 expenses, so landing on Today in silence left the user
+      // with no evidence the import happened. When some rows were skipped as
+      // already-imported duplicates, that's said too, honestly.
+      toast.show(
+        skipped > 0
+          ? `${strings.leakScan.savedToHabitCents} ${strings.leakScan.skippedAlreadyImported(skipped)}`
+          : strings.leakScan.savedToHabitCents
+      );
+    } finally {
+      setBringingInDays(false);
     }
-    track('scan_seed_applied', { rows: toWrite.length, days: BRING_IN_DAYS });
-    // This is the scan door's only exit into the app; it must complete
-    // onboarding here or the user loops back into an empty scan on relaunch.
-    await completeScanOnboarding();
-    router.push('/(tabs)');
-    // Every mutating action confirms itself (spec 01 section 5). This one
-    // writes about 30 expenses, so landing on Today in silence left the user
-    // with no evidence the import happened. When some rows were skipped as
-    // already-imported duplicates, that's said too, honestly.
-    toast.show(
-      skipped > 0
-        ? `${strings.leakScan.savedToHabitCents} ${strings.leakScan.skippedAlreadyImported(skipped)}`
-        : strings.leakScan.savedToHabitCents
-    );
-  }, [result, addExpense, expenses, router, toast, completeScanOnboarding]);
+  }, [result, addExpense, expenses, router, toast, completeScanOnboarding, bringingInDays]);
 
   // Dashed expander (ADR 0020): mirrors CategoryList's "View more" analytics
   // pattern, fired once per expand.
@@ -439,7 +484,7 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
             )}
 
             <View style={styles.spacer} />
-            <ProjectionSection summary={projection} onSave={handleSaveProjection} />
+            <ProjectionSection summary={projection} onSave={handleSaveProjection} saving={savingProjection} />
           </>
         )}
 
@@ -465,6 +510,7 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
         <Button
           label={strings.leakScan.bringInLastDays(BRING_IN_DAYS)}
           onPress={handleBringInDays}
+          disabled={bringingInDays}
           style={styles.handoffButton}
         />
 

@@ -18,6 +18,7 @@ import { act, cleanup, fireEvent, render } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
+import { ToastProvider } from '@/components/ui/Toast';
 import { PickOneSheet } from '@/components/habit-logging/PickOneSheet';
 import { strings } from '@/constants/strings';
 import type { DetectedHabit } from '@/types/habit';
@@ -31,7 +32,9 @@ function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SafeAreaProvider initialMetrics={initialMetrics}>
       <ThemeProvider>
-        <CurrencyProvider>{children}</CurrencyProvider>
+        <CurrencyProvider>
+          <ToastProvider>{children}</ToastProvider>
+        </CurrencyProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );
@@ -139,6 +142,24 @@ describe('PickOneSheet ungated', () => {
     const start = view.getByRole('button', { name: strings.habitLogging.startBreakingIt });
     expect(start.props.accessibilityState?.disabled).toBeFalsy();
     expect(view.getByRole('button', { name: strings.habitLogging.notThisOne })).toBeTruthy();
+  });
+
+  // UX-051: a $0.00 start would set "one skip keeps $0.00" with no warning,
+  // silently zeroing out every future skip on this habit (see PickOneSheet's
+  // handleStart doc comment).
+  it('Start with a zero amount does not start and shows the enter-amount-first toast', async () => {
+    const onStart = jest.fn();
+    const view = await renderSheet({ onStart });
+
+    await act(async () => {
+      fireEvent.changeText(view.getByLabelText(/^One skip keeps,/), '0');
+    });
+    await act(async () => {
+      fireEvent.press(view.getByRole('button', { name: strings.habitLogging.startBreakingIt }));
+    });
+
+    expect(onStart).not.toHaveBeenCalled();
+    expect(view.getByText(strings.toasts.enterAmountFirst)).toBeTruthy();
   });
 });
 

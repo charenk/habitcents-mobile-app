@@ -268,6 +268,9 @@ export const strings = {
     topMerchants: 'Top merchants',
     logCount: (count: number) => `${count} log${count !== 1 ? 's' : ''}`,
     recentLogs: 'Recent logs',
+    // UX-023: the list caps at 10, so the eyebrow names what is shown out of
+    // what exists. The mirror never hides evidence without saying so.
+    recentLogsCount: (shown: number, total: number) => `${shown} of ${total}`,
     // Rewritten off "transactions" (house rule: the app calls things
     // "expenses" or "logs", never "transactions").
     noExpensesLogged: 'Nothing logged in this category yet.',
@@ -473,6 +476,10 @@ export const strings = {
     startScan: 'Start scan',
     scanningTitle: 'Reading your files',
     scanningSubtitle: 'On this device. Usually a few seconds.',
+    // UX-014: the intake hook sets these two error codes but nothing rendered
+    // them, so a failed pick bounced back to idle with no explanation.
+    errorNoValidFiles: 'None of those files could be read. CSV files only.',
+    errorPickFailed: 'That did not open. Try choosing the files again.',
     // Results (spec 03 path B, copy from 05-copy.md)
     resultsTitle: 'Your statements, read.',
     leaksRankedTitle: 'Your leaks, ranked',
@@ -533,7 +540,9 @@ export const strings = {
     projectionPlaceholder: 'One full month of data unlocks your projection.',
     projectionLockedIn: 'Recurring: locked in',
     projectionRunRate: 'Variable: run rate',
-    projectionBuffer: '+12% · irregulars & annual renewals',
+    // UX-049: named as an estimate. The buffer is a convention, not observed
+    // evidence, and the label has to say which it is.
+    projectionBuffer: '+12% estimated buffer · irregulars & annual renewals',
     threePaymentMonth: (month: string) => `3 payments in ${month}`,
     saveToHabitCents: 'Save to HabitCents',
     remindDayBefore: 'Remind me the day before',
@@ -630,6 +639,12 @@ export const strings = {
     keptBack: (amount: string) => `+${amount} kept back.`,
     yesterdayCounted: (skipValue: string) => `Yesterday counted. +${skipValue} kept.`,
     yesterdayNoted: 'Yesterday noted.',
+    // UX-022: dismissing a detected leak is a mutating action, so it fires a
+    // toast with an undo like every other one.
+    leakDismissed: 'Leak set aside.',
+    // UX-021: the start path can throw. Say so plainly and invite a retry;
+    // never leave the button dead with no explanation.
+    startHabitFailed: 'That did not start. Try again.',
   },
 
   // Today tab (spec 04 "Today").

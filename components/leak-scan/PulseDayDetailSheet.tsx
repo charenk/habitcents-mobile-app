@@ -4,6 +4,7 @@ import { Icon } from '@/components/ui/Icon';
 import { Sheet } from '@/components/ui/Sheet';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import { formatDate, parseDateOnly } from '@/utils/dates';
 import { typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import type { PulseCell } from '@/utils/leakScan/spendPulse';
@@ -16,6 +17,23 @@ type PulseDayDetailSheetProps = {
   rows: ScanRow[];
   onClose: () => void;
 };
+
+/** UX-050: cell.key is an ISO day (yyyy-mm-dd, length 10), ISO month
+ *  (yyyy-mm, length 7), or a plain year (yyyy, length 4), per PulseCell's
+ *  own granularity (utils/leakScan/spendPulse.ts). Only the day and month
+ *  forms are raw enough to need locale formatting; a bare year already
+ *  reads fine as-is. */
+function formatCellDate(key: string): string {
+  if (key.length === 10) {
+    const parsed = parseDateOnly(key);
+    return parsed ? formatDate(parsed, { month: 'short', day: 'numeric' }) : key;
+  }
+  if (key.length === 7) {
+    const parsed = parseDateOnly(key);
+    return parsed ? formatDate(parsed, { month: 'long', year: 'numeric' }) : key;
+  }
+  return key;
+}
 
 /**
  * Pulse cell tap detail sheet (spec 5.3): date/period, total, merchant list.
@@ -34,12 +52,17 @@ export function PulseDayDetailSheet({ cell, rows, onClose }: PulseDayDetailSheet
 
   if (!cell) return null;
 
+  // UX-050: cell.key is a raw ISO string (day yyyy-mm-dd, month yyyy-mm, or
+  // year yyyy, per PulseCell's own granularity), which was being shown to the
+  // user as-is. Route it through the app's locale-aware date formatter.
+  const dateLabel = formatCellDate(cell.key);
+
   return (
-    <Sheet visible={!!cell} onClose={onClose} accessibilityLabel={cell.key}>
+    <Sheet visible={!!cell} onClose={onClose} accessibilityLabel={dateLabel}>
       <View style={styles.content}>
         <View style={styles.headerRow}>
           <Text style={styles.date} accessibilityRole="header">
-            {cell.key}
+            {dateLabel}
           </Text>
           <TouchableOpacity
             onPress={onClose}

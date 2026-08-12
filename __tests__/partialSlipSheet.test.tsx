@@ -21,6 +21,7 @@ import { act, cleanup, fireEvent, render } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
+import { ToastProvider } from '@/components/ui/Toast';
 import { PartialSlipSheet } from '@/components/habit-logging/PartialSlipSheet';
 import { strings } from '@/constants/strings';
 
@@ -33,7 +34,9 @@ function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SafeAreaProvider initialMetrics={initialMetrics}>
       <ThemeProvider>
-        <CurrencyProvider>{children}</CurrencyProvider>
+        <CurrencyProvider>
+          <ToastProvider>{children}</ToastProvider>
+        </CurrencyProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );
@@ -107,5 +110,17 @@ describe('PartialSlipSheet', () => {
     });
     expect(onCancel).toHaveBeenCalledTimes(1);
     expect(onSave).not.toHaveBeenCalled();
+  });
+
+  // UX-020: a $0.00 save would silently credit the entire skip value on a
+  // day the user just said they bought something (see PartialSlipSheet's
+  // handleSave doc comment).
+  it('Save with a zero amount does not save and shows the enter-amount-first toast', async () => {
+    const view = await renderSheet();
+    await act(async () => {
+      fireEvent.press(view.getByRole('button', { name: strings.common.save }));
+    });
+    expect(onSave).not.toHaveBeenCalled();
+    expect(view.getByText(strings.toasts.enterAmountFirst)).toBeTruthy();
   });
 });

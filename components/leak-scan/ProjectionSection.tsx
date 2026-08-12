@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Switch } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
-import { formatDate } from '@/utils/dates';
+import { formatDate, parseDateOnly } from '@/utils/dates';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { radii, typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
@@ -14,6 +14,10 @@ import { track } from '@/utils/analytics';
 type ProjectionSectionProps = {
   summary: ProjectionSummary;
   onSave: (remindBefore: Record<string, boolean>) => void;
+  /** UX-035: true while the parent's onSave write-loop is still in flight, so
+   *  this CTA disables itself instead of allowing a double tap to fire a
+   *  second import pass (mirrors app/paywall.tsx's `purchasing` pattern). */
+  saving?: boolean;
 };
 
 /** Month name for the "next month" label, from today's date. */
@@ -31,7 +35,15 @@ function nextMonthName(): string {
  * recurring items and each item's reminder-intent toggle (v1: intent capture
  * only, no notification scheduled).
  */
-export function ProjectionSection({ summary, onSave }: ProjectionSectionProps) {
+/** UX-050: nextDateISO is a calendar day, not an instant. Parsed locally so a
+ *  next-charge date never renders a day early; falls back to the raw string
+ *  rather than rendering "Invalid Date". */
+function formatNextDate(nextDateISO: string): string {
+  const parsed = parseDateOnly(nextDateISO);
+  return parsed ? formatDate(parsed, { month: 'short', day: 'numeric' }) : nextDateISO;
+}
+
+export function ProjectionSection({ summary, onSave, saving = false }: ProjectionSectionProps) {
   const theme = useTheme();
   const { format } = useCurrency();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -56,6 +68,9 @@ export function ProjectionSection({ summary, onSave }: ProjectionSectionProps) {
   };
 
   const handleSave = () => {
+    // UX-035: belt-and-suspenders against a double tap, alongside the
+    // disabled prop below (parent may re-render on the next tick, not this one).
+    if (saving) return;
     track('scan_projection_saved', { n_recurring: summary.lockedIn.length });
     onSave(remindBefore);
   };
@@ -71,7 +86,11 @@ export function ProjectionSection({ summary, onSave }: ProjectionSectionProps) {
             <View key={item.merchantStem} style={styles.itemRow}>
               <View style={styles.itemInfo}>
                 <Text style={styles.itemName}>{item.merchantDisplay}</Text>
-                <Text style={styles.itemNext}>{item.nextDateISO}</Text>
+                {/* UX-050: nextDateISO was rendered raw; route it through the
+                    app's locale-aware date formatter. Parsed as a local
+                    calendar day, not a UTC instant, so a next-charge date
+                    cannot render a day early west of UTC. */}
+                <Text style={styles.itemNext}>{formatNextDate(item.nextDateISO)}</Text>
                 {item.interval === 'biweekly' && item.nextMonthHits >= 3 && (
                   <View style={styles.flagPill}>
                     <Text style={styles.flagPillText}>
@@ -113,7 +132,13 @@ export function ProjectionSection({ summary, onSave }: ProjectionSectionProps) {
 
       <Text style={styles.buffer}>{strings.leakScan.projectionBuffer}</Text>
 
-      <TouchableOpacity style={styles.saveButton} onPress={handleSave} accessibilityRole="button">
+      <TouchableOpacity
+        style={[styles.saveButton, saving && styles.saveButtonDisabled]}
+        onPress={handleSave}
+        disabled={saving}
+        accessibilityRole="button"
+        accessibilityState={{ disabled: saving }}
+      >
         <Text style={styles.saveButtonText}>{strings.leakScan.saveToHabitCents}</Text>
       </TouchableOpacity>
     </View>
@@ -221,6 +246,11 @@ function createStyles(theme: AppTheme) {
       borderRadius: radii.control,
       alignItems: 'center',
       justifyContent: 'center',
+    },
+    // UX-035: same disabled-opacity treatment as app/paywall.tsx's
+    // primaryButtonDisabled.
+    saveButtonDisabled: {
+      opacity: 0.6,
     },
     saveButtonText: {
       fontSize: 15,

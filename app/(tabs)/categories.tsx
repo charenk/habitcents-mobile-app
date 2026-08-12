@@ -101,9 +101,14 @@ export default function CategoriesScreen() {
   }, []);
 
   const getCategorySpend = useCallback((category: Category): number => {
-    // Get spending from expenses that match this category name
+    // UX-007: CategoryRow renders this through strings.categories.thisMonthSuffix
+    // ("this month"), so the total has to actually be scoped to the current
+    // calendar month, not all-time. Same month-window pattern as
+    // app/category/[id].tsx's thisMonthStart/thisMonthExpenses.
+    const now = new Date();
+    const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
     const categoryExpenses = expenses.filter(
-      e => e.category === category.name || e.categoryId === category.id
+      e => (e.category === category.name || e.categoryId === category.id) && e.date >= thisMonthStart
     );
     return categoryExpenses.reduce((sum, e) => sum + e.amount, 0);
   }, [expenses]);

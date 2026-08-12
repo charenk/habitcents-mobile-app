@@ -51,6 +51,7 @@ import { act, cleanup, fireEvent, render } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
+import { ToastProvider } from '@/components/ui/Toast';
 import { CategoriesProvider } from '@/contexts/CategoriesContext';
 import { ExpensesProvider } from '@/contexts/ExpensesContext';
 import { HabitsProvider } from '@/contexts/HabitsContext';
@@ -75,13 +76,15 @@ function Providers({ children }: { children: React.ReactNode }) {
     <SafeAreaProvider initialMetrics={initialMetrics}>
       <ThemeProvider>
         <CurrencyProvider>
-          <CategoriesProvider>
-            <ExpensesProvider>
-              <HabitsProvider>
-                <ReportsProvider>{children}</ReportsProvider>
-              </HabitsProvider>
-            </ExpensesProvider>
-          </CategoriesProvider>
+          <ToastProvider>
+            <CategoriesProvider>
+              <ExpensesProvider>
+                <HabitsProvider>
+                  <ReportsProvider>{children}</ReportsProvider>
+                </HabitsProvider>
+              </ExpensesProvider>
+            </CategoriesProvider>
+          </ToastProvider>
         </CurrencyProvider>
       </ThemeProvider>
     </SafeAreaProvider>

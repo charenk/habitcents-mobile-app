@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -66,31 +66,43 @@ export default function OnboardingIntentScreen() {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const { chooseDoor, completeOnboarding } = useOnboarding();
+  // UX-062: guards a fast double tap from firing chooseDoor (and the
+  // onboarding_intent_selected analytics event) twice before the first await
+  // resolves. Matches app/(tabs)/index.tsx's breakStartInFlightRef pattern.
+  const pickInFlightRef = useRef(false);
 
   const handlePick = async (card: IntentCard) => {
-    track('onboarding_intent_selected', { intent: card.intent });
-    await chooseDoor(DOOR_FOR_INTENT[card.intent]);
+    if (pickInFlightRef.current) return;
+    pickInFlightRef.current = true;
+    try {
+      track('onboarding_intent_selected', { intent: card.intent });
+      await chooseDoor(DOOR_FOR_INTENT[card.intent]);
 
-    // Door 1 & Door 3 (W2 + W3, "the app is the onboarding" complete): both
-    // land straight on Today via a deep link instead of pushing a dedicated
-    // onboarding screen; Today itself opens the relevant sheet (the real
-    // LogExpenseSheet for track, BreakHabitSheet for break) and completes
-    // onboarding once that sheet resolves (app/(tabs)/index.tsx). currentStep
-    // deliberately stays at 'fork' in both cases: NEXT_STEP has no forward
-    // step from 'fork' anymore (only Door 2's scan flow still pushes a
-    // route), so an early abandon before either sheet resolves still resumes
-    // at this picker on relaunch (STEP_ROUTE['fork'], welcome.tsx).
-    if (card.intent === 'track') {
-      router.replace('/(tabs)?view=spent&firstLog=1');
-      return;
-    }
-    if (card.intent === 'break') {
-      router.replace('/(tabs)?view=kept&breakEntry=1');
-      return;
-    }
+      // Door 1 & Door 3 (W2 + W3, "the app is the onboarding" complete): both
+      // land straight on Today via a deep link instead of pushing a dedicated
+      // onboarding screen; Today itself opens the relevant sheet (the real
+      // LogExpenseSheet for track, BreakHabitSheet for break) and completes
+      // onboarding once that sheet resolves (app/(tabs)/index.tsx). currentStep
+      // deliberately stays at 'fork' in both cases: NEXT_STEP has no forward
+      // step from 'fork' anymore (only Door 2's scan flow still pushes a
+      // route), so an early abandon before either sheet resolves still resumes
+      // at this picker on relaunch (STEP_ROUTE['fork'], welcome.tsx).
+      if (card.intent === 'track') {
+        router.replace('/(tabs)?view=spent&firstLog=1');
+        return;
+      }
+      if (card.intent === 'break') {
+        router.replace('/(tabs)?view=kept&breakEntry=1');
+        return;
+      }
 
-    // Scan only, from here down.
-    router.push('/leak-scan');
+      // Scan only, from here down.
+      router.push('/leak-scan');
+    } finally {
+      // UX-062: reset in finally (not after the try body) so a thrown
+      // chooseDoor/navigation error can never leave the guard stuck locked.
+      pickInFlightRef.current = false;
+    }
   };
 
   const handleSkip = async () => {

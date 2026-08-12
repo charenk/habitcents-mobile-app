@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/Button';
 import { Sheet } from '@/components/ui/Sheet';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import { formatDate, parseDateOnly } from '@/utils/dates';
 import { radii, typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import { categoryDisplayLabel } from '@/utils/leakScanBridge';
@@ -30,6 +31,14 @@ type CategoryTransactionsSheetProps = {
   onCorrect: (merchantStem: string, category: ExpenseCategory) => void;
   onClose: () => void;
 };
+
+/** UX-050: a scan row's dateISO is a calendar day, not an instant, so it is
+ *  parsed field by field. Falls back to the raw key rather than rendering
+ *  "Invalid Date" if a row ever carries something unparseable. */
+function formatRowDate(dateISO: string): string {
+  const parsed = parseDateOnly(dateISO);
+  return parsed ? formatDate(parsed, { month: 'short', day: 'numeric' }) : dateISO;
+}
 
 /**
  * Category row tap -> transaction list (spec 5.2): every row's category chip
@@ -68,7 +77,11 @@ export function CategoryTransactionsSheet({
             <View key={row.id} style={styles.row}>
               <View style={styles.rowInfo}>
                 <Text style={styles.merchantName}>{row.merchantDisplay || row.rawDescription}</Text>
-                <Text style={styles.rowDate}>{row.dateISO}</Text>
+                {/* UX-050: dateISO was rendered raw; route it through the app's
+                    locale-aware date formatter. Parsed as a local calendar day,
+                    not a UTC instant, so the label cannot slip to the day
+                    before west of UTC. */}
+                <Text style={styles.rowDate}>{formatRowDate(row.dateISO)}</Text>
               </View>
               <Text style={styles.amount}>{format(Math.abs(row.amountCents))}</Text>
               <TouchableOpacity

@@ -117,6 +117,7 @@ export default function TodayScreen() {
     isLoading,
     refreshHabits,
     dismissHabit,
+    restoreDismissedHabit,
     seedDiscoveredHabit,
     startBreakingHabit,
     answerToday,
@@ -312,60 +313,75 @@ export default function TodayScreen() {
     //    that is actually being created.
     if (breakStartInFlightRef.current) return;
     breakStartInFlightRef.current = true;
-    const claimedOnboarding = door3CoachActive && !door3HandledRef.current;
-    if (claimedOnboarding) door3HandledRef.current = true;
+    // UX-021: everything below can reject (seedDiscoveredHabit,
+    // startBreakingHabit, addExpense are all async writes). Without
+    // try/finally, a rejection left breakStartInFlightRef stuck true, which
+    // permanently disabled the Start button for the rest of the session with
+    // no error surfaced. The ref reset now always runs, and a failure gets a
+    // toast instead of failing silently.
+    try {
+      const claimedOnboarding = door3CoachActive && !door3HandledRef.current;
+      if (claimedOnboarding) door3HandledRef.current = true;
 
-    const merchantPattern = data.chipId === 'custom' ? data.name : data.chipId;
-    const category: ExpenseCategory = data.chipId === 'custom' ? 'Other' : VICE_CATEGORIES[data.chipId];
-    const categoryId = getCategoryByName(category)?.id ?? getCategoryByName('Other')?.id ?? 'Other';
-    // Monthly-equivalent for the seeded habit's totalMonthlySpend, same
-    // approx-month convention the rest of the app uses elsewhere (weekly *
-    // 52/12); the honest yearly line on the sheet itself uses the exact
-    // 365/52/12 multipliers instead, since that is what is actually shown.
-    const monthlyMultiplier = data.cadence === 'daily' ? 30 : data.cadence === 'weekly' ? 52 / 12 : 1;
+      const merchantPattern = data.chipId === 'custom' ? data.name : data.chipId;
+      const category: ExpenseCategory = data.chipId === 'custom' ? 'Other' : VICE_CATEGORIES[data.chipId];
+      const categoryId = getCategoryByName(category)?.id ?? getCategoryByName('Other')?.id ?? 'Other';
+      // Monthly-equivalent for the seeded habit's totalMonthlySpend, same
+      // approx-month convention the rest of the app uses elsewhere (weekly *
+      // 52/12); the honest yearly line on the sheet itself uses the exact
+      // 365/52/12 multipliers instead, since that is what is actually shown.
+      const monthlyMultiplier = data.cadence === 'daily' ? 30 : data.cadence === 'weekly' ? 52 / 12 : 1;
 
-    const habit = await seedDiscoveredHabit({
-      merchantPattern,
-      name: data.name,
-      description: '',
-      categoryId,
-      averageAmount: data.amountCents,
-      frequency: data.cadence,
-      occurrencesPerPeriod: 1,
-      totalMonthlySpend: Math.round(data.amountCents * monthlyMultiplier),
-    });
-    // seedDiscoveredHabit protects live habits: re-picking one the user is
-    // already breaking returns it unchanged. Starting it again would append
-    // an orphan goal (stack review finding 2), so say so and stop; a
-    // bought-today yes below still writes the expense, which is an honest
-    // statement regardless.
-    const alreadyBreaking = habit.status === 'changing' || habit.status === 'tracking';
-    if (alreadyBreaking) {
-      show(strings.today.alreadyBreakingToast);
-    } else {
-      await startBreakingHabit(habit.id, data.amountCents, data.valueEdited, 'onboarding');
-    }
-
-    if (data.boughtToday) {
-      await addExpense({
-        title: data.name,
-        amount: data.amountCents,
-        category,
+      const habit = await seedDiscoveredHabit({
+        merchantPattern,
+        name: data.name,
+        description: '',
         categoryId,
-        merchant: data.name,
-        date: new Date(),
-        isRecurring: false,
-        reminderEnabled: false,
+        averageAmount: data.amountCents,
+        frequency: data.cadence,
+        occurrencesPerPeriod: 1,
+        totalMonthlySpend: Math.round(data.amountCents * monthlyMultiplier),
       });
-    }
+      // seedDiscoveredHabit protects live habits: re-picking one the user is
+      // already breaking returns it unchanged. Starting it again would append
+      // an orphan goal (stack review finding 2), so say so and stop; a
+      // bought-today yes below still writes the expense, which is an honest
+      // statement regardless.
+      const alreadyBreaking = habit.status === 'changing' || habit.status === 'tracking';
+      if (alreadyBreaking) {
+        show(strings.today.alreadyBreakingToast);
+      } else {
+        await startBreakingHabit(habit.id, data.amountCents, data.valueEdited, 'onboarding');
+      }
 
-    setBreakSheetVisible(false);
-    if (claimedOnboarding) {
-      setDoor3CoachActive(false);
-      await completeOnboarding();
-      await showDoor3Ribbon('door3_started');
+      if (data.boughtToday) {
+        await addExpense({
+          title: data.name,
+          amount: data.amountCents,
+          category,
+          categoryId,
+          merchant: data.name,
+          date: new Date(),
+          isRecurring: false,
+          reminderEnabled: false,
+        });
+      }
+
+      setBreakSheetVisible(false);
+      if (claimedOnboarding) {
+        setDoor3CoachActive(false);
+        await completeOnboarding();
+        await showDoor3Ribbon('door3_started');
+      }
+    } catch (error) {
+      // UX-021: the guard ref resets in finally, so the button comes back;
+      // this tells the user why nothing happened instead of leaving a silent
+      // no-op behind a button that just went live again.
+      console.error('handleBreakSheetStart failed', error);
+      show(strings.toasts.startHabitFailed);
+    } finally {
+      breakStartInFlightRef.current = false;
     }
-    breakStartInFlightRef.current = false;
   }, [
     seedDiscoveredHabit,
     startBreakingHabit,
@@ -604,7 +620,18 @@ export default function TodayScreen() {
 
   const handleDismissHabit = useCallback(async (habit: DetectedHabit) => {
     await dismissHabit(habit.id);
-  }, [dismissHabit]);
+    // UX-022: every mutating action fires exactly one toast (Toast contract).
+    // "Not this one" discards a detected leak the user may never see
+    // surfaced again, so it gets a real undo, not just an announcement.
+    show(strings.toasts.leakDismissed, {
+      action: {
+        label: strings.toasts.undo,
+        onPress: () => {
+          void restoreDismissedHabit(habit.id);
+        },
+      },
+    });
+  }, [dismissHabit, restoreDismissedHabit, show]);
 
   const handleHabitPress = useCallback((habitId: string) => {
     router.push(`/habit/${habitId}`);

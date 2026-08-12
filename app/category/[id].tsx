@@ -149,8 +149,12 @@ export default function CategoryDetailScreen() {
   const hasTrendData = trendData.some(d => d.amount > 0);
   const maxTrendAmount = Math.max(...trendData.map(d => d.amount), 1);
 
-  const renderLogRow = ({ item }: { item: Expense }) => (
-    <View style={styles.logRow}>
+  // UX-044: borderTopWidth lives on logRow itself, so the first-row
+  // suppression has to be applied on that style, not on a wrapper View
+  // (matches how merchantRow does it below, styles.merchantRow +
+  // styles.rowNoBorder in one array).
+  const renderLogRow = ({ item, isFirst }: { item: Expense; isFirst?: boolean }) => (
+    <View key={item.id} style={[styles.logRow, isFirst && styles.rowNoBorder]}>
       <View style={styles.logContent}>
         <Text style={styles.logTitle} numberOfLines={1}>
           {item.title}
@@ -162,6 +166,10 @@ export default function CategoryDetailScreen() {
       <Text style={styles.logAmount}>{format(item.amount, { signed: true })}</Text>
     </View>
   );
+
+  // UX-023: the list caps at 10 so the eyebrow can name what is shown out of
+  // what exists.
+  const recentLogs = categoryExpenses.slice(0, 10);
 
   // Serif titles end in a period, category names included (spec 01 s2).
   const categoryTitle = /\.$/.test(category.name) ? category.name : `${category.name}.`;
@@ -289,13 +297,18 @@ export default function CategoryDetailScreen() {
 
         {/* Recent logs */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{strings.categoryDetail.recentLogs}</Text>
+          {/* UX-023: name what's shown out of what exists once the list is
+              capped, so a heavy category doesn't read as having only 10 logs.
+              Silent when shown === total (nothing to disclose). Separator
+              matches the house convention for a combined eyebrow, e.g.
+              strings.money.spentGroupHeader's " · ". */}
+          <Text style={styles.sectionTitle}>
+            {recentLogs.length < categoryExpenses.length
+              ? `${strings.categoryDetail.recentLogs} · ${strings.categoryDetail.recentLogsCount(recentLogs.length, categoryExpenses.length)}`
+              : strings.categoryDetail.recentLogs}
+          </Text>
           <View style={styles.logsCard}>
-            {categoryExpenses.slice(0, 10).map((expense, index) => (
-              <View key={expense.id} style={index === 0 ? styles.rowNoBorder : undefined}>
-                {renderLogRow({ item: expense })}
-              </View>
-            ))}
+            {recentLogs.map((expense, index) => renderLogRow({ item: expense, isFirst: index === 0 }))}
             {categoryExpenses.length === 0 && (
               <EmptyState body={strings.categoryDetail.noExpensesLogged} />
             )}

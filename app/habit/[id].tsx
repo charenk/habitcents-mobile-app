@@ -330,12 +330,23 @@ export function EditSkipValueSheet({
 }) {
   const theme = useTheme();
   const { format } = useCurrency();
+  const { show } = useToast();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [cents, setCents] = useState(initialValue);
 
   React.useEffect(() => {
     if (visible) setCents(initialValue);
   }, [visible, initialValue]);
+
+  // UX-051: same guard as PartialSlipSheet/PickOneSheet. Saving $0.00 here
+  // would silently make every future skip on this habit keep nothing.
+  const handleSave = () => {
+    if (cents === 0) {
+      show(strings.toasts.enterAmountFirst);
+      return;
+    }
+    onSave(cents);
+  };
 
   return (
     <Sheet
@@ -357,7 +368,7 @@ export function EditSkipValueSheet({
         />
         <Button
           label={strings.habitDetailV2.skipValueSave}
-          onPress={() => onSave(cents)}
+          onPress={handleSave}
         />
         <Button label={strings.common.cancel} variant="tertiary" onPress={onCancel} />
       </View>

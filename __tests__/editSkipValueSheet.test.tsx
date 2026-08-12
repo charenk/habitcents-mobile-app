@@ -23,6 +23,7 @@ import { act, cleanup, fireEvent, render } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
+import { ToastProvider } from '@/components/ui/Toast';
 import { EditSkipValueSheet } from '@/app/habit/[id]';
 import { strings } from '@/constants/strings';
 
@@ -35,7 +36,9 @@ function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SafeAreaProvider initialMetrics={initialMetrics}>
       <ThemeProvider>
-        <CurrencyProvider>{children}</CurrencyProvider>
+        <CurrencyProvider>
+          <ToastProvider>{children}</ToastProvider>
+        </CurrencyProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );
@@ -115,5 +118,17 @@ describe('EditSkipValueSheet', () => {
     });
     expect(onCancel).toHaveBeenCalledTimes(1);
     expect(onSave).not.toHaveBeenCalled();
+  });
+
+  // UX-051: a $0.00 save would silently make every future skip on this
+  // habit keep nothing (see EditSkipValueSheet's handleSave doc comment).
+  it('Save with a zero amount does not save and shows the enter-amount-first toast', async () => {
+    const view = await renderSheet(1250);
+    await typeAmount(view, '0');
+    await act(async () => {
+      fireEvent.press(view.getByRole('button', { name: strings.habitDetailV2.skipValueSave }));
+    });
+    expect(onSave).not.toHaveBeenCalled();
+    expect(view.getByText(strings.toasts.enterAmountFirst)).toBeTruthy();
   });
 });
