@@ -228,7 +228,8 @@ describe('Today: quote placement', () => {
 
     const spentPane = within(view.getByTestId('spent-pane'));
     expect(spentPane.getByTestId('spent-quote')).toBeTruthy();
-    expect(spentPane.getByText(strings.today.loggedTodayEyebrow.toUpperCase())).toBeTruthy();
+    // UX-060: sentence case in the tree, uppercased by the style.
+    expect(spentPane.getByText(strings.today.loggedTodayEyebrow)).toBeTruthy();
   });
 
   it('each pane shows only its own quote, never the other view\'s array', async () => {
@@ -248,11 +249,13 @@ describe('Today: quote placement', () => {
 });
 
 describe('Today: rename (decision D3)', () => {
-  it('the logged-list eyebrow reads TODAY\'S LOG, not LOGGED TODAY', async () => {
+  // UX-060: still uppercase on screen, but transformed by the style, so the
+  // text node carries the sentence-case string.
+  it("the logged-list eyebrow reads Today's log, not Logged today", async () => {
     const view = await renderToday();
 
-    expect(view.getByText("TODAY'S LOG")).toBeTruthy();
-    expect(view.queryByText('LOGGED TODAY')).toBeNull();
+    expect(view.getByText("Today's log")).toBeTruthy();
+    expect(view.queryByText('Logged today')).toBeNull();
   });
 });
 

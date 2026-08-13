@@ -9,6 +9,7 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 );
 
 import React from 'react';
+import { StyleSheet } from 'react-native';
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
@@ -52,11 +53,18 @@ async function renderList(props: Partial<React.ComponentProps<typeof LoggedToday
 afterEach(cleanup);
 
 describe('LoggedTodayList: rename (decision D3)', () => {
-  it("renders the eyebrow as TODAY'S LOG, not LOGGED TODAY", async () => {
+  // UX-060: the eyebrow still reads TODAY'S LOG on screen, but the uppercase
+  // now comes from the style, so the text node keeps the sentence-case string
+  // a screen reader can speak as words. Both halves are asserted.
+  it("renders the eyebrow as Today's log, not Logged today, uppercased by style", async () => {
     const view = await renderList();
-    expect(view.getByText(strings.today.loggedTodayEyebrow.toUpperCase())).toBeTruthy();
-    expect(view.getByText("TODAY'S LOG")).toBeTruthy();
-    expect(view.queryByText('LOGGED TODAY')).toBeNull();
+    const eyebrow = view.getByText(strings.today.loggedTodayEyebrow);
+    expect(eyebrow).toBeTruthy();
+    expect(StyleSheet.flatten(eyebrow.props.style).textTransform).toBe('uppercase');
+    expect(view.getByText("Today's log")).toBeTruthy();
+    expect(view.queryByText('Logged today')).toBeNull();
+    // The pre-uppercased string must not be what lands in the tree.
+    expect(view.queryByText("TODAY'S LOG")).toBeNull();
   });
 });
 

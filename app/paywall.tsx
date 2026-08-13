@@ -165,7 +165,7 @@ export default function PaywallScreen() {
           end={{ x: 1, y: 1 }}
           style={styles.hero}
         >
-          <Text style={styles.heroEyebrow}>{strings.paywall.heroEyebrow.toUpperCase()}</Text>
+          <Text style={styles.heroEyebrow}>{strings.paywall.heroEyebrow}</Text>
           {/* UX-026: this is the paywall's screen title; give it header role
               so it shows up in VoiceOver's rotor. */}
           <Text style={styles.title} accessibilityRole="header">
@@ -308,6 +308,10 @@ function createStyles(theme: AppTheme) {
       fontFamily: theme.fonts.uiSemibold,
       letterSpacing: typeScale.eyebrowLetterSpacing,
       color: theme.white,
+      // UX-060: uppercased by the style, not by a JS .toUpperCase() on the
+      // string. The string stays sentence case so screen readers speak it as
+      // words rather than letters.
+      textTransform: 'uppercase',
       // UX-006: the opacity trick lowered effective contrast for no design
       // gain; removed now that the gradient itself clears 4.5:1.
       marginBottom: 8,

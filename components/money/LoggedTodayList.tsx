@@ -51,7 +51,7 @@ export function LoggedTodayList({ expenses, onEditExpense, onViewAll }: LoggedTo
   return (
     <View>
       <View style={styles.eyebrowRow}>
-        <Text style={styles.eyebrow}>{strings.today.loggedTodayEyebrow.toUpperCase()}</Text>
+        <Text style={styles.eyebrow}>{strings.today.loggedTodayEyebrow}</Text>
         {showViewAll ? (
           <TouchableOpacity
             onPress={onViewAll}
@@ -97,6 +97,11 @@ function createStyles(theme: AppTheme) {
       fontSize: typeScale.eyebrow,
       fontFamily: theme.fonts.uiSemibold,
       letterSpacing: typeScale.eyebrowLetterSpacing,
+      // UX-060: the component uppercases via style, never with a JS
+      // .toUpperCase() on the string. Strings stay sentence case so screen
+      // readers speak them as words rather than letters, and the transform is
+      // locale-aware.
+      textTransform: 'uppercase',
       color: theme.mistText,
     },
     // Tertiary text link (design/PATTERN_VOCABULARY.md controls: "tertiary

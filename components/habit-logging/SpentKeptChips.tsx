@@ -79,7 +79,7 @@ export function SpentKeptChips({
           style={[styles.eyebrow, spentSelected ? styles.eyebrowSpentSelected : null]}
           maxFontSizeMultiplier={1.5}
         >
-          {strings.today.spentChipLabel.toUpperCase()}
+          {strings.today.spentChipLabel}
         </Text>
         {/* Spend is never a win: it never takes the sage fill, selected or
             not, only slate at rest and ink when selected. */}
@@ -111,7 +111,7 @@ export function SpentKeptChips({
             style={[styles.eyebrow, keptSelected ? styles.eyebrowKeptSelected : null]}
             maxFontSizeMultiplier={1.5}
           >
-            {strings.today.keptChipLabel.toUpperCase()}
+            {strings.today.keptChipLabel}
           </Text>
           {checkInPending ? <View style={styles.pendingDot} /> : null}
         </View>
@@ -152,6 +152,9 @@ function createStyles(theme: AppTheme) {
       fontSize: typeScale.eyebrow,
       fontFamily: theme.fonts.uiSemibold,
       letterSpacing: typeScale.eyebrowLetterSpacing,
+      // UX-060: uppercased by the style, not by a JS .toUpperCase() on the
+      // string, so the string stays sentence case for screen readers.
+      textTransform: 'uppercase',
       // Slate, not mistText: the UNSELECTED segment is transparent over the
       // cloud track, where mistText is only 4.06:1. mistText is certified on
       // white and snow, not on cloud. Slate is 6.39:1 there. UX-003.
