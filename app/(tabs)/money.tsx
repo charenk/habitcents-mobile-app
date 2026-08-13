@@ -33,7 +33,7 @@ import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { categoryEmoji, categoryIdentityColor } from '@/constants/categoryEmoji';
 import { habitLeakGlyph } from '@/constants/onboardingPresets';
 import { strings } from '@/constants/strings';
-import type { AppTheme } from '@/constants/theme';
+import { layout, type AppTheme } from '@/constants/theme';
 import { useCategories } from '@/contexts/CategoriesContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
 import { useHabits } from '@/contexts/HabitsContext';
@@ -215,30 +215,41 @@ export default function MoneyScreen() {
         />
       </View>
 
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {view === 'spent' && <SpentList sections={sections} onEditExpense={setEditing} />}
-        {view === 'upcoming' && (
-          <UpcomingList
-            items={upcoming}
-            windowDays={windowDays}
-            onWindowDaysChange={handleWindowDaysChange}
-            onAdd={() => setAddUpcomingVisible(true)}
-            onEditItem={(expense) => setEditingUpcoming(expense)}
-          />
-        )}
-        {view === 'habits' && (
-          <HabitsList
-            rows={habitRows}
-            managedMonthlyTotal={managedMonthlyTotal}
-            onBreak={(habit) => setPickOneHabitId(habit.id)}
-            onOpenHabit={(habitId) => router.push(`/habit/${habitId}`)}
-          />
-        )}
-      </ScrollView>
+      {/*
+        UX-016: Spent renders as its own SectionList (components/money/
+        SpentList.tsx) rather than nesting inside this ScrollView, since a
+        SectionList already owns its own scrolling and virtualizes -- nesting
+        it inside another scroll container would fight that (and re-render/
+        mount every row anyway, defeating the point). Upcoming and Habits
+        (both bounded lists, ~15 items or fewer) keep the plain ScrollView.
+      */}
+      {view === 'spent' ? (
+        <SpentList sections={sections} onEditExpense={setEditing} />
+      ) : (
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {view === 'upcoming' && (
+            <UpcomingList
+              items={upcoming}
+              windowDays={windowDays}
+              onWindowDaysChange={handleWindowDaysChange}
+              onAdd={() => setAddUpcomingVisible(true)}
+              onEditItem={(expense) => setEditingUpcoming(expense)}
+            />
+          )}
+          {view === 'habits' && (
+            <HabitsList
+              rows={habitRows}
+              managedMonthlyTotal={managedMonthlyTotal}
+              onBreak={(habit) => setPickOneHabitId(habit.id)}
+              onOpenHabit={(habitId) => router.push(`/habit/${habitId}`)}
+            />
+          )}
+        </ScrollView>
+      )}
 
       <ExpenseSheet
         mode="edit"
@@ -288,7 +299,7 @@ function createStyles(theme: AppTheme) {
     scrollContent: {
       paddingHorizontal: 20,
       paddingTop: 12,
-      paddingBottom: 24,
+      paddingBottom: layout.screenBottomClearance,
     },
   });
 }

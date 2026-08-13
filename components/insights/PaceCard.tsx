@@ -62,10 +62,16 @@ export function PaceCard({ monthLabel, projection, comparison }: PaceCardProps) 
 
   const projected = format(projection.projectedTotal);
   const spent = format(projection.currentSpent);
-  const progress =
-    projection.projectedTotal > 0
-      ? Math.min(100, Math.max(0, Math.round((projection.currentSpent / projection.projectedTotal) * 100)))
-      : 0;
+  // UX-010: the bar is genuinely month progress now, not spend disguised as
+  // progress. It used to be currentSpent / projectedTotal, which filled the
+  // sage bar as the user spent more money, so a "good" (over-budget) month
+  // and a "bad" one both read as visual progress toward the sage fill. Days
+  // elapsed in the calendar month has nothing to do with spend, so sage no
+  // longer tracks it.
+  const now = new Date();
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  const dayOfMonth = now.getDate();
+  const progress = Math.min(100, Math.max(0, Math.round((dayOfMonth / daysInMonth) * 100)));
 
   const comparisonLine = comparison
     ? comparison.direction === 'under'
@@ -117,7 +123,7 @@ function createStyles(theme: AppTheme) {
       marginTop: 6,
     },
     projected: {
-      fontSize: 30,
+      fontSize: typeScale.displayMid,
       fontFamily: theme.fonts.display,
       color: theme.ink,
       fontVariant: ['tabular-nums'],
@@ -128,8 +134,10 @@ function createStyles(theme: AppTheme) {
       fontFamily: theme.fonts.ui,
       color: theme.slate,
     },
-    // Month progress, not a spend bar: this is the one sanctioned sage fill on
-    // this screen (spec 04 "Insights": "8px sage progress bar").
+    // UX-010: month progress (days elapsed / days in month), not a spend
+    // bar. This is the one sanctioned sage fill on this screen (spec 04
+    // "Insights": "8px sage progress bar"); it no longer tracks currentSpent,
+    // so sage here never rewards spending more.
     barTrack: {
       height: 8,
       borderRadius: 4,

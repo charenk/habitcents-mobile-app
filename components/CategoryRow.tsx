@@ -81,7 +81,7 @@ export function CategoryRow({
       <Icon
         name="ChevronRight"
         size={16}
-        color={theme.mist}
+        color={theme.mistText}
         importantForAccessibility="no-hide-descendants"
         accessibilityElementsHidden
       />
@@ -114,9 +114,9 @@ function createStyles(theme: AppTheme) {
       color: theme.ink,
     },
     spent: {
-      fontSize: 12,
+      fontSize: typeScale.caption,
       fontFamily: theme.fonts.ui,
-      color: theme.mist,
+      color: theme.mistText,
       marginTop: 2,
       fontVariant: ['tabular-nums'],
     },

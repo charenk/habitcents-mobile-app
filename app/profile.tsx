@@ -34,7 +34,7 @@ import { SettingsRow } from '@/components/settings/SettingsRow';
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { useToast } from '@/components/ui/Toast';
-import { typeScale } from '@/constants/theme';
+import { typeScale, layout } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -157,6 +157,9 @@ export default function ProfileScreen(): React.JSX.Element {
 
         <Text style={styles.eyebrow}>{strings.settings.groupMore}</Text>
         <View style={styles.group}>
+          {/* SettingsRow applies strings.settings.opensInBrowserHint to every
+              externalLink row automatically, so these two rows below need no
+              accessibilityHint of their own. */}
           <SettingsRow
             styles={styles}
             theme={theme}
@@ -229,14 +232,14 @@ function createStyles(theme: AppTheme) {
       // 20pt horizontal gutter per screen) so the title lines up with the
       // rows below it now that both share the same header component.
       paddingHorizontal: 20,
-      paddingBottom: 100,
+      paddingBottom: layout.screenBottomClearance,
     },
     eyebrow: {
       fontFamily: theme.fonts.uiSemibold,
       fontSize: typeScale.eyebrow,
       letterSpacing: typeScale.eyebrowLetterSpacing,
       textTransform: 'uppercase',
-      color: theme.mist,
+      color: theme.mistText,
       marginTop: 22,
       marginBottom: 2,
     },
@@ -283,13 +286,13 @@ function createStyles(theme: AppTheme) {
     },
     rowHint: {
       fontFamily: theme.fonts.ui,
-      fontSize: 12,
-      color: theme.mist,
+      fontSize: typeScale.caption,
+      color: theme.mistText,
     },
     versionFooter: {
       fontFamily: theme.fonts.ui,
-      fontSize: 12,
-      color: theme.mist,
+      fontSize: typeScale.caption,
+      color: theme.mistText,
       textAlign: 'center',
       marginTop: 22,
     },

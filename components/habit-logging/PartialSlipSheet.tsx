@@ -17,6 +17,7 @@ import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-n
 import { AmountField } from '@/components/ui/AmountField';
 import { Button } from '@/components/ui/Button';
 import { Sheet } from '@/components/ui/Sheet';
+import { useToast } from '@/components/ui/Toast';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { typeScale } from '@/constants/theme';
@@ -34,6 +35,7 @@ export function PartialSlipSheet({ visible, skipValue, onCancel, onSave }: Parti
   const theme = useTheme();
   const { format } = useCurrency();
   const { height } = useWindowDimensions();
+  const { show } = useToast();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [cents, setCents] = useState(0);
 
@@ -42,6 +44,19 @@ export function PartialSlipSheet({ visible, skipValue, onCancel, onSave }: Parti
   useEffect(() => {
     if (visible) setCents(0);
   }, [visible]);
+
+  // UX-020: cents === 0 must never reach onSave. HabitsContext credits
+  // max(0, skipValue - amountSpent), so a stray 0 would credit the ENTIRE
+  // skip value on a day the user just said they bought something. House
+  // pattern (components/money/ExpenseSheet.tsx handleSave): keep the button
+  // live and toast instead of a dead disabled control.
+  const handleSave = () => {
+    if (cents === 0) {
+      show(strings.toasts.enterAmountFirst);
+      return;
+    }
+    onSave(cents);
+  };
 
   return (
     <Sheet
@@ -74,7 +89,7 @@ export function PartialSlipSheet({ visible, skipValue, onCancel, onSave }: Parti
         </ScrollView>
 
         <View style={styles.footer}>
-          <Button label={strings.common.save} onPress={() => onSave(cents)} />
+          <Button label={strings.common.save} onPress={handleSave} />
           <Button label={strings.common.cancel} variant="tertiary" onPress={onCancel} />
         </View>
       </View>
@@ -102,13 +117,16 @@ function createStyles(theme: AppTheme) {
     },
     title: {
       fontFamily: theme.fonts.display,
-      fontSize: 32,
+      // Batch 2: token, was a literal 32. displayMid (30) is now the one
+      // size for every decision-moment sheet title (partial slip, pick one,
+      // break habit).
+      fontSize: typeScale.displayMid,
       lineHeight: 38,
       color: theme.ink,
     },
     subtitle: {
       fontFamily: theme.fonts.ui,
-      fontSize: 14,
+      fontSize: typeScale.label,
       lineHeight: 20,
       color: theme.slate,
       marginTop: 4,

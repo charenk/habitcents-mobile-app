@@ -25,7 +25,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/ui/Icon';
 import { useToast } from '@/components/ui/Toast';
 import { useTheme } from '@/contexts/ThemeContext';
-import { radii, typeScale, type AppTheme } from '@/constants/theme';
+import { radii, typeScale, spacing, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import { hapticSelection } from '@/utils/motion';
 import { track, isPaywallPlacement } from '@/utils/analytics';
@@ -140,7 +140,10 @@ export default function PaywallScreen() {
           onPress={handleClose}
           accessibilityRole="button"
           accessibilityLabel={strings.paywall.closeLabel}
-          hitSlop={{ top: 2, bottom: 2, left: 2, right: 2 }}
+          // UX-053: was hitSlop 2 (40pt + 2 = exactly 44); the house
+          // ScreenHeader pill (components/ui/ScreenHeader.tsx) uses hitSlop
+          // 4, matched here.
+          hitSlop={4}
         >
           <Icon name="X" size={18} color={theme.slate} />
         </TouchableOpacity>
@@ -151,15 +154,23 @@ export default function PaywallScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* One of two decorative gradients the app allows; see the list in
-            design/PATTERN_VOCABULARY.md "Color" (spec 01 section 1). */}
+            design/PATTERN_VOCABULARY.md "Color" (spec 01 section 1).
+            UX-006: full-strength lavender under white text was 3.32:1, below
+            AA, and the 11pt eyebrow and 15pt subtitle also carried opacity
+            that cut it further. Both stops are now real tokens dark enough to
+            hold white text (5.29 and 4.86) and the opacity is gone. */}
         <LinearGradient
-          colors={[theme.lavender, theme.categoryColors.utility]}
+          colors={[theme.lavenderDeep, theme.categoryColors.utility]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.hero}
         >
-          <Text style={styles.heroEyebrow}>{strings.paywall.heroEyebrow.toUpperCase()}</Text>
-          <Text style={styles.title}>{strings.paywall.title}</Text>
+          <Text style={styles.heroEyebrow}>{strings.paywall.heroEyebrow}</Text>
+          {/* UX-026: this is the paywall's screen title; give it header role
+              so it shows up in VoiceOver's rotor. */}
+          <Text style={styles.title} accessibilityRole="header">
+            {strings.paywall.title}
+          </Text>
           <Text style={styles.subtitle}>{strings.paywall.subtitle}</Text>
         </LinearGradient>
 
@@ -172,7 +183,9 @@ export default function PaywallScreen() {
           ))}
         </View>
 
-        <View style={styles.plans}>
+        {/* UX-025: iOS announces radio buttons poorly without a containing
+            radiogroup and a `checked` state per card. */}
+        <View style={styles.plans} accessibilityRole="radiogroup">
           {plans.map((plan) => {
             const isSelected = plan.id === selected;
             return (
@@ -181,8 +194,12 @@ export default function PaywallScreen() {
                 style={[styles.planCard, isSelected && styles.planCardSelected]}
                 onPress={() => { hapticSelection(); setSelected(plan.id); }}
                 accessibilityRole="radio"
-                accessibilityState={{ selected: isSelected }}
-                accessibilityLabel={`${plan.name}, ${plan.price} ${plan.period}${plan.badge ? `, ${plan.badge}` : ''}`}
+                accessibilityState={{ checked: isSelected }}
+                accessibilityLabel={strings.paywall.planSelectedLabel(
+                  plan.name,
+                  `${plan.price} ${plan.period}${plan.badge ? `, ${plan.badge}` : ''}`,
+                  isSelected
+                )}
               >
                 <View style={styles.planRadioColumn}>
                   <Icon
@@ -273,14 +290,17 @@ function createStyles(theme: AppTheme) {
       justifyContent: 'center',
     },
     scrollContent: {
-      paddingHorizontal: 24,
+      // UX-018: 24 drifted from the ratified 20pt screen gutter.
+      paddingHorizontal: spacing.gutter,
       paddingTop: 4,
     },
     // Gradient hero: white type on lavender-to-indigo. One of the two
     // decorative gradients the app allows (design/PATTERN_VOCABULARY.md "Color").
+    // UX-006: both stops are tokens dark enough to carry white text; see the
+    // render-side comment for the contrast math.
     hero: {
       borderRadius: radii.feature,
-      paddingHorizontal: 20,
+      paddingHorizontal: spacing.gutter,
       paddingVertical: 24,
     },
     heroEyebrow: {
@@ -288,11 +308,16 @@ function createStyles(theme: AppTheme) {
       fontFamily: theme.fonts.uiSemibold,
       letterSpacing: typeScale.eyebrowLetterSpacing,
       color: theme.white,
-      opacity: 0.9,
+      // UX-060: uppercased by the style, not by a JS .toUpperCase() on the
+      // string. The string stays sentence case so screen readers speak it as
+      // words rather than letters.
+      textTransform: 'uppercase',
+      // UX-006: the opacity trick lowered effective contrast for no design
+      // gain; removed now that the gradient itself clears 4.5:1.
       marginBottom: 8,
     },
     title: {
-      fontSize: 30,
+      fontSize: typeScale.displayMid,
       lineHeight: 36,
       fontFamily: theme.fonts.display,
       color: theme.white,
@@ -302,7 +327,8 @@ function createStyles(theme: AppTheme) {
       fontSize: typeScale.body,
       fontFamily: theme.fonts.ui,
       color: theme.white,
-      opacity: 0.92,
+      // UX-006: the opacity trick lowered effective contrast for no design
+      // gain; removed now that the gradient itself clears 4.5:1.
       lineHeight: 21,
       marginTop: 8,
     },
@@ -316,7 +342,7 @@ function createStyles(theme: AppTheme) {
       gap: 10,
     },
     featureText: {
-      fontSize: 15,
+      fontSize: typeScale.body,
       fontFamily: theme.fonts.ui,
       color: theme.text,
       flex: 1,
@@ -353,7 +379,7 @@ function createStyles(theme: AppTheme) {
       gap: 8,
     },
     planName: {
-      fontSize: 16,
+      fontSize: typeScale.button,
       fontFamily: theme.fonts.uiBold,
       color: theme.text,
     },
@@ -363,15 +389,16 @@ function createStyles(theme: AppTheme) {
       paddingHorizontal: 8,
       paddingVertical: 2,
     },
+    // UX-001: ink on the sage badge; white was 2.71:1 at 11pt uppercase.
     planBadgeText: {
-      fontSize: 11,
+      fontSize: typeScale.eyebrow,
       fontFamily: theme.fonts.uiBold,
-      color: theme.white,
+      color: theme.ink,
       textTransform: 'uppercase',
       letterSpacing: 0.3,
     },
     planCaption: {
-      fontSize: 13,
+      fontSize: typeScale.secondary,
       fontFamily: theme.fonts.ui,
       color: theme.textSecondary,
       marginTop: 3,
@@ -381,13 +408,13 @@ function createStyles(theme: AppTheme) {
       marginLeft: 12,
     },
     planPrice: {
-      fontSize: 17,
+      fontSize: typeScale.lead,
       fontFamily: theme.fonts.uiBold,
       fontVariant: ['tabular-nums'],
       color: theme.text,
     },
     planPeriod: {
-      fontSize: 12,
+      fontSize: typeScale.caption,
       fontFamily: theme.fonts.ui,
       fontVariant: ['tabular-nums'],
       color: theme.textSecondary,
@@ -407,20 +434,21 @@ function createStyles(theme: AppTheme) {
     },
     plannedBannerText: {
       flex: 1,
-      fontSize: 12,
+      fontSize: typeScale.caption,
       fontFamily: theme.fonts.ui,
       color: theme.textSecondary,
       lineHeight: 17,
     },
     footer: {
-      paddingHorizontal: 24,
+      // UX-018: 24 drifted from the ratified 20pt screen gutter.
+      paddingHorizontal: spacing.gutter,
       paddingTop: 12,
       borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: theme.border,
       backgroundColor: theme.background,
     },
     trialLine: {
-      fontSize: 13,
+      fontSize: typeScale.secondary,
       fontFamily: theme.fonts.ui,
       color: theme.textSecondary,
       textAlign: 'center',
@@ -438,9 +466,12 @@ function createStyles(theme: AppTheme) {
       opacity: 0.6,
     },
     primaryButtonText: {
-      fontSize: 16,
+      fontSize: typeScale.button,
       fontFamily: theme.fonts.uiSemibold,
-      color: theme.white,
+      // Ink, matching the shared Button primitive: white on sage is 2.71:1.
+      // This is the screen's main CTA, so it cannot be the one that misses.
+      // UX-001.
+      color: theme.ink,
     },
     restoreButton: {
       minHeight: 44,
@@ -449,12 +480,12 @@ function createStyles(theme: AppTheme) {
       marginTop: 4,
     },
     restoreText: {
-      fontSize: 14,
+      fontSize: typeScale.label,
       fontFamily: theme.fonts.uiSemibold,
       color: theme.primary,
     },
     stayFreeText: {
-      fontSize: 14,
+      fontSize: typeScale.label,
       fontFamily: theme.fonts.uiSemibold,
       color: theme.slate,
     },

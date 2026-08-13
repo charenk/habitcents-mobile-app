@@ -39,13 +39,22 @@ export function QuickLogRow({
         >
           <AmountDisplay valueCents={0} size={40} zeroAsPlaceholder fullWidth />
         </Pressable>
+        {/* UX-055: this and the amount Pressable above shared the same
+            accessibilityLabel and the same action, so VoiceOver announced
+            "Log an expense, button" twice in a row. The amount tap area
+            already covers the action for assistive tech; this stays a real,
+            tappable touch target for sighted/pointer users but is hidden
+            from the accessibility tree so it is not a redundant stop. */}
         <TouchableOpacity
           style={styles.quickLogPlus}
           onPress={() => onOpenSheet(undefined)}
-          accessibilityRole="button"
-          accessibilityLabel={strings.today.quickLogOpenLabel}
+          accessible={false}
+          importantForAccessibility="no-hide-descendants"
+          accessibilityElementsHidden
+          testID="quick-log-plus"
         >
-          <Icon name="Plus" size={22} color={theme.white} />
+          {/* UX-001: white on sage was 2.71:1, below the 3:1 icon floor. */}
+          <Icon name="Plus" size={22} color={theme.ink} />
         </TouchableOpacity>
       </View>
     </View>
@@ -81,7 +90,9 @@ function createStyles(theme: AppTheme) {
     quickLogPlus: {
       width: 44,
       height: 44,
-      borderRadius: 22,
+      // UX-018: was a hardcoded half-of-44 circle; radii.pill renders
+      // identically while using the ratified token.
+      borderRadius: radii.pill,
       backgroundColor: theme.primary,
       alignItems: 'center',
       justifyContent: 'center',

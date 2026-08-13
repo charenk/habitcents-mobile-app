@@ -29,7 +29,7 @@ import { isHabitLimitReached } from '@/utils/habitLogging';
 import { getEntitlement } from '@/utils/purchases';
 import { formatDate } from '@/utils/dates';
 import { getScanSummary } from '@/utils/storage';
-import { typeScale, type AppTheme } from '@/constants/theme';
+import { layout, typeScale, type AppTheme } from '@/constants/theme';
 import type { DetectedHabit } from '@/types/habit';
 import type { ScanSummary } from '@/types/scanSummary';
 import { strings } from '@/constants/strings';
@@ -247,7 +247,7 @@ function createStyles(theme: AppTheme) {
     scrollContent: {
       paddingHorizontal: 20,
       paddingTop: 14,
-      paddingBottom: 100,
+      paddingBottom: layout.screenBottomClearance,
       gap: 12,
     },
     loadingContainer: {

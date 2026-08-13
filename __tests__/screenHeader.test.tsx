@@ -11,6 +11,7 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 );
 
 import React from 'react';
+import { StyleSheet } from 'react-native';
 import { render, fireEvent } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '@/contexts/ThemeContext';
@@ -42,13 +43,22 @@ describe('ScreenHeader', () => {
     expect(title.props.accessibilityRole).toBe('header');
   });
 
-  it('renders the eyebrow, uppercased, only when passed', async () => {
+  // UX-060: the eyebrow is still uppercase on screen, but the transform now
+  // lives in the STYLE rather than a JS .toUpperCase() on the string, so the
+  // text node keeps its sentence case and a screen reader reads it as words
+  // rather than spelling out letters. This asserts both halves: the readable
+  // string and the visual uppercase.
+  it('renders the eyebrow only when passed, uppercased by style not by string', async () => {
     const withEyebrow = await render(
       <Providers>
         <ScreenHeader title="Today." eyebrow="Thursday, July 24" />
       </Providers>
     );
-    expect(await withEyebrow.findByText('THURSDAY, JULY 24')).toBeTruthy();
+    const eyebrow = await withEyebrow.findByText('Thursday, July 24');
+    expect(eyebrow).toBeTruthy();
+    expect(StyleSheet.flatten(eyebrow.props.style).textTransform).toBe('uppercase');
+    // The pre-uppercased string must NOT be what lands in the tree.
+    expect(withEyebrow.queryByText('THURSDAY, JULY 24')).toBeNull();
 
     const withoutEyebrow = await render(
       <Providers>
@@ -56,7 +66,7 @@ describe('ScreenHeader', () => {
       </Providers>
     );
     expect(await withoutEyebrow.findByText('Money.')).toBeTruthy();
-    expect(withoutEyebrow.queryByText('THURSDAY, JULY 24')).toBeNull();
+    expect(withoutEyebrow.queryByText('Thursday, July 24')).toBeNull();
   });
 
   it('renders actions as buttons with their labels and fires onPress', async () => {

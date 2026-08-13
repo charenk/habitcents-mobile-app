@@ -121,7 +121,7 @@ function createStyles(theme: AppTheme) {
       flex: 1,
     },
     rowName: {
-      fontSize: 14.5,
+      fontSize: typeScale.label,
       fontFamily: theme.fonts.uiSemibold,
       color: theme.ink,
     },
@@ -140,12 +140,15 @@ function createStyles(theme: AppTheme) {
       backgroundColor: theme.primary,
     },
     breakButtonPressed: {
-      backgroundColor: theme.primaryDark,
+      // primaryPressedBg, not primaryDark: the label below is now ink, and ink
+      // on primaryDark is 3.15:1. This follows the shared Button primitive so
+      // the label clears AA in BOTH the resting and pressed states. UX-001.
+      backgroundColor: theme.primaryPressedBg,
     },
     breakLabel: {
-      fontSize: 13,
+      fontSize: typeScale.secondary,
       fontFamily: theme.fonts.uiSemibold,
-      color: theme.white,
+      color: theme.ink,
     },
     breakingChip: {
       minHeight: 38,
@@ -158,12 +161,12 @@ function createStyles(theme: AppTheme) {
       opacity: 0.7,
     },
     breakingLabel: {
-      fontSize: 13,
+      fontSize: typeScale.secondary,
       fontFamily: theme.fonts.uiSemibold,
       color: theme.primaryDark,
     },
     watchLabel: {
-      fontSize: 13,
+      fontSize: typeScale.secondary,
       fontFamily: theme.fonts.uiSemibold,
       color: theme.slate,
       paddingHorizontal: 14,

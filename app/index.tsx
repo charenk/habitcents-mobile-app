@@ -20,8 +20,11 @@ export default function Index() {
   };
 
   if (isLoading) {
+    // UX-063: was theme.surface (pure white), which flashed against the
+    // "never pure white pages" rule right before redirecting onto snow
+    // screens.
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.surface }}>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.background }}>
         <ActivityIndicator size="large" color={theme.primary} />
       </View>
     );

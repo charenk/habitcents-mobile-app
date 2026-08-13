@@ -13,6 +13,7 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -27,7 +28,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/contexts/ThemeContext';
-import { motion, shadows } from '@/constants/theme';
+import { layout, motion, radii, shadows, typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
 import { useReducedMotion } from '@/utils/motion';
 
@@ -93,8 +94,17 @@ export function ToastProvider({
 
   useEffect(() => clearTimer, [clearTimer]);
 
+  // `show` is already a stable useCallback, so [show] is the complete dep
+  // list: this object only needs to change if `show` itself is ever
+  // recreated (it never is, in practice, since its own deps are stable).
+  // Without this, every show()/auto-dismiss re-render of ToastProvider (which
+  // happens on nearly every mutating action in the app) handed all 10
+  // useToast() consumer files a new object identity, re-rendering all of them
+  // twice per toast for no reason.
+  const value = useMemo(() => ({ show }), [show]);
+
   return (
-    <ToastContext.Provider value={{ show }}>
+    <ToastContext.Provider value={value}>
       {children}
       <ToastHost toast={toast} onDismiss={hide} />
     </ToastContext.Provider>
@@ -142,7 +152,7 @@ function ToastHost({
 
   if (!rendered) return null;
 
-  const bottom = 56 + Math.max(insets.bottom, 8) + 24;
+  const bottom = layout.tabBarHeight + Math.max(insets.bottom, 8) + 24;
   const translateY = progress.interpolate({
     inputRange: [0, 1],
     outputRange: [8, 0],
@@ -163,15 +173,27 @@ function ToastHost({
         style={[styles.pill, { bottom }, animatedStyle]}
         accessibilityLiveRegion="polite"
       >
-        <Text style={styles.message}>{rendered.message}</Text>
+        <Text style={styles.message} numberOfLines={2} maxFontSizeMultiplier={1.5}>
+          {rendered.message}
+        </Text>
         {rendered.action ? (
+          // UX-031: the pressable's text-only bounds plus hitSlop 8 landed
+          // around 33pt effective, short of the 44pt floor, on a control that
+          // is only reachable for 2.5s. minWidth on the wrapper covers the
+          // horizontal side and hitSlop extends the vertical reach to 44pt,
+          // neither of which grows the pill's own layout height (hitSlop
+          // never participates in layout; the pill's height still tracks the
+          // message text).
           <Pressable
             onPress={handleAction}
             accessibilityRole="button"
             accessibilityLabel={rendered.action.label}
-            hitSlop={8}
+            style={styles.actionHitArea}
+            hitSlop={{ top: 13, bottom: 13, left: 8, right: 8 }}
           >
-            <Text style={styles.action}>{rendered.action.label}</Text>
+            <Text style={styles.action} numberOfLines={1} maxFontSizeMultiplier={1.5}>
+              {rendered.action.label}
+            </Text>
           </Pressable>
         ) : null}
       </Animated.View>
@@ -191,21 +213,34 @@ function createStyles(theme: AppTheme) {
       flexDirection: 'row',
       alignItems: 'center',
       backgroundColor: theme.toastBg,
-      borderRadius: 12,
+      borderRadius: radii.card,
       paddingVertical: 12,
       paddingHorizontal: 18,
+      // The longest toast message plus an Undo action can overflow at large
+      // Dynamic Type without a width ceiling; the text below is left to
+      // shrink inside it rather than pushing the pill off-screen. UX-043.
+      maxWidth: '92%',
       ...shadows.toast,
     },
     message: {
       color: theme.white,
-      fontSize: 13.5,
+      fontSize: typeScale.control,
       fontFamily: theme.fonts.uiSemibold,
+      flexShrink: 1,
+    },
+    // UX-031: minWidth covers the horizontal 44pt floor; the vertical 44pt is
+    // reached via hitSlop on the Pressable above instead, since hitSlop does
+    // not affect layout and so cannot inflate the pill's height.
+    actionHitArea: {
+      minWidth: 44,
+      marginLeft: 14,
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     action: {
       color: theme.toastAction,
-      fontSize: 13.5,
+      fontSize: typeScale.control,
       fontFamily: theme.fonts.uiBold,
-      marginLeft: 14,
     },
   });
 }

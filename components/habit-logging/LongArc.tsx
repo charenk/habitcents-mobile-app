@@ -141,7 +141,7 @@ function createStyles(theme: AppTheme) {
     },
     title: {
       fontFamily: theme.fonts.uiSemibold,
-      fontSize: 15,
+      fontSize: typeScale.body,
       color: theme.ink,
     },
     pill: {
@@ -154,13 +154,15 @@ function createStyles(theme: AppTheme) {
     // lavender-on-14%-lavender pill text is 2.9:1, below AA for this size.
     pillText: {
       fontFamily: theme.fonts.uiSemibold,
-      fontSize: 11.5,
+      fontSize: typeScale.eyebrow,
       color: theme.ink,
       fontVariant: ['tabular-nums'],
     },
     identityLine: {
       fontFamily: theme.fonts.displayItalic,
-      fontSize: 20,
+      // Batch 2: token, was a literal 20. Unifies with ViewQuote's identical
+      // displayItalic use, which moves from 19 to this same quote (20).
+      fontSize: typeScale.quote,
       lineHeight: 26,
       color: theme.ink,
     },
@@ -168,7 +170,7 @@ function createStyles(theme: AppTheme) {
       fontFamily: theme.fonts.ui,
       fontSize: typeScale.caption,
       lineHeight: 18,
-      color: theme.mist,
+      color: theme.mistText,
       marginTop: 6,
       fontVariant: ['tabular-nums'],
     },
@@ -195,8 +197,8 @@ function createStyles(theme: AppTheme) {
     },
     trackLabel: {
       fontFamily: theme.fonts.ui,
-      fontSize: 10.5,
-      color: theme.mist,
+      fontSize: typeScale.eyebrow,
+      color: theme.mistText,
     },
     trackLabelActive: {
       fontFamily: theme.fonts.uiSemibold,

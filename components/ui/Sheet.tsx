@@ -26,6 +26,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { motion, radii, shadows } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
 import { useReducedMotion } from '@/utils/motion';
+import { strings } from '@/constants/strings';
 
 export type SheetProps = {
   visible: boolean;
@@ -108,7 +109,22 @@ export function Sheet({
       onLayout={onPanelLayout}
       accessibilityViewIsModal
       accessibilityLabel={accessibilityLabel}
+      // UX-024: accessibilityViewIsModal hides the sibling scrim "Close"
+      // pressable from VoiceOver, so the two-finger-Z dismiss gesture is the
+      // only way a screen-reader user can back out without that control.
+      // Wire it to the same onClose the scrim uses.
+      onAccessibilityEscape={onClose}
     >
+      {/*
+       * UX-041: this handle promises a swipe-to-dismiss gesture the sheet does
+       * not implement (no PanResponder/gesture-handler wiring exists in this
+       * file), and app/(tabs)/index.tsx documents "backdrop, swipe" as if both
+       * dismiss paths exist. The pattern vocabulary mandates the handle but
+       * not the gesture, so this is a real system gap, not a local bug. Do
+       * not add a pan gesture here without an ADR (new motion behaviour);
+       * this is flagged for Charen to pick: (a) add swipe-to-dismiss, or
+       * (b) drop the handle since it currently over-promises.
+       */}
       <View style={styles.handle} />
       {children}
     </Animated.View>
@@ -131,7 +147,9 @@ export function Sheet({
             style={StyleSheet.absoluteFill}
             onPress={handleScrimPress}
             accessibilityRole="button"
-            accessibilityLabel="Close"
+            // UX-046: reuse the existing shared string instead of a hardcoded
+            // literal.
+            accessibilityLabel={strings.common.close}
           />
         </Animated.View>
         {avoidKeyboard ? (

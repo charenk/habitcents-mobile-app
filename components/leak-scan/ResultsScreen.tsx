@@ -1,13 +1,13 @@
-import React, { useCallback, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { memo, useCallback, useMemo, useRef, useState } from 'react';
+import { AccessibilityInfo, View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Button } from '@/components/ui';
+import { Button, Icon } from '@/components/ui';
 import { useToast } from '@/components/ui/Toast';
 import { useTheme } from '@/contexts/ThemeContext';
-import { formatDate } from '@/utils/dates';
+import { formatDate, parseDateOnly } from '@/utils/dates';
 import { useExpenses } from '@/contexts/ExpensesContext';
 import { useHabits } from '@/contexts/HabitsContext';
-import { radii, typeScale, type AppTheme } from '@/constants/theme';
+import { radii, typeScale, spacing, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import { KpiRow } from './KpiRow';
 import { CategoryList } from './CategoryList';
@@ -39,6 +39,7 @@ import { scanResultToSummary } from '@/utils/leakScan/summarize';
 import type { ScanFileInput } from '@/utils/leakScan';
 import type { PulseCell } from '@/utils/leakScan/spendPulse';
 import type { GovernClass, HabitCandidate, ScanResult } from '@/utils/leakScan/types';
+import type { CategorySummary } from '@/utils/leakScan/resultsSummary';
 import type { ExpenseCategory } from '@/types/expense';
 import {
   getScanRules,
@@ -64,15 +65,25 @@ const RANKED_LEAKS_CAP = 5;
  *  days and promoted to the primary CTA. */
 const BRING_IN_DAYS = 30;
 
+/** UX-050: coverage bounds are calendar days, not instants. `new Date(iso)`
+ *  parses a date-only string as UTC midnight, which formats to the previous
+ *  day west of UTC; the evidence window is the scan's honesty metadata, so it
+ *  has to name the days the statements actually cover. */
+function formatDayOnly(dateISO: string): string {
+  const parsed = parseDateOnly(dateISO);
+  return parsed ? formatDate(parsed, { month: 'short', day: 'numeric' }) : dateISO;
+}
+
 function evidenceWindowLabel(result: ScanResult, nAccounts: number): string {
   if (!result.coverage) return '';
-  const start = formatDate(new Date(result.coverage.startISO), { month: 'short', day: 'numeric' });
-  const end = formatDate(new Date(result.coverage.endISO), { month: 'short', day: 'numeric' });
+  const start = formatDayOnly(result.coverage.startISO);
+  const end = formatDayOnly(result.coverage.endISO);
   return strings.leakScan.kpiEvidenceWindow(start, end, nAccounts);
 }
 
 function monthLabel(dateISO: string): string {
-  return formatDate(new Date(dateISO), { month: 'long' });
+  const parsed = parseDateOnly(dateISO);
+  return parsed ? formatDate(parsed, { month: 'long' }) : dateISO;
 }
 
 /** Monthly-equivalent cost used to rank the leaks list below the biggest-leak
@@ -82,6 +93,66 @@ function monthLabel(dateISO: string): string {
 function monthlyCostCents(candidate: HabitCandidate, windowDays: number): number {
   return Math.round((candidate.totalCents / windowDays) * 30);
 }
+
+type HabitCardItemProps = {
+  rank: number;
+  candidate: HabitCandidate;
+  month: string;
+  monthTotalCents: number;
+  coveredDays: number;
+  tipMonth: string;
+  tipAmountCents: number | undefined;
+  onTrack: (candidate: HabitCandidate) => void;
+  onMonitor: (candidate: HabitCandidate) => void;
+  onNotAHabit: (candidate: HabitCandidate) => void;
+  onWrongDetails: (category: ExpenseCategory) => void;
+};
+
+/**
+ * HabitCard is React.memo'd; this wrapper is what makes that memo effective.
+ * The old .map() body built onTrack/onMonitor/onNotAHabit/onWrongDetails as
+ * fresh inline arrows per candidate on every ResultsScreen render. Here each
+ * handler is built once per candidate via useCallback, keyed on the already-
+ * stable ResultsScreen callbacks (handleTrackLeak etc.) plus the candidate
+ * itself, so HabitCard only re-renders when its own candidate's data (or one
+ * of the stats computed for it) actually changes.
+ */
+const HabitCardItem = memo(function HabitCardItem({
+  rank,
+  candidate,
+  month,
+  monthTotalCents,
+  coveredDays,
+  tipMonth,
+  tipAmountCents,
+  onTrack,
+  onMonitor,
+  onNotAHabit,
+  onWrongDetails,
+}: HabitCardItemProps) {
+  const handleTrack = useCallback(() => onTrack(candidate), [onTrack, candidate]);
+  const handleMonitor = useCallback(() => onMonitor(candidate), [onMonitor, candidate]);
+  const handleNotAHabit = useCallback(() => onNotAHabit(candidate), [onNotAHabit, candidate]);
+  const handleWrongDetails = useCallback(
+    () => onWrongDetails(candidate.category),
+    [onWrongDetails, candidate.category]
+  );
+  return (
+    <HabitCard
+      rank={rank}
+      candidate={candidate}
+      month={month}
+      monthTotalCents={monthTotalCents}
+      coveredDays={coveredDays}
+      tipMonth={tipMonth}
+      tipAmountCents={tipAmountCents}
+      onTrack={handleTrack}
+      onMonitor={handleMonitor}
+      onNotAHabit={handleNotAHabit}
+      onWrongDetails={handleWrongDetails}
+    />
+  );
+});
 
 /**
  * Results screen orchestrator (leak-scan-spec.md section 5, visual spec).
@@ -108,12 +179,29 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
   const [openCategory, setOpenCategory] = useState<ExpenseCategory | null>(null);
   const [openPulseCell, setOpenPulseCell] = useState<PulseCell | null>(null);
   const [undone, setUndone] = useState(false);
+  // UX-035: busy flags for the two CTAs whose write-loops previously had no
+  // pending state, so a double tap could start a second import pass before
+  // the first finished (mirrors app/paywall.tsx's `purchasing` pattern).
+  const [savingProjection, setSavingProjection] = useState(false);
+  const [bringingInDays, setBringingInDays] = useState(false);
+  // UX-035: handleUndo's trigger (ResultsFooter's ConfirmSheet) lives in a
+  // file this pass does not own, so it can't be visually disabled from here.
+  // A ref guard still stops a second delete pass from firing.
+  const undoInFlightRef = useRef(false);
   // Finding-first ladder (ADR 0020): collapsed on first render, local state so
   // a re-visit within this session (i.e. this mount) keeps it expanded.
   const [ladderExpanded, setLadderExpanded] = useState(false);
 
   React.useEffect(() => {
     getScanRules().then(setRulesState);
+  }, []);
+
+  // UX-013: app/leak-scan.tsx swaps IntakeScreen for this screen as a
+  // conditional render, not a real navigation push, so VoiceOver never shifts
+  // focus here on its own. Announce arrival on mount (house pattern:
+  // components/ui/Toast.tsx, ~:88).
+  React.useEffect(() => {
+    AccessibilityInfo.announceForAccessibility(strings.leakScan.resultsTitle);
   }, []);
 
   const rerun = useCallback(
@@ -276,65 +364,95 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
 
   const handleSaveProjection = useCallback(
     async (remindBefore: Record<string, boolean>) => {
-      const recurringExpenses = recurringToExpenses(result, { remindBefore });
-      // Re-scan dedup (review fix, build 12 re-scan entry): drop any
-      // recurring item already brought in by a prior import before writing,
-      // same guard as handleBringInDays below.
-      const toWrite = filterAlreadyImported(recurringExpenses, expenses);
-      const skipped = recurringExpenses.length - toWrite.length;
-      // toAddExpenseInput (utils/leakScan/importWrite.ts) carries source and
-      // importId through, not just the fields a manual log would set -- the
-      // fix for undo previously removing nothing (see its own doc comment).
-      for (const exp of toWrite) {
-        await addExpense(toAddExpenseInput(exp));
-      }
-      // Save had no confirmation surface before; only speak up here when
-      // there's something the user wouldn't otherwise know, i.e. a skip.
-      if (skipped > 0) {
-        toast.show(strings.leakScan.skippedAlreadyImported(skipped));
+      // UX-035: guards ProjectionSection's Save CTA against a double tap
+      // starting a second write pass before the first completes.
+      if (savingProjection) return;
+      setSavingProjection(true);
+      try {
+        const recurringExpenses = recurringToExpenses(result, { remindBefore });
+        // Re-scan dedup (review fix, build 12 re-scan entry): drop any
+        // recurring item already brought in by a prior import before writing,
+        // same guard as handleBringInDays below.
+        const toWrite = filterAlreadyImported(recurringExpenses, expenses);
+        const skipped = recurringExpenses.length - toWrite.length;
+        // toAddExpenseInput (utils/leakScan/importWrite.ts) carries source and
+        // importId through, not just the fields a manual log would set -- the
+        // fix for undo previously removing nothing (see its own doc comment).
+        for (const exp of toWrite) {
+          await addExpense(toAddExpenseInput(exp));
+        }
+        // Save had no confirmation surface before; only speak up here when
+        // there's something the user wouldn't otherwise know, i.e. a skip.
+        if (skipped > 0) {
+          toast.show(strings.leakScan.skippedAlreadyImported(skipped));
+        }
+      } finally {
+        setSavingProjection(false);
       }
     },
-    [result, addExpense, expenses, toast]
+    [result, addExpense, expenses, toast, savingProjection]
   );
 
   const handleUndo = useCallback(async () => {
-    // undoImport is the pure filter the pipeline exports (acceptance 14); applied
-    // here via per-item deleteExpense calls so ExpensesContext's own persistence
-    // and analytics stay the single write path (no parallel storage write).
-    const toDelete = expenses.filter((e) => e.importId === result.importId);
-    for (const exp of toDelete) {
-      await deleteExpense(exp.id);
+    // UX-035: ResultsFooter's ConfirmSheet confirm button isn't owned by this
+    // pass, so it can't be visually disabled here; this ref guard still stops
+    // a double confirm-tap from deleting the same import twice.
+    if (undoInFlightRef.current) return;
+    undoInFlightRef.current = true;
+    try {
+      // undoImport is the pure filter the pipeline exports (acceptance 14); applied
+      // here via per-item deleteExpense calls so ExpensesContext's own persistence
+      // and analytics stay the single write path (no parallel storage write).
+      const toDelete = expenses.filter((e) => e.importId === result.importId);
+      for (const exp of toDelete) {
+        await deleteExpense(exp.id);
+      }
+      track('scan_undone', {});
+      setUndone(true);
+    } finally {
+      undoInFlightRef.current = false;
     }
-    track('scan_undone', {});
-    setUndone(true);
   }, [expenses, result.importId, deleteExpense]);
 
   const handleBringInDays = useCallback(async () => {
-    const seeded = seedLastDays(result, BRING_IN_DAYS);
-    // Re-scan dedup (review fix, build 12 re-scan entry): re-importing an
-    // overlapping statement (reachable via Insights' re-scan entry) used to
-    // write every overlapping row a second time with a fresh id, doubling
-    // recorded spend. Drop anything already brought in by a prior import.
-    const toWrite = filterAlreadyImported(seeded, expenses);
-    const skipped = seeded.length - toWrite.length;
-    for (const exp of toWrite) {
-      await addExpense(toAddExpenseInput(exp));
+    // UX-035: guards the "Bring in your last N days" CTA against a double
+    // tap starting a second ~30-expense import pass before the first
+    // completes.
+    if (bringingInDays) return;
+    setBringingInDays(true);
+    try {
+      const seeded = seedLastDays(result, BRING_IN_DAYS);
+      // Re-scan dedup (review fix, build 12 re-scan entry): re-importing an
+      // overlapping statement (reachable via Insights' re-scan entry) used to
+      // write every overlapping row a second time with a fresh id, doubling
+      // recorded spend. Drop anything already brought in by a prior import.
+      const toWrite = filterAlreadyImported(seeded, expenses);
+      const skipped = seeded.length - toWrite.length;
+      for (const exp of toWrite) {
+        await addExpense(toAddExpenseInput(exp));
+      }
+      track('scan_seed_applied', { rows: toWrite.length, days: BRING_IN_DAYS });
+      // This is the scan door's only exit into the app; it must complete
+      // onboarding here or the user loops back into an empty scan on relaunch.
+      await completeScanOnboarding();
+      router.push('/(tabs)');
+      // Every mutating action confirms itself (spec 01 section 5). This one
+      // writes about 30 expenses, so landing on Today in silence left the user
+      // with no evidence the import happened. When some rows were skipped as
+      // already-imported duplicates, that's said too, honestly.
+      toast.show(
+        skipped > 0
+          ? `${strings.leakScan.savedToHabitCents} ${strings.leakScan.skippedAlreadyImported(skipped)}`
+          : strings.leakScan.savedToHabitCents
+      );
+    } finally {
+      setBringingInDays(false);
     }
-    track('scan_seed_applied', { rows: toWrite.length, days: BRING_IN_DAYS });
-    // This is the scan door's only exit into the app; it must complete
-    // onboarding here or the user loops back into an empty scan on relaunch.
-    await completeScanOnboarding();
-    router.push('/(tabs)');
-    // Every mutating action confirms itself (spec 01 section 5). This one
-    // writes about 30 expenses, so landing on Today in silence left the user
-    // with no evidence the import happened. When some rows were skipped as
-    // already-imported duplicates, that's said too, honestly.
-    toast.show(
-      skipped > 0
-        ? `${strings.leakScan.savedToHabitCents} ${strings.leakScan.skippedAlreadyImported(skipped)}`
-        : strings.leakScan.savedToHabitCents
-    );
-  }, [result, addExpense, expenses, router, toast, completeScanOnboarding]);
+  }, [result, addExpense, expenses, router, toast, completeScanOnboarding, bringingInDays]);
+
+  // UX-033: CategoryList is React.memo'd; this is what makes that memo
+  // effective (the old inline arrow was recreated every render).
+  const handleCategoryPress = useCallback((c: CategorySummary) => setOpenCategory(c.category), []);
 
   // Dashed expander (ADR 0020): mirrors CategoryList's "View more" analytics
   // pattern, fired once per expand.
@@ -369,7 +487,11 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
           {evidenceWindow ? <Text style={styles.eyebrow}>{evidenceWindow}</Text> : null}
-          <Text style={styles.screenTitle}>{strings.leakScan.resultsTitle}</Text>
+          {/* UX-026: results is one of the longest screens in the flow; give
+              its title header role so it shows up in VoiceOver's rotor. */}
+          <Text style={styles.screenTitle} accessibilityRole="header">
+            {strings.leakScan.resultsTitle}
+          </Text>
         </View>
 
         {hasFinding && topCandidate && (
@@ -401,7 +523,7 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
             <KpiRow kpi={kpi} />
 
             <View style={styles.spacer} />
-            <CategoryList categories={categories} onCategoryPress={(c) => setOpenCategory(c.category)} />
+            <CategoryList categories={categories} onCategoryPress={handleCategoryPress} />
 
             <View style={styles.spacer} />
             <SpendPulse result={result} onCellPress={setOpenPulseCell} />
@@ -419,7 +541,7 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
                   // amount (nextMonthHits already reflects the 3-hit month).
                   const tipAmountCents = recurringMatch ? recurringMatch.amountCents : undefined;
                   return (
-                    <HabitCard
+                    <HabitCardItem
                       key={candidate.merchantStem}
                       rank={i + 1}
                       candidate={candidate}
@@ -428,10 +550,10 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
                       coveredDays={result.coverage?.coveredDays ?? 0}
                       tipMonth={upcomingMonthLabel}
                       tipAmountCents={tipAmountCents}
-                      onTrack={() => handleTrackLeak(candidate)}
-                      onMonitor={() => handleMonitor(candidate)}
-                      onNotAHabit={() => handleNotAHabit(candidate)}
-                      onWrongDetails={() => setOpenCategory(candidate.category)}
+                      onTrack={handleTrackLeak}
+                      onMonitor={handleMonitor}
+                      onNotAHabit={handleNotAHabit}
+                      onWrongDetails={setOpenCategory}
                     />
                   );
                 })}
@@ -439,7 +561,7 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
             )}
 
             <View style={styles.spacer} />
-            <ProjectionSection summary={projection} onSave={handleSaveProjection} />
+            <ProjectionSection summary={projection} onSave={handleSaveProjection} saving={savingProjection} />
           </>
         )}
 
@@ -458,6 +580,15 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
               <Text style={styles.reviewQueueBannerText}>
                 {strings.leakScan.reviewQueueTitle(reviewQueue.length)}
               </Text>
+              {/* UX-038: this row opens the review-queue sheet; the rows rule
+                  says a chevron names that ("opens something in-app"). */}
+              <Icon
+                name="ChevronRight"
+                size={16}
+                color={theme.mistText}
+                importantForAccessibility="no-hide-descendants"
+                accessibilityElementsHidden
+              />
             </TouchableOpacity>
           </>
         )}
@@ -465,6 +596,7 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
         <Button
           label={strings.leakScan.bringInLastDays(BRING_IN_DAYS)}
           onPress={handleBringInDays}
+          disabled={bringingInDays}
           style={styles.handoffButton}
         />
 
@@ -525,7 +657,10 @@ function createStyles(theme: AppTheme) {
       backgroundColor: theme.background,
     },
     scrollContent: {
-      padding: 16,
+      // UX-018: was a flat 16 in both directions; the horizontal gutter
+      // becomes the ratified 20, vertical padding is untouched.
+      paddingHorizontal: spacing.gutter,
+      paddingVertical: 16,
       paddingBottom: 40,
     },
     header: {
@@ -536,7 +671,7 @@ function createStyles(theme: AppTheme) {
       fontSize: typeScale.eyebrow,
       fontFamily: theme.fonts.uiSemibold,
       letterSpacing: typeScale.eyebrowLetterSpacing,
-      color: theme.mist,
+      color: theme.mistText,
       textTransform: 'uppercase',
       marginBottom: 2,
     },
@@ -572,7 +707,7 @@ function createStyles(theme: AppTheme) {
     },
     ladderExpanderText: {
       fontFamily: theme.fonts.uiSemibold,
-      fontSize: 14,
+      fontSize: typeScale.label,
       color: theme.primaryDark,
       textAlign: 'center',
     },
@@ -582,9 +717,15 @@ function createStyles(theme: AppTheme) {
       borderWidth: 1,
       borderColor: theme.cloud,
       padding: 14,
+      // UX-038: chevron trailing slot added; row goes horizontal to sit it
+      // at the end without disturbing the text's own layout.
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
     },
     reviewQueueBannerText: {
-      fontSize: 14,
+      flex: 1,
+      fontSize: typeScale.label,
       fontFamily: theme.fonts.uiMedium,
       color: theme.ink,
     },
@@ -594,7 +735,8 @@ function createStyles(theme: AppTheme) {
     undoneCenter: {
       alignItems: 'center',
       justifyContent: 'center',
-      paddingHorizontal: 24,
+      // UX-018: 24 drifted from the ratified 20pt screen gutter.
+      paddingHorizontal: spacing.gutter,
     },
     undoneText: {
       fontSize: typeScale.body,

@@ -79,13 +79,18 @@ export function SpentKeptChips({
           style={[styles.eyebrow, spentSelected ? styles.eyebrowSpentSelected : null]}
           maxFontSizeMultiplier={1.5}
         >
-          {strings.today.spentChipLabel.toUpperCase()}
+          {strings.today.spentChipLabel}
         </Text>
         {/* Spend is never a win: it never takes the sage fill, selected or
             not, only slate at rest and ink when selected. */}
         <Text
           style={[styles.amount, spentSelected ? styles.spentAmountSelected : null]}
           maxFontSizeMultiplier={1.3}
+          // UX-067: without a line cap a long formatted amount could wrap and
+          // misalign the Spent/Kept pair; adjustsFontSizeToFit shrinks the
+          // glyphs to fit the one line instead.
+          numberOfLines={1}
+          adjustsFontSizeToFit
         >
           {formattedSpent}
         </Text>
@@ -106,13 +111,16 @@ export function SpentKeptChips({
             style={[styles.eyebrow, keptSelected ? styles.eyebrowKeptSelected : null]}
             maxFontSizeMultiplier={1.5}
           >
-            {strings.today.keptChipLabel.toUpperCase()}
+            {strings.today.keptChipLabel}
           </Text>
           {checkInPending ? <View style={styles.pendingDot} /> : null}
         </View>
         <Text
           style={[styles.amount, keptSelected ? styles.keptAmountSelected : null]}
           maxFontSizeMultiplier={1.3}
+          // UX-067: same fix as the Spent amount above.
+          numberOfLines={1}
+          adjustsFontSizeToFit
         >
           {formattedKept}
         </Text>
@@ -144,7 +152,13 @@ function createStyles(theme: AppTheme) {
       fontSize: typeScale.eyebrow,
       fontFamily: theme.fonts.uiSemibold,
       letterSpacing: typeScale.eyebrowLetterSpacing,
-      color: theme.mist,
+      // UX-060: uppercased by the style, not by a JS .toUpperCase() on the
+      // string, so the string stays sentence case for screen readers.
+      textTransform: 'uppercase',
+      // Slate, not mistText: the UNSELECTED segment is transparent over the
+      // cloud track, where mistText is only 4.06:1. mistText is certified on
+      // white and snow, not on cloud. Slate is 6.39:1 there. UX-003.
+      color: theme.slate,
     },
     eyebrowSpentSelected: {
       color: theme.ink,

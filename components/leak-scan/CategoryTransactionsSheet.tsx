@@ -1,9 +1,10 @@
-import React, { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, useWindowDimensions } from 'react-native';
+import React, { useCallback, useMemo, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, useWindowDimensions } from 'react-native';
 import { Button } from '@/components/ui/Button';
 import { Sheet } from '@/components/ui/Sheet';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import { formatDate, parseDateOnly } from '@/utils/dates';
 import { radii, typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import { categoryDisplayLabel } from '@/utils/leakScanBridge';
@@ -31,6 +32,14 @@ type CategoryTransactionsSheetProps = {
   onClose: () => void;
 };
 
+/** UX-050: a scan row's dateISO is a calendar day, not an instant, so it is
+ *  parsed field by field. Falls back to the raw key rather than rendering
+ *  "Invalid Date" if a row ever carries something unparseable. */
+function formatRowDate(dateISO: string): string {
+  const parsed = parseDateOnly(dateISO);
+  return parsed ? formatDate(parsed, { month: 'short', day: 'numeric' }) : dateISO;
+}
+
 /**
  * Category row tap -> transaction list (spec 5.2): every row's category chip
  * is tap-to-correct (spec 8). A correction here writes the same persistent
@@ -54,6 +63,54 @@ export function CategoryTransactionsSheet({
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [openChipFor, setOpenChipFor] = useState<string | null>(null);
 
+  // UX-016/034: a category can carry every transaction in it, which used to
+  // all mount at once inside a plain ScrollView. FlatList virtualizes so only
+  // the rows on screen (plus a small overscan buffer) actually mount.
+  const renderRow = useCallback(
+    ({ item: row }: { item: ScanRow }) => (
+      <View style={styles.row}>
+        <View style={styles.rowInfo}>
+          <Text style={styles.merchantName}>{row.merchantDisplay || row.rawDescription}</Text>
+          {/* UX-050: dateISO was rendered raw; route it through the app's
+              locale-aware date formatter. Parsed as a local calendar day,
+              not a UTC instant, so the label cannot slip to the day
+              before west of UTC. */}
+          <Text style={styles.rowDate}>{formatRowDate(row.dateISO)}</Text>
+        </View>
+        <Text style={styles.amount}>{format(Math.abs(row.amountCents))}</Text>
+        <TouchableOpacity
+          style={styles.chipButton}
+          onPress={() => setOpenChipFor(openChipFor === row.id ? null : row.id)}
+          accessibilityRole="button"
+          hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
+        >
+          <Text style={styles.chipButtonText}>{categoryDisplayLabel(row.category)}</Text>
+        </TouchableOpacity>
+        {openChipFor === row.id && (
+          <View style={styles.chipRow}>
+            {CATEGORY_OPTIONS.map((cat) => (
+              <TouchableOpacity
+                key={cat}
+                style={styles.chip}
+                onPress={() => {
+                  onCorrect(row.merchantStem, cat);
+                  setOpenChipFor(null);
+                }}
+                accessibilityRole="button"
+                hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
+              >
+                <Text style={styles.chipText}>{categoryDisplayLabel(cat)}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+      </View>
+    ),
+    [styles, format, openChipFor, onCorrect]
+  );
+
+  const keyExtractor = useCallback((row: ScanRow) => row.id, []);
+
   if (!category) return null;
 
   return (
@@ -63,43 +120,13 @@ export function CategoryTransactionsSheet({
           {categoryDisplayLabel(category)}
         </Text>
 
-        <ScrollView style={styles.scroll} contentContainerStyle={styles.listContent}>
-          {rows.map((row) => (
-            <View key={row.id} style={styles.row}>
-              <View style={styles.rowInfo}>
-                <Text style={styles.merchantName}>{row.merchantDisplay || row.rawDescription}</Text>
-                <Text style={styles.rowDate}>{row.dateISO}</Text>
-              </View>
-              <Text style={styles.amount}>{format(Math.abs(row.amountCents))}</Text>
-              <TouchableOpacity
-                style={styles.chipButton}
-                onPress={() => setOpenChipFor(openChipFor === row.id ? null : row.id)}
-                accessibilityRole="button"
-                hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
-              >
-                <Text style={styles.chipButtonText}>{categoryDisplayLabel(row.category)}</Text>
-              </TouchableOpacity>
-              {openChipFor === row.id && (
-                <View style={styles.chipRow}>
-                  {CATEGORY_OPTIONS.map((cat) => (
-                    <TouchableOpacity
-                      key={cat}
-                      style={styles.chip}
-                      onPress={() => {
-                        onCorrect(row.merchantStem, cat);
-                        setOpenChipFor(null);
-                      }}
-                      accessibilityRole="button"
-                      hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
-                    >
-                      <Text style={styles.chipText}>{categoryDisplayLabel(cat)}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              )}
-            </View>
-          ))}
-        </ScrollView>
+        <FlatList
+          data={rows}
+          keyExtractor={keyExtractor}
+          renderItem={renderRow}
+          style={styles.scroll}
+          contentContainerStyle={styles.listContent}
+        />
 
         <View style={styles.footer}>
           <Button label={strings.common.ok} onPress={onClose} />
@@ -114,8 +141,10 @@ function createStyles(theme: AppTheme) {
     body: {
       flexShrink: 1,
     },
+    // BATCH 2: literal 18 -> typeScale.titleSm, the compact bold sheet-title
+    // step the token sweep ratified for exactly this kind of data sheet.
     title: {
-      fontSize: 18,
+      fontSize: typeScale.titleSm,
       fontFamily: theme.fonts.uiBold,
       color: theme.ink,
       paddingHorizontal: 20,
@@ -143,7 +172,7 @@ function createStyles(theme: AppTheme) {
       color: theme.ink,
     },
     rowDate: {
-      fontSize: 11,
+      fontSize: typeScale.eyebrow,
       fontFamily: theme.fonts.ui,
       color: theme.slate,
       marginTop: 2,
@@ -165,7 +194,7 @@ function createStyles(theme: AppTheme) {
       borderColor: theme.chipBorder,
     },
     chipButtonText: {
-      fontSize: 11.5,
+      fontSize: typeScale.eyebrow,
       fontFamily: theme.fonts.uiSemibold,
       color: theme.slate,
     },

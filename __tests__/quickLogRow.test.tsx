@@ -55,7 +55,12 @@ describe('QuickLogRow', () => {
     expect(flat.gap).toBe(12);
   });
 
-  it('keeps the tap target unchanged: both the amount card and the plus button open the sheet', async () => {
+  it('exposes exactly one accessible control for the log action, and both the amount card and the plus button still open the sheet by touch (UX-055)', async () => {
+    // UX-055: the amount Pressable and the plus TouchableOpacity used to
+    // share strings.today.quickLogOpenLabel, so VoiceOver announced the same
+    // button twice in a row. The plus button is now hidden from the
+    // accessibility tree (accessible={false}); only the amount tap area is
+    // discoverable by assistive tech, though both remain live touch targets.
     const onOpenSheet = jest.fn();
     const view = await render(
       <Providers>
@@ -63,14 +68,17 @@ describe('QuickLogRow', () => {
       </Providers>
     );
     const targets = await view.findAllByLabelText(strings.today.quickLogOpenLabel);
-    // The amount Pressable and the plus TouchableOpacity share this label
-    // (QuickLogRow.tsx); both must still open the sheet after the fullWidth
-    // change since the tap target itself did not move.
-    expect(targets).toHaveLength(2);
-    for (const target of targets) {
-      fireEvent.press(target);
-    }
-    expect(onOpenSheet).toHaveBeenCalledTimes(2);
+    expect(targets).toHaveLength(1);
+    fireEvent.press(targets[0]);
+    expect(onOpenSheet).toHaveBeenCalledTimes(1);
     expect(onOpenSheet).toHaveBeenCalledWith(undefined);
+
+    // The plus button is still a real touch target; it is only hidden from
+    // assistive tech (RNTL's queries exclude accessibility-hidden elements
+    // by default, hence includeHiddenElements here), not removed from the
+    // tree or made non-functional.
+    const plusButton = view.getByTestId('quick-log-plus', { includeHiddenElements: true });
+    fireEvent.press(plusButton);
+    expect(onOpenSheet).toHaveBeenCalledTimes(2);
   });
 });

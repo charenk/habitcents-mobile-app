@@ -1,5 +1,6 @@
-import React, { useMemo, useState } from 'react';
+import React, { memo, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Icon } from '@/components/ui';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { radii, typeScale, type AppTheme } from '@/constants/theme';
@@ -19,7 +20,7 @@ type CategoryListProps = {
  * "View more" expansion. Bars are neutral gray on purpose (spend is not a
  * win; green stays reserved for Kept).
  */
-export function CategoryList({ categories, onCategoryPress }: CategoryListProps) {
+function CategoryListImpl({ categories, onCategoryPress }: CategoryListProps) {
   const theme = useTheme();
   const { format } = useCurrency();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -46,8 +47,19 @@ export function CategoryList({ categories, onCategoryPress }: CategoryListProps)
           accessibilityRole="button"
         >
           <View style={styles.rowHeader}>
-            <Text style={styles.categoryName}>{categoryDisplayLabel(c.category)}</Text>
-            <TierBadge tier={c.tier} />
+            <View style={styles.rowHeaderLeft}>
+              <Text style={styles.categoryName}>{categoryDisplayLabel(c.category)}</Text>
+              <TierBadge tier={c.tier} />
+            </View>
+            {/* UX-038: this row opens CategoryTransactionsSheet; the rows
+                rule says a chevron names that ("opens something in-app"). */}
+            <Icon
+              name="ChevronRight"
+              size={16}
+              color={theme.mistText}
+              importantForAccessibility="no-hide-descendants"
+              accessibilityElementsHidden
+            />
           </View>
           <View style={styles.rowStats}>
             <Text style={styles.amount}>{format(c.totalCents)}</Text>
@@ -79,6 +91,15 @@ export function CategoryList({ categories, onCategoryPress }: CategoryListProps)
   );
 }
 
+/**
+ * Memoized: renders once per leak-scan results screen, so the payoff is
+ * bailing on re-renders triggered by unrelated ResultsScreen state (sheet
+ * open/close, other list edits) rather than a "many rows" win. Effective at
+ * its call site because ResultsScreen passes a useCallback-wrapped
+ * onCategoryPress instead of the previous inline arrow.
+ */
+export const CategoryList = memo(CategoryListImpl);
+
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     container: {
@@ -103,8 +124,16 @@ function createStyles(theme: AppTheme) {
       alignItems: 'center',
       marginBottom: 4,
     },
+    // UX-038: groups the name and tier badge so the chevron can sit at the
+    // row's true trailing edge instead of splitting three ways.
+    rowHeaderLeft: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+    },
     categoryName: {
-      fontSize: 14,
+      fontSize: typeScale.label,
       fontFamily: theme.fonts.uiMedium,
       color: theme.ink,
     },
@@ -115,6 +144,11 @@ function createStyles(theme: AppTheme) {
       marginBottom: 6,
     },
     amount: {
+      // Deliberately a literal, not typeScale.button. This is serif money in a
+      // list row, and the scale has no step for that yet: borrowing the button
+      // token would couple a money figure to button-label sizing, so retuning
+      // buttons would silently resize money. Awaiting a serif money step in the
+      // second scale ratification. UX-018.
       fontSize: 16,
       fontFamily: theme.fonts.display,
       color: theme.ink,

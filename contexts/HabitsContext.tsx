@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import {
   getHabits,
   saveHabits,
@@ -40,6 +40,12 @@ type HabitsContextValue = {
   isLoading: boolean;
   refreshHabits: (expenses: Expense[]) => Promise<void>;
   dismissHabit: (habitId: string) => Promise<void>;
+  /**
+   * UX-022: undo for dismissHabit's "Not this one". Clears dismissedAt so the
+   * leak reappears in getDiscoveredHabits() at the position it already held
+   * in `habits`, exactly as if it had never been dismissed.
+   */
+  restoreDismissedHabit: (habitId: string) => Promise<void>;
   /**
    * Register a Leak Scan habit candidate as a discovered habit (P2-1b results
    * screen "Track this leak"). The scan builds a full DetectedHabit from its
@@ -285,6 +291,23 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
     await saveHabits(updated);
     track('habit_dismissed', { source: 'detection' });
   }, [habits]);
+
+  // UX-022: real undo, not a fake one. Clears the same field dismissHabit
+  // set, so the habit is indistinguishable from one that was never dismissed.
+  //
+  // Reads habitsRef.current, not the render closure, exactly like
+  // ExpensesContext.restoreExpense: this runs from a toast action created
+  // before the dismissal committed, so mapping over a captured `habits` would
+  // write a pre-dismiss snapshot back to storage and silently revert anything
+  // else that changed while the toast was up.
+  const restoreDismissedHabit = useCallback(async (habitId: string): Promise<void> => {
+    const updated = habitsRef.current.map(h =>
+      h.id === habitId ? { ...h, dismissedAt: undefined } : h
+    );
+    habitsRef.current = updated;
+    setHabits(updated);
+    await saveHabits(updated);
+  }, []);
 
   /**
    * Admit a Leak Scan habit candidate into habits state. Reuses the same
@@ -649,6 +672,10 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
   const savePartialSlip = useCallback(async (goalId: string, amountSpent: number): Promise<void> => {
     const goal = goals.find(g => g.id === goalId);
     if (!goal) return;
+    // UX-020: defense in depth. partialSlipCredit(skipValue, 0) returns the
+    // FULL skipValue, so a 0 (or negative) amount must never reach it
+    // regardless of what the caller did or didn't guard on the sheet side.
+    if (amountSpent <= 0) return;
     const today = atMidnight(new Date());
     const existing = goal.dayLogs.find((e) => isSameDay(e.date, today));
     if (!existing || existing.state !== 'slipped') return;
@@ -700,36 +727,55 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
     return habits.filter(h => h.status === 'discovered' && !h.dismissedAt);
   }, [habits]);
 
+  // These were inline arrows in the provider value object below (a fresh
+  // function identity every render). setLastMilestone/setLastCoachMoment are
+  // React state setters, which are referentially stable forever, so an empty
+  // deps array is correct: these two never need to be recreated.
+  const clearLastMilestone = useCallback(() => setLastMilestone(null), []);
+  const clearLastCoachMoment = useCallback(() => setLastCoachMoment(null), []);
+
+  // Every field here is either plain state (habits, goals, isLoading,
+  // lastMilestone, lastCoachMoment) or a useCallback already listed in the
+  // deps array above it, so this deps list is exhaustive: the memo only
+  // recomputes when one of the 25 fields it actually returns changes.
+  const value = useMemo(() => ({
+    habits,
+    goals,
+    isLoading,
+    refreshHabits,
+    dismissHabit,
+    restoreDismissedHabit,
+    addScanHabit,
+    startBreakingHabit,
+    seedDiscoveredHabit,
+    answerToday,
+    answerEvent,
+    changeTodayAnswer,
+    backfillYesterday,
+    savePartialSlip,
+    updateSkipValue,
+    stopBreakingHabit,
+    getHabitById,
+    getGoalByHabitId,
+    getActiveHabits,
+    getDiscoveredHabits,
+    lastMilestone,
+    clearLastMilestone,
+    lastCoachMoment,
+    clearLastCoachMoment,
+    maybeShowDetectionMoment,
+    maybeShowFirstLogMoment,
+  }), [
+    habits, goals, isLoading, refreshHabits, dismissHabit, restoreDismissedHabit,
+    addScanHabit, startBreakingHabit, seedDiscoveredHabit, answerToday, answerEvent,
+    changeTodayAnswer, backfillYesterday, savePartialSlip, updateSkipValue, stopBreakingHabit,
+    getHabitById, getGoalByHabitId, getActiveHabits, getDiscoveredHabits,
+    lastMilestone, clearLastMilestone, lastCoachMoment, clearLastCoachMoment,
+    maybeShowDetectionMoment, maybeShowFirstLogMoment,
+  ]);
+
   return (
-    <HabitsContext.Provider
-      value={{
-        habits,
-        goals,
-        isLoading,
-        refreshHabits,
-        dismissHabit,
-        addScanHabit,
-        startBreakingHabit,
-        seedDiscoveredHabit,
-        answerToday,
-        answerEvent,
-        changeTodayAnswer,
-        backfillYesterday,
-        savePartialSlip,
-        updateSkipValue,
-        stopBreakingHabit,
-        getHabitById,
-        getGoalByHabitId,
-        getActiveHabits,
-        getDiscoveredHabits,
-        lastMilestone,
-        clearLastMilestone: () => setLastMilestone(null),
-        lastCoachMoment,
-        clearLastCoachMoment: () => setLastCoachMoment(null),
-        maybeShowDetectionMoment,
-        maybeShowFirstLogMoment,
-      }}
-    >
+    <HabitsContext.Provider value={value}>
       {children}
     </HabitsContext.Provider>
   );

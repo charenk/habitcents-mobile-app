@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import type { AppTheme } from '@/constants/theme';
-import { radii } from '@/constants/theme';
+import { radii, typeScale } from '@/constants/theme';
 
 export type ButtonVariant =
   | 'primary'
@@ -59,7 +59,10 @@ export function Button({
         style,
       ]}
     >
-      <Text style={[styles.baseLabel, labelStyle, disabled ? styles.disabledLabel : null]}>
+      <Text
+        style={[styles.baseLabel, labelStyle, disabled ? styles.disabledLabel : null]}
+        maxFontSizeMultiplier={1.5}
+      >
         {label}
       </Text>
     </Pressable>
@@ -82,7 +85,10 @@ function createStyles(theme: AppTheme) {
       borderWidth: 0,
     },
     disabledLabel: {
-      color: theme.white,
+      // Slate, not white: white on cloud is 1.18:1, so a disabled button could
+      // not be read at all. WCAG exempts disabled controls, but a user still
+      // has to know what the button would do. UX-047.
+      color: theme.slate,
     },
 
     // primary
@@ -91,12 +97,14 @@ function createStyles(theme: AppTheme) {
       minHeight: 50,
     },
     primaryPressed: {
-      backgroundColor: theme.primaryDark,
+      backgroundColor: theme.primaryPressedBg,
     },
     primaryLabel: {
-      color: theme.white,
+      // Ink on the unchanged brand sage: 6.24:1, where white was 2.71:1.
+      // Charen's call (2026-08-12): keep the green, darken the label. UX-001.
+      color: theme.ink,
       fontFamily: theme.fonts.uiSemibold,
-      fontSize: 16,
+      fontSize: typeScale.button,
     },
 
     // secondary
@@ -112,7 +120,7 @@ function createStyles(theme: AppTheme) {
     secondaryLabel: {
       color: theme.ink,
       fontFamily: theme.fonts.uiSemibold,
-      fontSize: 16,
+      fontSize: typeScale.button,
     },
 
     // tertiary
@@ -126,7 +134,7 @@ function createStyles(theme: AppTheme) {
     tertiaryLabel: {
       color: theme.slate,
       fontFamily: theme.fonts.uiSemibold,
-      fontSize: 14,
+      fontSize: typeScale.label,
     },
 
     // destructive (bare)
@@ -140,7 +148,7 @@ function createStyles(theme: AppTheme) {
     destructiveLabel: {
       color: theme.coral,
       fontFamily: theme.fonts.uiSemibold,
-      fontSize: 16,
+      fontSize: typeScale.button,
     },
 
     // destructiveFill
@@ -154,7 +162,7 @@ function createStyles(theme: AppTheme) {
     destructiveFillLabel: {
       color: theme.white,
       fontFamily: theme.fonts.uiSemibold,
-      fontSize: 16,
+      fontSize: typeScale.button,
     },
   });
 }

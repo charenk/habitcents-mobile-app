@@ -32,6 +32,7 @@ import { ThemeProvider } from '@/contexts/ThemeContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { CategoriesProvider } from '@/contexts/CategoriesContext';
 import { ExpensesProvider } from '@/contexts/ExpensesContext';
+import { ToastProvider } from '@/components/ui/Toast';
 import CategoryDetailScreen from '@/app/category/[id]';
 import { saveCategories, saveExpenses } from '@/utils/storage';
 import { strings } from '@/constants/strings';
@@ -47,11 +48,13 @@ function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SafeAreaProvider initialMetrics={initialMetrics}>
       <ThemeProvider>
-        <CurrencyProvider>
-          <CategoriesProvider>
-            <ExpensesProvider>{children}</ExpensesProvider>
-          </CategoriesProvider>
-        </CurrencyProvider>
+        <ToastProvider>
+          <CurrencyProvider>
+            <CategoriesProvider>
+              <ExpensesProvider>{children}</ExpensesProvider>
+            </CategoriesProvider>
+          </CurrencyProvider>
+        </ToastProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );

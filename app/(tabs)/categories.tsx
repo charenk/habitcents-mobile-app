@@ -20,7 +20,7 @@ import { useCategories } from '@/contexts/CategoriesContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
 import { CategoryRow } from '@/components/CategoryRow';
 import { AddCategoryModal } from '@/components/AddCategoryModal';
-import { radii, typeScale, type AppTheme } from '@/constants/theme';
+import { layout, radii, typeScale, type AppTheme } from '@/constants/theme';
 import type { Category, CategoryIcon } from '@/types/category';
 import { strings } from '@/constants/strings';
 import { hapticWarning } from '@/utils/motion';
@@ -101,9 +101,14 @@ export default function CategoriesScreen() {
   }, []);
 
   const getCategorySpend = useCallback((category: Category): number => {
-    // Get spending from expenses that match this category name
+    // UX-007: CategoryRow renders this through strings.categories.thisMonthSuffix
+    // ("this month"), so the total has to actually be scoped to the current
+    // calendar month, not all-time. Same month-window pattern as
+    // app/category/[id].tsx's thisMonthStart/thisMonthExpenses.
+    const now = new Date();
+    const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
     const categoryExpenses = expenses.filter(
-      e => e.category === category.name || e.categoryId === category.id
+      e => (e.category === category.name || e.categoryId === category.id) && e.date >= thisMonthStart
     );
     return categoryExpenses.reduce((sum, e) => sum + e.amount, 0);
   }, [expenses]);
@@ -196,7 +201,7 @@ function createStyles(theme: AppTheme) {
     scrollContent: {
       paddingHorizontal: 20,
       paddingTop: 14,
-      paddingBottom: 100,
+      paddingBottom: layout.screenBottomClearance,
       gap: 20,
     },
     section: {
@@ -207,7 +212,7 @@ function createStyles(theme: AppTheme) {
       fontFamily: theme.fonts.uiSemibold,
       letterSpacing: typeScale.eyebrowLetterSpacing,
       textTransform: 'uppercase',
-      color: theme.mist,
+      color: theme.mistText,
       paddingHorizontal: 2,
     },
     card: {

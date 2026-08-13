@@ -1,16 +1,13 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, View, Text, StyleSheet } from 'react-native';
+import React, { useEffect, useMemo } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useOnboarding } from '@/contexts/OnboardingContext';
-import { Button, Icon } from '@/components/ui';
-import type { IconName } from '@/components/ui';
-import { KeptHero } from '@/components/habit-logging/KeptHero';
+import { Button } from '@/components/ui';
 import { AuroraBackground } from '@/components/onboarding/AuroraBackground';
-import { useReducedMotion } from '@/utils/motion';
 import type { AppTheme } from '@/constants/theme';
-import { typeScale } from '@/constants/theme';
+import { spacing } from '@/constants/theme';
 import type { OnboardingStep } from '@/types/onboarding';
 import { strings } from '@/constants/strings';
 
@@ -37,70 +34,6 @@ const STEP_ROUTE: Partial<Record<OnboardingStep, string>> = {
   guided_log: '/onboarding/intent',
   success: '/onboarding/intent',
 };
-
-// The two honest-zero value rows under the hero (W1, ADR 0020/0022).
-const VALUE_ROWS: { icon: IconName; text: string }[] = [
-  { icon: 'Timer', text: strings.onboarding.valuePropLog },
-  { icon: 'ChartLine', text: strings.onboarding.outcomeKeptCounts },
-];
-
-const EXAMPLE_ROTATE_MS = 2600;
-const EXAMPLE_FADE_MS = 220;
-
-/**
- * The rotating "for example: ..." caption under the hero (W1). Cosmetic
- * only: the accessibility label is pinned to the first example so VoiceOver
- * never announces a rotation (PATTERN_VOCABULARY "anything mounted
- * off-screen" spirit extended to anything that moves on its own; there is no
- * live region here on purpose). A plain setInterval drives a single Animated
- * opacity value with useNativeDriver true, one driver on one node, matching
- * this app's motion rule after two release-build crashes from mixed drivers.
- */
-function ExampleCaption({ theme, styles }: { theme: AppTheme; styles: Styles }) {
-  const reduceMotion = useReducedMotion();
-  const [index, setIndex] = useState(0);
-  const opacity = useRef(new Animated.Value(1)).current;
-
-  useEffect(() => {
-    if (reduceMotion) return;
-    const id = setInterval(() => {
-      Animated.timing(opacity, {
-        toValue: 0,
-        duration: EXAMPLE_FADE_MS,
-        useNativeDriver: true,
-      }).start(() => {
-        setIndex(i => (i + 1) % strings.onboarding.exampleSkips.length);
-        Animated.timing(opacity, {
-          toValue: 1,
-          duration: EXAMPLE_FADE_MS,
-          useNativeDriver: true,
-        }).start();
-      });
-    }, EXAMPLE_ROTATE_MS);
-    return () => clearInterval(id);
-  }, [reduceMotion, opacity]);
-
-  const fragment = reduceMotion
-    ? strings.onboarding.exampleSkips[0]
-    : strings.onboarding.exampleSkips[index];
-
-  return (
-    <View
-      style={styles.exampleRow}
-      accessible
-      // Static first line on purpose: the rotation is decorative, not
-      // content, so the accessible label never changes underneath a reader.
-      accessibilityLabel={`${strings.onboarding.exampleSkipPrefix} ${strings.onboarding.exampleSkips[0]}`}
-    >
-      <Text style={styles.examplePrefix} importantForAccessibility="no">
-        {strings.onboarding.exampleSkipPrefix}{' '}
-      </Text>
-      <Animated.Text style={[styles.exampleFragment, { opacity }]} importantForAccessibility="no">
-        {fragment}
-      </Animated.Text>
-    </View>
-  );
-}
 
 /**
  * Welcome (design/redesign-handoff/03-onboarding.md, screen 1; W1, ADR
@@ -175,27 +108,12 @@ function createStyles(theme: AppTheme) {
     content: {
       flex: 1,
       justifyContent: 'center',
-      paddingHorizontal: 24,
+      // UX-018: 24 drifted from the ratified 20pt screen gutter.
+      paddingHorizontal: spacing.gutter,
     },
-    brandRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 10,
-      marginBottom: 28,
-    },
-    brandMark: {
-      width: 34,
-      height: 34,
-      borderRadius: 17,
-      backgroundColor: theme.primary,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    brandName: {
-      fontSize: 17,
-      fontFamily: theme.fonts.uiBold,
-      color: theme.ink,
-    },
+    // UX-061: was 44/48, an off-scale literal with no matching typeScale
+    // step (closest is keptHero at 42); left as-is pending a scale
+    // ratification, reported rather than guessed at.
     headline: {
       fontSize: 44,
       lineHeight: 48,
@@ -203,60 +121,10 @@ function createStyles(theme: AppTheme) {
       color: theme.ink,
       marginBottom: 28,
     },
-    heroSection: {
-      marginBottom: 24,
-    },
-    exampleRow: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      justifyContent: 'center',
-      marginTop: 10,
-    },
-    examplePrefix: {
-      fontSize: typeScale.caption,
-      fontFamily: theme.fonts.ui,
-      color: theme.mist,
-    },
-    exampleFragment: {
-      fontSize: typeScale.caption,
-      fontFamily: theme.fonts.ui,
-      color: theme.slate,
-    },
-    valueProps: {
-      gap: 12,
-      marginBottom: 24,
-    },
-    valueRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 12,
-    },
-    valueTile: {
-      width: 32,
-      height: 32,
-      borderRadius: 9,
-      backgroundColor: theme.primaryLight,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    valueText: {
-      flex: 1,
-      fontSize: typeScale.body,
-      fontFamily: theme.fonts.ui,
-      color: theme.ink,
-      lineHeight: 21,
-    },
-    privacy: {
-      fontSize: typeScale.secondary,
-      fontFamily: theme.fonts.ui,
-      color: theme.mist,
-      lineHeight: 19,
-    },
     footer: {
-      paddingHorizontal: 24,
+      // UX-018: 24 drifted from the ratified 20pt screen gutter.
+      paddingHorizontal: spacing.gutter,
       paddingBottom: 16,
     },
   });
 }
-
-type Styles = ReturnType<typeof createStyles>;

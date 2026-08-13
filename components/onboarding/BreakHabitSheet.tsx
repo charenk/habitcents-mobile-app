@@ -310,13 +310,18 @@ function createStyles(theme: AppTheme) {
     },
     title: {
       fontFamily: theme.fonts.display,
-      fontSize: 28,
+      // Batch 2: the third decision-moment sheet title. It sat at 28 while the
+      // partial-slip and pick-one sheets sat at 32, a spread nobody can read
+      // as intent. All three now share displayMid, leaving two ranks that mean
+      // something: sheetTitle 26 for utility sheets, displayMid 30 for the
+      // sheets that ask you to decide something. UX-018.
+      fontSize: typeScale.displayMid,
       lineHeight: 34,
       color: theme.ink,
     },
     caption: {
       fontFamily: theme.fonts.ui,
-      fontSize: 14,
+      fontSize: typeScale.label,
       lineHeight: 20,
       color: theme.slate,
       marginTop: 4,
@@ -335,13 +340,13 @@ function createStyles(theme: AppTheme) {
       fontSize: typeScale.eyebrow,
       letterSpacing: typeScale.eyebrowLetterSpacing,
       textTransform: 'uppercase',
-      color: theme.mist,
+      color: theme.mistText,
       marginTop: 18,
       marginBottom: 8,
     },
     yearlyLine: {
       fontFamily: theme.fonts.ui,
-      fontSize: 14,
+      fontSize: typeScale.label,
       lineHeight: 20,
       color: theme.slate,
       marginTop: 12,
@@ -363,12 +368,12 @@ function createStyles(theme: AppTheme) {
       fontSize: typeScale.eyebrow,
       letterSpacing: typeScale.eyebrowLetterSpacing,
       textTransform: 'uppercase',
-      color: theme.mist,
+      color: theme.mistText,
       marginBottom: 6,
     },
     gateTitle: {
       fontFamily: theme.fonts.uiSemibold,
-      fontSize: 16,
+      fontSize: typeScale.button,
       lineHeight: 22,
       color: theme.ink,
     },
@@ -383,7 +388,7 @@ function createStyles(theme: AppTheme) {
       fontFamily: theme.fonts.ui,
       fontSize: typeScale.caption,
       lineHeight: 17,
-      color: theme.mist,
+      color: theme.mistText,
       marginTop: 10,
     },
   });

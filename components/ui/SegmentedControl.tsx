@@ -14,7 +14,7 @@ import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import type { AppTheme } from '@/constants/theme';
-import { radii, shadows } from '@/constants/theme';
+import { radii, shadows, typeScale } from '@/constants/theme';
 import { selectableLabel } from '@/utils/a11y';
 
 export type SegmentedControlProps<T extends string | number> = {
@@ -49,6 +49,11 @@ export function SegmentedControl<T extends string | number>({
             accessibilityRole="tab"
             accessibilityLabel={selectableLabel(option.label, selected)}
             accessibilityState={{ selected }}
+            // UX-030: minHeight 38 sits below the 44pt target floor. The
+            // track's 3pt padding plus this segment's own edge leaves 3pt of
+            // headroom top and bottom before hitting the track edge, so this
+            // extends the hit area without changing the visual.
+            hitSlop={{ top: 3, bottom: 3 }}
             style={({ pressed }) => [
               styles.segment,
               selected ? styles.segmentSelected : null,
@@ -58,6 +63,7 @@ export function SegmentedControl<T extends string | number>({
             <Text
               style={[styles.label, selected ? styles.labelSelected : null]}
               numberOfLines={1}
+              maxFontSizeMultiplier={1.5}
             >
               {option.label}
             </Text>
@@ -95,7 +101,7 @@ function createStyles(theme: AppTheme) {
     },
     label: {
       fontFamily: theme.fonts.uiSemibold,
-      fontSize: 13,
+      fontSize: typeScale.secondary,
       color: theme.slate,
     },
     labelSelected: {

@@ -10,7 +10,7 @@
  * one expense exists today, so this component stays reusable anywhere the
  * link doesn't apply.
  */
-import { useMemo } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { ExpenseRow } from '@/components/money/ExpenseRow';
@@ -25,6 +25,24 @@ export type LoggedTodayListProps = {
   onViewAll?: () => void;
 };
 
+/**
+ * ExpenseRow is React.memo'd, which only pays off if `onPress` is
+ * referentially stable. This wrapper exists so useCallback can build a
+ * per-expense handler once (keyed on the expense object and the stable
+ * onEditExpense setter) instead of the inline `() => onEditExpense(expense)`
+ * arrow the old .map() body recreated on every render.
+ */
+const ExpenseRowItem = memo(function ExpenseRowItem({
+  expense,
+  onEditExpense,
+}: {
+  expense: Expense;
+  onEditExpense: (e: Expense) => void;
+}) {
+  const handlePress = useCallback(() => onEditExpense(expense), [expense, onEditExpense]);
+  return <ExpenseRow expense={expense} onPress={handlePress} />;
+});
+
 export function LoggedTodayList({ expenses, onEditExpense, onViewAll }: LoggedTodayListProps): React.JSX.Element {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -33,7 +51,7 @@ export function LoggedTodayList({ expenses, onEditExpense, onViewAll }: LoggedTo
   return (
     <View>
       <View style={styles.eyebrowRow}>
-        <Text style={styles.eyebrow}>{strings.today.loggedTodayEyebrow.toUpperCase()}</Text>
+        <Text style={styles.eyebrow}>{strings.today.loggedTodayEyebrow}</Text>
         {showViewAll ? (
           <TouchableOpacity
             onPress={onViewAll}
@@ -57,7 +75,7 @@ export function LoggedTodayList({ expenses, onEditExpense, onViewAll }: LoggedTo
         <View style={styles.loggedTodayCard}>
           {expenses.map((expense, i) => (
             <View key={expense.id} style={i > 0 ? styles.loggedTodaySeparator : undefined}>
-              <ExpenseRow expense={expense} onPress={() => onEditExpense(expense)} />
+              <ExpenseRowItem expense={expense} onEditExpense={onEditExpense} />
             </View>
           ))}
         </View>
@@ -79,7 +97,12 @@ function createStyles(theme: AppTheme) {
       fontSize: typeScale.eyebrow,
       fontFamily: theme.fonts.uiSemibold,
       letterSpacing: typeScale.eyebrowLetterSpacing,
-      color: theme.mist,
+      // UX-060: the component uppercases via style, never with a JS
+      // .toUpperCase() on the string. Strings stay sentence case so screen
+      // readers speak them as words rather than letters, and the transform is
+      // locale-aware.
+      textTransform: 'uppercase',
+      color: theme.mistText,
     },
     // Tertiary text link (design/PATTERN_VOCABULARY.md controls: "tertiary
     // bare slate text"), sentence case, not an eyebrow.

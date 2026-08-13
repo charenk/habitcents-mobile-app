@@ -64,6 +64,7 @@ import { act, cleanup, fireEvent, render } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
+import { ToastProvider } from '@/components/ui/Toast';
 import CategoriesScreen from '@/app/(tabs)/categories';
 import { strings } from '@/constants/strings';
 import { deleteCategoryLabel } from '@/utils/a11y';
@@ -77,7 +78,9 @@ function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SafeAreaProvider initialMetrics={initialMetrics}>
       <ThemeProvider>
-        <CurrencyProvider>{children}</CurrencyProvider>
+        <ToastProvider>
+          <CurrencyProvider>{children}</CurrencyProvider>
+        </ToastProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );

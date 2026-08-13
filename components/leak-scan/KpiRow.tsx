@@ -94,7 +94,7 @@ function createStyles(theme: AppTheme) {
     subtitle: {
       // Informational metadata (evidence window, covered days), so it uses
       // slate for the 4.5:1 contrast floor, not mist (spec 09 §1.5).
-      fontSize: 10.5,
+      fontSize: typeScale.eyebrow,
       fontFamily: theme.fonts.ui,
       color: theme.slate,
       marginTop: 2,

@@ -82,7 +82,7 @@ function createStyles(theme: AppTheme) {
       fontSize: typeScale.eyebrow,
       letterSpacing: typeScale.eyebrowLetterSpacing,
       textTransform: 'uppercase',
-      color: theme.mist,
+      color: theme.mistText,
       marginBottom: 6,
       marginLeft: 4,
       fontVariant: ['tabular-nums'],
@@ -98,7 +98,7 @@ function createStyles(theme: AppTheme) {
       paddingVertical: 10,
     },
     emptyTitle: {
-      fontSize: 14.5,
+      fontSize: typeScale.label,
       fontFamily: theme.fonts.uiSemibold,
       color: theme.ink,
     },

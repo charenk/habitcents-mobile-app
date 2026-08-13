@@ -274,7 +274,13 @@ export function ExpenseSheet({
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <Text style={[styles.eyebrow, styles.eyebrowFirst]}>{eyebrow}</Text>
+          {/* UX-040: was an 11pt eyebrow, the only Money sheet not heading
+              itself with the serif sheetTitle treatment that AddUpcomingSheet,
+              AddCategoryModal and CurrencySheet all share. Brought onto the
+              majority pattern so the two Money sheets read as one system. */}
+          <Text style={styles.title} accessibilityRole="header" maxFontSizeMultiplier={1.5}>
+            {eyebrow}
+          </Text>
 
           {coachLineText ? (
             <View style={styles.coachLine}>
@@ -354,17 +360,27 @@ function createStyles(theme: AppTheme) {
       paddingHorizontal: 20,
       paddingBottom: 16,
     },
+    // UX-040: sheet header, matching CurrencySheet/AddUpcomingSheet/
+    // AddCategoryModal's serif treatment (theme.fonts.display at
+    // typeScale.sheetTitle) instead of the old 11pt uppercase eyebrow.
+    title: {
+      fontFamily: theme.fonts.display,
+      fontSize: typeScale.sheetTitle,
+      lineHeight: 32,
+      color: theme.ink,
+      includeFontPadding: false,
+      // Matches AddUpcomingSheet's title spacing (12pt, the app's vertical
+      // rhythm gap) rather than reinventing a new gap.
+      marginBottom: 12,
+    },
     eyebrow: {
       fontFamily: theme.fonts.uiSemibold,
       fontSize: typeScale.eyebrow,
       letterSpacing: typeScale.eyebrowLetterSpacing,
       textTransform: 'uppercase',
-      color: theme.mist,
+      color: theme.mistText,
       marginBottom: 6,
       marginTop: 18,
-    },
-    eyebrowFirst: {
-      marginTop: 0,
     },
     coachLine: {
       flexDirection: 'row',

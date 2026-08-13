@@ -42,7 +42,7 @@ export type ChipProps = {
   /** Identity color; tints the unselected border only. */
   tint?: string;
   disabled?: boolean;
-  /** Selected-state treatment. 'solid' (default) = sage fill + white text; 'soft' = sage-light fill + sage border + ink text. */
+  /** Selected-state treatment. 'solid' (default) = sage fill + ink text; 'soft' = sage-light fill + sage border + ink text. */
   tone?: ChipTone;
   /** Pill shape (radius 999, 44pt min height, 1.5px border, 12.5pt label) for the drawer's category tags. Default false keeps the original card-radius chip. */
   pill?: boolean;
@@ -87,7 +87,11 @@ export function Chip({
     >
       <View style={styles.inner}>
         {emoji ? (
-          <Text style={styles.emoji} importantForAccessibility="no">
+          <Text
+            style={styles.emoji}
+            importantForAccessibility="no"
+            maxFontSizeMultiplier={1.5}
+          >
             {emoji}
           </Text>
         ) : null}
@@ -99,6 +103,7 @@ export function Chip({
             disabled ? styles.labelDisabled : null,
           ]}
           numberOfLines={1}
+          maxFontSizeMultiplier={1.5}
         >
           {label}
         </Text>
@@ -146,18 +151,20 @@ function createStyles(theme: AppTheme) {
       gap: 6,
     },
     emoji: {
-      fontSize: 14,
+      fontSize: typeScale.label,
       includeFontPadding: false,
     },
     label: {
       fontFamily: theme.fonts.uiSemibold,
-      fontSize: 14,
+      fontSize: typeScale.label,
     },
     labelPill: {
       fontSize: typeScale.caption,
     },
     labelSelectedSolid: {
-      color: theme.white,
+      // Ink on the sage fill: 6.24:1, where white was 2.71:1. Matches the
+      // primary Button and the soft tone below, which already used ink. UX-001.
+      color: theme.ink,
     },
     labelSelectedSoft: {
       color: theme.ink,
@@ -166,7 +173,8 @@ function createStyles(theme: AppTheme) {
       color: theme.slate,
     },
     labelDisabled: {
-      color: theme.white,
+      // White on cloud is 1.18:1, unreadable. UX-047.
+      color: theme.slate,
     },
   });
 }

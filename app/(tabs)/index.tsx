@@ -46,7 +46,7 @@ import { progressTowardDetection } from '@/utils/habitDetection';
 import { formatDate } from '@/utils/dates';
 import { track } from '@/utils/analytics';
 import { useReducedMotion } from '@/utils/motion';
-import { radii, typeScale, type AppTheme } from '@/constants/theme';
+import { radii, typeScale, layout, type AppTheme } from '@/constants/theme';
 import type { DetectedHabit, HabitChangeGoal } from '@/types/habit';
 import { strings } from '@/constants/strings';
 import { useToast } from '@/components/ui/Toast';
@@ -117,6 +117,7 @@ export default function TodayScreen() {
     isLoading,
     refreshHabits,
     dismissHabit,
+    restoreDismissedHabit,
     seedDiscoveredHabit,
     startBreakingHabit,
     answerToday,
@@ -215,9 +216,21 @@ export default function TodayScreen() {
 
   // Eyebrow date line, locale-aware (ADA-008): "Thursday, July 24".
   // ScreenHeader uppercases it, so this stays sentence case.
-  const todayLabel = useMemo(
-    () => formatDate(new Date(), { weekday: 'long', month: 'long', day: 'numeric' }),
-    []
+  //
+  // UX-067: was useMemo(..., []), computed once at mount and never again, so
+  // the header date went stale across midnight while the card logic below
+  // (todayState, keptTodayCents, etc.) recomputes `new Date()` on every
+  // render and could disagree with it. State + the focus effect below
+  // recompute it whenever Today comes back into focus, the same freshness
+  // boundary the rest of the screen's "today" already gets for free from
+  // re-rendering on focus.
+  const [todayLabel, setTodayLabel] = useState(() =>
+    formatDate(new Date(), { weekday: 'long', month: 'long', day: 'numeric' })
+  );
+  useFocusEffect(
+    useCallback(() => {
+      setTodayLabel(formatDate(new Date(), { weekday: 'long', month: 'long', day: 'numeric' }));
+    }, [])
   );
 
   // Deep link support: an onboarding flow can land Today on a specific view
@@ -312,60 +325,75 @@ export default function TodayScreen() {
     //    that is actually being created.
     if (breakStartInFlightRef.current) return;
     breakStartInFlightRef.current = true;
-    const claimedOnboarding = door3CoachActive && !door3HandledRef.current;
-    if (claimedOnboarding) door3HandledRef.current = true;
+    // UX-021: everything below can reject (seedDiscoveredHabit,
+    // startBreakingHabit, addExpense are all async writes). Without
+    // try/finally, a rejection left breakStartInFlightRef stuck true, which
+    // permanently disabled the Start button for the rest of the session with
+    // no error surfaced. The ref reset now always runs, and a failure gets a
+    // toast instead of failing silently.
+    try {
+      const claimedOnboarding = door3CoachActive && !door3HandledRef.current;
+      if (claimedOnboarding) door3HandledRef.current = true;
 
-    const merchantPattern = data.chipId === 'custom' ? data.name : data.chipId;
-    const category: ExpenseCategory = data.chipId === 'custom' ? 'Other' : VICE_CATEGORIES[data.chipId];
-    const categoryId = getCategoryByName(category)?.id ?? getCategoryByName('Other')?.id ?? 'Other';
-    // Monthly-equivalent for the seeded habit's totalMonthlySpend, same
-    // approx-month convention the rest of the app uses elsewhere (weekly *
-    // 52/12); the honest yearly line on the sheet itself uses the exact
-    // 365/52/12 multipliers instead, since that is what is actually shown.
-    const monthlyMultiplier = data.cadence === 'daily' ? 30 : data.cadence === 'weekly' ? 52 / 12 : 1;
+      const merchantPattern = data.chipId === 'custom' ? data.name : data.chipId;
+      const category: ExpenseCategory = data.chipId === 'custom' ? 'Other' : VICE_CATEGORIES[data.chipId];
+      const categoryId = getCategoryByName(category)?.id ?? getCategoryByName('Other')?.id ?? 'Other';
+      // Monthly-equivalent for the seeded habit's totalMonthlySpend, same
+      // approx-month convention the rest of the app uses elsewhere (weekly *
+      // 52/12); the honest yearly line on the sheet itself uses the exact
+      // 365/52/12 multipliers instead, since that is what is actually shown.
+      const monthlyMultiplier = data.cadence === 'daily' ? 30 : data.cadence === 'weekly' ? 52 / 12 : 1;
 
-    const habit = await seedDiscoveredHabit({
-      merchantPattern,
-      name: data.name,
-      description: '',
-      categoryId,
-      averageAmount: data.amountCents,
-      frequency: data.cadence,
-      occurrencesPerPeriod: 1,
-      totalMonthlySpend: Math.round(data.amountCents * monthlyMultiplier),
-    });
-    // seedDiscoveredHabit protects live habits: re-picking one the user is
-    // already breaking returns it unchanged. Starting it again would append
-    // an orphan goal (stack review finding 2), so say so and stop; a
-    // bought-today yes below still writes the expense, which is an honest
-    // statement regardless.
-    const alreadyBreaking = habit.status === 'changing' || habit.status === 'tracking';
-    if (alreadyBreaking) {
-      show(strings.today.alreadyBreakingToast);
-    } else {
-      await startBreakingHabit(habit.id, data.amountCents, data.valueEdited, 'onboarding');
-    }
-
-    if (data.boughtToday) {
-      await addExpense({
-        title: data.name,
-        amount: data.amountCents,
-        category,
+      const habit = await seedDiscoveredHabit({
+        merchantPattern,
+        name: data.name,
+        description: '',
         categoryId,
-        merchant: data.name,
-        date: new Date(),
-        isRecurring: false,
-        reminderEnabled: false,
+        averageAmount: data.amountCents,
+        frequency: data.cadence,
+        occurrencesPerPeriod: 1,
+        totalMonthlySpend: Math.round(data.amountCents * monthlyMultiplier),
       });
-    }
+      // seedDiscoveredHabit protects live habits: re-picking one the user is
+      // already breaking returns it unchanged. Starting it again would append
+      // an orphan goal (stack review finding 2), so say so and stop; a
+      // bought-today yes below still writes the expense, which is an honest
+      // statement regardless.
+      const alreadyBreaking = habit.status === 'changing' || habit.status === 'tracking';
+      if (alreadyBreaking) {
+        show(strings.today.alreadyBreakingToast);
+      } else {
+        await startBreakingHabit(habit.id, data.amountCents, data.valueEdited, 'onboarding');
+      }
 
-    setBreakSheetVisible(false);
-    if (claimedOnboarding) {
-      setDoor3CoachActive(false);
-      await completeOnboarding();
-      await showDoor3Ribbon('door3_started');
+      if (data.boughtToday) {
+        await addExpense({
+          title: data.name,
+          amount: data.amountCents,
+          category,
+          categoryId,
+          merchant: data.name,
+          date: new Date(),
+          isRecurring: false,
+          reminderEnabled: false,
+        });
+      }
+
+      setBreakSheetVisible(false);
+      if (claimedOnboarding) {
+        setDoor3CoachActive(false);
+        await completeOnboarding();
+        await showDoor3Ribbon('door3_started');
+      }
+    } catch (error) {
+      // UX-021: the guard ref resets in finally, so the button comes back;
+      // this tells the user why nothing happened instead of leaving a silent
+      // no-op behind a button that just went live again.
+      console.error('handleBreakSheetStart failed', error);
+      show(strings.toasts.startHabitFailed);
+    } finally {
+      breakStartInFlightRef.current = false;
     }
-    breakStartInFlightRef.current = false;
   }, [
     seedDiscoveredHabit,
     startBreakingHabit,
@@ -500,6 +528,19 @@ export default function TodayScreen() {
     }, [clearLastCoachMoment, clearLastMilestone])
   );
 
+  // UX-067: keyed on expenses.length, not a content hash, on purpose. Editing
+  // an existing expense's amount or merchant (no length change) will not
+  // re-run detection from this effect; that is the accepted gap, not fixed
+  // here. A content-derived key (e.g. summing amounts or hashing
+  // merchant+amount pairs) would recompute on every render whenever any
+  // expense mutates elsewhere in the tree that also touches this array's
+  // identity, and refreshHabits does real work (habit detection over the
+  // whole expense list) that this screen should not be re-running on
+  // unrelated re-renders. length is the cheap, stable proxy for "something
+  // was added", which is the case detection actually needs to react to;
+  // edits to existing expenses reach detection the next time a length-
+  // changing action fires (or the pull-to-refresh path below, which always
+  // re-runs regardless of length).
   useEffect(() => {
     if (expenses.length > 0) {
       refreshHabits(expenses);
@@ -604,7 +645,18 @@ export default function TodayScreen() {
 
   const handleDismissHabit = useCallback(async (habit: DetectedHabit) => {
     await dismissHabit(habit.id);
-  }, [dismissHabit]);
+    // UX-022: every mutating action fires exactly one toast (Toast contract).
+    // "Not this one" discards a detected leak the user may never see
+    // surfaced again, so it gets a real undo, not just an announcement.
+    show(strings.toasts.leakDismissed, {
+      action: {
+        label: strings.toasts.undo,
+        onPress: () => {
+          void restoreDismissedHabit(habit.id);
+        },
+      },
+    });
+  }, [dismissHabit, restoreDismissedHabit, show]);
 
   const handleHabitPress = useCallback((habitId: string) => {
     router.push(`/habit/${habitId}`);
@@ -819,6 +871,10 @@ export default function TodayScreen() {
                     accessibilityRole="button"
                     accessibilityLabel={strings.today.watchLeakNudgeLabel}
                     activeOpacity={0.7}
+                    // UX-031: ~41pt effective (12pt vertical padding either
+                    // side of the 14pt label) without this. The accept
+                    // control anxious users reach for clears 44 now.
+                    hitSlop={{ top: 14, bottom: 14, left: 8, right: 8 }}
                   >
                     <Text style={styles.watchNudgeLabel} numberOfLines={1}>
                       {strings.today.watchLeakNudgeLabel}
@@ -827,7 +883,8 @@ export default function TodayScreen() {
                   <Text style={styles.watchNudgeSeparator}>·</Text>
                   <TouchableOpacity
                     onPress={handleDismissWatchNudge}
-                    hitSlop={{ top: 12, bottom: 12, left: 8, right: 12 }}
+                    // UX-031: 12/12 was ~41pt effective; 14/14 clears 44.
+                    hitSlop={{ top: 14, bottom: 14, left: 8, right: 12 }}
                     accessibilityRole="button"
                     accessibilityLabel={strings.today.watchLeakNudgeDismiss}
                   >
@@ -1063,7 +1120,7 @@ function createStyles(theme: AppTheme) {
     spentScrollContent: {
       paddingHorizontal: 20,
       paddingTop: 16,
-      paddingBottom: 100,
+      paddingBottom: layout.screenBottomClearance,
     },
     loggedTodaySpacer: {
       marginTop: 12,
@@ -1090,22 +1147,22 @@ function createStyles(theme: AppTheme) {
     },
     watchNudgeLabel: {
       fontFamily: theme.fonts.uiSemibold,
-      fontSize: 14,
+      fontSize: typeScale.label,
       color: theme.primaryDark,
     },
     watchNudgeSeparator: {
       fontFamily: theme.fonts.ui,
-      fontSize: 14,
-      color: theme.mist,
+      fontSize: typeScale.label,
+      color: theme.mistText,
     },
     watchNudgeDismissText: {
       fontFamily: theme.fonts.ui,
-      fontSize: 14,
-      color: theme.mist,
+      fontSize: typeScale.label,
+      color: theme.mistText,
     },
     listContent: {
       paddingHorizontal: 20,
-      paddingBottom: 100,
+      paddingBottom: layout.screenBottomClearance,
     },
     sectionHeader: {
       marginTop: 20,
@@ -1118,7 +1175,7 @@ function createStyles(theme: AppTheme) {
       fontSize: typeScale.eyebrow,
       fontFamily: theme.fonts.uiSemibold,
       letterSpacing: typeScale.eyebrowLetterSpacing,
-      color: theme.mist,
+      color: theme.mistText,
       textTransform: 'uppercase',
     },
     loadingContainer: {
@@ -1127,7 +1184,7 @@ function createStyles(theme: AppTheme) {
       alignItems: 'center',
     },
     loadingText: {
-      fontSize: 16,
+      fontSize: typeScale.button,
       fontFamily: theme.fonts.ui,
       color: theme.textSecondary,
     },
@@ -1137,7 +1194,7 @@ function createStyles(theme: AppTheme) {
       alignItems: 'center',
       paddingHorizontal: 20,
       paddingTop: 24,
-      paddingBottom: 100,
+      paddingBottom: layout.screenBottomClearance,
     },
     emptyCoachMoment: {
       alignSelf: 'stretch',
@@ -1167,7 +1224,7 @@ function createStyles(theme: AppTheme) {
       flex: 1,
     },
     breakAnotherLabel: {
-      fontSize: 14,
+      fontSize: typeScale.label,
       fontFamily: theme.fonts.uiSemibold,
       color: theme.primaryDark,
     },
@@ -1196,7 +1253,7 @@ function createStyles(theme: AppTheme) {
       alignItems: 'flex-start',
     },
     progressTitle: {
-      fontSize: 17,
+      fontSize: typeScale.lead,
       fontFamily: theme.fonts.uiSemibold,
       color: theme.text,
     },
@@ -1214,18 +1271,18 @@ function createStyles(theme: AppTheme) {
       backgroundColor: theme.primary,
     },
     progressCount: {
-      fontSize: 15,
+      fontSize: typeScale.body,
       fontFamily: theme.fonts.uiBold,
       color: theme.text,
       marginTop: 12,
     },
     progressCountSuffix: {
-      fontSize: 15,
+      fontSize: typeScale.body,
       fontFamily: theme.fonts.ui,
       color: theme.textSecondary,
     },
     progressBody: {
-      fontSize: 14,
+      fontSize: typeScale.label,
       fontFamily: theme.fonts.ui,
       color: theme.textSecondary,
       marginTop: 6,

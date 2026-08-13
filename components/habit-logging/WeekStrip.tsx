@@ -3,13 +3,12 @@ import { View, Text, StyleSheet } from 'react-native';
 import { Icon } from '@/components/ui/Icon';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
-import { weekStrip, weekStats, type WeekDayCell } from '@/utils/habitLogging';
+import { weekStrip, weekStats } from '@/utils/habitLogging';
+import { weekDotLabel } from '@/utils/a11y';
 import { typeScale, type AppTheme } from '@/constants/theme';
 import type { HabitLogEntry } from '@/types/habit';
 import { strings } from '@/constants/strings';
-
-const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-const DAY_NAMES_FULL = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+import { formatDate } from '@/utils/dates';
 
 const DOT_SIZE = 26;
 
@@ -19,15 +18,6 @@ type WeekStripProps = {
   skipValue: number;
   today?: Date;
 };
-
-function stateLabel(cell: WeekDayCell): string {
-  if (cell.isOutOfRange) return 'not yet';
-  if (cell.isFuture) return 'not yet';
-  if (cell.isToday && cell.state === 'no-log') return 'today, not answered yet';
-  if (cell.state === 'skipped') return 'skipped';
-  if (cell.state === 'slipped') return 'slipped';
-  return 'no log';
-}
 
 /**
  * The 7-dot Mon-Sun week strip on the daily-cadence check-in card
@@ -55,11 +45,19 @@ export function WeekStrip({ dayLogs, trackingStart, skipValue, today = new Date(
         {cells.map((cell, i) => {
           const unanswered = cell.state === 'no-log';
           const isTodayOpen = unanswered && cell.isToday && !cell.isFuture && !cell.isOutOfRange;
+          // UX-027: the shared, unit-tested builder (utils/a11y.ts) instead of
+          // a hand-rolled label whose wording had drifted from it.
+          // UX-046: the weekday name/letter come from the cell's own date via
+          // the locale-aware formatDate, not a hardcoded English array, so
+          // this stops being a fixed-English surface.
+          const weekdayFull = formatDate(cell.date, { weekday: 'long' });
+          const weekdayLetter = formatDate(cell.date, { weekday: 'narrow' });
+          const reachable = !cell.isFuture && !cell.isOutOfRange;
           return (
             <View key={i} style={styles.dayColumn}>
               <View
                 accessible
-                accessibilityLabel={`${DAY_NAMES_FULL[i]}, ${stateLabel(cell)}`}
+                accessibilityLabel={weekDotLabel(weekdayFull, cell.state, cell.isToday, reachable)}
                 style={[
                   styles.dot,
                   cell.state === 'skipped' && styles.dotSkipped,
@@ -68,9 +66,10 @@ export function WeekStrip({ dayLogs, trackingStart, skipValue, today = new Date(
                   unanswered && !isTodayOpen && styles.dotOpen,
                 ]}
               >
-                {cell.state === 'skipped' && <Icon name="Check" size={14} color={theme.white} />}
+                {/* UX-001: white on sage was 2.71:1, below the 3:1 icon floor. */}
+                {cell.state === 'skipped' && <Icon name="Check" size={14} color={theme.ink} />}
               </View>
-              <Text style={styles.dayLabel}>{DAY_LABELS[i]}</Text>
+              <Text style={styles.dayLabel}>{weekdayLetter}</Text>
             </View>
           );
         })}
@@ -126,9 +125,10 @@ function createStyles(theme: AppTheme) {
       borderColor: theme.cloud,
     },
     dayLabel: {
-      fontSize: 9,
+      // Batch 2: token, was a literal 9.
+      fontSize: typeScale.micro,
       fontFamily: theme.fonts.uiBold,
-      color: theme.mist,
+      color: theme.mistText,
     },
     summary: {
       fontSize: typeScale.caption,

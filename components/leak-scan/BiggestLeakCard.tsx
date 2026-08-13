@@ -85,7 +85,7 @@ function createStyles(theme: AppTheme) {
       fontFamily: theme.fonts.uiSemibold,
       letterSpacing: typeScale.eyebrowLetterSpacing,
       textTransform: 'uppercase',
-      color: theme.mist,
+      color: theme.mistText,
       marginBottom: 6,
     },
     name: {
@@ -110,7 +110,7 @@ function createStyles(theme: AppTheme) {
     evidenceHint: {
       fontFamily: theme.fonts.ui,
       fontSize: typeScale.caption,
-      color: theme.mist,
+      color: theme.mistText,
       marginBottom: 14,
       lineHeight: 18,
     },

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { memo, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { EmojiTile, Icon } from '@/components/ui';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -40,7 +40,7 @@ type HabitCardProps = {
  * tracking CTA, only a tip card. The Track CTA is wired by the caller to
  * open the identical Decision-1 pick-one sheet Door 1 uses.
  */
-export function HabitCard({
+function HabitCardImpl({
   rank,
   candidate,
   month,
@@ -123,8 +123,10 @@ export function HabitCard({
           style={styles.menuButton}
           onPress={() => setMenuOpen((v) => !v)}
           accessibilityRole="button"
-          accessibilityLabel="More options"
-          hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+          accessibilityLabel={strings.leakScan.moreOptionsLabel}
+          // UX-032: this menu toggles the sheet below; expose that state.
+          accessibilityState={{ expanded: menuOpen }}
+          hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
         >
           <Icon name="Ellipsis" size={18} color={theme.slate} />
         </TouchableOpacity>
@@ -196,6 +198,15 @@ export function HabitCard({
   );
 }
 
+/**
+ * Memoized: HabitCard renders once per ranked leak (capped at 5, ResultsScreen
+ * RANKED_LEAKS_CAP) on the leak-scan results ladder. Effective at that call
+ * site because ResultsScreen wraps it in HabitCardItem, which builds a
+ * per-candidate stable callback via useCallback instead of the inline arrows
+ * the old .map() body used.
+ */
+export const HabitCard = memo(HabitCardImpl);
+
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     card: {
@@ -221,9 +232,12 @@ function createStyles(theme: AppTheme) {
       alignItems: 'center',
       gap: 8,
     },
+    // UX-059: was theme.fonts.display (serif). The charter reserves serif for
+    // screen titles, money, and Today quotes; a rank ordinal is none of
+    // those, so it moves to Inter.
     rank: {
       fontSize: typeScale.secondary,
-      fontFamily: theme.fonts.display,
+      fontFamily: theme.fonts.uiSemibold,
       fontVariant: ['tabular-nums'],
       color: theme.slate,
     },
@@ -238,11 +252,13 @@ function createStyles(theme: AppTheme) {
       fontSize: typeScale.eyebrow,
       fontFamily: theme.fonts.uiSemibold,
     },
+    // UX-032: was minHeight 32 + hitSlop 6 = exactly 44 with zero margin;
+    // bumped to match its sibling buttons (menu items below use minHeight 40).
     menuButton: {
       marginLeft: 'auto',
       paddingHorizontal: 6,
-      minWidth: 32,
-      minHeight: 32,
+      minWidth: 40,
+      minHeight: 40,
       alignItems: 'center',
       justifyContent: 'center',
     },
@@ -259,7 +275,7 @@ function createStyles(theme: AppTheme) {
       flex: 1,
     },
     title: {
-      fontSize: 16,
+      fontSize: typeScale.button,
       fontFamily: theme.fonts.uiSemibold,
       color: theme.ink,
     },
@@ -311,10 +327,11 @@ function createStyles(theme: AppTheme) {
       alignItems: 'center',
       justifyContent: 'center',
     },
+    // UX-001: ink on the sage fill; white was 2.71:1.
     trackButtonText: {
       fontSize: typeScale.secondary,
       fontFamily: theme.fonts.uiSemibold,
-      color: theme.white,
+      color: theme.ink,
     },
     monitorButton: {
       backgroundColor: theme.white,

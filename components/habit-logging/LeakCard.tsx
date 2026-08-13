@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { memo, useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Button } from '@/components/ui/Button';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -35,7 +35,7 @@ type LeakCardProps = {
  * (P2-2) below the buttons, the closest analog to a "confirmation slot" this
  * surface has: the moment a leak is shown to the user.
  */
-export function LeakCard({ habit, onBreak, onDismiss, coachMomentCardId, breakAgain }: LeakCardProps) {
+function LeakCardImpl({ habit, onBreak, onDismiss, coachMomentCardId, breakAgain }: LeakCardProps) {
   const theme = useTheme();
   const { format } = useCurrency();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -82,6 +82,16 @@ export function LeakCard({ habit, onBreak, onDismiss, coachMomentCardId, breakAg
   );
 }
 
+/**
+ * Memoized: LeakCard renders once per discovered leak in Today's "Leaks
+ * found" list. NOTE (perf phase, see PR body): as of this pass its only call
+ * site (app/(tabs)/index.tsx renderItem) still builds onBreak/onDismiss as
+ * fresh inline arrows on every render, so the memo does not yet bail there;
+ * stabilizing that call site was skipped as too risky for a zero-visible-
+ * change pass (see report).
+ */
+export const LeakCard = memo(LeakCardImpl);
+
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     card: {
@@ -94,7 +104,7 @@ function createStyles(theme: AppTheme) {
     },
     name: {
       fontFamily: theme.fonts.uiSemibold,
-      fontSize: 16,
+      fontSize: typeScale.button,
       color: theme.ink,
     },
     evidence: {
@@ -113,7 +123,7 @@ function createStyles(theme: AppTheme) {
     evidenceHint: {
       fontFamily: theme.fonts.ui,
       fontSize: typeScale.caption,
-      color: theme.mist,
+      color: theme.mistText,
       marginBottom: 14,
       lineHeight: 18,
     },

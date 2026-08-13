@@ -51,7 +51,7 @@ export function AmountDisplay({
   const major = (Number.isFinite(valueCents) ? valueCents : 0) / 100;
   const numberText = Math.abs(major).toFixed(meta.decimals);
 
-  const numberColor = placeholder ? theme.mist : theme.ink;
+  const numberColor = placeholder ? theme.mistText : theme.ink;
 
   const styles = useMemo(
     () =>
@@ -66,7 +66,7 @@ export function AmountDisplay({
         symbol: {
           fontFamily: theme.fonts.display,
           fontSize: Math.round(size * 0.6),
-          color: theme.mist,
+          color: theme.mistText,
           marginRight: 2,
           includeFontPadding: false,
         },
@@ -89,10 +89,14 @@ export function AmountDisplay({
   return (
     <View style={styles.column}>
       <View style={styles.row}>
-        <Text style={styles.symbol} allowFontScaling>
+        <Text style={styles.symbol} allowFontScaling maxFontSizeMultiplier={1.3}>
           {meta.symbol}
         </Text>
-        <Text style={[styles.number, { color: numberColor }]} allowFontScaling>
+        <Text
+          style={[styles.number, { color: numberColor }]}
+          allowFontScaling
+          maxFontSizeMultiplier={1.3}
+        >
           {numberText}
         </Text>
       </View>

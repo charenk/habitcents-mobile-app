@@ -188,7 +188,10 @@ describe('TextField', () => {
     expect(blurred.borderColor).toBe(lightTheme.cloud);
   });
 
-  it('uses the mist token for placeholder text, ignoring any caller override', async () => {
+  // UX-003: placeholder copy is text, so it takes mistText (4.78:1), not the
+  // decorative-fill mist (2.95:1). The "ignore the caller's override" contract
+  // is the point of the test and is unchanged; only which token wins moved.
+  it('uses the text-grade neutral for placeholder text, ignoring any caller override', async () => {
     const view = await render(
       <Providers>
         <TextField
@@ -201,6 +204,6 @@ describe('TextField', () => {
       </Providers>
     );
     const field = await view.findByLabelText('Category name');
-    expect(field.props.placeholderTextColor).toBe(lightTheme.mist);
+    expect(field.props.placeholderTextColor).toBe(lightTheme.mistText);
   });
 });

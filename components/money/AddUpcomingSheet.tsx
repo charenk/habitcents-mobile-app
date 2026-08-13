@@ -765,7 +765,7 @@ function StepperButton({
         pressed && !disabled ? styles.stepperButtonPressed : null,
       ]}
     >
-      <Icon name={icon} size={16} color={disabled ? theme.mist : theme.ink} />
+      <Icon name={icon} size={16} color={disabled ? theme.mistText : theme.ink} />
     </Pressable>
   );
 }
@@ -785,7 +785,7 @@ function createStyles(theme: AppTheme) {
     },
     title: {
       fontFamily: theme.fonts.display,
-      fontSize: 26,
+      fontSize: typeScale.sheetTitle,
       lineHeight: 32,
       color: theme.ink,
       includeFontPadding: false,
@@ -796,13 +796,13 @@ function createStyles(theme: AppTheme) {
       fontSize: typeScale.eyebrow,
       letterSpacing: typeScale.eyebrowLetterSpacing,
       textTransform: 'uppercase',
-      color: theme.mist,
+      color: theme.mistText,
       marginTop: 18,
       marginBottom: 8,
     },
     subLabel: {
       fontFamily: theme.fonts.ui,
-      fontSize: 12,
+      fontSize: typeScale.caption,
       color: theme.slate,
       marginTop: 12,
       marginBottom: 8,

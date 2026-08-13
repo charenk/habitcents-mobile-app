@@ -15,12 +15,28 @@ import { withAlpha } from '@/utils/color';
 const palette = {
   // brand
   sage: '#4CAF82', // CTA, kept number, active tab, skip confirm
-  sageDark: '#2E7D55', // hover/pressed, small sage text links
+  // Pressed/hover fill and small sage text links. Nudged one step darker
+  // (was #2E7D55) so it clears 4.5:1 on sageLight, where it sits in the
+  // tierSolid badge and the KeptHero eyebrow: 4.48 -> 4.79. UX-048.
+  sageDark: '#2C7851',
+  // Pressed fill for the primary button ONLY. The button now carries an ink
+  // label, and ink on sageDark is 3.15:1, so the press cannot simply reuse
+  // sageDark without the label going illegible mid-tap. This darkens enough
+  // to read as a press while keeping ink at 4.86:1. Swapping the label colour
+  // on press instead would flash a different colour under the user's thumb.
+  sagePressed: '#3D9A6E',
   sageLight: '#E8F5EE', // kept band, selected chips, coach slots, tinted cards
   // neutrals (carry ~90% of UI)
   ink: '#1A1D23', // primary text
   slate: '#4A5568', // secondary text
-  mist: '#8898AA', // tertiary text, placeholder, spend bar fill
+  // Decorative fills ONLY (spend bar fill, hairline-adjacent tints). At 2.80:1
+  // on snow this cannot legally carry text; use mistText for anything a user
+  // has to read. UX-003.
+  mist: '#8898AA',
+  // Tertiary TEXT and any meaning-bearing icon. Same hue as mist, scaled down
+  // until it clears the 4.5:1 floor the design context declares: 4.78 on
+  // white, 4.53 on snow. UX-003.
+  mistText: '#677481',
   cloud: '#E8EDF2', // hairline borders, slip dot fill, disabled fill
   cloudDashed: '#D6DEE8', // one step darker than cloud, so a 1.5px dashed edge still reads
   snow: '#F7F9FC', // page background (never pure white pages)
@@ -28,9 +44,23 @@ const palette = {
   hairlineSubtle: '#F1F4F8', // row separators inside cards
   // semantic
   lavender: '#8E7CF3', // habit arc, chapter pills, milestones, premium
+  // The premium hero gradient's start stop. Full-strength lavender under white
+  // text is 3.32:1; this carries white at 5.29:1 while staying the same
+  // violet family, so the one sanctioned premium gradient does not have to be
+  // faked with an alpha composite over ink. UX-006.
+  lavenderDeep: '#6B54E0',
   amber: '#F5A623', // upcoming bills, 3-payment flags
-  amberInk: '#B26A00', // amber text on amberBg
-  coral: '#F05A5A', // destructive only (delete, stop breaking, undo import)
+  // Amber text on amberBg. Darkened (was #B26A00) because every use is a
+  // 10.5-11pt pill on the 14% tint, where it read 3.66:1. Now 5.51 on that
+  // tint over white, 5.23 on it over snow, and 5.73 on the 8% fixed-tip
+  // card. UX-002.
+  amberInk: '#8F5500',
+  // Destructive only (delete, stop breaking, undo import). Darkened (was
+  // #F05A5A) because it failed BOTH directions at 3.33:1: as a label on white
+  // and as the destructive fill under a white label. Now 5.03 either way.
+  // Note pulseRamp keeps the lighter coral hue; it is a heat scale, not a
+  // destructive signal, and ink already passes on every step. UX-047.
+  coral: '#C93B3B',
   toastAction: '#7FD4A8', // toast action link on the ink pill
 } as const;
 
@@ -44,31 +74,39 @@ export const lightTheme = {
   surface: palette.white,
   text: palette.ink,
   textSecondary: palette.slate,
-  textTertiary: palette.mist,
+  textTertiary: palette.mistText,
   chipActiveBg: palette.sage,
-  chipActiveText: palette.white,
+  // Ink, not white: white on sage is 2.71:1. Charen's call (2026-08-12) was to
+  // keep the brand green exactly and darken the label instead, which reads
+  // 6.24:1. UX-001.
+  chipActiveText: palette.ink,
   chipInactiveBg: palette.white,
   chipInactiveText: palette.slate,
   chipBorder: palette.cloud,
   iconBgGreen: palette.sageLight,
   iconBgYellow: withAlpha(palette.amber, 0.14),
   iconOrange: palette.amber,
-  calendarDow: palette.mist,
-  calendarOtherMonth: palette.mist,
+  // Day-of-week letters and out-of-month numerals are read, so they take the
+  // text-grade neutral. UX-003.
+  calendarDow: palette.mistText,
+  calendarOtherMonth: palette.mistText,
   calendarBg: palette.snow,
   calendarCellBg: palette.white,
   calendarOtherMonthBg: palette.snow,
   primaryDark: palette.sageDark,
+  primaryPressedBg: palette.sagePressed,
   border: palette.cloud,
   white: palette.white,
-  tabIconDefault: palette.mist,
+  // An inactive tab icon is a meaning-bearing control, so it takes the 3:1
+  // non-text floor; mist missed it at 2.95. UX-003.
+  tabIconDefault: palette.mistText,
   danger: palette.coral,
   // Habit logging v2 (docs/design-package-phase2/01-habit-logging-spec.md,
   // section 2). A slip is neutral, never red/danger and never green/primary;
   // these are its own token family used only for the slip day-state.
-  slip: palette.mist,
+  slip: palette.mistText,
   slipWeekFill: palette.cloud,
-  slipWeekDot: palette.mist,
+  slipWeekDot: palette.mistText,
   coachMomentBg: palette.snow,
   coachMomentMilestoneBg: withAlpha(palette.lavender, 0.14),
   // Leak Scan (docs/design-package-phase2/03-p2-1b-leak-scan-visuals.md).
@@ -109,12 +147,14 @@ export const lightTheme = {
   ink: palette.ink,
   slate: palette.slate,
   mist: palette.mist,
+  mistText: palette.mistText,
   cloud: palette.cloud,
   cloudDashed: palette.cloudDashed,
   snow: palette.snow,
   hairlineSubtle: palette.hairlineSubtle,
   primaryLight: palette.sageLight,
   lavender: palette.lavender,
+  lavenderDeep: palette.lavenderDeep,
   amber: palette.amber,
   amberBg: withAlpha(palette.amber, 0.14),
   amberInk: palette.amberInk,
@@ -207,6 +247,7 @@ export type AppTheme = {
   calendarCellBg: string;
   calendarOtherMonthBg: string;
   primaryDark: string;
+  primaryPressedBg: string;
   border: string;
   white: string;
   tabIconDefault: string;
@@ -241,12 +282,14 @@ export type AppTheme = {
   ink: string;
   slate: string;
   mist: string;
+  mistText: string;
   cloud: string;
   cloudDashed: string;
   snow: string;
   hairlineSubtle: string;
   primaryLight: string;
   lavender: string;
+  lavenderDeep: string;
   amber: string;
   amberBg: string;
   amberInk: string;
@@ -265,7 +308,41 @@ export type ThemeMode = 'light' | 'dark' | 'system';
  * section 4). Shape, depth, motion, and the type scale do not change between
  * light and dark, so they live here as standalone exports.
  */
-export const radii = { control: 10, card: 14, feature: 20, frame: 28, pill: 999 } as const;
+export const radii = {
+  // Micro-geometry: progress bars, legend dots, pulse cells, tier badges.
+  // Ratified from the design audit (UX-018) where 20 sites had no token.
+  micro: 4,
+  control: 10,
+  card: 14,
+  feature: 20,
+  frame: 28,
+  pill: 999,
+} as const;
+
+/**
+ * Spacing rhythm (design audit, ratified). The app had no spacing tokens at
+ * all; this is the observed rhythm as it actually is, not a borrowed 4pt
+ * convention. A grep across app/ and components/ for padding, margin, and
+ * gap literals shows the values cluster on 2pt steps (2, 4, 6, 8, 10, 12,
+ * 14, 16, 18, 20, 24, 28), not 4pt multiples: 6/10/14/18 alone account for
+ * 108 hits. `gutter` (20) and `stack` (12) are the two the pattern
+ * vocabulary already names (one screen horizontal gutter, one vertical
+ * rhythm gap inside a view); the rest fill in the same 2pt scale.
+ */
+export const spacing = {
+  hairline: 2, // icon-to-label gaps, tightest inline separators
+  tight: 4,
+  xs: 6,
+  sm: 8,
+  control: 10, // control-interior padding (pairs with radii.control)
+  stack: 12, // vertical rhythm inside a view (ratified, pattern vocabulary)
+  md: 14,
+  lg: 16,
+  xl: 18,
+  gutter: 20, // screen horizontal gutter (ratified, pattern vocabulary)
+  xxl: 24,
+  section: 28, // separation between major sections
+} as const;
 
 export const shadows = {
   card: { shadowColor: '#1A1D23', shadowOffset: { width: 0, height: 4 }, shadowRadius: 8, shadowOpacity: 0.04, elevation: 2 },
@@ -275,17 +352,80 @@ export const shadows = {
 
 export const motion = { tap: 120, sheet: 220, toast: 220, screen: 360, pulse: 280, easing: [0.22, 1, 0.36, 1] as const } as const;
 
+/**
+ * Shared chrome metrics, so screens stop repeating the literals.
+ *
+ * `tabBarHeight` is the tab bar's base content height (app/(tabs)/_layout.tsx
+ * adds the device's safe-area inset on top). Toast positions itself above the
+ * bar and genuinely derives from this.
+ */
+export const layout = {
+  tabBarHeight: 56,
+  /**
+   * End-of-scroll breathing room at the bottom of a screen's content.
+   *
+   * NOT tab-bar clearance, despite how it reads. The tab bar does not float:
+   * app/(tabs)/_layout.tsx sets no `position: absolute`, so React Navigation
+   * already reserves the bar's space and content can never scroll under it.
+   * 100 is simply the convention the app arrived at, repeated at nine sites
+   * including profile, habit detail and category detail, which are pushed
+   * screens with no tab bar at all. That consistency is why the value is kept
+   * here rather than re-derived: centralising it first makes it a one-line
+   * change if it turns out to be too generous on device. It is unverified and
+   * worth a look during the Lane 2 pass. UX-045.
+   */
+  screenBottomClearance: 100,
+} as const;
+
 export const typeScale = {
   screenTitle: 34,
+  // Serif money hero on a card, between displayMid and the kept hero. Batch 2:
+  // the first sweep left this size at two sites (category detail total,
+  // upcoming total) and an exact duplicate is a token gap, not drift.
+  displayLarge: 36,
+  // Mid-size display serif: bigger than a stat card, smaller than the kept
+  // hero. Ratified from the design audit (UX-018 scale gap). Batch 2 also
+  // makes this the ONE size for decision-moment sheet titles (partial slip,
+  // pick one, break habit), which had drifted to 32, 32 and 28. Two ranks now
+  // exist and mean something: sheetTitle 26 for utility sheets, displayMid 30
+  // for the sheets that ask you to decide something.
+  displayMid: 30,
   keptHero: 42,
   statCard: 22,
   reveal: 64,
+  // Sheet headers. Ratified from the design audit (UX-018 scale gap).
+  sheetTitle: 26,
+  // Display italic, used for the Today quotes and the habit arc's identity
+  // line. Batch 2: those two sat 1pt apart (19 and 20), which nobody can read
+  // as intent, so they unify here.
+  quote: 20,
+  // Compact bold title for data sheets and the wordmark: the leak-scan review
+  // and transaction sheets deliberately head themselves in Inter rather than
+  // the serif utility-sheet treatment. Batch 2, four sites.
+  titleSm: 18,
   body: 15,
-  // Form-field text (ui/TextField): sits between secondary and body so a
-  // typed value reads a touch smaller than prose but never as fine print.
+  // Welcome/intent/paywall lead text. Ratified from the design audit
+  // (UX-018 scale gap).
+  lead: 17,
+  // Primary/secondary button labels, list titles. Ratified from the design
+  // audit (UX-018 scale gap).
+  button: 16,
+  // Compact UI text: form fields (ui/TextField), toast copy, coach prose.
+  // Sits between secondary and body so it reads a touch smaller than prose but
+  // never as fine print. Named for its original form-control use; the name is
+  // kept because renaming it would churn every call site, but the meaning is
+  // the size, not the widget, so retuning it moves toasts and coach moments
+  // too. UX-018.
   control: 13.5,
+  // Row labels, tertiary buttons, chip labels. Ratified from the design
+  // audit (UX-018 scale gap).
+  label: 14,
   secondary: 13,
   caption: 12.5,
   eyebrow: 11,
+  // Fine print below the eyebrow: the day-of-week letter strips on the week
+  // row and the history calendar. Batch 2, two sites, deliberately the only
+  // step under 11 so it stays hard to reach for by accident.
+  micro: 9,
   eyebrowLetterSpacing: 0.88,
 } as const;

@@ -19,16 +19,17 @@ import { Icon } from '@/components/ui/Icon';
 import { useTheme } from '@/contexts/ThemeContext';
 import { atMidnight, dayStateFor, isSameDay } from '@/utils/habitLogging';
 import { calendarCellLabel } from '@/utils/a11y';
+import { formatDate } from '@/utils/dates';
 import { radii, typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
 import type { DayState, HabitLogEntry } from '@/types/habit';
 import { strings } from '@/constants/strings';
 
-const MONTH_NAMES = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
-];
-const DOW_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+// UX-046: derived from formatDate (locale-aware), not a fixed English array.
+// A week of reference dates starting Sunday 2023-01-01 (a known Sunday), so
+// the grid's Sunday-first ordering (cells built from getDay(), 0 = Sunday)
+// lines up with these labels regardless of device locale.
+const DOW_REFERENCE_DATES = [0, 1, 2, 3, 4, 5, 6].map((d) => new Date(2023, 0, 1 + d));
 
 type HistoryCalendarProps = {
   dayLogs: HabitLogEntry[];
@@ -72,16 +73,25 @@ export function HistoryCalendar({ dayLogs, trackingStart, today = new Date(), on
     return result;
   }, [viewYear, viewMonth]);
 
+  // UX-046: locale-aware, matching how app/(tabs)/index.tsx already builds
+  // its own date line, instead of the fixed English MONTH_NAMES/DOW_LABELS
+  // arrays this component used to carry.
+  const monthName = formatDate(new Date(viewYear, viewMonth, 1), { month: 'long' });
+  const dowLabels = useMemo(
+    () => DOW_REFERENCE_DATES.map((d) => formatDate(d, { weekday: 'narrow' })),
+    []
+  );
+
   return (
     <View style={styles.card}>
       <View style={styles.headerRow}>
-        <Text style={styles.monthLabel}>{MONTH_NAMES[viewMonth]} {viewYear}</Text>
+        <Text style={styles.monthLabel}>{monthName} {viewYear}</Text>
         <View style={styles.navRow}>
           <TouchableOpacity
             onPress={goPrev}
             disabled={!canGoPrev}
             accessibilityRole="button"
-            accessibilityLabel="Previous month"
+            accessibilityLabel={strings.habitLogging.calendarPreviousMonth}
             accessibilityState={{ disabled: !canGoPrev }}
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           >
@@ -91,7 +101,7 @@ export function HistoryCalendar({ dayLogs, trackingStart, today = new Date(), on
             onPress={goNext}
             disabled={!canGoNext}
             accessibilityRole="button"
-            accessibilityLabel="Next month"
+            accessibilityLabel={strings.habitLogging.calendarNextMonth}
             accessibilityState={{ disabled: !canGoNext }}
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           >
@@ -101,7 +111,7 @@ export function HistoryCalendar({ dayLogs, trackingStart, today = new Date(), on
       </View>
 
       <View style={styles.grid}>
-        {DOW_LABELS.map((d, i) => (
+        {dowLabels.map((d, i) => (
           <Text key={`dow-${i}`} style={styles.dowLabel}>{d}</Text>
         ))}
         {cells.map((d, i) => {
@@ -111,7 +121,11 @@ export function HistoryCalendar({ dayLogs, trackingStart, today = new Date(), on
           const state = outOfRange ? null : dayStateFor(dayLogs, d);
           const label = outOfRange
             ? ''
-            : calendarCellLabel(MONTH_NAMES[viewMonth], d.getDate(), state as DayState);
+            : calendarCellLabel(monthName, d.getDate(), state as DayState);
+          // UX-054: today is the one cell that does something on tap (it
+          // opens change-answer); the hint says so instead of leaving a
+          // VoiceOver user to guess what activating it does.
+          const isActionable = isToday && !!onSelectToday;
           return (
             <View key={d.toISOString()} style={styles.cellSlot}>
               <TouchableOpacity
@@ -119,7 +133,8 @@ export function HistoryCalendar({ dayLogs, trackingStart, today = new Date(), on
                 onPress={onSelectToday}
                 accessible={!outOfRange}
                 accessibilityLabel={label || undefined}
-                accessibilityRole={isToday && onSelectToday ? 'button' : undefined}
+                accessibilityHint={isActionable ? strings.habitLogging.calendarTodayCellHint : undefined}
+                accessibilityRole={isActionable ? 'button' : undefined}
                 hitSlop={{ top: 9, bottom: 9, left: 9, right: 9 }}
                 style={[
                   styles.dot,
@@ -128,7 +143,8 @@ export function HistoryCalendar({ dayLogs, trackingStart, today = new Date(), on
                   state === 'no-log' && styles.dotNoLog,
                 ]}
               >
-                {state === 'skipped' && <Icon name="Check" size={12} color={theme.white} />}
+                {/* UX-001: white on sage was 2.71:1, below the 3:1 icon floor. */}
+                {state === 'skipped' && <Icon name="Check" size={12} color={theme.ink} />}
               </TouchableOpacity>
             </View>
           );
@@ -154,7 +170,7 @@ function LegendItem({ color, outline, label, theme }: { color?: string; outline?
           outline ? { borderWidth: 1.5, borderColor: theme.cloud, backgroundColor: 'transparent' } : null,
         ]}
       />
-      <Text style={[legendStyles.label, { color: theme.mist, fontFamily: theme.fonts.ui }]}>{label}</Text>
+      <Text style={[legendStyles.label, { color: theme.mistText, fontFamily: theme.fonts.ui }]}>{label}</Text>
     </View>
   );
 }
@@ -182,7 +198,7 @@ function createStyles(theme: AppTheme) {
     },
     monthLabel: {
       fontFamily: theme.fonts.uiSemibold,
-      fontSize: 15,
+      fontSize: typeScale.body,
       color: theme.ink,
     },
     navRow: {
@@ -197,9 +213,10 @@ function createStyles(theme: AppTheme) {
       width: `${100 / 7}%`,
       textAlign: 'center',
       fontFamily: theme.fonts.uiBold,
-      fontSize: 9,
+      // Batch 2: token, was a literal 9.
+      fontSize: typeScale.micro,
       letterSpacing: 0.6,
-      color: theme.mist,
+      color: theme.mistText,
       marginBottom: 8,
     },
     cellSlot: {
@@ -210,7 +227,10 @@ function createStyles(theme: AppTheme) {
     dot: {
       width: 26,
       height: 26,
-      borderRadius: 13,
+      // UX-018: was a hardcoded half-of-26 circle; radii.pill renders
+      // identically (RN clips to min(width,height)/2) while using the
+      // ratified token.
+      borderRadius: radii.pill,
       alignItems: 'center',
       justifyContent: 'center',
     },

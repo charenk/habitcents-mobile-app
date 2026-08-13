@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, ScrollView } from 'react-native';
+import React, { useEffect, useMemo } from 'react';
+import { AccessibilityInfo, View, Text, StyleSheet, ActivityIndicator, ScrollView } from 'react-native';
 import { Button, Icon } from '@/components/ui';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -34,12 +34,25 @@ export function IntakeScreen({ state, onChooseFiles, onAnswer, onBack }: IntakeS
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
+  // UX-013: the flow was silent for VoiceOver between the "Choose CSV files"
+  // tap and manually exploring for what happened next. Announce entering the
+  // scanning stage (house pattern: components/ui/Toast.tsx, ~:88); completion
+  // and failure are announced on mount by ResultsScreen and GracefulFailure,
+  // the two screens app/leak-scan.tsx swaps in once state.stage is 'done'.
+  useEffect(() => {
+    if (state.stage === 'scanning') {
+      AccessibilityInfo.announceForAccessibility(strings.leakScan.scanningTitle);
+    }
+  }, [state.stage]);
+
   if (state.stage === 'question' && state.pendingQuestion) {
     return (
       <View style={styles.screen}>
         <ScreenHeader onBack={onBack} />
         <ScrollView contentContainerStyle={styles.container}>
-          <Text style={styles.title}>{strings.leakScan.intakeTitle}</Text>
+          <Text style={styles.title} accessibilityRole="header">
+            {strings.leakScan.intakeTitle}
+          </Text>
           <QuestionCard question={state.pendingQuestion} onAnswer={onAnswer} />
         </ScrollView>
       </View>
@@ -63,7 +76,9 @@ export function IntakeScreen({ state, onChooseFiles, onAnswer, onBack }: IntakeS
     <View style={styles.screen}>
       <ScreenHeader onBack={onBack} />
       <View style={[styles.container, styles.centered]}>
-        <Text style={styles.title}>{strings.leakScan.intakeTitle}</Text>
+        <Text style={styles.title} accessibilityRole="header">
+          {strings.leakScan.intakeTitle}
+        </Text>
         <Text style={styles.subtitle}>{strings.leakScan.intakeSubtitle}</Text>
 
         {state.fileNames.length > 0 && (
@@ -78,6 +93,20 @@ export function IntakeScreen({ state, onChooseFiles, onAnswer, onBack }: IntakeS
             ))}
             <Text style={styles.filesChosen}>
               {strings.leakScan.filesChosenCount(state.fileNames.length)}
+            </Text>
+          </View>
+        )}
+
+        {/* UX-014: a document-picker exception or an all-invalid file set used
+            to bounce back to idle with zero explanation (state.error went
+            unread here). Reuses the same notice-box styling as the skipped-
+            file messages below rather than a new pattern. */}
+        {state.error && (
+          <View style={styles.noticeBox}>
+            <Text style={styles.noticeText}>
+              {state.error === 'no-valid-files'
+                ? strings.leakScan.errorNoValidFiles
+                : strings.leakScan.errorPickFailed}
             </Text>
           </View>
         )}
@@ -117,7 +146,7 @@ function createStyles(theme: AppTheme) {
       alignItems: 'center',
     },
     title: {
-      fontSize: 34,
+      fontSize: typeScale.screenTitle,
       fontFamily: theme.fonts.display,
       color: theme.ink,
       textAlign: 'center',
@@ -125,7 +154,7 @@ function createStyles(theme: AppTheme) {
       marginBottom: 8,
     },
     subtitle: {
-      fontSize: 14,
+      fontSize: typeScale.label,
       fontFamily: theme.fonts.ui,
       color: theme.slate,
       textAlign: 'center',
@@ -181,7 +210,7 @@ function createStyles(theme: AppTheme) {
       alignSelf: 'stretch',
     },
     scanningTitle: {
-      fontSize: 17,
+      fontSize: typeScale.lead,
       fontFamily: theme.fonts.uiSemibold,
       color: theme.ink,
       marginTop: 18,

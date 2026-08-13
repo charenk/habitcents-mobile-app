@@ -98,7 +98,9 @@ export function UpcomingList({
       accessibilityLabel={strings.money.upcomingAddAffordance}
       style={({ pressed }) => [styles.addCompact, pressed ? styles.addCompactPressed : null]}
     >
-      <Icon name="Plus" size={20} color={theme.primaryDark} />
+      {/* UX-064: adding a bill is amber-domain money-out, not a kept
+          outcome, so this is slate like header chrome icons, never sage. */}
+      <Icon name="Plus" size={20} color={theme.slate} />
     </Pressable>
   );
 
@@ -149,6 +151,8 @@ export function UpcomingList({
                 item={item}
                 isFirst={index === 0}
                 onPress={() => onEditItem(item.expense)}
+                theme={theme}
+                styles={styles}
               />
             ))}
           </View>
@@ -162,13 +166,19 @@ function UpcomingRow({
   item,
   isFirst,
   onPress,
+  theme,
+  styles,
 }: {
   item: UpcomingItem;
   isFirst: boolean;
   onPress: () => void;
+  theme: AppTheme;
+  // UX-056: createStyles is a ~30-entry StyleSheet.create; it used to be
+  // recomputed once per row instance (this component's own useMemo, keyed
+  // only on theme, still ran that memo hook fresh per row). Hoisted to the
+  // parent's single call and passed down instead.
+  styles: ReturnType<typeof createStyles>;
 }) {
-  const theme = useTheme();
-  const styles = useMemo(() => createStyles(theme), [theme]);
   const { format } = useCurrency();
 
   const { expense, nextDate, daysUntil, occurrencesInWindow } = item;
@@ -231,7 +241,7 @@ function UpcomingRow({
       <Icon
         name="ChevronRight"
         size={16}
-        color={theme.mist}
+        color={theme.mistText}
         importantForAccessibility="no-hide-descendants"
         accessibilityElementsHidden
       />
@@ -266,11 +276,12 @@ function createStyles(theme: AppTheme) {
       fontSize: typeScale.eyebrow,
       letterSpacing: typeScale.eyebrowLetterSpacing,
       textTransform: 'uppercase',
-      color: theme.mist,
+      color: theme.mistText,
     },
     totalAmount: {
       fontFamily: theme.fonts.display,
-      fontSize: 36,
+      // Batch 2 token pass: literal 36 -> typeScale.displayLarge.
+      fontSize: typeScale.displayLarge,
       lineHeight: 42,
       color: theme.ink,
       fontVariant: ['tabular-nums'],
@@ -303,7 +314,7 @@ function createStyles(theme: AppTheme) {
       fontSize: typeScale.eyebrow,
       letterSpacing: typeScale.eyebrowLetterSpacing,
       textTransform: 'uppercase',
-      color: theme.mist,
+      color: theme.mistText,
       marginTop: 16,
       marginBottom: 6,
       marginLeft: 4,
@@ -352,13 +363,13 @@ function createStyles(theme: AppTheme) {
     },
     pillLabel: {
       fontFamily: theme.fonts.uiBold,
-      fontSize: 10.5,
+      fontSize: typeScale.eyebrow,
       color: theme.amberInk,
     },
     schedule: {
       fontFamily: theme.fonts.ui,
-      fontSize: 12,
-      color: theme.mist,
+      fontSize: typeScale.caption,
+      color: theme.mistText,
       marginTop: 2,
     },
     rowAmount: {
@@ -373,8 +384,8 @@ function createStyles(theme: AppTheme) {
     },
     cadence: {
       fontFamily: theme.fonts.ui,
-      fontSize: 12,
-      color: theme.mist,
+      fontSize: typeScale.caption,
+      color: theme.mistText,
       marginTop: 2,
     },
     emptyWrap: {

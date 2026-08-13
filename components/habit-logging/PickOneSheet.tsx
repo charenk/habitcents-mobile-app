@@ -31,6 +31,7 @@ import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-n
 import { AmountField } from '@/components/ui/AmountField';
 import { Button } from '@/components/ui/Button';
 import { Sheet } from '@/components/ui/Sheet';
+import { useToast } from '@/components/ui/Toast';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { radii, typeScale } from '@/constants/theme';
@@ -88,6 +89,7 @@ export function PickOneSheet({
   const theme = useTheme();
   const { format } = useCurrency();
   const { height } = useWindowDimensions();
+  const { show } = useToast();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   // Prefilled from the detected per-occurrence MEDIAN and edited on the keypad
@@ -116,6 +118,18 @@ export function PickOneSheet({
         habit.observedCount
       );
   const hasRange = habit.maxAmount > habit.minAmount;
+
+  // UX-051: cents === 0 would set "one skip keeps $0.00" with no warning,
+  // silently zeroing out every future skip on this habit. Same house pattern
+  // as PartialSlipSheet/ExpenseSheet: keep Start live and toast instead of a
+  // dead disabled control.
+  const handleStart = () => {
+    if (cents === 0) {
+      show(strings.toasts.enterAmountFirst);
+      return;
+    }
+    onStart(cents, valueEdited);
+  };
 
   const header = (
     <>
@@ -202,7 +216,7 @@ export function PickOneSheet({
         <View style={styles.footer}>
           <Button
             label={strings.habitLogging.startBreakingIt}
-            onPress={() => onStart(cents, valueEdited)}
+            onPress={handleStart}
           />
           <Button label={strings.habitLogging.notThisOne} variant="tertiary" onPress={onCancel} />
         </View>
@@ -231,7 +245,10 @@ function createStyles(theme: AppTheme) {
     },
     title: {
       fontFamily: theme.fonts.display,
-      fontSize: 32,
+      // Batch 2: token, was a literal 32. displayMid (30) is now the one
+      // size for every decision-moment sheet title (partial slip, pick one,
+      // break habit).
+      fontSize: typeScale.displayMid,
       lineHeight: 38,
       color: theme.ink,
     },
@@ -244,7 +261,7 @@ function createStyles(theme: AppTheme) {
     },
     paragraph: {
       fontFamily: theme.fonts.ui,
-      fontSize: 14,
+      fontSize: typeScale.label,
       lineHeight: 20,
       color: theme.slate,
       marginBottom: 8,
@@ -254,7 +271,7 @@ function createStyles(theme: AppTheme) {
       fontSize: typeScale.eyebrow,
       letterSpacing: typeScale.eyebrowLetterSpacing,
       textTransform: 'uppercase',
-      color: theme.mist,
+      color: theme.mistText,
       marginTop: 14,
       marginBottom: 6,
     },
@@ -262,7 +279,7 @@ function createStyles(theme: AppTheme) {
       fontFamily: theme.fonts.ui,
       fontSize: typeScale.caption,
       lineHeight: 18,
-      color: theme.mist,
+      color: theme.mistText,
       marginTop: 14,
     },
     // Quiet second line: the keep-logging note and the buy-range hint.
@@ -270,7 +287,7 @@ function createStyles(theme: AppTheme) {
       fontFamily: theme.fonts.ui,
       fontSize: typeScale.caption,
       lineHeight: 18,
-      color: theme.mist,
+      color: theme.mistText,
       marginBottom: 8,
     },
     gateCard: {
@@ -287,12 +304,12 @@ function createStyles(theme: AppTheme) {
       fontSize: typeScale.eyebrow,
       letterSpacing: typeScale.eyebrowLetterSpacing,
       textTransform: 'uppercase',
-      color: theme.mist,
+      color: theme.mistText,
       marginBottom: 6,
     },
     gateTitle: {
       fontFamily: theme.fonts.uiSemibold,
-      fontSize: 16,
+      fontSize: typeScale.button,
       lineHeight: 22,
       color: theme.ink,
     },
@@ -307,7 +324,7 @@ function createStyles(theme: AppTheme) {
       fontFamily: theme.fonts.ui,
       fontSize: typeScale.caption,
       lineHeight: 17,
-      color: theme.mist,
+      color: theme.mistText,
       marginTop: 10,
     },
     primary: {

@@ -78,7 +78,7 @@ export function ScreenHeader({ title, eyebrow, actions, onBack }: ScreenHeaderPr
             </Text>
             {eyebrow ? (
               <Text style={styles.eyebrow} maxFontSizeMultiplier={1.5}>
-                {eyebrow.toUpperCase()}
+                {eyebrow}
               </Text>
             ) : null}
           </View>
@@ -146,7 +146,7 @@ function createStyles(theme: AppTheme) {
       fontSize: typeScale.eyebrow,
       fontFamily: theme.fonts.uiSemibold,
       letterSpacing: typeScale.eyebrowLetterSpacing,
-      color: theme.mist,
+      color: theme.mistText,
       textTransform: 'uppercase',
     },
     actions: {
