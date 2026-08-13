@@ -187,7 +187,15 @@ export default function CategoryDetailScreen() {
           {item.title}
         </Text>
         <Text style={styles.logDate}>
-          {strings.categoryDetail.logTimestamp(item.date.toLocaleDateString(), item.time)}
+          {/* UX-072: this called item.date.toLocaleDateString() with no
+              options, which on Hermes without full ICU returns an unformatted
+              ISO-ish string, so recent logs read "2026-08-01 at 8:14 AM". Every
+              other date in the app goes through formatDate, which passes
+              explicit options; this one site had bypassed it. */}
+          {strings.categoryDetail.logTimestamp(
+            formatDate(item.date, { month: 'short', day: 'numeric' }),
+            item.time
+          )}
         </Text>
       </View>
       <Text style={styles.logAmount}>{format(item.amount, { signed: true })}</Text>
