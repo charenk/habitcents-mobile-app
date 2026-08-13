@@ -5,6 +5,145 @@ Tone source: `../docs/content-agent-spec.md` (CONTENT_PROMPT.md does not exist y
 
 ---
 
+## 2026-08-13: Full UX/UI audit and remediation shipped as TestFlight build 13
+
+### Session scan
+
+**Scope:** end of session (multi-day session, 08-12 to 08-13)
+**Built this session:** Ran a full UX/UI debt audit of the mobile app (74 findings, file:line evidence, an interactive triage viewer) using parallel agents plus a dedicated adversarial reviewer per phase, then executed seven remediation phases: honesty and correctness bugs, WCAG contrast fixes, a ratified type and spacing scale, performance (memoization, first React.memo, list virtualization), and an accessibility-flow pass that made the core loop and the leak-scan flow speak for the first time. Merged to main and shipped as TestFlight build 13.
+**Pillar scores:** P1: None · P2: Strong · P3: Weak (already logged 2026-08-07, same underlying Metro/worktree constraint rediscovered with new detail, not a new pattern) · P4: Strong · P5: Strong
+**P6:** not generated (no explicit request; day of week not confirmed as Friday)
+
+---
+
+### P2 ITERATION WITH RATIONALE: Fixed the button, then found it broken five more times
+
+**TWITTER POST**
+Fixed the worst accessibility bug in my app: a green button with white text failing contrast (2.71:1, needs 4.5). Kept the brand green, flipped the label to dark text (6.24:1). Shipped it. Then a second AI pass, told to find what's wrong instead of confirm what's right, found five other buttons across the app still running the broken version, including the app's main paywall button. Fixing the shared component doesn't reach code that copy pasted the pattern instead of using it.
+
+VISUAL NOTE: before/after of the "Get started" button, white label vs the corrected dark label, same green.
+
+---
+
+**TWITTER THREAD**
+Tweet 1: I fixed the worst accessibility bug in my app. Then found it five more times.
+Tweet 2: The bug: a bright green call-to-action button with white text. Contrast ratio 2.71 to 1. WCAG needs 4.5. Every primary button in the app failed it.
+Tweet 3: The fix: keep the brand green exactly as is, flip the label from white to dark ink. New ratio: 6.24 to 1. Comfortable pass. Updated the shared button component. Called it done.
+Tweet 4: A second review pass, a different AI agent whose only job was to try to disprove the fix, found five buttons that had rolled their own version of the button instead of using the shared one, including the main call-to-action on the paywall screen. None of them had inherited the fix.
+Final tweet: "Fixed in the shared component" is not the same claim as "fixed." Grep for every place someone copy pasted the pattern instead of reusing it, every time.
+
+VISUAL NOTE: tweet 2, a screenshot of the contrast checker showing 2.71:1 fail; tweet 4, the paywall's main button before the second pass caught it.
+
+---
+
+**LINKEDIN POST**
+I fixed the worst accessibility bug in my app this week. Then I found it five more times.
+
+The bug was simple: the primary call to action button across HabitCents used white text on the brand green. Measured contrast: 2.71 to 1. WCAG AA needs 4.5. Every green button in the app failed it, including the button people tap to start a free trial.
+
+The fix looked simple too. Keep the exact brand green, no change there. Flip the label from white to a dark ink. New ratio: 6.24 to 1, a comfortable pass. I updated the shared Button component and marked the finding resolved.
+
+Then I ran a second pass with a different instruction: don't confirm this is fixed, try to prove it isn't. That pass found five buttons across the app, including the app's main paywall call to action, that had never gone through the shared component at all. Someone, at some point, had copy pasted the visual style instead of importing the button. All five still shipped the broken white-on-green text.
+
+The lesson I am keeping: a design system fix only reaches the places that actually use the design system. Every hand rolled copy of a pattern is a silent exception, and you will not find it by re-reading the component you just fixed. You find it by asking a second, skeptical pass to go looking for exactly that.
+
+All five are fixed now, verified with the same contrast math, shipped in build 13.
+
+VISUAL NOTE: a small before/after grid of all five buttons found in the second pass.
+
+---
+
+CASE STUDY MOMENT
+The token-fix-doesn't-reach-hand-rolled-copies pattern, caught by a dedicated adversarial review pass, is a strong anchor for a case study on how multi-agent review actually changes outcomes versus a single confident pass.
+
+---
+
+### P4 PRODUCT AND DESIGN JUDGMENT: The empty app hid the worst bugs
+
+**TWITTER POST**
+My AI-run audit read every line of my app's code and found real bugs. It also missed two of the worst ones, because the app was empty. A category screen quietly labeled an all-time spending total as "this month." A leak-detection feature told a user their $1,200 rent "costs you about $4,000.00 a month." Both only showed up once I put real data in and actually ran it.
+
+VISUAL NOTE: the leak-scan biggest-leak card claiming "$4,000.00 a month" next to the true $1,200 figure from the underlying data.
+
+---
+
+**TWITTER THREAD**
+Tweet 1: My AI code audit was thorough. It still missed two of the app's worst bugs, because the app was empty.
+Tweet 2: The audit read every file, computed every color contrast ratio by hand, found 74 real issues. All correct. All found by reading source code on a fresh install with zero data.
+Tweet 3: What it missed: a Categories screen that labeled an all-time spending total "this month" on every row. And a leak-detection card that told a user their $1,200 a month rent "costs you about $4,000.00 a month."
+Tweet 4: Both bugs live in arithmetic, not markup. You cannot see a wrong number by reading the code that produces it. You have to actually compute it and look at the screen.
+Final tweet: I seeded the app with a demo history and ran a real bank statement through the import flow. Both bugs surfaced in under five minutes. Code review finds what's written wrong. Only running the product with real data finds what's computed wrong.
+
+VISUAL NOTE: tweet 3, split screenshot of both bugs; tweet 4/final, the seeded Categories screen with correct monthly totals after the fix.
+
+---
+
+**LINKEDIN POST**
+My AI-run UX audit of HabitCents was genuinely thorough. It read every file in the app, computed WCAG contrast ratios by hand for every color pair, and surfaced 74 real findings. All of that happened on a fresh install with zero user data.
+
+It still missed two of the worst bugs in the product.
+
+The first: the Categories screen showed a spending total under every category, labeled "this month." The number was actually an all-time sum. Nobody had ever tested it against a full month of real expenses, because there weren't any.
+
+The second, worse one: HabitCents has a feature that scans a real bank statement and finds your biggest recurring expense. I ran one of my own real exports through it. It found my rent, correctly. Then it told me: "Park costs you about $4,000.00 a month." My actual rent is $1,200. The math that turns "three payments over some number of days" into "a monthly rate" was dividing by the wrong denominator, and it had never been checked against real numbers because nobody had ever run a real statement through it during the audit.
+
+Neither bug is a typo you can catch by reading code. They are arithmetic bugs that only exist once you compute them and look at the number on screen.
+
+The fix wasn't more code review. It was seeding the app with a demo history and running one real CSV through the actual pipeline. Both bugs surfaced in minutes.
+
+A code audit tells you what's written wrong. Running the product with real data tells you what's computed wrong. A finance app needs both, and I am filing the rent bug as its own priority fix rather than letting a thorough-looking report stand in for having actually checked the math.
+
+VISUAL NOTE: the leak-scan "biggest leak" card, before and after seeding, ideally with the real dollar figures visible.
+
+---
+
+CASE STUDY MOMENT
+"The audit that read code versus the pass that ran the app with real data" is a strong before/after for a case study on the limits of static AI code review in a product where correctness means a specific dollar figure, not just a passing test.
+
+---
+
+### P5 BUILDING WITH AI HONESTLY: The audit that caught its own wrong math
+
+**TWITTER POST**
+The AI-written audit of my app published a wrong number, then caught its own mistake in the same document. It claimed a proposed color fix passed accessibility contrast at 4.54. Real value: 4.37. It fails. A second AI agent, told to verify every claim rather than trust it, recomputed it and the report now says so in bold at the top: "Correction, read this first."
+
+VISUAL NOTE: screenshot of the "Correction, read this first" callout in the published audit report.
+
+---
+
+**TWITTER THREAD**
+Tweet 1: The AI audit of my app published a wrong number. Then it caught itself, in writing, in the same report.
+Tweet 2: The claim: a proposed color fix for a failing contrast ratio would score 4.54, a pass. The real number, recomputed independently: 4.37. It fails.
+Tweet 3: A second AI agent's whole job on that pass was to verify every number in the report, not trust it. It recomputed every contrast ratio from scratch and caught the miss.
+Tweet 4: Two more from the same session: one AI agent blamed a broken test on "pre-existing, unrelated" code, when the actual cause was a change made two steps earlier in the same session, only caught by checking git history instead of trusting the explanation. And I coined a tracking id in a commit message without ever logging it in the actual document, which caused a real mismatch between shipped code and the report describing it, and needed its own separate fix.
+Final tweet: AI reviewing AI only works if the reviewer's job is explicitly to disprove, not confirm. And even then, you still have to spot check the reviewer. I did, three separate times this session, and every time it was right.
+
+VISUAL NOTE: tweet 2/3, the published correction note; tweet 4, none, this one is a narrated beat, not a screenshot.
+
+---
+
+**LINKEDIN POST**
+This week's audit of my app's design system caught something I did not expect: itself, being wrong.
+
+The report claimed a proposed replacement color would fix a failing contrast ratio, scoring 4.54, a pass. That number was false. Recomputed independently, the real ratio is 4.37. It fails the same 4.5 floor the report itself was citing as the standard.
+
+What caught it was not a human reading closely. It was a second AI pass whose entire job was to verify every claim in the first pass's output rather than trust it, recomputing every color contrast ratio from raw values instead of reading the stated conclusion. It found the error, and rather than quietly editing the number, the report now carries a visible correction at the top: what was wrong, what the real number is, and why it matters that a document meant to catch mistakes had shipped one of its own.
+
+That was not the only place a second pass caught the first. In the same session: an AI agent explained away a broken test as "pre-existing, unrelated to this change," and it was wrong, the actual cause was a change made two steps earlier in the same session, only caught by checking git history instead of accepting the explanation. And I made my own mistake: I referenced a tracking id in a code comment and a commit message without ever logging that finding in the actual audit document, which meant the published report and the shipped code disagreed about what that id meant. Fixing it took a dedicated pass of its own.
+
+None of this is an argument against building with AI. It's the actual shape of doing it honestly: parallel agents doing the work, a separate agent per phase whose only job is trying to disprove what the first one produced, and me spot checking the strongest claims myself before anything ships. Three genuine catches in one session, plus one mistake that was mine, not the model's, and needed a human to say "go check your own work here."
+
+The audit is public inside the repo, correction note and all. That felt more honest than quietly fixing the number and moving on.
+
+VISUAL NOTE: the full "Correction, read this first" section of the report, unedited.
+
+---
+
+CASE STUDY MOMENT
+A single session containing three separate self-corrections, one factual (contrast math), one diagnostic (misattributed test failure), one process (a tracking-id collision the AI itself caused) is the strongest material yet for a case study on what disciplined multi-agent review actually looks like, mistakes included.
+
+---
+
 ## 2026-07-04 — Phase 2 half shipped: analytics + multi-currency live; Leak Scan specified; design scope packaged
 
 ### Session scan

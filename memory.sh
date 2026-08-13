@@ -51,3 +51,15 @@ npx eas-cli build:list --platform ios --limit 1 --non-interactive   # check late
 xcrun simctl io booted screenshot out.png          # capture for PR what-to-test comments
 npm test -- leakScanEval                           # scan pipeline eval harness (fixtures + scores)
 # Real bank exports go ONLY in __tests__/leakScanEval/private/ (gitignored; verify with git check-ignore)
+
+# --- Added 2026-08-13 (UX/UI audit + remediation: seeding + leak-scan sim testing) ---
+# Seed rich demo data without branch surgery: Profile > Developer > "Persona: returning user" in-app.
+# Copy an eval fixture CSV into every simulator app-group storage dir, then deep-link straight to intake:
+# D=<simulator-udid>
+# for dir in ~/Library/Developer/CoreSimulator/Devices/$D/data/Containers/Shared/AppGroup/*/File\ Provider\ Storage; do
+#   cp __tests__/leakScanEval/fixtures/*.csv "$dir"/
+# done
+# xcrun simctl openurl $D "habitcents://leak-scan"   # tap through the "Open in HabitCents?" prompt
+#
+# Verify design/audit/UXUI_AUDIT.html's embedded findings array parses and has no duplicate/gap ids:
+# node -e "const fs=require('fs');const h=fs.readFileSync('design/audit/UXUI_AUDIT.html','utf8');const m=h.match(/<script>([\s\S]*)<\/script>/);new Function(m[1]);const a=m[1].match(/const F = (\[[\s\S]*?\]);\n\nconst DIMS/);const F=eval(a[1]);const ids=F.map(f=>f.id);console.log('findings',F.length,'unique',new Set(ids).size===ids.length,'resolved',F.filter(f=>f.res).length);"
