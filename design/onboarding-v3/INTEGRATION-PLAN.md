@@ -45,7 +45,35 @@ by 27). The original plan for this phase follows, kept as the record of intent.
 Tests: eval fixtures, unit tests per divisor site, regression test that a fixed-class
 candidate can never be the hero with a break CTA.
 
-## Phase 2: scope selection + locked tier
+## Phase 2: scope selection + locked tier, SHIPPED (2026-08-14)
+
+Delivered: `utils/leakScan/scope.ts` (tiers, fail-closed defaults, the
+essential-merchant guard, `applyScope`, `scopeFromRules`),
+`components/leak-scan/ScopeScreen.tsx`, a new `scope` stage in
+`useLeakScanIntake`, scope persistence in `ScanRules`
+(`scope` + `scopeAnswered`), scope re-application on ResultsScreen re-runs,
+and the `scope_selected` event. Verification: tsc clean, 894/894 tests over
+three consecutive runs (51 new), eval harness 71/71.
+
+**Known limitation, deliberately not fixed here.** The PRD's tiers assume a
+finer taxonomy than the app ships (ADR 0006, ten categories):
+- Groceries and eating out are both `Food`, so Food is on (that is where the
+  behavioral leaks live).
+- Transit and rideshare are both `Transportation`, so it fails closed and is
+  off; a rideshare user turns it on in one tap.
+Splitting either is a taxonomy change with migration cost across the category
+picker and stored data. FOLLOW-UP BET: split Food into groceries vs eating out
+and Transportation into transit vs rideshare, then revisit these defaults. Read
+`scope_selected.used_defaults` first; heavy editing is the signal that this
+matters.
+
+**Owed:** visual pass on the new screen. It has a component test against the
+real theme and an end-to-end flow test against the real pipeline, but no human
+has looked at it. Needs a CSV in the simulator's Files app (or a device), so it
+belongs with the Lane 2 pass.
+
+The original plan for this phase follows, kept as the record of intent.
+
 
 - New screen between extraction and results: "Where should we look?". Runs AFTER the
   pipeline (scope is a pure post-filter over candidates, exactly like rules re-runs in

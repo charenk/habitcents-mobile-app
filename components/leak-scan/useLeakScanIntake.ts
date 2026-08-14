@@ -1,14 +1,26 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import * as DocumentPicker from 'expo-document-picker';
 import { File } from 'expo-file-system';
 import { runScan, type ScanFileInput } from '@/utils/leakScan';
 import { MAX_FILES, MAX_FILE_BYTES, type ScanQuestion, type ScanResult } from '@/utils/leakScan/types';
 import { scanResultToSummary } from '@/utils/leakScan/summarize';
-import { getScanRules, saveScanRules, setDateOrder, setSignConvention, type ScanRules } from '@/utils/scanRules';
+import { getScanRules, saveScanRules, setDateOrder, setScope, setSignConvention, type ScanRules } from '@/utils/scanRules';
+import {
+  applyScope,
+  defaultScope,
+  isDefaultScope,
+  scopeCodes,
+  scopeFromRules,
+  selectedCategories,
+  toggleScope,
+  unselectedCategories,
+  type ScanScope,
+} from '@/utils/leakScan/scope';
+import type { ExpenseCategory } from '@/types/expense';
 import { saveScanSummary } from '@/utils/storage';
 import { track } from '@/utils/analytics';
 
-export type IntakeStage = 'idle' | 'picking' | 'scanning' | 'question' | 'done';
+export type IntakeStage = 'idle' | 'picking' | 'scanning' | 'question' | 'scope' | 'done';
 
 export type IntakeState = {
   stage: IntakeStage;
@@ -18,7 +30,14 @@ export type IntakeState = {
   files: ScanFileInput[];
   skippedFileMessages: string[];
   pendingQuestion: ScanQuestion | null;
+  /**
+   * The scan result. While stage is 'scope' this is the UNSCOPED result; the
+   * scoped copy replaces it on confirm, so the results screen never has to know
+   * scope exists.
+   */
   result: ScanResult | null;
+  /** The working scope selection, live while stage is 'scope'. */
+  scope: ScanScope;
   error: string | null;
 };
 
@@ -37,10 +56,17 @@ export function useLeakScanIntake() {
     skippedFileMessages: [],
     pendingQuestion: null,
     result: null,
+    scope: defaultScope(),
     error: null,
   });
   const [rules, setRules] = useState<ScanRules | null>(null);
   const [pendingFiles, setPendingFiles] = useState<ScanFileInput[]>([]);
+
+  // Mirrors state so confirmScope reads the scope and result the user is
+  // actually looking at, not a stale render closure. Same pattern as
+  // OnboardingContext's onboardingStateRef and ExpensesContext's expensesRef.
+  const stateRef = useRef(state);
+  stateRef.current = state;
 
   const runWithRules = useCallback(async (files: ScanFileInput[], currentRules: ScanRules) => {
     const result = runScan(files, { rules: currentRules });
@@ -71,16 +97,67 @@ export function useLeakScanIntake() {
         likely_count: tierBreakdown.likely,
         needs_review_count: tierBreakdown['needs-review'],
       });
+      // Scope selection (PRD v3.1 sect 7.1) sits between extraction and
+      // results: the user says where to look before the app proposes anything.
+      // Skipped when the pipeline found no candidates at all, because there is
+      // then nothing to scope and the screen would be a dead step. The summary
+      // is deliberately NOT saved here in that case, it is saved once the
+      // scoped result is known, so the Insights snapshot never advertises a
+      // leak the user placed out of bounds.
+      if (result.habits.length > 0) {
+        const startingScope = scopeFromRules(currentRules);
+        setState((s) => ({
+          ...s,
+          stage: 'scope',
+          pendingQuestion: null,
+          result,
+          scope: startingScope,
+        }));
+        return;
+      }
+
       // Fire-and-forget (OB-4, ADR 0020): persists a small display-ready
       // snapshot so a later Insights segment can show it without re-running
-      // the pipeline. A rule-answer re-run lands here too (this function is
-      // the only place a scan reaches 'done'), so a correction's re-run
-      // naturally overwrites the prior summary with the corrected result --
-      // the right behavior per the "kept until replaced" contract.
+      // the pipeline. A rule-answer re-run lands here too, so a correction's
+      // re-run naturally overwrites the prior summary with the corrected
+      // result, the right behavior per the "kept until replaced" contract.
       void saveScanSummary(scanResultToSummary(result, new Date()));
     }
     setState((s) => ({ ...s, stage: 'done', pendingQuestion: null, result }));
   }, []);
+
+  /** Toggle one category on the scope screen. Locked ones are inert. */
+  const toggleScopeCategory = useCallback((category: ExpenseCategory) => {
+    setState((s) => ({ ...s, scope: toggleScope(s.scope, category) }));
+  }, []);
+
+  /**
+   * Confirm the scope: filter the candidates, save the snapshot from the
+   * SCOPED result, persist the selection for the next scan, and hand the
+   * results screen a result it can treat as final.
+   *
+   * Side effects stay out of the setState updater on purpose: React may invoke
+   * an updater more than once, which would double-write the summary.
+   */
+  const confirmScope = useCallback(async () => {
+    const { result, scope } = stateRef.current;
+    if (!result) return;
+    const scoped = applyScope(result, scope);
+
+    track('scope_selected', {
+      categories_on: scopeCodes(selectedCategories(scope)),
+      categories_off: scopeCodes(unselectedCategories(scope)),
+      used_defaults: isDefaultScope(scope),
+    });
+
+    setState((s) => ({ ...s, stage: 'done', result: scoped }));
+    void saveScanSummary(scanResultToSummary(scoped, new Date()));
+
+    const current = rules ?? (await getScanRules());
+    const updated = setScope(current, scope as Record<string, boolean>);
+    setRules(updated);
+    await saveScanRules(updated);
+  }, [rules]);
 
   const pickAndScan = useCallback(async () => {
     setState((s) => ({ ...s, stage: 'picking', error: null }));
@@ -164,10 +241,11 @@ export function useLeakScanIntake() {
       skippedFileMessages: [],
       pendingQuestion: null,
       result: null,
+      scope: defaultScope(),
       error: null,
     });
     setPendingFiles([]);
   }, []);
 
-  return { state, pickAndScan, answerQuestion, reset };
+  return { state, pickAndScan, answerQuestion, toggleScopeCategory, confirmScope, reset };
 }

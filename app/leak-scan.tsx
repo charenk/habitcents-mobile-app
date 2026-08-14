@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router';
 import { useLeakScanIntake } from '@/components/leak-scan/useLeakScanIntake';
 import { IntakeScreen } from '@/components/leak-scan/IntakeScreen';
 import { ResultsScreen } from '@/components/leak-scan/ResultsScreen';
+import { ScopeScreen } from '@/components/leak-scan/ScopeScreen';
 import { GracefulFailure } from '@/components/leak-scan/GracefulFailure';
 import { useCompleteScanOnboarding } from '@/components/leak-scan/useCompleteScanOnboarding';
 import { useOnboarding } from '@/contexts/OnboardingContext';
@@ -17,7 +18,8 @@ import { useOnboarding } from '@/contexts/OnboardingContext';
  */
 export default function LeakScanRoute() {
   const router = useRouter();
-  const { state, pickAndScan, answerQuestion, reset } = useLeakScanIntake();
+  const { state, pickAndScan, answerQuestion, toggleScopeCategory, confirmScope, reset } =
+    useLeakScanIntake();
   const completeScanOnboarding = useCompleteScanOnboarding();
   const { isOnboardingComplete } = useOnboarding();
 
@@ -51,6 +53,21 @@ export default function LeakScanRoute() {
   const handleBack = useCallback(() => {
     router.back();
   }, [router]);
+
+  // Scope selection (PRD v3.1 sect 7.1) sits between a finished extraction and
+  // the results: the user declares where to look before anything is proposed.
+  // Back here returns to intake rather than leaving the flow, so a user who
+  // changes their mind about the file is not forced through the results first.
+  if (state.stage === 'scope' && state.result) {
+    return (
+      <ScopeScreen
+        scope={state.scope}
+        onToggle={toggleScopeCategory}
+        onConfirm={confirmScope}
+        onBack={handleBack}
+      />
+    );
+  }
 
   if (state.stage === 'done' && state.result) {
     if (state.result.gracefulFailure) {

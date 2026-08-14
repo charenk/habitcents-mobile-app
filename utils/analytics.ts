@@ -160,6 +160,16 @@ export interface AnalyticsEventMap {
     amount_parse_rate: number;
     sign_confidence: number;
   };
+  // Scope selection (PRD v3.1 sect 7.1 / sect 11). `used_defaults` is the one
+  // to read first: heavy editing means the tier assignments are wrong, and
+  // that has to be settled before any classifier conversation reopens.
+  // Category names are a closed taxonomy (no merchant strings), so they are
+  // safe to send under D-9.
+  scope_selected: {
+    categories_on: string;
+    categories_off: string;
+    used_defaults: boolean;
+  };
   scan_categories_expanded: Record<string, never>;
   // Finding-first ladder's dashed expander (ADR 0020, W4), same shape as
   // scan_categories_expanded above.

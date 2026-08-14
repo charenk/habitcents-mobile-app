@@ -51,6 +51,7 @@ import {
   type ScanRules,
 } from '@/utils/scanRules';
 import { habitCandidateToDetectedHabit, scanHabitId } from '@/utils/leakScanBridge';
+import { applyScope, scopeFromRules } from '@/utils/leakScan/scope';
 import { saveScanSummary } from '@/utils/storage';
 import { track } from '@/utils/analytics';
 import { isHabitLimitReached } from '@/utils/habitLogging';
@@ -211,7 +212,15 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
     async (updatedRules: ScanRules) => {
       await saveScanRules(updatedRules);
       setRulesState(updatedRules);
-      const next = runScan(files, { rules: updatedRules, importId: initialResult.importId });
+      // A re-run rebuilds the candidate list from scratch, so the user's scope
+      // has to be re-applied or every correction would resurrect the categories
+      // they placed out of bounds. Dismissing a leak is itself a re-run, which
+      // makes this the difference between "Not a habit" narrowing the list and
+      // silently repopulating it.
+      const next = applyScope(
+        runScan(files, { rules: updatedRules, importId: initialResult.importId }),
+        scopeFromRules(updatedRules)
+      );
       setResult(next);
       // Corrections change what the scan concluded, so the persisted summary
       // follows the corrected result too (same write the intake hook does).

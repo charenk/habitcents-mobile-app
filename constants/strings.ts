@@ -486,6 +486,23 @@ export const strings = {
     intakeTitle: 'Scan your statement.',
     intakeSubtitle: 'CSV files only. Everything stays on this device.',
     chooseFiles: 'Choose CSV files',
+    // Scope selection (PRD v3.1 sect 7.1). The question is where to look, not
+    // "review what we found": the user draws the boundary so the app never has
+    // to claim it knows what is essential.
+    scopeTitle: 'Where should we look?',
+    scopeSubtitle: 'Pick the spending you want habit ideas from. You can change this on your next scan.',
+    scopeLockedHeading: 'Never searched',
+    // Reads as judgment, not omission (sect 7.1).
+    scopeLockedReason: 'Rent, medical, childcare, and insurance go to Upcoming, not to habits.',
+    scopeAvailableHeading: 'Search these',
+    scopeConfirm: 'Show my leaks',
+    scopeSelectedCount: (n: number) => (n === 1 ? '1 category selected' : `${n} categories selected`),
+    // Confirming with nothing selected is allowed: the dashboard still shows
+    // every dollar, there are simply no habit proposals.
+    scopeNoneSelected: 'No habit ideas, just the breakdown',
+    scopeLockedHint: 'Always excluded',
+    scopeOn: 'Searching',
+    scopeOff: 'Not searching',
     filesChosenCount: (n: number) => `${n} file${n === 1 ? '' : 's'} selected`,
     startScan: 'Start scan',
     scanningTitle: 'Reading your files',

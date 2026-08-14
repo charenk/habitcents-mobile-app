@@ -30,6 +30,16 @@ export type ScanRules = {
   signConvention: Record<string, 1 | -1>;
   /** fileFingerprint -> account label. Rename an account. Display only. */
   accountLabel: Record<string, string>;
+  /**
+   * Scan scope (PRD v3.1 sect 7.1): category -> searched for habit candidates.
+   * Absent means "never answered", which is NOT the same as an all-off scope:
+   * callers fall back to defaultScope() so a fresh install starts on the
+   * ratified defaults rather than finding nothing. Locked categories are never
+   * stored here, and a stray true for one is ignored on read (scope.ts).
+   */
+  scope: Record<string, boolean>;
+  /** True once the user has confirmed the scope screen at least once. */
+  scopeAnswered: boolean;
 };
 
 /** An empty, well-formed rule store. */
@@ -42,6 +52,8 @@ export function emptyScanRules(): ScanRules {
     dateOrder: {},
     signConvention: {},
     accountLabel: {},
+    scope: {},
+    scopeAnswered: false,
   };
 }
 
@@ -85,6 +97,8 @@ function reviveRules(raw: unknown): ScanRules {
       return out;
     })(),
     accountLabel: asStringRecord(r.accountLabel),
+    scope: asBoolRecord(r.scope),
+    scopeAnswered: r.scopeAnswered === true,
   };
 }
 
@@ -148,4 +162,14 @@ export function setSignConvention(
 
 export function setAccountLabel(rules: ScanRules, fileFingerprint: string, label: string): ScanRules {
   return { ...rules, accountLabel: { ...rules.accountLabel, [fileFingerprint]: label } };
+}
+
+/**
+ * Record the user's scope answer (PRD v3.1 sect 7.1). `scopeAnswered` is what
+ * distinguishes "chose nothing" from "never asked": without it, a confirmed
+ * all-off scope would be indistinguishable from a fresh install and would be
+ * silently overwritten with the defaults on the next scan.
+ */
+export function setScope(rules: ScanRules, scope: Record<string, boolean>): ScanRules {
+  return { ...rules, scope: { ...scope }, scopeAnswered: true };
 }
