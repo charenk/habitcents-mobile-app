@@ -365,7 +365,43 @@ has one today):
 
 Event: `skip_activation {surface}` on the first activation-relevant act from each.
 
-## Phase 8: instrumentation reconciliation
+## Phase 8: SHIPPED 2026-08-14 (final phase)
+
+Reference doc: `design/onboarding-v3/INSTRUMENTATION.md` (PRD name to shipped
+name for every sect 11 event, plus the exact query for each of the four month-3
+criteria).
+
+**Fixed a gap phase 4 left.** `first_kept` fired with no properties, so the
+PRD's HEADLINE criterion (scan-route vs habit-route first-kept, within 20%) was
+not computable at all. The start source is now persisted on `HabitChangeGoal`
+and carried as `first_kept { route }`. Read off the goal rather than inferred
+from the nearest preceding `habit_tracking_started`, because a first skip can
+land days later and after a second habit was started. Pre-upgrade goals report
+'unknown', kept separable so that cohort can be excluded instead of skewing the
+comparison.
+
+**`recurring_expense_count` ships as an event, not a person property (D5).**
+Person properties key off `identify()`, which D-9's anonymous-device-ID posture
+forbids. A once-per-session snapshot after hydration carries the same number.
+Counts parents only: materialized children are occurrences of a schedule, not
+schedules, and counting them would inflate the number against the very cap
+decision it exists to inform. Raw count rather than a bucket, because
+`bucketCount`'s 1-9 / 10-49 boundary sits exactly where the cap decision is and
+would pre-commit the answer.
+
+**Not built, deliberately:** `beat_viewed` / `beat_swipe` (the beats are
+placeholders until the captures land, so per-beat engagement would measure a
+placeholder), `permission_prompted` (the document picker raises no permission
+dialog; the PRD's Permission step is a prototype artifact), and a separate
+`activation` event (that moment is `habit_tracking_started`; a parallel name is
+two chances to disagree).
+
+Verification: tsc clean, 970/970 over three consecutive runs, eval harness
+71/71.
+
+The original plan for this phase follows.
+
+## Phase 8 (original plan): instrumentation reconciliation
 
 - Mapping table, old name kept wherever one exists (ADR 0020 stability rule):
   `beat_viewed/beat_swipe` -> new (carousel is new); `intent_selected` ->

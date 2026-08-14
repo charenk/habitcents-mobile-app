@@ -5,6 +5,11 @@
  * the scan and habit routes are actually compared on, so its meaning has to be
  * identical on both: the user's own first skip, counted exactly once per
  * install, whatever route or cadence produced it.
+ *
+ * It also has to NAME that route. Sect 11's headline criterion compares
+ * scan-route first-kept against habit-route first-kept, which is not computable
+ * unless the event says which one it was, so the route assertions below are the
+ * criterion itself rather than incidental coverage.
  */
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock')
@@ -40,7 +45,10 @@ function firstKeptCalls() {
 }
 
 /** A started habit, the shape every route produces before any check-in. */
-async function startedHabit(frequency: 'daily' | 'weekly' = 'daily') {
+async function startedHabit(
+  frequency: 'daily' | 'weekly' = 'daily',
+  source: 'detection' | 'scan' | 'onboarding' = 'scan'
+) {
   // RTL v14: renderHook, like render, is async here.
   const { result } = await renderHook(() => useHabits(), { wrapper: Providers });
   await act(async () => {});
@@ -60,7 +68,7 @@ async function startedHabit(frequency: 'daily' | 'weekly' = 'daily') {
 
   const habit = result.current.habits[0];
   await act(async () => {
-    await result.current.startBreakingHabit(habit.id, 600, false, 'scan');
+    await result.current.startBreakingHabit(habit.id, 600, false, source);
   });
 
   return result;
@@ -177,5 +185,50 @@ describe('first_kept', () => {
     });
 
     expect(firstKeptCalls()).toHaveLength(0);
+  });
+});
+
+
+describe('the route it names', () => {
+  function routeOf(call: unknown[]) {
+    return (call[1] as { route: string }).route;
+  }
+
+  it.each(['scan', 'onboarding', 'detection'] as const)(
+    'reports the %s route the habit was started from',
+    async (source) => {
+      const result = await startedHabit('daily', source);
+      const goal = result.current.goals[0];
+
+      await act(async () => {
+        await result.current.answerToday(goal.id, 'skipped');
+      });
+
+      expect(firstKeptCalls()).toHaveLength(1);
+      expect(routeOf(firstKeptCalls()[0])).toBe(source);
+    }
+  );
+
+  // A goal persisted before the source field existed must not be attributed to
+  // a route it may never have come from; 'unknown' keeps that cohort separable
+  // instead of quietly skewing the comparison.
+  it('reports unknown for a goal stored before the route was recorded', async () => {
+    const result = await startedHabit('daily', 'scan');
+    const goal = result.current.goals[0];
+
+    // Strip the field the way a pre-upgrade install would have stored it.
+    const { source: _dropped, ...legacyGoal } = goal;
+    await saveHabitGoals([legacyGoal as typeof goal]);
+
+    const fresh = await renderHook(() => useHabits(), { wrapper: Providers });
+    await act(async () => {});
+    const revived = fresh.result.current.goals[0];
+
+    await act(async () => {
+      await fresh.result.current.answerToday(revived.id, 'skipped');
+    });
+
+    expect(firstKeptCalls()).toHaveLength(1);
+    expect(routeOf(firstKeptCalls()[0])).toBe('unknown');
   });
 });

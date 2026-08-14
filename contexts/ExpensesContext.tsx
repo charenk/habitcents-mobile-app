@@ -141,6 +141,14 @@ export function ExpensesProvider({ children }: { children: React.ReactNode }) {
       await runMaterializer();
       setExpenses(expensesRef.current);
       setIsLoading(false);
+      // Once per session, after hydration, so the count is the real stored one
+      // rather than an empty pre-load snapshot (PRD sect 9 / 11). Parents only:
+      // materialized children (source 'recurring') are occurrences of a
+      // schedule, not schedules, so counting them would inflate this against
+      // the very cap decision it exists to inform.
+      track('recurring_expense_count', {
+        count: expensesRef.current.filter((e) => e.isRecurring && e.source !== 'recurring').length,
+      });
     }
     loadExpenses();
     // eslint-disable-next-line react-hooks/exhaustive-deps

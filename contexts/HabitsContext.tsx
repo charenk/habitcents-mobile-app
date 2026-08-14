@@ -385,6 +385,8 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
       dayLogs: [],
       firstRun: true,
       backfillUsed: false,
+      // Persisted so first_kept can name the route days later (PRD sect 11).
+      source,
     };
 
     const updatedGoals = [...goals, newGoal];
@@ -509,10 +511,15 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
    * goals can be stopped and restarted and a metric that can fire twice is not
    * a first.
    */
-  const reportFirstKept = useCallback(async (): Promise<void> => {
+  const reportFirstKept = useCallback(async (goal: HabitChangeGoal): Promise<void> => {
     if (await hasFiredFirstKept()) return;
     await setFirstKeptFired();
-    track('first_kept', {});
+    // Read off the goal, not the nearest preceding habit_tracking_started: a
+    // first skip can land days later, and after a second habit was started,
+    // which would misattribute it. Goals created before the field existed
+    // report 'unknown' rather than being folded into a route they may not have
+    // come from.
+    track('first_kept', { route: goal.source ?? 'unknown' });
   }, []);
 
   const answerToday = useCallback(async (goalId: string, state: AnswerState): Promise<void> => {
@@ -550,7 +557,7 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
         week_skips: wk.skips,
         backfill: false,
       });
-      await reportFirstKept();
+      await reportFirstKept(goal);
     } else {
       track('slip_logged', { cadence: habit?.frequency, partial: false, backfill: false });
     }
@@ -600,7 +607,7 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
         week_skips: periodSkips,
         backfill: false,
       });
-      await reportFirstKept();
+      await reportFirstKept(goal);
     } else {
       track('slip_logged', { cadence: habit?.frequency, partial: false, backfill: false });
     }
@@ -681,7 +688,7 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
         week_skips: wk.skips,
         backfill: true,
       });
-      await reportFirstKept();
+      await reportFirstKept(goal);
     } else {
       track('slip_logged', { cadence: habit?.frequency, partial: false, backfill: true });
     }

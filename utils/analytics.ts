@@ -114,17 +114,23 @@ export interface AnalyticsEventMap {
   slip_logged: { cadence?: string; partial: boolean; backfill: boolean };
   answer_changed: { from: 'skipped' | 'slipped'; to: 'skipped' | 'slipped' };
   milestone_reached: { milestone: 10 | 30 | 50 | 66 };
-  // First real skip, once per install, whatever route got the user here
-  // (PRD v3.1 sect 7.5 / sect 11). Activation certifies setup; THIS is
-  // engagement, and it is what the scan and habit routes are compared on.
-  //
-  // No properties on purpose. It carries no amount because the fact of it is
-  // the signal, and no route/source because nothing on the goal records which
-  // route created it: deriving one from the habit id would be a guess dressed
-  // as data. The cohort comes from the same device's earlier
-  // habit_tracking_started {source} and onboarding_completed {door}, which
-  // already say it truthfully.
-  first_kept: Record<string, never>;
+  // First real skip, once per install (PRD v3.1 sect 7.5 / sect 11).
+  // Activation certifies setup; THIS is engagement, and it is what the scan and
+  // habit routes are compared on.
+  /**
+   * The first dollar this install ever keeps, and the route that got it there.
+   *
+   * `route` is what makes PRD sect 11's headline criterion computable at all
+   * ("scan-route first-kept vs habit-route first-kept, within 20%"). It is read
+   * off the goal rather than inferred from the nearest preceding
+   * habit_tracking_started, because a first skip can land days later and after
+   * a second habit was started, which would misattribute it.
+   *
+   * 'unknown' means a goal created before the source was persisted, kept
+   * distinct rather than folded into 'detection' so the cohort can be excluded
+   * instead of quietly skewing the comparison.
+   */
+  first_kept: { route: 'detection' | 'scan' | 'onboarding' | 'unknown' };
   habit_dismissed: { source: string };
   // Today tab (redesign U5/U7, ADR 0019, DI-5/DI-7): fires on every
   // Spent/Kept switch, chip tap or pager swipe.
@@ -210,6 +216,25 @@ export interface AnalyticsEventMap {
   // activation on purpose: filing a bill is bookkeeping, not the moment the
   // product exists to deliver, and letting it inflate activation would flatter
   // the funnel with the one step that proves least.
+  /**
+   * How many recurring expenses this install carries (PRD v3.1 sect 9 / 11).
+   *
+   * D5 resolved as "stay uncapped and instrument": the PRD's 3-cap never
+   * existed in this codebase, and a ceiling should be chosen from observed
+   * behaviour rather than guessed. Read at month 3 and 6 to decide whether a
+   * free-tier cap is needed and where it sits.
+   *
+   * DEVIATION, deliberate: the PRD asks for a PostHog *person property*, which
+   * this app cannot set. Person properties key off identify(), and D-9's
+   * anonymous-device-ID posture forbids calling it. A once-per-session snapshot
+   * event carries the same information for a month-3 distribution read.
+   *
+   * The raw count ships rather than a bucket because the decision it feeds is
+   * exactly where to put a threshold, and bucketCount's 1-9 / 10-49 boundary
+   * would pre-commit the answer. A count of a user's own rows carries no
+   * amounts, merchants, or text, so it is safe under D-9.
+   */
+  recurring_expense_count: { count: number };
   bills_offered: { count_proposed: number };
   bills_imported: { count_accepted: number };
   scan_categories_expanded: Record<string, never>;
