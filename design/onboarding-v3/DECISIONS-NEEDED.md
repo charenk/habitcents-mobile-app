@@ -77,11 +77,16 @@ of failures. Final design, meeting every visible PRD outcome:
   at the metrics layer).
 - dayLogs starts empty; the kept counter only ever moves on a real skip.
 
+### D5. Free-tier recurring cap: stay uncapped, instrument only (round 2)
+The PRD's 3-cap never existed in this codebase, so there is nothing to raise. Recurring
+expenses stay uncapped; phase 8 adds the `recurring_expense_count` user property and the
+number is read at month 3 and 6. Rationale: an unenforced ceiling costs nothing to
+observe and everything to guess wrong, and the habit cap (1 free / 5 premium) is already
+the load-bearing gate the PRD says it should be. Revisit only if the data shows a
+free-tier abuse pattern.
+
 ## Open
 
-### D5. Free-tier recurring cap
-The PRD's 3-cap never existed; today recurring expenses are uncapped. Options:
-(a) stay uncapped, instrument `recurring_expense_count`, decide at month 3/6 data
-(recommended: strictly more information, zero build); (b) introduce the 10 cap now so
-the free-tier promise hardens at launch per the PRD. Blocks nothing; phase 8 instruments
-either way.
+None. All six decisions are resolved. The remaining gate is Charen's ratification of
+`ADR-0026-DRAFT.md` into the umbrella `docs/decisions/` folder, which unblocks phases 4
+(payoff) and 6 (carousel).

@@ -5,7 +5,14 @@ Prereqs and decisions: `DECISIONS-NEEDED.md`. Evidence: `AUDIT-VS-PRD.md`.
 Phases 2-8 assume phase 1 merged. Phase 6 gates on ADR 0026 ratification
 (`ADR-0026-DRAFT.md`; D1 resolved in-session 2026-08-14, round 2).
 
-## Phase 1: honesty + plumbing preconditions (start immediately, no design dependency)
+## Phase 1: honesty + plumbing preconditions — SHIPPED (commit c6d75a7, 2026-08-14)
+
+All five items merged to `design/onboarding-exploration`. Verification: tsc clean,
+843/843 tests over three consecutive runs (20 new), eval harness 71/71, every new test
+confirmed to fail on revert. Headline result: the rent fixture now reads $1,241.38 a
+month instead of $4,000.00 (true rent $1,200, an 87-day window that was being divided
+by 27). The original plan for this phase follows, kept as the record of intent.
+
 
 1. **UX-073, the divisor bug.** `sessionCoverage()` (`utils/leakScan/coverage.ts:63-73`)
    returns `coveredDays` = distinct transaction days; every monthly figure divides by it
