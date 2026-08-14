@@ -14,6 +14,12 @@ type BiggestLeakCardProps = {
   candidate: HabitCandidate;
   /** Calendar length of the evidence window: the rate divisor (UX-073). */
   spanDays: number;
+  /**
+   * Eyebrow override. The habit deck reuses this exact card for all three of
+   * its slots rather than growing a near-identical sibling, but only the first
+   * card is the biggest leak; the rest say so.
+   */
+  eyebrow?: string;
   /** Wired by the caller to the EXACT existing handlers: handleTrackLeak
    *  (opens the same Decision-1 pick-one sheet the ranked list's "Track this
    *  leak" uses) and handleNotAHabit (suppress + re-run). Nothing new is
@@ -33,7 +39,7 @@ type BiggestLeakCardProps = {
  * already calls; it is called again here only to read its evidence fields,
  * no side effects (addScanHabit only happens when Break it is pressed).
  */
-export function BiggestLeakCard({ candidate, spanDays, onBreak, onDismiss }: BiggestLeakCardProps) {
+export function BiggestLeakCard({ candidate, spanDays, eyebrow, onBreak, onDismiss }: BiggestLeakCardProps) {
   const theme = useTheme();
   const { format } = useCurrency();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -45,7 +51,7 @@ export function BiggestLeakCard({ candidate, spanDays, onBreak, onDismiss }: Big
 
   return (
     <View style={styles.card}>
-      <Text style={styles.eyebrow}>{strings.leakScan.biggestLeakEyebrow}</Text>
+      <Text style={styles.eyebrow}>{eyebrow ?? strings.leakScan.biggestLeakEyebrow}</Text>
       <Text style={styles.name}>{candidate.merchantDisplay}.</Text>
       {habit.hasReliableRate ? (
         <Text style={styles.evidence}>

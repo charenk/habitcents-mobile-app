@@ -223,6 +223,17 @@ export type HabitCandidate = {
   /** Ranking score = annualizedLeak * governabilityWeight. */
   rankScore: number;
   topMerchants: string[];
+  /**
+   * Why this group was admitted. A candidate qualifies as a recurring
+   * commitment, a behavioral habit, or a renewing subscription, and the three
+   * lead to different places: only a BEHAVIORAL one belongs in the habit deck
+   * (PRD v3.1 sect 7.3, "high frequency x small ticket is the discretionary
+   * signature"), while subscriptions and commitments belong in the bills
+   * offer. The reason used to be computed and thrown away, which left the deck
+   * unable to tell a coffee run from a monthly bill without re-deriving it.
+   */
+  isBehavioral: boolean;
+  isSubscription: boolean;
 };
 
 // ---------------------------------------------------------------------------

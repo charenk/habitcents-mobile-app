@@ -76,6 +76,9 @@ function makeCandidate(overrides: Partial<HabitCandidate> = {}): HabitCandidate 
     annualizedLeakCents: 60000,
     rankScore: 60000,
     topMerchants: ['Starbucks'],
+    // Default fixture is an ordinary behavioral leak, the deck's own shape.
+    isBehavioral: true,
+    isSubscription: false,
     ...overrides,
   };
 }

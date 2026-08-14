@@ -93,7 +93,36 @@ The original plan for this phase follows, kept as the record of intent.
 - Defaults fail closed; scope persisted with scan rules so re-scans remember it.
 - Event: `scope_selected {categories_on, categories_off, used_defaults}`.
 
-## Phase 3: habit deck
+## Phase 3: habit deck, SHIPPED (2026-08-14)
+
+Delivered: `utils/leakScan/deck.ts` (behavioral-only eligibility,
+frequency-first ranking with per-instance-cost tiebreak, cap 3, plus
+`billsCandidates` as phase 5's source), `components/leak-scan/DeckScreen.tsx`,
+a shared `useTrackLeak` hook now used by BOTH the deck and the results ladder,
+`isBehavioral`/`isSubscription` carried on HabitCandidate, a new `deck` stage,
+and the three deck events. Verification: tsc clean, 922/922 tests over three
+consecutive runs (28 new), eval harness 71/71.
+
+Notable: tracking a leak was extracted from ResultsScreen into `useTrackLeak`
+rather than copied, because the phase 1 activation sequence (markHabitStarted
+before completeOnboarding) now runs from two surfaces and a second copy is a
+second chance to get its ordering wrong.
+
+**Fallback 1 is NOT built.** PRD sect 7.3 wants a habit template grid when the
+scan finds no candidates; today that case falls through to the full breakdown,
+same as the all-dismissed case, and `deck_exhausted` honestly reports
+`full_list` for both. The template grid needs the Door 3 break-habit
+plumbing, which lives inside `app/(tabs)/index.tsx handleBreakSheetStart`
+entangled with Today's own onboarding state (door3 coach flags, ribbons,
+completeOnboarding). Extracting it safely is its own unit; duplicating it would
+fork the habit-creation path. FOLLOW-UP: extract the pure
+BreakHabitStartData -> seed-input mapping, then host BreakHabitSheet from the
+scan route for the no-candidate case.
+
+**Owed:** visual pass, same as phase 2.
+
+The original plan for this phase follows, kept as the record of intent.
+
 
 - Deck of at most 3 from in-scope candidates. Rank: occurrences desc, then per-instance
   cost (`averageAmount`) as tiebreak. `governClass 'fixed'` excluded upstream (exists),

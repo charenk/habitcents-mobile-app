@@ -503,6 +503,15 @@ export const strings = {
     scopeLockedHint: 'Always excluded',
     scopeOn: 'Searching',
     scopeOff: 'Not searching',
+    // Habit deck (PRD v3.1 sect 7.3). At most three cards, each a decision
+    // rather than a reading assignment.
+    deckTitle: 'Start with one.',
+    deckSubtitle: 'These showed up most often in your statement. Break one now, or say which are not habits.',
+    // Card 1 keeps the biggest-leak eyebrow; the rest are simply also-rans.
+    deckAlsoEyebrow: 'Also showing up',
+    // Terminal exit and the all-dismissed fallback both land on the full
+    // breakdown. One hop, never a fallback of a fallback.
+    deckSeeEverything: 'See the full breakdown',
     filesChosenCount: (n: number) => `${n} file${n === 1 ? '' : 's'} selected`,
     startScan: 'Start scan',
     scanningTitle: 'Reading your files',

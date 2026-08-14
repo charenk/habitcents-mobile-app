@@ -18,11 +18,10 @@ import { BiggestLeakCard } from './BiggestLeakCard';
 import { ProjectionSection } from './ProjectionSection';
 import { ResultsFooter } from './ResultsFooter';
 import { useCompleteScanOnboarding } from './useCompleteScanOnboarding';
-import { useOnboarding } from '@/contexts/OnboardingContext';
+import { useTrackLeak } from './useTrackLeak';
 import { ReviewQueueSheet } from './ReviewQueueSheet';
 import { CategoryTransactionsSheet } from './CategoryTransactionsSheet';
 import { PulseDayDetailSheet } from './PulseDayDetailSheet';
-import { PickOneSheet } from '@/components/habit-logging/PickOneSheet';
 import {
   buildKpiSummary,
   buildCategorySummary,
@@ -50,12 +49,10 @@ import {
   suppressHabit,
   type ScanRules,
 } from '@/utils/scanRules';
-import { habitCandidateToDetectedHabit, scanHabitId } from '@/utils/leakScanBridge';
+import { scanHabitId } from '@/utils/leakScanBridge';
 import { applyScope, scopeFromRules } from '@/utils/leakScan/scope';
 import { saveScanSummary } from '@/utils/storage';
 import { track } from '@/utils/analytics';
-import { isHabitLimitReached } from '@/utils/habitLogging';
-import { getEntitlement } from '@/utils/purchases';
 
 type ResultsScreenProps = {
   result: ScanResult;
@@ -170,16 +167,13 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
   const router = useRouter();
   const toast = useToast();
   const { addExpense, deleteExpense, expenses } = useExpenses();
-  const { addScanHabit, startBreakingHabit, dismissHabit, getHabitById, getActiveHabits } = useHabits();
+  const { dismissHabit, getHabitById } = useHabits();
   const completeScanOnboarding = useCompleteScanOnboarding();
-  const { markHabitStarted } = useOnboarding();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   const [result, setResult] = useState(initialResult);
   const [rules, setRulesState] = useState<ScanRules | null>(null);
   const [reviewQueueOpen, setReviewQueueOpen] = useState(false);
-  const [pickOneHabit, setPickOneHabit] = useState<ReturnType<typeof habitCandidateToDetectedHabit> | null>(null);
-  const [pickOneCandidate, setPickOneCandidate] = useState<HabitCandidate | null>(null);
   const [openCategory, setOpenCategory] = useState<ExpenseCategory | null>(null);
   const [openPulseCell, setOpenPulseCell] = useState<PulseCell | null>(null);
   const [undone, setUndone] = useState(false);
@@ -348,61 +342,15 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
     [rules, rerun]
   );
 
-  /** Govern class only: "Track this leak" opens the identical Decision-1
-   *  pick-one sheet Door 1 uses (visual spec acceptance 6). Nothing is
-   *  created until Start breaking it is tapped on that sheet. */
-  const handleTrackLeak = useCallback(
-    async (candidate: HabitCandidate) => {
-      const habit = habitCandidateToDetectedHabit(candidate, result.coverage?.spanDays ?? 0);
-      await addScanHabit(habit);
-      setPickOneCandidate(candidate);
-      setPickOneHabit(habit);
-    },
-    [addScanHabit, result.coverage]
-  );
-
-  /** Influence class only: "Monitor" creates a monitor-only habit (discovered
-   *  status, no HabitChangeGoal, no skip loop) -- distinct from Track. */
-  const handleMonitor = useCallback(
-    async (candidate: HabitCandidate) => {
-      const habit = habitCandidateToDetectedHabit(candidate, result.coverage?.spanDays ?? 0);
-      await addScanHabit(habit);
-      track('scan_habit_tracked', { class: 'influence', cadence_route: 'monitor' });
-    },
-    [addScanHabit, result.coverage]
-  );
-
-  const handlePickOneStart = useCallback(
-    async (skipValue: number, valueEdited: boolean) => {
-      if (!pickOneHabit) return;
-      await startBreakingHabit(pickOneHabit.id, skipValue, valueEdited, 'scan');
-      if (pickOneCandidate) {
-        track('scan_habit_tracked', {
-          class: pickOneCandidate.governClass,
-          cadence_route: pickOneHabit.frequency,
-        });
-      }
-
-      // Starting a habit IS the scan route's activation: a habit now exists and
-      // carries a skip value. Onboarding previously completed only on "Bring in
-      // your last 30 days" or the graceful-failure exit, so a user who broke
-      // their biggest leak and left was still mid-onboarding, and a cold start
-      // bounced them back into an empty intake (the relaunch loop
-      // useCompleteScanOnboarding exists to prevent, reached by a path it did
-      // not cover).
-      //
-      // markHabitStarted runs FIRST: completeOnboarding reads habitStarted off
-      // the context's own ref when it builds the onboarding_completed payload,
-      // and that ref is what makes these two same-tick calls see each other
-      // (OnboardingContext's onboardingStateRef). Reversed, the event would
-      // always report habitStarted: false.
-      await markHabitStarted();
-      await completeScanOnboarding();
-
-      setPickOneHabit(null);
-      setPickOneCandidate(null);
-    },
-    [pickOneHabit, pickOneCandidate, startBreakingHabit, markHabitStarted, completeScanOnboarding]
+  /**
+   * Tracking and monitoring live in useTrackLeak, shared with the habit deck.
+   * Both surfaces make the same promise, so they must keep the same
+   * consequences: the same pick-one sheet, the same free-tier gate, the same
+   * analytics, and above all the same activation sequence. A second copy of
+   * that sequence is a second chance to get its ordering wrong.
+   */
+  const { trackLeak, monitorLeak, sheet: trackSheet } = useTrackLeak(
+    result.coverage?.spanDays ?? 0
   );
 
   const handleNotAHabit = useCallback(
@@ -567,7 +515,7 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
             <BiggestLeakCard
               candidate={topCandidate}
               spanDays={result.coverage?.spanDays ?? 0}
-              onBreak={() => handleTrackLeak(topCandidate)}
+              onBreak={() => trackLeak(topCandidate)}
               onDismiss={() => handleNotAHabit(topCandidate)}
             />
             <View style={styles.spacer} />
@@ -619,8 +567,8 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
                       spanDays={rankedLeaksWindowDays}
                       tipMonth={upcomingMonthLabel}
                       tipAmountCents={tipAmountCents}
-                      onTrack={handleTrackLeak}
-                      onMonitor={handleMonitor}
+                      onTrack={trackLeak}
+                      onMonitor={monitorLeak}
                       onNotAHabit={handleNotAHabit}
                       onWrongDetails={setOpenCategory}
                     />
@@ -698,23 +646,7 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
         onClose={() => setOpenPulseCell(null)}
       />
 
-      <PickOneSheet
-        visible={!!pickOneHabit}
-        habit={pickOneHabit}
-        monthTotal={pickOneCandidate?.totalCents ?? 0}
-        occurrences={pickOneCandidate?.occurrences ?? 0}
-        onCancel={() => {
-          setPickOneHabit(null);
-          setPickOneCandidate(null);
-        }}
-        onStart={handlePickOneStart}
-        freeTierBlocked={isHabitLimitReached(getActiveHabits().length, getEntitlement())}
-        onStartTrial={() => {
-          setPickOneHabit(null);
-          setPickOneCandidate(null);
-          router.push('/paywall?placement=habit_gate_scan');
-        }}
-      />
+      {trackSheet}
     </View>
   );
 }

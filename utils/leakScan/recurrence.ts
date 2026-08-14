@@ -297,6 +297,11 @@ export function detectHabitCandidates(
       annualizedLeakCents,
       rankScore,
       topMerchants,
+      // Kept rather than discarded: the habit deck is behavioral-only, and
+      // without these it would have to guess a group's admission reason back
+      // out of its shape (PRD v3.1 sect 7.3).
+      isBehavioral: behavioral,
+      isSubscription,
     });
   }
 

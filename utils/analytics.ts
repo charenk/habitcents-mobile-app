@@ -170,6 +170,16 @@ export interface AnalyticsEventMap {
     categories_off: string;
     used_defaults: boolean;
   };
+  // Habit deck (PRD v3.1 sect 7.3 / sect 11). position is 1-based; the
+  // position-1 track rate is the success criterion for the ranking signal.
+  deck_card_shown: {
+    position: number;
+    merchant_category: string;
+    instances: number;
+    total_cents: string;
+  };
+  deck_card_result: { position: number; result: 'tracked' | 'dismissed' };
+  deck_exhausted: { fallback: 'template_grid' | 'full_list' };
   scan_categories_expanded: Record<string, never>;
   // Finding-first ladder's dashed expander (ADR 0020, W4), same shape as
   // scan_categories_expanded above.

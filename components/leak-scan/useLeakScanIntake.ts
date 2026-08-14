@@ -2,9 +2,24 @@ import { useCallback, useRef, useState } from 'react';
 import * as DocumentPicker from 'expo-document-picker';
 import { File } from 'expo-file-system';
 import { runScan, type ScanFileInput } from '@/utils/leakScan';
-import { MAX_FILES, MAX_FILE_BYTES, type ScanQuestion, type ScanResult } from '@/utils/leakScan/types';
+import {
+  MAX_FILES,
+  MAX_FILE_BYTES,
+  type HabitCandidate,
+  type ScanQuestion,
+  type ScanResult,
+} from '@/utils/leakScan/types';
 import { scanResultToSummary } from '@/utils/leakScan/summarize';
-import { getScanRules, saveScanRules, setDateOrder, setScope, setSignConvention, type ScanRules } from '@/utils/scanRules';
+import {
+  getScanRules,
+  saveScanRules,
+  setDateOrder,
+  setScope,
+  setSignConvention,
+  suppressHabit,
+  type ScanRules,
+} from '@/utils/scanRules';
+import { deckCandidates } from '@/utils/leakScan/deck';
 import {
   applyScope,
   defaultScope,
@@ -20,7 +35,7 @@ import type { ExpenseCategory } from '@/types/expense';
 import { saveScanSummary } from '@/utils/storage';
 import { track } from '@/utils/analytics';
 
-export type IntakeStage = 'idle' | 'picking' | 'scanning' | 'question' | 'scope' | 'done';
+export type IntakeStage = 'idle' | 'picking' | 'scanning' | 'question' | 'scope' | 'deck' | 'done';
 
 export type IntakeState = {
   stage: IntakeStage;
@@ -38,6 +53,15 @@ export type IntakeState = {
   result: ScanResult | null;
   /** The working scope selection, live while stage is 'scope'. */
   scope: ScanScope;
+  /**
+   * The deck, fixed at the moment scope is confirmed.
+   *
+   * Held rather than recomputed per render so that rejecting all three cards
+   * exits to the full list instead of dealing three more (PRD sect 7.3: "one
+   * fallback hop, never a fallback of a fallback"). Dismissed cards are removed
+   * from here; when it empties, the deck is done.
+   */
+  deck: HabitCandidate[];
   error: string | null;
 };
 
@@ -57,6 +81,7 @@ export function useLeakScanIntake() {
     pendingQuestion: null,
     result: null,
     scope: defaultScope(),
+    deck: [],
     error: null,
   });
   const [rules, setRules] = useState<ScanRules | null>(null);
@@ -150,7 +175,17 @@ export function useLeakScanIntake() {
       used_defaults: isDefaultScope(scope),
     });
 
-    setState((s) => ({ ...s, stage: 'done', result: scoped }));
+    // The deck is dealt once, here, and held. Recomputing it as cards are
+    // dismissed would deal a fresh three every time the user rejected three,
+    // which is the "fallback of a fallback" the spec rules out.
+    const deck = deckCandidates(scoped.habits);
+
+    setState((s) => ({
+      ...s,
+      stage: deck.length > 0 ? 'deck' : 'done',
+      result: scoped,
+      deck,
+    }));
     void saveScanSummary(scanResultToSummary(scoped, new Date()));
 
     const current = rules ?? (await getScanRules());
@@ -158,6 +193,58 @@ export function useLeakScanIntake() {
     setRules(updated);
     await saveScanRules(updated);
   }, [rules]);
+
+  /**
+   * "Not a habit" on a deck card. Suppresses the merchant for good and drops
+   * the card; emptying the deck falls through to the full list.
+   *
+   * Deliberately does NOT re-run the pipeline, unlike the results screen's own
+   * dismissal. A re-run would rebuild every candidate and rewrite the persisted
+   * summary on each tap, and the deck already knows exactly which card left.
+   * The snapshot keeps listing the dismissed candidate on purpose: PRD sect 7.4
+   * makes dismissal permanent for PROPOSALS while the First scan record stays
+   * intact, so "never propose" does not become "never allow".
+   */
+  const dismissDeckCandidate = useCallback(
+    async (candidate: HabitCandidate) => {
+      const remaining = stateRef.current.deck.filter(
+        (c) => c.merchantStem !== candidate.merchantStem
+      );
+      // Rejecting the last card is the one permitted fallback hop: the full
+      // in-scope list, which is terminal.
+      const exhausted = remaining.length === 0;
+      if (exhausted) track('deck_exhausted', { fallback: 'full_list' });
+
+      setState((s) => ({
+        ...s,
+        stage: exhausted ? 'done' : s.stage,
+        deck: remaining,
+        // Drop it from the ladder below too, so the full list the user lands on
+        // never re-offers something they just rejected.
+        result: s.result
+          ? {
+              ...s.result,
+              habits: s.result.habits.filter((h) => h.merchantStem !== candidate.merchantStem),
+            }
+          : s.result,
+      }));
+
+      const current = rules ?? (await getScanRules());
+      const updated = suppressHabit(current, candidate.merchantStem);
+      setRules(updated);
+      await saveScanRules(updated);
+    },
+    [rules]
+  );
+
+  /**
+   * Leave the deck for the full breakdown: the ghost exit, and where tracking a
+   * habit lands too. Not an exhaustion, so it emits no deck_exhausted; the user
+   * chose to move on rather than running out of cards.
+   */
+  const leaveDeck = useCallback(() => {
+    setState((s) => (s.stage === 'deck' ? { ...s, stage: 'done' } : s));
+  }, []);
 
   const pickAndScan = useCallback(async () => {
     setState((s) => ({ ...s, stage: 'picking', error: null }));
@@ -242,10 +329,20 @@ export function useLeakScanIntake() {
       pendingQuestion: null,
       result: null,
       scope: defaultScope(),
+      deck: [],
       error: null,
     });
     setPendingFiles([]);
   }, []);
 
-  return { state, pickAndScan, answerQuestion, toggleScopeCategory, confirmScope, reset };
+  return {
+    state,
+    pickAndScan,
+    answerQuestion,
+    toggleScopeCategory,
+    confirmScope,
+    dismissDeckCandidate,
+    leaveDeck,
+    reset,
+  };
 }

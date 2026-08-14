@@ -4,6 +4,7 @@ import { useLeakScanIntake } from '@/components/leak-scan/useLeakScanIntake';
 import { IntakeScreen } from '@/components/leak-scan/IntakeScreen';
 import { ResultsScreen } from '@/components/leak-scan/ResultsScreen';
 import { ScopeScreen } from '@/components/leak-scan/ScopeScreen';
+import { DeckScreen } from '@/components/leak-scan/DeckScreen';
 import { GracefulFailure } from '@/components/leak-scan/GracefulFailure';
 import { useCompleteScanOnboarding } from '@/components/leak-scan/useCompleteScanOnboarding';
 import { useOnboarding } from '@/contexts/OnboardingContext';
@@ -18,8 +19,16 @@ import { useOnboarding } from '@/contexts/OnboardingContext';
  */
 export default function LeakScanRoute() {
   const router = useRouter();
-  const { state, pickAndScan, answerQuestion, toggleScopeCategory, confirmScope, reset } =
-    useLeakScanIntake();
+  const {
+    state,
+    pickAndScan,
+    answerQuestion,
+    toggleScopeCategory,
+    confirmScope,
+    dismissDeckCandidate,
+    leaveDeck,
+    reset,
+  } = useLeakScanIntake();
   const completeScanOnboarding = useCompleteScanOnboarding();
   const { isOnboardingComplete } = useOnboarding();
 
@@ -64,6 +73,22 @@ export default function LeakScanRoute() {
         scope={state.scope}
         onToggle={toggleScopeCategory}
         onConfirm={confirmScope}
+        onBack={handleBack}
+      />
+    );
+  }
+
+  // The habit deck (PRD v3.1 sect 7.3): at most three cards between the scope
+  // the user just drew and the full breakdown. Tracking one, rejecting all
+  // three, or taking the ghost exit all land on the results ladder, which is
+  // terminal: one fallback hop, never a fallback of a fallback.
+  if (state.stage === 'deck' && state.result) {
+    return (
+      <DeckScreen
+        candidates={state.deck}
+        spanDays={state.result.coverage?.spanDays ?? 0}
+        onDismiss={dismissDeckCandidate}
+        onSeeEverything={leaveDeck}
         onBack={handleBack}
       />
     );

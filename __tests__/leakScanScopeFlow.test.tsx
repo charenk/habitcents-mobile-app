@@ -99,7 +99,9 @@ describe('scope sits between extraction and results', () => {
       await result.current.confirmScope();
     });
 
-    expect(result.current.state.stage).toBe('done');
+    // Phase 3 put the habit deck here; before it, confirming scope went
+    // straight to the results ladder.
+    expect(result.current.state.stage).toBe('deck');
     const after = result.current.state.result!.habits.map((h) => h.merchantStem);
     expect(after).not.toContain('park');
     expect(after).toContain('starbucks');
@@ -176,6 +178,96 @@ describe('scope is remembered and reported', () => {
 
     const props = scopeCall()![1] as { used_defaults: boolean };
     expect(props.used_defaults).toBe(false);
+  });
+});
+
+describe('the habit deck follows the scope', () => {
+  async function scanAndConfirm() {
+    const result = await scan();
+    await act(async () => {
+      await result.current.confirmScope();
+    });
+    return result;
+  }
+
+  it('deals a deck instead of dropping the user on the dashboard', async () => {
+    const result = await scanAndConfirm();
+
+    expect(result.current.state.stage).toBe('deck');
+    expect(result.current.state.deck.length).toBeGreaterThan(0);
+    expect(result.current.state.deck.length).toBeLessThanOrEqual(3);
+  });
+
+  it('never deals the rent card, whatever it costs', async () => {
+    const result = await scanAndConfirm();
+    expect(result.current.state.deck.map((c) => c.merchantStem)).not.toContain('park');
+  });
+
+  it('deals only behavioral, governable candidates', async () => {
+    const result = await scanAndConfirm();
+
+    for (const card of result.current.state.deck) {
+      expect(card.isBehavioral).toBe(true);
+      expect(card.isSubscription).toBe(false);
+      expect(card.governClass).toBe('govern');
+    }
+  });
+
+  it('drops a dismissed card and suppresses the merchant for good', async () => {
+    const result = await scanAndConfirm();
+    const first = result.current.state.deck[0];
+
+    await act(async () => {
+      await result.current.dismissDeckCandidate(first);
+    });
+
+    expect(result.current.state.deck.map((c) => c.merchantStem)).not.toContain(first.merchantStem);
+    // Also gone from the ladder the user lands on, so the full list never
+    // re-offers what they just rejected.
+    expect(result.current.state.result!.habits.map((h) => h.merchantStem)).not.toContain(
+      first.merchantStem
+    );
+
+    const rules = await getScanRules();
+    expect(rules.suppressedHabits[first.merchantStem]).toBe(true);
+  });
+
+  it('falls through to the full list once every card is rejected, and only once', async () => {
+    const result = await scanAndConfirm();
+
+    const deck = [...result.current.state.deck];
+    for (const card of deck) {
+      await act(async () => {
+        await result.current.dismissDeckCandidate(card);
+      });
+    }
+
+    expect(result.current.state.stage).toBe('done');
+    // One fallback hop: the full list is terminal, never itself fallen back
+    // from, so exactly one exhaustion is reported.
+    const exhausted = trackMock.mock.calls.filter(([event]) => event === 'deck_exhausted');
+    expect(exhausted).toHaveLength(1);
+    expect(exhausted[0][1]).toEqual({ fallback: 'full_list' });
+  });
+
+  it('treats the ghost exit as a choice, not an exhaustion', async () => {
+    const result = await scanAndConfirm();
+
+    await act(async () => {
+      result.current.leaveDeck();
+    });
+
+    expect(result.current.state.stage).toBe('done');
+    expect(trackMock.mock.calls.filter(([event]) => event === 'deck_exhausted')).toHaveLength(0);
+  });
+
+  it('keeps the passed-over findings on the result for the bills offer', async () => {
+    const result = await scanAndConfirm();
+
+    // The rent row is not deck material, but it is still a finding: phase 5's
+    // bills offer draws from exactly this.
+    const stems = result.current.state.result!.habits.map((h) => h.merchantStem);
+    expect(stems.length).toBeGreaterThanOrEqual(result.current.state.deck.length);
   });
 });
 
