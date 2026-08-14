@@ -207,6 +207,47 @@ describe('detectHabits guards', () => {
   });
 });
 
+/**
+ * PRD v3.1 sect 7.4: a merchant dismissed with "Not a habit" in the Leak Scan
+ * is never re-proposed, by that deck or by future habit discovery. Suppression
+ * used to bind the scan pipeline only, so the same merchant walked back in
+ * through this detector as soon as its imported expenses crossed four
+ * occurrences: the user said no and the app asked again.
+ */
+describe('detectHabits honours Leak Scan dismissals', () => {
+  it('proposes the merchant when nothing is suppressed', () => {
+    expect(detectHabits(series('Starbucks', 600, 2, 8))).toHaveLength(1);
+  });
+
+  it('never proposes a merchant the user dismissed in the scan', () => {
+    const detected = detectHabits(series('Starbucks', 600, 2, 8), 'USD', { starbucks: true });
+    expect(detected).toHaveLength(0);
+  });
+
+  it('matches the scan stem through store suffixes the scan strips', () => {
+    // The scan keys suppression on its own brand stem ("starbucks"), while a
+    // logged or imported expense carries the fuller display string. Detection's
+    // own normalizer only lowercases, so without the scan's stem extractor
+    // these two would never meet and the dismissal would silently do nothing.
+    const detected = detectHabits(series('Starbucks Downtown Toronto', 600, 2, 8), 'USD', {
+      starbucks: true,
+    });
+    expect(detected).toHaveLength(0);
+  });
+
+  it('leaves other merchants alone', () => {
+    const expenses = [...series('Starbucks', 600, 2, 8), ...series('Uber Eats', 2200, 3, 8)];
+    const detected = detectHabits(expenses, 'USD', { starbucks: true });
+    expect(detected.map((h) => h.merchantPattern)).toEqual(['uber eats']);
+  });
+
+  it('treats a false entry as not suppressed', () => {
+    // reviveRules keeps only well-formed booleans, but the map's value type is
+    // boolean, so an explicit false must read as "not dismissed".
+    expect(detectHabits(series('Starbucks', 600, 2, 8), 'USD', { starbucks: false })).toHaveLength(1);
+  });
+});
+
 describe('progressTowardDetection', () => {
   it('reports 0 of 4 with no expenses', () => {
     expect(progressTowardDetection([])).toEqual({ n: 0, threshold: 4 });

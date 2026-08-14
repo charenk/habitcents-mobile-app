@@ -64,7 +64,7 @@ export function useLeakScanIntake() {
       const tierBreakdown = { solid: 0, likely: 0, 'needs-review': 0 };
       for (const f of result.files) tierBreakdown[f.confidenceTier]++;
       track('scan_completed', {
-        coverage_days: result.coverage?.coveredDays ?? 0,
+        coverage_days: result.coverage?.spanDays ?? 0,
         n_accounts: new Set(result.files.map((f) => f.account)).size,
         n_habits_found: result.habits.length,
         solid_count: tierBreakdown.solid,

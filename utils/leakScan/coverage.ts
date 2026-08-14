@@ -59,7 +59,15 @@ export function median(values: number[]): number {
   return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
 }
 
-/** Union coverage window across all rows. coveredDays = distinct days with data. */
+/**
+ * Union coverage window across all rows.
+ *
+ * Two different day counts, and mixing them up was UX-073: `spanDays` is the
+ * inclusive calendar length of the window (the divisor for every rate), while
+ * `coveredDays` counts only the distinct days that carried a transaction (a
+ * density signal). For a statement running Apr 1 to Jun 26 with activity on 27
+ * days, spanDays is 87 and coveredDays is 27.
+ */
 export function sessionCoverage(rows: ScanRow[]): CoverageWindow | null {
   if (rows.length === 0) return null;
   const range = fileDateRange(rows);
@@ -68,6 +76,7 @@ export function sessionCoverage(rows: ScanRow[]): CoverageWindow | null {
   return {
     startISO: range.startISO,
     endISO: range.endISO,
+    spanDays: rangeDays(range),
     coveredDays: distinctDays.size,
   };
 }

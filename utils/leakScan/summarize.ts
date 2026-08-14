@@ -32,10 +32,13 @@ export function scanResultToSummary(result: ScanResult, now: Date): ScanSummary 
       share: c.percentOfTotal / 100,
     }));
 
-    const coveredDays = result.coverage?.coveredDays ?? 0;
     // Same windowDays floor ResultsScreen uses to annualize a habit's evidence-
     // window total into a monthly figure (see components/leak-scan/ResultsScreen.tsx).
-    const windowDays = Math.max(coveredDays, 1);
+    // Calendar span, not transacted days: this snapshot outlives the scan on
+    // Insights, so a wrong divisor here is a wrong number the user rereads for
+    // weeks (UX-073).
+    const spanDays = result.coverage?.spanDays ?? 0;
+    const windowDays = Math.max(spanDays, 1);
     const recurringByStem = new Map(result.recurring.map((r) => [r.merchantStem, r]));
 
     const topLeaks = [...result.habits]
@@ -56,7 +59,7 @@ export function scanResultToSummary(result: ScanResult, now: Date): ScanSummary 
     const projectionSummary = buildProjectionSummary(
       result.rows,
       result.recurring,
-      coveredDays,
+      spanDays,
       habitClassByCategory
     );
     const projection = projectionSummary.hasFullMonth

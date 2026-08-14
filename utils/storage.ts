@@ -631,6 +631,13 @@ export async function getScanSummary(): Promise<ScanSummary | null> {
         perDayCents: num(rawKpis.perDayCents, 0),
         transactionCount: num(rawKpis.transactionCount, 0),
         purchasesPerDay: num(rawKpis.purchasesPerDay, 0),
+        // spanDays is newer than the first shipped summaries (UX-073). A
+        // record written before it existed falls back to coveredDays, which
+        // is what those older figures were actually computed against, so a
+        // revived pre-fix snapshot stays internally consistent instead of
+        // pairing old numbers with a new denominator. The next scan replaces
+        // it with correct values.
+        spanDays: num(rawKpis.spanDays, num(rawKpis.coveredDays, 0)),
         coveredDays: num(rawKpis.coveredDays, 0),
         nAccounts: num(rawKpis.nAccounts, 0),
       },

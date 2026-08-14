@@ -245,6 +245,22 @@ export type ScanStatus = 'ok' | 'partial' | 'failed';
 export type CoverageWindow = {
   startISO: string;
   endISO: string;
+  /**
+   * Calendar length of the evidence window, inclusive: the same span the
+   * results screen prints as its eyebrow ("Apr 1 to Jun 26" = 87).
+   *
+   * THIS is the divisor for every rate ("a month", "a year", "per day").
+   * UX-073 shipped `coveredDays` in that role, which counts only days that
+   * carried a transaction, so a statement holding three monthly rent rows
+   * divided by 3 instead of 87 and told the user rent cost about $4,000 a
+   * month. A rate's denominator is elapsed time, never sampled time.
+   */
+  spanDays: number;
+  /**
+   * Distinct days that carried at least one transaction. A DENSITY signal
+   * (how much of the window has data), never a rate divisor: use it for
+   * "you transacted on 27 of 87 days" and coverage-quality copy only.
+   */
   coveredDays: number;
 };
 

@@ -65,9 +65,9 @@ export function ScanSnapshotCard({ summary }: ScanSnapshotCardProps) {
   // Same evidence-window floor LeaksCard uses (hasReliableRate): under it, an
   // extrapolated monthly figure would overstate a few days of data, so every
   // leak states what was actually observed instead. The scan's topLeaks all
-  // share one coveredDays window (summarize.ts), so this is a single check
+  // share one evidence window (summarize.ts), so this is a single check
   // for the whole list rather than a per-row one.
-  const reliableRate = summary.kpis.coveredDays >= MIN_SPAN_DAYS_FOR_RATE;
+  const reliableRate = summary.kpis.spanDays >= MIN_SPAN_DAYS_FOR_RATE;
 
   return (
     <>

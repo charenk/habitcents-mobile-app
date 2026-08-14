@@ -17,7 +17,9 @@ type HabitCardProps = {
    *  evidence month, e.g. "$612.40 in June". */
   month: string;
   monthTotalCents: number;
-  coveredDays: number;
+  /** Calendar length of the evidence window, the stats row's "N days"
+   *  denominator and the rate divisor (UX-073). */
+  spanDays: number;
   /**
    * Fixed class only: the upcoming month name and the extra payment amount
    * for the tip card ("July is a 3-payment month... plan for the extra
@@ -45,7 +47,7 @@ function HabitCardImpl({
   candidate,
   month,
   monthTotalCents,
-  coveredDays,
+  spanDays,
   tipMonth,
   tipAmountCents,
   onTrack,
@@ -75,7 +77,7 @@ function HabitCardImpl({
   const statsRow = strings.leakScan.habitStatsRow(
     candidate.occurrences,
     candidate.activeDays,
-    coveredDays,
+    spanDays,
     format(monthTotalCents),
     month
   );

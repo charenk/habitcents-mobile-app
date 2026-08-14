@@ -524,7 +524,10 @@ export const strings = {
     kpiTransactions: 'Transactions',
     kpiNetOfTransfers: 'Net of transfers',
     kpiPurchasesPerDay: (rate: string) => `${rate} purchases/day`,
-    kpiOverCoveredDays: (days: number) => `over ${days} covered days`,
+    // UX-073: "covered days" counted only days that carried a transaction, so
+    // this line disagreed with the evidence-window eyebrow directly above it.
+    // It now prints the calendar span, the same window every rate divides by.
+    kpiOverSpanDays: (days: number) => `over ${days} days`,
     kpiEvidenceWindow: (start: string, end: string, accounts: number) =>
       `${start} to ${end} · ${accounts} account${accounts === 1 ? '' : 's'}`,
     // Categories (spec 5.2, visual spec 4)
@@ -538,7 +541,10 @@ export const strings = {
     pulseLegendSpend: 'more spent',
     pulseLegendZero: 'no spend',
     pulseLegendOutOfCoverage: 'outside your files',
-    pulseCaption: (n: number, covered: number) => `You transacted on ${n} of ${covered} days.`,
+    // Density line: transacted days out of the window's calendar length. Both
+    // arguments used to be distinct-transacted-day counts, so this read
+    // "You transacted on 27 of 27 days" (UX-073).
+    pulseCaption: (n: number, spanDays: number) => `You transacted on ${n} of ${spanDays} days.`,
     // Finding-first ladder (ADR 0020, W4 redesign step, Charen 2026-08-04):
     // results lead with one BiggestLeakCard before the dashboard, which stays
     // collapsed behind this dashed expander until tapped.
@@ -548,8 +554,8 @@ export const strings = {
     classGovern: 'Govern',
     classInfluence: 'Influence',
     classFixed: 'Fixed',
-    habitStatsRow: (orders: number, days: number, coveredDays: number, monthTotal: string, month: string) =>
-      `${orders} orders · ${days}/${coveredDays} days · ${monthTotal} in ${month}`,
+    habitStatsRow: (orders: number, days: number, spanDays: number, monthTotal: string, month: string) =>
+      `${orders} orders · ${days}/${spanDays} days · ${monthTotal} in ${month}`,
     yearlyPacePill: (amount: string) => `≈ ${amount}/yr pace`,
     trackThisLeak: 'Track this leak',
     monitorHabit: 'Monitor',

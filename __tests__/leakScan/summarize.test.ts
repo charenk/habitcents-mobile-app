@@ -124,7 +124,7 @@ describe('scanResultToSummary', () => {
     const result = scanResult({
       files: [fileScan({ account: 'A' }), fileScan({ account: 'B' })],
       rows,
-      coverage: { startISO: '2026-01-01', endISO: '2026-01-31', coveredDays: 31 },
+      coverage: { startISO: '2026-01-01', endISO: '2026-01-31', spanDays: 31, coveredDays: 31 },
       habits: [
         habit({
           merchantStem: 'coffee',
@@ -196,7 +196,7 @@ describe('scanResultToSummary', () => {
     );
     const result = scanResult({
       habits,
-      coverage: { startISO: '2026-01-01', endISO: '2026-01-31', coveredDays: 31 },
+      coverage: { startISO: '2026-01-01', endISO: '2026-01-31', spanDays: 31, coveredDays: 31 },
     });
     const summary = scanResultToSummary(result, NOW);
     expect(summary?.topLeaks).toHaveLength(5);
@@ -211,7 +211,7 @@ describe('scanResultToSummary', () => {
         habit({ merchantStem: 'a', merchantDisplay: 'A', totalCents: 1000, occurrences: 2 }),
         habit({ merchantStem: 'b', merchantDisplay: 'B', totalCents: 1000, occurrences: 5 }),
       ],
-      coverage: { startISO: '2026-01-01', endISO: '2026-01-31', coveredDays: 31 },
+      coverage: { startISO: '2026-01-01', endISO: '2026-01-31', spanDays: 31, coveredDays: 31 },
     });
     const summary = scanResultToSummary(result, NOW);
     expect(summary?.topLeaks.map((l) => l.name)).toEqual(['B', 'A']);
@@ -227,7 +227,7 @@ describe('scanResultToSummary', () => {
 
   it('leaves projection null when coverage is under a full calendar month', () => {
     const result = scanResult({
-      coverage: { startISO: '2026-01-01', endISO: '2026-01-15', coveredDays: 15 },
+      coverage: { startISO: '2026-01-01', endISO: '2026-01-15', spanDays: 15, coveredDays: 15 },
     });
     const summary = scanResultToSummary(result, NOW);
     expect(summary?.projection).toBeNull();

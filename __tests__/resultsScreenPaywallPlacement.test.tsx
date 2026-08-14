@@ -90,7 +90,7 @@ function makeScanResult(habits: HabitCandidate[], overrides: Partial<ScanResult>
     duplicatesMerged: 0,
     recurring: [],
     habits,
-    coverage: { startISO: '2026-01-01', endISO: '2026-01-30', coveredDays: 30 },
+    coverage: { startISO: '2026-01-01', endISO: '2026-01-30', spanDays: 30, coveredDays: 30 },
     tier: 'solid',
     gracefulFailure: false,
     ...overrides,

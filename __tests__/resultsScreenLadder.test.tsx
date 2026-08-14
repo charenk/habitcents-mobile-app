@@ -91,7 +91,7 @@ function makeScanResult(habits: HabitCandidate[], overrides: Partial<ScanResult>
     duplicatesMerged: 0,
     recurring: [],
     habits,
-    coverage: { startISO: '2026-01-01', endISO: '2026-01-30', coveredDays: 30 },
+    coverage: { startISO: '2026-01-01', endISO: '2026-01-30', spanDays: 30, coveredDays: 30 },
     tier: 'solid',
     gracefulFailure: false,
     ...overrides,
@@ -253,5 +253,81 @@ describe('results screen: finding-first ladder (ADR 0020)', () => {
 
     // Same Decision-1 sheet "Track this leak" opens elsewhere in the app.
     expect(view.getByText(strings.habitLogging.startBreakingIt)).toBeTruthy();
+  });
+
+  // A fixed-class candidate is a commitment: rent, a mortgage, insurance, a car
+  // payment. The ranked list has always rendered those as a no-CTA tip card,
+  // but the hero path did not, so the priciest row won the lead slot on cost
+  // alone. Against a real statement that row was $1,200-a-month rent, and the
+  // app invited the user to break it. Tracking an essential is fine; proposing
+  // you skip it is not.
+  it('never leads with a fixed-class candidate, however expensive', async () => {
+    const result = makeScanResult([
+      makeCandidate({
+        merchantDisplay: 'Park Property Management',
+        merchantStem: 'park',
+        category: 'Mortgage',
+        governClass: 'fixed',
+        totalCents: 120000, // dwarfs the coffee habit below
+        occurrences: 1,
+        activeDays: 1,
+      }),
+      makeCandidate({ merchantDisplay: 'Starbucks', merchantStem: 'starbucks', totalCents: 5000 }),
+    ]);
+
+    const view = await renderResults(result);
+
+    // The coffee habit leads, not the rent.
+    expect(view.getByText(strings.leakScan.biggestLeakEyebrow)).toBeTruthy();
+    expect(view.getByText('Starbucks.')).toBeTruthy();
+    expect(view.queryByText('Park Property Management.')).toBeNull();
+
+    // Exactly one Break it on the screen, and it belongs to the coffee habit.
+    expect(view.getAllByRole('button', { name: strings.habitLogging.breakIt })).toHaveLength(1);
+  });
+
+  // Passing over the rent must not delete it: it still belongs in the ladder,
+  // as the tip card its class has always rendered.
+  it('keeps the passed-over fixed candidate in the ranked list below', async () => {
+    const result = makeScanResult([
+      makeCandidate({
+        merchantDisplay: 'Park Property Management',
+        merchantStem: 'park',
+        category: 'Mortgage',
+        governClass: 'fixed',
+        totalCents: 120000,
+      }),
+      makeCandidate({ merchantDisplay: 'Starbucks', merchantStem: 'starbucks', totalCents: 5000 }),
+    ]);
+
+    const view = await renderResults(result);
+
+    await act(async () => {
+      fireEvent.press(view.getByRole('button', { name: strings.leakScan.seeFullPicture }));
+    });
+
+    expect(view.getByText('Park Property Management')).toBeTruthy();
+    // Its class carries no tracking CTA, so the count is still the hero's one.
+    expect(view.getAllByRole('button', { name: strings.habitLogging.breakIt })).toHaveLength(1);
+    expect(view.queryByRole('button', { name: strings.leakScan.trackThisLeak })).toBeNull();
+  });
+
+  // When every candidate is a commitment there is no leak to lead with, which
+  // is the existing zero-finding path: no hero, no Break it, full list below.
+  it('shows no hero when every candidate is fixed-class', async () => {
+    const result = makeScanResult([
+      makeCandidate({
+        merchantDisplay: 'Park Property Management',
+        merchantStem: 'park',
+        category: 'Mortgage',
+        governClass: 'fixed',
+        totalCents: 120000,
+      }),
+    ]);
+
+    const view = await renderResults(result);
+
+    expect(view.queryByText(strings.leakScan.biggestLeakEyebrow)).toBeNull();
+    expect(view.queryByRole('button', { name: strings.habitLogging.breakIt })).toBeNull();
   });
 });

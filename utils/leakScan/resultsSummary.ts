@@ -27,6 +27,10 @@ export type KpiSummary = {
   perDayCents: number;
   transactionCount: number;
   purchasesPerDay: number;
+  /** Calendar length of the evidence window: the divisor for the per-day
+   *  rates above, and what "over N days" prints (UX-073). */
+  spanDays: number;
+  /** Distinct days that carried a transaction. Density only, never a divisor. */
   coveredDays: number;
   nAccounts: number;
 };
@@ -37,10 +41,13 @@ export type KpiSummary = {
 export function buildKpiSummary(result: ScanResult): KpiSummary {
   const spendable = spendableRows(result.rows);
   const totalSpentCents = totalSpendCents(result.rows);
+  // Per-day rates divide by elapsed calendar days, not by the days that
+  // carried a transaction (UX-073): a quiet week is part of the average.
+  const spanDays = result.coverage?.spanDays ?? 0;
   const coveredDays = result.coverage?.coveredDays ?? 0;
   const transactionCount = spendable.length;
-  const perDayCents = coveredDays > 0 ? Math.round(totalSpentCents / coveredDays) : 0;
-  const purchasesPerDay = coveredDays > 0 ? transactionCount / coveredDays : 0;
+  const perDayCents = spanDays > 0 ? Math.round(totalSpentCents / spanDays) : 0;
+  const purchasesPerDay = spanDays > 0 ? transactionCount / spanDays : 0;
   const accounts = new Set(result.files.filter((f) => !f.belowFloor).map((f) => f.account));
 
   const rowsTier = weakestRowTier(spendable);
@@ -52,6 +59,7 @@ export function buildKpiSummary(result: ScanResult): KpiSummary {
     perDayCents,
     transactionCount,
     purchasesPerDay,
+    spanDays,
     coveredDays,
     nAccounts: accounts.size,
   };

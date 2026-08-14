@@ -8,6 +8,7 @@ import {
   saveCoachMomentState,
 } from '@/utils/storage';
 import { detectHabits, findExistingHabit, mergeHabits } from '@/utils/habitDetection';
+import { getScanRules } from '@/utils/scanRules';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import {
   atMidnight,
@@ -268,7 +269,12 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
   }, [ensureCoachState]);
 
   const refreshHabits = useCallback(async (expenses: Expense[]): Promise<void> => {
-    const detected = detectHabits(expenses, currency);
+    // Read the rule store fresh rather than caching it at mount: "Not a habit"
+    // is written by the results screen mid-session, and a cached copy would
+    // let the merchant the user just dismissed reappear until the next
+    // relaunch. One small AsyncStorage read per detection pass.
+    const rules = await getScanRules();
+    const detected = detectHabits(expenses, currency, rules.suppressedHabits);
     const merged = mergeHabits(habits, detected);
     setHabits(merged);
     await saveHabits(merged);

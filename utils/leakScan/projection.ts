@@ -79,10 +79,13 @@ function buildRunRate(
 export function buildProjectionSummary(
   rows: ScanRow[],
   recurring: RecurringItem[],
-  coveredDays: number,
+  spanDays: number,
   habitClassByCategory: Map<ExpenseCategory, GovernClass>
 ): ProjectionSummary {
-  const hasFullMonth = coveredDays >= 28;
+  // "Do we hold a full month of history?" is a question about elapsed calendar
+  // time, not about how many days carried a transaction (UX-073): a statement
+  // spanning a quarter with activity on 20 days is still months of evidence.
+  const hasFullMonth = spanDays >= 28;
   if (!hasFullMonth) {
     return { hasFullMonth: false, lockedIn: [], runRate: [], bufferCents: 0, subtotalCents: 0 };
   }

@@ -46,7 +46,7 @@ export function KpiRow({ kpi, evidenceWindow }: KpiRowProps) {
         </View>
         <Text style={styles.amount}>{format(kpi.perDayCents)}</Text>
         <Text style={styles.label}>{strings.leakScan.kpiPerDay}</Text>
-        <Text style={styles.subtitle}>{strings.leakScan.kpiOverCoveredDays(kpi.coveredDays)}</Text>
+        <Text style={styles.subtitle}>{strings.leakScan.kpiOverSpanDays(kpi.spanDays)}</Text>
       </View>
 
       <View style={styles.card}>

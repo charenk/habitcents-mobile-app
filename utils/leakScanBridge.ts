@@ -57,15 +57,21 @@ export function scanHabitId(merchantStem: string): string {
 
 /**
  * Convert a Leak Scan HabitCandidate (Stage 9 governability output) into a
- * DetectedHabit the existing habit-logging surfaces understand. `coveredDays`
- * is the scan's evidence window, used to derive a monthly-equivalent spend and
- * occurrence rate consistent with the card's own stats row math.
+ * DetectedHabit the existing habit-logging surfaces understand. `spanDays` is
+ * the calendar length of the scan's evidence window, used to derive a
+ * monthly-equivalent spend and occurrence rate consistent with the card's own
+ * stats row math.
+ *
+ * Rates divide by elapsed calendar time, never by the count of days that
+ * carried a transaction (UX-073, see CoverageWindow). `averageAmount` is the
+ * exception and is deliberately per-occurrence: it is a price, not a rate, so
+ * it divides by the occurrence count.
  */
 export function habitCandidateToDetectedHabit(
   candidate: HabitCandidate,
-  coveredDays: number
+  spanDays: number
 ): DetectedHabit {
-  const windowDays = Math.max(coveredDays, 1);
+  const windowDays = Math.max(spanDays, 1);
   const monthlyOccurrences = (candidate.occurrences / windowDays) * 30;
   const frequency = frequencyFromMonthlyRate(monthlyOccurrences);
   const totalMonthlySpend = Math.round((candidate.totalCents / windowDays) * 30);
@@ -79,7 +85,7 @@ export function habitCandidateToDetectedHabit(
   return {
     id: scanHabitId(candidate.merchantStem),
     name: candidate.merchantDisplay,
-    description: `${topMerchantsLabel} landed ${candidate.activeDays} of your ${coveredDays} covered days.`,
+    description: `${topMerchantsLabel} landed ${candidate.activeDays} of your ${windowDays} days.`,
     categoryId: candidate.category,
     merchantPattern: candidate.merchantStem,
     averageAmount,

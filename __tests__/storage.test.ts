@@ -170,6 +170,7 @@ describe('scan summary storage', () => {
         perDayCents: 3871,
         transactionCount: 42,
         purchasesPerDay: 1.35,
+        spanDays: 31,
         coveredDays: 31,
         nAccounts: 1,
       },
