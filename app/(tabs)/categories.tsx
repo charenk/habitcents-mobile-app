@@ -20,6 +20,7 @@ import { useCategories } from '@/contexts/CategoriesContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
 import { CategoryRow } from '@/components/CategoryRow';
 import { AddCategoryModal } from '@/components/AddCategoryModal';
+import { useEmptyStateAction } from '@/components/onboarding/useEmptyStateAction';
 import { layout, radii, typeScale, type AppTheme } from '@/constants/theme';
 import type { Category, CategoryIcon } from '@/types/category';
 import { strings } from '@/constants/strings';
@@ -72,6 +73,12 @@ export default function CategoriesScreen() {
   // was only ever set to null, so the AddCategoryModal edit branch was
   // unreachable from this tab (custom categories are edited via category
   // detail's pencil instead, app/category/[id].tsx). This tab only ever adds.
+  // Empty state as an onboarding surface (PRD v3.1 sect 5). This screen owns
+  // the add modal, so the action opens in place.
+  const handleEmptyAddCategory = useEmptyStateAction('categories', useCallback(() => {
+    setIsModalVisible(true);
+  }, []));
+
   const handleAddCategory = useCallback(async (
     name: string,
     icon: CategoryIcon,
@@ -144,6 +151,7 @@ export default function CategoriesScreen() {
               icon="Folder"
               title={strings.categories.emptyTitle}
               body={strings.categories.emptySubtitle}
+              cta={{ label: strings.categories.emptyCta, onPress: handleEmptyAddCategory }}
             />
           </View>
         ) : (

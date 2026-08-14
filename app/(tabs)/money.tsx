@@ -24,6 +24,7 @@ import { useRouter } from 'expo-router';
 import { AddUpcomingSheet } from '@/components/money/AddUpcomingSheet';
 import { ExpenseSheet } from '@/components/money/ExpenseSheet';
 import { HabitsList } from '@/components/money/HabitsList';
+import { useEmptyStateAction } from '@/components/onboarding/useEmptyStateAction';
 import { SpentList } from '@/components/money/SpentList';
 import { UpcomingList } from '@/components/money/UpcomingList';
 import { PickOneSheet } from '@/components/habit-logging/PickOneSheet';
@@ -144,6 +145,20 @@ export default function MoneyScreen() {
 
   const upcomingSheetVisible = addUpcomingVisible || editingUpcoming !== null;
 
+  // Empty states as onboarding surfaces (PRD v3.1 sect 5). Logging and
+  // breaking both live on Today, so those two route through the general-purpose
+  // ?sheet= entry rather than mounting a second copy of either sheet here.
+  // Adding an upcoming expense is owned by this screen, so it opens in place.
+  const handleEmptyLog = useEmptyStateAction('money_spent', useCallback(() => {
+    router.push('/(tabs)?view=spent&sheet=log');
+  }, [router]));
+  const handleEmptyAddUpcoming = useEmptyStateAction('money_upcoming', useCallback(() => {
+    setAddUpcomingVisible(true);
+  }, []));
+  const handleEmptyBreak = useEmptyStateAction('money_habits', useCallback(() => {
+    router.push('/(tabs)?view=kept&sheet=break');
+  }, [router]));
+
   const closeUpcomingSheet = useCallback(() => {
     setAddUpcomingVisible(false);
     setEditingUpcoming(null);
@@ -224,7 +239,7 @@ export default function MoneyScreen() {
         (both bounded lists, ~15 items or fewer) keep the plain ScrollView.
       */}
       {view === 'spent' ? (
-        <SpentList sections={sections} onEditExpense={setEditing} />
+        <SpentList sections={sections} onEditExpense={setEditing} onLogExpense={handleEmptyLog} />
       ) : (
         <ScrollView
           style={styles.scroll}
@@ -237,6 +252,7 @@ export default function MoneyScreen() {
               windowDays={windowDays}
               onWindowDaysChange={handleWindowDaysChange}
               onAdd={() => setAddUpcomingVisible(true)}
+              onEmptyAdd={handleEmptyAddUpcoming}
               onEditItem={(expense) => setEditingUpcoming(expense)}
             />
           )}
@@ -246,6 +262,7 @@ export default function MoneyScreen() {
               managedMonthlyTotal={managedMonthlyTotal}
               onBreak={(habit) => setPickOneHabitId(habit.id)}
               onOpenHabit={(habitId) => router.push(`/habit/${habitId}`)}
+              onBreakHabit={handleEmptyBreak}
             />
           )}
         </ScrollView>

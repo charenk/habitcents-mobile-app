@@ -22,9 +22,12 @@ type LeaksCardProps = {
   onBreak: (habit: DetectedHabit) => void;
   /** "Breaking" tapped: the screen pushes the habit detail route. */
   onOpenHabit: (habitId: string) => void;
+  /** Empty-state first action (PRD v3.1 sect 5). Optional so a caller that
+   *  cannot log from its screen simply renders the explanation. */
+  onLogExpense?: () => void;
 };
 
-export function LeaksCard({ rows, onBreak, onOpenHabit }: LeaksCardProps) {
+export function LeaksCard({ rows, onBreak, onOpenHabit, onLogExpense }: LeaksCardProps) {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
@@ -36,7 +39,11 @@ export function LeaksCard({ rows, onBreak, onOpenHabit }: LeaksCardProps) {
 
       {rows.length === 0 ? (
         <View style={styles.empty}>
-          <EmptyState title={strings.insights.leaksEmptyTitle} body={strings.insights.leaksEmptyBody} />
+          <EmptyState
+            title={strings.insights.leaksEmptyTitle}
+            body={strings.insights.leaksEmptyBody}
+            cta={onLogExpense ? { label: strings.insights.leaksEmptyCta, onPress: onLogExpense } : undefined}
+          />
         </View>
       ) : (
         rows.map((row, index) => (

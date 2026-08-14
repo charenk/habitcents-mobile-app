@@ -27,6 +27,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { act, cleanup, fireEvent, render } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '@/contexts/ThemeContext';
+import { OnboardingProvider } from '@/contexts/OnboardingContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { CategoriesProvider } from '@/contexts/CategoriesContext';
 import { ExpensesProvider } from '@/contexts/ExpensesContext';
@@ -50,7 +51,7 @@ function Providers({ children }: { children: React.ReactNode }) {
           <CategoriesProvider>
             <ExpensesProvider>
               <HabitsProvider>
-                <ToastProvider>{children}</ToastProvider>
+                <ToastProvider><OnboardingProvider>{children}</OnboardingProvider></ToastProvider>
               </HabitsProvider>
             </ExpensesProvider>
           </CategoriesProvider>

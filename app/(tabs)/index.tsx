@@ -182,6 +182,9 @@ export default function TodayScreen() {
   const [breakSheetVisible, setBreakSheetVisible] = useState(false);
   const [door3CoachActive, setDoor3CoachActive] = useState(false);
   const door3HandledRef = useRef(false);
+  // One-shot per param value, so returning to Today with a stale ?sheet= in
+  // history cannot pop the sheet open again.
+  const sheetHandledRef = useRef<string | null>(null);
   // Guards a double-tap on the break sheet's async Start (finding 1).
   const breakStartInFlightRef = useRef(false);
   const {
@@ -236,7 +239,12 @@ export default function TodayScreen() {
   // Deep link support: an onboarding flow can land Today on a specific view
   // via ?view=kept|spent. Anything else (missing, malformed) is ignored and
   // the default (Spent) stands.
-  const params = useLocalSearchParams<{ view?: string; firstLog?: string; breakEntry?: string }>();
+  const params = useLocalSearchParams<{
+    view?: string;
+    firstLog?: string;
+    breakEntry?: string;
+    sheet?: string;
+  }>();
   useEffect(() => {
     if (params.view === 'kept' || params.view === 'spent') {
       setTodayView(params.view);
@@ -680,6 +688,29 @@ export default function TodayScreen() {
       setBreakSheetVisible(true);
     }
   }, [freeTierBlocked, router]);
+
+  // General-purpose sheet entry (PRD v3.1 sect 5, phase 7).
+  //
+  // Deliberately SEPARATE from firstLog/breakEntry above. Those two carry
+  // onboarding semantics (they arm the coach flow and complete onboarding) and
+  // are guarded on isOnboardingComplete(), so they go inert exactly when an
+  // empty state needs them: after the user has finished or skipped onboarding.
+  // This param carries no onboarding meaning at all, which is why an empty
+  // state can use it forever without ever re-triggering a coach flow.
+  //
+  // 'break' routes through handleBreakAnother rather than opening the sheet
+  // directly, so the free-tier gate is enforced on this path exactly as it is
+  // on Today's own affordance.
+  const sheetParam = params.sheet;
+  useEffect(() => {
+    if (onboardingLoading) return;
+    if (sheetParam !== 'log' && sheetParam !== 'break') return;
+    if (sheetHandledRef.current === sheetParam) return;
+    sheetHandledRef.current = sheetParam;
+    if (sheetParam === 'log') openLogSheet();
+    else handleBreakAnother();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onboardingLoading, sheetParam]);
 
   const handleStart = useCallback(async (skipValue: number, valueEdited: boolean) => {
     if (!pickOneHabitId) return;

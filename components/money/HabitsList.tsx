@@ -14,6 +14,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { radii, typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
+import { EmptyState } from '@/components/ui';
 import { HabitLeakRow, type LeakRowData } from '@/components/habit-logging/HabitLeakRow';
 import type { DetectedHabit } from '@/types/habit';
 
@@ -25,9 +26,11 @@ export type HabitsListProps = {
   onBreak: (habit: DetectedHabit) => void;
   /** "Breaking" tapped: the screen pushes the habit detail route. */
   onOpenHabit: (habitId: string) => void;
+  /** Empty-state first action (PRD v3.1 sect 5). Gate-aware at the call site. */
+  onBreakHabit?: () => void;
 };
 
-export function HabitsList({ rows, managedMonthlyTotal, onBreak, onOpenHabit }: HabitsListProps) {
+export function HabitsList({ rows, managedMonthlyTotal, onBreak, onOpenHabit, onBreakHabit }: HabitsListProps) {
   const theme = useTheme();
   const { format } = useCurrency();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -38,8 +41,15 @@ export function HabitsList({ rows, managedMonthlyTotal, onBreak, onOpenHabit }: 
     return (
       <View style={styles.card}>
         <View style={styles.empty}>
-          <Text style={styles.emptyTitle}>{strings.insights.leaksEmptyTitle}</Text>
-          <Text style={styles.emptyBody}>{strings.insights.leaksEmptyBody}</Text>
+          {/* Was a bespoke Text pair; now the house primitive, which is what
+              carries the CTA. The habits tab offers the direct action rather
+              than Insights' "go log something", because this IS the habits
+              surface: someone here already knows what they want to break. */}
+          <EmptyState
+            title={strings.insights.leaksEmptyTitle}
+            body={strings.insights.leaksEmptyBody}
+            cta={onBreakHabit ? { label: strings.money.habitsEmptyCta, onPress: onBreakHabit } : undefined}
+          />
         </View>
       </View>
     );

@@ -320,7 +320,37 @@ survives as an amendment, not a reversal).
 - The welcome aurora exploration resolves into the carousel's first frame, closing the
   open ADR 0022 welcome question from the punchlist.
 
-## Phase 7: empty states as onboarding surfaces
+## Phase 7: SHIPPED 2026-08-14
+
+Five empty states gained a concrete first action: Money Spent (log), Money
+Upcoming (add, in place), Money Habits (break, gate-aware), Insights Leaks
+(log), Categories (add, in place). `HabitsList` swapped its bespoke Text pair
+for the house `EmptyState` primitive on the way.
+
+**Two states deliberately left WITHOUT a CTA, and asserted so it reads as a
+decision:** Insights Pace is empty until a month of data exists, and Where it
+went is empty for the CHOSEN RANGE. Neither resolves with a tap, so a button
+would promise something it cannot deliver.
+
+**New `?sheet=log|break` deep link.** The existing `firstLog`/`breakEntry`
+params carry onboarding semantics and are guarded on `isOnboardingComplete()`,
+so they go inert exactly when an empty state needs them. The new param carries
+no onboarding meaning, and `break` routes through `handleBreakAnother` so the
+free-tier gate holds on this path too.
+
+**`skip_activation` fires at CTA press, for skippers only**, and the event
+comment says so: attributing all the way to activation would mean carrying the
+surface across a sheet, a navigation, and an async write, where a dropped
+hand-off would look identical to a skipper who never acted. Conversion is the
+join against the activation events that follow.
+
+Five existing suites gained `OnboardingProvider` in their wrappers rather than
+the hook tolerating a missing provider, which would have hidden real wiring
+bugs. Verification: tsc clean, 966/966 over three runs, eval harness 71/71.
+
+The original plan for this phase follows.
+
+## Phase 7 (original plan): empty states as onboarding surfaces
 
 Add a concrete first action to every skipper-reachable empty state (only Today > Kept
 has one today):

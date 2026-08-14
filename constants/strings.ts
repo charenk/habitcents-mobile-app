@@ -246,7 +246,10 @@ export const strings = {
     customCategories: 'Custom Categories',
     loading: 'Loading.',
     emptyTitle: 'No categories yet',
-    emptySubtitle: 'Tap Add category at the top to create your first one.',
+    // Was "Tap Add category at the top", which described an action instead of
+    // offering one; the CTA below now IS the action (PRD v3.1 sect 5).
+    emptySubtitle: 'Group your spending so the patterns are easier to see.',
+    emptyCta: 'Add category',
     // Delete confirm sheet (design/selection-sheets U3), replacing the native
     // alert. deleteConfirmCta and deleteCancel are the sheet's two buttons.
     deleteTitle: (name: string) => `Delete ${name}?`,
@@ -930,6 +933,10 @@ export const strings = {
       return `${paymentLabel} from ${bills} bill${bills === 1 ? '' : 's'}`;
     },
     upcomingAddAffordance: 'Add an upcoming expense',
+    // Empty-state first actions (PRD v3.1 sect 5). Every empty state a skipper
+    // can reach has to offer something to DO, not just explain itself.
+    spentEmptyCta: 'Log an expense',
+    habitsEmptyCta: 'Break a habit',
     upcomingListEyebrow: 'Scheduled',
     upcomingEmptyBody: "Mark an expense as repeating and we'll show its next date here.",
     multiPaymentPill: (count: number, monthLabel: string) => `${count} payments in ${monthLabel}`,
@@ -1016,6 +1023,7 @@ export const strings = {
     // collapsed to this one key). Body keeps the honest detection threshold
     // verbatim (house rule: real detection window, not a rounded claim).
     leaksEmptyTitle: 'Your leaks will show up here',
+    leaksEmptyCta: 'Log an expense',
     leaksEmptyBody:
       'Keep logging expenses. Around 4 logs at the same place is enough to spot a pattern.',
     whereItWentTitle: 'Where it went',

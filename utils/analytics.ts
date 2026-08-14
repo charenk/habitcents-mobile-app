@@ -171,6 +171,21 @@ export interface AnalyticsEventMap {
     amount_parse_rate: number;
     sign_confidence: number;
   };
+  /**
+   * A skipper acted from an empty state (PRD v3.1 sect 5 / sect 11).
+   *
+   * Fires on the CTA press, not on the resulting write, and only for users
+   * whose door was 'skip'. It answers "which empty state moved someone who
+   * refused the tour", which is the question sect 5 raises by sending skippers
+   * straight into the app: whether they converted is then the join against the
+   * activation events that follow (expense_logged, habit_tracking_started).
+   *
+   * Keeping it at press time is deliberate. Attributing all the way to
+   * activation would mean carrying the surface across a sheet, a navigation,
+   * and an async write, and a dropped hand-off would look identical to a
+   * skipper who never acted.
+   */
+  skip_activation: { surface: string };
   // Scope selection (PRD v3.1 sect 7.1 / sect 11). `used_defaults` is the one
   // to read first: heavy editing means the tier assignments are wrong, and
   // that has to be settled before any classifier conversation reopens.

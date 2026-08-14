@@ -50,6 +50,7 @@ import React from 'react';
 import { act, cleanup, fireEvent, render } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '@/contexts/ThemeContext';
+import { OnboardingProvider } from '@/contexts/OnboardingContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { ToastProvider } from '@/components/ui/Toast';
 import { CategoriesProvider } from '@/contexts/CategoriesContext';
@@ -80,7 +81,7 @@ function Providers({ children }: { children: React.ReactNode }) {
             <CategoriesProvider>
               <ExpensesProvider>
                 <HabitsProvider>
-                  <ReportsProvider>{children}</ReportsProvider>
+                  <ReportsProvider><OnboardingProvider>{children}</OnboardingProvider></ReportsProvider>
                 </HabitsProvider>
               </ExpensesProvider>
             </CategoriesProvider>
