@@ -1,130 +1,107 @@
-import React, { useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useCallback, useEffect, useRef } from 'react';
+import { BackHandler, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '@/contexts/ThemeContext';
 import { useOnboarding } from '@/contexts/OnboardingContext';
-import { Button } from '@/components/ui';
-import { AuroraBackground } from '@/components/onboarding/AuroraBackground';
-import type { AppTheme } from '@/constants/theme';
-import { spacing } from '@/constants/theme';
-import type { OnboardingStep } from '@/types/onboarding';
-import { strings } from '@/constants/strings';
+import { OnboardingCarousel, type BeatIntent } from '@/components/onboarding/OnboardingCarousel';
+import { track } from '@/utils/analytics';
 
-// Resume routing (spec 02 section 7, "Mid-flow abandon and reopen"): welcome
-// is not repeated once an intent has been picked (doorChosen set). Reopening
-// resumes at the first incomplete input step with prior answers intact. The
-// stored step is still named "fork"; the screen it routes to is now the intent
-// picker, so a track, break, or scan user who abandons early re-picks rather
-// than landing on a route that no longer exists.
-const STEP_ROUTE: Partial<Record<OnboardingStep, string>> = {
-  fork: '/onboarding/intent',
-  // W3 ("the app is the onboarding" complete): audit_subs, audit_vices,
-  // reveal, guided_log, and success all belonged to screens deleted by this
-  // update. A device that has one of these stored from before must not crash
-  // trying to route to a screen that no longer exists (the build 5 dayLogs
-  // lesson, docs/runs.log: an unhandled resume target is exactly how that
-  // crash happened); resuming at the intent picker is honest too, since
-  // auditAnswers are legacy now and nothing reads a partial audit's answers
-  // back into a screen anymore (OnboardingContext.completeOnboarding already
-  // clears them on the next successful completion).
-  audit_subs: '/onboarding/intent',
-  audit_vices: '/onboarding/intent',
-  reveal: '/onboarding/intent',
-  guided_log: '/onboarding/intent',
-  success: '/onboarding/intent',
+// The stored door value the rest of onboarding reads (resume routing,
+// onboarding_completed). Both "track" and "break" stay on-device from the
+// user's own taps, so both map to 'fresh'; only "scan" brings a statement in.
+const DOOR_FOR_INTENT: Record<BeatIntent, 'fresh' | 'statements'> = {
+  track: 'fresh',
+  scan: 'statements',
+  break: 'fresh',
 };
 
 /**
- * Welcome (design/redesign-handoff/03-onboarding.md, screen 1; W1, ADR
- * 0020/0022). Brand row, serif headline, the honest-zero hero, the privacy
- * line. Primary continues to the intent picker.
+ * Onboarding entry (PRD v3.1 sect 4, ADR 0026).
  *
- * Honest-zero rule (Charen, 2026-08-04): a finance app never shows an
- * invented total. The real KeptHero renders at cents=0, so it honestly says
- * "$0.00 / your first skip starts this counter" by itself. Sample dollars
- * appear only as per-skip example prices explicitly marked "for example",
- * never as a fake accumulated total. This replaces
- * components/onboarding/OutcomeCarousel.tsx (OB-5), which is retired along
- * with the static three-row value-prop list and How-it-works sheet it once
- * replaced.
+ * The carousel replaces BOTH the old welcome splash and the intent picker that
+ * followed it. One surface, three beats, each a recording of the real app with
+ * a CTA that starts that same workflow for real.
+ *
+ * RESUME ROUTING. This screen is now the only onboarding destination, which
+ * makes stale persisted steps harmless by construction: whatever
+ * `currentStep` holds, landing here shows the carousel, and re-picking is an
+ * honest resume. That closes the class of bug that crashed build 5 (a stored
+ * step routing to a screen that no longer exists) by removing the routing
+ * table rather than maintaining it. `app/onboarding/intent.tsx` stays
+ * registered and redirects here, so any persisted deep link still resolves.
+ *
+ * The one genuine resume is the scan door, which owns state of its own
+ * (picked files, a partially answered question set) and belongs back in its
+ * own flow rather than at the start.
  */
 export default function OnboardingWelcomeScreen() {
-  const insets = useSafeAreaInsets();
   const router = useRouter();
-  const theme = useTheme();
-  const styles = useMemo(() => createStyles(theme), [theme]);
-  const { onboardingState, isLoading, completeStep } = useOnboarding();
+  const { onboardingState, isLoading, completeStep, chooseDoor, completeOnboarding } =
+    useOnboarding();
+  // Guards a fast double tap from firing chooseDoor (and its analytics) twice
+  // before the first await resolves (UX-062, same as the retired picker).
+  const pickInFlightRef = useRef(false);
 
   useEffect(() => {
     if (isLoading) return;
-    if (!onboardingState.doorChosen || onboardingState.doorChosen === 'skip') return;
-    // The scan path owns its own resume state past the picker; the only thing
-    // welcome needs to do is not re-show itself, so route straight back into
-    // that flow rather than falling through to a STEP_ROUTE entry.
-    if (onboardingState.doorChosen === 'statements') {
-      router.replace('/leak-scan');
-      return;
-    }
-    const resumeRoute = STEP_ROUTE[onboardingState.currentStep];
-    if (resumeRoute) {
-      router.replace(resumeRoute);
-    }
-  }, [isLoading, onboardingState.doorChosen, onboardingState.currentStep, router]);
+    if (onboardingState.doorChosen !== 'statements') return;
+    router.replace('/leak-scan');
+  }, [isLoading, onboardingState.doorChosen, router]);
 
-  const handleGetStarted = async () => {
-    await completeStep('welcome');
-    router.push('/onboarding/intent');
-  };
+  const handleSkip = useCallback(async () => {
+    track('onboarding_intent_skipped', {});
+    await chooseDoor('skip');
+    await completeOnboarding();
+    router.replace('/(tabs)');
+  }, [chooseDoor, completeOnboarding, router]);
 
-  // DESIGN EXPLORATION (Charen, 2026-08-10): the splash reduces to aurora,
-  // headline, and the single CTA. The retired block (brand row, KeptHero at
-  // zero, value rows, privacy line) lives in this file's git history. NOTE
-  // before this ships for real: the zero-state KeptHero on welcome was an
-  // ADR 0022 ruling (the honest-zero hero); removing it here is Charen's
-  // live exploration, to be ratified or reverted when the design lands.
-  return (
-    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
-      <AuroraBackground />
-      <View style={styles.content}>
-        <Text style={styles.headline} accessibilityRole="header">
-          {strings.onboarding.welcomeHeadline}
-        </Text>
-      </View>
+  /**
+   * Two-level back (sect 10): on the carousel itself, system back exits
+   * onboarding to the app, which is the same thing the ghost does. Back never
+   * steps between beats; paging is swipe and dots only.
+   *
+   * Android only, because that is where a system back button exists. iOS has
+   * no back affordance at an onboarding root, which is the correct behaviour
+   * rather than a gap.
+   */
+  useEffect(() => {
+    if (Platform.OS !== 'android') return;
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      void handleSkip();
+      return true;
+    });
+    return () => sub.remove();
+  }, [handleSkip]);
 
-      <View style={styles.footer}>
-        <Button label={strings.onboarding.getStarted} onPress={handleGetStarted} />
-      </View>
-    </View>
+  const handlePick = useCallback(
+    async (intent: BeatIntent) => {
+      if (pickInFlightRef.current) return;
+      pickInFlightRef.current = true;
+      try {
+        track('onboarding_intent_selected', { intent });
+        await completeStep('welcome');
+        await chooseDoor(DOOR_FOR_INTENT[intent]);
+
+        // Every beat starts the REAL workflow (ADR 0026). Track and break open
+        // the app's own sheets over Today; scan enters the real scan flow.
+        // currentStep deliberately stays put: nothing maps forward from here,
+        // so an abandon before the sheet resolves resumes at this carousel.
+        if (intent === 'track') {
+          router.replace('/(tabs)?view=spent&firstLog=1');
+          return;
+        }
+        if (intent === 'break') {
+          router.replace('/(tabs)?view=kept&breakEntry=1');
+          return;
+        }
+        router.push('/leak-scan');
+      } finally {
+        // Reset in finally so a thrown navigation can never leave the guard
+        // stuck locked (UX-062).
+        pickInFlightRef.current = false;
+      }
+    },
+    [chooseDoor, completeStep, router]
   );
-}
 
-function createStyles(theme: AppTheme) {
-  return StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: theme.background,
-    },
-    content: {
-      flex: 1,
-      justifyContent: 'center',
-      // UX-018: 24 drifted from the ratified 20pt screen gutter.
-      paddingHorizontal: spacing.gutter,
-    },
-    // UX-061: was 44/48, an off-scale literal with no matching typeScale
-    // step (closest is keptHero at 42); left as-is pending a scale
-    // ratification, reported rather than guessed at.
-    headline: {
-      fontSize: 44,
-      lineHeight: 48,
-      fontFamily: theme.fonts.display,
-      color: theme.ink,
-      marginBottom: 28,
-    },
-    footer: {
-      // UX-018: 24 drifted from the ratified 20pt screen gutter.
-      paddingHorizontal: spacing.gutter,
-      paddingBottom: 16,
-    },
-  });
+  return <OnboardingCarousel onPick={handlePick} onSkip={handleSkip} />;
 }

@@ -242,7 +242,53 @@ The original plan for this phase follows, kept as the record of intent.
 - Undo coherence: bills rows share the scan `importId`; undo must keep removing them
   (it does today; add a regression test).
 
-## Phase 6: carousel + beat 1 (gated on ADR 0026 ratification)
+## Phase 6: carousel, SHIPPED STRUCTURALLY, BLOCKED ON ASSETS (2026-08-14)
+
+Delivered: `components/onboarding/OnboardingCarousel.tsx` (three beats, no
+auto-advance, platform rubber-band, dots, ghost skip),
+`components/onboarding/BeatMedia.tsx`, the carousel hosted at
+`app/onboarding/welcome.tsx`, `app/onboarding/intent.tsx` reduced to a redirect,
+Android two-level back, and the capture runbook at
+`design/captures/onboarding-beats/RUNBOOK.md`. Verification: tsc clean, 956/956
+tests over three consecutive runs, eval harness 71/71.
+
+**BLOCKED: the beat captures do not exist, and cannot be faked.** ADR 0026
+requires recordings of the real app; fabricating them is the one thing the ADR
+exists to prevent. `BeatMedia` therefore renders an honest labelled empty frame
+("Preview coming soon"), pinned by a test, so the carousel is visibly
+incomplete rather than quietly showing a mock-up. The runbook says exactly what
+to record. THIS IS NOT SHIPPABLE TO USERS until those files land.
+
+**`expo-video` was deliberately NOT added.** Playback needs a native module,
+and adding one forces the next build to be a fresh native build rather than an
+OTA update. There is no reason to pay that cost for an empty frame, so it is
+left to whoever lands the captures. `BeatAsset.video` already carries the
+contract, so that change is additive.
+
+**Deviation from PRD sect 6, deliberate.** The PRD wants beat 1 to host its own
+amount pad on an onboarding route rather than routing into Today. The shipped
+track beat deep-links to Today, which opens the REAL log sheet over it, so the
+user sees the sheet rather than an empty page and the saved amount is a real
+expense (D4). Building a second onboarding-owned pad would create the parallel
+surface ADR 0022 bans and ADR 0026 explicitly preserved. Flagged rather than
+silently skipped; revisit if the device pass shows the Today background reads
+as disorienting.
+
+**Resume routing got stronger, not weaker.** The carousel is now the only
+onboarding destination, so there is no resume table left to get wrong: whatever
+`currentStep` is stored, landing there shows the carousel and re-picking is an
+honest resume. The revive suite's assertions moved from "redirects to the intent
+picker" to "renders, and navigates nowhere at all". `intent.tsx` stays
+registered as a redirect so any persisted deep link still resolves (build 5
+crash class).
+
+**Retired suites:** `intentPicker.test.tsx` and `welcomeHero.test.tsx` are
+replaced by `onboardingCarousel.test.tsx`, which carries every behavioural
+contract they pinned (accessible names, per-intent analytics, replace-not-push
+routing, skip) plus the new carousel rules.
+
+The original plan for this phase follows, kept as the record of intent.
+
 
 Beat design per D1 (round 2): each beat is a pre-recorded capture FROM the real app,
 a looping video with hook text below; tapping the beat triggers the real workflow.

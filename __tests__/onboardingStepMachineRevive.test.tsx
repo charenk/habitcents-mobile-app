@@ -1,19 +1,18 @@
 /**
- * Onboarding step machine: reviving a retired currentStep (W3, "the app is
- * the onboarding" complete, ADR 0020 + 0022). audit_subs, audit_vices,
- * reveal, guided_log, and success all named screens deleted by this update
- * (app/onboarding/audit-subs.tsx, audit-vices.tsx, reveal.tsx, success.tsx).
- * A device that has one of these persisted from before this update must not
- * crash trying to route to a screen that no longer exists (the build 5
- * dayLogs lesson, docs/runs.log: an unhandled resume target is exactly how
- * that crash happened); welcome.tsx's STEP_ROUTE now maps every one of them
- * to the intent picker instead.
+ * Onboarding step machine: reviving a retired currentStep.
  *
- * Formerly __tests__/onboardingGuidedLogRevive.test.tsx, which only covered
- * the single 'guided_log' -> (then) '/onboarding/success' case; renamed and
- * widened to cover the full retired set now that success.tsx and reveal.tsx
- * are gone too, so "reveal keeps resuming to its own screen" is no longer
- * true.
+ * A device can carry a persisted `currentStep` naming a screen that no longer
+ * exists. Routing to one is exactly how build 5 crashed (docs/runs.log: an
+ * unhandled resume target), so this suite exists to keep that impossible.
+ *
+ * The MECHANISM changed in phase 6 (PRD v3.1, ADR 0026) and the guarantee got
+ * stronger. The carousel is now the only onboarding destination, so there is no
+ * resume table left to get wrong: whatever step is stored, landing here shows
+ * the carousel and re-picking is an honest resume. The assertions therefore
+ * moved from "redirects to the intent picker" to "renders, and navigates
+ * nowhere at all", which is the property that actually prevents the crash.
+ *
+ * Formerly covered a STEP_ROUTE map; before that, the single guided_log case.
  *
  * Uses the real OnboardingProvider (unlike door1FirstRun.test.tsx /
  * door3BreakSheet.test.tsx, which mock it) so the actual STEP_ROUTE resume
@@ -95,28 +94,51 @@ beforeEach(() => {
 
 afterEach(cleanup);
 
-describe('Onboarding step machine: retired steps revive at the intent picker', () => {
+describe('Onboarding step machine: retired steps revive on the carousel', () => {
   it.each([
     ['audit_subs', '/onboarding/audit-subs'],
     ['audit_vices', '/onboarding/audit-vices'],
     ['reveal', '/onboarding/reveal'],
     ['guided_log', '/onboarding/guided-log'],
     ['success', '/onboarding/success'],
-  ] as const)('a stored %s step resumes at the intent picker without crashing', async (step, deletedRoute) => {
+  ] as const)('a stored %s step revives without crashing or routing anywhere', async (step, deletedRoute) => {
     await seedStoredStep(step);
 
     await expect(renderWelcome()).resolves.not.toThrow();
 
-    expect(mockReplace).toHaveBeenCalledWith('/onboarding/intent');
+    // The deleted screen is never navigated to, and neither is anything else:
+    // the carousel IS the resume, so the safest routing table is no routing
+    // table.
     expect(mockReplace).not.toHaveBeenCalledWith(deletedRoute);
+    expect(mockReplace).not.toHaveBeenCalled();
+    expect(mockPush).not.toHaveBeenCalled();
   });
 
-  it('a step still shipped (fork) keeps resuming to its own screen unaffected', async () => {
+  it('a step still shipped (fork) revives the same way', async () => {
     await seedStoredStep('fork');
 
     await renderWelcome();
 
-    expect(mockReplace).toHaveBeenCalledWith('/onboarding/intent');
+    expect(mockReplace).not.toHaveBeenCalled();
+  });
+
+  // The one genuine resume: the scan door owns state of its own (picked files,
+  // a partly answered question set) and belongs back in its flow, not at the
+  // start.
+  it('sends a mid-scan device back into the scan flow', async () => {
+    const state = {
+      currentStep: 'fork',
+      hasSeenWelcome: true,
+      hasSeenValueProps: false,
+      hasAddedFirstExpense: false,
+      skippedSteps: [],
+      doorChosen: 'statements',
+    };
+    await AsyncStorage.setItem(ONBOARDING_STATE_KEY, JSON.stringify(state));
+
+    await renderWelcome();
+
+    expect(mockReplace).toHaveBeenCalledWith('/leak-scan');
   });
 });
 
@@ -135,10 +157,9 @@ describe('Onboarding step machine: legacy audit answers', () => {
 
     await renderWelcome();
 
-    // Revive never routes anywhere that would read auditAnswers back into a
-    // screen; it always lands on the intent picker regardless of what is
-    // stored under the legacy key.
-    expect(mockReplace).toHaveBeenCalledWith('/onboarding/intent');
+    // Revive never routes anywhere that could read auditAnswers back into a
+    // screen, because it does not route at all.
+    expect(mockReplace).not.toHaveBeenCalled();
     // The key itself is only actually cleared by completeOnboarding()
     // (contexts/OnboardingContext.tsx), not by the revive path; still present
     // here proves the revive path really did leave it untouched rather than

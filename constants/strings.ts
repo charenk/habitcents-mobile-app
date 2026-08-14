@@ -413,6 +413,28 @@ export const strings = {
     valuePropLog: 'Log expenses in 10 seconds.',
     welcomeSub: 'Everything stays on your phone. No bank login. No account.',
     getStarted: 'Get started',
+    // ---------------------------------------------------------------------
+    // Carousel beats (PRD v3.1 sect 4, ADR 0026). Three beats, one per real
+    // workflow. Each shows a RECORDING of the app doing the thing, with a hook
+    // below and a CTA that triggers the real workflow, never a simulation of
+    // it. Beat order matches the intent order the picker used, so the funnel
+    // stays comparable across the change.
+    // ---------------------------------------------------------------------
+    beatTrackHeadline: 'Log it in ten seconds.',
+    beatTrackHook: 'Amount first, one tap. The patterns show up on their own.',
+    beatTrackCta: 'Log my first expense',
+    beatScanHeadline: 'See where it all goes.',
+    beatScanHook: 'Scan a bank statement on your phone. Nothing uploads, ever.',
+    beatScanCta: 'Scan my statement',
+    beatBreakHeadline: 'Break the one that costs most.',
+    beatBreakHook: 'Name it, price it, start today.',
+    // Ratified CTA wording (PRD sect 13, resolved round 2).
+    beatBreakCta: 'Start with my habit',
+    beatProgress: (n: number, total: number) => `Step ${n} of ${total}`,
+    // Shown in the media frame until the real captures land. Says what is
+    // missing rather than showing a mock-up of the app, which is the whole
+    // point of ADR 0026.
+    beatMediaPending: 'Preview coming soon',
     // Rescued from the retired How-it-works sheet's third row; now the
     // second honest-zero value row under the hero.
     outcomeKeptCounts: 'Every time you skip it, we count the money you kept.',
