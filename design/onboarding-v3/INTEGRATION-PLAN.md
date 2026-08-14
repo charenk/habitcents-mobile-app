@@ -2,7 +2,8 @@
 
 How the PRD's flow lands on the shipped app. One phase = one PR, Lane 2 unless noted.
 Prereqs and decisions: `DECISIONS-NEEDED.md`. Evidence: `AUDIT-VS-PRD.md`.
-Phases 2-8 assume phase 1 merged. Phase 6 additionally gates on D1 (ADR 0026).
+Phases 2-8 assume phase 1 merged. Phase 6 gates on ADR 0026 ratification
+(`ADR-0026-DRAFT.md`; D1 resolved in-session 2026-08-14, round 2).
 
 ## Phase 1: honesty + plumbing preconditions (start immediately, no design dependency)
 
@@ -61,7 +62,10 @@ candidate can never be the hero with a break CTA.
 
 - Deck of at most 3 from in-scope candidates. Rank: occurrences desc, then per-instance
   cost (`averageAmount`) as tiebreak. `governClass 'fixed'` excluded upstream (exists),
-  suppression respected (exists), threshold per D6 (recommend: keep rate-based gates).
+  suppression respected (exists). Threshold per D6 (RESOLVED): rate-based gates stay, no
+  fixed >=8; the deck is behavioral-only. The full five-layer essential guarantee is in
+  `DECISIONS-NEEDED.md` D6. Detected subscriptions do NOT enter the deck; they route to
+  the phase 5 bills screen as their own group.
 - Card tap: keep `PickOneSheet` as the skipValue confirm (prefill `averageAmount`,
   already wired via `leakScanBridge`). Dismiss: existing `suppressHabit` + re-run.
 - Fallback 1 (no candidates): template grid from the VICE presets + "Something else"
@@ -78,8 +82,9 @@ candidate can never be the hero with a break CTA.
 - Activation = `habit_tracking_started` (any source) with skipValue > 0. Scan route
   writes NO habit instances: the evidence block (observedCount/observedTotal/
   averageAmount) certifies setup, matching PRD 7.5's "certifies setup, not engagement".
-  Deliberate deviation from PRD's letter (no dayLogs entries; statement rows are past
-  spends, not skips; the kept counter stays honest).
+  PRD 7.5's letter is formally amended (D-round 2, recorded in `DECISIONS-NEEDED.md` and
+  the ADR 0026 draft): statement rows never enter dayLogs; the kept counter only moves
+  on a real skip.
 - New event `first_kept {}`: first `skip_logged` per install, the engagement metric for
   all routes.
 - Payoff screen (gated on D1): quiet variant renders the real-history line ("Coffee, 14
@@ -94,6 +99,10 @@ candidate can never be the hero with a break CTA.
   (exists), per-row untick, one "Add to Upcoming" confirm ->
   `recurringToExpenses` + `filterAlreadyImported` (both exist in
   `utils/leakScan/importWrite.ts`). Skippable, one screen.
+- Two row groups per the D6 subscription ruling: "bills" (essentials and other fixed
+  cadence rows) and "subscriptions" (subscription-classed cadence rows, cancellable,
+  visually distinct from essentials). The deck never shows subscriptions; this screen
+  is where they surface during onboarding.
 - Reposition ProjectionSection's in-ladder bulk save for the onboarding path (keep for
   in-app re-scans, or retire once this screen also serves Insights re-scans).
 - Events: `bills_offered {count_proposed}`, `bills_imported {count_accepted}`; never
@@ -101,15 +110,26 @@ candidate can never be the hero with a break CTA.
 - Undo coherence: bills rows share the scan `importId`; undo must keep removing them
   (it does today; add a regression test).
 
-## Phase 6: carousel + beat 1 (gated on D1 / ADR 0026)
+## Phase 6: carousel + beat 1 (gated on ADR 0026 ratification)
 
-- Carousel: three beats carrying the shipped intent content; no auto-advance,
-  rubber-band both ends, dots; ghost "I'll explore on my own" = existing skip.
-  Two-level back: route screens pop to the carousel; carousel back exits to the app;
-  back never steps between beats.
-- **Drift rule (the ADR 0026 clause): beats render real components, never simulated
-  mockups.** The app went through a redesign and a 74-finding audit in one month;
-  simulated frames would already have drifted twice.
+Beat design per D1 (round 2): each beat is a pre-recorded capture FROM the real app,
+a looping video with hook text below; tapping the beat triggers the real workflow.
+Workflows are always the real ones; simulated interactive UI stays banned (ADR 0022
+survives as an amendment, not a reversal).
+
+- Carousel: three beats; no auto-advance, rubber-band both ends, dots; ghost
+  "I'll explore on my own" = existing skip. Two-level back: route screens pop to the
+  carousel; carousel back exits to the app; back never steps between beats.
+- Beat media: looping HEVC/MP4 via expo-video, 3-5 second loops, never GIF (binary
+  size, battery, JS-thread decode). Reduced motion = static poster frame per beat
+  (the video's first frame). Beats-as-video removes reanimated scene work from the
+  carousel, so the release-only animation crash class does not apply to the beats;
+  carousel paging itself stays trivial.
+- Capture runbook: `design/captures/onboarding-beats/RUNBOOK.md` records which flows,
+  seed data, device frame, light mode. Re-capture is a named release-checklist item
+  whenever an onboarding-visible surface changes. No invented totals inside a
+  recording: example-scale seed data; the hook text under the video carries the
+  "for example" framing (ADR 0022's rule extends to marketing surfaces).
 - Beat 1 host: the real LogExpenseSheet (native decimal pad, ADR 0023) on a dedicated
   onboarding route; the saved amount is a REAL expense (D4). "Is this a regular thing?"
   = the restyled break-or-watch nudge; "Track it" -> the existing
@@ -117,8 +137,8 @@ candidate can never be the hero with a break CTA.
 - Resume routing: extend STEP_ROUTE (`app/onboarding/welcome.tsx:20-36`) for any new
   persisted steps AND keep all stale-step mappings. The build 5 crash class stays
   impossible.
-- Animation constraints are hard: runOnUI, one driver per node, reduced-motion static
-  frames (two prior release-only crashes).
+- Any remaining reanimated work (payoff, transitions) keeps the hard constraints:
+  runOnUI, one driver per node, reduced-motion paths (two prior release-only crashes).
 - The welcome aurora exploration resolves into the carousel's first frame, closing the
   open ADR 0022 welcome question from the punchlist.
 
@@ -162,7 +182,10 @@ Event: `skip_activation {surface}` on the first activation-relevant act from eac
 ## Risks
 
 - STEP_ROUTE stale-step revival (build 5 crash class).
-- Release-only animation crashes (carousel and payoff are the animation-heavy surfaces).
+- Release-only animation crashes (payoff is the remaining animation-heavy surface; the
+  beats are video and exempt).
+- Stale beat videos: a re-capture miss ships an outdated preview. Mitigated by the
+  runbook being a release-checklist item, not a memory.
 - ScanSummary churn from deck dismiss re-runs (phase 3 note).
 - Undo-import vs accepted bills (phase 5 note).
 - Android predictive back semantics documented, not built (iOS-first).
