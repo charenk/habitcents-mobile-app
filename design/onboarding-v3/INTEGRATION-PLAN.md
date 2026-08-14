@@ -187,7 +187,44 @@ The original plan for this phase follows, kept as the record of intent.
   correct only after phase 1. Celebratory variant only when a skip was recorded
   in-flow. Palette per D2: sage, house motion budget, reduced-motion path.
 
-## Phase 5: bills -> Upcoming offer
+## Phase 5: bills to Upcoming, SHIPPED (2026-08-14)
+
+Delivered: `utils/leakScan/bills.ts` (bill vs subscription grouping, the
+spend-only guard, deck exclusion, propose-don't-ask default),
+`components/leak-scan/BillsScreen.tsx`, a `bills` stage AFTER the payoff, an
+`onlyStems` filter on `recurringToExpenses` for the per-row untick, and the
+`bills_offered` / `bills_imported` events. Verification: tsc clean, 955/955
+tests over three consecutive runs (21 new), eval harness 71/71.
+
+**A real bug caught on the way in.** `detectRecurring` runs over every
+non-internal row, not just outflows, so a fortnightly payroll deposit is
+exactly as "recurring" as rent. The offer therefore filters to
+`rowClass === 'spend'` with a positive amount. NOTE: the pre-existing in-ladder
+"Save to HabitCents" path (`ProjectionSection` -> `recurringToExpenses` with no
+filter) does NOT apply this guard, so it can still write a recurring income row
+into Upcoming as an expense. Out of scope here because it is an older path with
+its own tests; FOLLOW-UP: apply `isPayable` there too, or move that CTA onto
+this screen.
+
+**Scope-blind on purpose.** The offer draws from `result.recurring`, which is
+never scope-filtered, because scope decides what may be PROPOSED as a habit and
+not what the app will help you track. Locked and out-of-scope recurring spending
+is exactly what this screen exists to catch.
+
+**Opposite default from scope, deliberately.** Everything starts ticked. Scope
+fails closed because its risk is the app proposing something it should not;
+here the only risk is bookkeeping the user can undo in one tap.
+
+**Coupling correction made during the build.** The accept handler first lived in
+the intake hook and took the expense contexts from the route, which forced every
+leak-scan test (intake, questions, graceful failure) to acquire providers it had
+no use for and broke five of them. The write moved into `BillsScreen`, the only
+surface that needs those contexts, exactly as `DeckScreen` owns `useTrackLeak`.
+
+**Owed:** visual pass, now covering four new screens.
+
+The original plan for this phase follows, kept as the record of intent.
+
 
 - New post-payoff screen listing `RecurringItem`s NOT consumed by the deck (fixed
   class, out-of-scope, non-candidates): cadence pre-answered from `detectRecurring`

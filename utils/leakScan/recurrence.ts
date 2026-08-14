@@ -78,6 +78,16 @@ const GOVERN_WEIGHT: Record<GovernClass, number> = {
 
 const SUBSCRIPTION_RE = /subscription|software|saas|netflix|spotify|prime|icloud|adobe|patreon|substack|membership/i;
 
+/**
+ * Is this merchant a renewing subscription? Exported so the bills offer can
+ * group subscriptions apart from essentials without restating the rule; the
+ * two must agree, because the deck excludes subscriptions on the strength of
+ * this same test and the bills screen is where they resurface.
+ */
+export function isSubscriptionStem(stem: string, category: ExpenseCategory): boolean {
+  return SUBSCRIPTION_RE.test(stem) || category === 'Software & Subscriptions';
+}
+
 type Group = {
   stem: string;
   display: string;

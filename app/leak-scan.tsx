@@ -6,6 +6,7 @@ import { ResultsScreen } from '@/components/leak-scan/ResultsScreen';
 import { ScopeScreen } from '@/components/leak-scan/ScopeScreen';
 import { DeckScreen } from '@/components/leak-scan/DeckScreen';
 import { PayoffScreen } from '@/components/leak-scan/PayoffScreen';
+import { BillsScreen } from '@/components/leak-scan/BillsScreen';
 import { GracefulFailure } from '@/components/leak-scan/GracefulFailure';
 import { useCompleteScanOnboarding } from '@/components/leak-scan/useCompleteScanOnboarding';
 import { useOnboarding } from '@/contexts/OnboardingContext';
@@ -30,6 +31,7 @@ export default function LeakScanRoute() {
     leaveDeck,
     enterPayoff,
     leavePayoff,
+    finishBills,
     reset,
   } = useLeakScanIntake();
   const completeScanOnboarding = useCompleteScanOnboarding();
@@ -103,6 +105,15 @@ export default function LeakScanRoute() {
   // affordance, it reads forward only.
   if (state.stage === 'payoff' && state.activated) {
     return <PayoffScreen habit={state.activated} onContinue={leavePayoff} />;
+  }
+
+  // Bills to Upcoming (PRD v3.1 sect 8), after the payoff and never before it.
+  // Tracking an essential is fine; proposing you skip it is not, so this files
+  // rather than nudges.
+  if (state.stage === 'bills') {
+    return (
+      <BillsScreen offer={state.billsOffer} result={state.result} onDone={finishBills} />
+    );
   }
 
   if (state.stage === 'done' && state.result) {

@@ -283,7 +283,10 @@ describe('the habit deck follows the scope', () => {
       result.current.leavePayoff();
     });
 
-    expect(result.current.state.stage).toBe('done');
+    // Phase 5: the bills offer sits after the payoff. This fixture's statement
+    // holds recurring rent, so there is something to offer; a scan with nothing
+    // recurring goes straight to the breakdown instead.
+    expect(result.current.state.stage).toBe('bills');
   });
 
   it('keeps the passed-over findings on the result for the bills offer', async () => {

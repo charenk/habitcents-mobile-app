@@ -84,9 +84,15 @@ export function seedLast15Days(result: ScanResult, now: Date = new Date()): Expe
  */
 export function recurringToExpenses(
   result: ScanResult,
-  opts: { remindBefore?: Record<string, boolean> } = {}
+  opts: { remindBefore?: Record<string, boolean>; onlyStems?: Set<string> } = {}
 ): Expense[] {
-  return result.recurring.map((item) => {
+  // `onlyStems` is the bills offer's per-row untick (PRD sect 8): the user
+  // accepts a subset, so only that subset is written. Omitted means every
+  // detected item, which is what the in-ladder bulk save has always done.
+  const items = opts.onlyStems
+    ? result.recurring.filter((item) => opts.onlyStems!.has(item.merchantStem))
+    : result.recurring;
+  return items.map((item) => {
     const remind = opts.remindBefore?.[item.merchantStem] ?? false;
     const nextDate = new Date(item.nextDateISO);
     return {

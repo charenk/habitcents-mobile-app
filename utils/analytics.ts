@@ -191,6 +191,12 @@ export interface AnalyticsEventMap {
   };
   deck_card_result: { position: number; result: 'tracked' | 'dismissed' };
   deck_exhausted: { fallback: 'template_grid' | 'full_list' };
+  // Bills offer (PRD v3.1 sect 8 / sect 11). Instrumented separately from
+  // activation on purpose: filing a bill is bookkeeping, not the moment the
+  // product exists to deliver, and letting it inflate activation would flatter
+  // the funnel with the one step that proves least.
+  bills_offered: { count_proposed: number };
+  bills_imported: { count_accepted: number };
   scan_categories_expanded: Record<string, never>;
   // Finding-first ladder's dashed expander (ADR 0020, W4), same shape as
   // scan_categories_expanded above.

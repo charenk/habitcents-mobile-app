@@ -525,6 +525,26 @@ export const strings = {
       `${name}, ${count} time${count === 1 ? '' : 's'}, ${total} in your statement. Skip it once and ${perSkip} comes back.`,
     payoffCaption: 'We will ask you about it. Every skip you log adds to the counter above.',
     payoffContinue: 'Continue',
+    // Bills offer (PRD v3.1 sect 8). "Tracking an essential is fine, proposing
+    // you skip it is not": same data, different verb. This is the screen where
+    // both halves of the positioning show at once.
+    billsTitle: 'The rest of your money.',
+    billsSubtitle: 'These repeat on a schedule. We can keep an eye on them in Upcoming, no habits, no nudges.',
+    billsGroupBills: 'Bills',
+    billsGroupSubscriptions: 'Subscriptions',
+    // Cadence is pre-answered from the statement, so the row states it rather
+    // than asking (propose, do not ask).
+    billsCadenceWeekly: 'Every week',
+    billsCadenceBiweekly: 'Every two weeks',
+    billsCadenceMonthly: 'Every month',
+    billsCadenceAnnual: 'Every year',
+    billsConfirm: (n: number) => (n === 1 ? 'Add 1 to Upcoming' : `Add ${n} to Upcoming`),
+    billsConfirmNone: 'Not right now',
+    billsSkip: 'Skip this',
+    billsAddedToast: (n: number) =>
+      n === 1 ? 'Added 1 to Upcoming.' : `Added ${n} to Upcoming.`,
+    billsRowOn: 'Will be added',
+    billsRowOff: 'Will not be added',
     filesChosenCount: (n: number) => `${n} file${n === 1 ? '' : 's'} selected`,
     startScan: 'Start scan',
     scanningTitle: 'Reading your files',

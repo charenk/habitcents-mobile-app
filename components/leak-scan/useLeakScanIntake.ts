@@ -20,6 +20,7 @@ import {
   type ScanRules,
 } from '@/utils/scanRules';
 import { deckCandidates } from '@/utils/leakScan/deck';
+import { buildBillsOffer, offerCount, type BillsOffer } from '@/utils/leakScan/bills';
 import {
   applyScope,
   defaultScope,
@@ -44,6 +45,7 @@ export type IntakeStage =
   | 'scope'
   | 'deck'
   | 'payoff'
+  | 'bills'
   | 'done';
 
 export type IntakeState = {
@@ -77,6 +79,12 @@ export type IntakeState = {
    * evidence block, which only the started habit carries.
    */
   activated: DetectedHabit | null;
+  /**
+   * Recurring spending the deck passed over, offered to Upcoming. Built once
+   * when the payoff is left, so the offer reflects what the deck actually
+   * consumed rather than a guess made before the user decided.
+   */
+  billsOffer: BillsOffer;
   error: string | null;
 };
 
@@ -98,6 +106,7 @@ export function useLeakScanIntake() {
     scope: defaultScope(),
     deck: [],
     activated: null,
+    billsOffer: { bills: [], subscriptions: [] },
     error: null,
   });
   const [rules, setRules] = useState<ScanRules | null>(null);
@@ -274,9 +283,41 @@ export function useLeakScanIntake() {
     setState((s) => ({ ...s, stage: 'payoff', activated: habit }));
   }, []);
 
-  /** Continue from the payoff into the full breakdown. */
+  /**
+   * Continue from the payoff into the bills offer (PRD v3.1 sect 8), or
+   * straight to the breakdown when there is nothing to offer.
+   *
+   * The offer is built HERE rather than at scope time so it can exclude
+   * whatever the deck actually dealt: a merchant the user just tracked or
+   * dismissed as a habit must not immediately reappear asking to be filed as a
+   * bill, which would be the app proposing the same row twice under two
+   * different verbs.
+   */
   const leavePayoff = useCallback(() => {
-    setState((s) => (s.stage === 'payoff' ? { ...s, stage: 'done' } : s));
+    setState((s) => {
+      if (s.stage !== 'payoff' || !s.result) return s;
+      const dealt = s.deck.map((c) => c.merchantStem);
+      const activatedStem = s.activated?.merchantPattern;
+      const excluded = activatedStem ? [...dealt, activatedStem] : dealt;
+      const billsOffer = buildBillsOffer(s.result, excluded);
+      return {
+        ...s,
+        stage: offerCount(billsOffer) > 0 ? 'bills' : 'done',
+        billsOffer,
+      };
+    });
+  }, []);
+
+  /**
+   * Leave the bills offer, however it ended.
+   *
+   * The write itself lives in BillsScreen, which is the only surface that
+   * needs the expense contexts; keeping it out of this hook means the leak-scan
+   * ROUTE stays context-free and intake, questions, and graceful failure do not
+   * inherit providers they have no use for.
+   */
+  const finishBills = useCallback(() => {
+    setState((s) => (s.stage === 'bills' ? { ...s, stage: 'done' } : s));
   }, []);
 
   const pickAndScan = useCallback(async () => {
@@ -364,6 +405,7 @@ export function useLeakScanIntake() {
       scope: defaultScope(),
       deck: [],
       activated: null,
+      billsOffer: { bills: [], subscriptions: [] },
       error: null,
     });
     setPendingFiles([]);
@@ -379,6 +421,7 @@ export function useLeakScanIntake() {
     leaveDeck,
     enterPayoff,
     leavePayoff,
+    finishBills,
     reset,
   };
 }
