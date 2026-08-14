@@ -2,8 +2,9 @@
 
 How the PRD's flow lands on the shipped app. One phase = one PR, Lane 2 unless noted.
 Prereqs and decisions: `DECISIONS-NEEDED.md`. Evidence: `AUDIT-VS-PRD.md`.
-Phases 2-8 assume phase 1 merged. Phase 6 gates on ADR 0026 ratification
-(`ADR-0026-DRAFT.md`; D1 resolved in-session 2026-08-14, round 2).
+Phases 2-8 assume phase 1 merged. ADR 0026 was ratified in session on 2026-08-14
+(`ADR-0026-DRAFT.md`), so nothing is gated on a decision any more; promoting that
+draft into the ops repo's `docs/decisions/` is still owed.
 
 ## Phase 1: honesty + plumbing preconditions, SHIPPED (commit c6d75a7, 2026-08-14)
 
@@ -141,7 +142,37 @@ The original plan for this phase follows, kept as the record of intent.
 - Note: each dismissal currently overwrites the persisted ScanSummary via re-run;
   batch or debounce summary writes so deck churn does not thrash it.
 
-## Phase 4: activation + payoff
+## Phase 4: activation + payoff, SHIPPED (2026-08-14)
+
+Delivered: `first_kept` (once per install, from all three skip paths, behind a
+persisted flag), `components/leak-scan/PayoffScreen.tsx`, a `payoff` stage
+between the deck and the results ladder, and the activation definition below.
+Verification: tsc clean, 933/933 tests over three consecutive runs (11 new),
+eval harness 71/71.
+
+**Activation, as built.** A habit exists and carries a skip value, guaranteed
+atomically by `startBreakingHabit`. The scan route writes NO habit instances:
+the evidence block certifies setup, which is exactly PRD sect 7.5's "certifies
+setup, not engagement". Engagement is `first_kept`, and it means the same thing
+on every route, so the scan-vs-habit comparison in sect 11 is like for like.
+
+**The payoff is the quiet variant only.** Nothing has been kept at that moment,
+so the kept band shows the user's true zero with its own first-skip caption
+(honest-zero, ADR 0022). Every figure on the screen is observed (a count, a
+total, a per-buy price), so no monthly rate appears and the UX-073 class of
+error cannot express itself there. The celebratory variant belongs to a route
+that can record a skip in-flow; the scan route cannot, and building an
+unreachable state would be inventing a screen. NOT BUILT, deliberately.
+
+`first_kept` carries no properties. It has no amount because the fact of it is
+the signal, and no source because nothing on the goal records which route
+created it; the cohort comes from the same device's earlier
+`habit_tracking_started {source}`, which says it truthfully.
+
+**Owed:** visual pass, now covering three new screens.
+
+The original plan for this phase follows, kept as the record of intent.
+
 
 - Activation = `habit_tracking_started` (any source) with skipValue > 0. Scan route
   writes NO habit instances: the evidence block (observedCount/observedTotal/

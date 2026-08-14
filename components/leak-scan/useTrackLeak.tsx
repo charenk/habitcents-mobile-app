@@ -34,10 +34,14 @@ export type UseTrackLeak = {
 
 /**
  * @param spanDays evidence-window length, the rate divisor (UX-073).
- * @param onStarted runs after a habit is successfully started, for screens that
- *        need to move on (the deck advances; results stays put).
+ * @param onStarted runs after a habit is successfully started, carrying the
+ *        habit so a caller can show the payoff from its evidence block. The
+ *        deck advances; results stays put and passes nothing.
  */
-export function useTrackLeak(spanDays: number, onStarted?: () => void): UseTrackLeak {
+export function useTrackLeak(
+  spanDays: number,
+  onStarted?: (habit: DetectedHabit) => void
+): UseTrackLeak {
   const router = useRouter();
   const { addScanHabit, startBreakingHabit, getActiveHabits } = useHabits();
   const { markHabitStarted } = useOnboarding();
@@ -96,7 +100,7 @@ export function useTrackLeak(spanDays: number, onStarted?: () => void): UseTrack
       await completeScanOnboarding();
 
       close();
-      onStarted?.();
+      onStarted?.(habit);
     },
     [habit, candidate, startBreakingHabit, markHabitStarted, completeScanOnboarding, close, onStarted]
   );

@@ -5,6 +5,7 @@ import { IntakeScreen } from '@/components/leak-scan/IntakeScreen';
 import { ResultsScreen } from '@/components/leak-scan/ResultsScreen';
 import { ScopeScreen } from '@/components/leak-scan/ScopeScreen';
 import { DeckScreen } from '@/components/leak-scan/DeckScreen';
+import { PayoffScreen } from '@/components/leak-scan/PayoffScreen';
 import { GracefulFailure } from '@/components/leak-scan/GracefulFailure';
 import { useCompleteScanOnboarding } from '@/components/leak-scan/useCompleteScanOnboarding';
 import { useOnboarding } from '@/contexts/OnboardingContext';
@@ -27,6 +28,8 @@ export default function LeakScanRoute() {
     confirmScope,
     dismissDeckCandidate,
     leaveDeck,
+    enterPayoff,
+    leavePayoff,
     reset,
   } = useLeakScanIntake();
   const completeScanOnboarding = useCompleteScanOnboarding();
@@ -89,9 +92,17 @@ export default function LeakScanRoute() {
         spanDays={state.result.coverage?.spanDays ?? 0}
         onDismiss={dismissDeckCandidate}
         onSeeEverything={leaveDeck}
+        onActivated={enterPayoff}
         onBack={handleBack}
       />
     );
+  }
+
+  // The payoff (PRD v3.1 sect 7.5): the moment the product exists to deliver,
+  // carrying the user's real history rather than a ceremony. No back
+  // affordance, it reads forward only.
+  if (state.stage === 'payoff' && state.activated) {
+    return <PayoffScreen habit={state.activated} onContinue={leavePayoff} />;
   }
 
   if (state.stage === 'done' && state.result) {

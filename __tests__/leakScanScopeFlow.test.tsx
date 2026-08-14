@@ -261,6 +261,31 @@ describe('the habit deck follows the scope', () => {
     expect(trackMock.mock.calls.filter(([event]) => event === 'deck_exhausted')).toHaveLength(0);
   });
 
+  // Phase 4: activation lands on the payoff, not back on a dashboard.
+  // Bookkeeping must not stand between the user and the moment the product
+  // exists to deliver.
+  it('shows the payoff when a habit is activated, and continues to the list', async () => {
+    const result = await scanAndConfirm();
+    const card = result.current.state.deck[0];
+
+    await act(async () => {
+      result.current.enterPayoff({
+        ...card,
+        id: 'scan-habit-x',
+        name: card.merchantDisplay,
+      } as never);
+    });
+
+    expect(result.current.state.stage).toBe('payoff');
+    expect(result.current.state.activated).not.toBeNull();
+
+    await act(async () => {
+      result.current.leavePayoff();
+    });
+
+    expect(result.current.state.stage).toBe('done');
+  });
+
   it('keeps the passed-over findings on the result for the bills offer', async () => {
     const result = await scanAndConfirm();
 

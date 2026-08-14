@@ -6,6 +6,8 @@ import {
   saveHabitGoals,
   getCoachMomentState,
   saveCoachMomentState,
+  hasFiredFirstKept,
+  setFirstKeptFired,
 } from '@/utils/storage';
 import { detectHabits, findExistingHabit, mergeHabits } from '@/utils/habitDetection';
 import { getScanRules } from '@/utils/scanRules';
@@ -496,6 +498,23 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
     await saveHabits(updatedHabits);
   }, [goals, habits]);
 
+  /**
+   * first_kept (PRD v3.1 sect 7.5 / sect 11): the first time this install ever
+   * keeps money, whatever route got the user here.
+   *
+   * Activation only certifies that a habit was SET UP. This is the engagement
+   * metric the scan and habit routes are actually compared on, so it has to
+   * mean the same thing on both: the user's own first skip, counted once.
+   * Guarded by a persisted flag rather than a derived skip count, because
+   * goals can be stopped and restarted and a metric that can fire twice is not
+   * a first.
+   */
+  const reportFirstKept = useCallback(async (): Promise<void> => {
+    if (await hasFiredFirstKept()) return;
+    await setFirstKeptFired();
+    track('first_kept', {});
+  }, []);
+
   const answerToday = useCallback(async (goalId: string, state: AnswerState): Promise<void> => {
     const goal = goals.find(g => g.id === goalId);
     if (!goal) return;
@@ -531,6 +550,7 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
         week_skips: wk.skips,
         backfill: false,
       });
+      await reportFirstKept();
     } else {
       track('slip_logged', { cadence: habit?.frequency, partial: false, backfill: false });
     }
@@ -543,7 +563,7 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
       setLastMilestone(null);
     }
     await applyCheckInCoachMoment(goalId, state, today, goal.dayLogs, crossed);
-  }, [goals, habits, persistGoalAndHabit, applyCheckInCoachMoment]);
+  }, [goals, habits, persistGoalAndHabit, applyCheckInCoachMoment, reportFirstKept]);
 
   const answerEvent = useCallback(async (goalId: string, state: AnswerState): Promise<void> => {
     const goal = goals.find(g => g.id === goalId);
@@ -580,6 +600,7 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
         week_skips: periodSkips,
         backfill: false,
       });
+      await reportFirstKept();
     } else {
       track('slip_logged', { cadence: habit?.frequency, partial: false, backfill: false });
     }
@@ -592,7 +613,7 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
       setLastMilestone(null);
     }
     await applyCheckInCoachMoment(goalId, state, atMidnight(now), goal.dayLogs, crossed);
-  }, [goals, habits, persistGoalAndHabit, applyCheckInCoachMoment]);
+  }, [goals, habits, persistGoalAndHabit, applyCheckInCoachMoment, reportFirstKept]);
 
   /** "Change answer", today only (spec §4.4): flips today's skip<->slip. */
   const changeTodayAnswer = useCallback(async (goalId: string): Promise<void> => {
@@ -660,6 +681,7 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
         week_skips: wk.skips,
         backfill: true,
       });
+      await reportFirstKept();
     } else {
       track('slip_logged', { cadence: habit?.frequency, partial: false, backfill: true });
     }
@@ -672,7 +694,7 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
       setLastMilestone(null);
     }
     await applyCheckInCoachMoment(goalId, state, yesterday, goal.dayLogs, crossed);
-  }, [goals, habits, persistGoalAndHabit, applyCheckInCoachMoment]);
+  }, [goals, habits, persistGoalAndHabit, applyCheckInCoachMoment, reportFirstKept]);
 
   /** "Spent less than usual?" partial slip (spec §4.7). Applies to today's slip entry. */
   const savePartialSlip = useCallback(async (goalId: string, amountSpent: number): Promise<void> => {

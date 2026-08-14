@@ -512,6 +512,19 @@ export const strings = {
     // Terminal exit and the all-dismissed fallback both land on the full
     // breakdown. One hop, never a fallback of a fallback.
     deckSeeEverything: 'See the full breakdown',
+    // Payoff (PRD v3.1 sect 7.5, phase 4; revives the screen ADR 0020 retired,
+    // per ADR 0026). The quiet variant: nothing has been kept yet, and the
+    // screen says so honestly rather than celebrating a number the user has
+    // not earned.
+    payoffTitle: 'You have a habit to break.',
+    // Every figure here is observed, never extrapolated: a count, a total, and
+    // a per-buy price. "in your statement" rather than "last month" because
+    // the evidence window is whatever the user's export covered, which is
+    // frequently not a month (UX-073's lesson, stated in copy).
+    payoffEvidence: (name: string, count: number, total: string, perSkip: string) =>
+      `${name}, ${count} time${count === 1 ? '' : 's'}, ${total} in your statement. Skip it once and ${perSkip} comes back.`,
+    payoffCaption: 'We will ask you about it. Every skip you log adds to the counter above.',
+    payoffContinue: 'Continue',
     filesChosenCount: (n: number) => `${n} file${n === 1 ? '' : 's'} selected`,
     startScan: 'Start scan',
     scanningTitle: 'Reading your files',

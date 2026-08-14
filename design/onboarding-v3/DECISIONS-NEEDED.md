@@ -23,7 +23,11 @@ The saved amount persists through the real log sheet as a genuine first expense.
 throwaway onboarding store. Preserves the honest-data rule and "the first log is the
 thousandth log."
 
-### D1. Carousel resolved as previews plus real workflows (round 2)
+### D1. RATIFIED 2026-08-14. Carousel as previews plus real workflows (round 2)
+Charen authorised phase 4, which builds the payoff screen this ADR revives, so
+ADR 0026 is accepted. Promoting the draft into the umbrella `docs/decisions/`
+folder is still owed (different repo, needs its own branch).
+
 Charen's clarified design: each beat is a pre-recorded capture FROM the real app (looping
 video) with hook text below; tapping the beat triggers the real workflow. That AMENDS
 rather than reverses ADR 0022: workflows are always the real ones, preview media may
@@ -87,6 +91,9 @@ free-tier abuse pattern.
 
 ## Open
 
-None. All six decisions are resolved. The remaining gate is Charen's ratification of
-`ADR-0026-DRAFT.md` into the umbrella `docs/decisions/` folder, which unblocks phases 4
-(payoff) and 6 (carousel).
+None. All six decisions are resolved, and ADR 0026 was ratified in session on
+2026-08-14, which unblocked phase 4 (payoff) and phase 6 (carousel).
+
+One clerical item remains: promote `ADR-0026-DRAFT.md` into the umbrella repo's
+`docs/decisions/`. ADRs live in habitcents-ops, so it needs its own branch there
+and cannot be committed from this worktree.

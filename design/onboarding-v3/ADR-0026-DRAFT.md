@@ -1,7 +1,10 @@
 # 0026. Onboarding v3.1: preview carousel, real workflows, payoff revival (DRAFT)
 
 - **Date:** 2026-08-14 (draft; ratify by moving to habitcents-ops `docs/decisions/`)
-- **Status:** Draft, awaiting Charen's ratification
+- **Status:** Ratified in session by Charen on 2026-08-14 (by authorising phase 4,
+  which builds the payoff this ADR revives). STILL TO DO: promote this file into
+  the umbrella repo's `docs/decisions/0026-...md` on its own branch, since ADRs
+  live in habitcents-ops and this worktree cannot commit there.
 - **Area:** Design / Product / UX
 - **Deciders:** Charen (PRD v3.1 + two decision rounds in session, 2026-08-14)
 - **Amends:** ADR 0022 (the app is the onboarding), ADR 0020 (success screen retired),

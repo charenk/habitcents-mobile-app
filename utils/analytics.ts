@@ -114,6 +114,17 @@ export interface AnalyticsEventMap {
   slip_logged: { cadence?: string; partial: boolean; backfill: boolean };
   answer_changed: { from: 'skipped' | 'slipped'; to: 'skipped' | 'slipped' };
   milestone_reached: { milestone: 10 | 30 | 50 | 66 };
+  // First real skip, once per install, whatever route got the user here
+  // (PRD v3.1 sect 7.5 / sect 11). Activation certifies setup; THIS is
+  // engagement, and it is what the scan and habit routes are compared on.
+  //
+  // No properties on purpose. It carries no amount because the fact of it is
+  // the signal, and no route/source because nothing on the goal records which
+  // route created it: deriving one from the habit id would be a guess dressed
+  // as data. The cohort comes from the same device's earlier
+  // habit_tracking_started {source} and onboarding_completed {door}, which
+  // already say it truthfully.
+  first_kept: Record<string, never>;
   habit_dismissed: { source: string };
   // Today tab (redesign U5/U7, ADR 0019, DI-5/DI-7): fires on every
   // Spent/Kept switch, chip tap or pager swipe.

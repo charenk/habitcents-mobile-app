@@ -67,6 +67,7 @@ async function renderDeck(overrides: Partial<React.ComponentProps<typeof DeckScr
     spanDays: 30,
     onDismiss: jest.fn(),
     onSeeEverything: jest.fn(),
+    onActivated: jest.fn(),
     onBack: jest.fn(),
     ...overrides,
   };
@@ -152,6 +153,7 @@ describe('deck screen', () => {
                         spanDays={30}
                         onDismiss={jest.fn()}
                         onSeeEverything={jest.fn()}
+                        onActivated={jest.fn()}
                         onBack={jest.fn()}
                       />
                     </HabitsProvider>

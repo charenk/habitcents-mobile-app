@@ -11,6 +11,7 @@ import { useTrackLeak } from './useTrackLeak';
 import { track } from '@/utils/analytics';
 import { bucketCents } from '@/utils/analytics';
 import type { HabitCandidate } from '@/utils/leakScan/types';
+import type { DetectedHabit } from '@/types/habit';
 
 type DeckScreenProps = {
   /** The deck, already selected and ranked (utils/leakScan/deck.ts). */
@@ -21,6 +22,8 @@ type DeckScreenProps = {
   onDismiss: (candidate: HabitCandidate) => void;
   /** Leave the deck for the full breakdown. Also the all-dismissed exit. */
   onSeeEverything: () => void;
+  /** A habit was started: the route shows the payoff from its evidence. */
+  onActivated: (habit: DetectedHabit) => void;
   onBack: () => void;
 };
 
@@ -41,6 +44,7 @@ export function DeckScreen({
   spanDays,
   onDismiss,
   onSeeEverything,
+  onActivated,
   onBack,
 }: DeckScreenProps) {
   const theme = useTheme();
@@ -49,7 +53,7 @@ export function DeckScreen({
 
   // Tracking is shared with the results ladder so the two cannot drift on what
   // "break this one" does, including the activation that completes onboarding.
-  const { trackLeak, sheet } = useTrackLeak(spanDays, onSeeEverything);
+  const { trackLeak, sheet } = useTrackLeak(spanDays, onActivated);
 
   // The route swaps this screen in as a conditional render rather than a real
   // navigation push, so VoiceOver never shifts focus here on its own (UX-013,

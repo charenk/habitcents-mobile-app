@@ -32,10 +32,19 @@ import {
   type ScanScope,
 } from '@/utils/leakScan/scope';
 import type { ExpenseCategory } from '@/types/expense';
+import type { DetectedHabit } from '@/types/habit';
 import { saveScanSummary } from '@/utils/storage';
 import { track } from '@/utils/analytics';
 
-export type IntakeStage = 'idle' | 'picking' | 'scanning' | 'question' | 'scope' | 'deck' | 'done';
+export type IntakeStage =
+  | 'idle'
+  | 'picking'
+  | 'scanning'
+  | 'question'
+  | 'scope'
+  | 'deck'
+  | 'payoff'
+  | 'done';
 
 export type IntakeState = {
   stage: IntakeStage;
@@ -62,6 +71,12 @@ export type IntakeState = {
    * from here; when it empties, the deck is done.
    */
   deck: HabitCandidate[];
+  /**
+   * The habit just started, shown on the payoff. Null outside that stage.
+   * Held here rather than recomputed because the payoff renders the habit's
+   * evidence block, which only the started habit carries.
+   */
+  activated: DetectedHabit | null;
   error: string | null;
 };
 
@@ -82,6 +97,7 @@ export function useLeakScanIntake() {
     result: null,
     scope: defaultScope(),
     deck: [],
+    activated: null,
     error: null,
   });
   const [rules, setRules] = useState<ScanRules | null>(null);
@@ -246,6 +262,23 @@ export function useLeakScanIntake() {
     setState((s) => (s.stage === 'deck' ? { ...s, stage: 'done' } : s));
   }, []);
 
+  /**
+   * A habit was started: show the payoff (PRD v3.1 sect 7.5).
+   *
+   * This is the moment the product exists to deliver, so it gets its own
+   * screen rather than dropping the user back on a dashboard. The bills offer
+   * lands after it, never before: bookkeeping must not stand between the user
+   * and the payoff.
+   */
+  const enterPayoff = useCallback((habit: DetectedHabit) => {
+    setState((s) => ({ ...s, stage: 'payoff', activated: habit }));
+  }, []);
+
+  /** Continue from the payoff into the full breakdown. */
+  const leavePayoff = useCallback(() => {
+    setState((s) => (s.stage === 'payoff' ? { ...s, stage: 'done' } : s));
+  }, []);
+
   const pickAndScan = useCallback(async () => {
     setState((s) => ({ ...s, stage: 'picking', error: null }));
     try {
@@ -330,6 +363,7 @@ export function useLeakScanIntake() {
       result: null,
       scope: defaultScope(),
       deck: [],
+      activated: null,
       error: null,
     });
     setPendingFiles([]);
@@ -343,6 +377,8 @@ export function useLeakScanIntake() {
     confirmScope,
     dismissDeckCandidate,
     leaveDeck,
+    enterPayoff,
+    leavePayoff,
     reset,
   };
 }
