@@ -27,6 +27,8 @@ export default function LeakScanRoute() {
     answerQuestion,
     toggleScopeCategory,
     confirmScope,
+    backToIntake,
+    backToScope,
     dismissDeckCandidate,
     leaveDeck,
     enterPayoff,
@@ -70,15 +72,17 @@ export default function LeakScanRoute() {
 
   // Scope selection (PRD v3.1 sect 7.1) sits between a finished extraction and
   // the results: the user declares where to look before anything is proposed.
-  // Back here returns to intake rather than leaving the flow, so a user who
-  // changes their mind about the file is not forced through the results first.
+  // Back is IN-FLOW (backToIntake, not router.back()): scope is a conditional
+  // render inside this one route, so popping the router would discard the
+  // whole extraction. Backing out of scope means "different files", so intake
+  // returns with the picked files intact (review round 3, P1-g).
   if (state.stage === 'scope' && state.result) {
     return (
       <ScopeScreen
         scope={state.scope}
         onToggle={toggleScopeCategory}
         onConfirm={confirmScope}
-        onBack={handleBack}
+        onBack={backToIntake}
       />
     );
   }
@@ -87,6 +91,8 @@ export default function LeakScanRoute() {
   // the user just drew and the full breakdown. Tracking one, rejecting all
   // three, or taking the ghost exit all land on the results ladder, which is
   // terminal: one fallback hop, never a fallback of a fallback.
+  // Deck back is in-flow too, one step to the scope screen: re-confirming
+  // re-deals from the full unscoped candidate set (see backToScope).
   if (state.stage === 'deck' && state.result) {
     return (
       <DeckScreen
@@ -95,7 +101,7 @@ export default function LeakScanRoute() {
         onDismiss={dismissDeckCandidate}
         onSeeEverything={leaveDeck}
         onActivated={enterPayoff}
-        onBack={handleBack}
+        onBack={backToScope}
       />
     );
   }

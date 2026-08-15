@@ -190,17 +190,38 @@ describe('deck screen', () => {
     expect(results[0][1]).toEqual({ position: 1, result: 'dismissed' });
   });
 
-  it('reports a track and opens the confirm sheet', async () => {
+  it('opens the confirm sheet WITHOUT reporting a track', async () => {
     const { view } = await renderDeck();
 
     await act(async () => {
       fireEvent.press(view.getByRole('button', { name: strings.habitLogging.breakIt }));
     });
 
-    const results = trackMock.mock.calls.filter(([event]) => event === 'deck_card_result');
-    expect(results[0][1]).toEqual({ position: 1, result: 'tracked' });
     // The same Decision-1 sheet the results ladder opens, not a deck-only one.
     expect(view.getByText(strings.habitLogging.startBreakingIt)).toBeTruthy();
+    // 'tracked' means a STARTED habit, not an opened sheet: a cancel or a
+    // paywall bounce must not count toward the position-1 track rate the
+    // ranking criterion is computed from (review round 3, P2-c). The full
+    // press-Start-and-report path is covered by the activation flow suite.
+    const results = trackMock.mock.calls.filter(([event]) => event === 'deck_card_result');
+    expect(results).toHaveLength(0);
+  });
+
+  it('cancelling the sheet reports nothing', async () => {
+    const { view } = await renderDeck();
+
+    await act(async () => {
+      fireEvent.press(view.getByRole('button', { name: strings.habitLogging.breakIt }));
+    });
+    await act(async () => {
+      // The sheet's own cancel shares the card's "Not this one" label; the
+      // sheet's is mounted last.
+      const cancels = view.getAllByRole('button', { name: strings.habitLogging.notThisOne });
+      fireEvent.press(cancels[cancels.length - 1]);
+    });
+
+    const results = trackMock.mock.calls.filter(([event]) => event === 'deck_card_result');
+    expect(results).toHaveLength(0);
   });
 
   it('always offers a way out that is not a dismissal', async () => {

@@ -51,9 +51,30 @@ export function DeckScreen({
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
+  // Deal-time positions, frozen on the first non-empty render. Dismissing a
+  // card shifts the survivors down the array, so the render index is NOT the
+  // position the criterion means: without this, dismissing card 1 manufactured
+  // a second position-1 impression and could attribute card 2's outcome to
+  // position 1 (review round 3, P2-b). The deck is dealt exactly once per scan
+  // (one-hop rule), so freezing here is safe.
+  const dealRef = useRef<string[] | null>(null);
+  if (dealRef.current === null && candidates.length > 0) {
+    dealRef.current = candidates.map((c) => c.merchantStem);
+  }
+  const dealPosition = (stem: string): number => (dealRef.current?.indexOf(stem) ?? -1) + 1;
+
   // Tracking is shared with the results ladder so the two cannot drift on what
   // "break this one" does, including the activation that completes onboarding.
-  const { trackLeak, sheet } = useTrackLeak(spanDays, onActivated);
+  // deck_card_result 'tracked' fires HERE, on a real start, never on sheet
+  // open: a cancel or a paywall bounce is not a tracked card, and counting it
+  // as one inflated the position-1 track rate (review round 3, P2-c).
+  const { trackLeak, sheet } = useTrackLeak(spanDays, (habit, candidate) => {
+    track('deck_card_result', {
+      position: dealPosition(candidate.merchantStem),
+      result: 'tracked',
+    });
+    onActivated(habit);
+  });
 
   // The route swaps this screen in as a conditional render rather than a real
   // navigation push, so VoiceOver never shifts focus here on its own (UX-013,
@@ -62,22 +83,25 @@ export function DeckScreen({
     AccessibilityInfo.announceForAccessibility(strings.leakScan.deckTitle);
   }, []);
 
-  // One impression per card per position, not one per render. Without the ref
-  // the position-1 track rate (the success criterion for the whole ranking
-  // signal, PRD sect 11) would be divided by a render count.
+  // One impression per card, keyed on the stem alone (not the render index:
+  // see dealRef above), at its deal-time position. Without the ref the
+  // position-1 track rate (the success criterion for the whole ranking signal,
+  // PRD sect 11) would be divided by a render count.
   const shownRef = useRef(new Set<string>());
   useEffect(() => {
-    candidates.forEach((candidate, i) => {
-      const key = `${i + 1}:${candidate.merchantStem}`;
-      if (shownRef.current.has(key)) return;
-      shownRef.current.add(key);
+    candidates.forEach((candidate) => {
+      if (shownRef.current.has(candidate.merchantStem)) return;
+      shownRef.current.add(candidate.merchantStem);
       track('deck_card_shown', {
-        position: i + 1,
+        position: dealPosition(candidate.merchantStem),
         merchant_category: candidate.category,
         instances: candidate.occurrences,
         total_cents: bucketCents(candidate.totalCents),
       });
     });
+    // dealPosition is a render-scope helper over a ref; candidates is the real
+    // dependency.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [candidates]);
 
   return (
@@ -97,11 +121,15 @@ export function DeckScreen({
               spanDays={spanDays}
               eyebrow={i === 0 ? undefined : strings.leakScan.deckAlsoEyebrow}
               onBreak={() => {
-                track('deck_card_result', { position: i + 1, result: 'tracked' });
+                // No result event here: 'tracked' is a started habit, and that
+                // is reported by the onStarted callback above.
                 void trackLeak(candidate);
               }}
               onDismiss={() => {
-                track('deck_card_result', { position: i + 1, result: 'dismissed' });
+                track('deck_card_result', {
+                  position: dealPosition(candidate.merchantStem),
+                  result: 'dismissed',
+                });
                 onDismiss(candidate);
               }}
             />

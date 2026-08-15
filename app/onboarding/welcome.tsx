@@ -40,10 +40,18 @@ export default function OnboardingWelcomeScreen() {
   // Guards a fast double tap from firing chooseDoor (and its analytics) twice
   // before the first await resolves (UX-062, same as the retired picker).
   const pickInFlightRef = useRef(false);
+  // True once THIS session's scan pick has navigated. The resume effect below
+  // exists for a cold start that finds a persisted statements door; without
+  // this flag it also fired on the very transition handlePick just caused,
+  // issuing a replace('/leak-scan') alongside the push and double-entering the
+  // scan flow (review round 3, P1-h).
+  const scanNavigatedRef = useRef(false);
 
   useEffect(() => {
     if (isLoading) return;
     if (onboardingState.doorChosen !== 'statements') return;
+    if (scanNavigatedRef.current) return;
+    scanNavigatedRef.current = true;
     router.replace('/leak-scan');
   }, [isLoading, onboardingState.doorChosen, router]);
 
@@ -83,8 +91,10 @@ export default function OnboardingWelcomeScreen() {
 
         // Every beat starts the REAL workflow (ADR 0026). Track and break open
         // the app's own sheets over Today; scan enters the real scan flow.
-        // currentStep deliberately stays put: nothing maps forward from here,
-        // so an abandon before the sheet resolves resumes at this carousel.
+        // completeStep('welcome') advances the persisted currentStep to 'fork'
+        // (NEXT_STEP in OnboardingContext), but nothing routes on currentStep
+        // any more, so an abandon before the sheet resolves still resumes at
+        // this carousel; only the statements door resumes elsewhere.
         if (intent === 'track') {
           router.replace('/(tabs)?view=spent&firstLog=1');
           return;
@@ -93,6 +103,10 @@ export default function OnboardingWelcomeScreen() {
           router.replace('/(tabs)?view=kept&breakEntry=1');
           return;
         }
+        // Claim the navigation BEFORE chooseDoor commits: the awaited write
+        // yields to React mid-handler, which is exactly when the resume effect
+        // used to see the fresh 'statements' door and navigate a second time.
+        scanNavigatedRef.current = true;
         router.push('/leak-scan');
       } finally {
         // Reset in finally so a thrown navigation can never leave the guard

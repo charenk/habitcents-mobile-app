@@ -36,6 +36,8 @@ import { OnboardingProvider } from '@/contexts/OnboardingContext';
 import { ResultsScreen } from '@/components/leak-scan/ResultsScreen';
 import { strings } from '@/constants/strings';
 import { track } from '@/utils/analytics';
+import { saveHabits } from '@/utils/storage';
+import type { DetectedHabit } from '@/types/habit';
 import type { HabitCandidate, ScanResult } from '@/utils/leakScan/types';
 
 const trackMock = track as jest.MockedFunction<typeof track>;
@@ -192,5 +194,100 @@ describe('results screen: starting a habit completes onboarding', () => {
     await trackTheLeak(view);
 
     expect(completedCalls()).toHaveLength(1);
+  });
+});
+
+
+describe('the scan route against an existing habit (review round 3, P1-2/P1-3)', () => {
+  // Same reset the first describe carries: the AsyncStorage mock is module
+  // state, so without this the previous test's started habit and completed
+  // onboarding leak into these.
+  beforeEach(async () => {
+    await AsyncStorage.clear();
+    trackMock.mockClear();
+    mockPush.mockClear();
+  });
+  afterEach(cleanup);
+
+  /** A habit already mid-break for the fixture merchant, stored under a
+   *  DETECTION id, not the scan id the bridge would derive. */
+  async function seedBreakingHabit(): Promise<void> {
+    const habit = {
+      id: 'habit-legacy-1',
+      name: 'Starbucks',
+      description: '',
+      categoryId: 'Food',
+      merchantPattern: 'starbucks',
+      averageAmount: 600,
+      frequency: 'daily',
+      occurrencesPerPeriod: 1,
+      totalMonthlySpend: 18000,
+      observedTotal: 5000,
+      observedCount: 5,
+      spanDays: 30,
+      hasReliableRate: true,
+      medianAmount: 600,
+      minAmount: 600,
+      maxAmount: 600,
+      trend: 'stable',
+      trendPercentage: 0,
+      triggers: [],
+      status: 'changing',
+      sentiment: 'neutral',
+      discoveredAt: new Date('2026-08-01'),
+    } as unknown as DetectedHabit;
+    await saveHabits([habit]);
+  }
+
+  it('toasts instead of dead-ending when the merchant is already being broken', async () => {
+    await seedBreakingHabit();
+    const view = await renderResults(makeScanResult([makeCandidate()]));
+
+    await act(async () => {
+      fireEvent.press(view.getByRole('button', { name: strings.habitLogging.breakIt }));
+    });
+
+    // addScanHabit resolves to the EXISTING habit (different id, already
+    // changing). The old code discarded that return value and asked
+    // startBreakingHabit for 'scan-habit-starbucks', which does not exist:
+    // an unhandled throw with the sheet stuck open. Now: the same toast and
+    // the same refusal to append a second goal as Today's break sheet.
+    expect(view.getByText(strings.today.alreadyBreakingToast)).toBeTruthy();
+    expect(view.queryByText(strings.habitLogging.startBreakingIt)).toBeNull();
+    const started = trackMock.mock.calls.filter(([e]) => e === 'habit_tracking_started');
+    expect(started).toHaveLength(0);
+  });
+});
+
+describe('double-tapping Start (review round 3, P1-1)', () => {
+  // Same reset the first describe carries: the AsyncStorage mock is module
+  // state, so without this the previous test's started habit and completed
+  // onboarding leak into these.
+  beforeEach(async () => {
+    await AsyncStorage.clear();
+    trackMock.mockClear();
+    mockPush.mockClear();
+  });
+  afterEach(cleanup);
+
+  it('starts exactly one habit and completes onboarding exactly once', async () => {
+    const view = await renderResults(makeScanResult([makeCandidate()]));
+
+    await act(async () => {
+      fireEvent.press(view.getByRole('button', { name: strings.habitLogging.breakIt }));
+    });
+    const start = view.getByRole('button', { name: strings.habitLogging.startBreakingIt });
+    await act(async () => {
+      // Two presses in one commit: both land before the first write resolves,
+      // which is exactly the race the in-flight ref exists for. Unguarded,
+      // this raced two goal writes and double-fired onboarding_completed.
+      fireEvent.press(start);
+      fireEvent.press(start);
+    });
+
+    const started = trackMock.mock.calls.filter(([e]) => e === 'habit_tracking_started');
+    expect(started).toHaveLength(1);
+    const completed = trackMock.mock.calls.filter(([e]) => e === 'onboarding_completed');
+    expect(completed).toHaveLength(1);
   });
 });

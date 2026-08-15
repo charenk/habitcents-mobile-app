@@ -65,6 +65,20 @@ export type IntakeState = {
   /** The working scope selection, live while stage is 'scope'. */
   scope: ScanScope;
   /**
+   * The pre-scope result, kept while the in-flow back affordance can return to
+   * the scope screen. Re-confirming must filter from the FULL candidate set: a
+   * user who goes back and widens their scope should see candidates the first
+   * confirm excluded, which the scoped copy no longer carries.
+   */
+  unscopedResult: ScanResult | null;
+  /**
+   * Every stem the deck DEALT, frozen at confirm time. The live `deck` array
+   * shrinks as cards are dismissed, so by payoff time it no longer says what
+   * the user was shown; building the bills exclusion from it re-proposed a
+   * just-dismissed merchant as a pre-ticked bill (review round 3, P1-a).
+   */
+  dealtStems: string[];
+  /**
    * The deck, fixed at the moment scope is confirmed.
    *
    * Held rather than recomputed per render so that rejecting all three cards
@@ -104,6 +118,8 @@ export function useLeakScanIntake() {
     pendingQuestion: null,
     result: null,
     scope: defaultScope(),
+    unscopedResult: null,
+    dealtStems: [],
     deck: [],
     activated: null,
     billsOffer: { bills: [], subscriptions: [] },
@@ -161,6 +177,7 @@ export function useLeakScanIntake() {
           stage: 'scope',
           pendingQuestion: null,
           result,
+          unscopedResult: result,
           scope: startingScope,
         }));
         return;
@@ -190,9 +207,13 @@ export function useLeakScanIntake() {
    * an updater more than once, which would double-write the summary.
    */
   const confirmScope = useCallback(async () => {
-    const { result, scope } = stateRef.current;
-    if (!result) return;
-    const scoped = applyScope(result, scope);
+    const { result, unscopedResult, scope } = stateRef.current;
+    // The unscoped snapshot, so a back-and-widen re-confirm can resurrect
+    // candidates the first confirm filtered out; `result` alone would have
+    // already lost them.
+    const base = unscopedResult ?? result;
+    if (!base) return;
+    const scoped = applyScope(base, scope);
 
     track('scope_selected', {
       categories_on: scopeCodes(selectedCategories(scope)),
@@ -210,6 +231,7 @@ export function useLeakScanIntake() {
       stage: deck.length > 0 ? 'deck' : 'done',
       result: scoped,
       deck,
+      dealtStems: deck.map((c) => c.merchantStem),
     }));
     void saveScanSummary(scanResultToSummary(scoped, new Date()));
 
@@ -296,9 +318,11 @@ export function useLeakScanIntake() {
   const leavePayoff = useCallback(() => {
     setState((s) => {
       if (s.stage !== 'payoff' || !s.result) return s;
-      const dealt = s.deck.map((c) => c.merchantStem);
+      // dealtStems, not the live deck: dismissal already removed the card from
+      // s.deck, and a dismissed merchant reappearing here as a pre-ticked bill
+      // is the app proposing the row it just promised never to re-propose.
       const activatedStem = s.activated?.merchantPattern;
-      const excluded = activatedStem ? [...dealt, activatedStem] : dealt;
+      const excluded = activatedStem ? [...s.dealtStems, activatedStem] : s.dealtStems;
       const billsOffer = buildBillsOffer(s.result, excluded);
       return {
         ...s,
@@ -318,6 +342,49 @@ export function useLeakScanIntake() {
    */
   const finishBills = useCallback(() => {
     setState((s) => (s.stage === 'bills' ? { ...s, stage: 'done' } : s));
+  }, []);
+
+  /**
+   * In-flow back from the scope screen to intake (review round 3, P1-g).
+   *
+   * The scope and deck screens are conditional renders inside the single
+   * /leak-scan route, so router.back() from either pops the WHOLE route and
+   * discards the extraction. Backing out of scope means "I want different
+   * files", so the picked files and names are kept and the parsed result is
+   * dropped; nothing else survives.
+   */
+  const backToIntake = useCallback(() => {
+    setState((s) => ({
+      ...s,
+      stage: 'idle',
+      pendingQuestion: null,
+      result: null,
+      unscopedResult: null,
+      deck: [],
+      dealtStems: [],
+      activated: null,
+      billsOffer: { bills: [], subscriptions: [] },
+    }));
+  }, []);
+
+  /**
+   * In-flow back from the deck to the scope screen. The unscoped result is
+   * restored as the working result so re-confirming filters from the full
+   * candidate set; the deck re-deals on confirm. Suppressions already
+   * persisted by a dismissal stay persisted, which is exactly what PRD 7.4's
+   * "dismissal is permanent for proposals" asks for.
+   */
+  const backToScope = useCallback(() => {
+    setState((s) => {
+      if (s.stage !== 'deck' || !s.unscopedResult) return s;
+      return {
+        ...s,
+        stage: 'scope',
+        result: s.unscopedResult,
+        deck: [],
+        dealtStems: [],
+      };
+    });
   }, []);
 
   const pickAndScan = useCallback(async () => {
@@ -403,6 +470,8 @@ export function useLeakScanIntake() {
       pendingQuestion: null,
       result: null,
       scope: defaultScope(),
+      unscopedResult: null,
+      dealtStems: [],
       deck: [],
       activated: null,
       billsOffer: { bills: [], subscriptions: [] },
@@ -415,6 +484,8 @@ export function useLeakScanIntake() {
     state,
     pickAndScan,
     answerQuestion,
+    backToIntake,
+    backToScope,
     toggleScopeCategory,
     confirmScope,
     dismissDeckCandidate,

@@ -122,7 +122,7 @@ describe('the three beats', () => {
     expect(mockPush).not.toHaveBeenCalled();
   });
 
-  it('pushes the scan beat into the real scan flow', async () => {
+  it('pushes the scan beat into the real scan flow exactly once', async () => {
     const view = await renderCarousel();
 
     await act(async () => {
@@ -131,6 +131,13 @@ describe('the three beats', () => {
 
     expect(selectedIntents()).toEqual(['scan']);
     expect(mockPush).toHaveBeenCalledWith('/leak-scan');
+    expect(mockPush).toHaveBeenCalledTimes(1);
+    // The statements resume effect fires on exactly the doorChosen transition
+    // this press causes; unguarded it issued a replace('/leak-scan') alongside
+    // the push, double-entering the flow (review round 3, P1-h). The resume is
+    // for a COLD START that finds a persisted statements door, and that path
+    // is pinned in onboardingStepMachineRevive.test.tsx.
+    expect(mockReplace).not.toHaveBeenCalled();
   });
 
   it('guards a double tap from starting two workflows', async () => {
