@@ -422,6 +422,33 @@ describe('Door 3 break sheet: stack review findings', () => {
     expect(view.queryByText(strings.today.door3RibbonGentle)).toBeNull();
   });
 
+  // Review round 3, P2-5: claimedOnboarding latches door3HandledRef BEFORE
+  // the awaits, so a failed write left the claim held with nothing to release
+  // it. completeOnboarding never ran, and the close path early-returned on
+  // the latched ref, so onboarding could never complete by any route: the
+  // next cold start dropped the user back on the carousel with a habit
+  // already created.
+  it('a failed write releases the onboarding claim so the close can still complete it', async () => {
+    mockParams = { view: 'kept', breakEntry: '1' };
+    mockSeedDiscoveredHabit.mockRejectedValueOnce(new Error('storage full'));
+
+    const view = await renderToday();
+    await tap(view.getByText(coffee.name));
+    await tap(view.getByText(strings.habitLogging.startBreakingIt));
+
+    // The failure is surfaced, and nothing was completed on a write that
+    // did not happen.
+    expect(view.getByText(strings.toasts.startHabitFailed)).toBeTruthy();
+    expect(mockCompleteOnboarding).not.toHaveBeenCalled();
+
+    // The user gives up and dismisses: the gentle path completes onboarding
+    // rather than stranding them mid-flow forever.
+    await tap(view.getByLabelText('Close'));
+
+    expect(mockCompleteOnboarding).toHaveBeenCalledTimes(1);
+    expect(view.getByText(strings.today.door3RibbonGentle)).toBeTruthy();
+  });
+
   it('double-tapping Start creates exactly one habit (finding 1 guard)', async () => {
     mockParams = { view: 'kept', breakEntry: '1' };
     const view = await renderToday();

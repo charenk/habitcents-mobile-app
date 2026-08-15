@@ -166,6 +166,25 @@ describe('the ghost exit', () => {
   });
 });
 
+describe('the ghost exit is also the Android back handler', () => {
+  // One handler behind two affordances, and completeOnboarding has no
+  // idempotency of its own, so an unguarded double press completed onboarding
+  // twice (review round 3, P2-4).
+  it('completes onboarding once however fast it is pressed twice', async () => {
+    const view = await renderCarousel();
+    const ghost = view.getByRole('button', { name: strings.onboarding.skipForNow });
+
+    await act(async () => {
+      fireEvent.press(ghost);
+      fireEvent.press(ghost);
+    });
+
+    expect(trackMock.mock.calls.filter(([e]) => e === 'onboarding_intent_skipped')).toHaveLength(1);
+    expect(trackMock.mock.calls.filter(([e]) => e === 'onboarding_completed')).toHaveLength(1);
+    expect(trackMock.mock.calls.filter(([e]) => e === 'door_chosen')).toHaveLength(1);
+  });
+});
+
 describe('the rules that do not bend', () => {
   it('never auto-advances', async () => {
     const view = await renderCarousel();

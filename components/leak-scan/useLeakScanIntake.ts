@@ -134,6 +134,15 @@ export function useLeakScanIntake() {
   const stateRef = useRef(state);
   stateRef.current = state;
 
+  // Serializes overlapping rule writes onto ONE queue, so a second dismissal
+  // always reads the first one's already-committed store rather than the same
+  // pre-commit snapshot. Two rapid dismissals of DIFFERENT cards otherwise
+  // both read the same rules and the second write dropped the first
+  // suppression (review round 3, P3-2). Same mechanism as ExpensesContext's
+  // materializeChainRef, and the reason the deck screen needs no in-flight
+  // guard of its own.
+  const rulesChainRef = useRef<Promise<void>>(Promise.resolve());
+
   const runWithRules = useCallback(async (files: ScanFileInput[], currentRules: ScanRules) => {
     const result = runScan(files, { rules: currentRules });
     if (result.questions.length > 0) {
@@ -276,12 +285,19 @@ export function useLeakScanIntake() {
           : s.result,
       }));
 
-      const current = rules ?? (await getScanRules());
-      const updated = suppressHabit(current, candidate.merchantStem);
-      setRules(updated);
-      await saveScanRules(updated);
+      // Queued, and reading fresh inside the queue: the read has to happen
+      // AFTER any previous write commits, which is exactly what the chain
+      // guarantees and what a mount-time copy could never give.
+      const run = rulesChainRef.current.then(async () => {
+        const current = await getScanRules();
+        const updated = suppressHabit(current, candidate.merchantStem);
+        setRules(updated);
+        await saveScanRules(updated);
+      });
+      rulesChainRef.current = run.catch(() => {});
+      await run;
     },
-    [rules]
+    []
   );
 
   /**

@@ -307,13 +307,22 @@ export default function TodayScreen() {
   // (they are already in the app; nothing here should trap them).
   const handleLogSheetClose = useCallback(() => {
     setLogVisible(false);
+    // Re-arm the ?sheet= entry: without this, dismissing the sheet and
+    // pressing the same empty-state CTA again did nothing for the rest of the
+    // session (review round 3, P2-2). BOTH halves are needed: the ref so the
+    // effect will act again, and clearing the param itself so the next
+    // navigate() to the same href is a real param transition that re-fires
+    // the effect (an identical href would otherwise change nothing).
+    sheetHandledRef.current = null;
+    if (params.sheet) router.setParams({ sheet: undefined });
     if (!door1CoachActive || door1HandledRef.current) return;
     door1HandledRef.current = true;
     setDoor1CoachActive(false);
     void skipOnboardingStep('guided_log');
     void completeOnboarding();
     void showRibbon('door1_gentle');
-  }, [door1CoachActive, skipOnboardingStep, completeOnboarding, showRibbon]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [door1CoachActive, skipOnboardingStep, completeOnboarding, showRibbon, params.sheet]);
 
   // Door 3 break sheet "Start breaking it": builds the habit with the stated
   // cadence the user just picked (stated-rate exception, mirroring how the
@@ -340,8 +349,10 @@ export default function TodayScreen() {
     // permanently disabled the Start button for the rest of the session with
     // no error surfaced. The ref reset now always runs, and a failure gets a
     // toast instead of failing silently.
+    // Declared outside the try so the catch can RELEASE the claim it latched
+    // (review round 3, P2-5); a const inside the try is not in scope there.
+    const claimedOnboarding = door3CoachActive && !door3HandledRef.current;
     try {
-      const claimedOnboarding = door3CoachActive && !door3HandledRef.current;
       if (claimedOnboarding) door3HandledRef.current = true;
 
       const merchantPattern = data.chipId === 'custom' ? data.name : data.chipId;
@@ -408,6 +419,14 @@ export default function TodayScreen() {
       // no-op behind a button that just went live again.
       console.error('handleBreakSheetStart failed', error);
       show(strings.toasts.startHabitFailed);
+      // Release the onboarding claim latched before the awaits (review round
+      // 3, P2-5). Without this the write failed, completeOnboarding never ran,
+      // and handleBreakSheetClose then early-returned on the still-latched
+      // ref: onboarding could never complete by any route, so the next cold
+      // start dropped the user back on the carousel with a habit already
+      // created. Un-claiming lets the close path complete it gently, which is
+      // exactly what it does for a user who dismisses without starting.
+      if (claimedOnboarding) door3HandledRef.current = false;
     } finally {
       breakStartInFlightRef.current = false;
     }
@@ -430,12 +449,16 @@ export default function TodayScreen() {
   // re-fires completeOnboarding.
   const handleBreakSheetClose = useCallback(() => {
     setBreakSheetVisible(false);
+    // Re-arm the ?sheet= entry (P2-2), same as the log sheet.
+    sheetHandledRef.current = null;
+    if (params.sheet) router.setParams({ sheet: undefined });
     if (!door3CoachActive || door3HandledRef.current) return;
     door3HandledRef.current = true;
     setDoor3CoachActive(false);
     void completeOnboarding();
     void showDoor3Ribbon('door3_gentle');
-  }, [door3CoachActive, completeOnboarding, showDoor3Ribbon]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [door3CoachActive, completeOnboarding, showDoor3Ribbon, params.sheet]);
 
   // Gate's "See Premium": leaving for the paywall is still leaving without
   // starting a habit, so it completes onboarding the same way "Maybe later"

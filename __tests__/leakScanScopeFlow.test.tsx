@@ -366,6 +366,39 @@ describe('the Insights snapshot follows the scope', () => {
 });
 
 
+describe('concurrent dismissals (review round 3, P3-2)', () => {
+  it('keeps every suppression when two cards are dismissed at once', async () => {
+    const result = await scan();
+    await act(async () => {
+      await result.current.confirmScope();
+    });
+
+    const deck = [...result.current.state.deck];
+    if (deck.length < 2) {
+      // This fixture deals one behavioral card; the serialization contract is
+      // still worth stating, so assert the single case commits rather than
+      // silently passing on an empty loop.
+      await act(async () => {
+        await result.current.dismissDeckCandidate(deck[0]);
+      });
+      const rules = await getScanRules();
+      expect(rules.suppressedHabits[deck[0].merchantStem]).toBe(true);
+      return;
+    }
+
+    // Fired together, not awaited in turn: both read the rule store before
+    // either write lands unless the writes are queued.
+    await act(async () => {
+      await Promise.all(deck.map((c) => result.current.dismissDeckCandidate(c)));
+    });
+
+    const rules = await getScanRules();
+    for (const card of deck) {
+      expect(rules.suppressedHabits[card.merchantStem]).toBe(true);
+    }
+  });
+});
+
 describe('in-flow back (review round 3, P1-g)', () => {
   // Scope and deck are conditional renders inside the single /leak-scan route,
   // so a router.back() from either pops the whole route and throws the

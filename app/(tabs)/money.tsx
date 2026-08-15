@@ -150,13 +150,13 @@ export default function MoneyScreen() {
   // ?sheet= entry rather than mounting a second copy of either sheet here.
   // Adding an upcoming expense is owned by this screen, so it opens in place.
   const handleEmptyLog = useEmptyStateAction('money_spent', useCallback(() => {
-    router.push('/(tabs)?view=spent&sheet=log');
+    router.navigate('/(tabs)?view=spent&sheet=log');
   }, [router]));
   const handleEmptyAddUpcoming = useEmptyStateAction('money_upcoming', useCallback(() => {
     setAddUpcomingVisible(true);
   }, []));
   const handleEmptyBreak = useEmptyStateAction('money_habits', useCallback(() => {
-    router.push('/(tabs)?view=kept&sheet=break');
+    router.navigate('/(tabs)?view=kept&sheet=break');
   }, [router]));
 
   const closeUpcomingSheet = useCallback(() => {

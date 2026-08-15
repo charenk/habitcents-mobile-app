@@ -51,7 +51,7 @@ export default function InsightsScreen() {
   // list is empty because nothing has been logged often enough to detect yet,
   // so the honest first action is logging, not breaking.
   const handleEmptyLog = useEmptyStateAction('insights_leaks', useCallback(() => {
-    router.push('/(tabs)?view=spent&sheet=log');
+    router.navigate('/(tabs)?view=spent&sheet=log');
   }, [router]));
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);

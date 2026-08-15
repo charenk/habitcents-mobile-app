@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { AccessibilityInfo, View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button, Icon } from '@/components/ui';
@@ -33,6 +33,20 @@ export function ScopeScreen({ scope, onToggle, onConfirm, onBack }: ScopeScreenP
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(theme), [theme]);
+  // Confirming persists rules AND writes the scan summary, so a double tap
+  // fired scope_selected twice and wrote the snapshot twice (review round 3,
+  // P3-2). Same shape as BillsScreen's `filing`.
+  const [confirming, setConfirming] = useState(false);
+
+  const handleConfirm = async () => {
+    if (confirming) return;
+    setConfirming(true);
+    try {
+      await onConfirm();
+    } finally {
+      setConfirming(false);
+    }
+  };
 
   const locked = useMemo(() => categoriesInTier('locked'), []);
   const available = useMemo(
@@ -127,7 +141,12 @@ export function ScopeScreen({ scope, onToggle, onConfirm, onBack }: ScopeScreenP
             ? strings.leakScan.scopeNoneSelected
             : strings.leakScan.scopeSelectedCount(selectedCount)}
         </Text>
-        <Button label={strings.leakScan.scopeConfirm} onPress={onConfirm} style={styles.confirm} />
+        <Button
+          label={strings.leakScan.scopeConfirm}
+          onPress={handleConfirm}
+          disabled={confirming}
+          style={styles.confirm}
+        />
       </View>
     </View>
   );

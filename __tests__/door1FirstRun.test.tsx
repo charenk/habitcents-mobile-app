@@ -21,12 +21,13 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 
 jest.mock('@/utils/analytics', () => ({ track: jest.fn() }));
 
-let mockParams: { view?: string; firstLog?: string } = {};
+let mockParams: { view?: string; firstLog?: string; sheet?: string } = {};
 const mockRouterPush = jest.fn();
+const mockSetParams = jest.fn();
 jest.mock('expo-router', () => {
   const ReactActual = require('react');
   return {
-    useRouter: () => ({ push: mockRouterPush }),
+    useRouter: () => ({ push: mockRouterPush, setParams: mockSetParams }),
     useFocusEffect: (callback: () => void | (() => void)) => {
       ReactActual.useEffect(() => callback(), []);
     },
@@ -183,6 +184,7 @@ beforeEach(() => {
   mockOnboardingComplete = false;
   mockHabits = [];
   mockRouterPush.mockClear();
+  mockSetParams.mockClear();
   mockTrack.mockClear();
   mockAddExpense.mockClear();
   mockSeedDiscoveredHabit.mockClear();
@@ -326,5 +328,41 @@ describe('Door 1 real-app first run: watch-nudge', () => {
 
     expect(mockSeedDiscoveredHabit).not.toHaveBeenCalled();
     expect(view.queryByText(strings.today.watchLeakNudgeLabel)).toBeNull();
+  });
+});
+
+
+/**
+ * The general-purpose ?sheet= entry (PRD v3.1 sect 5, phase 7).
+ *
+ * Deliberately NOT the same thing as firstLog above: that one carries
+ * onboarding semantics and is guarded on isOnboardingComplete(), so it goes
+ * inert exactly when an empty state needs it. This one has to keep working
+ * forever, and keep working REPEATEDLY (review round 3, P2-2).
+ */
+describe('Today: the ?sheet= entry for empty-state CTAs', () => {
+  it('opens the log sheet even after onboarding is complete', async () => {
+    mockParams = { view: 'spent', sheet: 'log' };
+    mockOnboardingComplete = true;
+    const view = await renderToday();
+
+    expect(view.getByText(strings.expenseSheet.logEyebrow)).toBeTruthy();
+    // No coach line: this is not an onboarding path.
+    expect(view.queryByText(strings.today.firstLogCoachLine)).toBeNull();
+  });
+
+  it('clears the param on close, so pressing the same CTA again re-opens it', async () => {
+    mockParams = { view: 'spent', sheet: 'log' };
+    mockOnboardingComplete = true;
+    const view = await renderToday();
+
+    await act(async () => {
+      fireEvent.press(view.getByLabelText('Close'));
+    });
+
+    // Both halves of the re-arm: the one-shot ref is reset internally, and the
+    // param itself is cleared so the next navigate() to the same href is a
+    // real transition rather than a no-op that leaves the CTA dead.
+    expect(mockSetParams).toHaveBeenCalledWith({ sheet: undefined });
   });
 });

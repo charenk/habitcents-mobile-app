@@ -46,6 +46,9 @@ export default function OnboardingWelcomeScreen() {
   // issuing a replace('/leak-scan') alongside the push and double-entering the
   // scan flow (review round 3, P1-h).
   const scanNavigatedRef = useRef(false);
+  // The ghost exit and Android hardware back share one handler, so the guard
+  // has to live on the handler rather than on either affordance.
+  const skipInFlightRef = useRef(false);
 
   useEffect(() => {
     if (isLoading) return;
@@ -56,10 +59,21 @@ export default function OnboardingWelcomeScreen() {
   }, [isLoading, onboardingState.doorChosen, router]);
 
   const handleSkip = useCallback(async () => {
-    track('onboarding_intent_skipped', {});
-    await chooseDoor('skip');
-    await completeOnboarding();
-    router.replace('/(tabs)');
+    // Same guard as handlePick, and needed for the same reason twice over:
+    // this is wired to both the ghost button AND Android's hardware back, and
+    // completeOnboarding has no idempotency of its own, so two fast presses
+    // fired onboarding_intent_skipped, door_chosen and onboarding_completed
+    // twice each (review round 3, P2-4).
+    if (skipInFlightRef.current) return;
+    skipInFlightRef.current = true;
+    try {
+      track('onboarding_intent_skipped', {});
+      await chooseDoor('skip');
+      await completeOnboarding();
+      router.replace('/(tabs)');
+    } finally {
+      skipInFlightRef.current = false;
+    }
   }, [chooseDoor, completeOnboarding, router]);
 
   /**

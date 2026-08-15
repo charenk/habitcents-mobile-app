@@ -104,6 +104,19 @@ export function DeckScreen({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [candidates]);
 
+  // No in-flight guard here on purpose. Dismissing a card unmounts it, so the
+  // same card cannot be double-tapped, and dropping a SECOND card's dismissal
+  // would be worse than the race it prevents. The concurrent-write hazard is
+  // real but belongs at the write: useLeakScanIntake serializes the rule
+  // updates onto one queue (review round 3, P3-2).
+  const handleDismiss = (candidate: HabitCandidate) => {
+    track('deck_card_result', {
+      position: dealPosition(candidate.merchantStem),
+      result: 'dismissed',
+    });
+    onDismiss(candidate);
+  };
+
   return (
     <View style={styles.screen}>
       <ScreenHeader onBack={onBack} />
@@ -125,13 +138,7 @@ export function DeckScreen({
                 // is reported by the onStarted callback above.
                 void trackLeak(candidate);
               }}
-              onDismiss={() => {
-                track('deck_card_result', {
-                  position: dealPosition(candidate.merchantStem),
-                  result: 'dismissed',
-                });
-                onDismiss(candidate);
-              }}
+              onDismiss={() => handleDismiss(candidate)}
             />
           ))}
         </View>
