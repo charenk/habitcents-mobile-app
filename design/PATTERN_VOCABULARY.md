@@ -10,7 +10,7 @@ Sources of truth this page compresses: `design/redesign-handoff/01-tokens-and-fo
 - Sage (`theme.primary` and `primaryDark`) means one thing: a kept outcome or the action that produces one (CTA, kept numbers, active tab tint, skip confirm). Sage never touches a spend figure, a border around one, or decoration.
 - Spend is never a win: spend figures are ink, spend bars are mist on snow.
 - Lavender = habit arc, chapters, premium. Amber = upcoming money. Coral = destructive only. A slip is never red.
-- Exactly two decorative gradients are allowed in the app: the premium upsell card's hero, and the welcome screen's aurora background (components/onboarding/AuroraBackground.tsx). Scroll-edge fades (a white fade over a clipped horizontal rail, signalling more content) are functional, not decorative, and allowed.
+- Exactly ONE decorative gradient is allowed in the app: the premium upsell card's hero. The welcome aurora retired with the splash it decorated (ADR 0026: the carousel replaced that screen); `components/onboarding/AuroraBackground.tsx` is kept unreferenced as the documented revert path, so a gradient appearing anywhere else is a deviation, not a precedent. Scroll-edge fades (a white fade over a clipped horizontal rail, signalling more content) are functional, not decorative, and allowed.
 
 ## Type
 

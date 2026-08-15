@@ -48,6 +48,8 @@ export type SpentListProps = {
   sections: ExpenseSection[];
   /** Opens the edit sheet for a row. */
   onEditExpense: (expense: Expense) => void;
+  /** Empty-state first action (PRD v3.1 sect 5). */
+  onLogExpense?: () => void;
 };
 
 /**
@@ -104,7 +106,7 @@ function totalFor(section: ExpenseSection): number {
   return section.data.reduce((sum, e) => sum + e.amount, 0);
 }
 
-export function SpentList({ sections, onEditExpense }: SpentListProps): React.JSX.Element {
+export function SpentList({ sections, onEditExpense, onLogExpense }: SpentListProps): React.JSX.Element {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const { format } = useCurrency();
@@ -177,7 +179,11 @@ export function SpentList({ sections, onEditExpense }: SpentListProps): React.JS
 
   const listFooter = neverLogged ? (
     <View style={styles.empty}>
-      <EmptyState title={strings.money.spentEmptyTitle} body={strings.money.spentEmptyBody} />
+      <EmptyState
+        title={strings.money.spentEmptyTitle}
+        body={strings.money.spentEmptyBody}
+        cta={onLogExpense ? { label: strings.money.spentEmptyCta, onPress: onLogExpense } : undefined}
+      />
     </View>
   ) : (
     <Text style={styles.hint}>{strings.money.spentEditHint}</Text>

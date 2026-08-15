@@ -74,6 +74,9 @@ function makeCandidate(overrides: Partial<HabitCandidate> = {}): HabitCandidate 
     annualizedLeakCents: 60000,
     rankScore: 60000,
     topMerchants: ['Merchant'],
+    // Default fixture is an ordinary behavioral leak, the deck's own shape.
+    isBehavioral: true,
+    isSubscription: false,
     ...overrides,
   };
 }
@@ -90,7 +93,7 @@ function makeScanResult(habits: HabitCandidate[], overrides: Partial<ScanResult>
     duplicatesMerged: 0,
     recurring: [],
     habits,
-    coverage: { startISO: '2026-01-01', endISO: '2026-01-30', coveredDays: 30 },
+    coverage: { startISO: '2026-01-01', endISO: '2026-01-30', spanDays: 30, coveredDays: 30 },
     tier: 'solid',
     gracefulFailure: false,
     ...overrides,

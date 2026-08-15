@@ -120,7 +120,24 @@ export type HabitChangeGoal = {
   firstRun: boolean;
   // One-time backfill-for-yesterday offer already used (section 3.6, 5).
   backfillUsed: boolean;
+  /**
+   * Which route started this habit (PRD v3.1 sect 11).
+   *
+   * Persisted rather than only reported at creation because the headline
+   * success criterion compares scan-route first-kept against habit-route
+   * first-kept, and the first kept dollar can land days after the habit was
+   * set up. Without this on the goal, that comparison is not computable from
+   * the event stream at all.
+   *
+   * Optional: goals created before this field existed carry undefined, which
+   * reports as 'unknown' rather than being silently attributed to a route
+   * they may not have come from.
+   */
+  source?: HabitStartSource;
 };
+
+/** Where a habit's tracking was started from. */
+export type HabitStartSource = 'detection' | 'scan' | 'onboarding';
 
 export type DetectedHabit = {
   id: string;

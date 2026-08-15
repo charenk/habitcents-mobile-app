@@ -1,14 +1,52 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import * as DocumentPicker from 'expo-document-picker';
 import { File } from 'expo-file-system';
 import { runScan, type ScanFileInput } from '@/utils/leakScan';
-import { MAX_FILES, MAX_FILE_BYTES, type ScanQuestion, type ScanResult } from '@/utils/leakScan/types';
+import {
+  MAX_FILES,
+  MAX_FILE_BYTES,
+  type HabitCandidate,
+  type ScanQuestion,
+  type ScanResult,
+} from '@/utils/leakScan/types';
 import { scanResultToSummary } from '@/utils/leakScan/summarize';
-import { getScanRules, saveScanRules, setDateOrder, setSignConvention, type ScanRules } from '@/utils/scanRules';
+import {
+  getScanRules,
+  saveScanRules,
+  setDateOrder,
+  setScope,
+  setSignConvention,
+  suppressHabit,
+  type ScanRules,
+} from '@/utils/scanRules';
+import { deckCandidates } from '@/utils/leakScan/deck';
+import { buildBillsOffer, offerCount, type BillsOffer } from '@/utils/leakScan/bills';
+import {
+  applyScope,
+  defaultScope,
+  isDefaultScope,
+  scopeCodes,
+  scopeFromRules,
+  selectedCategories,
+  toggleScope,
+  unselectedCategories,
+  type ScanScope,
+} from '@/utils/leakScan/scope';
+import type { ExpenseCategory } from '@/types/expense';
+import type { DetectedHabit } from '@/types/habit';
 import { saveScanSummary } from '@/utils/storage';
 import { track } from '@/utils/analytics';
 
-export type IntakeStage = 'idle' | 'picking' | 'scanning' | 'question' | 'done';
+export type IntakeStage =
+  | 'idle'
+  | 'picking'
+  | 'scanning'
+  | 'question'
+  | 'scope'
+  | 'deck'
+  | 'payoff'
+  | 'bills'
+  | 'done';
 
 export type IntakeState = {
   stage: IntakeStage;
@@ -18,7 +56,49 @@ export type IntakeState = {
   files: ScanFileInput[];
   skippedFileMessages: string[];
   pendingQuestion: ScanQuestion | null;
+  /**
+   * The scan result. While stage is 'scope' this is the UNSCOPED result; the
+   * scoped copy replaces it on confirm, so the results screen never has to know
+   * scope exists.
+   */
   result: ScanResult | null;
+  /** The working scope selection, live while stage is 'scope'. */
+  scope: ScanScope;
+  /**
+   * The pre-scope result, kept while the in-flow back affordance can return to
+   * the scope screen. Re-confirming must filter from the FULL candidate set: a
+   * user who goes back and widens their scope should see candidates the first
+   * confirm excluded, which the scoped copy no longer carries.
+   */
+  unscopedResult: ScanResult | null;
+  /**
+   * Every stem the deck DEALT, frozen at confirm time. The live `deck` array
+   * shrinks as cards are dismissed, so by payoff time it no longer says what
+   * the user was shown; building the bills exclusion from it re-proposed a
+   * just-dismissed merchant as a pre-ticked bill (review round 3, P1-a).
+   */
+  dealtStems: string[];
+  /**
+   * The deck, fixed at the moment scope is confirmed.
+   *
+   * Held rather than recomputed per render so that rejecting all three cards
+   * exits to the full list instead of dealing three more (PRD sect 7.3: "one
+   * fallback hop, never a fallback of a fallback"). Dismissed cards are removed
+   * from here; when it empties, the deck is done.
+   */
+  deck: HabitCandidate[];
+  /**
+   * The habit just started, shown on the payoff. Null outside that stage.
+   * Held here rather than recomputed because the payoff renders the habit's
+   * evidence block, which only the started habit carries.
+   */
+  activated: DetectedHabit | null;
+  /**
+   * Recurring spending the deck passed over, offered to Upcoming. Built once
+   * when the payoff is left, so the offer reflects what the deck actually
+   * consumed rather than a guess made before the user decided.
+   */
+  billsOffer: BillsOffer;
   error: string | null;
 };
 
@@ -37,10 +117,31 @@ export function useLeakScanIntake() {
     skippedFileMessages: [],
     pendingQuestion: null,
     result: null,
+    scope: defaultScope(),
+    unscopedResult: null,
+    dealtStems: [],
+    deck: [],
+    activated: null,
+    billsOffer: { bills: [], subscriptions: [] },
     error: null,
   });
   const [rules, setRules] = useState<ScanRules | null>(null);
   const [pendingFiles, setPendingFiles] = useState<ScanFileInput[]>([]);
+
+  // Mirrors state so confirmScope reads the scope and result the user is
+  // actually looking at, not a stale render closure. Same pattern as
+  // OnboardingContext's onboardingStateRef and ExpensesContext's expensesRef.
+  const stateRef = useRef(state);
+  stateRef.current = state;
+
+  // Serializes overlapping rule writes onto ONE queue, so a second dismissal
+  // always reads the first one's already-committed store rather than the same
+  // pre-commit snapshot. Two rapid dismissals of DIFFERENT cards otherwise
+  // both read the same rules and the second write dropped the first
+  // suppression (review round 3, P3-2). Same mechanism as ExpensesContext's
+  // materializeChainRef, and the reason the deck screen needs no in-flight
+  // guard of its own.
+  const rulesChainRef = useRef<Promise<void>>(Promise.resolve());
 
   const runWithRules = useCallback(async (files: ScanFileInput[], currentRules: ScanRules) => {
     const result = runScan(files, { rules: currentRules });
@@ -64,22 +165,242 @@ export function useLeakScanIntake() {
       const tierBreakdown = { solid: 0, likely: 0, 'needs-review': 0 };
       for (const f of result.files) tierBreakdown[f.confidenceTier]++;
       track('scan_completed', {
-        coverage_days: result.coverage?.coveredDays ?? 0,
+        coverage_days: result.coverage?.spanDays ?? 0,
         n_accounts: new Set(result.files.map((f) => f.account)).size,
         n_habits_found: result.habits.length,
         solid_count: tierBreakdown.solid,
         likely_count: tierBreakdown.likely,
         needs_review_count: tierBreakdown['needs-review'],
       });
+      // Scope selection (PRD v3.1 sect 7.1) sits between extraction and
+      // results: the user says where to look before the app proposes anything.
+      // Skipped when the pipeline found no candidates at all, because there is
+      // then nothing to scope and the screen would be a dead step. The summary
+      // is deliberately NOT saved here in that case, it is saved once the
+      // scoped result is known, so the Insights snapshot never advertises a
+      // leak the user placed out of bounds.
+      if (result.habits.length > 0) {
+        const startingScope = scopeFromRules(currentRules);
+        setState((s) => ({
+          ...s,
+          stage: 'scope',
+          pendingQuestion: null,
+          result,
+          unscopedResult: result,
+          scope: startingScope,
+        }));
+        return;
+      }
+
       // Fire-and-forget (OB-4, ADR 0020): persists a small display-ready
       // snapshot so a later Insights segment can show it without re-running
-      // the pipeline. A rule-answer re-run lands here too (this function is
-      // the only place a scan reaches 'done'), so a correction's re-run
-      // naturally overwrites the prior summary with the corrected result --
-      // the right behavior per the "kept until replaced" contract.
+      // the pipeline. A rule-answer re-run lands here too, so a correction's
+      // re-run naturally overwrites the prior summary with the corrected
+      // result, the right behavior per the "kept until replaced" contract.
       void saveScanSummary(scanResultToSummary(result, new Date()));
     }
     setState((s) => ({ ...s, stage: 'done', pendingQuestion: null, result }));
+  }, []);
+
+  /** Toggle one category on the scope screen. Locked ones are inert. */
+  const toggleScopeCategory = useCallback((category: ExpenseCategory) => {
+    setState((s) => ({ ...s, scope: toggleScope(s.scope, category) }));
+  }, []);
+
+  /**
+   * Confirm the scope: filter the candidates, save the snapshot from the
+   * SCOPED result, persist the selection for the next scan, and hand the
+   * results screen a result it can treat as final.
+   *
+   * Side effects stay out of the setState updater on purpose: React may invoke
+   * an updater more than once, which would double-write the summary.
+   */
+  const confirmScope = useCallback(async () => {
+    const { result, unscopedResult, scope } = stateRef.current;
+    // The unscoped snapshot, so a back-and-widen re-confirm can resurrect
+    // candidates the first confirm filtered out; `result` alone would have
+    // already lost them.
+    const base = unscopedResult ?? result;
+    if (!base) return;
+    const scoped = applyScope(base, scope);
+
+    track('scope_selected', {
+      categories_on: scopeCodes(selectedCategories(scope)),
+      categories_off: scopeCodes(unselectedCategories(scope)),
+      used_defaults: isDefaultScope(scope),
+    });
+
+    // The deck is dealt once, here, and held. Recomputing it as cards are
+    // dismissed would deal a fresh three every time the user rejected three,
+    // which is the "fallback of a fallback" the spec rules out.
+    const deck = deckCandidates(scoped.habits);
+
+    setState((s) => ({
+      ...s,
+      stage: deck.length > 0 ? 'deck' : 'done',
+      result: scoped,
+      deck,
+      dealtStems: deck.map((c) => c.merchantStem),
+    }));
+    void saveScanSummary(scanResultToSummary(scoped, new Date()));
+
+    const current = rules ?? (await getScanRules());
+    const updated = setScope(current, scope as Record<string, boolean>);
+    setRules(updated);
+    await saveScanRules(updated);
+  }, [rules]);
+
+  /**
+   * "Not a habit" on a deck card. Suppresses the merchant for good and drops
+   * the card; emptying the deck falls through to the full list.
+   *
+   * Deliberately does NOT re-run the pipeline, unlike the results screen's own
+   * dismissal. A re-run would rebuild every candidate and rewrite the persisted
+   * summary on each tap, and the deck already knows exactly which card left.
+   * The snapshot keeps listing the dismissed candidate on purpose: PRD sect 7.4
+   * makes dismissal permanent for PROPOSALS while the First scan record stays
+   * intact, so "never propose" does not become "never allow".
+   */
+  const dismissDeckCandidate = useCallback(
+    async (candidate: HabitCandidate) => {
+      const remaining = stateRef.current.deck.filter(
+        (c) => c.merchantStem !== candidate.merchantStem
+      );
+      // Rejecting the last card is the one permitted fallback hop: the full
+      // in-scope list, which is terminal.
+      const exhausted = remaining.length === 0;
+      if (exhausted) track('deck_exhausted', { fallback: 'full_list' });
+
+      setState((s) => ({
+        ...s,
+        stage: exhausted ? 'done' : s.stage,
+        deck: remaining,
+        // Drop it from the ladder below too, so the full list the user lands on
+        // never re-offers something they just rejected.
+        result: s.result
+          ? {
+              ...s.result,
+              habits: s.result.habits.filter((h) => h.merchantStem !== candidate.merchantStem),
+            }
+          : s.result,
+      }));
+
+      // Queued, and reading fresh inside the queue: the read has to happen
+      // AFTER any previous write commits, which is exactly what the chain
+      // guarantees and what a mount-time copy could never give.
+      const run = rulesChainRef.current.then(async () => {
+        const current = await getScanRules();
+        const updated = suppressHabit(current, candidate.merchantStem);
+        setRules(updated);
+        await saveScanRules(updated);
+      });
+      rulesChainRef.current = run.catch(() => {});
+      await run;
+    },
+    []
+  );
+
+  /**
+   * Leave the deck for the full breakdown: the ghost exit, and where tracking a
+   * habit lands too. Not an exhaustion, so it emits no deck_exhausted; the user
+   * chose to move on rather than running out of cards.
+   */
+  const leaveDeck = useCallback(() => {
+    setState((s) => (s.stage === 'deck' ? { ...s, stage: 'done' } : s));
+  }, []);
+
+  /**
+   * A habit was started: show the payoff (PRD v3.1 sect 7.5).
+   *
+   * This is the moment the product exists to deliver, so it gets its own
+   * screen rather than dropping the user back on a dashboard. The bills offer
+   * lands after it, never before: bookkeeping must not stand between the user
+   * and the payoff.
+   */
+  const enterPayoff = useCallback((habit: DetectedHabit) => {
+    setState((s) => ({ ...s, stage: 'payoff', activated: habit }));
+  }, []);
+
+  /**
+   * Continue from the payoff into the bills offer (PRD v3.1 sect 8), or
+   * straight to the breakdown when there is nothing to offer.
+   *
+   * The offer is built HERE rather than at scope time so it can exclude
+   * whatever the deck actually dealt: a merchant the user just tracked or
+   * dismissed as a habit must not immediately reappear asking to be filed as a
+   * bill, which would be the app proposing the same row twice under two
+   * different verbs.
+   */
+  const leavePayoff = useCallback(() => {
+    setState((s) => {
+      if (s.stage !== 'payoff' || !s.result) return s;
+      // dealtStems, not the live deck: dismissal already removed the card from
+      // s.deck, and a dismissed merchant reappearing here as a pre-ticked bill
+      // is the app proposing the row it just promised never to re-propose.
+      const activatedStem = s.activated?.merchantPattern;
+      const excluded = activatedStem ? [...s.dealtStems, activatedStem] : s.dealtStems;
+      const billsOffer = buildBillsOffer(s.result, excluded);
+      return {
+        ...s,
+        stage: offerCount(billsOffer) > 0 ? 'bills' : 'done',
+        billsOffer,
+      };
+    });
+  }, []);
+
+  /**
+   * Leave the bills offer, however it ended.
+   *
+   * The write itself lives in BillsScreen, which is the only surface that
+   * needs the expense contexts; keeping it out of this hook means the leak-scan
+   * ROUTE stays context-free and intake, questions, and graceful failure do not
+   * inherit providers they have no use for.
+   */
+  const finishBills = useCallback(() => {
+    setState((s) => (s.stage === 'bills' ? { ...s, stage: 'done' } : s));
+  }, []);
+
+  /**
+   * In-flow back from the scope screen to intake (review round 3, P1-g).
+   *
+   * The scope and deck screens are conditional renders inside the single
+   * /leak-scan route, so router.back() from either pops the WHOLE route and
+   * discards the extraction. Backing out of scope means "I want different
+   * files", so the picked files and names are kept and the parsed result is
+   * dropped; nothing else survives.
+   */
+  const backToIntake = useCallback(() => {
+    setState((s) => ({
+      ...s,
+      stage: 'idle',
+      pendingQuestion: null,
+      result: null,
+      unscopedResult: null,
+      deck: [],
+      dealtStems: [],
+      activated: null,
+      billsOffer: { bills: [], subscriptions: [] },
+    }));
+  }, []);
+
+  /**
+   * In-flow back from the deck to the scope screen. The unscoped result is
+   * restored as the working result so re-confirming filters from the full
+   * candidate set; the deck re-deals on confirm. Suppressions already
+   * persisted by a dismissal stay persisted, which is exactly what PRD 7.4's
+   * "dismissal is permanent for proposals" asks for.
+   */
+  const backToScope = useCallback(() => {
+    setState((s) => {
+      if (s.stage !== 'deck' || !s.unscopedResult) return s;
+      return {
+        ...s,
+        stage: 'scope',
+        result: s.unscopedResult,
+        deck: [],
+        dealtStems: [],
+      };
+    });
   }, []);
 
   const pickAndScan = useCallback(async () => {
@@ -164,10 +485,30 @@ export function useLeakScanIntake() {
       skippedFileMessages: [],
       pendingQuestion: null,
       result: null,
+      scope: defaultScope(),
+      unscopedResult: null,
+      dealtStems: [],
+      deck: [],
+      activated: null,
+      billsOffer: { bills: [], subscriptions: [] },
       error: null,
     });
     setPendingFiles([]);
   }, []);
 
-  return { state, pickAndScan, answerQuestion, reset };
+  return {
+    state,
+    pickAndScan,
+    answerQuestion,
+    backToIntake,
+    backToScope,
+    toggleScopeCategory,
+    confirmScope,
+    dismissDeckCandidate,
+    leaveDeck,
+    enterPayoff,
+    leavePayoff,
+    finishBills,
+    reset,
+  };
 }

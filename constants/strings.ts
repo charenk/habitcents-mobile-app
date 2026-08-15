@@ -246,7 +246,13 @@ export const strings = {
     customCategories: 'Custom Categories',
     loading: 'Loading.',
     emptyTitle: 'No categories yet',
-    emptySubtitle: 'Tap Add category at the top to create your first one.',
+    // Was "Tap Add category at the top", which described an action instead of
+    // offering one; the CTA below now IS the action (PRD v3.1 sect 5).
+    emptySubtitle: 'Group your spending so the patterns are easier to see.',
+    // Distinct from addCategoryLabel below on purpose: both buttons are on
+    // screen together in the empty state, and two controls reading "Add
+    // category" is a needless ambiguity for anyone navigating by button.
+    emptyCta: 'Add your first category',
     // Delete confirm sheet (design/selection-sheets U3), replacing the native
     // alert. deleteConfirmCta and deleteCancel are the sheet's two buttons.
     deleteTitle: (name: string) => `Delete ${name}?`,
@@ -413,6 +419,28 @@ export const strings = {
     valuePropLog: 'Log expenses in 10 seconds.',
     welcomeSub: 'Everything stays on your phone. No bank login. No account.',
     getStarted: 'Get started',
+    // ---------------------------------------------------------------------
+    // Carousel beats (PRD v3.1 sect 4, ADR 0026). Three beats, one per real
+    // workflow. Each shows a RECORDING of the app doing the thing, with a hook
+    // below and a CTA that triggers the real workflow, never a simulation of
+    // it. Beat order matches the intent order the picker used, so the funnel
+    // stays comparable across the change.
+    // ---------------------------------------------------------------------
+    beatTrackHeadline: 'Log it in ten seconds.',
+    beatTrackHook: 'Amount first, one tap. The patterns show up on their own.',
+    beatTrackCta: 'Log my first expense',
+    beatScanHeadline: 'See where it all goes.',
+    beatScanHook: 'Scan a bank statement on your phone. Nothing uploads, ever.',
+    beatScanCta: 'Scan my statement',
+    beatBreakHeadline: 'Break the one that costs most.',
+    beatBreakHook: 'Name it, price it, start today.',
+    // Ratified CTA wording (PRD sect 13, resolved round 2).
+    beatBreakCta: 'Start with my habit',
+    beatProgress: (n: number, total: number) => `Step ${n} of ${total}`,
+    // Shown in the media frame until the real captures land. Says what is
+    // missing rather than showing a mock-up of the app, which is the whole
+    // point of ADR 0026.
+    beatMediaPending: 'Preview coming soon',
     // Rescued from the retired How-it-works sheet's third row; now the
     // second honest-zero value row under the hero.
     outcomeKeptCounts: 'Every time you skip it, we count the money you kept.',
@@ -486,6 +514,65 @@ export const strings = {
     intakeTitle: 'Scan your statement.',
     intakeSubtitle: 'CSV files only. Everything stays on this device.',
     chooseFiles: 'Choose CSV files',
+    // Scope selection (PRD v3.1 sect 7.1). The question is where to look, not
+    // "review what we found": the user draws the boundary so the app never has
+    // to claim it knows what is essential.
+    scopeTitle: 'Where should we look?',
+    scopeSubtitle: 'Pick the spending you want habit ideas from. You can change this on your next scan.',
+    scopeLockedHeading: 'Never searched',
+    // Reads as judgment, not omission (sect 7.1).
+    scopeLockedReason: 'Rent, medical, childcare, and insurance go to Upcoming, not to habits.',
+    scopeAvailableHeading: 'Search these',
+    scopeConfirm: 'Show my leaks',
+    scopeSelectedCount: (n: number) => (n === 1 ? '1 category selected' : `${n} categories selected`),
+    // Confirming with nothing selected is allowed: the dashboard still shows
+    // every dollar, there are simply no habit proposals.
+    scopeNoneSelected: 'No habit ideas, just the breakdown',
+    scopeLockedHint: 'Always excluded',
+    scopeOn: 'Searching',
+    scopeOff: 'Not searching',
+    // Habit deck (PRD v3.1 sect 7.3). At most three cards, each a decision
+    // rather than a reading assignment.
+    deckTitle: 'Start with one.',
+    deckSubtitle: 'These showed up most often in your statement. Break one now, or say which are not habits.',
+    // Card 1 keeps the biggest-leak eyebrow; the rest are simply also-rans.
+    deckAlsoEyebrow: 'Also showing up',
+    // Terminal exit and the all-dismissed fallback both land on the full
+    // breakdown. One hop, never a fallback of a fallback.
+    deckSeeEverything: 'See the full breakdown',
+    // Payoff (PRD v3.1 sect 7.5, phase 4; revives the screen ADR 0020 retired,
+    // per ADR 0026). The quiet variant: nothing has been kept yet, and the
+    // screen says so honestly rather than celebrating a number the user has
+    // not earned.
+    payoffTitle: 'You have a habit to break.',
+    // Every figure here is observed, never extrapolated: a count, a total, and
+    // a per-buy price. "in your statement" rather than "last month" because
+    // the evidence window is whatever the user's export covered, which is
+    // frequently not a month (UX-073's lesson, stated in copy).
+    payoffEvidence: (name: string, count: number, total: string, perSkip: string) =>
+      `${name}, ${count} time${count === 1 ? '' : 's'}, ${total} in your statement. Skip it once and ${perSkip} comes back.`,
+    payoffCaption: 'We will ask you about it. Every skip you log adds to the counter above.',
+    payoffContinue: 'Continue',
+    // Bills offer (PRD v3.1 sect 8). "Tracking an essential is fine, proposing
+    // you skip it is not": same data, different verb. This is the screen where
+    // both halves of the positioning show at once.
+    billsTitle: 'The rest of your money.',
+    billsSubtitle: 'These repeat on a schedule. We can keep an eye on them in Upcoming, no habits, no nudges.',
+    billsGroupBills: 'Bills',
+    billsGroupSubscriptions: 'Subscriptions',
+    // Cadence is pre-answered from the statement, so the row states it rather
+    // than asking (propose, do not ask).
+    billsCadenceWeekly: 'Every week',
+    billsCadenceBiweekly: 'Every two weeks',
+    billsCadenceMonthly: 'Every month',
+    billsCadenceAnnual: 'Every year',
+    billsConfirm: (n: number) => (n === 1 ? 'Add 1 to Upcoming' : `Add ${n} to Upcoming`),
+    billsConfirmNone: 'Not right now',
+    billsSkip: 'Skip this',
+    billsAddedToast: (n: number) =>
+      n === 1 ? 'Added 1 to Upcoming.' : `Added ${n} to Upcoming.`,
+    billsRowOn: 'Will be added',
+    billsRowOff: 'Will not be added',
     filesChosenCount: (n: number) => `${n} file${n === 1 ? '' : 's'} selected`,
     startScan: 'Start scan',
     scanningTitle: 'Reading your files',
@@ -524,7 +611,10 @@ export const strings = {
     kpiTransactions: 'Transactions',
     kpiNetOfTransfers: 'Net of transfers',
     kpiPurchasesPerDay: (rate: string) => `${rate} purchases/day`,
-    kpiOverCoveredDays: (days: number) => `over ${days} covered days`,
+    // UX-073: "covered days" counted only days that carried a transaction, so
+    // this line disagreed with the evidence-window eyebrow directly above it.
+    // It now prints the calendar span, the same window every rate divides by.
+    kpiOverSpanDays: (days: number) => `over ${days} days`,
     kpiEvidenceWindow: (start: string, end: string, accounts: number) =>
       `${start} to ${end} · ${accounts} account${accounts === 1 ? '' : 's'}`,
     // Categories (spec 5.2, visual spec 4)
@@ -538,7 +628,10 @@ export const strings = {
     pulseLegendSpend: 'more spent',
     pulseLegendZero: 'no spend',
     pulseLegendOutOfCoverage: 'outside your files',
-    pulseCaption: (n: number, covered: number) => `You transacted on ${n} of ${covered} days.`,
+    // Density line: transacted days out of the window's calendar length. Both
+    // arguments used to be distinct-transacted-day counts, so this read
+    // "You transacted on 27 of 27 days" (UX-073).
+    pulseCaption: (n: number, spanDays: number) => `You transacted on ${n} of ${spanDays} days.`,
     // Finding-first ladder (ADR 0020, W4 redesign step, Charen 2026-08-04):
     // results lead with one BiggestLeakCard before the dashboard, which stays
     // collapsed behind this dashed expander until tapped.
@@ -548,8 +641,8 @@ export const strings = {
     classGovern: 'Govern',
     classInfluence: 'Influence',
     classFixed: 'Fixed',
-    habitStatsRow: (orders: number, days: number, coveredDays: number, monthTotal: string, month: string) =>
-      `${orders} orders · ${days}/${coveredDays} days · ${monthTotal} in ${month}`,
+    habitStatsRow: (orders: number, days: number, spanDays: number, monthTotal: string, month: string) =>
+      `${orders} orders · ${days}/${spanDays} days · ${monthTotal} in ${month}`,
     yearlyPacePill: (amount: string) => `≈ ${amount}/yr pace`,
     trackThisLeak: 'Track this leak',
     monitorHabit: 'Monitor',
@@ -843,6 +936,10 @@ export const strings = {
       return `${paymentLabel} from ${bills} bill${bills === 1 ? '' : 's'}`;
     },
     upcomingAddAffordance: 'Add an upcoming expense',
+    // Empty-state first actions (PRD v3.1 sect 5). Every empty state a skipper
+    // can reach has to offer something to DO, not just explain itself.
+    spentEmptyCta: 'Log an expense',
+    habitsEmptyCta: 'Break a habit',
     upcomingListEyebrow: 'Scheduled',
     upcomingEmptyBody: "Mark an expense as repeating and we'll show its next date here.",
     multiPaymentPill: (count: number, monthLabel: string) => `${count} payments in ${monthLabel}`,
@@ -929,6 +1026,7 @@ export const strings = {
     // collapsed to this one key). Body keeps the honest detection threshold
     // verbatim (house rule: real detection window, not a rounded claim).
     leaksEmptyTitle: 'Your leaks will show up here',
+    leaksEmptyCta: 'Log an expense',
     leaksEmptyBody:
       'Keep logging expenses. Around 4 logs at the same place is enough to spot a pattern.',
     whereItWentTitle: 'Where it went',

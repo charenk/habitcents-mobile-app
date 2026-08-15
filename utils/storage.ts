@@ -37,6 +37,12 @@ const AUDIT_ANSWERS_KEY = '@habitcents_audit_answers';
 // Leak Scan summary snapshot (OB-4, ADR 0020): survives navigation so a later
 // Insights segment can read the last scan without re-running the pipeline.
 const SCAN_SUMMARY_KEY = '@habitcents_scan_summary';
+// first_kept one-shot (PRD v3.1 sect 7.5, phase 4). Activation certifies that
+// a habit was SET UP; engagement is the first time the user actually kept
+// money, and that is measured once per install across every route. A flag
+// rather than a derived count: goals can be stopped and restarted, and a
+// metric that can fire twice is not a first.
+const FIRST_KEPT_KEY = '@habitcents_first_kept';
 // Recurring materializer delete-child tombstones (ADR 0024, U11). See
 // utils/materializer.ts planMaterialization's header comment for why this
 // exists instead of "plan only forward from the newest child".
@@ -123,6 +129,29 @@ export async function setHasOnboarded(): Promise<void> {
     await AsyncStorage.setItem(ONBOARDING_KEY, 'true');
   } catch (error) {
     console.error('Error saving onboarding state:', error);
+  }
+}
+
+/**
+ * Has the first_kept milestone already been reported? (PRD v3.1 sect 11.)
+ * Read before every skip so the event fires at most once per install.
+ */
+export async function hasFiredFirstKept(): Promise<boolean> {
+  try {
+    return (await AsyncStorage.getItem(FIRST_KEPT_KEY)) === 'true';
+  } catch (error) {
+    // A read failure must not cause a duplicate report, so fail closed.
+    console.error('Error reading first-kept flag:', error);
+    return true;
+  }
+}
+
+/** Record that first_kept has been reported. */
+export async function setFirstKeptFired(): Promise<void> {
+  try {
+    await AsyncStorage.setItem(FIRST_KEPT_KEY, 'true');
+  } catch (error) {
+    console.error('Error saving first-kept flag:', error);
   }
 }
 
@@ -631,6 +660,13 @@ export async function getScanSummary(): Promise<ScanSummary | null> {
         perDayCents: num(rawKpis.perDayCents, 0),
         transactionCount: num(rawKpis.transactionCount, 0),
         purchasesPerDay: num(rawKpis.purchasesPerDay, 0),
+        // spanDays is newer than the first shipped summaries (UX-073). A
+        // record written before it existed falls back to coveredDays, which
+        // is what those older figures were actually computed against, so a
+        // revived pre-fix snapshot stays internally consistent instead of
+        // pairing old numbers with a new denominator. The next scan replaces
+        // it with correct values.
+        spanDays: num(rawKpis.spanDays, num(rawKpis.coveredDays, 0)),
         coveredDays: num(rawKpis.coveredDays, 0),
         nAccounts: num(rawKpis.nAccounts, 0),
       },

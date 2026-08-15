@@ -170,6 +170,7 @@ describe('scan summary storage', () => {
         perDayCents: 3871,
         transactionCount: 42,
         purchasesPerDay: 1.35,
+        spanDays: 31,
         coveredDays: 31,
         nAccounts: 1,
       },
@@ -199,6 +200,36 @@ describe('scan summary storage', () => {
     expect(out?.categories).toEqual(summary().categories);
     expect(out?.topLeaks).toEqual(summary().topLeaks);
     expect(out?.projection).toEqual(summary().projection);
+  });
+
+  // UX-073 shipped spanDays (calendar span) alongside coveredDays (distinct
+  // transacted days). A summary persisted BEFORE that split has no spanDays,
+  // and the revive falls back to coveredDays: those old figures were computed
+  // against that divisor, so the fallback keeps the record internally
+  // consistent rather than pairing old numerators with a new denominator.
+  // The fallback itself was untested (review round 3, P3-11).
+  it('revives a pre-spanDays summary by falling back to coveredDays', async () => {
+    const legacy = summary();
+    const raw = JSON.parse(JSON.stringify(legacy));
+    delete raw.kpis.spanDays;
+    await AsyncStorage.setItem('@habitcents_scan_summary', JSON.stringify(raw));
+
+    const out = await getScanSummary();
+
+    expect(out?.kpis.spanDays).toBe(legacy.kpis.coveredDays);
+    expect(Number.isFinite(out?.kpis.spanDays)).toBe(true);
+  });
+
+  it('revives a summary missing BOTH day counts as zero, never NaN', async () => {
+    const raw = JSON.parse(JSON.stringify(summary()));
+    delete raw.kpis.spanDays;
+    delete raw.kpis.coveredDays;
+    await AsyncStorage.setItem('@habitcents_scan_summary', JSON.stringify(raw));
+
+    const out = await getScanSummary();
+
+    expect(out?.kpis.spanDays).toBe(0);
+    expect(out?.kpis.coveredDays).toBe(0);
   });
 
   it('revives a null evidence window without throwing', async () => {

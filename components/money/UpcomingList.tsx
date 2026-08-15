@@ -73,6 +73,8 @@ export type UpcomingListProps = {
   onWindowDaysChange: (days: UpcomingWindowDays) => void;
   /** Opens the add-upcoming sheet. */
   onAdd: () => void;
+  /** Empty-state first action (PRD v3.1 sect 5). Falls back to onAdd. */
+  onEmptyAdd?: () => void;
   /** Opens the add-upcoming sheet in edit mode for this row's expense. */
   onEditItem: (expense: Expense) => void;
 };
@@ -82,6 +84,7 @@ export function UpcomingList({
   windowDays,
   onWindowDaysChange,
   onAdd,
+  onEmptyAdd,
   onEditItem,
 }: UpcomingListProps): React.JSX.Element {
   const theme = useTheme();
@@ -137,7 +140,10 @@ export function UpcomingList({
 
       {items.length === 0 ? (
         <View style={styles.emptyWrap}>
-          <EmptyState body={strings.money.upcomingEmptyBody} />
+          <EmptyState
+            body={strings.money.upcomingEmptyBody}
+            cta={{ label: strings.money.upcomingAddAffordance, onPress: onEmptyAdd ?? onAdd }}
+          />
         </View>
       ) : (
         <>

@@ -78,6 +78,16 @@ const GOVERN_WEIGHT: Record<GovernClass, number> = {
 
 const SUBSCRIPTION_RE = /subscription|software|saas|netflix|spotify|prime|icloud|adobe|patreon|substack|membership/i;
 
+/**
+ * Is this merchant a renewing subscription? Exported so the bills offer can
+ * group subscriptions apart from essentials without restating the rule; the
+ * two must agree, because the deck excludes subscriptions on the strength of
+ * this same test and the bills screen is where they resurface.
+ */
+export function isSubscriptionStem(stem: string, category: ExpenseCategory): boolean {
+  return SUBSCRIPTION_RE.test(stem) || category === 'Software & Subscriptions';
+}
+
 type Group = {
   stem: string;
   display: string;
@@ -228,19 +238,26 @@ function groupTier(group: Group): HabitCandidate['tier'] {
 }
 
 /**
- * Detect habit candidates over the full history. `coveredDays` scales the annualized
- * leak (evidence window). Suppressed habits (spec 6) are filtered out. Returns up to
+ * Detect habit candidates over the full history. `spanDays` is the evidence
+ * window's calendar length and scales both the occurrence rate and the
+ * annualized leak. Suppressed habits (spec 6) are filtered out. Returns up to
  * 10 candidates ranked by annualizedLeak * governabilityWeight, none pre-selected.
+ *
+ * The divisor must be elapsed time, never the count of days that carried a
+ * transaction (UX-073): three monthly rent rows span a quarter, and dividing
+ * their total by 3 produced a "$4,000 a month" claim for a $1,200 bill. The
+ * same distinction decides `behavioral` below, so a wrong divisor also
+ * mislabels commitments as habits.
  */
 export function detectHabitCandidates(
   rows: ScanRow[],
-  coveredDays: number,
+  spanDays: number,
   rules: ScanRules
 ): HabitCandidate[] {
   const spendRows = rows.filter((r) => r.rowClass === 'spend' && !r.internal && !r.reversed && r.amountCents < 0);
   const groups = groupByStem(spendRows);
   const recurringStems = new Set(detectRecurring(spendRows).map((i) => i.merchantStem));
-  const windowDays = Math.max(coveredDays, 1);
+  const windowDays = Math.max(spanDays, 1);
 
   const candidates: HabitCandidate[] = [];
   for (const g of groups) {
@@ -290,6 +307,11 @@ export function detectHabitCandidates(
       annualizedLeakCents,
       rankScore,
       topMerchants,
+      // Kept rather than discarded: the habit deck is behavioral-only, and
+      // without these it would have to guess a group's admission reason back
+      // out of its shape (PRD v3.1 sect 7.3).
+      isBehavioral: behavioral,
+      isSubscription,
     });
   }
 

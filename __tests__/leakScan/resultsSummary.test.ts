@@ -95,7 +95,7 @@ describe('buildKpiSummary', () => {
     const rows = [row({ amountCents: -1000 }), row({ amountCents: -1000 })];
     const result = scanResult({
       rows,
-      coverage: { startISO: '2026-01-01', endISO: '2026-01-10', coveredDays: 10 },
+      coverage: { startISO: '2026-01-01', endISO: '2026-01-10', spanDays: 10, coveredDays: 10 },
     });
     const kpi = buildKpiSummary(result);
     expect(kpi.perDayCents).toBe(200);

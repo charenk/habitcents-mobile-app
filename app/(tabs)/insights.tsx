@@ -16,6 +16,7 @@ import { useExpenses } from '@/contexts/ExpensesContext';
 import { useCategories } from '@/contexts/CategoriesContext';
 import { useHabits } from '@/contexts/HabitsContext';
 import { LeaksCard, type LeakRowData } from '@/components/insights/LeaksCard';
+import { useEmptyStateAction } from '@/components/onboarding/useEmptyStateAction';
 import { WhereItWentCard } from '@/components/insights/WhereItWentCard';
 import { PaceCard, type PaceComparison } from '@/components/insights/PaceCard';
 import { ScanSnapshotCard } from '@/components/insights/ScanSnapshotCard';
@@ -46,6 +47,12 @@ const WHERE_IT_WENT_DAYS = 7;
 export default function InsightsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  // Empty state as an onboarding surface (PRD v3.1 sect 5). Insights' leaks
+  // list is empty because nothing has been logged often enough to detect yet,
+  // so the honest first action is logging, not breaking.
+  const handleEmptyLog = useEmptyStateAction('insights_leaks', useCallback(() => {
+    router.navigate('/(tabs)?view=spent&sheet=log');
+  }, [router]));
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
@@ -200,6 +207,7 @@ export default function InsightsScreen() {
         ) : (
           <>
             <LeaksCard
+              onLogExpense={handleEmptyLog}
               rows={leakRows}
               onBreak={(habit) => setPickOneHabitId(habit.id)}
               onOpenHabit={(habitId) => router.push(`/habit/${habitId}`)}

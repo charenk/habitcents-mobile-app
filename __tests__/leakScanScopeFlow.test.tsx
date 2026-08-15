@@ -1,0 +1,451 @@
+/**
+ * Scope, end to end through the real intake hook and the real pipeline
+ * (PRD v3.1 sect 7.1, phase 2).
+ *
+ * The unit tests in leakScan/scope.test.ts pin the model. This one pins the
+ * wiring, which is where the subtle failure lives: scope is applied to a
+ * finished scan, and every rule correction RE-RUNS that scan from scratch. Miss
+ * the re-application and dismissing one leak silently repopulates every
+ * category the user just placed out of bounds.
+ */
+jest.mock('@react-native-async-storage/async-storage', () =>
+  require('@react-native-async-storage/async-storage/jest/async-storage-mock')
+);
+
+const mockGetDocumentAsync = jest.fn();
+jest.mock('expo-document-picker', () => ({
+  getDocumentAsync: (...args: unknown[]) => mockGetDocumentAsync(...args),
+}));
+
+// Self-contained on purpose: a jest.mock factory is hoisted above the imports
+// and may not close over ordinary module variables.
+jest.mock('expo-file-system', () => ({
+  File: class {
+    async text() {
+      const nodeFs = require('fs');
+      const nodePath = require('path');
+      return nodeFs.readFileSync(
+        nodePath.join(__dirname, 'leakScanEval', 'fixtures', 'chequing-split-mixed-dates.csv'),
+        'utf-8'
+      );
+    }
+  },
+}));
+
+jest.mock('@/utils/analytics', () => ({ track: jest.fn() }));
+
+import fs from 'fs';
+import path from 'path';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { act, renderHook } from '@testing-library/react-native';
+import { useLeakScanIntake } from '@/components/leak-scan/useLeakScanIntake';
+import { getScanRules } from '@/utils/scanRules';
+import { getScanSummary } from '@/utils/storage';
+import { track } from '@/utils/analytics';
+import { defaultScope, selectedCategories } from '@/utils/leakScan/scope';
+
+const trackMock = track as jest.MockedFunction<typeof track>;
+
+const FIXTURE = path.join(__dirname, 'leakScanEval', 'fixtures', 'chequing-split-mixed-dates.csv');
+const FIXTURE_TEXT = fs.readFileSync(FIXTURE, 'utf-8');
+
+beforeEach(async () => {
+  await AsyncStorage.clear();
+  trackMock.mockClear();
+  mockGetDocumentAsync.mockReset();
+  mockGetDocumentAsync.mockResolvedValue({
+    canceled: false,
+    assets: [{ name: 'statement.csv', uri: 'file:///statement.csv', size: FIXTURE_TEXT.length }],
+  });
+});
+
+/** Run a scan and stop at whatever stage the hook lands on. */
+async function scan() {
+  // RTL v14: renderHook, like render, is async here.
+  const { result } = await renderHook(() => useLeakScanIntake());
+  await act(async () => {
+    await result.current.pickAndScan();
+  });
+  return result;
+}
+
+function scopeCall() {
+  return trackMock.mock.calls.find(([event]) => event === 'scope_selected');
+}
+
+describe('scope sits between extraction and results', () => {
+  it('stops at the scope screen before showing any finding', async () => {
+    const result = await scan();
+
+    expect(result.current.state.stage).toBe('scope');
+    // The unscoped result is present but has not been shown yet.
+    expect(result.current.state.result?.habits.length).toBeGreaterThan(0);
+  });
+
+  it('starts on the fail-closed defaults for a first-time scanner', async () => {
+    const result = await scan();
+
+    expect(result.current.state.scope).toEqual(defaultScope());
+    expect(selectedCategories(result.current.state.scope)).not.toContain('Other');
+  });
+
+  it('drops the out-of-scope rent candidate on confirm', async () => {
+    const result = await scan();
+
+    const before = result.current.state.result!.habits.map((h) => h.merchantStem);
+    expect(before).toContain('park'); // the rent row, category Mortgage
+
+    await act(async () => {
+      await result.current.confirmScope();
+    });
+
+    // Phase 3 put the habit deck here; before it, confirming scope went
+    // straight to the results ladder.
+    expect(result.current.state.stage).toBe('deck');
+    const after = result.current.state.result!.habits.map((h) => h.merchantStem);
+    expect(after).not.toContain('park');
+    expect(after).toContain('starbucks');
+  });
+
+  it('keeps every row, so the dashboard still accounts for the excluded spend', async () => {
+    const result = await scan();
+    const rowsBefore = result.current.state.result!.rows.length;
+
+    await act(async () => {
+      await result.current.confirmScope();
+    });
+
+    expect(result.current.state.result!.rows).toHaveLength(rowsBefore);
+    expect(result.current.state.result!.coverage).not.toBeNull();
+  });
+});
+
+describe('scope is remembered and reported', () => {
+  it('persists the confirmed selection for the next scan', async () => {
+    const result = await scan();
+
+    await act(async () => {
+      result.current.toggleScopeCategory('Other');
+    });
+    await act(async () => {
+      await result.current.confirmScope();
+    });
+
+    const rules = await getScanRules();
+    expect(rules.scopeAnswered).toBe(true);
+    expect(rules.scope.Other).toBe(true);
+    expect(rules.scope.Food).toBe(true);
+  });
+
+  it('reopens on the remembered selection rather than the defaults', async () => {
+    const first = await scan();
+    await act(async () => {
+      first.current.toggleScopeCategory('Food');
+    });
+    await act(async () => {
+      await first.current.confirmScope();
+    });
+
+    const second = await scan();
+
+    expect(second.current.state.stage).toBe('scope');
+    expect(second.current.state.scope.Food).toBe(false);
+  });
+
+  it('reports the selection, and whether the defaults survived', async () => {
+    const result = await scan();
+    await act(async () => {
+      await result.current.confirmScope();
+    });
+
+    const call = scopeCall();
+    expect(call).toBeDefined();
+    const props = call![1] as { categories_on: string; used_defaults: boolean };
+    expect(props.used_defaults).toBe(true);
+    expect(props.categories_on).toContain('food');
+    // Short codes, because the analytics layer silently drops long strings.
+    expect(props.categories_on.length).toBeLessThanOrEqual(64);
+  });
+
+  it('reports used_defaults false once the user edits', async () => {
+    const result = await scan();
+    await act(async () => {
+      result.current.toggleScopeCategory('Other');
+    });
+    await act(async () => {
+      await result.current.confirmScope();
+    });
+
+    const props = scopeCall()![1] as { used_defaults: boolean };
+    expect(props.used_defaults).toBe(false);
+  });
+});
+
+describe('the habit deck follows the scope', () => {
+  async function scanAndConfirm() {
+    const result = await scan();
+    await act(async () => {
+      await result.current.confirmScope();
+    });
+    return result;
+  }
+
+  it('deals a deck instead of dropping the user on the dashboard', async () => {
+    const result = await scanAndConfirm();
+
+    expect(result.current.state.stage).toBe('deck');
+    expect(result.current.state.deck.length).toBeGreaterThan(0);
+    expect(result.current.state.deck.length).toBeLessThanOrEqual(3);
+  });
+
+  it('never deals the rent card, whatever it costs', async () => {
+    const result = await scanAndConfirm();
+    expect(result.current.state.deck.map((c) => c.merchantStem)).not.toContain('park');
+  });
+
+  it('deals only behavioral, governable candidates', async () => {
+    const result = await scanAndConfirm();
+
+    for (const card of result.current.state.deck) {
+      expect(card.isBehavioral).toBe(true);
+      expect(card.isSubscription).toBe(false);
+      expect(card.governClass).toBe('govern');
+    }
+  });
+
+  it('drops a dismissed card and suppresses the merchant for good', async () => {
+    const result = await scanAndConfirm();
+    const first = result.current.state.deck[0];
+
+    await act(async () => {
+      await result.current.dismissDeckCandidate(first);
+    });
+
+    expect(result.current.state.deck.map((c) => c.merchantStem)).not.toContain(first.merchantStem);
+    // Also gone from the ladder the user lands on, so the full list never
+    // re-offers what they just rejected.
+    expect(result.current.state.result!.habits.map((h) => h.merchantStem)).not.toContain(
+      first.merchantStem
+    );
+
+    const rules = await getScanRules();
+    expect(rules.suppressedHabits[first.merchantStem]).toBe(true);
+  });
+
+  it('falls through to the full list once every card is rejected, and only once', async () => {
+    const result = await scanAndConfirm();
+
+    const deck = [...result.current.state.deck];
+    for (const card of deck) {
+      await act(async () => {
+        await result.current.dismissDeckCandidate(card);
+      });
+    }
+
+    expect(result.current.state.stage).toBe('done');
+    // One fallback hop: the full list is terminal, never itself fallen back
+    // from, so exactly one exhaustion is reported.
+    const exhausted = trackMock.mock.calls.filter(([event]) => event === 'deck_exhausted');
+    expect(exhausted).toHaveLength(1);
+    expect(exhausted[0][1]).toEqual({ fallback: 'full_list' });
+  });
+
+  it('treats the ghost exit as a choice, not an exhaustion', async () => {
+    const result = await scanAndConfirm();
+
+    await act(async () => {
+      result.current.leaveDeck();
+    });
+
+    expect(result.current.state.stage).toBe('done');
+    expect(trackMock.mock.calls.filter(([event]) => event === 'deck_exhausted')).toHaveLength(0);
+  });
+
+  // Phase 4: activation lands on the payoff, not back on a dashboard.
+  // Bookkeeping must not stand between the user and the moment the product
+  // exists to deliver.
+  it('shows the payoff when a habit is activated, and continues to the list', async () => {
+    const result = await scanAndConfirm();
+    const card = result.current.state.deck[0];
+
+    await act(async () => {
+      result.current.enterPayoff({
+        ...card,
+        id: 'scan-habit-x',
+        name: card.merchantDisplay,
+      } as never);
+    });
+
+    expect(result.current.state.stage).toBe('payoff');
+    expect(result.current.state.activated).not.toBeNull();
+
+    await act(async () => {
+      result.current.leavePayoff();
+    });
+
+    // Phase 5: the bills offer sits after the payoff. This fixture's statement
+    // holds recurring rent, so there is something to offer; a scan with nothing
+    // recurring goes straight to the breakdown instead.
+    expect(result.current.state.stage).toBe('bills');
+  });
+
+  // Review round 3, P1-a: the exclusion set must be the stems the deck DEALT,
+  // not the survivors. Dismissal removes a card from state.deck, so building
+  // the exclusion from the live deck re-proposed a just-dismissed merchant as
+  // a pre-ticked bill, the exact double-offer the leavePayoff comment forbids.
+  it('freezes the dealt stems and excludes every one of them from the bills offer', async () => {
+    const result = await scanAndConfirm();
+
+    const dealt = [...result.current.state.dealtStems];
+    expect(dealt).toEqual(result.current.state.deck.map((c) => c.merchantStem));
+    expect(dealt.length).toBeGreaterThan(0);
+
+    // When the deck holds more than one card, dismiss one: the frozen list
+    // must NOT shrink with the live deck. (With a single card, dismissal is
+    // exhaustion and the payoff is unreachable, so the freeze is only
+    // observable via the exclusion below.)
+    if (result.current.state.deck.length > 1) {
+      const first = result.current.state.deck[0];
+      await act(async () => {
+        await result.current.dismissDeckCandidate(first);
+      });
+      expect(result.current.state.dealtStems).toEqual(dealt);
+    }
+
+    const card = result.current.state.deck[0];
+    await act(async () => {
+      result.current.enterPayoff({
+        ...card,
+        id: 'scan-habit-x',
+        name: card.merchantDisplay,
+        merchantPattern: card.merchantStem,
+      } as never);
+    });
+    await act(async () => {
+      result.current.leavePayoff();
+    });
+
+    const offered = [
+      ...result.current.state.billsOffer.bills,
+      ...result.current.state.billsOffer.subscriptions,
+    ].map((i) => i.merchantStem);
+    for (const stem of dealt) {
+      expect(offered).not.toContain(stem);
+    }
+    // The exclusion is surgical: rent was never dealt, so it is still offered.
+    expect(offered).toContain('park');
+  });
+
+  it('keeps the passed-over findings on the result for the bills offer', async () => {
+    const result = await scanAndConfirm();
+
+    // The rent row is not deck material, but it is still a finding: phase 5's
+    // bills offer draws from exactly this.
+    const stems = result.current.state.result!.habits.map((h) => h.merchantStem);
+    expect(stems.length).toBeGreaterThanOrEqual(result.current.state.deck.length);
+  });
+});
+
+describe('the Insights snapshot follows the scope', () => {
+  // The snapshot outlives the scan on Insights, so a leak the user placed out
+  // of bounds must never survive there. It is written on confirm, not at scan
+  // completion, precisely so this holds.
+  it('never advertises an excluded leak', async () => {
+    const result = await scan();
+
+    expect(await getScanSummary()).toBeNull();
+
+    await act(async () => {
+      await result.current.confirmScope();
+    });
+
+    const summary = await getScanSummary();
+    expect(summary).not.toBeNull();
+    expect(summary!.topLeaks.map((l) => l.name.toLowerCase())).not.toContain('park');
+  });
+});
+
+
+describe('concurrent dismissals (review round 3, P3-2)', () => {
+  it('keeps every suppression when two cards are dismissed at once', async () => {
+    const result = await scan();
+    await act(async () => {
+      await result.current.confirmScope();
+    });
+
+    const deck = [...result.current.state.deck];
+    if (deck.length < 2) {
+      // This fixture deals one behavioral card; the serialization contract is
+      // still worth stating, so assert the single case commits rather than
+      // silently passing on an empty loop.
+      await act(async () => {
+        await result.current.dismissDeckCandidate(deck[0]);
+      });
+      const rules = await getScanRules();
+      expect(rules.suppressedHabits[deck[0].merchantStem]).toBe(true);
+      return;
+    }
+
+    // Fired together, not awaited in turn: both read the rule store before
+    // either write lands unless the writes are queued.
+    await act(async () => {
+      await Promise.all(deck.map((c) => result.current.dismissDeckCandidate(c)));
+    });
+
+    const rules = await getScanRules();
+    for (const card of deck) {
+      expect(rules.suppressedHabits[card.merchantStem]).toBe(true);
+    }
+  });
+});
+
+describe('in-flow back (review round 3, P1-g)', () => {
+  // Scope and deck are conditional renders inside the single /leak-scan route,
+  // so a router.back() from either pops the whole route and throws the
+  // extraction away. Back is therefore a stage transition inside the hook.
+  it('deck back returns to scope with the FULL unscoped candidate set', async () => {
+    const result = await scan();
+    expect(result.current.state.stage).toBe('scope');
+    const unscopedCount = result.current.state.result!.habits.length;
+
+    await act(async () => {
+      await result.current.confirmScope();
+    });
+    expect(result.current.state.stage).toBe('deck');
+    // The scoped result is narrower than the unscoped one on this fixture
+    // (rent is locked out), which is what makes the restore observable.
+    expect(result.current.state.result!.habits.length).toBeLessThan(unscopedCount);
+
+    await act(async () => {
+      result.current.backToScope();
+    });
+
+    expect(result.current.state.stage).toBe('scope');
+    // Re-confirming must filter from everything the scan found, not from the
+    // remainder the first confirm left behind.
+    expect(result.current.state.result!.habits.length).toBe(unscopedCount);
+    expect(result.current.state.deck).toHaveLength(0);
+
+    await act(async () => {
+      await result.current.confirmScope();
+    });
+    expect(result.current.state.stage).toBe('deck');
+    expect(result.current.state.deck.length).toBeGreaterThan(0);
+  });
+
+  it('scope back returns to intake with the picked files intact', async () => {
+    const result = await scan();
+    expect(result.current.state.stage).toBe('scope');
+
+    await act(async () => {
+      result.current.backToIntake();
+    });
+
+    expect(result.current.state.stage).toBe('idle');
+    // "Different files" keeps what was picked so the user re-chooses rather
+    // than starting from nothing; the parsed result is honestly gone.
+    expect(result.current.state.files).toHaveLength(1);
+    expect(result.current.state.fileNames).toEqual(['statement.csv']);
+    expect(result.current.state.result).toBeNull();
+  });
+});

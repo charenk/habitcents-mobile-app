@@ -223,6 +223,17 @@ export type HabitCandidate = {
   /** Ranking score = annualizedLeak * governabilityWeight. */
   rankScore: number;
   topMerchants: string[];
+  /**
+   * Why this group was admitted. A candidate qualifies as a recurring
+   * commitment, a behavioral habit, or a renewing subscription, and the three
+   * lead to different places: only a BEHAVIORAL one belongs in the habit deck
+   * (PRD v3.1 sect 7.3, "high frequency x small ticket is the discretionary
+   * signature"), while subscriptions and commitments belong in the bills
+   * offer. The reason used to be computed and thrown away, which left the deck
+   * unable to tell a coffee run from a monthly bill without re-deriving it.
+   */
+  isBehavioral: boolean;
+  isSubscription: boolean;
 };
 
 // ---------------------------------------------------------------------------
@@ -245,6 +256,22 @@ export type ScanStatus = 'ok' | 'partial' | 'failed';
 export type CoverageWindow = {
   startISO: string;
   endISO: string;
+  /**
+   * Calendar length of the evidence window, inclusive: the same span the
+   * results screen prints as its eyebrow ("Apr 1 to Jun 26" = 87).
+   *
+   * THIS is the divisor for every rate ("a month", "a year", "per day").
+   * UX-073 shipped `coveredDays` in that role, which counts only days that
+   * carried a transaction, so a statement holding three monthly rent rows
+   * divided by 3 instead of 87 and told the user rent cost about $4,000 a
+   * month. A rate's denominator is elapsed time, never sampled time.
+   */
+  spanDays: number;
+  /**
+   * Distinct days that carried at least one transaction. A DENSITY signal
+   * (how much of the window has data), never a rate divisor: use it for
+   * "you transacted on 27 of 87 days" and coverage-quality copy only.
+   */
   coveredDays: number;
 };
 

@@ -19,6 +19,9 @@ function candidate(overrides: Partial<HabitCandidate> = {}): HabitCandidate {
     annualizedLeakCents: 734000,
     rankScore: 734000,
     topMerchants: ['Shawarma Spot', 'Hyderabad Cafe', 'Uber Eats'],
+    // Default fixture is an ordinary behavioral leak, the deck's own shape.
+    isBehavioral: true,
+    isSubscription: false,
     ...overrides,
   };
 }

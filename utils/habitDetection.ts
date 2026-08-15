@@ -6,6 +6,11 @@
 import type { Expense } from '@/types/expense';
 import type { DetectedHabit, HabitTrigger, HabitFrequency, HabitSentiment } from '@/types/habit';
 import { type CurrencyCode, DEFAULT_CURRENCY, formatMoney, scaleThresholdCents } from '@/utils/currency';
+// The Leak Scan's brand-stem extractor, reused so a merchant dismissed there is
+// recognised here. This module's own normalizeMerchant only lowercases and
+// trims, so "Starbucks Downtown Toronto" and the scan's "starbucks" stem would
+// otherwise never meet. categorize.ts imports only types, so there is no cycle.
+import { normalizeMerchant as scanMerchantStem } from '@/utils/leakScan/categorize';
 
 type MerchantGroup = {
   merchant: string;
@@ -338,11 +343,20 @@ export function progressTowardDetection(expenses: Expense[]): { n: number; thres
 }
 
 /**
- * Main habit detection function
+ * Main habit detection function.
+ *
+ * `suppressedStems` carries the Leak Scan's "Not a habit" dismissals
+ * (ScanRules.suppressedHabits, keyed on merchant stem). Dismissing a leak in
+ * the scan used to bind only the scan pipeline, so the same merchant walked
+ * straight back in through this detector as soon as its imported expenses hit
+ * the four-occurrence threshold: the user said no and the app asked again.
+ * A dismissal is permanent for PROPOSALS only; nothing is deleted, and the
+ * user can still create the habit by hand.
  */
 export function detectHabits(
   expenses: Expense[],
-  currency: CurrencyCode = DEFAULT_CURRENCY
+  currency: CurrencyCode = DEFAULT_CURRENCY,
+  suppressedStems: Record<string, boolean> = {}
 ): DetectedHabit[] {
   // Thresholds are authored in USD cents; scale them to the active currency so
   // detection stays meaningful in high-magnitude currencies (e.g. JPY).
@@ -365,6 +379,11 @@ export function detectHabits(
   for (const [merchant, groupExpenses] of merchantGroups) {
     // Skip groups with too few occurrences
     if (groupExpenses.length < MIN_OCCURRENCES) {
+      continue;
+    }
+
+    // Never re-propose what the user already dismissed in the scan.
+    if (suppressedStems[scanMerchantStem(merchant)]) {
       continue;
     }
 

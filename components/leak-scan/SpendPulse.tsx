@@ -126,7 +126,7 @@ function SpendPulseImpl({ result, onCellPress }: SpendPulseProps) {
       </View>
 
       <Text style={styles.caption}>
-        {strings.leakScan.pulseCaption(data.daysTransacted, data.coveredDays)}
+        {strings.leakScan.pulseCaption(data.daysTransacted, data.spanDays)}
       </Text>
     </View>
   );

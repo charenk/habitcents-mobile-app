@@ -210,11 +210,13 @@ export function runScan(files: ScanFileInput[], options: RunScanOptions = {}): S
 
   // --- Stage 8: coverage.
   const coverage = sessionCoverage(netted);
-  const coveredDays = coverage?.coveredDays ?? 0;
+  // Rates annualize over elapsed calendar time, not over the days that
+  // happened to carry a transaction (UX-073); see CoverageWindow.
+  const spanDays = coverage?.spanDays ?? 0;
 
   // --- Stage 9: recurrence + habits (full history).
   const recurring = detectRecurring(netted.filter((r) => !r.internal && !r.reversed));
-  const habits = detectHabitCandidates(netted, coveredDays, rules);
+  const habits = detectHabitCandidates(netted, spanDays, rules);
 
   // Session tier = weakest passing file (spec 5.1).
   const tierRank: Record<string, number> = { solid: 0, likely: 1, 'needs-review': 2 };

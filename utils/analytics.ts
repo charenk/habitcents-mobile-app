@@ -109,11 +109,34 @@ export interface AnalyticsEventMap {
   // section 6). cadence is 'daily' | 'weekly' | 'monthly'; never amounts,
   // merchant names, or habit titles.
   habit_goal_created: { cadence?: string; value_edited: boolean };
-  habit_tracking_started: { cadence?: string; source: 'detection' | 'scan' | 'onboarding' };
+  // 'unknown' mirrors first_kept: startBreakingHabit has no default source, so
+  // a caller that omits one is reported honestly rather than attributed to a
+  // route it may not have come from.
+  habit_tracking_started: {
+    cadence?: string;
+    source: 'detection' | 'scan' | 'onboarding' | 'unknown';
+  };
   skip_logged: { cadence?: string; total_skips_after: number; week_skips: number; backfill: boolean };
   slip_logged: { cadence?: string; partial: boolean; backfill: boolean };
   answer_changed: { from: 'skipped' | 'slipped'; to: 'skipped' | 'slipped' };
   milestone_reached: { milestone: 10 | 30 | 50 | 66 };
+  // First real skip, once per install (PRD v3.1 sect 7.5 / sect 11).
+  // Activation certifies setup; THIS is engagement, and it is what the scan and
+  // habit routes are compared on.
+  /**
+   * The first dollar this install ever keeps, and the route that got it there.
+   *
+   * `route` is what makes PRD sect 11's headline criterion computable at all
+   * ("scan-route first-kept vs habit-route first-kept, within 20%"). It is read
+   * off the goal rather than inferred from the nearest preceding
+   * habit_tracking_started, because a first skip can land days later and after
+   * a second habit was started, which would misattribute it.
+   *
+   * 'unknown' means a goal created before the source was persisted, kept
+   * distinct rather than folded into 'detection' so the cohort can be excluded
+   * instead of quietly skewing the comparison.
+   */
+  first_kept: { route: 'detection' | 'scan' | 'onboarding' | 'unknown' };
   habit_dismissed: { source: string };
   // Today tab (redesign U5/U7, ADR 0019, DI-5/DI-7): fires on every
   // Spent/Kept switch, chip tap or pager swipe.
@@ -160,6 +183,70 @@ export interface AnalyticsEventMap {
     amount_parse_rate: number;
     sign_confidence: number;
   };
+  /**
+   * A skipper acted from an empty state (PRD v3.1 sect 5 / sect 11).
+   *
+   * Fires on the CTA press, not on the resulting write, and only for users
+   * whose door was 'skip'. It answers "which empty state moved someone who
+   * refused the tour", which is the question sect 5 raises by sending skippers
+   * straight into the app: whether they converted is then the join against the
+   * activation events that follow (expense_logged, habit_tracking_started).
+   *
+   * Keeping it at press time is deliberate. Attributing all the way to
+   * activation would mean carrying the surface across a sheet, a navigation,
+   * and an async write, and a dropped hand-off would look identical to a
+   * skipper who never acted.
+   */
+  skip_activation: { surface: string };
+  // Scope selection (PRD v3.1 sect 7.1 / sect 11). `used_defaults` is the one
+  // to read first: heavy editing means the tier assignments are wrong, and
+  // that has to be settled before any classifier conversation reopens.
+  // Category names are a closed taxonomy (no merchant strings), so they are
+  // safe to send under D-9.
+  scope_selected: {
+    categories_on: string;
+    categories_off: string;
+    used_defaults: boolean;
+  };
+  // Habit deck (PRD v3.1 sect 7.3 / sect 11). position is 1-based; the
+  // position-1 track rate is the success criterion for the ranking signal.
+  deck_card_shown: {
+    position: number;
+    merchant_category: string;
+    instances: number;
+    total_cents_bucket: string;
+  };
+  deck_card_result: { position: number; result: 'tracked' | 'dismissed' };
+  deck_exhausted: { fallback: 'template_grid' | 'full_list' };
+  // Bills offer (PRD v3.1 sect 8 / sect 11). Instrumented separately from
+  // activation on purpose: filing a bill is bookkeeping, not the moment the
+  // product exists to deliver, and letting it inflate activation would flatter
+  // the funnel with the one step that proves least.
+  /**
+   * How many recurring expenses this install carries (PRD v3.1 sect 9 / 11).
+   *
+   * D5 resolved as "stay uncapped and instrument": the PRD's 3-cap never
+   * existed in this codebase, and a ceiling should be chosen from observed
+   * behaviour rather than guessed. Read at month 3 and 6 to decide whether a
+   * free-tier cap is needed and where it sits.
+   *
+   * DEVIATION, deliberate: the PRD asks for a PostHog *person property*, which
+   * this app cannot set. Person properties key off identify(), and D-9's
+   * anonymous-device-ID posture forbids calling it. A once-per-session snapshot
+   * event carries the same information for a month-3 distribution read.
+   *
+   * The raw count ships rather than a bucket because the decision it feeds is
+   * exactly where to put a threshold, and bucketCount's 1-9 / 10-49 boundary
+   * would pre-commit the answer. A count of a user's own rows carries no
+   * amounts, merchants, or text, so it is safe under D-9.
+   */
+  recurring_expense_count: { count: number };
+  bills_offered: { count_proposed: number };
+  // `skipped` separates "skipped the screen outright" from "considered it and
+  // unticked everything": both accept zero rows, but only one of them read the
+  // offer, and the sect 11 acceptance criterion should not blend them
+  // (review round 3, P3-15).
+  bills_imported: { count_accepted: number; skipped: boolean };
   scan_categories_expanded: Record<string, never>;
   // Finding-first ladder's dashed expander (ADR 0020, W4), same shape as
   // scan_categories_expanded above.

@@ -3,6 +3,10 @@ import { useRouter } from 'expo-router';
 import { useLeakScanIntake } from '@/components/leak-scan/useLeakScanIntake';
 import { IntakeScreen } from '@/components/leak-scan/IntakeScreen';
 import { ResultsScreen } from '@/components/leak-scan/ResultsScreen';
+import { ScopeScreen } from '@/components/leak-scan/ScopeScreen';
+import { DeckScreen } from '@/components/leak-scan/DeckScreen';
+import { PayoffScreen } from '@/components/leak-scan/PayoffScreen';
+import { BillsScreen } from '@/components/leak-scan/BillsScreen';
 import { GracefulFailure } from '@/components/leak-scan/GracefulFailure';
 import { useCompleteScanOnboarding } from '@/components/leak-scan/useCompleteScanOnboarding';
 import { useOnboarding } from '@/contexts/OnboardingContext';
@@ -17,7 +21,21 @@ import { useOnboarding } from '@/contexts/OnboardingContext';
  */
 export default function LeakScanRoute() {
   const router = useRouter();
-  const { state, pickAndScan, answerQuestion, reset } = useLeakScanIntake();
+  const {
+    state,
+    pickAndScan,
+    answerQuestion,
+    toggleScopeCategory,
+    confirmScope,
+    backToIntake,
+    backToScope,
+    dismissDeckCandidate,
+    leaveDeck,
+    enterPayoff,
+    leavePayoff,
+    finishBills,
+    reset,
+  } = useLeakScanIntake();
   const completeScanOnboarding = useCompleteScanOnboarding();
   const { isOnboardingComplete } = useOnboarding();
 
@@ -52,6 +70,58 @@ export default function LeakScanRoute() {
     router.back();
   }, [router]);
 
+  // Scope selection (PRD v3.1 sect 7.1) sits between a finished extraction and
+  // the results: the user declares where to look before anything is proposed.
+  // Back is IN-FLOW (backToIntake, not router.back()): scope is a conditional
+  // render inside this one route, so popping the router would discard the
+  // whole extraction. Backing out of scope means "different files", so intake
+  // returns with the picked files intact (review round 3, P1-g).
+  if (state.stage === 'scope' && state.result) {
+    return (
+      <ScopeScreen
+        scope={state.scope}
+        onToggle={toggleScopeCategory}
+        onConfirm={confirmScope}
+        onBack={backToIntake}
+      />
+    );
+  }
+
+  // The habit deck (PRD v3.1 sect 7.3): at most three cards between the scope
+  // the user just drew and the full breakdown. Tracking one, rejecting all
+  // three, or taking the ghost exit all land on the results ladder, which is
+  // terminal: one fallback hop, never a fallback of a fallback.
+  // Deck back is in-flow too, one step to the scope screen: re-confirming
+  // re-deals from the full unscoped candidate set (see backToScope).
+  if (state.stage === 'deck' && state.result) {
+    return (
+      <DeckScreen
+        candidates={state.deck}
+        spanDays={state.result.coverage?.spanDays ?? 0}
+        onDismiss={dismissDeckCandidate}
+        onSeeEverything={leaveDeck}
+        onActivated={enterPayoff}
+        onBack={backToScope}
+      />
+    );
+  }
+
+  // The payoff (PRD v3.1 sect 7.5): the moment the product exists to deliver,
+  // carrying the user's real history rather than a ceremony. No back
+  // affordance, it reads forward only.
+  if (state.stage === 'payoff' && state.activated) {
+    return <PayoffScreen habit={state.activated} onContinue={leavePayoff} />;
+  }
+
+  // Bills to Upcoming (PRD v3.1 sect 8), after the payoff and never before it.
+  // Tracking an essential is fine; proposing you skip it is not, so this files
+  // rather than nudges.
+  if (state.stage === 'bills') {
+    return (
+      <BillsScreen offer={state.billsOffer} result={state.result} onDone={finishBills} />
+    );
+  }
+
   if (state.stage === 'done' && state.result) {
     if (state.result.gracefulFailure) {
       return (
@@ -65,10 +135,10 @@ export default function LeakScanRoute() {
           // not be offered the audit exit. It replaces to
           // /onboarding/welcome, whose resume effect only knows how to route
           // an in-progress onboarding; a completed one with a non-statements
-          // doorChosen would land in the intent picker with no way back into
-          // the app, and even a statements doorChosen just bounces straight
-          // back to this same screen. Onboarding-time behavior (this option
-          // shown) is unchanged.
+          // doorChosen would land on the carousel with no way back into the
+          // app, and even a statements doorChosen just bounces straight back
+          // to this same screen. Onboarding-time behavior (this option shown)
+          // is unchanged.
           showAuditExit={!isOnboardingComplete()}
         />
       );

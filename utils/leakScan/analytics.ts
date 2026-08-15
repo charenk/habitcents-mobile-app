@@ -68,7 +68,7 @@ export function scanCompleted(result: ScanResult): ScanCompletedEvent {
   const accounts = new Set(result.files.map((f) => f.account));
   return {
     event: 'scan_completed',
-    coverageDays: result.coverage?.coveredDays ?? 0,
+    coverageDays: result.coverage?.spanDays ?? 0,
     nAccounts: accounts.size,
     nHabitsFound: result.habits.length,
     tierBreakdown,

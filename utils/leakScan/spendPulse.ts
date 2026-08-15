@@ -33,7 +33,10 @@ export type PulseData = {
   /** Days that have at least one transaction, for the caption. */
   daysTransacted: number;
   /** Covered days (union of per-file date ranges), for the caption. */
+  /** Distinct days that carried spend (the caption's numerator). */
   coveredDays: number;
+  /** Calendar length of the evidence window (the caption's denominator). */
+  spanDays: number;
 };
 
 function toISODate(d: Date): string {
@@ -163,7 +166,10 @@ export function buildSpendPulse(result: ScanResult, granularity?: PulseGranulari
   const coveredDays = result.coverage?.coveredDays ?? 0;
   const daysTransacted = new Set(spendable.map((r) => r.dateISO)).size;
 
-  const spanDays = days.length;
+  // dayCells fills every calendar day in the window (out-of-coverage days
+  // included), so its length IS the span; prefer the coverage window's own
+  // figure when present and fall back to the cell count.
+  const spanDays = result.coverage?.spanDays ?? days.length;
   const g = granularity ?? autoGranularity(spanDays);
 
   let cells: PulseCell[];
@@ -171,5 +177,5 @@ export function buildSpendPulse(result: ScanResult, granularity?: PulseGranulari
   else if (g === 'month') cells = aggregateCells(days, monthKey);
   else cells = aggregateCells(days, yearKey);
 
-  return { granularity: g, cells, daysTransacted, coveredDays };
+  return { granularity: g, cells, daysTransacted, coveredDays, spanDays };
 }

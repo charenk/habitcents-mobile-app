@@ -6,8 +6,11 @@ import {
   saveHabitGoals,
   getCoachMomentState,
   saveCoachMomentState,
+  hasFiredFirstKept,
+  setFirstKeptFired,
 } from '@/utils/storage';
 import { detectHabits, findExistingHabit, mergeHabits } from '@/utils/habitDetection';
+import { getScanRules } from '@/utils/scanRules';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import {
   atMidnight,
@@ -28,6 +31,7 @@ import type {
   HabitChangeGoal,
   HabitLogEntry,
   HabitStatus,
+  HabitStartSource,
 } from '@/types/habit';
 
 type AnswerState = 'skipped' | 'slipped';
@@ -268,7 +272,12 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
   }, [ensureCoachState]);
 
   const refreshHabits = useCallback(async (expenses: Expense[]): Promise<void> => {
-    const detected = detectHabits(expenses, currency);
+    // Read the rule store fresh rather than caching it at mount: "Not a habit"
+    // is written by the results screen mid-session, and a cached copy would
+    // let the merchant the user just dismissed reappear until the next
+    // relaunch. One small AsyncStorage read per detection pass.
+    const rules = await getScanRules();
+    const detected = detectHabits(expenses, currency, rules.suppressedHabits);
     const merged = mergeHabits(habits, detected);
     setHabits(merged);
     await saveHabits(merged);
@@ -344,7 +353,11 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
     habitId: string,
     skipValue: number,
     valueEdited: boolean,
-    source: 'detection' | 'scan' | 'onboarding' = 'detection'
+    // No default. An unpassed source persists undefined and reports as
+    // 'unknown' on first_kept, which is what types/habit.ts promises: a goal is
+    // never silently attributed to a route it may not have come from. All call
+    // sites pass one explicitly.
+    source?: HabitStartSource
   ): Promise<HabitChangeGoal> => {
     // Read through the ref: the break sheet seeds and starts in one
     // handler tick, before the seeded habit reaches the `habits` render state.
@@ -377,6 +390,8 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
       dayLogs: [],
       firstRun: true,
       backfillUsed: false,
+      // Persisted so first_kept can name the route days later (PRD sect 11).
+      source,
     };
 
     const updatedGoals = [...goals, newGoal];
@@ -392,7 +407,7 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
     await saveHabits(updatedHabits);
 
     track('habit_goal_created', { cadence: habit.frequency, value_edited: valueEdited });
-    track('habit_tracking_started', { cadence: habit.frequency, source });
+    track('habit_tracking_started', { cadence: habit.frequency, source: source ?? 'unknown' });
     return newGoal;
   }, [habits, goals]);
 
@@ -490,6 +505,28 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
     await saveHabits(updatedHabits);
   }, [goals, habits]);
 
+  /**
+   * first_kept (PRD v3.1 sect 7.5 / sect 11): the first time this install ever
+   * keeps money, whatever route got the user here.
+   *
+   * Activation only certifies that a habit was SET UP. This is the engagement
+   * metric the scan and habit routes are actually compared on, so it has to
+   * mean the same thing on both: the user's own first skip, counted once.
+   * Guarded by a persisted flag rather than a derived skip count, because
+   * goals can be stopped and restarted and a metric that can fire twice is not
+   * a first.
+   */
+  const reportFirstKept = useCallback(async (goal: HabitChangeGoal): Promise<void> => {
+    if (await hasFiredFirstKept()) return;
+    await setFirstKeptFired();
+    // Read off the goal, not the nearest preceding habit_tracking_started: a
+    // first skip can land days later, and after a second habit was started,
+    // which would misattribute it. Goals created before the field existed
+    // report 'unknown' rather than being folded into a route they may not have
+    // come from.
+    track('first_kept', { route: goal.source ?? 'unknown' });
+  }, []);
+
   const answerToday = useCallback(async (goalId: string, state: AnswerState): Promise<void> => {
     const goal = goals.find(g => g.id === goalId);
     if (!goal) return;
@@ -525,6 +562,7 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
         week_skips: wk.skips,
         backfill: false,
       });
+      await reportFirstKept(goal);
     } else {
       track('slip_logged', { cadence: habit?.frequency, partial: false, backfill: false });
     }
@@ -537,7 +575,7 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
       setLastMilestone(null);
     }
     await applyCheckInCoachMoment(goalId, state, today, goal.dayLogs, crossed);
-  }, [goals, habits, persistGoalAndHabit, applyCheckInCoachMoment]);
+  }, [goals, habits, persistGoalAndHabit, applyCheckInCoachMoment, reportFirstKept]);
 
   const answerEvent = useCallback(async (goalId: string, state: AnswerState): Promise<void> => {
     const goal = goals.find(g => g.id === goalId);
@@ -574,6 +612,7 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
         week_skips: periodSkips,
         backfill: false,
       });
+      await reportFirstKept(goal);
     } else {
       track('slip_logged', { cadence: habit?.frequency, partial: false, backfill: false });
     }
@@ -586,7 +625,7 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
       setLastMilestone(null);
     }
     await applyCheckInCoachMoment(goalId, state, atMidnight(now), goal.dayLogs, crossed);
-  }, [goals, habits, persistGoalAndHabit, applyCheckInCoachMoment]);
+  }, [goals, habits, persistGoalAndHabit, applyCheckInCoachMoment, reportFirstKept]);
 
   /** "Change answer", today only (spec §4.4): flips today's skip<->slip. */
   const changeTodayAnswer = useCallback(async (goalId: string): Promise<void> => {
@@ -614,11 +653,15 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
       // is left untouched even though totalSkips may have just dropped by one.
     };
     await persistGoalAndHabit(updatedGoal);
+    // A slip corrected to a skip is a real first kept dollar: without this,
+    // an install whose very first check-in was a mis-tap stayed outside the
+    // scan-vs-habit comparison forever (review round 3, P2-d).
+    if (to === 'skipped') await reportFirstKept(goal);
     track('answer_changed', { from, to });
     // A correction is not a fresh triggering event (spec principle 3): clear
     // any Coach Moment shown for the answer that was just overwritten.
     setLastCoachMoment(null);
-  }, [goals, persistGoalAndHabit]);
+  }, [goals, persistGoalAndHabit, reportFirstKept]);
 
   /** One-time "missed yesterday" backfill (spec §3.6). */
   const backfillYesterday = useCallback(async (goalId: string, state: AnswerState): Promise<void> => {
@@ -654,6 +697,7 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
         week_skips: wk.skips,
         backfill: true,
       });
+      await reportFirstKept(goal);
     } else {
       track('slip_logged', { cadence: habit?.frequency, partial: false, backfill: true });
     }
@@ -666,7 +710,7 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
       setLastMilestone(null);
     }
     await applyCheckInCoachMoment(goalId, state, yesterday, goal.dayLogs, crossed);
-  }, [goals, habits, persistGoalAndHabit, applyCheckInCoachMoment]);
+  }, [goals, habits, persistGoalAndHabit, applyCheckInCoachMoment, reportFirstKept]);
 
   /** "Spent less than usual?" partial slip (spec §4.7). Applies to today's slip entry. */
   const savePartialSlip = useCallback(async (goalId: string, amountSpent: number): Promise<void> => {
@@ -690,8 +734,12 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
       kept: goal.kept + credit,
     };
     await persistGoalAndHabit(updatedGoal);
+    // A partial slip CREDITS kept (partialSlipCredit above), so it can be the
+    // install's first kept money; dating first_kept at a later full skip
+    // misattributed the engagement moment (review round 3, P2-d).
+    await reportFirstKept(goal);
     track('slip_logged', { partial: true, backfill: false });
-  }, [goals, persistGoalAndHabit]);
+  }, [goals, persistGoalAndHabit, reportFirstKept]);
 
   /** "Edit one skip keeps" (spec §4.8). */
   const updateSkipValue = useCallback(async (goalId: string, skipValue: number): Promise<void> => {

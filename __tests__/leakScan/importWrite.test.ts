@@ -67,7 +67,7 @@ function makeScanResult(overrides: Partial<ScanResult> = {}): ScanResult {
     duplicatesMerged: 0,
     recurring: [],
     habits: [],
-    coverage: { startISO: '2026-01-01', endISO: '2026-01-30', coveredDays: 30 },
+    coverage: { startISO: '2026-01-01', endISO: '2026-01-30', spanDays: 30, coveredDays: 30 },
     tier: 'solid',
     gracefulFailure: false,
     ...overrides,
@@ -210,5 +210,38 @@ describe('filterAlreadyImported', () => {
   it('keeps every candidate when there is no existing data', () => {
     const candidate = makeExpense({ id: 'e2', importId: 'imp-new' });
     expect(filterAlreadyImported([candidate], [])).toEqual([candidate]);
+  });
+});
+
+
+describe('recurringToExpenses only writes what the user actually pays (review round 3, P2-e)', () => {
+  // detectRecurring runs over every non-internal row, so a fortnightly payroll
+  // deposit is exactly as "recurring" as rent. Writing it as an upcoming
+  // EXPENSE inflated recorded spend; the gate lives at the write itself so no
+  // caller can forget it.
+  it('drops income and transfer rows on the bulk path', () => {
+    const result = makeScanResult({
+      recurring: [
+        makeRecurringItem(),
+        makeRecurringItem({ merchantStem: 'payroll', merchantDisplay: 'Payroll', rowClass: 'income' }),
+        makeRecurringItem({ merchantStem: 'loc', merchantDisplay: 'LOC Payment', rowClass: 'transfer' }),
+      ],
+    });
+
+    const written = recurringToExpenses(result);
+
+    expect(written.map((e) => e.merchant)).toEqual(['Netflix']);
+  });
+
+  it('drops them even when explicitly selected', () => {
+    const result = makeScanResult({
+      recurring: [
+        makeRecurringItem({ merchantStem: 'payroll', merchantDisplay: 'Payroll', rowClass: 'income' }),
+      ],
+    });
+
+    const written = recurringToExpenses(result, { onlyStems: new Set(['payroll']) });
+
+    expect(written).toHaveLength(0);
   });
 });

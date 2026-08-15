@@ -91,7 +91,7 @@ describe('buildSpendPulse', () => {
     const result = scanResult({
       rows,
       files: [fileScan({ rows, rowsRead: 1, dateRange: { startISO: '2026-01-01', endISO: '2026-01-10' } })],
-      coverage: { startISO: '2026-01-01', endISO: '2026-01-10', coveredDays: 10 },
+      coverage: { startISO: '2026-01-01', endISO: '2026-01-10', spanDays: 10, coveredDays: 10 },
     });
     const pulse = buildSpendPulse(result, 'day');
     const spendCell = pulse.cells.find((c) => c.key === '2026-01-05');
@@ -105,7 +105,7 @@ describe('buildSpendPulse', () => {
     const result = scanResult({
       rows,
       files: [fileScan({ rows, dateRange: { startISO: '2026-01-01', endISO: '2026-01-10' } })],
-      coverage: { startISO: '2026-01-01', endISO: '2026-01-10', coveredDays: 10 },
+      coverage: { startISO: '2026-01-01', endISO: '2026-01-10', spanDays: 10, coveredDays: 10 },
     });
     const pulse = buildSpendPulse(result, 'day');
     const zeroCell = pulse.cells.find((c) => c.key === '2026-01-03');
@@ -120,7 +120,7 @@ describe('buildSpendPulse', () => {
     const result = scanResult({
       rows,
       files: [fileScan({ rows, dateRange: { startISO: '2026-01-01', endISO: '2026-01-10' } })],
-      coverage: { startISO: '2026-01-01', endISO: '2026-01-10', coveredDays: 10 },
+      coverage: { startISO: '2026-01-01', endISO: '2026-01-10', spanDays: 10, coveredDays: 10 },
     });
     const pulse = buildSpendPulse(result, 'day');
     // Every emitted cell must fall within the file's own range; none should be
@@ -137,7 +137,7 @@ describe('buildSpendPulse', () => {
         fileScan({ rows: rowsA, dateRange: { startISO: '2026-01-01', endISO: '2026-01-10' } }),
         fileScan({ rows: rowsB, dateRange: { startISO: '2026-03-01', endISO: '2026-03-10' } }),
       ],
-      coverage: { startISO: '2026-01-01', endISO: '2026-03-10', coveredDays: 20 },
+      coverage: { startISO: '2026-01-01', endISO: '2026-03-10', spanDays: 69, coveredDays: 20 },
     });
     const pulse = buildSpendPulse(result, 'day');
     // Feb 15 sits in the gap between the two file ranges.
@@ -154,7 +154,7 @@ describe('buildSpendPulse', () => {
         fileScan({ rows, dateRange: { startISO: '2026-01-01', endISO: '2026-01-10' } }),
         fileScan({ rows: badRows, dateRange: { startISO: '2026-02-01', endISO: '2026-02-10' }, belowFloor: true }),
       ],
-      coverage: { startISO: '2026-01-01', endISO: '2026-01-10', coveredDays: 10 },
+      coverage: { startISO: '2026-01-01', endISO: '2026-01-10', spanDays: 10, coveredDays: 10 },
     });
     const pulse = buildSpendPulse(result, 'day');
     const badFileCell = pulse.cells.find((c) => c.key === '2026-02-05');
@@ -173,7 +173,7 @@ describe('buildSpendPulse', () => {
     const result = scanResult({
       rows,
       files: [fileScan({ rows, dateRange: { startISO: '2026-01-01', endISO: '2026-01-10' } })],
-      coverage: { startISO: '2026-01-01', endISO: '2026-01-10', coveredDays: 10 },
+      coverage: { startISO: '2026-01-01', endISO: '2026-01-10', spanDays: 10, coveredDays: 10 },
     });
     const pulse = buildSpendPulse(result, 'day');
     const cell = pulse.cells.find((c) => c.key === '2026-01-05');
@@ -185,7 +185,7 @@ describe('buildSpendPulse', () => {
     const result = scanResult({
       rows,
       files: [fileScan({ rows, dateRange: { startISO: '2026-01-01', endISO: '2026-01-31' } })],
-      coverage: { startISO: '2026-01-01', endISO: '2026-01-31', coveredDays: 31 },
+      coverage: { startISO: '2026-01-01', endISO: '2026-01-31', spanDays: 31, coveredDays: 31 },
     });
     const pulse = buildSpendPulse(result, 'month');
     const monthCell = pulse.cells.find((c) => c.key === '2026-01');
@@ -201,7 +201,7 @@ describe('buildSpendPulse', () => {
     const result = scanResult({
       rows,
       files: [fileScan({ rows, dateRange: { startISO: '2026-01-01', endISO: '2026-01-05' } })],
-      coverage: { startISO: '2026-01-01', endISO: '2026-01-05', coveredDays: 5 },
+      coverage: { startISO: '2026-01-01', endISO: '2026-01-05', spanDays: 5, coveredDays: 5 },
     });
     const pulse = buildSpendPulse(result, 'month');
     const monthCell = pulse.cells.find((c) => c.key === '2026-01');
@@ -216,7 +216,7 @@ describe('buildSpendPulse', () => {
     const result = scanResult({
       rows,
       files: [fileScan({ rows, dateRange: { startISO: '2026-01-01', endISO: '2026-01-10' } })],
-      coverage: { startISO: '2026-01-01', endISO: '2026-01-10', coveredDays: 10 },
+      coverage: { startISO: '2026-01-01', endISO: '2026-01-10', spanDays: 10, coveredDays: 10 },
     });
     const pulse = buildSpendPulse(result, 'day');
     expect(pulse.daysTransacted).toBe(2);
@@ -228,7 +228,7 @@ describe('buildSpendPulse', () => {
     const result = scanResult({
       rows,
       files: [fileScan({ rows, dateRange: { startISO: '2026-01-01', endISO: '2026-01-10' } })],
-      coverage: { startISO: '2026-01-01', endISO: '2026-01-10', coveredDays: 10 },
+      coverage: { startISO: '2026-01-01', endISO: '2026-01-10', spanDays: 10, coveredDays: 10 },
     });
     const pulse = buildSpendPulse(result);
     expect(pulse.granularity).toBe('day');

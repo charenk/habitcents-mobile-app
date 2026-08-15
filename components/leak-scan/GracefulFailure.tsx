@@ -17,10 +17,10 @@ type GracefulFailureProps = {
    * Whether the "Start with the 90-second Leak Audit" exit is offered
    * (review fix, build 12 re-scan entry). That exit replaces to
    * /onboarding/welcome, which is only a safe landing while onboarding is
-   * still in progress: welcome's resume effect routes a completed
-   * onboarding's doorChosen back into the intent picker or another
-   * onboarding screen, bouncing or stranding a user who reached this screen
-   * from the already-onboarded Insights re-scan entry. Callers pass this as
+   * still in progress: an already-onboarded user lands on the carousel with
+   * no way back into the app, or, on a statements door, bounces straight back
+   * to this same screen. Either way it strands a user who reached here from
+   * the Insights re-scan entry. Callers pass this as
    * false once onboarding is complete so the honest exits (try a different
    * export, log by hand, back) are the only ones offered.
    */

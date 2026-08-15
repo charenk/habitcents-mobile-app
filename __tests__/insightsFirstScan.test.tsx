@@ -50,6 +50,7 @@ import React from 'react';
 import { act, cleanup, fireEvent, render } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '@/contexts/ThemeContext';
+import { OnboardingProvider } from '@/contexts/OnboardingContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { ToastProvider } from '@/components/ui/Toast';
 import { CategoriesProvider } from '@/contexts/CategoriesContext';
@@ -80,7 +81,7 @@ function Providers({ children }: { children: React.ReactNode }) {
             <CategoriesProvider>
               <ExpensesProvider>
                 <HabitsProvider>
-                  <ReportsProvider>{children}</ReportsProvider>
+                  <ReportsProvider><OnboardingProvider>{children}</OnboardingProvider></ReportsProvider>
                 </HabitsProvider>
               </ExpensesProvider>
             </CategoriesProvider>
@@ -124,6 +125,7 @@ function syntheticSummary(): ScanSummary {
       perDayCents: 8166,
       transactionCount: 62,
       purchasesPerDay: 2.1,
+      spanDays: 30,
       // 30 days clears MIN_SPAN_DAYS_FOR_RATE (14), so leak rows below use the
       // monthly rate line, not the observed-so-far line.
       coveredDays: 30,
@@ -242,7 +244,11 @@ describe('Insights first scan segment', () => {
 
   it('shows the observed-so-far leak line when the scan window is under the reliable-rate floor', async () => {
     const summary = syntheticSummary();
-    summary.kpis.coveredDays = 5; // under MIN_SPAN_DAYS_FOR_RATE (14)
+    // A five-day statement: too short a window to extrapolate a month from.
+    // The floor is about elapsed time (MIN_SPAN_DAYS_FOR_RATE), so a span of
+    // five days cannot carry more than five transacted days either.
+    summary.kpis.spanDays = 5;
+    summary.kpis.coveredDays = 5;
     mockGetScanSummary.mockResolvedValue(summary);
     const view = await renderInsights();
 
@@ -253,6 +259,26 @@ describe('Insights first scan segment', () => {
     expect(view.getByText(strings.insights.leakSummaryObserved(money(11000), 18))).toBeTruthy();
     // The extrapolated monthly line must not appear when evidence is thin.
     expect(view.queryByText(strings.insights.leakSummary(money(12000), 18))).toBeNull();
+  });
+
+  // UX-073 regression. A long statement whose spending clusters on a handful of
+  // days is still a long statement: reliability is a question about how much
+  // time the evidence covers, not about how busy the user was inside it. Before
+  // the fix this gate read the transacted-day count, so this scan (90 days of
+  // history, spending on 5 of them) was wrongly called thin evidence.
+  it('keeps the monthly rate line for a long window that is sparsely transacted', async () => {
+    const summary = syntheticSummary();
+    summary.kpis.spanDays = 90;
+    summary.kpis.coveredDays = 5;
+    mockGetScanSummary.mockResolvedValue(summary);
+    const view = await renderInsights();
+
+    await act(async () => {
+      fireEvent.press(view.getByLabelText(selectableLabel(strings.insights.scanSegment, false)));
+    });
+
+    expect(view.getByText(strings.insights.leakSummary(money(12000), 18))).toBeTruthy();
+    expect(view.queryByText(strings.insights.leakSummaryObserved(money(11000), 18))).toBeNull();
   });
 });
 

@@ -145,6 +145,7 @@ export default function TodayScreen() {
     completeStep: completeOnboardingStep,
     skipStep: skipOnboardingStep,
     completeOnboarding,
+    markHabitStarted,
   } = useOnboarding();
 
   // Quick log and the logged-today list (spec 04 "Today" 3 and 4).
@@ -182,6 +183,9 @@ export default function TodayScreen() {
   const [breakSheetVisible, setBreakSheetVisible] = useState(false);
   const [door3CoachActive, setDoor3CoachActive] = useState(false);
   const door3HandledRef = useRef(false);
+  // One-shot per param value, so returning to Today with a stale ?sheet= in
+  // history cannot pop the sheet open again.
+  const sheetHandledRef = useRef<string | null>(null);
   // Guards a double-tap on the break sheet's async Start (finding 1).
   const breakStartInFlightRef = useRef(false);
   const {
@@ -236,7 +240,12 @@ export default function TodayScreen() {
   // Deep link support: an onboarding flow can land Today on a specific view
   // via ?view=kept|spent. Anything else (missing, malformed) is ignored and
   // the default (Spent) stands.
-  const params = useLocalSearchParams<{ view?: string; firstLog?: string; breakEntry?: string }>();
+  const params = useLocalSearchParams<{
+    view?: string;
+    firstLog?: string;
+    breakEntry?: string;
+    sheet?: string;
+  }>();
   useEffect(() => {
     if (params.view === 'kept' || params.view === 'spent') {
       setTodayView(params.view);
@@ -298,13 +307,22 @@ export default function TodayScreen() {
   // (they are already in the app; nothing here should trap them).
   const handleLogSheetClose = useCallback(() => {
     setLogVisible(false);
+    // Re-arm the ?sheet= entry: without this, dismissing the sheet and
+    // pressing the same empty-state CTA again did nothing for the rest of the
+    // session (review round 3, P2-2). BOTH halves are needed: the ref so the
+    // effect will act again, and clearing the param itself so the next
+    // navigate() to the same href is a real param transition that re-fires
+    // the effect (an identical href would otherwise change nothing).
+    sheetHandledRef.current = null;
+    if (params.sheet) router.setParams({ sheet: undefined });
     if (!door1CoachActive || door1HandledRef.current) return;
     door1HandledRef.current = true;
     setDoor1CoachActive(false);
     void skipOnboardingStep('guided_log');
     void completeOnboarding();
     void showRibbon('door1_gentle');
-  }, [door1CoachActive, skipOnboardingStep, completeOnboarding, showRibbon]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [door1CoachActive, skipOnboardingStep, completeOnboarding, showRibbon, params.sheet]);
 
   // Door 3 break sheet "Start breaking it": builds the habit with the stated
   // cadence the user just picked (stated-rate exception, mirroring how the
@@ -331,8 +349,10 @@ export default function TodayScreen() {
     // permanently disabled the Start button for the rest of the session with
     // no error surfaced. The ref reset now always runs, and a failure gets a
     // toast instead of failing silently.
+    // Declared outside the try so the catch can RELEASE the claim it latched
+    // (review round 3, P2-5); a const inside the try is not in scope there.
+    const claimedOnboarding = door3CoachActive && !door3HandledRef.current;
     try {
-      const claimedOnboarding = door3CoachActive && !door3HandledRef.current;
       if (claimedOnboarding) door3HandledRef.current = true;
 
       const merchantPattern = data.chipId === 'custom' ? data.name : data.chipId;
@@ -382,6 +402,14 @@ export default function TodayScreen() {
       setBreakSheetVisible(false);
       if (claimedOnboarding) {
         setDoor3CoachActive(false);
+        // The break beat just created a habit, and the completion event's
+        // habitStarted property is the activation term of the sect 11
+        // criteria; without this it read false on the one non-scan route that
+        // actually starts a habit (review round 3, P2-1). Ordered before
+        // completeOnboarding for the same ref-visibility reason as
+        // useTrackLeak. alreadyBreaking still counts: a habit is running
+        // either way, which is what the property claims.
+        await markHabitStarted();
         await completeOnboarding();
         await showDoor3Ribbon('door3_started');
       }
@@ -391,6 +419,14 @@ export default function TodayScreen() {
       // no-op behind a button that just went live again.
       console.error('handleBreakSheetStart failed', error);
       show(strings.toasts.startHabitFailed);
+      // Release the onboarding claim latched before the awaits (review round
+      // 3, P2-5). Without this the write failed, completeOnboarding never ran,
+      // and handleBreakSheetClose then early-returned on the still-latched
+      // ref: onboarding could never complete by any route, so the next cold
+      // start dropped the user back on the carousel with a habit already
+      // created. Un-claiming lets the close path complete it gently, which is
+      // exactly what it does for a user who dismisses without starting.
+      if (claimedOnboarding) door3HandledRef.current = false;
     } finally {
       breakStartInFlightRef.current = false;
     }
@@ -401,6 +437,7 @@ export default function TodayScreen() {
     getCategoryByName,
     door3CoachActive,
     completeOnboarding,
+    markHabitStarted,
     showDoor3Ribbon,
     show,
   ]);
@@ -412,12 +449,16 @@ export default function TodayScreen() {
   // re-fires completeOnboarding.
   const handleBreakSheetClose = useCallback(() => {
     setBreakSheetVisible(false);
+    // Re-arm the ?sheet= entry (P2-2), same as the log sheet.
+    sheetHandledRef.current = null;
+    if (params.sheet) router.setParams({ sheet: undefined });
     if (!door3CoachActive || door3HandledRef.current) return;
     door3HandledRef.current = true;
     setDoor3CoachActive(false);
     void completeOnboarding();
     void showDoor3Ribbon('door3_gentle');
-  }, [door3CoachActive, completeOnboarding, showDoor3Ribbon]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [door3CoachActive, completeOnboarding, showDoor3Ribbon, params.sheet]);
 
   // Gate's "See Premium": leaving for the paywall is still leaving without
   // starting a habit, so it completes onboarding the same way "Maybe later"
@@ -680,6 +721,29 @@ export default function TodayScreen() {
       setBreakSheetVisible(true);
     }
   }, [freeTierBlocked, router]);
+
+  // General-purpose sheet entry (PRD v3.1 sect 5, phase 7).
+  //
+  // Deliberately SEPARATE from firstLog/breakEntry above. Those two carry
+  // onboarding semantics (they arm the coach flow and complete onboarding) and
+  // are guarded on isOnboardingComplete(), so they go inert exactly when an
+  // empty state needs them: after the user has finished or skipped onboarding.
+  // This param carries no onboarding meaning at all, which is why an empty
+  // state can use it forever without ever re-triggering a coach flow.
+  //
+  // 'break' routes through handleBreakAnother rather than opening the sheet
+  // directly, so the free-tier gate is enforced on this path exactly as it is
+  // on Today's own affordance.
+  const sheetParam = params.sheet;
+  useEffect(() => {
+    if (onboardingLoading) return;
+    if (sheetParam !== 'log' && sheetParam !== 'break') return;
+    if (sheetHandledRef.current === sheetParam) return;
+    sheetHandledRef.current = sheetParam;
+    if (sheetParam === 'log') openLogSheet();
+    else handleBreakAnother();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onboardingLoading, sheetParam]);
 
   const handleStart = useCallback(async (skipValue: number, valueEdited: boolean) => {
     if (!pickOneHabitId) return;

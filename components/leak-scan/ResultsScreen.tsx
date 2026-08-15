@@ -1,6 +1,7 @@
 import React, { memo, useCallback, useMemo, useRef, useState } from 'react';
 import { AccessibilityInfo, View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button, Icon } from '@/components/ui';
 import { useToast } from '@/components/ui/Toast';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -17,10 +18,10 @@ import { BiggestLeakCard } from './BiggestLeakCard';
 import { ProjectionSection } from './ProjectionSection';
 import { ResultsFooter } from './ResultsFooter';
 import { useCompleteScanOnboarding } from './useCompleteScanOnboarding';
+import { useTrackLeak } from './useTrackLeak';
 import { ReviewQueueSheet } from './ReviewQueueSheet';
 import { CategoryTransactionsSheet } from './CategoryTransactionsSheet';
 import { PulseDayDetailSheet } from './PulseDayDetailSheet';
-import { PickOneSheet } from '@/components/habit-logging/PickOneSheet';
 import {
   buildKpiSummary,
   buildCategorySummary,
@@ -48,11 +49,10 @@ import {
   suppressHabit,
   type ScanRules,
 } from '@/utils/scanRules';
-import { habitCandidateToDetectedHabit, scanHabitId } from '@/utils/leakScanBridge';
+import { scanHabitId } from '@/utils/leakScanBridge';
+import { applyScope, scopeFromRules } from '@/utils/leakScan/scope';
 import { saveScanSummary } from '@/utils/storage';
 import { track } from '@/utils/analytics';
-import { isHabitLimitReached } from '@/utils/habitLogging';
-import { getEntitlement } from '@/utils/purchases';
 
 type ResultsScreenProps = {
   result: ScanResult;
@@ -99,7 +99,7 @@ type HabitCardItemProps = {
   candidate: HabitCandidate;
   month: string;
   monthTotalCents: number;
-  coveredDays: number;
+  spanDays: number;
   tipMonth: string;
   tipAmountCents: number | undefined;
   onTrack: (candidate: HabitCandidate) => void;
@@ -122,7 +122,7 @@ const HabitCardItem = memo(function HabitCardItem({
   candidate,
   month,
   monthTotalCents,
-  coveredDays,
+  spanDays,
   tipMonth,
   tipAmountCents,
   onTrack,
@@ -143,7 +143,7 @@ const HabitCardItem = memo(function HabitCardItem({
       candidate={candidate}
       month={month}
       monthTotalCents={monthTotalCents}
-      coveredDays={coveredDays}
+      spanDays={spanDays}
       tipMonth={tipMonth}
       tipAmountCents={tipAmountCents}
       onTrack={handleTrack}
@@ -167,15 +167,12 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
   const router = useRouter();
   const toast = useToast();
   const { addExpense, deleteExpense, expenses } = useExpenses();
-  const { addScanHabit, startBreakingHabit, dismissHabit, getHabitById, getActiveHabits } = useHabits();
+  const { dismissHabit, getHabitById } = useHabits();
   const completeScanOnboarding = useCompleteScanOnboarding();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   const [result, setResult] = useState(initialResult);
-  const [rules, setRulesState] = useState<ScanRules | null>(null);
   const [reviewQueueOpen, setReviewQueueOpen] = useState(false);
-  const [pickOneHabit, setPickOneHabit] = useState<ReturnType<typeof habitCandidateToDetectedHabit> | null>(null);
-  const [pickOneCandidate, setPickOneCandidate] = useState<HabitCandidate | null>(null);
   const [openCategory, setOpenCategory] = useState<ExpenseCategory | null>(null);
   const [openPulseCell, setOpenPulseCell] = useState<PulseCell | null>(null);
   const [undone, setUndone] = useState(false);
@@ -192,10 +189,6 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
   // a re-visit within this session (i.e. this mount) keeps it expanded.
   const [ladderExpanded, setLadderExpanded] = useState(false);
 
-  React.useEffect(() => {
-    getScanRules().then(setRulesState);
-  }, []);
-
   // UX-013: app/leak-scan.tsx swaps IntakeScreen for this screen as a
   // conditional render, not a real navigation push, so VoiceOver never shifts
   // focus here on its own. Announce arrival on mount (house pattern:
@@ -205,10 +198,24 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
   }, []);
 
   const rerun = useCallback(
-    async (updatedRules: ScanRules) => {
+    async (correct: (current: ScanRules) => ScanRules) => {
+      // Read the store fresh rather than trusting the mount-time copy: the
+      // intake hook persists the confirmed scope on its own schedule, and a
+      // whole-object write from a stale copy could erase it and resurrect
+      // out-of-scope candidates on the next correction (review round 3, P2-f;
+      // same pattern as HabitsContext.refreshHabits).
+      const fresh = await getScanRules();
+      const updatedRules = correct(fresh);
       await saveScanRules(updatedRules);
-      setRulesState(updatedRules);
-      const next = runScan(files, { rules: updatedRules, importId: initialResult.importId });
+      // A re-run rebuilds the candidate list from scratch, so the user's scope
+      // has to be re-applied or every correction would resurrect the categories
+      // they placed out of bounds. Dismissing a leak is itself a re-run, which
+      // makes this the difference between "Not a habit" narrowing the list and
+      // silently repopulating it.
+      const next = applyScope(
+        runScan(files, { rules: updatedRules, importId: initialResult.importId }),
+        scopeFromRules(updatedRules)
+      );
       setResult(next);
       // Corrections change what the scan concluded, so the persisted summary
       // follows the corrected result too (same write the intake hook does).
@@ -219,6 +226,12 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
     [files, initialResult.importId]
   );
 
+  // UX-074: results is the payoff screen of the app's biggest feature and it
+  // renders no ScreenHeader, so nothing supplied a top inset and the eyebrow
+  // and serif title sat under the status bar and the dynamic island. Intake and
+  // graceful failure escape this only because their ScreenHeader back pill
+  // carries its own inset.
+  const insets = useSafeAreaInsets();
   const kpi = useMemo(() => buildKpiSummary(result), [result]);
   const categories = useMemo(() => buildCategorySummary(result), [result]);
   const reviewQueue = useMemo(() => buildReviewQueue(result.rows), [result]);
@@ -231,7 +244,9 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
   // is deliberately not used here; a card claiming "biggest" must never sit
   // above a pricier leak.) Zero candidates means there is no finding to lead
   // with, so the screen falls back to the pre-W4 order in full below.
-  const rankedLeaksWindowDays = Math.max(result.coverage?.coveredDays ?? 0, 1);
+  // Calendar span, never the count of transacted days: monthly cost is a rate
+  // and its divisor is elapsed time (UX-073, see CoverageWindow).
+  const rankedLeaksWindowDays = Math.max(result.coverage?.spanDays ?? 0, 1);
   const rankedByMonthlyCost = useMemo(
     () =>
       result.habits
@@ -244,10 +259,30 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
         }),
     [result.habits, rankedLeaksWindowDays]
   );
-  const topCandidate = rankedByMonthlyCost[0] ?? null;
+  // The hero card's only action is "Break it", so only a candidate the user can
+  // actually govern may lead the screen. The ranked list below already renders
+  // a fixed-class candidate as a no-CTA tip card (HabitCard.tsx), but the hero
+  // path skipped that rule: against a real statement, rent ranked first on
+  // monthly cost and the app invited the user to break their housing payment.
+  // Influence-class is excluded for the same reason in milder form, its card
+  // below offers "Monitor", never "Break it".
+  //
+  // This filters hero ELIGIBILITY only. Ranking is untouched, and anything
+  // passed over here still appears in the list below, so no finding is hidden.
+  // "Your biggest leak" stays literally true: a leak is something you can plug,
+  // which is what the govern class means; commitments are tips, not leaks.
+  const topCandidate = useMemo(
+    () => rankedByMonthlyCost.find((c) => c.governClass === 'govern') ?? null,
+    [rankedByMonthlyCost]
+  );
   const hasFinding = !!topCandidate;
   const rankedLeaksBelow = useMemo(
-    () => (topCandidate ? rankedByMonthlyCost.slice(1, 1 + RANKED_LEAKS_CAP) : result.habits),
+    () =>
+      topCandidate
+        ? rankedByMonthlyCost
+            .filter((c) => c.merchantStem !== topCandidate.merchantStem)
+            .slice(0, RANKED_LEAKS_CAP)
+        : result.habits,
     [rankedByMonthlyCost, topCandidate, result.habits]
   );
   // Zero-candidate fallback (existing dashboard order, spec: "skip the card
@@ -281,7 +316,7 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
   }, [result.recurring]);
 
   const projection = useMemo(
-    () => buildProjectionSummary(result.rows, result.recurring, result.coverage?.coveredDays ?? 0, habitClassByCategory),
+    () => buildProjectionSummary(result.rows, result.recurring, result.coverage?.spanDays ?? 0, habitClassByCategory),
     [result, habitClassByCategory]
   );
 
@@ -301,65 +336,35 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
 
   const handleCategoryCorrect = useCallback(
     async (merchantStem: string, category: ExpenseCategory) => {
-      if (!rules) return;
-      const updated = setMerchantCategory(rules, merchantStem, category);
-      await rerun(updated);
+      // The corrector applies to the FRESH store inside rerun, so a correction
+      // can never clobber rules another surface persisted after this screen
+      // mounted (the confirmed scope, above all).
+      await rerun((current) => setMerchantCategory(current, merchantStem, category));
     },
-    [rules, rerun]
+    [rerun]
   );
 
-  /** Govern class only: "Track this leak" opens the identical Decision-1
-   *  pick-one sheet Door 1 uses (visual spec acceptance 6). Nothing is
-   *  created until Start breaking it is tapped on that sheet. */
-  const handleTrackLeak = useCallback(
-    async (candidate: HabitCandidate) => {
-      const habit = habitCandidateToDetectedHabit(candidate, result.coverage?.coveredDays ?? 0);
-      await addScanHabit(habit);
-      setPickOneCandidate(candidate);
-      setPickOneHabit(habit);
-    },
-    [addScanHabit, result.coverage]
-  );
-
-  /** Influence class only: "Monitor" creates a monitor-only habit (discovered
-   *  status, no HabitChangeGoal, no skip loop) -- distinct from Track. */
-  const handleMonitor = useCallback(
-    async (candidate: HabitCandidate) => {
-      const habit = habitCandidateToDetectedHabit(candidate, result.coverage?.coveredDays ?? 0);
-      await addScanHabit(habit);
-      track('scan_habit_tracked', { class: 'influence', cadence_route: 'monitor' });
-    },
-    [addScanHabit, result.coverage]
-  );
-
-  const handlePickOneStart = useCallback(
-    async (skipValue: number, valueEdited: boolean) => {
-      if (!pickOneHabit) return;
-      await startBreakingHabit(pickOneHabit.id, skipValue, valueEdited, 'scan');
-      if (pickOneCandidate) {
-        track('scan_habit_tracked', {
-          class: pickOneCandidate.governClass,
-          cadence_route: pickOneHabit.frequency,
-        });
-      }
-      setPickOneHabit(null);
-      setPickOneCandidate(null);
-    },
-    [pickOneHabit, pickOneCandidate, startBreakingHabit]
+  /**
+   * Tracking and monitoring live in useTrackLeak, shared with the habit deck.
+   * Both surfaces make the same promise, so they must keep the same
+   * consequences: the same pick-one sheet, the same free-tier gate, the same
+   * analytics, and above all the same activation sequence. A second copy of
+   * that sequence is a second chance to get its ordering wrong.
+   */
+  const { trackLeak, monitorLeak, sheet: trackSheet } = useTrackLeak(
+    result.coverage?.spanDays ?? 0
   );
 
   const handleNotAHabit = useCallback(
     async (candidate: HabitCandidate) => {
-      if (!rules) return;
-      const updated = suppressHabit(rules, candidate.merchantStem);
-      await rerun(updated);
+      await rerun((current) => suppressHabit(current, candidate.merchantStem));
       track('scan_habit_dismissed', { class: candidate.governClass });
       // Also dismiss if it happens to already be a discovered habit in HabitsContext
       // (admitted via a prior Track tap on the same session).
       const existing = getHabitById(scanHabitId(candidate.merchantStem));
       if (existing) await dismissHabit(existing.id);
     },
-    [rules, rerun, getHabitById, dismissHabit]
+    [rerun, getHabitById, dismissHabit]
   );
 
   const handleSaveProjection = useCallback(
@@ -471,7 +476,13 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
     // router.replace (not push) so a repeat visit to this state never stacks
     // another copy of the tab navigator underneath.
     return (
-      <View style={[styles.screen, styles.undoneCenter]}>
+      <View
+        style={[
+          styles.screen,
+          styles.undoneCenter,
+          { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 16 },
+        ]}
+      >
         <Text style={styles.undoneText}>{strings.leakScan.undoneMessage}</Text>
         <Button
           label={strings.leakScan.undoneContinue}
@@ -484,7 +495,12 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
 
   return (
     <View style={styles.screen}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 40 },
+        ]}
+      >
         <View style={styles.header}>
           {evidenceWindow ? <Text style={styles.eyebrow}>{evidenceWindow}</Text> : null}
           {/* UX-026: results is one of the longest screens in the flow; give
@@ -498,8 +514,8 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
           <>
             <BiggestLeakCard
               candidate={topCandidate}
-              coveredDays={result.coverage?.coveredDays ?? 0}
-              onBreak={() => handleTrackLeak(topCandidate)}
+              spanDays={result.coverage?.spanDays ?? 0}
+              onBreak={() => trackLeak(topCandidate)}
               onDismiss={() => handleNotAHabit(topCandidate)}
             />
             <View style={styles.spacer} />
@@ -533,7 +549,8 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
               <View>
                 <Text style={styles.sectionTitle}>{strings.leakScan.leaksRankedTitle}</Text>
                 {leaksToShow.map((candidate, i) => {
-                  const windowDays = Math.max(result.coverage?.coveredDays ?? 0, 1);
+                  // Same calendar-span divisor as the ranking above (UX-073).
+                  const windowDays = rankedLeaksWindowDays;
                   const monthTotalCents = Math.round((candidate.totalCents / windowDays) * 30);
                   const recurringMatch = recurringByStem.get(candidate.merchantStem);
                   // Extra-payment amount for a biweekly 3-payment month is the
@@ -547,11 +564,11 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
                       candidate={candidate}
                       month={evidenceMonthLabel}
                       monthTotalCents={monthTotalCents}
-                      coveredDays={result.coverage?.coveredDays ?? 0}
+                      spanDays={rankedLeaksWindowDays}
                       tipMonth={upcomingMonthLabel}
                       tipAmountCents={tipAmountCents}
-                      onTrack={handleTrackLeak}
-                      onMonitor={handleMonitor}
+                      onTrack={trackLeak}
+                      onMonitor={monitorLeak}
                       onNotAHabit={handleNotAHabit}
                       onWrongDetails={setOpenCategory}
                     />
@@ -629,23 +646,7 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
         onClose={() => setOpenPulseCell(null)}
       />
 
-      <PickOneSheet
-        visible={!!pickOneHabit}
-        habit={pickOneHabit}
-        monthTotal={pickOneCandidate?.totalCents ?? 0}
-        occurrences={pickOneCandidate?.occurrences ?? 0}
-        onCancel={() => {
-          setPickOneHabit(null);
-          setPickOneCandidate(null);
-        }}
-        onStart={handlePickOneStart}
-        freeTierBlocked={isHabitLimitReached(getActiveHabits().length, getEntitlement())}
-        onStartTrial={() => {
-          setPickOneHabit(null);
-          setPickOneCandidate(null);
-          router.push('/paywall?placement=habit_gate_scan');
-        }}
-      />
+      {trackSheet}
     </View>
   );
 }
@@ -659,6 +660,8 @@ function createStyles(theme: AppTheme) {
     scrollContent: {
       // UX-018: was a flat 16 in both directions; the horizontal gutter
       // becomes the ratified 20, vertical padding is untouched.
+      // UX-074: the vertical values are overridden inline with the safe-area
+      // insets added; these stay as the zero-inset baseline.
       paddingHorizontal: spacing.gutter,
       paddingVertical: 16,
       paddingBottom: 40,
