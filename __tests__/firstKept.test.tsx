@@ -232,3 +232,61 @@ describe('the route it names', () => {
     expect(routeOf(firstKeptCalls()[0])).toBe('unknown');
   });
 });
+
+
+describe('the kept-crediting edge paths (review round 3, P2-d)', () => {
+  it('fires when the first kept dollar arrives via Change answer', async () => {
+    const result = await startedHabit('daily', 'scan');
+    const goal = result.current.goals[0];
+
+    // First-ever check-in is a mis-tapped slip: no money kept, no event.
+    await act(async () => {
+      await result.current.answerToday(goal.id, 'slipped');
+    });
+    expect(firstKeptCalls()).toHaveLength(0);
+
+    // The correction credits the skip value, which IS the first kept dollar.
+    await act(async () => {
+      await result.current.changeTodayAnswer(goal.id);
+    });
+
+    expect(firstKeptCalls()).toHaveLength(1);
+  });
+
+  it('does not fire when Change answer flips a skip INTO a slip', async () => {
+    const result = await startedHabit('daily', 'scan');
+    const goal = result.current.goals[0];
+
+    await act(async () => {
+      await result.current.answerToday(goal.id, 'skipped');
+    });
+    trackMock.mockClear();
+
+    await act(async () => {
+      await result.current.changeTodayAnswer(goal.id);
+    });
+
+    // The flag was already set by the skip; the point pinned here is that the
+    // slip direction never calls the reporter at all.
+    expect(firstKeptCalls()).toHaveLength(0);
+  });
+
+  it('fires when the first kept money is a partial-slip credit', async () => {
+    const result = await startedHabit('daily', 'scan');
+    const goal = result.current.goals[0];
+
+    await act(async () => {
+      await result.current.answerToday(goal.id, 'slipped');
+    });
+    expect(firstKeptCalls()).toHaveLength(0);
+
+    // Spent less than usual: partialSlipCredit banks the difference, real
+    // kept money on a slip day.
+    await act(async () => {
+      await result.current.savePartialSlip(goal.id, 200);
+    });
+
+    expect(firstKeptCalls()).toHaveLength(1);
+    expect((firstKeptCalls()[0][1] as { route: string }).route).toBe('scan');
+  });
+});

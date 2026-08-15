@@ -90,16 +90,19 @@ export function BillsScreen({ offer, result, onDone }: BillsScreenProps) {
         }
         accepted = fresh.length;
       }
-      track('bills_imported', { count_accepted: accepted });
+      track('bills_imported', { count_accepted: accepted, skipped: false });
       if (accepted > 0) toast.show(strings.leakScan.billsAddedToast(accepted));
-      onDone();
+      // onDone AFTER the state settles: the parent swaps this screen out on
+      // done, and a setState on the unmounted screen is the warning the review
+      // flagged (round 3, P3-15 minor).
     } finally {
       setFiling(false);
     }
+    onDone();
   };
 
   const handleSkip = () => {
-    track('bills_imported', { count_accepted: 0 });
+    track('bills_imported', { count_accepted: 0, skipped: true });
     onDone();
   };
 

@@ -145,6 +145,7 @@ export default function TodayScreen() {
     completeStep: completeOnboardingStep,
     skipStep: skipOnboardingStep,
     completeOnboarding,
+    markHabitStarted,
   } = useOnboarding();
 
   // Quick log and the logged-today list (spec 04 "Today" 3 and 4).
@@ -390,6 +391,14 @@ export default function TodayScreen() {
       setBreakSheetVisible(false);
       if (claimedOnboarding) {
         setDoor3CoachActive(false);
+        // The break beat just created a habit, and the completion event's
+        // habitStarted property is the activation term of the sect 11
+        // criteria; without this it read false on the one non-scan route that
+        // actually starts a habit (review round 3, P2-1). Ordered before
+        // completeOnboarding for the same ref-visibility reason as
+        // useTrackLeak. alreadyBreaking still counts: a habit is running
+        // either way, which is what the property claims.
+        await markHabitStarted();
         await completeOnboarding();
         await showDoor3Ribbon('door3_started');
       }
@@ -409,6 +418,7 @@ export default function TodayScreen() {
     getCategoryByName,
     door3CoachActive,
     completeOnboarding,
+    markHabitStarted,
     showDoor3Ribbon,
     show,
   ]);

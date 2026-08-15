@@ -10,6 +10,7 @@
 
 import type { AddExpenseInput, Expense, ExpenseCategory, RecurrenceFrequency } from '@/types/expense';
 import type { RecurringItem, ScanResult, ScanRow } from './types';
+import { isPayable } from './bills';
 import { spendableRows } from './netting';
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -89,9 +90,17 @@ export function recurringToExpenses(
   // `onlyStems` is the bills offer's per-row untick (PRD sect 8): the user
   // accepts a subset, so only that subset is written. Omitted means every
   // detected item, which is what the in-ladder bulk save has always done.
+  //
+  // isPayable gates BOTH paths. detectRecurring runs over every non-internal
+  // row, so a fortnightly payroll deposit is exactly as "recurring" as rent;
+  // writing it as an upcoming EXPENSE inflated recorded spend on the bulk-save
+  // path (review round 3, P2-e; the bills offer was already filtered, this
+  // makes the invariant live where the write happens rather than in one
+  // caller).
+  const payable = result.recurring.filter(isPayable);
   const items = opts.onlyStems
-    ? result.recurring.filter((item) => opts.onlyStems!.has(item.merchantStem))
-    : result.recurring;
+    ? payable.filter((item) => opts.onlyStems!.has(item.merchantStem))
+    : payable;
   return items.map((item) => {
     const remind = opts.remindBefore?.[item.merchantStem] ?? false;
     const nextDate = new Date(item.nextDateISO);

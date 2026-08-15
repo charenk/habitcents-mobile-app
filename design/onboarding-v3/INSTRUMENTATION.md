@@ -22,7 +22,7 @@ just a synonym.
 | `permission_prompted` | **not applicable** | The scan reads a user-picked CSV through the iOS document picker, which grants access to the chosen file with no permission dialog. There is no prompt to report. The PRD's "Permission" step is a prototype artifact. |
 | `scope_selected` | `scope_selected` | As specified. |
 | `deck_card_shown` / `deck_card_result` / `deck_exhausted` | same | As specified. |
-| `bills_offered` / `bills_imported` | same | As specified. |
+| `bills_offered` / `bills_imported` | same | As specified, plus `bills_imported.skipped`: true = skipped the screen outright, false = read the offer (including reading it and unticking everything). Criterion 3 blends neither. |
 | `skip_activation` | `skip_activation` | Fires at CTA press, skippers only. See the event's own comment for what that does and does not measure. |
 | user property `recurring_expense_count` | event `recurring_expense_count` | **Deviation.** Person properties key off `identify()`, which D-9's anonymous-device-ID posture forbids. Ships as a once-per-session snapshot event carrying the same number. |
 
@@ -35,6 +35,11 @@ Added beyond the PRD:
 ## Computing the four month-3 criteria
 
 ### 1. Scan-route first-kept vs habit-route first-kept, within 20%
+
+`first_kept` fires on EVERY path that credits kept money for the first time: a
+plain skip, a backfilled skip, a slip corrected to a skip via Change answer,
+and a partial-slip credit. An install whose first kept dollar arrives through a
+correction or a partial is inside the comparison, not silently excluded.
 
 ```
 numerator   count distinct devices with first_kept where route = 'scan'

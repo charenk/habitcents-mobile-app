@@ -236,7 +236,11 @@ export interface AnalyticsEventMap {
    */
   recurring_expense_count: { count: number };
   bills_offered: { count_proposed: number };
-  bills_imported: { count_accepted: number };
+  // `skipped` separates "skipped the screen outright" from "considered it and
+  // unticked everything": both accept zero rows, but only one of them read the
+  // offer, and the sect 11 acceptance criterion should not blend them
+  // (review round 3, P3-15).
+  bills_imported: { count_accepted: number; skipped: boolean };
   scan_categories_expanded: Record<string, never>;
   // Finding-first ladder's dashed expander (ADR 0020, W4), same shape as
   // scan_categories_expanded above.

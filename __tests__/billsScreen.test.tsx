@@ -155,7 +155,7 @@ describe('bills screen', () => {
 
     const written = await getExpenses();
     expect(written.map((e) => e.merchant).sort()).toEqual(['Hydro One', 'Park Property']);
-    expect(importedCalls()[0][1]).toEqual({ count_accepted: 2 });
+    expect(importedCalls()[0][1]).toEqual({ count_accepted: 2, skipped: false });
     expect(onDone).toHaveBeenCalledTimes(1);
   });
 
@@ -174,7 +174,9 @@ describe('bills screen', () => {
     });
 
     expect(await getExpenses()).toHaveLength(0);
-    expect(importedCalls()[0][1]).toEqual({ count_accepted: 0 });
+    // Zero accepted, but the user READ the offer and declined it: skipped
+    // false keeps this cohort separable from the outright skip below.
+    expect(importedCalls()[0][1]).toEqual({ count_accepted: 0, skipped: false });
     expect(onDone).toHaveBeenCalledTimes(1);
   });
 
@@ -187,8 +189,9 @@ describe('bills screen', () => {
 
     expect(await getExpenses()).toHaveLength(0);
     // Reported as zero rather than not reported, so bills_imported /
-    // bills_offered has a denominator that includes the people who declined.
-    expect(importedCalls()[0][1]).toEqual({ count_accepted: 0 });
+    // bills_offered has a denominator that includes the people who declined;
+    // skipped true marks that this cohort never engaged with the rows at all.
+    expect(importedCalls()[0][1]).toEqual({ count_accepted: 0, skipped: true });
     expect(onDone).toHaveBeenCalledTimes(1);
   });
 

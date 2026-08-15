@@ -172,7 +172,6 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   const [result, setResult] = useState(initialResult);
-  const [rules, setRulesState] = useState<ScanRules | null>(null);
   const [reviewQueueOpen, setReviewQueueOpen] = useState(false);
   const [openCategory, setOpenCategory] = useState<ExpenseCategory | null>(null);
   const [openPulseCell, setOpenPulseCell] = useState<PulseCell | null>(null);
@@ -190,10 +189,6 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
   // a re-visit within this session (i.e. this mount) keeps it expanded.
   const [ladderExpanded, setLadderExpanded] = useState(false);
 
-  React.useEffect(() => {
-    getScanRules().then(setRulesState);
-  }, []);
-
   // UX-013: app/leak-scan.tsx swaps IntakeScreen for this screen as a
   // conditional render, not a real navigation push, so VoiceOver never shifts
   // focus here on its own. Announce arrival on mount (house pattern:
@@ -203,9 +198,15 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
   }, []);
 
   const rerun = useCallback(
-    async (updatedRules: ScanRules) => {
+    async (correct: (current: ScanRules) => ScanRules) => {
+      // Read the store fresh rather than trusting the mount-time copy: the
+      // intake hook persists the confirmed scope on its own schedule, and a
+      // whole-object write from a stale copy could erase it and resurrect
+      // out-of-scope candidates on the next correction (review round 3, P2-f;
+      // same pattern as HabitsContext.refreshHabits).
+      const fresh = await getScanRules();
+      const updatedRules = correct(fresh);
       await saveScanRules(updatedRules);
-      setRulesState(updatedRules);
       // A re-run rebuilds the candidate list from scratch, so the user's scope
       // has to be re-applied or every correction would resurrect the categories
       // they placed out of bounds. Dismissing a leak is itself a re-run, which
@@ -335,11 +336,12 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
 
   const handleCategoryCorrect = useCallback(
     async (merchantStem: string, category: ExpenseCategory) => {
-      if (!rules) return;
-      const updated = setMerchantCategory(rules, merchantStem, category);
-      await rerun(updated);
+      // The corrector applies to the FRESH store inside rerun, so a correction
+      // can never clobber rules another surface persisted after this screen
+      // mounted (the confirmed scope, above all).
+      await rerun((current) => setMerchantCategory(current, merchantStem, category));
     },
-    [rules, rerun]
+    [rerun]
   );
 
   /**
@@ -355,16 +357,14 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
 
   const handleNotAHabit = useCallback(
     async (candidate: HabitCandidate) => {
-      if (!rules) return;
-      const updated = suppressHabit(rules, candidate.merchantStem);
-      await rerun(updated);
+      await rerun((current) => suppressHabit(current, candidate.merchantStem));
       track('scan_habit_dismissed', { class: candidate.governClass });
       // Also dismiss if it happens to already be a discovered habit in HabitsContext
       // (admitted via a prior Track tap on the same session).
       const existing = getHabitById(scanHabitId(candidate.merchantStem));
       if (existing) await dismissHabit(existing.id);
     },
-    [rules, rerun, getHabitById, dismissHabit]
+    [rerun, getHabitById, dismissHabit]
   );
 
   const handleSaveProjection = useCallback(

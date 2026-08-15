@@ -109,6 +109,7 @@ let mockOnboardingComplete = false;
 const mockCompleteStep = jest.fn(async () => {});
 const mockSkipStep = jest.fn(async () => {});
 const mockCompleteOnboarding = jest.fn(async () => {});
+const mockMarkHabitStarted = jest.fn(async () => {});
 jest.mock('@/contexts/OnboardingContext', () => ({
   useOnboarding: () => ({
     isLoading: false,
@@ -116,6 +117,7 @@ jest.mock('@/contexts/OnboardingContext', () => ({
     completeStep: mockCompleteStep,
     skipStep: mockSkipStep,
     completeOnboarding: mockCompleteOnboarding,
+    markHabitStarted: mockMarkHabitStarted,
   }),
 }));
 
@@ -211,6 +213,7 @@ beforeEach(() => {
   mockCompleteStep.mockClear();
   mockSkipStep.mockClear();
   mockCompleteOnboarding.mockClear();
+  mockMarkHabitStarted.mockClear();
 });
 
 afterEach(cleanup);
@@ -332,7 +335,13 @@ describe('Door 3 break sheet: Start, bought-today', () => {
       category: 'Food',
     });
 
-    // Exactly-once completion, with the "started" ribbon.
+    // Exactly-once completion, with the "started" ribbon. markHabitStarted
+    // lands first so onboarding_completed reports habitStarted true on this
+    // route too (review round 3, P2-1).
+    expect(mockMarkHabitStarted).toHaveBeenCalledTimes(1);
+    expect(mockMarkHabitStarted.mock.invocationCallOrder[0]).toBeLessThan(
+      mockCompleteOnboarding.mock.invocationCallOrder[0]
+    );
     expect(mockCompleteOnboarding).toHaveBeenCalledTimes(1);
     expect(view.getByText(strings.today.door3RibbonStarted)).toBeTruthy();
   });

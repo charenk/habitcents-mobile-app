@@ -648,11 +648,15 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
       // is left untouched even though totalSkips may have just dropped by one.
     };
     await persistGoalAndHabit(updatedGoal);
+    // A slip corrected to a skip is a real first kept dollar: without this,
+    // an install whose very first check-in was a mis-tap stayed outside the
+    // scan-vs-habit comparison forever (review round 3, P2-d).
+    if (to === 'skipped') await reportFirstKept(goal);
     track('answer_changed', { from, to });
     // A correction is not a fresh triggering event (spec principle 3): clear
     // any Coach Moment shown for the answer that was just overwritten.
     setLastCoachMoment(null);
-  }, [goals, persistGoalAndHabit]);
+  }, [goals, persistGoalAndHabit, reportFirstKept]);
 
   /** One-time "missed yesterday" backfill (spec §3.6). */
   const backfillYesterday = useCallback(async (goalId: string, state: AnswerState): Promise<void> => {
@@ -725,8 +729,12 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
       kept: goal.kept + credit,
     };
     await persistGoalAndHabit(updatedGoal);
+    // A partial slip CREDITS kept (partialSlipCredit above), so it can be the
+    // install's first kept money; dating first_kept at a later full skip
+    // misattributed the engagement moment (review round 3, P2-d).
+    await reportFirstKept(goal);
     track('slip_logged', { partial: true, backfill: false });
-  }, [goals, persistGoalAndHabit]);
+  }, [goals, persistGoalAndHabit, reportFirstKept]);
 
   /** "Edit one skip keeps" (spec §4.8). */
   const updateSkipValue = useCallback(async (goalId: string, skipValue: number): Promise<void> => {
