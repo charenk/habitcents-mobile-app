@@ -124,19 +124,10 @@ describe('every reachable empty state offers a first action', () => {
     expect(onLogExpense).toHaveBeenCalledTimes(1);
   });
 
-  it('Categories offers adding one', async () => {
-    const onPress = jest.fn();
-    const view = await renderWith(
-      <EmptyState
-        title={strings.categories.emptyTitle}
-        body={strings.categories.emptySubtitle}
-        cta={{ label: strings.categories.emptyCta, onPress }}
-      />
-    );
-
-    fireEvent.press(view.getByRole('button', { name: strings.categories.emptyCta }));
-    expect(onPress).toHaveBeenCalledTimes(1);
-  });
+  // Categories lives in its own suite (categoriesEmptyState.test.tsx) because
+  // it needs the REAL screen: CategoriesContext re-seeds defaults on empty, so
+  // the emptiness has to come from the data source. Rendering a bare
+  // EmptyState here was a tautology that asserted nothing about the screen.
 });
 
 describe('the empty states deliberately left without a CTA', () => {

@@ -249,7 +249,10 @@ export const strings = {
     // Was "Tap Add category at the top", which described an action instead of
     // offering one; the CTA below now IS the action (PRD v3.1 sect 5).
     emptySubtitle: 'Group your spending so the patterns are easier to see.',
-    emptyCta: 'Add category',
+    // Distinct from addCategoryLabel below on purpose: both buttons are on
+    // screen together in the empty state, and two controls reading "Add
+    // category" is a needless ambiguity for anyone navigating by button.
+    emptyCta: 'Add your first category',
     // Delete confirm sheet (design/selection-sheets U3), replacing the native
     // alert. deleteConfirmCta and deleteCancel are the sheet's two buttons.
     deleteTitle: (name: string) => `Delete ${name}?`,

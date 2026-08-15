@@ -98,6 +98,21 @@ describe('the three beats', () => {
     expect(view.getByRole('button', { name: strings.onboarding.beatBreakCta })).toBeTruthy();
   });
 
+  // Carried from the retired welcomeHero suite: each beat headline is a
+  // heading, not just text.
+  it('marks every beat headline as a header', async () => {
+    const view = await renderCarousel();
+
+    const headers = view.getAllByRole('header').map((h) => h.props.children);
+    expect(headers).toEqual(
+      expect.arrayContaining([
+        strings.onboarding.beatTrackHeadline,
+        strings.onboarding.beatScanHeadline,
+        strings.onboarding.beatBreakHeadline,
+      ])
+    );
+  });
+
   it('sends the track beat into Today with the firstLog param, replacing not pushing', async () => {
     const view = await renderCarousel();
 
@@ -161,7 +176,11 @@ describe('the ghost exit', () => {
       fireEvent.press(view.getByRole('button', { name: strings.onboarding.skipForNow }));
     });
 
-    expect(trackMock.mock.calls.filter(([e]) => e === 'onboarding_intent_skipped')).toHaveLength(1);
+    const skips = trackMock.mock.calls.filter(([e]) => e === 'onboarding_intent_skipped');
+    expect(skips).toHaveLength(1);
+    // Payload asserted exactly, not just the event name (carried from the
+    // retired intentPicker suite).
+    expect(skips[0][1]).toEqual({});
     expect(mockReplace).toHaveBeenCalledWith('/(tabs)');
   });
 });
@@ -187,17 +206,25 @@ describe('the ghost exit is also the Android back handler', () => {
 
 describe('the rules that do not bend', () => {
   it('never auto-advances', async () => {
-    const view = await renderCarousel();
-
-    // No timer moves the pager: the user moves it or it does not move
-    // (PRD sect 10). Advancing time must change nothing.
+    // Fake timers BEFORE the render, not after. Installed afterwards, any
+    // interval scheduled during mount (exactly what an auto-advance
+    // regression would add) stays bound to real timers, so advancing fake
+    // time could not move it and the test could not fail (review round 3,
+    // P2-i).
     jest.useFakeTimers();
-    await act(async () => {
-      jest.advanceTimersByTime(30000);
-    });
-    jest.useRealTimers();
+    try {
+      const view = await renderCarousel();
 
-    expect(view.getByLabelText(strings.onboarding.beatProgress(1, 3))).toBeTruthy();
+      // No timer moves the pager: the user moves it or it does not move
+      // (PRD sect 10). Advancing time must change nothing.
+      await act(async () => {
+        await jest.advanceTimersByTimeAsync(30000);
+      });
+
+      expect(view.getByLabelText(strings.onboarding.beatProgress(1, 3))).toBeTruthy();
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   it('offers no back affordance, because back never steps between beats', async () => {
@@ -219,6 +246,21 @@ describe('the rules that do not bend', () => {
   it('invents no totals on the way in', async () => {
     const view = await renderCarousel();
     // ADR 0022 still stands: nothing here may show an accumulated figure.
-    expect(view.queryByText(/\$\d/)).toBeNull();
+    // The space-tolerant form is deliberate, it catches "$ 12" too (the
+    // narrower /\$\d/ was a weakening carried over from welcomeHero).
+    expect(view.queryByText(/\$\s?\d/)).toBeNull();
+  });
+
+  // Also carried from welcomeHero: the surfaces the carousel REPLACED must
+  // not quietly come back. Their strings all still exist in strings.ts, so
+  // nothing else stops them being rendered here again.
+  it('renders none of the retired welcome surfaces', async () => {
+    const view = await renderCarousel();
+
+    expect(view.queryByText(strings.habitLogging.keptZeroCaption)).toBeNull();
+    expect(view.queryByText(strings.onboarding.valuePropLog)).toBeNull();
+    expect(view.queryByText(strings.onboarding.outcomeKeptCounts)).toBeNull();
+    expect(view.queryByText(strings.onboarding.welcomeHeadline)).toBeNull();
+    expect(view.queryByText(strings.onboarding.intentTitle)).toBeNull();
   });
 });
