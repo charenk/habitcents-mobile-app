@@ -56,17 +56,18 @@ type OnboardingContextValue = {
 
 const OnboardingContext = createContext<OnboardingContextValue | null>(null);
 
-// Step machine (W3, "the app is the onboarding" complete, ADR 0020 + 0022):
-// welcome -> fork, then every door completes onboarding at its own terminal
-// action in the real app rather than advancing through a chain of screens.
-// fork is the intent picker's currentStep (STEP_ROUTE['fork'] in welcome.tsx
-// below); nothing maps forward from it anymore; Door 2's scan flow still
-// pushes its own route from the picker without advancing currentStep, same
-// as Door 1 and Door 3 already don't (app/onboarding/intent.tsx). The
-// audit_subs / audit_vices / reveal / guided_log / success steps this used to
-// chain through belonged to screens now deleted; see STEP_ROUTE for how a
-// stored one of those revives without crashing (the build 5 dayLogs lesson,
-// docs/runs.log: never let a stale persisted value route to gone code).
+// Step machine (ADR 0020 + 0022, amended by ADR 0026): welcome -> fork, then
+// every beat completes onboarding at its own terminal action in the real app
+// rather than advancing through a chain of screens.
+//
+// currentStep no longer ROUTES anywhere. The carousel is the only onboarding
+// destination, so whatever step is stored, landing there shows the carousel
+// and re-picking is an honest resume; the routing table that used to map
+// retired steps is deleted, which is a stronger guarantee than maintaining it
+// (the build 5 lesson, docs/runs.log: never let a stale persisted value route
+// to gone code). The audit_subs / audit_vices / reveal / guided_log / success
+// steps this used to chain through named screens that are now deleted; they
+// survive in the union only so an old value still deserializes.
 const NEXT_STEP: Partial<Record<OnboardingStep, OnboardingStep>> = {
   welcome: 'fork',
 };

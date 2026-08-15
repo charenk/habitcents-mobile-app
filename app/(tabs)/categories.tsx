@@ -69,16 +69,16 @@ export default function CategoriesScreen() {
     return result;
   }, [categories, getDefaultCategories, getCustomCategories]);
 
-  // U12b: this handler used to also branch on editingCategory, but that state
-  // was only ever set to null, so the AddCategoryModal edit branch was
-  // unreachable from this tab (custom categories are edited via category
-  // detail's pencil instead, app/category/[id].tsx). This tab only ever adds.
   // Empty state as an onboarding surface (PRD v3.1 sect 5). This screen owns
   // the add modal, so the action opens in place.
   const handleEmptyAddCategory = useEmptyStateAction('categories', useCallback(() => {
     setIsModalVisible(true);
   }, []));
 
+  // U12b: this handler used to also branch on editingCategory, but that state
+  // was only ever set to null, so the AddCategoryModal edit branch was
+  // unreachable from this tab (custom categories are edited via category
+  // detail's pencil instead, app/category/[id].tsx). This tab only ever adds.
   const handleAddCategory = useCallback(async (
     name: string,
     icon: CategoryIcon,

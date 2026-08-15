@@ -11,7 +11,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@/components/ui';
 import { useTheme } from '@/contexts/ThemeContext';
-import { spacing, typeScale, type AppTheme } from '@/constants/theme';
+import { radii, spacing, typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import { BeatMedia, type BeatAsset } from './BeatMedia';
 
@@ -198,7 +198,7 @@ function createStyles(theme: AppTheme) {
     dot: {
       width: 7,
       height: 7,
-      borderRadius: 4,
+      borderRadius: radii.micro,
       backgroundColor: theme.cloud,
     },
     dotActive: {

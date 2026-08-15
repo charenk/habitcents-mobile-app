@@ -109,7 +109,13 @@ export interface AnalyticsEventMap {
   // section 6). cadence is 'daily' | 'weekly' | 'monthly'; never amounts,
   // merchant names, or habit titles.
   habit_goal_created: { cadence?: string; value_edited: boolean };
-  habit_tracking_started: { cadence?: string; source: 'detection' | 'scan' | 'onboarding' };
+  // 'unknown' mirrors first_kept: startBreakingHabit has no default source, so
+  // a caller that omits one is reported honestly rather than attributed to a
+  // route it may not have come from.
+  habit_tracking_started: {
+    cadence?: string;
+    source: 'detection' | 'scan' | 'onboarding' | 'unknown';
+  };
   skip_logged: { cadence?: string; total_skips_after: number; week_skips: number; backfill: boolean };
   slip_logged: { cadence?: string; partial: boolean; backfill: boolean };
   answer_changed: { from: 'skipped' | 'slipped'; to: 'skipped' | 'slipped' };
@@ -208,7 +214,7 @@ export interface AnalyticsEventMap {
     position: number;
     merchant_category: string;
     instances: number;
-    total_cents: string;
+    total_cents_bucket: string;
   };
   deck_card_result: { position: number; result: 'tracked' | 'dismissed' };
   deck_exhausted: { fallback: 'template_grid' | 'full_list' };

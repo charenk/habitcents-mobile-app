@@ -135,10 +135,10 @@ export default function LeakScanRoute() {
           // not be offered the audit exit. It replaces to
           // /onboarding/welcome, whose resume effect only knows how to route
           // an in-progress onboarding; a completed one with a non-statements
-          // doorChosen would land in the intent picker with no way back into
-          // the app, and even a statements doorChosen just bounces straight
-          // back to this same screen. Onboarding-time behavior (this option
-          // shown) is unchanged.
+          // doorChosen would land on the carousel with no way back into the
+          // app, and even a statements doorChosen just bounces straight back
+          // to this same screen. Onboarding-time behavior (this option shown)
+          // is unchanged.
           showAuditExit={!isOnboardingComplete()}
         />
       );

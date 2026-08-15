@@ -57,10 +57,14 @@ drift past ratified decisions silently.
    discovery; (e) cadence routing: monthly/annual cadence in essential or locked
    categories goes to the bills offer, never the deck. The deck is behavioral-only;
    detected subscriptions surface in the bills screen as their own group.
-5. **Beat 1's saved amount is a real expense** through the real log sheet on an
-   onboarding route (no throwaway store, native decimal pad per ADR 0023). Beat 2 is
-   the existing CSV leak-scan pipeline restyled with scope selection and the deck; no
-   new extractor.
+5. **Beat 1's saved amount is a real expense** through the real log sheet (no
+   throwaway store, native decimal pad per ADR 0023). AS BUILT the beat deep-links
+   into Today, which opens that real sheet over it, rather than hosting a second copy
+   on a dedicated onboarding route as PRD sect 6 asks: the user sees the sheet, not an
+   empty page, and a parallel pad would be exactly the surface rule 1 preserves.
+   Revisit if the device pass shows the Today background reads as disorienting.
+   Beat 2 is the existing CSV leak-scan pipeline restyled with scope selection and the
+   deck; no new extractor.
 
 ## Alternatives considered
 
@@ -82,8 +86,19 @@ drift past ratified decisions silently.
   checklist item. A stale video is a checklist miss, not silent drift.
 - PRD v3.1 sections 6, 7.2, 7.5, and 10 are read through this ADR's amendments.
 - ADR 0022's welcome-screen question (the aurora exploration flagged in the punchlist)
-  closes: the exploration resolves into the carousel's first frame.
-- The onboarding step machine changes again; STEP_ROUTE keeps mapping every stale
-  persisted step (the build 5 lesson stands).
-- Open item carried: D5, the free-tier recurring cap (recommend uncapped plus
-  `recurring_expense_count` instrumentation; decide on month 3/6 data).
+  closes by RETIRING the aurora: the carousel replaces the splash it decorated, so no
+  screen renders it. `components/onboarding/AuroraBackground.tsx` is kept unreferenced
+  as the documented revert path, the same way `darkTheme` is. The carousel's first
+  frame is a beat poster once captures land. `design/PATTERN_VOCABULARY.md` follows:
+  one decorative gradient remains (the premium upsell hero).
+- The onboarding step machine gets SIMPLER, not more complex: the routing table is
+  deleted outright. The carousel is the only onboarding destination, so whatever step
+  is stored, landing there shows it and re-picking is an honest resume;
+  `app/onboarding/intent.tsx` stays registered as a redirect so a persisted deep link
+  resolves. That is a stronger guarantee than a table nobody can forget to maintain
+  (the build 5 lesson stands, discharged differently).
+- D5 resolved: the free-tier recurring cap stays UNCAPPED and instrumented. The PRD
+  asks for `recurring_expense_count` as a person property, which this app cannot set:
+  person properties key off `identify()`, and D-9's anonymous-device-ID posture
+  forbids calling it. It ships as a once-per-session snapshot EVENT carrying the same
+  number. Decide the cap on month 3/6 data.

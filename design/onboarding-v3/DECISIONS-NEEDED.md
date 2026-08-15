@@ -1,7 +1,7 @@
 # Onboarding v3.1: decision matrix
 
-Six decisions surfaced by the audit. Five resolved by Charen on 2026-08-14 across two
-session rounds; one open (D5). Nothing blocks phase 1 of the integration plan.
+Six decisions surfaced by the audit, ALL RESOLVED by Charen on 2026-08-14 across
+three session rounds. Nothing is open; nothing blocks the build.
 
 ## Resolved 2026-08-14
 
@@ -83,8 +83,10 @@ of failures. Final design, meeting every visible PRD outcome:
 
 ### D5. Free-tier recurring cap: stay uncapped, instrument only (round 2)
 The PRD's 3-cap never existed in this codebase, so there is nothing to raise. Recurring
-expenses stay uncapped; phase 8 adds the `recurring_expense_count` user property and the
-number is read at month 3 and 6. Rationale: an unenforced ceiling costs nothing to
+expenses stay uncapped; phase 8 adds `recurring_expense_count` and the number is read at
+month 3 and 6. AS BUILT it is an EVENT, not the person property the PRD names: person
+properties key off `identify()`, which D-9's anonymous-device-ID posture forbids, so a
+once-per-session snapshot carries the same number (see INSTRUMENTATION.md). Rationale: an unenforced ceiling costs nothing to
 observe and everything to guess wrong, and the habit cap (1 free / 5 premium) is already
 the load-bearing gate the PRD says it should be. Revisit only if the data shows a
 free-tier abuse pattern.

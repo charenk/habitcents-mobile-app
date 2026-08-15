@@ -96,7 +96,7 @@ export function DeckScreen({
         position: dealPosition(candidate.merchantStem),
         merchant_category: candidate.category,
         instances: candidate.occurrences,
-        total_cents: bucketCents(candidate.totalCents),
+        total_cents_bucket: bucketCents(candidate.totalCents),
       });
     });
     // dealPosition is a render-scope helper over a ref; candidates is the real

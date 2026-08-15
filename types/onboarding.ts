@@ -1,17 +1,18 @@
 /**
  * Type definitions for onboarding flow and progressive feature reveal.
  *
- * Onboarding flow (W3, "the app is the onboarding" complete, ADR 0020 + 0022):
- * welcome -> fork (the intent picker), then every door completes onboarding at
- * its own terminal action in the real app: Door 1 (track) from the first
- * LogExpenseSheet save/close, Door 3 (break) from BreakHabitSheet's start/
- * close, Door 2 (scan) from its own results flow, skip immediately.
+ * Onboarding flow (ADR 0020 + 0022, amended by ADR 0026): welcome -> fork,
+ * then every beat completes onboarding at its own terminal action in the real
+ * app: track from the first LogExpenseSheet save/close, break from
+ * BreakHabitSheet's start/close, scan from its own results flow, skip
+ * immediately.
+ *
  * audit_subs / audit_vices / reveal / guided_log / success are RETIRED step
  * values: the screens they named (P2-1, docs/design-package-phase2/
  * 02-p2-1-onboarding-leak-audit.md) are deleted. They stay in the union below
- * only so a currentStep persisted before this update still deserializes; see
- * OnboardingContext's NEXT_STEP and welcome.tsx's STEP_ROUTE for how a stored
- * one revives (at the intent picker) without crashing.
+ * only so a currentStep persisted before this update still deserializes.
+ * Nothing routes on currentStep any more (the carousel is the sole onboarding
+ * destination), so a retired value is inert rather than dangerous.
  */
 
 export type OnboardingStep =

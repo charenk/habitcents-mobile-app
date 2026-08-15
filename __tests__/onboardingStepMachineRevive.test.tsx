@@ -15,9 +15,8 @@
  * Formerly covered a STEP_ROUTE map; before that, the single guided_log case.
  *
  * Uses the real OnboardingProvider (unlike door1FirstRun.test.tsx /
- * door3BreakSheet.test.tsx, which mock it) so the actual STEP_ROUTE resume
- * effect runs against real persisted state, seeded directly into the
- * AsyncStorage mock.
+ * door3BreakSheet.test.tsx, which mock it) so the real resume effect runs
+ * against real persisted state, seeded directly into the AsyncStorage mock.
  */
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock')
@@ -53,8 +52,10 @@ function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SafeAreaProvider initialMetrics={initialMetrics}>
       <ThemeProvider>
-        {/* The honest-zero welcome renders the real KeptHero, which reads
-            useCurrency; the provider joined the wrapper at the W1+W3 merge. */}
+        {/* The carousel tree reaches useCurrency through the shared UI
+            primitives; welcome itself no longer renders a KeptHero (that was
+            the retired honest-zero splash), but the provider is still
+            required. */}
         <CurrencyProvider>
           <OnboardingProvider>{children}</OnboardingProvider>
         </CurrencyProvider>

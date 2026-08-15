@@ -31,6 +31,7 @@ import type {
   HabitChangeGoal,
   HabitLogEntry,
   HabitStatus,
+  HabitStartSource,
 } from '@/types/habit';
 
 type AnswerState = 'skipped' | 'slipped';
@@ -352,7 +353,11 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
     habitId: string,
     skipValue: number,
     valueEdited: boolean,
-    source: 'detection' | 'scan' | 'onboarding' = 'detection'
+    // No default. An unpassed source persists undefined and reports as
+    // 'unknown' on first_kept, which is what types/habit.ts promises: a goal is
+    // never silently attributed to a route it may not have come from. All call
+    // sites pass one explicitly.
+    source?: HabitStartSource
   ): Promise<HabitChangeGoal> => {
     // Read through the ref: the break sheet seeds and starts in one
     // handler tick, before the seeded habit reaches the `habits` render state.
@@ -402,7 +407,7 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
     await saveHabits(updatedHabits);
 
     track('habit_goal_created', { cadence: habit.frequency, value_edited: valueEdited });
-    track('habit_tracking_started', { cadence: habit.frequency, source });
+    track('habit_tracking_started', { cadence: habit.frequency, source: source ?? 'unknown' });
     return newGoal;
   }, [habits, goals]);
 

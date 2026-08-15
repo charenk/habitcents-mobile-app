@@ -172,9 +172,9 @@ describe('deck screen', () => {
   it('sends a bucketed total, never a raw amount', async () => {
     await renderDeck();
     // D-9: amounts are coarse-bucketed before they leave the device.
-    const props = shownCalls()[0][1] as { total_cents: string };
-    expect(typeof props.total_cents).toBe('string');
-    expect(props.total_cents).not.toBe('8400');
+    const props = shownCalls()[0][1] as { total_cents_bucket: string };
+    expect(typeof props.total_cents_bucket).toBe('string');
+    expect(props.total_cents_bucket).not.toBe('8400');
   });
 
   it('reports and raises a dismissal', async () => {
