@@ -36,22 +36,18 @@ export function HabitsList({ rows, managedMonthlyTotal, onBreak, onOpenHabit, on
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   if (rows.length === 0) {
-    // Same experience, same words as Insights' empty leaks state: nothing has
-    // been discovered yet, so there is nothing to manage on either tab.
+    // Pane-level fill treatment, no card shell: nothing has been discovered
+    // yet, so there is nothing to manage on either tab. The habits tab offers
+    // the direct action rather than Insights' "go log something", because
+    // this IS the habits surface: someone here already knows what they want
+    // to break.
     return (
-      <View style={styles.card}>
-        <View style={styles.empty}>
-          {/* Was a bespoke Text pair; now the house primitive, which is what
-              carries the CTA. The habits tab offers the direct action rather
-              than Insights' "go log something", because this IS the habits
-              surface: someone here already knows what they want to break. */}
-          <EmptyState
-            title={strings.insights.leaksEmptyTitle}
-            body={strings.insights.leaksEmptyBody}
-            cta={onBreakHabit ? { label: strings.money.habitsEmptyCta, onPress: onBreakHabit } : undefined}
-          />
-        </View>
-      </View>
+      <EmptyState
+        layout="fill"
+        title={strings.money.habitsEmptyTitle}
+        body={strings.money.habitsEmptyBody}
+        cta={onBreakHabit ? { label: strings.money.habitsEmptyCta, onPress: onBreakHabit } : undefined}
+      />
     );
   }
 
@@ -103,21 +99,6 @@ function createStyles(theme: AppTheme) {
       borderColor: theme.cloud,
       borderRadius: radii.feature,
       paddingHorizontal: 18,
-    },
-    empty: {
-      paddingVertical: 10,
-    },
-    emptyTitle: {
-      fontSize: typeScale.label,
-      fontFamily: theme.fonts.uiSemibold,
-      color: theme.ink,
-    },
-    emptyBody: {
-      fontSize: typeScale.caption,
-      fontFamily: theme.fonts.ui,
-      color: theme.slate,
-      marginTop: 4,
-      lineHeight: 18,
     },
   });
 }

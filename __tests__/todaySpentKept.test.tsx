@@ -85,6 +85,11 @@ jest.mock('@/contexts/CategoriesContext', () => ({
 // existing suites exercise that flow, so onboarding is complete by default
 // and every mutator is a no-op spy. door1FirstRun.test.tsx covers the flow
 // itself with a fuller mock.
+//
+// mockDoorChosen is mutable (not a literal in the factory) so the empty-state
+// skip_activation test below can seed 'skip' for its own case, the same
+// pattern mockGoals/mockHabits/mockExpenses above already use.
+let mockDoorChosen: 'skip' | 'fresh' = 'fresh';
 jest.mock('@/contexts/OnboardingContext', () => ({
   useOnboarding: () => ({
     isLoading: false,
@@ -92,6 +97,9 @@ jest.mock('@/contexts/OnboardingContext', () => ({
     completeStep: jest.fn(async () => {}),
     skipStep: jest.fn(async () => {}),
     completeOnboarding: jest.fn(async () => {}),
+    // useEmptyStateAction (components/onboarding/useEmptyStateAction.ts)
+    // reads onboardingState.doorChosen.
+    onboardingState: { doorChosen: mockDoorChosen },
   }),
 }));
 
@@ -220,6 +228,7 @@ beforeEach(() => {
   mockGoals = [];
   mockHabits = [];
   mockExpenses = [];
+  mockDoorChosen = 'fresh';
   mockPush.mockClear();
   mockTrack.mockClear();
 });
@@ -442,5 +451,70 @@ describe('Today: break-another affordance (DI-6)', () => {
 
     expect(view.getByText(strings.today.breakAnotherHabitCta)).toBeTruthy();
     expect(view.queryByText(strings.habitLogging.freeTierNote)).toBeNull();
+  });
+});
+
+// Empty-state unification pass (design/empty-state-unification): the Spent
+// pane's true zero state (no expense ever logged) and the Kept pane's CTA
+// analytics, now both routed through useEmptyStateAction.
+describe('Today: Spent pane true-zero state', () => {
+  it('shows the fill empty state, and its CTA opens the log sheet, when no expense has ever been logged', async () => {
+    const view = await renderToday();
+
+    expect(view.getByText(strings.today.spentEmptyTitle)).toBeTruthy();
+    expect(view.getByText(strings.today.spentEmptyBody)).toBeTruthy();
+    // The logged-today block never renders alongside the fill state: there's
+    // nothing for it to show.
+    expect(view.queryByText(strings.today.loggedTodayEmpty)).toBeNull();
+
+    // QuickLogRow's own control shares the exact same accessible name
+    // ("Log an expense" is both quickLogOpenLabel and spentEmptyCta by
+    // design, and the Kept pane's own true-zero CTA reads identically too).
+    // Scoped to the Spent pane rules out Kept's; within the Spent pane the
+    // fill state's CTA is the second (QuickLogRow's own control renders
+    // first, above it).
+    const spentPane = view.getByTestId('spent-pane');
+    const spentPaneCtas = within(spentPane).getAllByRole('button', { name: strings.today.spentEmptyCta });
+    expect(spentPaneCtas).toHaveLength(2);
+    await tap(spentPaneCtas[1]);
+
+    expect(view.getByText(strings.expenseSheet.logEyebrow)).toBeTruthy();
+  });
+
+  it('renders the normal quiet-day path once any expense exists, even one not logged today', async () => {
+    mockExpenses = [makeExpense({ id: 'e1', date: new Date('2026-01-01T09:00:00') })];
+
+    const view = await renderToday();
+
+    expect(view.queryByText(strings.today.spentEmptyTitle)).toBeNull();
+    expect(view.getByText(strings.today.loggedTodayEmpty)).toBeTruthy();
+  });
+});
+
+describe('Today: Kept pane true-zero CTA analytics', () => {
+  it('fires skip_activation with surface today_kept for a skipper, and always switches to Spent', async () => {
+    mockDoorChosen = 'skip';
+    const view = await renderToday();
+
+    await tap(view.getByTestId('kept-chip'));
+    // Scoped to the Kept pane: both panes stay mounted (DI-7), and
+    // "Log an expense" is also QuickLogRow's (still-mounted) Spent-pane
+    // control plus the Spent pane's own true-zero CTA in this fixture.
+    const keptPane = view.getByTestId('kept-pane');
+    await tap(within(keptPane).getByRole('button', { name: strings.today.keptEmptyCta }));
+
+    expect(mockTrack).toHaveBeenCalledWith('skip_activation', { surface: 'today_kept' });
+    expect(view.getByLabelText(/^Spent .*, selected/)).toBeTruthy();
+  });
+
+  it('stays silent for a user who did not skip onboarding', async () => {
+    mockDoorChosen = 'fresh';
+    const view = await renderToday();
+
+    await tap(view.getByTestId('kept-chip'));
+    const keptPane = view.getByTestId('kept-pane');
+    await tap(within(keptPane).getByRole('button', { name: strings.today.keptEmptyCta }));
+
+    expect(mockTrack).not.toHaveBeenCalledWith('skip_activation', expect.anything());
   });
 });

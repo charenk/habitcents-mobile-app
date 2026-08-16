@@ -23,7 +23,11 @@ export type EmptyStateSurface =
   | 'money_upcoming'
   | 'money_habits'
   | 'insights_leaks'
-  | 'categories';
+  | 'categories'
+  | 'today_spent'
+  | 'today_kept'
+  | 'insights_month'
+  | 'insights_scan';
 
 /**
  * Wrap an empty-state CTA. Returns the handler to hand to `EmptyState`.

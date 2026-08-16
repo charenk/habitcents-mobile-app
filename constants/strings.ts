@@ -810,6 +810,17 @@ export const strings = {
     // least one logged expense (LoggedTodayList's onViewAll prop).
     loggedTodayViewAll: 'View all',
     loggedTodayEmpty: 'A quiet day so far. Anything you log lands here.',
+    // Spent pane, true zero state (no expenses ever, not just today):
+    // replaces the logged-today list entirely rather than showing it empty.
+    spentEmptyTitle: 'Start with what you just spent',
+    spentEmptyBody: 'Amount first, then a category. About ten seconds.',
+    spentEmptyCta: 'Log an expense',
+    // Kept pane, true zero state. Deliberately the same visible words as
+    // insights.leaksEmptyTitle/Body/Cta (kept has its own keys so the two
+    // surfaces stop sharing one string).
+    keptEmptyTitle: 'Your leaks will show up here',
+    keptEmptyBody: 'Keep logging expenses. Around 4 logs at the same place is enough to spot a pattern.',
+    keptEmptyCta: 'Log an expense',
     alreadyBreakingToast: "You're already breaking this habit.",
     editExpenseLabel: (title: string, amountLabel: string) => `Edit ${title}, ${amountLabel}`,
     // Break-another affordance (DI-6, ADR 0019): quiet, always-present at the
@@ -917,7 +928,9 @@ export const strings = {
     // relying on shape alone being noticed.
     recurringRowSuffix: 'recurring',
     spentEmptyTitle: 'Nothing logged yet',
-    spentEmptyBody: 'Log your first in about 10 seconds. Amount first, then tap a category.',
+    // Every expense you log lands in this list; the empty state says so
+    // rather than restating "log your first" (that's the CTA's job).
+    spentEmptyBody: 'Every expense you log lands here, newest first.',
     // Upcoming
     upcomingWindowEyebrow: (days: number) => `Next ${days} days`,
     // U8: the window presets picker (2 weeks / 1 month / 3 months).
@@ -940,8 +953,17 @@ export const strings = {
     // can reach has to offer something to DO, not just explain itself.
     spentEmptyCta: 'Log an expense',
     habitsEmptyCta: 'Break a habit',
+    habitsEmptyTitle: 'No leaks spotted yet',
+    habitsEmptyBody: 'Keep logging and patterns surface on their own. Or pick a habit to break yourself.',
     upcomingListEyebrow: 'Scheduled',
+    // True zero-data state (no recurring expense exists at all), distinct
+    // from the window-empty state below (a recurring expense exists, just
+    // none fall in the current window).
+    upcomingEmptyTitle: 'Nothing repeating yet',
     upcomingEmptyBody: "Mark an expense as repeating and we'll show its next date here.",
+    // Same words as upcomingAddAffordance (the header affordance), its own key
+    // so the true-zero empty state's CTA can be targeted unambiguously.
+    upcomingEmptyCta: 'Add an upcoming expense',
     multiPaymentPill: (count: number, monthLabel: string) => `${count} payments in ${monthLabel}`,
     // Schedule line under an upcoming row, assembled in utils/recurring.ts:
     // "Monthly · 1st · next Aug 1", "Every 2 weeks · next Aug 14".
@@ -1041,12 +1063,25 @@ export const strings = {
       `${spent} spent · ${difference} over ${monthLabel}`,
     paceSpentOnly: (spent: string) => `${spent} spent`,
     pacePlaceholder: 'One full month of data unlocks your pace.',
+    // This month segment, true zero state (no expenses and no leak rows at
+    // all): replaces the three-card stack entirely rather than showing three
+    // empty cards stacked on top of each other.
+    monthEmptyTitle: 'Your first insights are a few logs away',
+    monthEmptyBody:
+      'Log what you spend and this fills in: where it went, and which leaks are worth breaking.',
+    monthEmptyCta: 'Log an expense',
 
     // First scan segment (W5, OB-6 Insights half, ADR 0020: summary shown
     // until replaced, no expiry). Conditional on a persisted ScanSummary.
     monthSegment: 'This month',
     scanSegment: 'First scan',
     scanSegmentControlLabel: 'Insights view',
+    // Loaded, no scan on file yet (scanSummary resolved to null).
+    scanEmptyTitle: 'Find the leaks you already have',
+    // The privacy line is quoted verbatim from the app's existing scan copy
+    // (onboarding.beatScanHook / intentScanDescription).
+    scanEmptyBody: 'Scan a bank statement on your phone. Nothing uploads, ever.',
+    scanEmptyCta: 'Scan my statement',
     scanSnapshotEyebrow: (date: string) => `First scan · ${date}`,
     // Evidence line under the eyebrow: what this snapshot covers, honestly.
     // windowLabel is omitted when the scan carried no coverage window.

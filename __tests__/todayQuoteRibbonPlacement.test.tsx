@@ -110,6 +110,10 @@ jest.mock('@/contexts/OnboardingContext', () => ({
     completeStep: jest.fn(async () => {}),
     skipStep: jest.fn(async () => {}),
     completeOnboarding: jest.fn(async () => {}),
+    // useEmptyStateAction (components/onboarding/useEmptyStateAction.ts)
+    // reads onboardingState.doorChosen; 'fresh' (not 'skip') keeps this
+    // file's existing assertions untouched by the skip_activation event.
+    onboardingState: { doorChosen: 'fresh' },
   }),
 }));
 
@@ -252,6 +256,10 @@ describe('Today: rename (decision D3)', () => {
   // UX-060: still uppercase on screen, but transformed by the style, so the
   // text node carries the sentence-case string.
   it("the logged-list eyebrow reads Today's log, not Logged today", async () => {
+    // Empty-state unification pass: the logged-today list (and its eyebrow)
+    // only renders once at least one expense exists at all; with none, the
+    // Spent pane's true-zero fill EmptyState renders instead.
+    mockExpenses = [makeExpense({ id: 'e1' })];
     const view = await renderToday();
 
     expect(view.getByText("Today's log")).toBeTruthy();

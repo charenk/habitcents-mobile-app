@@ -89,6 +89,11 @@ async function renderList(overrides: Partial<React.ComponentProps<typeof Upcomin
         onWindowDaysChange={noop}
         onAdd={noop}
         onEditItem={noop}
+        // Every fixture here has at least one recurring expense somewhere
+        // (the window-empty case below is "no items in THIS window", not
+        // "nothing recurs at all"); override to false to hit the true-zero
+        // fill state instead.
+        hasAnyRecurring={true}
         {...overrides}
       />
     </Providers>

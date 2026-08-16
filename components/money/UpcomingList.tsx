@@ -77,6 +77,10 @@ export type UpcomingListProps = {
   onEmptyAdd?: () => void;
   /** Opens the add-upcoming sheet in edit mode for this row's expense. */
   onEditItem: (expense: Expense) => void;
+  /** True zero-data: whether ANY expense resolves to a recurrence rule at
+   *  all, independent of the current window. Distinct from `items.length`,
+   *  which can be empty just because the current window is narrow. */
+  hasAnyRecurring: boolean;
 };
 
 export function UpcomingList({
@@ -86,6 +90,7 @@ export function UpcomingList({
   onAdd,
   onEmptyAdd,
   onEditItem,
+  hasAnyRecurring,
 }: UpcomingListProps): React.JSX.Element {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -106,6 +111,23 @@ export function UpcomingList({
       <Icon name="Plus" size={20} color={theme.slate} />
     </Pressable>
   );
+
+  // Two distinct empties (PRD v3.1 sect 5). True zero-data (no recurring
+  // expense exists at all) drops the whole total/summary card too: a window
+  // picker and a $0 total over nothing repeating would be chrome around an
+  // empty room. Window-empty (something repeats, just not inside the
+  // currently picked window) keeps the total card exactly as before, since
+  // the window picker itself is how the user gets back to their data.
+  if (!hasAnyRecurring) {
+    return (
+      <EmptyState
+        layout="fill"
+        title={strings.money.upcomingEmptyTitle}
+        body={strings.money.upcomingEmptyBody}
+        cta={{ label: strings.money.upcomingEmptyCta, onPress: onEmptyAdd ?? onAdd }}
+      />
+    );
+  }
 
   return (
     <View>

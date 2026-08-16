@@ -210,11 +210,11 @@ describe('Money > Habits tab', () => {
     expect(mockPush).toHaveBeenCalledWith('/habit/h-changing');
   });
 
-  it('shows the reused Insights empty copy when there are no habits', async () => {
+  it('shows its own empty copy when there are no habits (empty-state unification: HabitsList no longer shares Insights\' leaksEmpty* strings)', async () => {
     const view = await renderMoney();
     await openHabitsSegment(view);
 
-    expect(view.getByText(strings.insights.leaksEmptyTitle)).toBeTruthy();
-    expect(view.getByText(strings.insights.leaksEmptyBody)).toBeTruthy();
+    expect(view.getByText(strings.money.habitsEmptyTitle)).toBeTruthy();
+    expect(view.getByText(strings.money.habitsEmptyBody)).toBeTruthy();
   });
 });

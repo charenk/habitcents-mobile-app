@@ -21,6 +21,7 @@ import { WhereItWentCard } from '@/components/insights/WhereItWentCard';
 import { PaceCard, type PaceComparison } from '@/components/insights/PaceCard';
 import { ScanSnapshotCard } from '@/components/insights/ScanSnapshotCard';
 import { PickOneSheet } from '@/components/habit-logging/PickOneSheet';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { categoryEmoji, categoryIdentityColor } from '@/constants/categoryEmoji';
@@ -53,6 +54,15 @@ export default function InsightsScreen() {
   const handleEmptyLog = useEmptyStateAction('insights_leaks', useCallback(() => {
     router.navigate('/(tabs)?view=spent&sheet=log');
   }, [router]));
+  // This month segment, true zero state (no data at all, not just no leaks):
+  // its own surface, so the two zero states never get conflated in the funnel.
+  const handleMonthEmptyLog = useEmptyStateAction('insights_month', useCallback(() => {
+    router.navigate('/(tabs)?view=spent&sheet=log');
+  }, [router]));
+  // First scan segment, loaded-but-no-scan state.
+  const handleScanEmptyOpen = useEmptyStateAction('insights_scan', useCallback(() => {
+    router.push('/leak-scan');
+  }, [router]));
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
@@ -71,7 +81,10 @@ export default function InsightsScreen() {
   // First scan segment (W5, OB-6 Insights half, ADR 0020: kept until
   // replaced, no expiry). Re-read on every focus, not just mount, so a scan
   // run elsewhere and then returned to shows up here without a reload.
-  const [scanSummary, setScanSummary] = useState<ScanSummary | null>(null);
+  // undefined = not loaded yet (distinct from null = loaded, no scan on
+  // file): without the distinction, the pre-scan empty state flashed for a
+  // beat before getScanSummary() resolved, on every focus.
+  const [scanSummary, setScanSummary] = useState<ScanSummary | null | undefined>(undefined);
   const [view, setView] = useState<InsightsView>('month');
 
   useFocusEffect(
@@ -114,6 +127,11 @@ export default function InsightsScreen() {
         };
       });
   }, [categories, getDiscoveredHabits, getActiveHabits]);
+
+  // This month segment, true zero state: nothing to show at all, not even a
+  // partial-data card. Distinct from LeaksCard's own empty state below, which
+  // still applies once there IS month data but no leak has been detected yet.
+  const monthHasData = expenses.length > 0 || leakRows.length > 0;
 
   // 2. Where it went: reuse the single category rollup implementation.
   const spendingByCategory = useMemo(
@@ -185,26 +203,40 @@ export default function InsightsScreen() {
       <ScreenHeader title={strings.screenTitles.insights} actions={profileAction} />
       {/* Same composition the Today tab uses: ScreenHeader owns the chrome,
           the switcher sits below it as its own row (merge of first-scan onto
-          the DI stack, resolution per the independents review). */}
-      {scanSummary ? (
-        <View style={styles.segments}>
-          <SegmentedControl<InsightsView>
-            options={segments}
-            value={view}
-            onChange={setView}
-            accessibilityLabel={strings.insights.scanSegmentControlLabel}
-          />
-        </View>
-      ) : null}
+          the DI stack, resolution per the independents review). Always
+          renders now: First scan is a real destination (a fill empty state
+          when nothing has been scanned yet) rather than a segment that only
+          exists once a scan has happened. */}
+      <View style={styles.segments}>
+        <SegmentedControl<InsightsView>
+          options={segments}
+          value={view}
+          onChange={setView}
+          accessibilityLabel={strings.insights.scanSegmentControlLabel}
+        />
+      </View>
 
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {scanSummary && view === 'scan' ? (
-          <ScanSnapshotCard summary={scanSummary} />
-        ) : (
+        {view === 'scan' ? (
+          // scanSummary undefined means getScanSummary() hasn't resolved yet
+          // (this focus's fetch is still in flight): render nothing rather
+          // than flashing the "no scan yet" empty state for a beat before the
+          // real answer (truthy or null) lands.
+          scanSummary === undefined ? null : scanSummary ? (
+            <ScanSnapshotCard summary={scanSummary} />
+          ) : (
+            <EmptyState
+              layout="fill"
+              title={strings.insights.scanEmptyTitle}
+              body={strings.insights.scanEmptyBody}
+              cta={{ label: strings.insights.scanEmptyCta, onPress: handleScanEmptyOpen }}
+            />
+          )
+        ) : monthHasData ? (
           <>
             <LeaksCard
               onLogExpense={handleEmptyLog}
@@ -220,6 +252,13 @@ export default function InsightsScreen() {
 
             <PaceCard monthLabel={monthLabel} projection={projection} comparison={comparison} />
           </>
+        ) : (
+          <EmptyState
+            layout="fill"
+            title={strings.insights.monthEmptyTitle}
+            body={strings.insights.monthEmptyBody}
+            cta={{ label: strings.insights.monthEmptyCta, onPress: handleMonthEmptyLog }}
+          />
         )}
       </ScrollView>
 
@@ -247,6 +286,12 @@ function createStyles(theme: AppTheme) {
       backgroundColor: theme.background,
     },
     segments: {
+      // The control used to render only once a scan existed, which hid the
+      // fact that this row never carried the screen gutter Money's identical
+      // row does: it sat flush against both screen edges. Now that it is
+      // always visible, that lands on every first-time user, so it takes the
+      // same 20pt gutter as the rest of the app's screen chrome.
+      paddingHorizontal: 20,
       marginTop: 12,
     },
     scrollView: {

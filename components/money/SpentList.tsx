@@ -112,8 +112,9 @@ export function SpentList({ sections, onEditExpense, onLogExpense }: SpentListPr
   const { format } = useCurrency();
 
   const today = new Date();
-  // No expenses ever, today included: the whole-list EmptyState renders
-  // below the (empty) Today block rather than replacing it.
+  // No expenses ever: no synthesized Today section either, so the SectionList
+  // sees a genuinely empty `sections` array and renders ListEmptyComponent
+  // instead of a Today block with nothing under it.
   const neverLogged = sections.length === 0;
 
   // Today is always the first section, synthesized empty if nothing was
@@ -126,12 +127,13 @@ export function SpentList({ sections, onEditExpense, onLogExpense }: SpentListPr
   // could not go stale that way.
   const dayKey = today.toDateString();
   const listSections: ExpenseSection[] = useMemo(() => {
+    if (neverLogged) return [];
     const todaySection = sections.find((section) => isSameDay(section.data[0].date, today));
     const pastSections = sections.filter((section) => section !== todaySection);
     const head: ExpenseSection = todaySection ?? { title: TODAY_EMPTY_KEY, data: [] };
     return [head, ...pastSections];
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sections, dayKey]);
+  }, [sections, dayKey, neverLogged]);
 
   const renderItem = ({
     item,
@@ -177,17 +179,18 @@ export function SpentList({ sections, onEditExpense, onLogExpense }: SpentListPr
     </View>
   );
 
-  const listFooter = neverLogged ? (
-    <View style={styles.empty}>
-      <EmptyState
-        title={strings.money.spentEmptyTitle}
-        body={strings.money.spentEmptyBody}
-        cta={onLogExpense ? { label: strings.money.spentEmptyCta, onPress: onLogExpense } : undefined}
-      />
-    </View>
-  ) : (
-    <Text style={styles.hint}>{strings.money.spentEditHint}</Text>
-  );
+  // Populated only: the never-logged case renders through ListEmptyComponent
+  // instead, so no section (and no hint below one) exists to footer.
+  const listFooter = neverLogged ? null : <Text style={styles.hint}>{strings.money.spentEditHint}</Text>;
+
+  const listEmpty = neverLogged ? (
+    <EmptyState
+      layout="fill"
+      title={strings.money.spentEmptyTitle}
+      body={strings.money.spentEmptyBody}
+      cta={onLogExpense ? { label: strings.money.spentEmptyCta, onPress: onLogExpense } : undefined}
+    />
+  ) : null;
 
   return (
     <SectionList<Expense, ExpenseSection>
@@ -197,6 +200,7 @@ export function SpentList({ sections, onEditExpense, onLogExpense }: SpentListPr
       renderSectionHeader={renderSectionHeader}
       renderSectionFooter={renderSectionFooter}
       ListFooterComponent={listFooter}
+      ListEmptyComponent={listEmpty}
       style={styles.container}
       contentContainerStyle={styles.listContent}
       stickySectionHeadersEnabled={false}
@@ -282,11 +286,6 @@ function createStyles(theme: AppTheme) {
       color: theme.mistText,
       textAlign: 'center',
       marginTop: 24,
-    },
-    empty: {
-      paddingVertical: 40,
-      paddingHorizontal: 24,
-      alignItems: 'center',
     },
   });
 }
