@@ -146,14 +146,13 @@ export default function CategoriesScreen() {
         showsVerticalScrollIndicator={false}
       >
         {sections.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <EmptyState
-              icon="Folder"
-              title={strings.categories.emptyTitle}
-              body={strings.categories.emptySubtitle}
-              cta={{ label: strings.categories.emptyCta, onPress: handleEmptyAddCategory }}
-            />
-          </View>
+          <EmptyState
+            layout="fill"
+            icon="Folder"
+            title={strings.categories.emptyTitle}
+            body={strings.categories.emptySubtitle}
+            cta={{ label: strings.categories.emptyCta, onPress: handleEmptyAddCategory }}
+          />
         ) : (
           sections.map((section) => (
             <View key={section.title} style={styles.section}>
@@ -239,11 +238,6 @@ function createStyles(theme: AppTheme) {
       fontSize: typeScale.body,
       fontFamily: theme.fonts.ui,
       color: theme.slate,
-    },
-    emptyContainer: {
-      alignItems: 'center',
-      paddingTop: 60,
-      paddingHorizontal: 24,
     },
   });
 }

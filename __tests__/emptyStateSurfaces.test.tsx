@@ -78,7 +78,7 @@ describe('every reachable empty state offers a first action', () => {
     expect(onLogExpense).toHaveBeenCalledTimes(1);
   });
 
-  it('Money > Upcoming offers adding one', async () => {
+  it('Money > Upcoming offers adding one (true zero-data: no recurring expense at all)', async () => {
     const onEmptyAdd = jest.fn();
     const view = await renderWith(
       <UpcomingList
@@ -88,13 +88,14 @@ describe('every reachable empty state offers a first action', () => {
         onAdd={jest.fn()}
         onEmptyAdd={onEmptyAdd}
         onEditItem={jest.fn()}
+        hasAnyRecurring={false}
       />
     );
 
-    // Two controls share this label (the header affordance and the empty
-    // state's CTA); the empty state's is the one that reports a surface.
-    const buttons = view.getAllByRole('button', { name: strings.money.upcomingAddAffordance });
-    fireEvent.press(buttons[buttons.length - 1]);
+    // upcomingEmptyCta is its own key now (empty-state unification pass), so
+    // this no longer shares a label with the header affordance and needs no
+    // index-based disambiguation.
+    fireEvent.press(view.getByRole('button', { name: strings.money.upcomingEmptyCta }));
     expect(onEmptyAdd).toHaveBeenCalledTimes(1);
   });
 
@@ -109,6 +110,11 @@ describe('every reachable empty state offers a first action', () => {
         onBreakHabit={onBreakHabit}
       />
     );
+
+    // HabitsList no longer reuses insights.leaksEmptyTitle/Body (empty-state
+    // unification pass): it has its own money.habitsEmptyTitle/Body keys.
+    expect(view.getByText(strings.money.habitsEmptyTitle)).toBeTruthy();
+    expect(view.getByText(strings.money.habitsEmptyBody)).toBeTruthy();
 
     fireEvent.press(view.getByRole('button', { name: strings.money.habitsEmptyCta }));
     expect(onBreakHabit).toHaveBeenCalledTimes(1);
@@ -132,7 +138,11 @@ describe('every reachable empty state offers a first action', () => {
 
 describe('the empty states deliberately left without a CTA', () => {
   // Pace is empty until a month of data exists. No button can shorten that, so
-  // offering one would promise something the tap cannot deliver.
+  // offering one would promise something the tap cannot deliver. Empty-state
+  // unification pass note: this is now reachable only as a PARTIAL-data
+  // state (Insights' "This month" true-zero case renders one fill EmptyState
+  // instead of the three-card stack, so PaceCard's own empty never appears
+  // then); the "no button" rule stated above is unchanged either way.
   it('Pace explains the wait instead of offering a button', async () => {
     // projection null is exactly the "not a full month yet" state.
     const view = await renderWith(
@@ -146,6 +156,9 @@ describe('the empty states deliberately left without a CTA', () => {
   // Where-it-went is empty for the CHOSEN RANGE, not for all time. The fix is
   // usually widening the range, which the card does not own, so a "log an
   // expense" button here would answer a question the user did not ask.
+  // Empty-state unification pass note: same partial-data caveat as Pace
+  // above -- this card's own empty only renders once Insights' "This month"
+  // segment has cleared monthHasData.
   it('Where it went states the range is empty instead of offering a button', async () => {
     const view = await renderWith(<WhereItWentCard rows={[]} rangeLabel="Last 7 days" />);
 
@@ -208,5 +221,109 @@ describe('skip_activation', () => {
 
     // The measurement must never be able to swallow the user's tap.
     expect(onPress).toHaveBeenCalledTimes(1);
+  });
+});
+
+// Empty-state unification pass (design/empty-state-unification): finishing
+// the EmptyState primitive's rollout so every zero-data surface renders the
+// same pane-level treatment (layout="fill") -- centered icon, hook title,
+// short body, secondary CTA.
+describe('layout="fill" renders the icon on every pane-level surface', () => {
+  // The icon is accessibility-hidden by design (EmptyState.tsx), and RNTL
+  // excludes hidden elements from queries by default; `{ hidden: true }`
+  // opts back in, the same option name the icon's own accessibility state
+  // documents itself with (accessibilityElementsHidden).
+  const HIDDEN = { hidden: true };
+
+  it('Money > Spent (SpentList, neverLogged)', async () => {
+    const view = await renderWith(
+      <SpentList sections={[]} onEditExpense={jest.fn()} onLogExpense={jest.fn()} />
+    );
+    expect(view.getByTestId('empty-state-icon', HIDDEN)).toBeTruthy();
+  });
+
+  it('Money > Upcoming (true zero-data)', async () => {
+    const view = await renderWith(
+      <UpcomingList
+        items={[]}
+        windowDays={14}
+        onWindowDaysChange={jest.fn()}
+        onAdd={jest.fn()}
+        onEditItem={jest.fn()}
+        hasAnyRecurring={false}
+      />
+    );
+    expect(view.getByTestId('empty-state-icon', HIDDEN)).toBeTruthy();
+  });
+
+  it('Money > Habits', async () => {
+    const view = await renderWith(
+      <HabitsList rows={[]} managedMonthlyTotal={0} onBreak={jest.fn()} onOpenHabit={jest.fn()} />
+    );
+    expect(view.getByTestId('empty-state-icon', HIDDEN)).toBeTruthy();
+  });
+
+  // Falls back to the default ChartLine icon: no icon prop is passed.
+  it('fill mode defaults the icon even when the caller supplies none', async () => {
+    const view = await renderWith(<EmptyState layout="fill" body="body" />);
+    expect(view.getByTestId('empty-state-icon', HIDDEN)).toBeTruthy();
+  });
+
+  // Inline (the default layout) must NOT gain a default icon: that would
+  // shift every existing inline call site that renders no icon today.
+  it('inline mode stays icon-less when the caller supplies none', async () => {
+    const view = await renderWith(<EmptyState body="body" />);
+    expect(view.queryByTestId('empty-state-icon', HIDDEN)).toBeNull();
+  });
+});
+
+describe('SpentList true zero-data (neverLogged)', () => {
+  it('renders no day header at all, only the fill empty state', async () => {
+    const view = await renderWith(
+      <SpentList sections={[]} onEditExpense={jest.fn()} onLogExpense={jest.fn()} />
+    );
+
+    expect(view.getByText(strings.money.spentEmptyTitle)).toBeTruthy();
+    // No synthesized "Today" section header, and no day label from any real
+    // section either -- there is nothing to group.
+    expect(view.queryByText(strings.money.spentToday, { exact: false })).toBeNull();
+    expect(view.queryByRole('header')).toBeNull();
+  });
+});
+
+describe('UpcomingList: true zero-data vs window-empty are two different empties', () => {
+  it('true zero-data (no recurring expense at all) hides the total/summary card', async () => {
+    const view = await renderWith(
+      <UpcomingList
+        items={[]}
+        windowDays={14}
+        onWindowDaysChange={jest.fn()}
+        onAdd={jest.fn()}
+        onEditItem={jest.fn()}
+        hasAnyRecurring={false}
+      />
+    );
+
+    expect(view.getByText(strings.money.upcomingEmptyTitle)).toBeTruthy();
+    expect(view.queryByTestId('upcoming-total-text')).toBeNull();
+    expect(view.queryByLabelText(strings.money.upcomingWindowSegmentLabel)).toBeNull();
+  });
+
+  it('window-empty (something recurs, just not in this window) keeps the total card', async () => {
+    const view = await renderWith(
+      <UpcomingList
+        items={[]}
+        windowDays={14}
+        onWindowDaysChange={jest.fn()}
+        onAdd={jest.fn()}
+        onEditItem={jest.fn()}
+        hasAnyRecurring={true}
+      />
+    );
+
+    expect(view.getByTestId('upcoming-total-text')).toBeTruthy();
+    expect(view.getByLabelText(strings.money.upcomingWindowSegmentLabel)).toBeTruthy();
+    expect(view.getByText(strings.money.upcomingEmptyBody)).toBeTruthy();
+    expect(view.queryByText(strings.money.upcomingEmptyTitle)).toBeNull();
   });
 });

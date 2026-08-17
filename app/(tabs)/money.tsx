@@ -44,7 +44,7 @@ import type { Expense } from '@/types/expense';
 import { groupExpensesByDate } from '@/data/expensesMock';
 import { isHabitLimitReached } from '@/utils/habitLogging';
 import { getEntitlement } from '@/utils/purchases';
-import { computeUpcoming, type UpcomingItem } from '@/utils/recurring';
+import { computeUpcoming, resolveRule, type UpcomingItem } from '@/utils/recurring';
 import { getUpcomingWindowDays, setUpcomingWindowDays } from '@/utils/storage';
 import { DEFAULT_UPCOMING_WINDOW_DAYS, type UpcomingWindowDays } from '@/utils/upcomingWindow';
 
@@ -142,6 +142,13 @@ export default function MoneyScreen() {
     todayMid.setHours(0, 0, 0, 0);
     return advancePastToday(computeUpcoming(expenses, windowDays), todayMid.getTime());
   }, [expenses, windowDays]);
+
+  // True zero-data for Upcoming (PRD v3.1 sect 5): whether ANY expense
+  // resolves to a recurrence rule at all, independent of the current window.
+  const hasAnyRecurring = useMemo(
+    () => expenses.some((e) => resolveRule(e) !== null),
+    [expenses]
+  );
 
   const upcomingSheetVisible = addUpcomingVisible || editingUpcoming !== null;
 
@@ -254,6 +261,7 @@ export default function MoneyScreen() {
               onAdd={() => setAddUpcomingVisible(true)}
               onEmptyAdd={handleEmptyAddUpcoming}
               onEditItem={(expense) => setEditingUpcoming(expense)}
+              hasAnyRecurring={hasAnyRecurring}
             />
           )}
           {view === 'habits' && (

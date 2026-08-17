@@ -99,10 +99,16 @@ describe('SpentList: Today always first', () => {
     expect(view.queryByText(strings.money.spentTodayEmpty)).toBeNull();
   });
 
-  it('keeps the whole-list EmptyState below the (empty) Today block when nothing has ever been logged', async () => {
+  // Empty-state unification pass (design/empty-state-unification): the
+  // synthesized "Today, nothing logged yet" block used to render above the
+  // whole-list EmptyState even when nothing had ever been logged. It no
+  // longer does: a genuinely empty `sections` array now renders through
+  // SectionList's ListEmptyComponent with no synthesized section (and so no
+  // day header) at all, just the one fill EmptyState.
+  it('renders only the fill EmptyState, no synthesized Today block, when nothing has ever been logged', async () => {
     const view = await renderSpent([]);
 
-    expect(view.getByText(strings.money.spentTodayEmpty)).toBeTruthy();
+    expect(view.queryByText(strings.money.spentTodayEmpty)).toBeNull();
     expect(view.getByText(strings.money.spentEmptyTitle)).toBeTruthy();
     expect(view.getByText(strings.money.spentEmptyBody)).toBeTruthy();
     // No tappable rows exist anywhere, so the edit hint does not render.

@@ -33,6 +33,7 @@ import { QuickLogRow } from '@/components/money/QuickLogRow';
 import { LoggedTodayList } from '@/components/money/LoggedTodayList';
 import { FirstRunRibbon } from '@/components/onboarding/FirstRunRibbon';
 import { useFirstRunRibbon } from '@/components/onboarding/useFirstRunRibbon';
+import { useEmptyStateAction } from '@/components/onboarding/useEmptyStateAction';
 import { ViewQuote } from '@/components/today/ViewQuote';
 import { useViewQuote } from '@/components/today/useViewQuote';
 import { BreakHabitSheet, type BreakHabitStartData } from '@/components/onboarding/BreakHabitSheet';
@@ -217,6 +218,22 @@ export default function TodayScreen() {
     setLogCategory(category);
     setLogVisible(true);
   }, []);
+
+  // Spent pane, true zero state (PRD v3.1 sect 5): no expense has ever been
+  // logged, not just today. Hides the logged-today list and watch-nudge and
+  // shows a fill EmptyState below the quote instead.
+  const spentIsEmpty = expenses.length === 0;
+  const handleSpentEmptyLog = useEmptyStateAction('today_spent', () => openLogSheet());
+
+  // Kept pane, true zero state: same "switch to Spent" handler the empty
+  // state has always used, wrapped so a skipper's tap reports the surface.
+  const handleKeptEmptyLog = useEmptyStateAction(
+    'today_kept',
+    useCallback(() => {
+      pagerInteracted.current = true;
+      setTodayView('spent');
+    }, [])
+  );
 
   // Eyebrow date line, locale-aware (ADA-008): "Thursday, July 24".
   // ScreenHeader uppercases it, so this stays sentence case.
@@ -915,53 +932,68 @@ export default function TodayScreen() {
               </View>
             ) : null}
             <QuickLogRow onOpenSheet={openLogSheet} />
-            <View style={styles.loggedTodaySpacer}>
-              <LoggedTodayList
-                expenses={loggedToday}
-                onEditExpense={setEditingExpense}
-                onViewAll={handleViewAllExpenses}
-              />
-              {watchNudgeVisible ? (
-                // The watch-nudge (W2 item 3): UpcomingList's dashed-card
-                // grammar (components/money/UpcomingList.tsx `add`), one-shot
-                // for the door 1 first-run flow only, never a permanent Today
-                // feature. Two tap targets in one dashed card: the label
-                // accepts (seeds an honest discovered habit), "not now"
-                // dismisses; both resolve the nudge permanently.
-                <View style={styles.watchNudge}>
-                  <TouchableOpacity
-                    style={styles.watchNudgeAccept}
-                    onPress={handleAcceptWatchNudge}
-                    accessibilityRole="button"
-                    accessibilityLabel={strings.today.watchLeakNudgeLabel}
-                    activeOpacity={0.7}
-                    // UX-031: ~41pt effective (12pt vertical padding either
-                    // side of the 14pt label) without this. The accept
-                    // control anxious users reach for clears 44 now.
-                    hitSlop={{ top: 14, bottom: 14, left: 8, right: 8 }}
-                  >
-                    <Text style={styles.watchNudgeLabel} numberOfLines={1}>
-                      {strings.today.watchLeakNudgeLabel}
-                    </Text>
-                  </TouchableOpacity>
-                  <Text style={styles.watchNudgeSeparator}>·</Text>
-                  <TouchableOpacity
-                    onPress={handleDismissWatchNudge}
-                    // UX-031: 12/12 was ~41pt effective; 14/14 clears 44.
-                    hitSlop={{ top: 14, bottom: 14, left: 8, right: 12 }}
-                    accessibilityRole="button"
-                    accessibilityLabel={strings.today.watchLeakNudgeDismiss}
-                  >
-                    <Text style={styles.watchNudgeDismissText}>
-                      {strings.today.watchLeakNudgeDismiss}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              ) : null}
-            </View>
+            {/* Spent pane, true zero state (PRD v3.1 sect 5): no expense has
+                ever been logged. The logged-today list and watch-nudge have
+                nothing to show, so they're hidden entirely rather than
+                rendering empty, and the fill EmptyState below the quote
+                carries the first action instead. */}
+            {!spentIsEmpty ? (
+              <View style={styles.loggedTodaySpacer}>
+                <LoggedTodayList
+                  expenses={loggedToday}
+                  onEditExpense={setEditingExpense}
+                  onViewAll={handleViewAllExpenses}
+                />
+                {watchNudgeVisible ? (
+                  // The watch-nudge (W2 item 3): UpcomingList's dashed-card
+                  // grammar (components/money/UpcomingList.tsx `add`), one-shot
+                  // for the door 1 first-run flow only, never a permanent Today
+                  // feature. Two tap targets in one dashed card: the label
+                  // accepts (seeds an honest discovered habit), "not now"
+                  // dismisses; both resolve the nudge permanently.
+                  <View style={styles.watchNudge}>
+                    <TouchableOpacity
+                      style={styles.watchNudgeAccept}
+                      onPress={handleAcceptWatchNudge}
+                      accessibilityRole="button"
+                      accessibilityLabel={strings.today.watchLeakNudgeLabel}
+                      activeOpacity={0.7}
+                      // UX-031: ~41pt effective (12pt vertical padding either
+                      // side of the 14pt label) without this. The accept
+                      // control anxious users reach for clears 44 now.
+                      hitSlop={{ top: 14, bottom: 14, left: 8, right: 8 }}
+                    >
+                      <Text style={styles.watchNudgeLabel} numberOfLines={1}>
+                        {strings.today.watchLeakNudgeLabel}
+                      </Text>
+                    </TouchableOpacity>
+                    <Text style={styles.watchNudgeSeparator}>·</Text>
+                    <TouchableOpacity
+                      onPress={handleDismissWatchNudge}
+                      // UX-031: 12/12 was ~41pt effective; 14/14 clears 44.
+                      hitSlop={{ top: 14, bottom: 14, left: 8, right: 12 }}
+                      accessibilityRole="button"
+                      accessibilityLabel={strings.today.watchLeakNudgeDismiss}
+                    >
+                      <Text style={styles.watchNudgeDismissText}>
+                        {strings.today.watchLeakNudgeDismiss}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : null}
+              </View>
+            ) : null}
             {/* U6: Spent closes with a quote, below the logged-today block
                 and the watch-nudge (Charen-approved live preview placement). */}
             <ViewQuote quote={spentQuote} style={styles.spentQuoteWrap} testID="spent-quote" />
+            {spentIsEmpty ? (
+              <EmptyState
+                layout="fill"
+                title={strings.today.spentEmptyTitle}
+                body={strings.today.spentEmptyBody}
+                cta={{ label: strings.today.spentEmptyCta, onPress: handleSpentEmptyLog }}
+              />
+            ) : null}
           </ScrollView>
         </View>
 
@@ -994,7 +1026,7 @@ export default function TodayScreen() {
             </View>
           ) : isEmpty ? (
             <ScrollView
-              contentContainerStyle={styles.emptyContainer}
+              contentContainerStyle={detectionProgress ? styles.emptyContainer : styles.emptyContainerFill}
               showsVerticalScrollIndicator={false}
               refreshControl={
                 <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={theme.primary} />
@@ -1030,20 +1062,19 @@ export default function TodayScreen() {
                 </View>
               ) : (
                 <EmptyState
-                  icon="ChartLine"
-                  title={strings.insights.leaksEmptyTitle}
-                  body={strings.insights.leaksEmptyBody}
+                  layout="fill"
+                  title={strings.today.keptEmptyTitle}
+                  body={strings.today.keptEmptyBody}
                   cta={{
-                    label: strings.habitLogging.logAnExpense,
                     // The quick-log card now lives on the Spent view, not the
                     // Money tab, so the CTA switches views in place rather
                     // than navigating away (was router.push('/(tabs)/money')).
                     // Routed through the same tap-like interaction flag as a
-                    // chip tap so the pager animates over to match (DI-7).
-                    onPress: () => {
-                      pagerInteracted.current = true;
-                      setTodayView('spent');
-                    },
+                    // chip tap so the pager animates over to match (DI-7), and
+                    // through useEmptyStateAction so a skipper's tap reports
+                    // the surface (handleKeptEmptyLog, defined above).
+                    label: strings.today.keptEmptyCta,
+                    onPress: handleKeptEmptyLog,
                   }}
                 />
               )}
@@ -1254,10 +1285,23 @@ function createStyles(theme: AppTheme) {
     },
     // Scrolls rather than centering in a fixed height: on shorter screens the
     // content would otherwise overlap the kept band above it.
+    // Used only by the "spotting your leak" progress card branch, untouched
+    // by the empty-state unification pass below.
     emptyContainer: {
       alignItems: 'center',
       paddingHorizontal: 20,
       paddingTop: 24,
+      paddingBottom: layout.screenBottomClearance,
+    },
+    // Used by the true-zero EmptyState branch. Slimmed off its own
+    // paddingTop: layout="fill" already supplies a (more generous) 40pt top
+    // padding, so stacking this container's 24pt on top of it would be a
+    // duplicate gap between KeptHero and the icon. paddingHorizontal stays:
+    // it is the coach-moment slot and break-another affordance's only
+    // horizontal inset, not just the empty state's.
+    emptyContainerFill: {
+      alignItems: 'center',
+      paddingHorizontal: 20,
       paddingBottom: layout.screenBottomClearance,
     },
     emptyCoachMoment: {

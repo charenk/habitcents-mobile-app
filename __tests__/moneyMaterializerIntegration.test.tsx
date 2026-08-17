@@ -137,7 +137,7 @@ describe('Money: same-day materialization (ADR 0024, U11)', () => {
     expect(view.getByText(daysUntilLabel(7))).toBeTruthy();
   });
 
-  it('a bill with nothing due yet (first occurrence still ahead) shows nothing extra in Spent', async () => {
+  it('a bill with nothing due yet (first occurrence still ahead) shows the true-zero Spent empty state', async () => {
     const parent: Expense = {
       id: 'future-parent',
       title: 'Rent',
@@ -158,8 +158,12 @@ describe('Money: same-day materialization (ADR 0024, U11)', () => {
 
     const view = await renderMoney();
 
-    // Nothing logged today yet: the future-dated parent belongs in Upcoming
-    // only, so Spent's Today block stays the compact empty state.
-    expect(view.getByText(strings.money.spentTodayEmpty)).toBeTruthy();
+    // The future-dated parent belongs in Upcoming only, so Spent's history
+    // is genuinely empty: the true-zero fill EmptyState (empty-state
+    // unification pass), not the compact "nothing yet today" card (that
+    // compact card is for a day with history elsewhere, which this fixture
+    // has none of).
+    expect(view.getByText(strings.money.spentEmptyTitle)).toBeTruthy();
+    expect(view.queryByText(strings.money.spentTodayEmpty)).toBeNull();
   });
 });

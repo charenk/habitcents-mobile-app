@@ -118,6 +118,10 @@ jest.mock('@/contexts/OnboardingContext', () => ({
     skipStep: mockSkipStep,
     completeOnboarding: mockCompleteOnboarding,
     markHabitStarted: mockMarkHabitStarted,
+    // useEmptyStateAction (components/onboarding/useEmptyStateAction.ts)
+    // reads onboardingState.doorChosen; 'fresh' (not 'skip') keeps this
+    // file's existing assertions untouched by the skip_activation event.
+    onboardingState: { doorChosen: 'fresh' },
   }),
 }));
 

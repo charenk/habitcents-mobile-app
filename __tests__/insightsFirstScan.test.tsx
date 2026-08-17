@@ -3,8 +3,10 @@
  * shown until replaced, no expiry).
  *
  * Two things pinned here:
- * - No persisted ScanSummary: the screen renders EXACTLY as it did before
- *   this feature, with no segmented control at all.
+ * - No persisted ScanSummary: the segmented control is always present now
+ *   (empty-state unification pass), defaulting to This month with its usual
+ *   cards; switching to First scan shows a fill empty state whose CTA pushes
+ *   the real scan route, not a hidden segment.
  * - A persisted ScanSummary: the segmented control appears, defaults to This
  *   month, and switching to First scan renders the summary verbatim (dated
  *   eyebrow, KPI numbers, category rows, capped leaks with the evidence-
@@ -25,10 +27,15 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 );
 
 const mockPush = jest.fn();
+// insights_month's empty CTA (handleMonthEmptyLog, app/(tabs)/insights.tsx)
+// routes through router.navigate, same as insights_leaks' existing
+// handleEmptyLog; previously unexercised in this file since no test pressed
+// either CTA.
+const mockNavigate = jest.fn();
 jest.mock('expo-router', () => {
   const react = require('react');
   return {
-    useRouter: () => ({ push: mockPush }),
+    useRouter: () => ({ push: mockPush, navigate: mockNavigate }),
     // No navigator in a unit test, so this stands in for the real
     // useFocusEffect: run the effect once on mount, which is enough to cover
     // both "on mount" and "on focus" for this screen's re-read of the summary.
@@ -63,9 +70,10 @@ import { formatDate } from '@/utils/dates';
 import { selectableLabel } from '@/utils/a11y';
 import { formatMoney } from '@/utils/currency';
 import { DEFAULT_CURRENCY } from '@/utils/currency';
-import { saveHabits } from '@/utils/storage';
+import { saveExpenses, saveHabits } from '@/utils/storage';
 import type { ScanSummary } from '@/types/scanSummary';
 import type { DetectedHabit, HabitStatus } from '@/types/habit';
+import type { Expense } from '@/types/expense';
 
 const initialMetrics = {
   frame: { x: 0, y: 0, width: 390, height: 844 },
@@ -105,6 +113,21 @@ async function renderInsights() {
   // Flush every provider's load effect plus the screen's own scan-summary read.
   await act(async () => {});
   return view;
+}
+
+function expense(overrides: Partial<Expense> = {}): Expense {
+  return {
+    id: 'e1',
+    title: 'Coffee',
+    amount: 500,
+    category: 'Food',
+    date: new Date(),
+    time: '9:00 AM',
+    isRecurring: false,
+    reminderEnabled: false,
+    iconVariant: 'green',
+    ...overrides,
+  };
 }
 
 const CREATED_AT = new Date('2026-07-15T12:00:00.000Z');
@@ -147,18 +170,27 @@ function syntheticSummary(): ScanSummary {
 
 beforeEach(() => {
   mockPush.mockClear();
+  mockNavigate.mockClear();
   mockGetScanSummary.mockClear();
 });
 
 afterEach(cleanup);
 
 describe('Insights first scan segment', () => {
-  it('renders no segmented control and the three usual cards when there is no scan summary', async () => {
+  it('shows the segmented control and the three usual cards when there is no scan summary', async () => {
     mockGetScanSummary.mockResolvedValue(null);
+    // This month needs at least one expense to clear monthHasData and render
+    // the three-card stack instead of its own fill empty state; that gate is
+    // this test's own scope in the "This month segment" describe below.
+    await saveExpenses([expense()]);
     const view = await renderInsights();
 
-    expect(view.queryByRole('tablist')).toBeNull();
-    expect(view.queryByLabelText(strings.insights.scanSegmentControlLabel)).toBeNull();
+    // The control is always present now, even before any scan exists (empty-
+    // state unification pass): First scan is a real destination with its own
+    // fill empty state, not a segment that only appears once earned.
+    expect(view.getByLabelText(strings.insights.scanSegmentControlLabel)).toBeTruthy();
+    expect(view.getByLabelText(selectableLabel(strings.insights.monthSegment, true))).toBeTruthy();
+    expect(view.getByLabelText(selectableLabel(strings.insights.scanSegment, false))).toBeTruthy();
 
     expect(view.getByText(strings.insights.leaksTitle)).toBeTruthy();
     expect(view.getByText(strings.insights.whereItWentTitle)).toBeTruthy();
@@ -166,9 +198,30 @@ describe('Insights first scan segment', () => {
     expect(view.getByText(strings.insights.paceTitle(monthLabel))).toBeTruthy();
   });
 
+  it('pre-scan, selecting First scan shows the scan empty state and its CTA pushes /leak-scan', async () => {
+    mockGetScanSummary.mockResolvedValue(null);
+    const view = await renderInsights();
+
+    await act(async () => {
+      fireEvent.press(view.getByLabelText(selectableLabel(strings.insights.scanSegment, false)));
+    });
+
+    expect(view.getByText(strings.insights.scanEmptyTitle)).toBeTruthy();
+    expect(view.getByText(strings.insights.scanEmptyBody)).toBeTruthy();
+
+    const cta = view.getByRole('button', { name: strings.insights.scanEmptyCta });
+    await act(async () => {
+      fireEvent.press(cta);
+    });
+
+    expect(mockPush).toHaveBeenCalledWith('/leak-scan');
+  });
+
   it('shows the segmented control, defaults to This month, and switches to First scan with the summary rendered verbatim', async () => {
     const summary = syntheticSummary();
     mockGetScanSummary.mockResolvedValue(summary);
+    // This month needs data to clear monthHasData; see the note above.
+    await saveExpenses([expense()]);
     const view = await renderInsights();
 
     // Segmented control present, This month selected by default.
@@ -279,6 +332,56 @@ describe('Insights first scan segment', () => {
 
     expect(view.getByText(strings.insights.leakSummary(money(12000), 18))).toBeTruthy();
     expect(view.queryByText(strings.insights.leakSummaryObserved(money(11000), 18))).toBeNull();
+  });
+});
+
+// Empty-state unification pass (design/empty-state-unification): This
+// month's true zero state (no expenses AND no leak rows) replaces the
+// three-card stack (LeaksCard / WhereItWentCard / PaceCard) with a single
+// fill EmptyState, rather than showing three empty cards stacked on top of
+// each other.
+describe('Insights This month segment: true zero state', () => {
+  it('shows the fill empty state and none of the three cards when there is no data at all', async () => {
+    mockGetScanSummary.mockResolvedValue(null);
+    // AsyncStorage is not cleared between tests in this file (matches this
+    // file's existing convention); reset both sources monthHasData reads
+    // explicitly so this test does not depend on run order.
+    await saveExpenses([]);
+    await saveHabits([]);
+    const view = await renderInsights();
+
+    expect(view.getByText(strings.insights.monthEmptyTitle)).toBeTruthy();
+    expect(view.getByText(strings.insights.monthEmptyBody)).toBeTruthy();
+    expect(view.queryByText(strings.insights.leaksTitle)).toBeNull();
+    expect(view.queryByText(strings.insights.whereItWentTitle)).toBeNull();
+    const monthLabel = formatDate(new Date(), { month: 'long' });
+    expect(view.queryByText(strings.insights.paceTitle(monthLabel))).toBeNull();
+  });
+
+  it('returns the three-card stack once a single expense exists', async () => {
+    mockGetScanSummary.mockResolvedValue(null);
+    await saveExpenses([expense()]);
+    const view = await renderInsights();
+
+    expect(view.queryByText(strings.insights.monthEmptyTitle)).toBeNull();
+    expect(view.getByText(strings.insights.leaksTitle)).toBeTruthy();
+    expect(view.getByText(strings.insights.whereItWentTitle)).toBeTruthy();
+    const monthLabel = formatDate(new Date(), { month: 'long' });
+    expect(view.getByText(strings.insights.paceTitle(monthLabel))).toBeTruthy();
+  });
+
+  it("the fill empty state's CTA navigates to Today's log sheet", async () => {
+    mockGetScanSummary.mockResolvedValue(null);
+    await saveExpenses([]);
+    await saveHabits([]);
+    const view = await renderInsights();
+
+    await act(async () => {
+      fireEvent.press(view.getByRole('button', { name: strings.insights.monthEmptyCta }));
+    });
+
+    // Same destination as insights_leaks' existing handleEmptyLog.
+    expect(mockNavigate).toHaveBeenCalledWith('/(tabs)?view=spent&sheet=log');
   });
 });
 

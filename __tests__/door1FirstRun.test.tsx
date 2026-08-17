@@ -68,9 +68,30 @@ jest.mock('@/contexts/HabitsContext', () => ({
   }),
 }));
 
-const mockAddExpense = jest.fn(async () => undefined);
+// mockExpenses is mutable, mirroring the mockHabits pattern above: the
+// Spent pane's true-zero state (empty-state unification pass) now reads
+// expenses.length, so a saved log has to actually land in this array for
+// the tests below (which save one, then check what renders next) to see
+// the real app's post-save state rather than a permanently-empty stub.
+let mockExpenses: Expense[] = [];
+const mockAddExpense = jest.fn(async (input: Partial<Expense>) => {
+  const saved: Expense = {
+    id: `mock-expense-${mockExpenses.length}`,
+    title: '',
+    amount: 0,
+    category: 'Other',
+    date: new Date(),
+    time: '9:00 AM',
+    isRecurring: false,
+    reminderEnabled: false,
+    iconVariant: 'green',
+    ...input,
+  };
+  mockExpenses = [...mockExpenses, saved];
+  return saved;
+});
 jest.mock('@/contexts/ExpensesContext', () => ({
-  useExpenses: () => ({ expenses: [], addExpense: mockAddExpense }),
+  useExpenses: () => ({ expenses: mockExpenses, addExpense: mockAddExpense }),
 }));
 
 const mockCategories: Category[] = [
@@ -111,6 +132,10 @@ jest.mock('@/contexts/OnboardingContext', () => ({
     completeStep: mockCompleteStep,
     skipStep: mockSkipStep,
     completeOnboarding: mockCompleteOnboarding,
+    // useEmptyStateAction (components/onboarding/useEmptyStateAction.ts)
+    // reads onboardingState.doorChosen; 'fresh' (not 'skip') keeps this
+    // file's existing assertions untouched by the skip_activation event.
+    onboardingState: { doorChosen: 'fresh' },
   }),
 }));
 
@@ -125,6 +150,7 @@ import { strings } from '@/constants/strings';
 import { track } from '@/utils/analytics';
 import type { Category } from '@/types/category';
 import type { DetectedHabit } from '@/types/habit';
+import type { Expense } from '@/types/expense';
 
 const mockTrack = track as jest.Mock;
 
@@ -183,6 +209,7 @@ beforeEach(() => {
   mockParams = {};
   mockOnboardingComplete = false;
   mockHabits = [];
+  mockExpenses = [];
   mockRouterPush.mockClear();
   mockSetParams.mockClear();
   mockTrack.mockClear();
