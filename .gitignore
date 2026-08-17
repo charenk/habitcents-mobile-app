@@ -36,7 +36,11 @@ yarn-error.*
 
 # Metro
 .metro-health-check*
-.claude/
+
+# Claude Code: local settings and worktrees stay out, but .claude/skills/ is
+# checked in so every session and scheduled routine loads them cold.
+.claude/*
+!.claude/skills/
 
 # Leak Scan eval harness: Charen's sanitized real bank exports for local runs
 # only. Never committed (see __tests__/leakScanEval/README.md).
