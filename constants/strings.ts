@@ -865,6 +865,13 @@ export const strings = {
   // ExpenseSheet component (U2, the expense drawer rebuild); the mode
   // ('log' | 'edit') only changes the eyebrow, this coach line, the primary
   // button label, and edit's added delete row.
+  //
+  // Expense-sheet workflow redesign (Charen, 2026-08-16): Save now lives in a
+  // pinned header next to the title and is disabled until an amount is
+  // entered (cents > 0), replacing the old always-live button that toasted
+  // "Enter an amount first." on an empty tap. toasts.enterAmountFirst stays
+  // in use by AddUpcomingSheet, BreakHabitSheet, PartialSlipSheet and
+  // PickOneSheet; only this sheet stopped needing it.
   expenseSheet: {
     logEyebrow: 'Log expense',
     editEyebrow: 'Edit expense',
@@ -883,7 +890,9 @@ export const strings = {
     saveChanges: 'Save changes',
     deleteExpense: 'Delete expense',
     amountLabel: (formattedAmount: string) => `Amount, ${formattedAmount}`,
-    closeLabel: 'Close',
+    // Expense-sheet workflow redesign (2026-08-16): label for the Done bar
+    // that dismisses the iOS decimal pad, which has no return key of its own.
+    keyboardDone: 'Done',
   },
 
   // Money tab (spec 04 "Money").

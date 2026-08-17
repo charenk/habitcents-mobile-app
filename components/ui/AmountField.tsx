@@ -2,10 +2,20 @@
  * AmountField (ADR 0023: amount entry moves to the native keyboard).
  *
  * Same look as AmountDisplay (Instrument Serif digits, tabular-nums, the
- * currency symbol at 0.6x in mist, a 1.5px underline that turns sage on
- * focus) but backed by a real TextInput on `keyboardType="decimal-pad"`
- * instead of a display paired with the retiring custom Keypad. Full width:
- * the underline spans the container, not just the digits.
+ * currency symbol at 0.6x in mist) but backed by a real TextInput on
+ * `keyboardType="decimal-pad"` instead of a display paired with the retiring
+ * custom Keypad. Full width.
+ *
+ * Two variants (`variant`, default 'underline'). 'underline' is the original
+ * look: a 1.5px rule under the digits that turns sage on focus, spanning the
+ * container rather than just the digits. 'enclosed' (expense-sheet workflow
+ * redesign, Charen 2026-08-16) instead wraps the field in TextField's own
+ * bordered-fill grammar: theme.snow fill, a 1.5px border that stays cloud at
+ * rest and turns theme.primary on focus (the width never changes between
+ * states), radius radii.control. Only ExpenseSheet opts into 'enclosed';
+ * every other consumer (AddUpcomingSheet, BreakHabitSheet, PartialSlipSheet,
+ * PickOneSheet, the skip-value sheet in app/habit/[id].tsx) takes the
+ * default and renders byte-identically to before this variant existed.
  *
  * State ownership: the field keeps its own raw typed string internally
  * (typing "12." can't round-trip through toFixed(2) without losing the dot
@@ -21,6 +31,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import { radii } from '@/constants/theme';
 import { currencyMeta } from '@/utils/currency';
 import { centsToKeypadValue, keypadValueToCents } from '@/utils/keypad';
 import { sanitizeAmountInput } from '@/utils/amountInput';
@@ -30,6 +41,8 @@ import { sanitizeAmountInput } from '@/utils/amountInput';
  *  motion.sheet) so iOS doesn't drop a focus request mid-transition. */
 const AUTOFOCUS_DELAY_MS = 300;
 
+export type AmountFieldVariant = 'underline' | 'enclosed';
+
 export type AmountFieldProps = {
   valueCents: number;
   onChangeCents: (cents: number) => void;
@@ -38,6 +51,9 @@ export type AmountFieldProps = {
   /** Numeral font size; the symbol renders at ~60% of this. Default 48. */
   size?: number;
   accessibilityLabel?: string;
+  /** 'underline' (default) is the original look. 'enclosed' wraps the field
+   *  in TextField's bordered-fill grammar instead. See the header comment. */
+  variant?: AmountFieldVariant;
 };
 
 export function AmountField({
@@ -46,6 +62,7 @@ export function AmountField({
   autoFocus = false,
   size = 48,
   accessibilityLabel,
+  variant = 'underline',
 }: AmountFieldProps): React.JSX.Element {
   const theme = useTheme();
   const { currency } = useCurrency();
@@ -99,6 +116,17 @@ export function AmountField({
           flexDirection: 'row',
           alignItems: 'flex-start',
         },
+        // 'enclosed' only. borderWidth never changes between states (only
+        // borderColor does, per TextField's grammar), so focus never nudges
+        // layout.
+        enclosedRow: {
+          backgroundColor: theme.snow,
+          borderWidth: 1.5,
+          borderColor: focused ? theme.primary : theme.cloud,
+          borderRadius: radii.control,
+          paddingHorizontal: 14,
+          paddingVertical: 14,
+        },
         symbol: {
           fontFamily: theme.fonts.display,
           fontSize: Math.round(size * 0.6),
@@ -118,6 +146,7 @@ export function AmountField({
           includeFontPadding: false,
           padding: 0,
         },
+        // 'underline' only.
         underline: {
           height: 1.5,
           marginTop: 6,
@@ -125,12 +154,12 @@ export function AmountField({
           borderRadius: 999,
         },
       }),
-    [theme, size, focused]
+    [theme, size, focused, variant]
   );
 
   return (
     <View style={styles.column}>
-      <View style={styles.row}>
+      <View style={[styles.row, variant === 'enclosed' ? styles.enclosedRow : null]}>
         <Text style={styles.symbol} allowFontScaling maxFontSizeMultiplier={1.3}>
           {meta.symbol}
         </Text>
@@ -150,7 +179,7 @@ export function AmountField({
           selectionColor={theme.primary}
         />
       </View>
-      <View style={styles.underline} />
+      {variant === 'underline' ? <View style={styles.underline} /> : null}
     </View>
   );
 }

@@ -19,10 +19,21 @@
  *    the row were re-logged.
  *
  * Amount (ADR 0023): AmountField is a real TextInput on the native decimal
- * pad, full width, auto-focused on open. Because that pad has no done key,
- * Save (and, in edit mode, Delete) live in a footer docked below the
- * ScrollView rather than inside it, so they stay visible above the keyboard
- * while the amount, category row, and merchant section scroll underneath.
+ * pad, full width, auto-focused on open.
+ *
+ * Expense-sheet workflow redesign (Charen, 2026-08-16): the header (title +
+ * Save) is pinned above the ScrollView instead of docked in a footer below
+ * it, so it stays visible while the amount, WHERE, and CATEGORY sections
+ * scroll underneath (composition only: components/ui/Sheet.tsx did not
+ * change). Save is disabled (Button's existing disabled styling, cloud
+ * background/slate label, UX-047) until an amount is entered, rather than
+ * staying live and toasting "Enter an amount first." on an empty tap. The
+ * amount field itself uses AmountField's 'enclosed' variant (a bordered,
+ * filled rect) rather than the underline every other AmountField consumer
+ * still uses. Because the native decimal pad has no done key, a slim Done
+ * bar renders above the keyboard on iOS so the user has a way to dismiss it;
+ * Android already has one via the pad itself and the merchant field's
+ * returnKeyType="done".
  *
  * Category (U2): a single sideways-scrolling row of labeled tags
  * (CategoryChipRow) replaces the emoji-tile grid. CategoryTilePicker itself
@@ -31,23 +42,21 @@
  * imported from there here.
  *
  * Merchant (U2): the recent-merchant chip row now renders in BOTH modes
- * (the source is unchanged: the user's own recent logs). In edit mode the
- * expense's current merchant is guaranteed a chip, prepended if the natural
- * recency list didn't already include it, and shows pre-selected. The
- * merchant field is optional but not decorative: detection groups strictly
- * on `expense.merchant` (utils/habitDetection.ts groupByMerchant), so it is
- * the only way the app's own logging flow can ever produce a leak.
+ * (the source is unchanged: the user's own recent logs), below the merchant
+ * text field rather than above it. In edit mode the expense's current
+ * merchant is guaranteed a chip, prepended if the natural recency list
+ * didn't already include it, and shows pre-selected. The merchant field is
+ * optional but not decorative: detection groups strictly on
+ * `expense.merchant` (utils/habitDetection.ts groupByMerchant), so it is the
+ * only way the app's own logging flow can ever produce a leak.
  *
  * The LogExpenseSavedInfo callback contract and Door 1's analytics wiring are
  * unchanged: onSaved still fires once, synchronously, right before onClose,
  * built from the values just sent to addExpense rather than its return value.
- *
- * An empty amount is not an error state on the button. The button stays live
- * and tapping it toasts "Enter an amount first.", which tells the user what
- * to do instead of leaving a dead control with no explanation.
  */
 import { useEffect, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Keyboard, Platform, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AmountField } from '@/components/ui/AmountField';
 import { Button } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
@@ -66,6 +75,26 @@ import type { Expense, ExpenseCategory } from '@/types/expense';
 import { toExpenseCategory } from '@/utils/expenseCategory';
 import { hapticSuccess } from '@/utils/motion';
 import { CategoryChipRow } from './CategoryChipRow';
+
+/**
+ * Tracks whether the iOS keyboard is currently up, so the Done bar (below)
+ * renders only while it would have something to dismiss. keyboardWillShow/
+ * Hide are iOS-only events; on Android this stays permanently false, which is
+ * fine since the bar is gated on Platform.OS === 'ios' anyway (Android's
+ * decimal pad has its own done key).
+ */
+function useKeyboardVisible(): boolean {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const showSub = Keyboard.addListener('keyboardWillShow', () => setVisible(true));
+    const hideSub = Keyboard.addListener('keyboardWillHide', () => setVisible(false));
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
+  return visible;
+}
 
 /** How many recent-merchant chips the sheet offers before it stops (log
  *  mode's natural recency list; edit mode may add one more, see below). */
@@ -115,6 +144,8 @@ export function ExpenseSheet({
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const { height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const keyboardVisible = useKeyboardVisible();
   const { show } = useToast();
   const { format } = useCurrency();
   const { getVisibleCategories } = useCategories();
@@ -180,10 +211,9 @@ export function ExpenseSheet({
   };
 
   const handleSave = () => {
-    if (cents <= 0) {
-      show(strings.toasts.enterAmountFirst);
-      return;
-    }
+    // Unreachable from the UI now that Save is disabled until cents > 0
+    // (Charen's call, 2026-08-16); kept as a defensive guard.
+    if (cents <= 0) return;
 
     if (mode === 'log') {
       const resolved = category ?? 'Other';
@@ -265,15 +295,27 @@ export function ExpenseSheet({
   const coachLineText = mode === 'log' ? coachLine ?? strings.expenseSheet.logCoachLine : undefined;
   const saveLabel = mode === 'log' ? strings.expenseSheet.saveExpense : strings.expenseSheet.saveChanges;
 
+  // iOS only: Android's decimal pad has its own done key and the merchant
+  // field already sets returnKeyType="done", so there is nothing for a Done
+  // bar to add there.
+  const showDoneBar = Platform.OS === 'ios' && keyboardVisible;
+  // Sheet gives the panel `paddingBottom: insets.bottom` unconditionally
+  // (constants/theme.ts via components/ui/Sheet.tsx), sized for the resting,
+  // no-keyboard case (home-indicator clearance). With the keyboard up,
+  // avoidKeyboard's KeyboardAvoidingView already lifts the whole panel to sit
+  // right above the keyboard, so that same bottom padding becomes a stray
+  // gap between the Done bar and the keyboard's top edge. Pulling the bar
+  // down by that same inset while the keyboard is visible closes the gap
+  // without touching Sheet.tsx.
+  const doneBarLift = insets.bottom > 0 ? { marginBottom: -insets.bottom } : undefined;
+
   return (
     <Sheet visible={visible} onClose={onClose} avoidKeyboard accessibilityLabel={eyebrow}>
       <View style={[styles.body, { maxHeight: height * 0.82 }]}>
-        <ScrollView
-          style={styles.scroll}
-          contentContainerStyle={styles.content}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
+        {/* Expense-sheet workflow redesign (2026-08-16): title + Save pinned
+            above the scroll area, a sibling of the ScrollView rather than its
+            first child, so it stays fixed while everything else scrolls. */}
+        <View style={styles.header}>
           {/* UX-040: was an 11pt eyebrow, the only Money sheet not heading
               itself with the serif sheetTitle treatment that AddUpcomingSheet,
               AddCategoryModal and CurrencySheet all share. Brought onto the
@@ -281,7 +323,21 @@ export function ExpenseSheet({
           <Text style={styles.title} accessibilityRole="header" maxFontSizeMultiplier={1.5}>
             {eyebrow}
           </Text>
+          <Button
+            label={saveLabel}
+            onPress={handleSave}
+            variant="primary"
+            disabled={cents <= 0}
+            style={styles.headerSave}
+          />
+        </View>
 
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator
+        >
           {coachLineText ? (
             <View style={styles.coachLine}>
               <Icon name="Sprout" size={14} color={theme.primaryDark} />
@@ -294,18 +350,20 @@ export function ExpenseSheet({
             onChangeCents={setCents}
             autoFocus={visible}
             size={48}
+            variant="enclosed"
             accessibilityLabel={strings.expenseSheet.amountLabel(format(cents))}
           />
 
-          <Text style={styles.eyebrow}>{strings.expenseSheet.categoryEyebrow}</Text>
-          <CategoryChipRow
-            categories={categories}
-            value={category}
-            onChange={setCategory}
-            scrollToSelected={mode === 'edit' && visible}
-          />
-
           <Text style={styles.eyebrow}>{strings.expenseSheet.whereEyebrow}</Text>
+          <TextField
+            value={merchant}
+            onChangeText={setMerchant}
+            placeholder={strings.expenses.merchantPlaceholder}
+            accessibilityLabel={strings.expenses.merchantFieldLabel}
+            autoCapitalize="words"
+            autoCorrect={false}
+            returnKeyType="done"
+          />
           {recentMerchants.length > 0 ? (
             <View style={styles.chipRow}>
               {recentMerchants.map((name) => (
@@ -319,29 +377,36 @@ export function ExpenseSheet({
               ))}
             </View>
           ) : null}
-          <TextField
-            value={merchant}
-            onChangeText={setMerchant}
-            placeholder={strings.expenses.merchantPlaceholder}
-            style={styles.merchantField}
-            accessibilityLabel={strings.expenses.merchantFieldLabel}
-            autoCapitalize="words"
-            autoCorrect={false}
-            returnKeyType="done"
+
+          <Text style={styles.eyebrow}>{strings.expenseSheet.categoryEyebrow}</Text>
+          <CategoryChipRow
+            categories={categories}
+            value={category}
+            onChange={setCategory}
+            scrollToSelected={mode === 'edit' && visible}
           />
         </ScrollView>
 
-        <View style={styles.footer}>
-          <Button label={saveLabel} onPress={handleSave} variant="primary" />
-          {mode === 'edit' ? (
+        {mode === 'edit' ? (
+          <View style={styles.footer}>
             <Button
               label={strings.expenseSheet.deleteExpense}
               onPress={handleDelete}
               variant="destructive"
               style={styles.delete}
             />
-          ) : null}
-        </View>
+          </View>
+        ) : null}
+
+        {showDoneBar ? (
+          <View style={[styles.doneBar, doneBarLift]}>
+            <Button
+              label={strings.expenseSheet.keyboardDone}
+              onPress={() => Keyboard.dismiss()}
+              variant="tertiary"
+            />
+          </View>
+        ) : null}
       </View>
     </Sheet>
   );
@@ -352,26 +417,44 @@ function createStyles(theme: AppTheme) {
     body: {
       flexShrink: 1,
     },
-    scroll: {
-      flexShrink: 1,
-    },
-    content: {
-      paddingTop: 10,
+    // Pinned header row: title left, Save right. A hairline bottom border
+    // marks the fixed edge; no scroll-driven shadow or animation.
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
       paddingHorizontal: 20,
-      paddingBottom: 16,
+      paddingTop: 14,
+      paddingBottom: 12,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: theme.cloud,
     },
     // UX-040: sheet header, matching CurrencySheet/AddUpcomingSheet/
     // AddCategoryModal's serif treatment (theme.fonts.display at
     // typeScale.sheetTitle) instead of the old 11pt uppercase eyebrow.
     title: {
+      flex: 1,
       fontFamily: theme.fonts.display,
       fontSize: typeScale.sheetTitle,
       lineHeight: 32,
       color: theme.ink,
       includeFontPadding: false,
-      // Matches AddUpcomingSheet's title spacing (12pt, the app's vertical
-      // rhythm gap) rather than reinventing a new gap.
-      marginBottom: 12,
+      marginRight: 12,
+    },
+    // Compact enough to sit in a header row without touching Button.tsx: a
+    // shorter minHeight than the default primary (50) and tighter horizontal
+    // padding than the default 20.
+    headerSave: {
+      minHeight: 44,
+      paddingHorizontal: 16,
+    },
+    scroll: {
+      flexShrink: 1,
+    },
+    content: {
+      paddingTop: 16,
+      paddingHorizontal: 20,
+      paddingBottom: 16,
     },
     eyebrow: {
       fontFamily: theme.fonts.uiSemibold,
@@ -395,12 +478,12 @@ function createStyles(theme: AppTheme) {
       color: theme.slate,
       lineHeight: 17,
     },
+    // Below the merchant field now (was above it); same 10pt gap the field
+    // used to carry above the chips.
     chipRow: {
       flexDirection: 'row',
       flexWrap: 'wrap',
       gap: 6,
-    },
-    merchantField: {
       marginTop: 10,
     },
     footer: {
@@ -410,6 +493,16 @@ function createStyles(theme: AppTheme) {
     },
     delete: {
       marginTop: 0,
+    },
+    // iOS-only Done bar, last child of the body View so it rides the Sheet's
+    // own KeyboardAvoidingView.
+    doneBar: {
+      minHeight: 44,
+      justifyContent: 'center',
+      alignItems: 'flex-end',
+      paddingHorizontal: 20,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: theme.cloud,
     },
   });
 }

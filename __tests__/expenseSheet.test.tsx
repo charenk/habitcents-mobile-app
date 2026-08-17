@@ -1,6 +1,7 @@
 /**
  * ExpenseSheet (U2, the expense drawer rebuild): merchant capture, mode
- * parity, and edit merchant pre-selection.
+ * parity, edit merchant pre-selection, and (expense-sheet workflow redesign,
+ * Charen 2026-08-16) the pinned header's Save gating and the iOS Done bar.
  *
  * The sheets are the only place the app itself can write `expense.merchant`,
  * and detection groups strictly on that field, so several of these tests pin
@@ -19,6 +20,16 @@
  * rather than tapping digit-labeled Keypad buttons. It's found by its
  * "Amount, ..." accessibility label PREFIX (the suffix changes with the
  * current value as soon as typing starts).
+ *
+ * Done bar (below): components/ui/Sheet.tsx's avoidKeyboard wraps the panel
+ * in a real KeyboardAvoidingView, which ALSO subscribes to 'keyboardWillShow'
+ * on iOS to size its own padding. That listener and the sheet's own Done-bar
+ * hook end up registered under the same event name, so the test tells them
+ * apart by arity: the hook's is an inline, zero-argument
+ * `() => setVisible(true)`; KeyboardAvoidingView's is a bound, one-argument
+ * `_onKeyboardChange`. jest-expo's haste config defaults Platform.OS to
+ * 'ios' for tests, so the bar's Platform.OS === 'ios' gate is satisfied here
+ * without mocking Platform.
  */
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock')
@@ -51,6 +62,7 @@ jest.mock('@/contexts/CategoriesContext', () => ({
 
 import React from 'react';
 import { act, cleanup, fireEvent, render } from '@testing-library/react-native';
+import { Keyboard } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
@@ -372,5 +384,70 @@ describe('ExpenseSheet mode parity', () => {
       editView.getByRole('button', { name: strings.expenseSheet.deleteExpense })
     ).toBeTruthy();
     expect(editView.queryByText(strings.expenseSheet.logCoachLine)).toBeNull();
+  });
+});
+
+describe('ExpenseSheet: Save gating (expense-sheet workflow redesign, 2026-08-16)', () => {
+  it('disables Save in log mode until an amount is entered, then saves on press', async () => {
+    const view = await renderLogSheet();
+
+    const disabledSave = view.getByRole('button', { name: strings.expenseSheet.saveExpense });
+    expect(disabledSave.props.accessibilityState?.disabled).toBe(true);
+
+    // A press on a disabled Button never reaches onPress (Button.tsx passes
+    // `disabled` straight to Pressable), so this is pinning that the control
+    // itself blocks the save, not just that nobody happened to press it.
+    await tap(disabledSave);
+    expect(mockAddExpense).not.toHaveBeenCalled();
+    expect(onClose).not.toHaveBeenCalled();
+
+    await typeAmount(view, '450');
+
+    const enabledSave = view.getByRole('button', { name: strings.expenseSheet.saveExpense });
+    expect(enabledSave.props.accessibilityState?.disabled).toBe(false);
+
+    await tap(enabledSave);
+    expect(mockAddExpense).toHaveBeenCalledTimes(1);
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders Save already enabled in edit mode, where the amount is prefilled', async () => {
+    const expense = makeExpense({ id: 'e1', amount: 1200 });
+    const view = await renderEditSheet(expense);
+
+    const save = view.getByRole('button', { name: strings.expenseSheet.saveChanges });
+    expect(save.props.accessibilityState?.disabled).toBe(false);
+  });
+});
+
+describe('ExpenseSheet: iOS Done bar', () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('pressing Done dismisses the keyboard', async () => {
+    const dismissSpy = jest.spyOn(Keyboard, 'dismiss').mockImplementation(() => {});
+    const addListenerSpy = jest.spyOn(Keyboard, 'addListener');
+
+    const view = await renderLogSheet();
+
+    // Both the sheet's Done-bar hook and Sheet.tsx's own KeyboardAvoidingView
+    // register a 'keyboardWillShow' listener (see the file header comment);
+    // pick out the hook's zero-argument one specifically.
+    const showCall = addListenerSpy.mock.calls.find(
+      ([eventName, listener]) =>
+        eventName === 'keyboardWillShow' && (listener as (...args: unknown[]) => void).length === 0
+    );
+    expect(showCall).toBeTruthy();
+    const showListener = showCall![1] as () => void;
+
+    await act(async () => {
+      showListener();
+    });
+
+    const doneButton = view.getByRole('button', { name: strings.expenseSheet.keyboardDone });
+    await tap(doneButton);
+
+    expect(dismissSpy).toHaveBeenCalledTimes(1);
   });
 });
