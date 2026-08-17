@@ -141,25 +141,46 @@ describe('PickOneSheet ungated', () => {
     expect(view.getByText(strings.habitLogging.pickOneCadenceNoteDaily)).toBeTruthy();
     const start = view.getByRole('button', { name: strings.habitLogging.startBreakingIt });
     expect(start.props.accessibilityState?.disabled).toBeFalsy();
+    expect(start.props.accessibilityHint).toBeUndefined();
     expect(view.getByRole('button', { name: strings.habitLogging.notThisOne })).toBeTruthy();
   });
 
   // UX-051: a $0.00 start would set "one skip keeps $0.00" with no warning,
   // silently zeroing out every future skip on this habit (see PickOneSheet's
-  // handleStart doc comment).
-  it('Start with a zero amount does not start and shows the enter-amount-first toast', async () => {
+  // handleStart doc comment). Disabled-until-valid (ops ADR 0028, 2026-08-16):
+  // Start is disabled at zero rather than live-and-toasting.
+  it('disables Start at a zero amount, then starts on press once it is nonzero', async () => {
     const onStart = jest.fn();
     const view = await renderSheet({ onStart });
 
     await act(async () => {
       fireEvent.changeText(view.getByLabelText(/^One skip keeps,/), '0');
     });
+
+    const disabledStart = view.getByRole('button', { name: strings.habitLogging.startBreakingIt });
+    expect(disabledStart.props.accessibilityState?.disabled).toBe(true);
+    expect(disabledStart.props.accessibilityHint).toBe(strings.sheets.saveHintAmount);
+
+    // A press on a disabled Button never reaches onPress (Button.tsx passes
+    // `disabled` straight to Pressable), so this pins that the control itself
+    // blocks the start, not just that nobody happened to press it.
     await act(async () => {
-      fireEvent.press(view.getByRole('button', { name: strings.habitLogging.startBreakingIt }));
+      fireEvent.press(disabledStart);
+    });
+    expect(onStart).not.toHaveBeenCalled();
+
+    await act(async () => {
+      fireEvent.changeText(view.getByLabelText(/^One skip keeps,/), '5');
     });
 
-    expect(onStart).not.toHaveBeenCalled();
-    expect(view.getByText(strings.toasts.enterAmountFirst)).toBeTruthy();
+    const enabledStart = view.getByRole('button', { name: strings.habitLogging.startBreakingIt });
+    expect(enabledStart.props.accessibilityState?.disabled).toBe(false);
+    expect(enabledStart.props.accessibilityHint).toBeUndefined();
+
+    await act(async () => {
+      fireEvent.press(enabledStart);
+    });
+    expect(onStart).toHaveBeenCalledTimes(1);
   });
 });
 

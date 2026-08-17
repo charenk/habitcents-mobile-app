@@ -31,7 +31,6 @@ import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-n
 import { AmountField } from '@/components/ui/AmountField';
 import { Button } from '@/components/ui/Button';
 import { Sheet } from '@/components/ui/Sheet';
-import { useToast } from '@/components/ui/Toast';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { radii, typeScale } from '@/constants/theme';
@@ -89,7 +88,6 @@ export function PickOneSheet({
   const theme = useTheme();
   const { format } = useCurrency();
   const { height } = useWindowDimensions();
-  const { show } = useToast();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   // Prefilled from the detected per-occurrence MEDIAN and edited on the keypad
@@ -120,14 +118,17 @@ export function PickOneSheet({
   const hasRange = habit.maxAmount > habit.minAmount;
 
   // UX-051: cents === 0 would set "one skip keeps $0.00" with no warning,
-  // silently zeroing out every future skip on this habit. Same house pattern
-  // as PartialSlipSheet/ExpenseSheet: keep Start live and toast instead of a
-  // dead disabled control.
+  // silently zeroing out every future skip on this habit.
+  // Disabled-until-valid (ops ADR 0028, 2026-08-16): Start is disabled until
+  // an amount is entered, rather than staying live and toasting "Enter an
+  // amount first." on an empty tap (the old house pattern, shared with
+  // PartialSlipSheet/ExpenseSheet).
+  const canStart = cents !== 0;
+
   const handleStart = () => {
-    if (cents === 0) {
-      show(strings.toasts.enterAmountFirst);
-      return;
-    }
+    // Unreachable from the UI now that Start is disabled until canStart;
+    // kept as a defensive guard.
+    if (!canStart) return;
     onStart(cents, valueEdited);
   };
 
@@ -217,6 +218,11 @@ export function PickOneSheet({
           <Button
             label={strings.habitLogging.startBreakingIt}
             onPress={handleStart}
+            disabled={!canStart}
+            // Only carried while disabled, so VoiceOver never reads stale
+            // guidance on an already-enabled button (Button.tsx passes the
+            // hint straight through unconditionally).
+            accessibilityHint={canStart ? undefined : strings.sheets.saveHintAmount}
           />
           <Button label={strings.habitLogging.notThisOne} variant="tertiary" onPress={onCancel} />
         </View>
