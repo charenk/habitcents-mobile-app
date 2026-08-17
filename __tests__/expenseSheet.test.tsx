@@ -374,16 +374,31 @@ describe('ExpenseSheet mode parity', () => {
     expect(editView.getByLabelText(/^Chipotle, /)).toBeTruthy();
   });
 
-  it('only edit mode renders the delete row; only log mode renders a coach line', async () => {
+  it('only edit mode renders the delete row', async () => {
     const logView = await renderLogSheet();
     expect(logView.queryByRole('button', { name: strings.expenseSheet.deleteExpense })).toBeNull();
-    expect(logView.getByText(strings.expenseSheet.logCoachLine)).toBeTruthy();
 
     const editView = await renderEditSheet(makeExpense({ id: 'e1' }));
     expect(
       editView.getByRole('button', { name: strings.expenseSheet.deleteExpense })
     ).toBeTruthy();
-    expect(editView.queryByText(strings.expenseSheet.logCoachLine)).toBeNull();
+  });
+
+  it('neither mode renders a coach line by default, but a passed coachLine still renders in log mode', async () => {
+    const logView = await renderLogSheet();
+    const editView = await renderEditSheet(makeExpense({ id: 'e1' }));
+
+    const CUSTOM_LINE = 'Amount first, custom copy.';
+    expect(logView.queryByText(CUSTOM_LINE)).toBeNull();
+    expect(editView.queryByText(CUSTOM_LINE)).toBeNull();
+
+    const customView = await render(
+      <Providers>
+        <ExpenseSheet mode="log" visible onClose={onClose} coachLine={CUSTOM_LINE} />
+      </Providers>
+    );
+    await act(async () => {});
+    expect(customView.getByText(CUSTOM_LINE)).toBeTruthy();
   });
 });
 

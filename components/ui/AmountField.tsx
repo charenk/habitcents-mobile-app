@@ -125,7 +125,9 @@ export function AmountField({
           borderColor: focused ? theme.primary : theme.cloud,
           borderRadius: radii.control,
           paddingHorizontal: 14,
-          paddingVertical: 14,
+          // Density pass (Charen, 2026-08-16 device feedback): 14 -> 8, part
+          // of the ~25% shorter field (paired with ExpenseSheet's size 48 -> 40).
+          paddingVertical: 8,
         },
         symbol: {
           fontFamily: theme.fonts.display,
