@@ -16,6 +16,14 @@
  * used to guard is gone, so the rule is now trivially honored by the fill
  * simply never being sage on that side.
  *
+ * Geometry (Charen's call, 2026-08-16): this is SegmentedControl's own
+ * nesting rule, track radius = thumb radius + track padding, scaled to this
+ * control's value size. Thumb (segment) sits at radii.feature (20), track
+ * padding is TRACK_PADDING (3), so the track sits at 23. The old track
+ * (radii.feature, 20) and segment (radii.feature - 3, 17) pairing predated
+ * the rule and used a derived magic number for the segment; this replaces
+ * both with the named tokens the rule expects.
+ *
  * No motion (house style, like SegmentedControl): the thumb swaps instantly.
  */
 import { useMemo } from 'react';
@@ -25,6 +33,14 @@ import { useCurrency } from '@/contexts/CurrencyContext';
 import { radii, shadows, typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import { selectableLabel } from '@/utils/a11y';
+
+// Track padding (also the inter-segment gap): the nesting rule this file and
+// SegmentedControl.tsx both follow is track radius = thumb radius + this
+// value. Kept local rather than shared: SegmentedControl's own TRACK_PADDING
+// is a private module constant with no established cross-file export point,
+// and the two scales have no other coupling that would justify importing
+// one component's internals into the other's.
+const TRACK_PADDING = 3;
 
 export type SpentKeptView = 'spent' | 'kept';
 
@@ -134,13 +150,13 @@ function createStyles(theme: AppTheme) {
     track: {
       flexDirection: 'row',
       backgroundColor: theme.cloud,
-      borderRadius: radii.feature,
-      padding: 3,
-      gap: 3,
+      borderRadius: radii.feature + TRACK_PADDING,
+      padding: TRACK_PADDING,
+      gap: TRACK_PADDING,
     },
     segment: {
       flex: 1,
-      borderRadius: radii.feature - 3,
+      borderRadius: radii.feature,
       paddingVertical: 12,
       paddingHorizontal: 14,
     },

@@ -22,6 +22,7 @@ Sources of truth this page compresses: `design/redesign-handoff/01-tokens-and-fo
 ## Controls
 
 - There is ONE switching pattern: the cloud track with a raised white thumb. Small scale = SegmentedControl (Money views, sheet toggles). Value scale = the Today scoreboard. Do not invent a third switcher; grow one of these.
+- Both scales are rounded rects, not pills (Charen, 2026-08-16), and both follow one nesting rule: **track radius = thumb radius + track padding (3)**. Small scale is thumb 14 on a 17 track; value scale is thumb 20 on a 23 track. The two track radii are the only derived values in the app; every other radius comes from the token set.
 - Buttons: primary sage (48 to 52pt min height), secondary white with cloud border, tertiary bare slate text, destructive coral. Pick from these four.
 - The dashed-border card is the app's "add another" affordance (add upcoming, break another habit). Reuse it for any add-an-item entry.
 - 40pt pill buttons with cloud borders are header chrome only, icons in slate, never sage.
@@ -69,7 +70,7 @@ Sources of truth this page compresses: `design/redesign-handoff/01-tokens-and-fo
 - [ ] Type on the scale; serif only for titles and money; tabular numbers
 - [ ] Controls picked from the vocabulary above, not invented
 - [ ] Rows: exactly one trailing affordance (chevron / external-link / none), value in 13pt slate, no silent Linking failures
-- [ ] 20pt gutter, 12pt rhythm, radii from the set (10 / 14 / 20 / 999)
+- [ ] 20pt gutter, 12pt rhythm, radii from the set (10 / 14 / 20 / 999), switcher tracks derived per the nesting rule
 - [ ] Motion inside the budget with a reduced-motion path, single driver
 - [ ] Header roles, tab roles, 44pt targets, Dynamic Type caps
 - [ ] Strings centralized, sentence case, locked vocabulary
