@@ -5,7 +5,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { CoachMomentSlot } from './CoachMomentSlot';
 import { cardText, type CoachMomentCardId } from '@/utils/coachMoments';
-import { radii, shadows, typeScale, type AppTheme } from '@/constants/theme';
+import { radii, shadows, spacing, typeScale, type AppTheme } from '@/constants/theme';
 import type { DetectedHabit } from '@/types/habit';
 import { strings } from '@/constants/strings';
 
@@ -97,7 +97,7 @@ function createStyles(theme: AppTheme) {
     card: {
       backgroundColor: theme.white,
       borderRadius: radii.feature,
-      padding: 18,
+      padding: spacing.xl,
       borderWidth: 1,
       borderColor: theme.cloud,
       ...shadows.card,

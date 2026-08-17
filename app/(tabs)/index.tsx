@@ -47,7 +47,7 @@ import { progressTowardDetection } from '@/utils/habitDetection';
 import { formatDate } from '@/utils/dates';
 import { track } from '@/utils/analytics';
 import { useReducedMotion } from '@/utils/motion';
-import { radii, typeScale, layout, type AppTheme } from '@/constants/theme';
+import { radii, spacing, typeScale, layout, type AppTheme } from '@/constants/theme';
 import type { DetectedHabit, HabitChangeGoal } from '@/types/habit';
 import { strings } from '@/constants/strings';
 import { useToast } from '@/components/ui/Toast';
@@ -1167,22 +1167,22 @@ function createStyles(theme: AppTheme) {
       // The track itself carries no horizontal padding (SegmentedControl
       // doesn't either); the 20pt gutter lives here, same as money.tsx's
       // "segments" wrapper around its own SegmentedControl.
-      paddingHorizontal: 20,
-      marginTop: 8,
-      marginBottom: 12,
+      paddingHorizontal: spacing.gutter,
+      marginTop: spacing.sm,
+      marginBottom: spacing.stack,
     },
     // FirstRunRibbon, door3 (U6): the Kept pane's top-level View carries no
     // ambient horizontal padding (KeptHero gets its own via keptHeroGutter
     // below), so this style supplies the screen's 20pt gutter directly.
     ribbonWrap: {
-      paddingHorizontal: 20,
-      marginBottom: 12,
+      paddingHorizontal: spacing.gutter,
+      marginBottom: spacing.stack,
     },
     // FirstRunRibbon, door1 (U6): renders inside spentScrollContent, which
     // already carries the 20pt gutter for every child, so this only adds the
     // bottom spacing, not a second horizontal inset.
     ribbonWrapInline: {
-      marginBottom: 12,
+      marginBottom: spacing.stack,
     },
     // DI-7: the pager fills whatever vertical space is left below the chips
     // row, same as the single conditional pane did before it.
@@ -1192,13 +1192,13 @@ function createStyles(theme: AppTheme) {
     // DI-6: shares the 20pt gutter the chips row and both list content styles
     // use below, so the band no longer renders full-bleed on Today.
     keptHeroGutter: {
-      marginHorizontal: 20,
+      marginHorizontal: spacing.gutter,
     },
     // U6 opening quote (Kept): the Kept pane's top-level View has no ambient
     // padding, so ViewQuote's own 20pt gutter is the only inset it needs;
     // this only adds the space above KeptHero below it.
     keptQuoteWrap: {
-      marginBottom: 14,
+      marginBottom: spacing.md,
     },
     // U6 closing quote (Spent): spentScrollContent already carries the
     // screen's 20pt gutter for every child, and ViewQuote applies its own
@@ -1206,19 +1206,19 @@ function createStyles(theme: AppTheme) {
     // otherwise the quote would sit at a 40pt inset instead of the 20pt
     // every other pane edge uses, including the Kept opening quote above.
     spentQuoteWrap: {
-      marginHorizontal: -20,
-      marginTop: 20,
+      marginHorizontal: -spacing.gutter,
+      marginTop: spacing.gutter,
     },
     spentScroll: {
       flex: 1,
     },
     spentScrollContent: {
-      paddingHorizontal: 20,
-      paddingTop: 16,
+      paddingHorizontal: spacing.gutter,
+      paddingTop: spacing.lg,
       paddingBottom: layout.screenBottomClearance,
     },
     loggedTodaySpacer: {
-      marginTop: 12,
+      marginTop: spacing.stack,
     },
     // Watch-nudge (W2 item 3): UpcomingList's dashed-card grammar
     // (components/money/UpcomingList.tsx `add`), placed directly under the
@@ -1226,19 +1226,19 @@ function createStyles(theme: AppTheme) {
     watchNudge: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 8,
+      gap: spacing.sm,
       minHeight: 48,
       borderRadius: radii.card,
       borderWidth: 1.5,
       borderStyle: 'dashed',
       borderColor: theme.cloudDashed,
       backgroundColor: theme.white,
-      paddingHorizontal: 16,
-      marginTop: 10,
+      paddingHorizontal: spacing.lg,
+      marginTop: spacing.control,
     },
     watchNudgeAccept: {
       flex: 1,
-      paddingVertical: 12,
+      paddingVertical: spacing.stack,
     },
     watchNudgeLabel: {
       fontFamily: theme.fonts.uiSemibold,
@@ -1256,13 +1256,13 @@ function createStyles(theme: AppTheme) {
       color: theme.mistText,
     },
     listContent: {
-      paddingHorizontal: 20,
+      paddingHorizontal: spacing.gutter,
       paddingBottom: layout.screenBottomClearance,
     },
     sectionHeader: {
-      marginTop: 20,
-      marginBottom: 10,
-      paddingHorizontal: 4,
+      marginTop: spacing.gutter,
+      marginBottom: spacing.control,
+      paddingHorizontal: spacing.tight,
     },
     // Section headers are eyebrows like every other one on this screen; the
     // uppercasing lives here so strings.ts keeps storing sentence case.
@@ -1289,8 +1289,8 @@ function createStyles(theme: AppTheme) {
     // by the empty-state unification pass below.
     emptyContainer: {
       alignItems: 'center',
-      paddingHorizontal: 20,
-      paddingTop: 24,
+      paddingHorizontal: spacing.gutter,
+      paddingTop: spacing.xxl,
       paddingBottom: layout.screenBottomClearance,
     },
     // Used by the true-zero EmptyState branch. Slimmed off its own
@@ -1301,12 +1301,12 @@ function createStyles(theme: AppTheme) {
     // horizontal inset, not just the empty state's.
     emptyContainerFill: {
       alignItems: 'center',
-      paddingHorizontal: 20,
+      paddingHorizontal: spacing.gutter,
       paddingBottom: layout.screenBottomClearance,
     },
     emptyCoachMoment: {
       alignSelf: 'stretch',
-      marginTop: 24,
+      marginTop: spacing.xxl,
     },
     // Break-another affordance (DI-6, ADR 0019): a dashed card mirroring
     // UpcomingList's add-upcoming row (components/money/UpcomingList.tsx
@@ -1318,15 +1318,15 @@ function createStyles(theme: AppTheme) {
     breakAnother: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 12,
+      gap: spacing.stack,
       minHeight: 56,
       borderRadius: radii.card,
       borderWidth: 1.5,
       borderStyle: 'dashed',
       borderColor: theme.cloudDashed,
       backgroundColor: theme.white,
-      paddingHorizontal: 16,
-      paddingVertical: 12,
+      paddingHorizontal: spacing.lg,
+      paddingVertical: spacing.stack,
     },
     breakAnotherText: {
       flex: 1,
@@ -1340,7 +1340,7 @@ function createStyles(theme: AppTheme) {
       fontSize: typeScale.caption,
       fontFamily: theme.fonts.ui,
       color: theme.textSecondary,
-      marginTop: 2,
+      marginTop: spacing.hairline,
     },
     // Wraps the affordance wherever it is placed (empty ScrollView content or
     // the populated SectionList's footer): alignSelf stretch matters in the
@@ -1349,7 +1349,7 @@ function createStyles(theme: AppTheme) {
     // margin, so both spots need the same explicit top spacing too.
     breakAnotherWrap: {
       alignSelf: 'stretch',
-      marginTop: 24,
+      marginTop: spacing.xxl,
     },
     progressCard: {
       alignSelf: 'stretch',
@@ -1357,7 +1357,8 @@ function createStyles(theme: AppTheme) {
       borderRadius: radii.feature,
       borderWidth: 1,
       borderColor: theme.border,
-      padding: 20,
+      // Was 20, putting content 2pt right of the check-in and leak cards.
+      padding: spacing.xl,
       alignItems: 'flex-start',
     },
     progressTitle: {
@@ -1370,7 +1371,7 @@ function createStyles(theme: AppTheme) {
       height: 6,
       borderRadius: 3,
       backgroundColor: theme.border,
-      marginTop: 14,
+      marginTop: spacing.md,
       overflow: 'hidden',
     },
     progressMeterFill: {
@@ -1382,7 +1383,7 @@ function createStyles(theme: AppTheme) {
       fontSize: typeScale.body,
       fontFamily: theme.fonts.uiBold,
       color: theme.text,
-      marginTop: 12,
+      marginTop: spacing.stack,
     },
     progressCountSuffix: {
       fontSize: typeScale.body,
@@ -1393,12 +1394,12 @@ function createStyles(theme: AppTheme) {
       fontSize: typeScale.label,
       fontFamily: theme.fonts.ui,
       color: theme.textSecondary,
-      marginTop: 6,
+      marginTop: spacing.xs,
       lineHeight: 20,
     },
     progressCta: {
       alignSelf: 'stretch',
-      marginTop: 12,
+      marginTop: spacing.stack,
     },
   });
 }

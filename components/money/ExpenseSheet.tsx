@@ -69,7 +69,7 @@ import { Sheet } from '@/components/ui/Sheet';
 import { TextField } from '@/components/ui/TextField';
 import { useToast } from '@/components/ui/Toast';
 import { strings } from '@/constants/strings';
-import { typeScale } from '@/constants/theme';
+import { spacing, typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
 import { useCategories } from '@/contexts/CategoriesContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -332,6 +332,12 @@ export function ExpenseSheet({
             onPress={handleSave}
             variant="primary"
             disabled={cents <= 0}
+            // ADR 0028: a disabled primary names the first missing thing, so a
+            // VoiceOver user is not left with a dimmed button and no reason.
+            // This sheet was the first converted to disabled-until-valid and
+            // was the only amount-gated sheet still missing the hint that
+            // AddUpcomingSheet already carried.
+            accessibilityHint={cents > 0 ? undefined : strings.sheets.saveHintAmount}
             style={styles.headerSave}
           />
         </View>

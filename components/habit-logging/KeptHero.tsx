@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
-import { radii, typeScale, type AppTheme } from '@/constants/theme';
+import { radii, spacing, typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import { keptHeroLabel } from '@/utils/a11y';
 
@@ -57,8 +57,13 @@ function createStyles(theme: AppTheme) {
     card: {
       backgroundColor: theme.primaryLight,
       borderRadius: radii.feature,
+      // This band centers its content, so it is deliberately NOT on the
+      // spacing.xl top-level card padding: it has no left content edge to
+      // align. 22 is the one value on this screen that is off the ratified
+      // 2pt scale (which skips from 20 to 24); left as-is rather than change
+      // the hero's height in a spacing pass. Worth settling on device.
       paddingVertical: 22,
-      paddingHorizontal: 20,
+      paddingHorizontal: spacing.gutter,
       alignItems: 'center',
     },
     label: {
