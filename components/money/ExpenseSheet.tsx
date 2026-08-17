@@ -10,7 +10,10 @@
  *
  * Mode differences, exhaustively:
  * 1. Eyebrow: "Log expense" / "Edit expense".
- * 2. Coach line: log mode only (see logCoachLine below); edit never shows one.
+ * 2. Coach line: log mode only, and only when a caller passes one via the
+ *    coachLine prop (Door 1's first-run open does; a plain log open shows
+ *    none since Charen's 2026-08-16 device feedback removed the sheet's own
+ *    stock line). Edit never shows one.
  * 3. Primary button label: "Save expense" / "Save changes".
  * 4. Edit adds a "Delete expense" row. No confirm dialog: delete is instant
  *    and reversible from the toast's Undo, which is faster to use and easier
@@ -43,10 +46,11 @@
  *
  * Merchant (U2): the recent-merchant chip row now renders in BOTH modes
  * (the source is unchanged: the user's own recent logs), below the merchant
- * text field rather than above it. In edit mode the expense's current
- * merchant is guaranteed a chip, prepended if the natural recency list
- * didn't already include it, and shows pre-selected. The merchant field is
- * optional but not decorative: detection groups strictly on
+ * text field rather than above it, as a single horizontally-scrolling line
+ * (Charen, 2026-08-16 device feedback; was a wrapping row). In edit mode the
+ * expense's current merchant is guaranteed a chip, prepended if the natural
+ * recency list didn't already include it, and shows pre-selected. The
+ * merchant field is optional but not decorative: detection groups strictly on
  * `expense.merchant` (utils/habitDetection.ts groupByMerchant), so it is the
  * only way the app's own logging flow can ever produce a leak.
  *
@@ -118,9 +122,9 @@ export type ExpenseSheetProps = {
   /** Log mode only. Preselects a tile, e.g. when opened from a Today quick-log category. */
   initialCategory?: ExpenseCategory;
   /**
-   * Log mode only. One-line coach caption above the amount. Undefined falls
-   * back to logCoachLine (strings.expenseSheet); pass a caller-specific line
-   * (Door 1's first-run open) to override it.
+   * Log mode only. One-line coach caption above the amount. There is no
+   * default: undefined renders nothing. Pass a caller-specific line (Door 1's
+   * first-run open) to show one.
    */
   coachLine?: string;
   /**
@@ -292,7 +296,7 @@ export function ExpenseSheet({
   };
 
   const eyebrow = mode === 'log' ? strings.expenseSheet.logEyebrow : strings.expenseSheet.editEyebrow;
-  const coachLineText = mode === 'log' ? coachLine ?? strings.expenseSheet.logCoachLine : undefined;
+  const coachLineText = mode === 'log' ? coachLine : undefined;
   const saveLabel = mode === 'log' ? strings.expenseSheet.saveExpense : strings.expenseSheet.saveChanges;
 
   // iOS only: Android's decimal pad has its own done key and the merchant
@@ -349,7 +353,10 @@ export function ExpenseSheet({
             valueCents={cents}
             onChangeCents={setCents}
             autoFocus={visible}
-            size={48}
+            // Density pass (Charen, 2026-08-16 device feedback): 48 -> 40,
+            // paired with AmountField's enclosed paddingVertical 14 -> 8, for
+            // a field about 25% shorter overall.
+            size={40}
             variant="enclosed"
             accessibilityLabel={strings.expenseSheet.amountLabel(format(cents))}
           />
@@ -365,7 +372,21 @@ export function ExpenseSheet({
             returnKeyType="done"
           />
           {recentMerchants.length > 0 ? (
-            <View style={styles.chipRow}>
+            // One-line horizontal scroll (Charen, 2026-08-16 device
+            // feedback), matching CategoryChipRow below: same
+            // showsHorizontalScrollIndicator/gap convention. keyboardShould-
+            // PersistTaps is set here too, not just on the outer ScrollView,
+            // so a chip tap registers on the first press while the keyboard
+            // is up. No right-edge fade: CategoryChipRow's fade is a
+            // LinearGradient plus its own theme/withAlpha plumbing, and
+            // duplicating that for one more chip row isn't worth it here.
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={styles.chipRow}
+              style={styles.chipScroll}
+            >
               {recentMerchants.map((name) => (
                 <Chip
                   key={name.toLowerCase()}
@@ -375,7 +396,7 @@ export function ExpenseSheet({
                   onPress={() => pickMerchant(name)}
                 />
               ))}
-            </View>
+            </ScrollView>
           ) : null}
 
           <Text style={styles.eyebrow}>{strings.expenseSheet.categoryEyebrow}</Text>
@@ -480,11 +501,15 @@ function createStyles(theme: AppTheme) {
     },
     // Below the merchant field now (was above it); same 10pt gap the field
     // used to carry above the chips.
+    chipScroll: {
+      marginTop: 10,
+    },
+    // Single line now (was a wrapping row); gap 8 matches CategoryChipRow's
+    // content gap below it.
     chipRow: {
       flexDirection: 'row',
-      flexWrap: 'wrap',
-      gap: 6,
-      marginTop: 10,
+      gap: 8,
+      paddingRight: 12,
     },
     footer: {
       paddingHorizontal: 20,
