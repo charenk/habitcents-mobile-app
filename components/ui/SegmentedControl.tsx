@@ -6,6 +6,17 @@
  * two buttons. Labels are 13/600, ink when selected and slate when not, which
  * keeps the state legible without relying on the fill alone.
  *
+ * Geometry (Charen's call, 2026-08-16): the family moved off the stadium
+ * (radii.pill) shape onto the rounded-rect radius family, to match
+ * SpentKeptChips and Charen's mock of all three tab styles as rounded
+ * rectangles. The nesting rule shared by both scales is:
+ *
+ *     track radius = thumb radius + track padding
+ *
+ * Here the thumb is a segment at radii.card (14) and the track padding is
+ * TRACK_PADDING (3), so the track sits at 17. See SpentKeptChips.tsx for the
+ * value-scale application of the same rule.
+ *
  * No motion: the thumb is the selected segment's own background, so it swaps
  * instantly. That is deliberate. A sliding thumb would be a second animated
  * surface competing with the sheet and toast motion the spec already budgets.
@@ -16,6 +27,10 @@ import { useTheme } from '@/contexts/ThemeContext';
 import type { AppTheme } from '@/constants/theme';
 import { radii, shadows, typeScale } from '@/constants/theme';
 import { selectableLabel } from '@/utils/a11y';
+
+// Track padding (also the inter-segment gap): the nesting rule this file and
+// SpentKeptChips.tsx both follow is track radius = thumb radius + this value.
+const TRACK_PADDING = 3;
 
 export type SegmentedControlProps<T extends string | number> = {
   options: ReadonlyArray<{ value: T; label: string }>;
@@ -80,14 +95,14 @@ function createStyles(theme: AppTheme) {
       flexDirection: 'row',
       alignSelf: 'stretch',
       backgroundColor: theme.cloud,
-      borderRadius: radii.pill,
-      padding: 3,
-      gap: 3,
+      borderRadius: radii.card + TRACK_PADDING,
+      padding: TRACK_PADDING,
+      gap: TRACK_PADDING,
     },
     segment: {
       flex: 1,
       minHeight: 38,
-      borderRadius: radii.pill,
+      borderRadius: radii.card,
       alignItems: 'center',
       justifyContent: 'center',
       paddingHorizontal: 12,
