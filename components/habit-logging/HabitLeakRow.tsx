@@ -140,15 +140,16 @@ function createStyles(theme: AppTheme) {
       backgroundColor: theme.primary,
     },
     breakButtonPressed: {
-      // primaryPressedBg, not primaryDark: the label below is now ink, and ink
-      // on primaryDark is 3.15:1. This follows the shared Button primitive so
-      // the label clears AA in BOTH the resting and pressed states. UX-001.
+      // ADR 0027 (2026-08-16, Option A): the label below is white, and
+      // primaryPressedBg now resolves to the retuned sagePressed (#246242,
+      // white at 7.24:1), so the label clears AA in BOTH the resting and
+      // pressed states. UX-001.
       backgroundColor: theme.primaryPressedBg,
     },
     breakLabel: {
       fontSize: typeScale.secondary,
       fontFamily: theme.fonts.uiSemibold,
-      color: theme.ink,
+      color: theme.white,
     },
     breakingChip: {
       minHeight: 38,

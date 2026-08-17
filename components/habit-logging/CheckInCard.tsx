@@ -577,13 +577,14 @@ function ConfirmationBlock({
   return (
     <Animated.View style={[styles.confirmationRow, skipped ? pulseStyle : null]}>
       <View style={[styles.badge, skipped ? styles.badgeSkip : styles.badgeSlip]}>
-        {/* UX-001: the skip badge is sage (theme.primary); white on sage was
-            2.71:1, below the 3:1 icon floor. The slip badge is cloud, so
-            mistText there is unaffected. */}
+        {/* ADR 0027 (2026-08-16, Option A): the skip badge is sage
+            (theme.primary); white on the retuned sage is 5.37:1, clear of
+            the 3:1 icon floor. The slip badge is cloud, so mistText there
+            is unaffected. UX-001. */}
         <Icon
           name={skipped ? 'Check' : 'Minus'}
           size={20}
-          color={skipped ? theme.ink : theme.mistText}
+          color={skipped ? theme.white : theme.mistText}
         />
       </View>
       <View style={styles.confirmationText}>

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Primary green re-tune: three directions (ADR 0027)</title>
+<style>
+  :root{--ink:#1A1D23;--slate:#4A5568;--mist:#8898AA;--cloud:#E8EDF2;--snow:#F7F9FC;--sageLight:#E8F5EE;}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,'Inter',system-ui,sans-serif;background:var(--snow);color:var(--ink);padding:40px 24px 80px;max-width:1240px;margin:0 auto;line-height:1.5}
+  h1{font-size:28px;margin-bottom:6px}
+  h2{font-size:20px;margin:36px 0 12px}
+  p.lead{color:var(--slate);max-width:70ch}
+  .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:20px;margin-top:16px}
+  .card{background:#fff;border:1px solid var(--cloud);border-radius:20px;padding:20px;box-shadow:0 4px 8px rgba(26,29,35,.04)}
+  .card header{margin-bottom:12px}
+  .tag{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--slate);background:var(--cloud);border-radius:999px;padding:3px 10px;margin-right:6px}
+  .rec{background:#DEF3E7;color:#1F5C41}
+  .card h3{font-size:17px;margin:8px 0 4px}
+  .card .desc{font-size:13.5px;color:var(--slate)}
+  code{background:var(--snow);border:1px solid var(--cloud);border-radius:6px;padding:1px 6px;font-size:12.5px}
+  .phone{background:var(--snow);border:1px solid var(--cloud);border-radius:16px;padding:16px;margin:14px 0;display:flex;flex-direction:column;gap:12px}
+  .quickrow{background:#fff;border:1px solid var(--cloud);border-radius:20px;padding:14px;display:flex;gap:12px;align-items:stretch}
+  .amountfield{flex:1;background:var(--snow);border-radius:14px;padding:12px 16px;font-family:Georgia,'Instrument Serif',serif;font-size:26px;color:#677481;display:flex;align-items:center}
+  .plusbtn{width:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:24px;font-weight:300}
+  .savebtn{border-radius:10px;min-height:46px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:15px}
+  .keptband{border-radius:16px;background:var(--sageLight);padding:14px;text-align:center}
+  .keptband .eyebrow{font-size:10.5px;font-weight:600;letter-spacing:.09em;text-transform:uppercase}
+  .keptband .amt{font-family:Georgia,'Instrument Serif',serif;font-size:30px;margin-top:2px}
+  .tabrow{display:flex;justify-content:space-around;background:#fff;border:1px solid var(--cloud);border-radius:14px;padding:10px}
+  .tabrow span{font-size:12px;color:var(--slate)}
+  .swatches{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+  .sw{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--slate)}
+  .sw i{width:18px;height:18px;border-radius:5px;display:inline-block;border:1px solid rgba(0,0,0,.08)}
+  .verdict{border-top:1px solid var(--cloud);margin-top:12px;padding-top:12px}
+  .rrow{display:flex;justify-content:space-between;font-size:13px;padding:3px 0;color:var(--slate)}
+  .ratio{font-variant-numeric:tabular-nums;font-weight:600}
+  .ok{color:#1F7A4D}.fail{color:#C0392B}
+  .feel{font-size:13px;color:var(--slate);margin-top:10px;font-style:italic}
+  .note{background:#fff;border:1px solid var(--cloud);border-radius:14px;padding:16px 18px;font-size:13.5px;color:var(--slate);margin-top:14px}
+</style>
+</head>
+<body>
+<h1>Primary green re-tune: three directions</h1>
+<p class="lead">ADR 0027: the primary must carry white. Thresholds: white text 4.5:1 (button labels, the mock's "Save expense"), white icons 3:1 (the quick-log plus, calendar checks). Current sage <code>#4CAF82</code> is 2.71:1 with white, which is why every label on it went ink in 2026-08-12. Each card below renders the real components in that option's actual values. All ratios are computed WCAG, not eyeballed.</p>
+
+<h2>Shared baseline (unchanged in every option)</h2>
+<p class="lead">Ink <code>#1A1D23</code>, slate, mist, cloud, snow neutrals; the kept tint <code>sageLight #E8F5EE</code>; text on the tint keeps using <code>sageDark #2C7851</code> (4.79:1 on the tint, passes). Only the token that fills buttons, the plus, dots, and active tints changes.</p>
+
+<div class="cols">
+
+  <div class="card">
+    <header>
+      <span class="tag">Option A</span>
+      <h3>Promote sageDark</h3>
+      <p class="desc">Primary becomes the existing <code>#2C7851</code>. No new color in the system; the palette collapses to fewer greens. Deep forest reading.</p>
+    </header>
+    <div class="phone">
+      <div class="quickrow"><div class="amountfield">$ 0.00</div><div class="plusbtn" style="background:#2C7851">+</div></div>
+      <div class="savebtn" style="background:#2C7851">Save expense</div>
+      <div class="keptband"><div class="eyebrow" style="color:#2C7851">Kept so far</div><div class="amt" style="color:#2C7851">$0.00</div></div>
+      <div class="tabrow"><span style="color:#2C7851;font-weight:600">Today</span><span>Money</span><span>Insights</span><span>Categories</span></div>
+    </div>
+    <div class="swatches">
+      <span class="sw"><i style="background:#2C7851"></i>#2C7851 primary</span>
+      <span class="sw"><i style="background:#246242"></i>#246242 pressed</span>
+      <span class="sw"><i style="background:#E8F5EE"></i>#E8F5EE tint</span>
+    </div>
+    <div class="verdict">
+      <div class="rrow"><span>White text on primary (needs 4.5)</span><span class="ratio ok">5.37 ok</span></div>
+      <div class="rrow"><span>White icon on primary (needs 3.0)</span><span class="ratio ok">5.37 ok</span></div>
+      <div class="rrow"><span>White text on pressed</span><span class="ratio ok">7.24 ok</span></div>
+      <div class="rrow"><span>Primary as text on the tint (needs 4.5)</span><span class="ratio ok">4.79 ok</span></div>
+      <p class="feel">Feel: calm, premium, unmistakably passes everything with margin. But it is a real brand shift: the app reads forest, not fresh sage, and the bright green survives only inside the tint.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <header>
+      <span class="tag">Option B</span><span class="tag rec">Recommended</span>
+      <h3>Same hue, tuned to pass</h3>
+      <p class="desc">Keep sage's exact hue (152.7) and saturation, darken lightness until white text just clears 4.5:1: <code>#398462</code>. The closest color to today's brand that is honest about white.</p>
+    </header>
+    <div class="phone">
+      <div class="quickrow"><div class="amountfield">$ 0.00</div><div class="plusbtn" style="background:#398462">+</div></div>
+      <div class="savebtn" style="background:#398462">Save expense</div>
+      <div class="keptband"><div class="eyebrow" style="color:#2C7851">Kept so far</div><div class="amt" style="color:#2C7851">$0.00</div></div>
+      <div class="tabrow"><span style="color:#398462;font-weight:600">Today</span><span>Money</span><span>Insights</span><span>Categories</span></div>
+    </div>
+    <div class="swatches">
+      <span class="sw"><i style="background:#398462"></i>#398462 primary</span>
+      <span class="sw"><i style="background:#306F52"></i>#306F52 pressed</span>
+      <span class="sw"><i style="background:#E8F5EE"></i>#E8F5EE tint</span>
+      <span class="sw"><i style="background:#2C7851"></i>#2C7851 stays text-on-tint</span>
+    </div>
+    <div class="verdict">
+      <div class="rrow"><span>White text on primary (needs 4.5)</span><span class="ratio ok">4.52 ok</span></div>
+      <div class="rrow"><span>White icon on primary (needs 3.0)</span><span class="ratio ok">4.52 ok</span></div>
+      <div class="rrow"><span>White text on pressed</span><span class="ratio ok">5.96 ok</span></div>
+      <div class="rrow"><span>Text on the tint stays sageDark</span><span class="ratio ok">4.79 ok</span></div>
+      <p class="feel">Feel: recognizably the same green, one notch deeper. Passes text with almost no headroom (4.52), so it must not drift lighter in future tweaks; the ADR pins it.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <header>
+      <span class="tag">Option C</span>
+      <h3>Two tokens, split roles</h3>
+      <p class="desc">Brand sage <code>#4CAF82</code> survives for tinted surfaces and decoration; a new <code>primaryStrong</code> (B's <code>#398462</code>) carries every control with white on it. Most flexible, most tokens.</p>
+    </header>
+    <div class="phone">
+      <div class="quickrow"><div class="amountfield">$ 0.00</div><div class="plusbtn" style="background:#398462">+</div></div>
+      <div class="savebtn" style="background:#398462">Save expense</div>
+      <div class="keptband" style="background:#E8F5EE"><div class="eyebrow" style="color:#2C7851">Kept so far</div><div class="amt" style="color:#2C7851">$0.00</div></div>
+      <div class="tabrow"><span style="color:#4CAF82;font-weight:600">Today</span><span>Money</span><span>Insights</span><span>Categories</span></div>
+    </div>
+    <div class="swatches">
+      <span class="sw"><i style="background:#4CAF82"></i>#4CAF82 brand, tints and decoration</span>
+      <span class="sw"><i style="background:#398462"></i>#398462 primaryStrong, anything with white</span>
+    </div>
+    <div class="verdict">
+      <div class="rrow"><span>White text on primaryStrong (needs 4.5)</span><span class="ratio ok">4.52 ok</span></div>
+      <div class="rrow"><span>White on brand sage (why it cannot carry controls)</span><span class="ratio fail">2.71 fail</span></div>
+      <div class="rrow"><span>Active tab tint in brand sage on white (3.0 for UI)</span><span class="ratio fail">2.71 fail</span></div>
+      <p class="feel">Feel: keeps the bright brand alive, but every future component now asks "which green am I", and the bright one still fails as a tint on small UI like the active tab label. Two rules where one would do.</p>
+    </div>
+  </div>
+</div>
+
+<h2>Why B is the recommendation</h2>
+<p class="lead">B is the smallest honest move: one token changes value, the hue Charen chose stays exactly, and both thresholds pass. A is the safe overachiever if the darker reading feels right in the mockups above. C preserves the brightest brand at the cost of a permanent two-green rule that still leaves the bright green unusable on small UI. Whichever wins, <code>sageDark</code> keeps its current job as text on the tint, and the pressed state derives by the same darkening step shown in each card.</p>
+<div class="note">Decision recorded in ops ADR 0027. On pick: retune <code>palette.sage</code> in <code>constants/theme.ts</code> (single token, nothing hardcodes the hex elsewhere), sweep the 11 ink-on-sage sites to white, update every comment citing 2.71/6.24, close the PR #112 exception, fix PrivacyOverlay. Ships as build 16's Lane 2 palette PR.</div>
+</body>
+</html>

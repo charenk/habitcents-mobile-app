@@ -143,8 +143,9 @@ export function HistoryCalendar({ dayLogs, trackingStart, today = new Date(), on
                   state === 'no-log' && styles.dotNoLog,
                 ]}
               >
-                {/* UX-001: white on sage was 2.71:1, below the 3:1 icon floor. */}
-                {state === 'skipped' && <Icon name="Check" size={12} color={theme.ink} />}
+                {/* ADR 0027 (2026-08-16, Option A): white on the retuned sage
+                    is 5.37:1, clear of the 3:1 icon floor. UX-001. */}
+                {state === 'skipped' && <Icon name="Check" size={12} color={theme.white} />}
               </TouchableOpacity>
             </View>
           );

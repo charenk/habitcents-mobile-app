@@ -72,6 +72,8 @@ function createStyles(theme: AppTheme) {
       marginBottom: 10,
     },
     wordmarkDotText: {
+      // White on the retuned sage primary is 5.37:1 (ADR 0027, 2026-08-16,
+      // Option A); previously unaudited under UX-001.
       color: theme.white,
       fontSize: typeScale.statCard,
       // UX-042: no fontFamily meant this fell back to system San Francisco

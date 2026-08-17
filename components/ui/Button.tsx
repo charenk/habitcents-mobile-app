@@ -100,9 +100,10 @@ function createStyles(theme: AppTheme) {
       backgroundColor: theme.primaryPressedBg,
     },
     primaryLabel: {
-      // Ink on the unchanged brand sage: 6.24:1, where white was 2.71:1.
-      // Charen's call (2026-08-12): keep the green, darken the label. UX-001.
-      color: theme.ink,
+      // White on the retuned brand sage: 5.37:1. ADR 0027 (2026-08-16,
+      // Option A) supersedes the 2026-08-12 ink-label call now that the
+      // primary itself moved. UX-001.
+      color: theme.white,
       fontFamily: theme.fonts.uiSemibold,
       fontSize: typeScale.button,
     },

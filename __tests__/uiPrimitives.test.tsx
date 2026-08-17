@@ -79,6 +79,22 @@ describe('Button', () => {
       expect(await view.findByText(variant)).toBeTruthy();
     }
   });
+
+  // ADR 0027 (2026-08-16, Option A): the primary retune promoted sageDark to
+  // primary and flipped the primary label to white (5.37:1, was ink at
+  // 2026-08-12's 6.24:1 call). Pin both ends of the contract so a future
+  // palette change cannot silently reintroduce the ink label without a test
+  // failure.
+  it('pins the retuned primary token and its white label (ADR 0027)', async () => {
+    expect(lightTheme.primary).toBe('#2C7851');
+    const view = await render(
+      <Providers>
+        <Button label="Save" onPress={() => {}} variant="primary" />
+      </Providers>
+    );
+    const label = await view.findByText('Save');
+    expect(StyleSheet.flatten(label.props.style).color).toBe(lightTheme.white);
+  });
 });
 
 describe('EmojiTile', () => {
