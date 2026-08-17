@@ -17,7 +17,6 @@ import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-n
 import { AmountField } from '@/components/ui/AmountField';
 import { Button } from '@/components/ui/Button';
 import { Sheet } from '@/components/ui/Sheet';
-import { useToast } from '@/components/ui/Toast';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { typeScale } from '@/constants/theme';
@@ -35,7 +34,6 @@ export function PartialSlipSheet({ visible, skipValue, onCancel, onSave }: Parti
   const theme = useTheme();
   const { format } = useCurrency();
   const { height } = useWindowDimensions();
-  const { show } = useToast();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [cents, setCents] = useState(0);
 
@@ -47,14 +45,16 @@ export function PartialSlipSheet({ visible, skipValue, onCancel, onSave }: Parti
 
   // UX-020: cents === 0 must never reach onSave. HabitsContext credits
   // max(0, skipValue - amountSpent), so a stray 0 would credit the ENTIRE
-  // skip value on a day the user just said they bought something. House
-  // pattern (components/money/ExpenseSheet.tsx handleSave): keep the button
-  // live and toast instead of a dead disabled control.
+  // skip value on a day the user just said they bought something.
+  // Disabled-until-valid (ops ADR 0028, 2026-08-16): Save is disabled until
+  // an amount is entered, rather than staying live and toasting "Enter an
+  // amount first." on an empty tap (the old house pattern).
+  const canSave = cents !== 0;
+
   const handleSave = () => {
-    if (cents === 0) {
-      show(strings.toasts.enterAmountFirst);
-      return;
-    }
+    // Unreachable from the UI now that Save is disabled until canSave; kept
+    // as a defensive guard.
+    if (!canSave) return;
     onSave(cents);
   };
 
@@ -89,7 +89,15 @@ export function PartialSlipSheet({ visible, skipValue, onCancel, onSave }: Parti
         </ScrollView>
 
         <View style={styles.footer}>
-          <Button label={strings.common.save} onPress={handleSave} />
+          <Button
+            label={strings.common.save}
+            onPress={handleSave}
+            disabled={!canSave}
+            // Only carried while disabled, so VoiceOver never reads stale
+            // guidance on an already-enabled button (Button.tsx passes the
+            // hint straight through unconditionally).
+            accessibilityHint={canSave ? undefined : strings.sheets.saveHintAmount}
+          />
           <Button label={strings.common.cancel} variant="tertiary" onPress={onCancel} />
         </View>
       </View>

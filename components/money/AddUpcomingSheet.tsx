@@ -429,11 +429,16 @@ export function AddUpcomingSheet({
     setEveryNDays(v);
   };
 
+  // Disabled-until-valid (ops ADR 0028, 2026-08-16): Save is disabled until an
+  // amount is entered, rather than staying live and toasting "Enter an amount
+  // first." on an empty tap (the sheet's old behavior, mirrored by ExpenseSheet
+  // until it converted first). No other field is required to save.
+  const canSave = cents > 0;
+
   const handleSave = () => {
-    if (cents <= 0) {
-      show(strings.toasts.enterAmountFirst);
-      return;
-    }
+    // Unreachable from the UI now that Save is disabled until canSave; kept
+    // as a defensive guard.
+    if (!canSave) return;
 
     const chip = NAME_CHIPS.find((c) => c.key === nameChipKey);
     // Edit mode with no chip selected keeps the row's own category rather than
@@ -719,7 +724,17 @@ export function AddUpcomingSheet({
         </ScrollView>
 
         <View style={styles.footer}>
-          <Button label={saveLabel} onPress={handleSave} variant="primary" style={styles.save} />
+          <Button
+            label={saveLabel}
+            onPress={handleSave}
+            variant="primary"
+            disabled={!canSave}
+            // Only carried while disabled, so VoiceOver never reads stale
+            // guidance on an already-enabled button (Button.tsx passes the
+            // hint straight through unconditionally).
+            accessibilityHint={canSave ? undefined : strings.sheets.saveHintAmount}
+            style={styles.save}
+          />
           {mode === 'edit' ? (
             <Button
               label={strings.addUpcoming.deleteUpcoming}

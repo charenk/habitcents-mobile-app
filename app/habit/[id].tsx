@@ -349,7 +349,6 @@ export function EditSkipValueSheet({
 }) {
   const theme = useTheme();
   const { format } = useCurrency();
-  const { show } = useToast();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [cents, setCents] = useState(initialValue);
 
@@ -359,11 +358,15 @@ export function EditSkipValueSheet({
 
   // UX-051: same guard as PartialSlipSheet/PickOneSheet. Saving $0.00 here
   // would silently make every future skip on this habit keep nothing.
+  // Disabled-until-valid (ops ADR 0028, 2026-08-16): Save is disabled until
+  // an amount is entered, rather than staying live and toasting "Enter an
+  // amount first." on an empty tap (the old house pattern).
+  const canSave = cents !== 0;
+
   const handleSave = () => {
-    if (cents === 0) {
-      show(strings.toasts.enterAmountFirst);
-      return;
-    }
+    // Unreachable from the UI now that Save is disabled until canSave; kept
+    // as a defensive guard.
+    if (!canSave) return;
     onSave(cents);
   };
 
@@ -388,6 +391,11 @@ export function EditSkipValueSheet({
         <Button
           label={strings.habitDetailV2.skipValueSave}
           onPress={handleSave}
+          disabled={!canSave}
+          // Only carried while disabled, so VoiceOver never reads stale
+          // guidance on an already-enabled button (Button.tsx passes the
+          // hint straight through unconditionally).
+          accessibilityHint={canSave ? undefined : strings.sheets.saveHintAmount}
         />
         <Button label={strings.common.cancel} variant="tertiary" onPress={onCancel} />
       </View>

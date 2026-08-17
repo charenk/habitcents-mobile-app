@@ -112,15 +112,34 @@ describe('PartialSlipSheet', () => {
     expect(onSave).not.toHaveBeenCalled();
   });
 
-  // UX-020: a $0.00 save would silently credit the entire skip value on a
-  // day the user just said they bought something (see PartialSlipSheet's
-  // handleSave doc comment).
-  it('Save with a zero amount does not save and shows the enter-amount-first toast', async () => {
+  // UX-020: a $0.00 save would silently credit the entire skip value on a day
+  // the user just said they bought something (see PartialSlipSheet's
+  // handleSave doc comment). Disabled-until-valid (ops ADR 0028, 2026-08-16):
+  // Save is disabled at the empty default rather than live-and-toasting.
+  it('disables Save until an amount is entered, then saves on press', async () => {
     const view = await renderSheet();
+
+    const disabledSave = view.getByRole('button', { name: strings.common.save });
+    expect(disabledSave.props.accessibilityState?.disabled).toBe(true);
+    expect(disabledSave.props.accessibilityHint).toBe(strings.sheets.saveHintAmount);
+
+    // A press on a disabled Button never reaches onPress (Button.tsx passes
+    // `disabled` straight to Pressable), so this pins that the control itself
+    // blocks the save, not just that nobody happened to press it.
     await act(async () => {
-      fireEvent.press(view.getByRole('button', { name: strings.common.save }));
+      fireEvent.press(disabledSave);
     });
     expect(onSave).not.toHaveBeenCalled();
-    expect(view.getByText(strings.toasts.enterAmountFirst)).toBeTruthy();
+
+    await typeAmount(view, '5');
+
+    const enabledSave = view.getByRole('button', { name: strings.common.save });
+    expect(enabledSave.props.accessibilityState?.disabled).toBe(false);
+    expect(enabledSave.props.accessibilityHint).toBeUndefined();
+
+    await act(async () => {
+      fireEvent.press(enabledSave);
+    });
+    expect(onSave).toHaveBeenCalledWith(500);
   });
 });

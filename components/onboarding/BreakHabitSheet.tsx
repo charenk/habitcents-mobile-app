@@ -158,6 +158,16 @@ export function BreakHabitSheet({
     amountCents > 0 &&
     (selectedChip !== CUSTOM_CHIP_ID || customName.trim().length > 0);
 
+  // Disabled-Start hint (ops ADR 0028, 2026-08-16): names the FIRST thing
+  // canStart is missing, in the same order canStart checks it, so a
+  // VoiceOver user hears one concrete next step rather than every gap at
+  // once. Only read while Start is actually disabled (see the Button below).
+  const startHint = !selectedChip
+    ? strings.onboarding.breakSheetHintPickHabit
+    : selectedChip === CUSTOM_CHIP_ID && customName.trim().length === 0
+      ? strings.onboarding.breakSheetHintNameIt
+      : strings.sheets.saveHintAmount;
+
   const yearlyCents = yearlyKeepCents(amountCents, cadence);
   const yearlyLine = yearlyLineFor(cadence, format(yearlyCents));
 
@@ -284,6 +294,10 @@ export function BreakHabitSheet({
             label={strings.habitLogging.startBreakingIt}
             onPress={handleStart}
             disabled={!canStart}
+            // Only carried while disabled, so VoiceOver never reads stale
+            // guidance on an already-enabled button (Button.tsx passes the
+            // hint straight through unconditionally).
+            accessibilityHint={canStart ? undefined : startHint}
           />
         </View>
       </View>

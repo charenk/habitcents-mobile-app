@@ -244,6 +244,57 @@ describe('Door 3 break sheet: auto-open', () => {
   });
 });
 
+describe('Door 3 break sheet: disabled-Start hint (ops ADR 0028)', () => {
+  it('names the first missing thing: pick a habit, then name it (custom), then an amount', async () => {
+    mockParams = { view: 'kept', breakEntry: '1' };
+    const view = await renderToday();
+
+    // Nothing picked yet: Start is disabled and names the habit pick first.
+    let start = view.getByRole('button', { name: strings.habitLogging.startBreakingIt });
+    expect(start.props.accessibilityState?.disabled).toBe(true);
+    expect(start.props.accessibilityHint).toBe(strings.onboarding.breakSheetHintPickHabit);
+
+    // Custom chip picked, no name typed yet: names the name field next.
+    await tap(view.getByText(strings.onboarding.somethingElse));
+    start = view.getByRole('button', { name: strings.habitLogging.startBreakingIt });
+    expect(start.props.accessibilityState?.disabled).toBe(true);
+    expect(start.props.accessibilityHint).toBe(strings.onboarding.breakSheetHintNameIt);
+
+    // Named, but the custom chip has no preset amount to prefill: names the
+    // amount field last.
+    await act(async () => {
+      fireEvent.changeText(
+        view.getByLabelText(strings.onboarding.somethingElseNamePlaceholder),
+        'Vending machine'
+      );
+    });
+    start = view.getByRole('button', { name: strings.habitLogging.startBreakingIt });
+    expect(start.props.accessibilityState?.disabled).toBe(true);
+    expect(start.props.accessibilityHint).toBe(strings.sheets.saveHintAmount);
+
+    // A nonzero amount clears every gap: Start is enabled and carries no
+    // stale hint (Button.tsx passes accessibilityHint straight through, so
+    // callers only pass it while disabled).
+    await act(async () => {
+      fireEvent.changeText(view.getByLabelText(/^One skip keeps,/), '5');
+    });
+    start = view.getByRole('button', { name: strings.habitLogging.startBreakingIt });
+    expect(start.props.accessibilityState?.disabled).toBe(false);
+    expect(start.props.accessibilityHint).toBeUndefined();
+  });
+
+  it('a preset chip alone fills the name and the amount, leaving Start enabled', async () => {
+    mockParams = { view: 'kept', breakEntry: '1' };
+    const view = await renderToday();
+
+    await tap(view.getByText(coffee.name));
+
+    const start = view.getByRole('button', { name: strings.habitLogging.startBreakingIt });
+    expect(start.props.accessibilityState?.disabled).toBe(false);
+    expect(start.props.accessibilityHint).toBeUndefined();
+  });
+});
+
 describe('Door 3 break sheet: chip selection', () => {
   it('selecting a chip prefills the amount with its per-currency preset, not auto-focused', async () => {
     mockParams = { view: 'kept', breakEntry: '1' };

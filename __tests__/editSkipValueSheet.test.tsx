@@ -120,15 +120,35 @@ describe('EditSkipValueSheet', () => {
     expect(onSave).not.toHaveBeenCalled();
   });
 
-  // UX-051: a $0.00 save would silently make every future skip on this
-  // habit keep nothing (see EditSkipValueSheet's handleSave doc comment).
-  it('Save with a zero amount does not save and shows the enter-amount-first toast', async () => {
+  // UX-051: a $0.00 save would silently make every future skip on this habit
+  // keep nothing (see EditSkipValueSheet's handleSave doc comment).
+  // Disabled-until-valid (ops ADR 0028, 2026-08-16): Save is disabled at zero
+  // rather than live-and-toasting.
+  it('disables Save at a zero amount, then saves on press once it is nonzero', async () => {
     const view = await renderSheet(1250);
     await typeAmount(view, '0');
+
+    const disabledSave = view.getByRole('button', { name: strings.habitDetailV2.skipValueSave });
+    expect(disabledSave.props.accessibilityState?.disabled).toBe(true);
+    expect(disabledSave.props.accessibilityHint).toBe(strings.sheets.saveHintAmount);
+
+    // A press on a disabled Button never reaches onPress (Button.tsx passes
+    // `disabled` straight to Pressable), so this pins that the control itself
+    // blocks the save, not just that nobody happened to press it.
     await act(async () => {
-      fireEvent.press(view.getByRole('button', { name: strings.habitDetailV2.skipValueSave }));
+      fireEvent.press(disabledSave);
     });
     expect(onSave).not.toHaveBeenCalled();
-    expect(view.getByText(strings.toasts.enterAmountFirst)).toBeTruthy();
+
+    await typeAmount(view, '5');
+
+    const enabledSave = view.getByRole('button', { name: strings.habitDetailV2.skipValueSave });
+    expect(enabledSave.props.accessibilityState?.disabled).toBe(false);
+    expect(enabledSave.props.accessibilityHint).toBeUndefined();
+
+    await act(async () => {
+      fireEvent.press(enabledSave);
+    });
+    expect(onSave).toHaveBeenCalledWith(500);
   });
 });

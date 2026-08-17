@@ -330,6 +330,40 @@ describe('AddUpcomingSheet edit mode: materialized-child collision (queue2 revie
   });
 });
 
+describe('AddUpcomingSheet: Save gating (ops ADR 0028, disabled-until-valid)', () => {
+  it('disables Save in add mode until an amount is entered, then saves on press', async () => {
+    const view = await renderAdd();
+
+    const disabledSave = view.getByRole('button', { name: strings.addUpcoming.save });
+    expect(disabledSave.props.accessibilityState?.disabled).toBe(true);
+    expect(disabledSave.props.accessibilityHint).toBe(strings.sheets.saveHintAmount);
+
+    // A press on a disabled Button never reaches onPress (Button.tsx passes
+    // `disabled` straight to Pressable), so this pins that the control itself
+    // blocks the save, not just that nobody happened to press it.
+    await tap(disabledSave);
+    expect(mockAddExpense).not.toHaveBeenCalled();
+
+    await typeAmount(view, '12');
+
+    const enabledSave = view.getByRole('button', { name: strings.addUpcoming.save });
+    expect(enabledSave.props.accessibilityState?.disabled).toBe(false);
+    expect(enabledSave.props.accessibilityHint).toBeUndefined();
+
+    await tap(enabledSave);
+    expect(mockAddExpense).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders Save already enabled in edit mode, where the amount is prefilled', async () => {
+    const expense = makeExpense({ id: 'e1', amount: 1200 });
+    const view = await renderEdit(expense);
+
+    const save = view.getByRole('button', { name: strings.addUpcoming.saveChanges });
+    expect(save.props.accessibilityState?.disabled).toBe(false);
+    expect(save.props.accessibilityHint).toBeUndefined();
+  });
+});
+
 describe('AddUpcomingSheet edit mode: delete with undo', () => {
   it('deletes with no confirmation and offers an undo toast', async () => {
     const expense = makeExpense({ id: 'e1' });

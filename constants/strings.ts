@@ -19,6 +19,15 @@ export const strings = {
     close: 'Close',
     dismiss: 'Dismiss',
   },
+  // Shared sheet chrome for the disabled-until-valid Save/Start convention
+  // (ops ADR 0028, 2026-08-16): a disabled primary action carries an
+  // accessibilityHint naming what is missing, so VoiceOver hears why instead
+  // of hitting a dead end. One amount hint, reused by every sheet whose only
+  // requirement is a nonzero amount, rather than five copies of the same
+  // sentence.
+  sheets: {
+    saveHintAmount: 'Enter an amount first',
+  },
   // Tab bar (redesign step 02): Today / Money / Insights / Categories.
   tabs: {
     today: 'Today',
@@ -503,6 +512,12 @@ export const strings = {
     breakSheetBoughtTodayLabel: 'Did you buy it today?',
     breakSheetBoughtYes: 'Yes, log it',
     breakSheetBoughtNo: 'Not today',
+    // Disabled-Start hints (ops ADR 0028, 2026-08-16): named in the order
+    // canStart actually checks, so the hint always names the FIRST thing
+    // missing rather than every gap at once. The amount gap reuses
+    // sheets.saveHintAmount rather than a fourth copy of that sentence.
+    breakSheetHintPickHabit: 'Pick a habit first',
+    breakSheetHintNameIt: 'Name it first',
   },
   // --- Leak Scan (P2-1b). Canonical behavior: docs/design-context/leak-scan-spec.md.
   // Canonical visuals: docs/design-package-phase2/03-p2-1b-leak-scan-visuals.md.
@@ -746,7 +761,6 @@ export const strings = {
     deleted: 'Deleted.',
     undo: 'Undo',
     restored: 'Restored.',
-    enterAmountFirst: 'Enter an amount first.',
     addedToUpcoming: 'Added to upcoming.',
     stoppedHistoryKept: 'Stopped. Your history is kept.',
     trialStarted: 'Trial started. 14 days free.',
@@ -880,9 +894,11 @@ export const strings = {
   // Expense-sheet workflow redesign (Charen, 2026-08-16): Save now lives in a
   // pinned header next to the title and is disabled until an amount is
   // entered (cents > 0), replacing the old always-live button that toasted
-  // "Enter an amount first." on an empty tap. toasts.enterAmountFirst stays
-  // in use by AddUpcomingSheet, BreakHabitSheet, PartialSlipSheet and
-  // PickOneSheet; only this sheet stopped needing it.
+  // "Enter an amount first." on an empty tap. This was the first sheet
+  // converted to the disabled-until-valid convention (ops ADR 0028); every
+  // other amount-gated sheet has since converged on it too (see
+  // sheets.saveHintAmount), so nothing in the app still toasts on an empty
+  // amount.
   expenseSheet: {
     logEyebrow: 'Log expense',
     editEyebrow: 'Edit expense',
