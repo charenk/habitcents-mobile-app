@@ -66,8 +66,9 @@ export function WeekStrip({ dayLogs, trackingStart, skipValue, today = new Date(
                   unanswered && !isTodayOpen && styles.dotOpen,
                 ]}
               >
-                {/* UX-001: white on sage was 2.71:1, below the 3:1 icon floor. */}
-                {cell.state === 'skipped' && <Icon name="Check" size={14} color={theme.ink} />}
+                {/* ADR 0027 (2026-08-16, Option A): white on the retuned sage
+                    is 5.37:1, clear of the 3:1 icon floor. UX-001. */}
+                {cell.state === 'skipped' && <Icon name="Check" size={14} color={theme.white} />}
               </View>
               <Text style={styles.dayLabel}>{weekdayLetter}</Text>
             </View>

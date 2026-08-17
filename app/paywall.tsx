@@ -389,11 +389,12 @@ function createStyles(theme: AppTheme) {
       paddingHorizontal: 8,
       paddingVertical: 2,
     },
-    // UX-001: ink on the sage badge; white was 2.71:1 at 11pt uppercase.
+    // ADR 0027 (2026-08-16, Option A): white on the retuned sage badge is
+    // 5.37:1 at 11pt uppercase. UX-001.
     planBadgeText: {
       fontSize: typeScale.eyebrow,
       fontFamily: theme.fonts.uiBold,
-      color: theme.ink,
+      color: theme.white,
       textTransform: 'uppercase',
       letterSpacing: 0.3,
     },
@@ -468,10 +469,10 @@ function createStyles(theme: AppTheme) {
     primaryButtonText: {
       fontSize: typeScale.button,
       fontFamily: theme.fonts.uiSemibold,
-      // Ink, matching the shared Button primitive: white on sage is 2.71:1.
-      // This is the screen's main CTA, so it cannot be the one that misses.
-      // UX-001.
-      color: theme.ink,
+      // White, matching the shared Button primitive: the retuned sage is
+      // 5.37:1. ADR 0027 (2026-08-16, Option A). This is the screen's main
+      // CTA, so it cannot be the one that misses. UX-001.
+      color: theme.white,
     },
     restoreButton: {
       minHeight: 44,

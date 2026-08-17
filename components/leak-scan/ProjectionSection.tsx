@@ -254,12 +254,12 @@ function createStyles(theme: AppTheme) {
     saveButtonDisabled: {
       opacity: 0.6,
     },
-    // UX-001: ink on the sage fill; white was 2.71:1, and the disabled
-    // opacity 0.6 pushed it lower still.
+    // ADR 0027 (2026-08-16, Option A): white on the retuned sage fill is
+    // 5.37:1, clear even with the disabled opacity 0.6 applied on top. UX-001.
     saveButtonText: {
       fontSize: typeScale.body,
       fontFamily: theme.fonts.uiBold,
-      color: theme.ink,
+      color: theme.white,
     },
   });
 }

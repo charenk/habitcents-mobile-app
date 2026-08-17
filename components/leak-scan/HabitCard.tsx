@@ -329,11 +329,12 @@ function createStyles(theme: AppTheme) {
       alignItems: 'center',
       justifyContent: 'center',
     },
-    // UX-001: ink on the sage fill; white was 2.71:1.
+    // ADR 0027 (2026-08-16, Option A): white on the retuned sage fill is
+    // 5.37:1. UX-001.
     trackButtonText: {
       fontSize: typeScale.secondary,
       fontFamily: theme.fonts.uiSemibold,
-      color: theme.ink,
+      color: theme.white,
     },
     monitorButton: {
       backgroundColor: theme.white,

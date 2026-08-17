@@ -162,9 +162,10 @@ function createStyles(theme: AppTheme) {
       fontSize: typeScale.caption,
     },
     labelSelectedSolid: {
-      // Ink on the sage fill: 6.24:1, where white was 2.71:1. Matches the
-      // primary Button and the soft tone below, which already used ink. UX-001.
-      color: theme.ink,
+      // White on the retuned sage fill: 5.37:1. ADR 0027 (2026-08-16,
+      // Option A). The soft tone below stays ink; it sits on primaryLight,
+      // an unaffected tint surface. UX-001.
+      color: theme.white,
     },
     labelSelectedSoft: {
       color: theme.ink,

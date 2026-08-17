@@ -14,17 +14,22 @@ import { withAlpha } from '@/utils/color';
  */
 const palette = {
   // brand
-  sage: '#4CAF82', // CTA, kept number, active tab, skip confirm
-  // Pressed/hover fill and small sage text links. Nudged one step darker
-  // (was #2E7D55) so it clears 4.5:1 on sageLight, where it sits in the
-  // tierSolid badge and the KeptHero eyebrow: 4.48 -> 4.79. UX-048.
+  // ADR 0027 (2026-08-16, Option A): promoted from the old sageDark value.
+  // White text/icons now pass on primary (5.37:1, needs 4.5; icons need 3),
+  // retiring every ink-on-primary workaround from UX-001. CTA, kept number,
+  // active tab, skip confirm.
+  sage: '#2C7851',
+  // Text-on-tint role: small sage text/labels over sageLight (tierSolid
+  // badge, KeptHero eyebrow, Chip's "soft" tone), where it holds 4.79:1. Sage
+  // and sageDark are now the same value by coincidence of ADR 0027, not by
+  // dedup: they stay two separately named tokens because their roles (fill
+  // vs. text-on-tint) are independently tunable again later. UX-048.
   sageDark: '#2C7851',
-  // Pressed fill for the primary button ONLY. The button now carries an ink
-  // label, and ink on sageDark is 3.15:1, so the press cannot simply reuse
-  // sageDark without the label going illegible mid-tap. This darkens enough
-  // to read as a press while keeping ink at 4.86:1. Swapping the label colour
-  // on press instead would flash a different colour under the user's thumb.
-  sagePressed: '#3D9A6E',
+  // Pressed fill for the primary button. Retuned alongside the primary (ADR
+  // 0027): the button now carries a WHITE label, so the press darkens enough
+  // to keep white readable mid-tap (7.24:1) rather than ink (which is what
+  // the old #3D9A6E value was tuned for, back when the label was ink).
+  sagePressed: '#246242',
   sageLight: '#E8F5EE', // kept band, selected chips, coach slots, tinted cards
   // neutrals (carry ~90% of UI)
   ink: '#1A1D23', // primary text
@@ -67,8 +72,14 @@ const palette = {
 export const lightTheme = {
   // Sage brand green: CTA, kept numeral, active tab, skip confirm.
   primary: palette.sage,
-  // Decorative celebration green: same sage hue (redesign uses one green).
-  primaryBright: palette.sage,
+  // Decorative celebration green. ADR 0027 audit: no current consumer (grep
+  // clean at time of the primary retune), but the token exists for a
+  // decorative/celebration accent on a tint or large serif amount, never a
+  // control fill and never text that must pass contrast. Kept at the old
+  // bright literal rather than following the retuned primary, so a future
+  // decorative use stays vivid instead of quietly picking up a darker,
+  // AA-driven green it was never designed to need.
+  primaryBright: '#4CAF82',
   primaryMuted: palette.sageLight,
   background: palette.snow,
   surface: palette.white,
@@ -76,10 +87,12 @@ export const lightTheme = {
   textSecondary: palette.slate,
   textTertiary: palette.mistText,
   chipActiveBg: palette.sage,
-  // Ink, not white: white on sage is 2.71:1. Charen's call (2026-08-12) was to
-  // keep the brand green exactly and darken the label instead, which reads
-  // 6.24:1. UX-001.
-  chipActiveText: palette.ink,
+  // White on the retuned sage: 5.37:1. Supersedes Charen's 2026-08-12 call to
+  // keep the brand green exactly and darken the label instead; ADR 0027
+  // (2026-08-16, Option A) retunes the green itself, so white now passes.
+  // UX-001. (No current consumer reads this token directly; components/ui/
+  // Chip.tsx's selected-solid label is a local style kept in sync by hand.)
+  chipActiveText: palette.white,
   chipInactiveBg: palette.white,
   chipInactiveText: palette.slate,
   chipBorder: palette.cloud,

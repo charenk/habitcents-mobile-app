@@ -55,12 +55,9 @@ export function QuickLogRow({
           accessibilityElementsHidden
           testID="quick-log-plus"
         >
-          {/* Deliberate, temporary exception to UX-001 (white on sage is
-              2.71:1, below the 3:1 non-text contrast floor). Charen's call
-              (2026-08-16): the sage primary itself is getting re-tuned at
-              palette finalization to restore contrast against a white icon,
-              so this ships white now to match the mock rather than block on
-              a palette change. Owed a contrast re-check once primary moves. */}
+          {/* UX-001 debt closed: the primary moved to #2C7851 (ADR 0027,
+              2026-08-16, Option A), where white is 5.37:1, clear of the 3:1
+              non-text floor. */}
           <Icon name="Plus" size={22} color={theme.white} />
         </TouchableOpacity>
       </View>
