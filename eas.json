@@ -20,6 +20,7 @@
       "distribution": "store",
       "channel": "internal",
       "autoIncrement": true,
+      "environment": "production",
       "env": {
         "EXPO_PUBLIC_DEV_MENU": "1"
       }
@@ -27,6 +28,7 @@
     "production": {
       "autoIncrement": true,
       "channel": "production",
+      "environment": "production",
       "env": {
         "EXPO_PUBLIC_DEV_MENU": "0"
       }
