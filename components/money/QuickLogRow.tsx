@@ -29,15 +29,17 @@ export function QuickLogRow({
   return (
     <View style={styles.quickLogCard}>
       <View style={styles.quickLogAmountRow}>
-        {/* The big zero is the obvious thing to tap, so it opens the sheet
-            too; the plus stays for anyone who reads it as the only control. */}
+        {/* The enclosed field is the obvious thing to tap, so it opens the
+            sheet too; the plus stays for anyone who reads it as the only
+            control. */}
         <Pressable
-          style={styles.quickLogAmountTap}
+          style={styles.quickLogAmountField}
           onPress={() => onOpenSheet(undefined)}
           accessibilityRole="button"
           accessibilityLabel={strings.today.quickLogOpenLabel}
+          testID="quick-log-field"
         >
-          <AmountDisplay valueCents={0} size={40} zeroAsPlaceholder fullWidth />
+          <AmountDisplay valueCents={0} size={40} zeroAsPlaceholder underline={false} />
         </Pressable>
         {/* UX-055: this and the amount Pressable above shared the same
             accessibilityLabel and the same action, so VoiceOver announced
@@ -53,8 +55,13 @@ export function QuickLogRow({
           accessibilityElementsHidden
           testID="quick-log-plus"
         >
-          {/* UX-001: white on sage was 2.71:1, below the 3:1 icon floor. */}
-          <Icon name="Plus" size={22} color={theme.ink} />
+          {/* Deliberate, temporary exception to UX-001 (white on sage is
+              2.71:1, below the 3:1 non-text contrast floor). Charen's call
+              (2026-08-16): the sage primary itself is getting re-tuned at
+              palette finalization to restore contrast against a white icon,
+              so this ships white now to match the mock rather than block on
+              a palette change. Owed a contrast re-check once primary moves. */}
+          <Icon name="Plus" size={22} color={theme.white} />
         </TouchableOpacity>
       </View>
     </View>
@@ -72,27 +79,33 @@ function createStyles(theme: AppTheme) {
     },
     quickLogAmountRow: {
       flexDirection: 'row',
-      alignItems: 'flex-end',
-      justifyContent: 'space-between',
-      // Review fix: the fullWidth amount's underline (AmountDisplay) was
-      // running flush against the plus button with no breathing room between
-      // the two tap targets.
+      // Stretch (the row default) so the plus button's alignSelf: 'stretch'
+      // below matches the field's full height rather than the row shrinking
+      // to the shorter child.
+      alignItems: 'stretch',
       gap: 12,
     },
-    // Takes the row's free width so the whole left side of the card opens the
-    // sheet, not just the glyphs. No visual change: the amount still sits on
-    // the baseline it did before.
-    quickLogAmountTap: {
+    // Enclosed input-style field: a snow-filled rounded rect standing in for
+    // the old bare-number-on-a-rule. Takes the row's free width so the whole
+    // left side of the card opens the sheet, not just the digits.
+    quickLogAmountField: {
       flex: 1,
       minHeight: 44,
-      justifyContent: 'flex-end',
+      backgroundColor: theme.snow,
+      borderRadius: radii.card,
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      justifyContent: 'center',
     },
     quickLogPlus: {
-      width: 44,
-      height: 44,
-      // UX-018: was a hardcoded half-of-44 circle; radii.pill renders
-      // identically while using the ratified token.
-      borderRadius: radii.pill,
+      // Rounded square, not the old circle: shares the field's radius so the
+      // two shapes read as one grammar. stretch takes the field's full
+      // height, and aspectRatio squares the width off that height rather
+      // than pinning it, so the square stays square when the field grows
+      // under Dynamic Type instead of stretching into a tall bar.
+      alignSelf: 'stretch',
+      aspectRatio: 1,
+      borderRadius: radii.card,
       backgroundColor: theme.primary,
       alignItems: 'center',
       justifyContent: 'center',

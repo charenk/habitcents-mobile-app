@@ -1,10 +1,11 @@
 /**
- * QuickLogRow (components/money/QuickLogRow.tsx): pins the full-width amount
- * fix (cleanup unit A). The card's $0.00 used to hug the digits because
- * AmountDisplay shrink-wraps by default; QuickLogRow now passes fullWidth so
- * the underline spans from the card's left padding to the plus button, not
- * just the digits. See __tests__/uiPrimitives.test.tsx for the AmountDisplay
- * prop-level assertion this wiring depends on.
+ * QuickLogRow (components/money/QuickLogRow.tsx): the enclosed-field
+ * redesign (design/quick-log-trigger). The card's $0.00 now sits in a
+ * snow-filled rounded field instead of a bare number on an underline, and
+ * the plus button is a rounded square that shares the field's radius and
+ * stretches to its full height. See __tests__/uiPrimitives.test.tsx for the
+ * AmountDisplay underline={false} prop-level assertion this wiring depends
+ * on.
  */
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock')
@@ -17,6 +18,7 @@ import { ThemeProvider } from '@/contexts/ThemeContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { QuickLogRow } from '@/components/money/QuickLogRow';
 import { strings } from '@/constants/strings';
+import { radii, lightTheme } from '@/constants/theme';
 
 function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -27,32 +29,38 @@ function Providers({ children }: { children: React.ReactNode }) {
 }
 
 describe('QuickLogRow', () => {
-  it('renders the amount fullWidth so its underline stretches to the card, not just the digits', async () => {
+  it('renders the field as a snow-filled rounded rect with no underline', async () => {
     const view = await render(
       <Providers>
         <QuickLogRow onOpenSheet={() => {}} />
       </Providers>
     );
-    const number = await view.findByText('0.00');
-    // number Text -> row View -> AmountDisplay's own root View.
-    const amountRoot = number.parent?.parent;
-    const flat = StyleSheet.flatten(amountRoot?.props.style);
-    expect(flat.alignSelf).toBe('stretch');
+    const field = view.getByTestId('quick-log-field');
+    const flat = StyleSheet.flatten(field.props.style);
+    expect(flat.backgroundColor).toBe(lightTheme.snow);
+    expect(flat.borderRadius).toBe(radii.card);
+    expect(view.queryByText('0.00')).toBeTruthy();
+    // The old bare-number underline is gone: AmountDisplay is passed
+    // underline={false}, so no view anywhere in the tree carries the
+    // underline's distinctive shape (a 1.5pt-tall pill-radius rule).
+    const underlines = view.container.queryAll((node) => {
+      const style = StyleSheet.flatten(node.props?.style);
+      return style?.height === 1.5 && style?.borderRadius === 999;
+    });
+    expect(underlines).toHaveLength(0);
   });
 
-  it('keeps a 12pt gap between the amount tap area and the plus button (review fix: flush underline)', async () => {
+  it('renders the plus button as a rounded square matching the field radius, stretched to full height, with the sage fill', async () => {
     const view = await render(
       <Providers>
         <QuickLogRow onOpenSheet={() => {}} />
       </Providers>
     );
-    const number = await view.findByText('0.00');
-    // number Text -> AmountDisplay root -> quickLogAmountTap Pressable -> quickLogAmountRow View.
-    const amountRoot = number.parent?.parent;
-    const tapArea = amountRoot?.parent;
-    const row = tapArea?.parent;
-    const flat = StyleSheet.flatten(row?.props.style);
-    expect(flat.gap).toBe(12);
+    const plusButton = view.getByTestId('quick-log-plus', { includeHiddenElements: true });
+    const flat = StyleSheet.flatten(plusButton.props.style);
+    expect(flat.borderRadius).toBe(radii.card);
+    expect(flat.alignSelf).toBe('stretch');
+    expect(flat.backgroundColor).toBe(lightTheme.primary);
   });
 
   it('exposes exactly one accessible control for the log action, and both the amount card and the plus button still open the sheet by touch (UX-055)', async () => {
