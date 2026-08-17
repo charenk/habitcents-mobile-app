@@ -15,7 +15,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { ExpenseRow } from '@/components/money/ExpenseRow';
 import { EmptyState } from '@/components/ui';
-import { radii, typeScale, type AppTheme } from '@/constants/theme';
+import { radii, spacing, typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import type { Expense } from '@/types/expense';
 
@@ -113,10 +113,16 @@ function createStyles(theme: AppTheme) {
     },
     loggedTodayCard: {
       backgroundColor: theme.white,
-      borderRadius: radii.card,
+      // radii.feature, not radii.card: this is a top-level Today surface and it
+      // sits directly under the quick-log card, which is feature. Two adjacent
+      // cards of the same rank were carrying 14 and 20. radii.card stays the
+      // inner-control radius (the quick-log amount field, chips).
+      borderRadius: radii.feature,
       borderWidth: 1,
       borderColor: theme.border,
-      paddingHorizontal: 12,
+      // Was 12, the tightest interior padding on the screen and 6pt left of the
+      // check-in and leak cards. spacing.xl is the ratified top-level value.
+      paddingHorizontal: spacing.xl,
     },
     loggedTodaySeparator: {
       borderTopWidth: 1,

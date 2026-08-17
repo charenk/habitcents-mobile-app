@@ -61,7 +61,12 @@ export function Sheet({
   useEffect(() => {
     if (visible) {
       setRendered(true);
-      progress.setValue(0);
+      // No setValue(0) here. Animated.timing already starts from the current
+      // value, and slamming progress to 0 first made a reopen during the 220ms
+      // close snap the panel off-screen before sliding it back up. Reachable on
+      // the core loop: save a spend, then tap the field again to log a second
+      // one while the sheet is still closing. After a completed close progress
+      // is already 0, so the reset only ever cost the interrupt case.
       Animated.timing(progress, {
         toValue: 1,
         duration: motion.sheet,

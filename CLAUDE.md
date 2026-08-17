@@ -14,6 +14,24 @@
 
 Branch, never main. Fill the PR template (Was/Now, Why, Improvement, Measure, Lane). Lane 1 `auto-merge` = ops/backend/infra with zero user-visible change, CI green, agent merges. Lane 2 `needs-user-test` = anything a user sees or feels, plus always pricing/payments/legal/analytics contracts; attach capture + what-to-test, wait for Charen. Debatable = Lane 2. Full policy: ../docs/decisions/0012-pr-merge-policy.md (habitcents-ops repo).
 
+## UI craft skills (vendored 2026-08-17)
+
+Emil Kowalski's design engineering and animation skills live in
+`.claude/skills/` and load automatically in this repo. Use them for motion and
+UI polish work: `emil-design-eng` and `animate` to build, `review-animations`
+and `improve-animations` to judge, `find-animation-opportunities` to decide
+whether to animate at all, `apple-design` for gesture and spring work.
+
+**Every example in them is web (CSS, Framer Motion, DOM). This is React Native.
+Translate the judgment, never paste the code.** Durations and curves become
+`withTiming`/`withSpring` via `react-native-reanimated`; shared motion belongs
+in `utils/motion.ts`; reduced motion comes from `useReducedMotion()` there, and
+haptics keep firing when motion is off. On any conflict our locked rules win:
+the ADR 0004-0007 motion budget (motion concentrated on the log save and the
+skip), ADR 0027 palette, ADR 0028 save convention, and the content rules.
+Provenance, the full transfers/translate/does-not-apply breakdown, and update
+steps are in `.claude/skills/VENDORED.md`.
+
 ## Project Overview
 
 HabitCents is an Atomic Habits-inspired personal finance app that helps users track spending, discover spending patterns, and build better financial habits. Core loop: log a spend in under 10 seconds, detect the leak, break one habit, count the dollars kept.

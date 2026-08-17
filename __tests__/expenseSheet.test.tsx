@@ -433,6 +433,32 @@ describe('ExpenseSheet: Save gating (expense-sheet workflow redesign, 2026-08-16
     const save = view.getByRole('button', { name: strings.expenseSheet.saveChanges });
     expect(save.props.accessibilityState?.disabled).toBe(false);
   });
+
+  // ADR 0028: disabling is only half the convention. A dimmed button with no
+  // hint tells a VoiceOver user nothing about why, and this sheet shipped that
+  // way through build 16 while AddUpcomingSheet (whose own test pins the same
+  // three assertions) already carried the hint.
+  it('names the missing amount in a VoiceOver hint while Save is disabled', async () => {
+    const view = await renderLogSheet();
+
+    const disabledSave = view.getByRole('button', { name: strings.expenseSheet.saveExpense });
+    expect(disabledSave.props.accessibilityState?.disabled).toBe(true);
+    expect(disabledSave.props.accessibilityHint).toBe(strings.sheets.saveHintAmount);
+
+    await typeAmount(view, '450');
+
+    // Once the amount is real the hint goes away rather than lingering as a
+    // stale instruction on an enabled control.
+    const enabledSave = view.getByRole('button', { name: strings.expenseSheet.saveExpense });
+    expect(enabledSave.props.accessibilityHint).toBeUndefined();
+  });
+
+  it('carries no hint in edit mode, where the amount is never missing', async () => {
+    const view = await renderEditSheet(makeExpense({ id: 'e1', amount: 1200 }));
+
+    const save = view.getByRole('button', { name: strings.expenseSheet.saveChanges });
+    expect(save.props.accessibilityHint).toBeUndefined();
+  });
 });
 
 describe('ExpenseSheet: iOS Done bar', () => {

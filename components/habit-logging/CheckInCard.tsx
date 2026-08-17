@@ -25,7 +25,7 @@ import {
 } from '@/utils/habitLogging';
 import { cardText, isMilestoneCard, type CoachMomentCardId } from '@/utils/coachMoments';
 import { useReducedMotion, hapticSuccess } from '@/utils/motion';
-import { motion, radii, shadows, typeScale, type AppTheme } from '@/constants/theme';
+import { motion, radii, shadows, spacing, typeScale, type AppTheme } from '@/constants/theme';
 import type { DetectedHabit, HabitChangeGoal } from '@/types/habit';
 import { strings } from '@/constants/strings';
 
@@ -260,7 +260,13 @@ function CheckInCardImpl({
       <Pressable
         onPress={onOpenDetail}
         disabled={!onOpenDetail}
-        style={styles.header}
+        // Feedback on press down: the same opacity swap ExpenseRow, UpcomingList
+        // and CurrencySheet rows use. Tapping through to habit detail used to
+        // acknowledge nothing.
+        style={({ pressed }) => [
+          styles.header,
+          pressed && onOpenDetail ? styles.pressedRow : null,
+        ]}
         accessibilityRole={onOpenDetail ? 'button' : undefined}
         accessibilityLabel={onOpenDetail ? strings.today.openHabitLabel(habit.name) : undefined}
       >
@@ -354,6 +360,7 @@ function CheckInCardImpl({
               // label. 14/14 clears the 44pt minimum on the controls anxious
               // users reach for most (change answer, spent less than usual).
               hitSlop={{ top: 14, bottom: 14, left: 8, right: 8 }}
+              style={({ pressed }) => (pressed ? styles.pressedRow : null)}
             >
               <Text style={styles.linkText}>{strings.habitLogging.changeAnswer}</Text>
             </Pressable>
@@ -363,6 +370,7 @@ function CheckInCardImpl({
                 accessibilityRole="button"
                 // UX-031: same 44pt correction as "change answer" above.
                 hitSlop={{ top: 14, bottom: 14, left: 8, right: 8 }}
+                style={({ pressed }) => (pressed ? styles.pressedRow : null)}
               >
                 <Text style={styles.linkText}>{strings.habitLogging.spentLessThanUsual}</Text>
               </Pressable>
@@ -600,7 +608,7 @@ function createStyles(theme: AppTheme) {
     card: {
       backgroundColor: theme.white,
       borderRadius: radii.feature,
-      padding: 18,
+      padding: spacing.xl,
       borderWidth: 1,
       borderColor: theme.cloud,
       ...shadows.card,
@@ -609,6 +617,12 @@ function createStyles(theme: AppTheme) {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 8,
+    },
+    // One pressed treatment for every tappable region in this card: the header
+    // that opens habit detail and the two text links below it. Matches the
+    // bare-row and text-link convention (Button tertiary, ExpenseRow).
+    pressedRow: {
+      opacity: 0.6,
     },
     headerSpacer: {
       flex: 1,
@@ -693,7 +707,9 @@ function createStyles(theme: AppTheme) {
     badge: {
       width: 40,
       height: 40,
-      borderRadius: 20,
+      // radii.pill, not a bare 20: this is a circle (half of 40), and saying so
+      // keeps it round if the badge is ever resized.
+      borderRadius: radii.pill,
       alignItems: 'center',
       justifyContent: 'center',
     },

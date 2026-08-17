@@ -39,6 +39,16 @@ describe('QuickLogRow', () => {
     const flat = StyleSheet.flatten(field.props.style);
     expect(flat.backgroundColor).toBe(lightTheme.snow);
     expect(flat.borderRadius).toBe(radii.card);
+    // Press feedback: the field had no pressed style at all, so the primary
+    // entry to the core loop acknowledged a touch with nothing until the sheet
+    // began to rise. It now takes Button.tsx's stated convention, a pressed
+    // background swap. Asserted as shape rather than colour on purpose: RNTL
+    // resolves the ({ pressed }) callback before the test sees the element and
+    // Pressability's pressed state does not flip under fireEvent (checked with
+    // and without fake timers), so a control WITH feedback renders
+    // [resting, null] while a static one renders a bare object. That is the
+    // regression worth guarding, since the defect was the absence of feedback.
+    expect(Array.isArray(field.props.style)).toBe(true);
     expect(view.queryByText('0.00')).toBeTruthy();
     // The old bare-number underline is gone: AmountDisplay is passed
     // underline={false}, so no view anywhere in the tree carries the
@@ -61,6 +71,11 @@ describe('QuickLogRow', () => {
     expect(flat.borderRadius).toBe(radii.card);
     expect(flat.alignSelf).toBe('stretch');
     expect(flat.backgroundColor).toBe(lightTheme.primary);
+    // Was a TouchableOpacity on its default activeOpacity fade, so the two
+    // halves of one affordance answered a touch differently and neither used
+    // the house swap. Now a Pressable on primaryPressedBg. Same shape assertion
+    // and same reason as the field above.
+    expect(Array.isArray(plusButton.props.style)).toBe(true);
   });
 
   it('exposes exactly one accessible control for the log action, and both the amount card and the plus button still open the sheet by touch (UX-055)', async () => {
@@ -89,4 +104,5 @@ describe('QuickLogRow', () => {
     fireEvent.press(plusButton);
     expect(onOpenSheet).toHaveBeenCalledTimes(2);
   });
+
 });
