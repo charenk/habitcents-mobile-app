@@ -19,20 +19,28 @@ type AmountDisplayProps = {
    * every existing consumer pixel-identical.
    */
   fullWidth?: boolean;
+  /**
+   * Render the 1.5px underline beneath the digits. Default true preserves
+   * every existing consumer pixel-identical. QuickLogRow (components/money/
+   * QuickLogRow.tsx) passes false: its enclosed-field redesign draws its own
+   * container fill instead, so the bare-number underline would be redundant.
+   */
+  underline?: boolean;
 };
 
 /**
- * The shared amount-first display look: a currency symbol plus a serif tabular
- * number over a 1.5px underline (design/redesign-handoff/01-tokens-and-
- * foundations.md, §5). Display only, never a TextInput.
+ * The shared amount-first display look: a currency symbol plus a serif
+ * tabular number, optionally over a 1.5px underline (design/redesign-
+ * handoff/01-tokens-and-foundations.md, §5). Display only, never a
+ * TextInput.
  *
  * ADR 0023 retired this component's editable pairing (AmountDisplay + the
  * custom Keypad) in favor of AmountField, a real TextInput on the native
  * decimal pad, across every amount-entry surface. QuickLogRow (components/
  * money/QuickLogRow.tsx) is the one remaining consumer, and it is
- * display-only there too: a tappable card that opens the log sheet, not
- * paired with any keypad. QuickLogRow passes fullWidth so the underline
- * spans the card instead of hugging the digits.
+ * display-only there too: a tappable control that opens the log sheet, not
+ * paired with any keypad. QuickLogRow renders inside its own enclosed field
+ * container, so it passes underline={false} and no longer needs fullWidth.
  */
 export function AmountDisplay({
   valueCents,
@@ -40,6 +48,7 @@ export function AmountDisplay({
   size = 48,
   zeroAsPlaceholder = false,
   fullWidth = false,
+  underline = true,
 }: AmountDisplayProps) {
   const theme = useTheme();
   const { currency } = useCurrency();
@@ -100,7 +109,7 @@ export function AmountDisplay({
           {numberText}
         </Text>
       </View>
-      <View style={styles.underline} />
+      {underline ? <View style={styles.underline} /> : null}
     </View>
   );
 }

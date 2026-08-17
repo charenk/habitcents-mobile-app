@@ -149,6 +149,23 @@ describe('AmountDisplay', () => {
     const flat = StyleSheet.flatten(column?.props.style);
     expect(flat.alignSelf).toBe('stretch');
   });
+
+  it('renders no underline when underline is false', async () => {
+    const view = await render(
+      <Providers>
+        <AmountDisplay valueCents={0} zeroAsPlaceholder underline={false} />
+      </Providers>
+    );
+    await view.findByText('0.00');
+    // The underline is a View with no other identifying prop, so search the
+    // whole tree for its distinctive shape (a 1.5pt-tall pill-radius rule)
+    // rather than depending on where it sits in the nesting.
+    const underlines = view.container.queryAll((node) => {
+      const style = StyleSheet.flatten(node.props?.style);
+      return style?.height === 1.5 && style?.borderRadius === 999;
+    });
+    expect(underlines).toHaveLength(0);
+  });
 });
 
 describe('TextField', () => {
