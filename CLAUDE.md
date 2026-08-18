@@ -14,6 +14,21 @@
 
 Branch, never main. Fill the PR template (Was/Now, Why, Improvement, Measure, Lane). Lane 1 `auto-merge` = ops/backend/infra with zero user-visible change, CI green, agent merges. Lane 2 `needs-user-test` = anything a user sees or feels, plus always pricing/payments/legal/analytics contracts; attach capture + what-to-test, wait for Charen. Debatable = Lane 2. Full policy: ../docs/decisions/0012-pr-merge-policy.md (habitcents-ops repo).
 
+## Shipping: OTA or native build (ADR 0029)
+
+Before shipping, run `npm run ota:check` (optionally with a base and head).
+`app.json` sets `runtimeVersion.policy = "fingerprint"`, so a change that leaves
+the native fingerprint alone reaches an installed build via `eas update` in about
+two minutes, with no App Store round trip. A change touching `package.json`,
+`package-lock.json`, `app.json`, `app.config.*`, `eas.json`, `babel.config.js`,
+`metro.config.js`, `ios/` or `android/` needs `eas build`. The script is a fast
+pre-check; `eas fingerprint:compare` is the authority before a production OTA.
+
+Channel boundary: agents may publish autonomously to `preview` and `internal`
+only. **`production` is a human action**, OTA or build alike, because Lane 2
+review exists so a person sees anything a user can feel. Full reasoning in the
+umbrella repo's `docs/decisions/0029-release-credentials-and-channel-boundary.md`.
+
 ## UI craft skills (vendored 2026-08-17)
 
 Emil Kowalski's design engineering and animation skills live in
