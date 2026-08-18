@@ -9,7 +9,8 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "test": "jest",
-    "scan:eval": "jest --testPathPattern=leakScanEval --verbose"
+    "scan:eval": "jest --testPathPattern=leakScanEval --verbose",
+    "ota:check": "scripts/ota-eligible.sh"
   },
   "dependencies": {
     "@expo-google-fonts/instrument-serif": "^0.4.1",
