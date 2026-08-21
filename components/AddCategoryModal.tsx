@@ -10,7 +10,7 @@
  * `monthlyBudget` on the Category type since stored data may still carry it;
  * this form just never writes or reads it anymore.
  */
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useRef, useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -24,6 +24,7 @@ import { Icon, categoryIconName } from '@/components/ui/Icon';
 import { Sheet } from '@/components/ui/Sheet';
 import { TextField } from '@/components/ui/TextField';
 import { useToast } from '@/components/ui/Toast';
+import { hapticError } from '@/utils/motion';
 import { useTheme } from '@/contexts/ThemeContext';
 import { radii, typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
@@ -85,7 +86,12 @@ function checkIconColor(swatchHex: string, theme: AppTheme): string {
 type AddCategoryModalProps = {
   visible: boolean;
   onClose: () => void;
-  onSave: (name: string, icon: CategoryIcon, color: string) => void;
+  /**
+   * Persists. Returns a promise so the modal only clears the form and closes
+   * once the category is on disk; a rejection keeps the sheet open with what
+   * the user typed still in it.
+   */
+  onSave: (name: string, icon: CategoryIcon, color: string) => void | Promise<void>;
   initialName?: string;
   initialIcon?: CategoryIcon;
   initialColor?: string;
@@ -105,6 +111,10 @@ export function AddCategoryModal({
   const { height } = useWindowDimensions();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const { show } = useToast();
+  // The sheet stays open until the write lands, so Save is reachable twice on
+  // a slow device; same in-flight guard as the two Money sheets.
+  const savingRef = useRef(false);
+  const [saving, setSaving] = useState(false);
 
   const [name, setName] = useState(initialName);
   const [selectedIcon, setSelectedIcon] = useState<CategoryIcon>(initialIcon);
@@ -137,12 +147,25 @@ export function AddCategoryModal({
   // button with no explanation. The house pattern (ExpenseSheet.tsx
   // handleSave, ~:182-186) keeps the primary button live and toasts an
   // explanation instead.
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!name.trim()) {
       show(strings.toasts.enterCategoryNameFirst);
       return;
     }
-    onSave(name.trim(), selectedIcon, selectedColor);
+    if (savingRef.current) return;
+    savingRef.current = true;
+    setSaving(true);
+    try {
+      await onSave(name.trim(), selectedIcon, selectedColor);
+    } catch (error) {
+      console.error('Error saving category:', error);
+      hapticError();
+      show(strings.toasts.categoryFailed);
+      return;
+    } finally {
+      savingRef.current = false;
+      setSaving(false);
+    }
     resetForm();
     onClose();
   };
@@ -247,6 +270,7 @@ export function AddCategoryModal({
         <Button
           label={strings.common.save}
           onPress={handleSave}
+          disabled={saving}
           style={styles.save}
         />
         <Button label={strings.common.cancel} variant="tertiary" onPress={handleClose} />

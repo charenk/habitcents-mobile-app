@@ -51,6 +51,15 @@ export function hapticWarning(): void {
   Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
 }
 
+/**
+ * Error haptic for an action that reported failure: a save that did not land,
+ * a start that threw. The counterpart to hapticSuccess, so a failure never
+ * feels like a success in the hand. Best effort; never throws.
+ */
+export function hapticError(): void {
+  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
+}
+
 /** Selection tick for picker-style choices (plan cards, filter chips). Best effort; never throws. */
 export function hapticSelection(): void {
   Haptics.selectionAsync().catch(() => {});

@@ -24,7 +24,8 @@ import { useEmptyStateAction } from '@/components/onboarding/useEmptyStateAction
 import { layout, radii, typeScale, type AppTheme } from '@/constants/theme';
 import type { Category, CategoryIcon } from '@/types/category';
 import { strings } from '@/constants/strings';
-import { hapticWarning } from '@/utils/motion';
+import { hapticError, hapticWarning } from '@/utils/motion';
+import { useToast } from '@/components/ui/Toast';
 
 type CategorySection = {
   title: string;
@@ -35,6 +36,7 @@ export default function CategoriesScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const theme = useTheme();
+  const { show } = useToast();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   // deleteTarget stays set through the sheet's close animation (only
@@ -84,6 +86,8 @@ export default function CategoriesScreen() {
     icon: CategoryIcon,
     color: string
   ) => {
+    // Rethrows on purpose: AddCategoryModal is the surface holding the user's
+    // typed name, so it is the one that keeps the sheet open and says so.
     await addCategory(name, icon, color);
   }, [addCategory]);
 
@@ -95,9 +99,19 @@ export default function CategoriesScreen() {
 
   const confirmDeleteCategory = useCallback(async () => {
     if (!deleteTarget) return;
-    await deleteCategory(deleteTarget.id);
+    try {
+      await deleteCategory(deleteTarget.id);
+    } catch (error) {
+      // Covers both the domain guard ("Cannot delete default categories") and
+      // a failed write. The confirm stays up rather than closing over a
+      // category that is still there.
+      console.error('Error deleting category:', error);
+      hapticError();
+      show(strings.toasts.deleteFailed);
+      return;
+    }
     setDeleteConfirmVisible(false);
-  }, [deleteTarget, deleteCategory]);
+  }, [deleteTarget, deleteCategory, show]);
 
   const handleCategoryPress = useCallback((category: Category) => {
     router.push(`/category/${category.id}`);

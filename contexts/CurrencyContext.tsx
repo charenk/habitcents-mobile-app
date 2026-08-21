@@ -24,9 +24,18 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const setCurrency = useCallback(async (code: CurrencyCode) => {
+    const previous = currency;
     setCurrencyState(code);
-    await persistCurrency(code);
-  }, []);
+    try {
+      await persistCurrency(code);
+    } catch (error) {
+      // Put the old currency back rather than reformatting every amount in a
+      // setting that will be gone at the next launch (utils/storage.ts write
+      // policy). The sheet reports the failure.
+      setCurrencyState(previous);
+      throw error;
+    }
+  }, [currency]);
 
   const format = useCallback(
     (cents: number, opts?: FormatMoneyOptions) => formatMoney(cents, currency, opts),

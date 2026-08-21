@@ -147,6 +147,8 @@ export default function CategoryDetailScreen() {
     color: string
   ) => {
     if (!category) return;
+    // Rethrows: AddCategoryModal holds the edited name and owns the failure
+    // message, and only closes itself once the write lands.
     await updateCategory(category.id, { name, icon, color });
     setIsEditModalVisible(false);
   }, [category, updateCategory]);

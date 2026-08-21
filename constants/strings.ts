@@ -774,6 +774,24 @@ export const strings = {
     // UX-021: the start path can throw. Say so plainly and invite a retry;
     // never leave the button dead with no explanation.
     startHabitFailed: 'That did not start. Try again.',
+    // Storage write failures. Until the write policy in utils/storage.ts was
+    // inverted, a failed persist still produced "Logged." and a success
+    // haptic; these are what the app says instead. Plain, specific about what
+    // did not happen, and always an invitation to retry -- the user's input is
+    // still on screen, so a retry costs one tap.
+    logFailed: 'That did not save. Try again.',
+    saveFailed: 'That did not save. Try again.',
+    deleteFailed: 'That did not delete. Try again.',
+    restoreFailed: 'That did not come back. Try again.',
+    addUpcomingFailed: 'That did not save. Try again.',
+    checkInFailed: 'That did not save. Try again.',
+    stopHabitFailed: 'That did not stop. Try again.',
+    skipValueFailed: 'That did not save. Try again.',
+    dismissLeakFailed: 'That did not save. Try again.',
+    categoryFailed: 'That did not save. Try again.',
+    currencyFailed: 'That did not save. Try again.',
+    startOverFailed: 'That did not reset. Try again.',
+    importFailed: 'That did not save. Nothing was imported. Try again.',
     // UX-021-adjacent: AddCategoryModal used to disable Save on an empty name.
     // The house pattern is a live button plus an explanatory toast, so the
     // control never goes dead with no reason given.

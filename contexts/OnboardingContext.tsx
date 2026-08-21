@@ -110,6 +110,25 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     loadData();
   }, []);
 
+  /**
+   * The single onboarding-state write. Optimistic, then honest: a failed
+   * persist restores the previous step and rethrows, so the flow can never
+   * advance the user past a step that will still be waiting for them at the
+   * next launch (utils/storage.ts write policy).
+   */
+  const commitOnboardingState = useCallback(async (next: OnboardingState): Promise<void> => {
+    const previous = onboardingStateRef.current;
+    onboardingStateRef.current = next;
+    setOnboardingState(next);
+    try {
+      await saveOnboardingState(next);
+    } catch (error) {
+      onboardingStateRef.current = previous;
+      setOnboardingState(previous);
+      throw error;
+    }
+  }, []);
+
   const completeStep = useCallback(async (step: OnboardingStep): Promise<void> => {
     const updates: Partial<OnboardingState> = {};
     const next = NEXT_STEP[step];
@@ -120,15 +139,13 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     if (step === 'success') updates.completedAt = new Date();
 
     const updated = { ...onboardingStateRef.current, ...updates };
-    onboardingStateRef.current = updated;
-    setOnboardingState(updated);
-    await saveOnboardingState(updated);
+    await commitOnboardingState(updated);
 
     if (step === 'welcome') {
       track('onboarding_started', {});
     }
     track('onboarding_step_completed', { step });
-  }, []);
+  }, [commitOnboardingState]);
 
   const skipStep = useCallback(async (step: OnboardingStep): Promise<void> => {
     const updates: Partial<OnboardingState> = {
@@ -138,52 +155,63 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     if (next) updates.currentStep = next;
 
     const updated = { ...onboardingStateRef.current, ...updates };
-    onboardingStateRef.current = updated;
-    setOnboardingState(updated);
-    await saveOnboardingState(updated);
+    await commitOnboardingState(updated);
 
     track('onboarding_step_skipped', { step });
-  }, []);
+  }, [commitOnboardingState]);
 
   const chooseDoor = useCallback(async (door: 'fresh' | 'statements' | 'skip'): Promise<void> => {
     const updated: OnboardingState = { ...onboardingStateRef.current, doorChosen: door };
-    onboardingStateRef.current = updated;
-    setOnboardingState(updated);
-    await saveOnboardingState(updated);
+    await commitOnboardingState(updated);
     track('door_chosen', { door });
-  }, []);
+  }, [commitOnboardingState]);
 
   const saveAudit = useCallback(async (answers: AuditAnswers): Promise<void> => {
+    const previous = auditAnswers;
     setAuditAnswers(answers);
-    await saveAuditAnswers(answers);
-  }, []);
+    try {
+      await saveAuditAnswers(answers);
+    } catch (error) {
+      setAuditAnswers(previous);
+      throw error;
+    }
+  }, [auditAnswers]);
 
   const markHabitStarted = useCallback(async (): Promise<void> => {
     const updated: OnboardingState = { ...onboardingStateRef.current, habitStarted: true };
-    onboardingStateRef.current = updated;
-    setOnboardingState(updated);
-    await saveOnboardingState(updated);
-  }, []);
+    await commitOnboardingState(updated);
+  }, [commitOnboardingState]);
 
   const completeOnboarding = useCallback(async (): Promise<void> => {
     const updated: OnboardingState = {
       ...onboardingStateRef.current,
       completedAt: new Date(),
     };
-    onboardingStateRef.current = updated;
-    setOnboardingState(updated);
-    await saveOnboardingState(updated);
+    await commitOnboardingState(updated);
+    // Load-bearing: this flag is what app/index.tsx reads to decide whether to
+    // show the carousel. If it does not land, the user would be told they are
+    // done and meet onboarding again at the next cold start, so let it reject
+    // and let the caller say so. commitOnboardingState above already rolled
+    // its own key back if it was the one that failed.
     await setHasOnboarded();
-    await clearAuditAnswers();
 
-    // Initialize progressive state
+    // Everything below is bookkeeping that a failure must not turn into a
+    // failed completion: the user is onboarded now either way.
+    // clearAuditAnswers only removes a legacy key (see AUDIT_ANSWERS_KEY in
+    // utils/storage.ts); progressive state rebuilds itself from use.
+    await clearAuditAnswers().catch((error) => {
+      console.error('Error clearing legacy audit answers:', error);
+    });
+
     const initialProgressive: ProgressiveFeatureState = {
       ...progressiveState,
       firstActiveDate: new Date(),
       daysActive: 1,
     };
     setProgressiveState(initialProgressive);
-    await saveProgressiveFeatureState(initialProgressive);
+    await saveProgressiveFeatureState(initialProgressive).catch((error) => {
+      console.error('Error initializing progressive feature state:', error);
+    });
 
     // onboarding_completed (spec 02 section 6) fires here, not at each call
     // site, so every path to completing onboarding (skip, or the success
@@ -193,15 +221,17 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       door: updated.doorChosen,
       habitStarted: !!updated.habitStarted,
     });
-  }, [progressiveState]);
+  }, [progressiveState, commitOnboardingState]);
 
   const resetOnboarding = useCallback(async (): Promise<void> => {
-    onboardingStateRef.current = INITIAL_ONBOARDING_STATE;
-    setOnboardingState(INITIAL_ONBOARDING_STATE);
-    await saveOnboardingState(INITIAL_ONBOARDING_STATE);
+    await commitOnboardingState(INITIAL_ONBOARDING_STATE);
     setAuditAnswers(INITIAL_AUDIT_ANSWERS);
-    await clearAuditAnswers();
-  }, []);
+    // Legacy key only; a start-over that already reset the real state must not
+    // fail because a dead key could not be removed.
+    await clearAuditAnswers().catch((error) => {
+      console.error('Error clearing legacy audit answers:', error);
+    });
+  }, [commitOnboardingState]);
 
   const incrementExpenseCount = useCallback(async (): Promise<void> => {
     const updated: ProgressiveFeatureState = {
@@ -209,7 +239,11 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       expenseCount: progressiveState.expenseCount + 1,
     };
     setProgressiveState(updated);
-    await saveProgressiveFeatureState(updated);
+    // Derived bookkeeping fired by app lifecycle, not by a user action, so
+    // it degrades rather than throwing into a screen with no way to react.
+    await saveProgressiveFeatureState(updated).catch((error) => {
+      console.error('Error saving progressive feature state:', error);
+    });
   }, [progressiveState]);
 
   const updateDaysActive = useCallback(async (): Promise<void> => {
@@ -220,7 +254,11 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
         daysActive: 1,
       };
       setProgressiveState(updated);
-      await saveProgressiveFeatureState(updated);
+      // Derived bookkeeping fired by app lifecycle, not by a user action, so
+      // it degrades rather than throwing into a screen with no way to react.
+      await saveProgressiveFeatureState(updated).catch((error) => {
+        console.error('Error saving progressive feature state:', error);
+      });
       return;
     }
 
@@ -235,7 +273,11 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
         daysActive: diffDays,
       };
       setProgressiveState(updated);
-      await saveProgressiveFeatureState(updated);
+      // Derived bookkeeping fired by app lifecycle, not by a user action, so
+      // it degrades rather than throwing into a screen with no way to react.
+      await saveProgressiveFeatureState(updated).catch((error) => {
+        console.error('Error saving progressive feature state:', error);
+      });
     }
   }, [progressiveState]);
 
@@ -270,7 +312,11 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       revealedFeatures: [...progressiveState.revealedFeatures, revealId],
     };
     setProgressiveState(updated);
-    await saveProgressiveFeatureState(updated);
+    // Derived bookkeeping fired by app lifecycle, not by a user action, so
+    // it degrades rather than throwing into a screen with no way to react.
+    await saveProgressiveFeatureState(updated).catch((error) => {
+      console.error('Error saving progressive feature state:', error);
+    });
   }, [progressiveState]);
 
   const isFeatureRevealed = useCallback((feature: string): boolean => {

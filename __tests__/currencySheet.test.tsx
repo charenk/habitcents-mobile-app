@@ -20,6 +20,7 @@ import { act, cleanup, fireEvent, render } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
+import { ToastProvider } from '@/components/ui/Toast';
 import { CurrencySheet } from '@/components/settings/CurrencySheet';
 import { strings } from '@/constants/strings';
 import { selectableLabel } from '@/utils/a11y';
@@ -33,7 +34,11 @@ function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SafeAreaProvider initialMetrics={initialMetrics}>
       <ThemeProvider>
-        <CurrencyProvider>{children}</CurrencyProvider>
+        <CurrencyProvider>
+          {/* The sheet now says so when a currency change fails to persist,
+              so it needs the toast the app root always provides. */}
+          <ToastProvider>{children}</ToastProvider>
+        </CurrencyProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );

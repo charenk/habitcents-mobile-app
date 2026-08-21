@@ -10,6 +10,7 @@ import { useExpenses } from '@/contexts/ExpensesContext';
 import { useHabits } from '@/contexts/HabitsContext';
 import { radii, typeScale, spacing, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
+import { hapticError } from '@/utils/motion';
 import { KpiRow } from './KpiRow';
 import { CategoryList } from './CategoryList';
 import { SpendPulse } from './SpendPulse';
@@ -166,7 +167,7 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
   const theme = useTheme();
   const router = useRouter();
   const toast = useToast();
-  const { addExpense, deleteExpense, expenses } = useExpenses();
+  const { addExpenses, deleteExpense, expenses } = useExpenses();
   const { dismissHabit, getHabitById } = useHabits();
   const completeScanOnboarding = useCompleteScanOnboarding();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -383,8 +384,15 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
         // toAddExpenseInput (utils/leakScan/importWrite.ts) carries source and
         // importId through, not just the fields a manual log would set -- the
         // fix for undo previously removing nothing (see its own doc comment).
-        for (const exp of toWrite) {
-          await addExpense(toAddExpenseInput(exp));
+        // One commit, not one per row: an import either lands whole or rolls
+        // back whole, so there is no half-imported state to describe.
+        try {
+          await addExpenses(toWrite.map(toAddExpenseInput));
+        } catch (error) {
+          console.error('Error saving recurring projection:', error);
+          hapticError();
+          toast.show(strings.toasts.importFailed);
+          return;
         }
         // Save had no confirmation surface before; only speak up here when
         // there's something the user wouldn't otherwise know, i.e. a skip.
@@ -395,7 +403,7 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
         setSavingProjection(false);
       }
     },
-    [result, addExpense, expenses, toast, savingProjection]
+    [result, addExpenses, expenses, toast, savingProjection]
   );
 
   const handleUndo = useCallback(async () => {
@@ -409,15 +417,25 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
       // here via per-item deleteExpense calls so ExpensesContext's own persistence
       // and analytics stay the single write path (no parallel storage write).
       const toDelete = expenses.filter((e) => e.importId === result.importId);
-      for (const exp of toDelete) {
-        await deleteExpense(exp.id);
+      try {
+        for (const exp of toDelete) {
+          await deleteExpense(exp.id);
+        }
+      } catch (error) {
+        // Deletes are one row at a time, so some may already be gone. Say the
+        // undo did not finish rather than marking it done and firing the
+        // event; the remaining rows are still there to try again on.
+        console.error('Error undoing scan import:', error);
+        hapticError();
+        toast.show(strings.toasts.deleteFailed);
+        return;
       }
       track('scan_undone', {});
       setUndone(true);
     } finally {
       undoInFlightRef.current = false;
     }
-  }, [expenses, result.importId, deleteExpense]);
+  }, [expenses, result.importId, deleteExpense, toast]);
 
   const handleBringInDays = useCallback(async () => {
     // UX-035: guards the "Bring in your last N days" CTA against a double
@@ -433,8 +451,16 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
       // recorded spend. Drop anything already brought in by a prior import.
       const toWrite = filterAlreadyImported(seeded, expenses);
       const skipped = seeded.length - toWrite.length;
-      for (const exp of toWrite) {
-        await addExpense(toAddExpenseInput(exp));
+      // One commit for the whole import (about 30 rows). Nothing below runs
+      // unless it landed: no analytics event, no navigation, and no toast
+      // claiming the scan was saved.
+      try {
+        await addExpenses(toWrite.map(toAddExpenseInput));
+      } catch (error) {
+        console.error('Error bringing in scanned days:', error);
+        hapticError();
+        toast.show(strings.toasts.importFailed);
+        return;
       }
       track('scan_seed_applied', { rows: toWrite.length, days: BRING_IN_DAYS });
       // This is the scan door's only exit into the app; it must complete
@@ -453,7 +479,7 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
     } finally {
       setBringingInDays(false);
     }
-  }, [result, addExpense, expenses, router, toast, completeScanOnboarding, bringingInDays]);
+  }, [result, addExpenses, expenses, router, toast, completeScanOnboarding, bringingInDays]);
 
   // UX-033: CategoryList is React.memo'd; this is what makes that memo
   // effective (the old inline arrow was recreated every render).

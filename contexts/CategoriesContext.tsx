@@ -53,8 +53,15 @@ export function CategoriesProvider({ children }: { children: React.ReactNode }) 
       if (stored.length === 0) {
         // Initialize with defaults
         const defaults = initializeDefaultCategories();
+        // Hydration, not a user action: if the first-run seed cannot be
+        // written there is no moment to interrupt and nothing to undo, so the
+        // session runs on the in-memory defaults and the next launch retries.
+        try {
+          await saveCategories(defaults);
+        } catch (error) {
+          console.error('Error seeding default categories:', error);
+        }
         categoriesRef.current = defaults;
-        await saveCategories(defaults);
         setCategories(defaults);
       } else {
         categoriesRef.current = stored;
@@ -65,10 +72,23 @@ export function CategoriesProvider({ children }: { children: React.ReactNode }) 
     loadCategories();
   }, []);
 
+  /**
+   * Optimistic, then honest: state moves first so the UI stays instant, and a
+   * failed persist puts it back and rethrows rather than leaving a category on
+   * screen that would be gone at the next cold start. Same contract as
+   * ExpensesContext's commit; see the write policy in utils/storage.ts.
+   */
   const commit = useCallback(async (next: Category[]): Promise<void> => {
+    const previous = categoriesRef.current;
     categoriesRef.current = next;
     setCategories(next);
-    await saveCategories(next);
+    try {
+      await saveCategories(next);
+    } catch (error) {
+      categoriesRef.current = previous;
+      setCategories(previous);
+      throw error;
+    }
   }, []);
 
   const addCategory = useCallback(async (

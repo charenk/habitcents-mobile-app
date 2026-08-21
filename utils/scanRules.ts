@@ -115,11 +115,18 @@ export async function getScanRules(): Promise<ScanRules> {
 }
 
 /** Persist the rule store. */
+/**
+ * Throws on failure, matching the write policy in utils/storage.ts. These
+ * rules are the user's own "not a habit" decisions: swallowing a failed write
+ * would bring a merchant they just dismissed straight back at the next
+ * relaunch, with no hint that the dismissal never took.
+ */
 export async function saveScanRules(rules: ScanRules): Promise<void> {
   try {
     await AsyncStorage.setItem(SCAN_RULES_KEY, JSON.stringify(rules));
   } catch (error) {
     console.error('Error saving scan rules:', error);
+    throw error;
   }
 }
 

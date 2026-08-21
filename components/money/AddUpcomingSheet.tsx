@@ -34,7 +34,7 @@
  * The date math below mirrors `startFor` in utils/recurring.ts exactly, so
  * `nextOccurrence` returns the stored date unchanged on the very first read.
  */
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Pressable,
   ScrollView,
@@ -69,7 +69,7 @@ import type {
 import { formatDate } from '@/utils/dates';
 import { toExpenseCategory } from '@/utils/expenseCategory';
 import { atMidnight } from '@/utils/habitLogging';
-import { hapticSuccess } from '@/utils/motion';
+import { hapticError, hapticSuccess } from '@/utils/motion';
 import { nextOccurrence, resolveRule } from '@/utils/recurring';
 
 export type AddUpcomingSheetMode = 'add' | 'edit';
@@ -435,7 +435,26 @@ export function AddUpcomingSheet({
   // until it converted first). No other field is required to save.
   const canSave = cents > 0;
 
-  const handleSave = () => {
+  // Same contract as ExpenseSheet.handleSave: the confirmation waits for the
+  // write, a rejection keeps the sheet open with the user's input intact, and
+  // an in-flight guard stops a second tap from creating a duplicate bill while
+  // the first write is still in the air.
+  const savingRef = useRef(false);
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    if (savingRef.current) return;
+    savingRef.current = true;
+    setSaving(true);
+    try {
+      await performSave();
+    } finally {
+      savingRef.current = false;
+      setSaving(false);
+    }
+  };
+
+  const performSave = async () => {
     // Unreachable from the UI now that Save is disabled until canSave; kept
     // as a defensive guard.
     if (!canSave) return;
@@ -490,33 +509,47 @@ export function AddUpcomingSheet({
     }
 
     if (mode === 'edit' && expense) {
-      void updateExpense(expense.id, {
-        title,
-        amount: cents,
-        category,
-        categoryId: match?.id,
-        date: safeDate,
-        isRecurring: rule.type !== 'once',
-        recurrence: legacyRecurrence(rule),
-        recurrenceRule: rule,
-      });
+      try {
+        await updateExpense(expense.id, {
+          title,
+          amount: cents,
+          category,
+          categoryId: match?.id,
+          date: safeDate,
+          isRecurring: rule.type !== 'once',
+          recurrence: legacyRecurrence(rule),
+          recurrenceRule: rule,
+        });
+      } catch (error) {
+        console.error('Error editing upcoming expense:', error);
+        hapticError();
+        show(strings.toasts.saveFailed);
+        return;
+      }
       show(strings.toasts.saved);
       onClose();
       return;
     }
 
-    void addExpense({
-      title,
-      amount: cents,
-      category,
-      categoryId: match?.id,
-      // The write invariant: the stored date IS the first scheduled occurrence.
-      date,
-      isRecurring: rule.type !== 'once',
-      recurrence: legacyRecurrence(rule),
-      recurrenceRule: rule,
-      reminderEnabled: false,
-    });
+    try {
+      await addExpense({
+        title,
+        amount: cents,
+        category,
+        categoryId: match?.id,
+        // The write invariant: the stored date IS the first scheduled occurrence.
+        date,
+        isRecurring: rule.type !== 'once',
+        recurrence: legacyRecurrence(rule),
+        recurrenceRule: rule,
+        reminderEnabled: false,
+      });
+    } catch (error) {
+      console.error('Error adding upcoming expense:', error);
+      hapticError();
+      show(strings.toasts.addUpcomingFailed);
+      return;
+    }
 
     hapticSuccess();
     show(strings.toasts.addedToUpcoming);
@@ -531,17 +564,31 @@ export function AddUpcomingSheet({
     const index = expenses.findIndex((e) => e.id === removed.id);
 
     onClose();
-    void deleteExpense(removed.id);
-    show(strings.toasts.deleted, {
-      action: {
-        label: strings.toasts.undo,
-        onPress: () => {
-          void restoreExpense(removed, index < 0 ? 0 : index).then(() => {
-            show(strings.toasts.restored);
-          });
-        },
+    // "Deleted." only after the delete lands; same shape as ExpenseSheet.
+    void deleteExpense(removed.id).then(
+      () => {
+        show(strings.toasts.deleted, {
+          action: {
+            label: strings.toasts.undo,
+            onPress: () => {
+              void restoreExpense(removed, index < 0 ? 0 : index).then(
+                () => show(strings.toasts.restored),
+                (error) => {
+                  console.error('Error restoring upcoming expense:', error);
+                  hapticError();
+                  show(strings.toasts.restoreFailed);
+                }
+              );
+            },
+          },
+        });
       },
-    });
+      (error) => {
+        console.error('Error deleting upcoming expense:', error);
+        hapticError();
+        show(strings.toasts.deleteFailed);
+      }
+    );
   };
 
   const title = mode === 'edit' ? strings.addUpcoming.editTitle : strings.addUpcoming.title;
@@ -728,7 +775,7 @@ export function AddUpcomingSheet({
             label={saveLabel}
             onPress={handleSave}
             variant="primary"
-            disabled={!canSave}
+            disabled={!canSave || saving}
             // Only carried while disabled, so VoiceOver never reads stale
             // guidance on an already-enabled button (Button.tsx passes the
             // hint straight through unconditionally).

@@ -108,6 +108,62 @@ function toValidDate(value: unknown): Date | null {
   return isNaN(d.getTime()) ? null : d;
 }
 
+// =====================
+// SAFE WRITE HELPERS
+// =====================
+
+/**
+ * The write policy, and why it is the mirror image of the read policy above.
+ *
+ * READS DEGRADE. A loader that cannot read returns an empty or default value
+ * (see loadArray and every getter), so a corrupt blob can never crash a
+ * screen. That is deliberate and stays.
+ *
+ * WRITES THROW. A writer that cannot write rejects, so no caller can report
+ * success for data that never landed. Until this file was fixed, all 19
+ * writers were byte-for-byte copies of the loaders' swallow-and-log shape,
+ * inherited by copy-paste rather than decided: that is how a full disk could
+ * still produce a success haptic and the word "Logged." over an expense that
+ * was already gone. The app is not allowed to claim a save it did not make.
+ *
+ * Background writes that nobody asked for may still degrade, but each one
+ * does so explicitly at its own call site (see ExpensesContext's recurring
+ * materializer), where there is a comment saying why. Never silently here.
+ */
+export class StorageWriteError extends Error {
+  /** The AsyncStorage key the write was aimed at. */
+  readonly key: string;
+  /** Whatever AsyncStorage threw, kept for logging. */
+  readonly underlying: unknown;
+
+  constructor(key: string, underlying: unknown) {
+    super(`Could not save to ${key}`);
+    this.name = 'StorageWriteError';
+    this.key = key;
+    this.underlying = underlying;
+  }
+}
+
+/** Write one key, or reject with a StorageWriteError naming it. */
+async function persist(key: string, value: string): Promise<void> {
+  try {
+    await AsyncStorage.setItem(key, value);
+  } catch (error) {
+    console.error(`Error saving ${key}:`, error);
+    throw new StorageWriteError(key, error);
+  }
+}
+
+/** Delete one key, or reject with a StorageWriteError naming it. */
+async function remove(key: string): Promise<void> {
+  try {
+    await AsyncStorage.removeItem(key);
+  } catch (error) {
+    console.error(`Error clearing ${key}:`, error);
+    throw new StorageWriteError(key, error);
+  }
+}
+
 /**
  * Check if user has completed onboarding
  */
@@ -125,11 +181,7 @@ export async function getHasOnboarded(): Promise<boolean> {
  * Mark user as having completed onboarding
  */
 export async function setHasOnboarded(): Promise<void> {
-  try {
-    await AsyncStorage.setItem(ONBOARDING_KEY, 'true');
-  } catch (error) {
-    console.error('Error saving onboarding state:', error);
-  }
+  return persist(ONBOARDING_KEY, 'true');
 }
 
 /**
@@ -148,22 +200,14 @@ export async function hasFiredFirstKept(): Promise<boolean> {
 
 /** Record that first_kept has been reported. */
 export async function setFirstKeptFired(): Promise<void> {
-  try {
-    await AsyncStorage.setItem(FIRST_KEPT_KEY, 'true');
-  } catch (error) {
-    console.error('Error saving first-kept flag:', error);
-  }
+  return persist(FIRST_KEPT_KEY, 'true');
 }
 
 /**
  * Clear onboarding state (useful for testing)
  */
 export async function clearOnboarding(): Promise<void> {
-  try {
-    await AsyncStorage.removeItem(ONBOARDING_KEY);
-  } catch (error) {
-    console.error('Error clearing onboarding state:', error);
-  }
+  return remove(ONBOARDING_KEY);
 }
 
 /**
@@ -184,11 +228,7 @@ export async function getThemeMode(): Promise<ThemeMode> {
  * Persist theme mode
  */
 export async function setThemeMode(mode: ThemeMode): Promise<void> {
-  try {
-    await AsyncStorage.setItem(THEME_MODE_KEY, mode);
-  } catch (error) {
-    console.error('Error saving theme mode:', error);
-  }
+  return persist(THEME_MODE_KEY, mode);
 }
 
 /**
@@ -209,11 +249,7 @@ export async function getCurrency(): Promise<CurrencyCode> {
  * Persist currency code
  */
 export async function setCurrency(code: CurrencyCode): Promise<void> {
-  try {
-    await AsyncStorage.setItem(CURRENCY_KEY, code);
-  } catch (error) {
-    console.error('Error saving currency:', error);
-  }
+  return persist(CURRENCY_KEY, code);
 }
 
 /**
@@ -238,11 +274,7 @@ export async function getUpcomingWindowDays(): Promise<UpcomingWindowDays> {
  * Persist the Upcoming window selection.
  */
 export async function setUpcomingWindowDays(days: UpcomingWindowDays): Promise<void> {
-  try {
-    await AsyncStorage.setItem(UPCOMING_WINDOW_KEY, String(days));
-  } catch (error) {
-    console.error('Error saving upcoming window:', error);
-  }
+  return persist(UPCOMING_WINDOW_KEY, String(days));
 }
 
 /**
@@ -261,11 +293,7 @@ export async function getExpenses(): Promise<Expense[]> {
  * Persist expenses
  */
 export async function saveExpenses(expenses: Expense[]): Promise<void> {
-  try {
-    await AsyncStorage.setItem(EXPENSES_KEY, JSON.stringify(expenses));
-  } catch (error) {
-    console.error('Error saving expenses:', error);
-  }
+  return persist(EXPENSES_KEY, JSON.stringify(expenses));
 }
 
 /**
@@ -290,11 +318,7 @@ export async function getRecurringTombstones(): Promise<string[]> {
 
 /** Persist the recurring-materializer tombstone set. */
 export async function saveRecurringTombstones(keys: string[]): Promise<void> {
-  try {
-    await AsyncStorage.setItem(RECURRING_TOMBSTONES_KEY, JSON.stringify(keys));
-  } catch (error) {
-    console.error('Error saving recurring tombstones:', error);
-  }
+  return persist(RECURRING_TOMBSTONES_KEY, JSON.stringify(keys));
 }
 
 // =====================
@@ -315,11 +339,7 @@ export async function getCategories(): Promise<Category[]> {
  * Persist categories
  */
 export async function saveCategories(categories: Category[]): Promise<void> {
-  try {
-    await AsyncStorage.setItem(CATEGORIES_KEY, JSON.stringify(categories));
-  } catch (error) {
-    console.error('Error saving categories:', error);
-  }
+  return persist(CATEGORIES_KEY, JSON.stringify(categories));
 }
 
 // =====================
@@ -359,11 +379,7 @@ export async function getHabits(): Promise<DetectedHabit[]> {
  * Persist detected habits
  */
 export async function saveHabits(habits: DetectedHabit[]): Promise<void> {
-  try {
-    await AsyncStorage.setItem(HABITS_KEY, JSON.stringify(habits));
-  } catch (error) {
-    console.error('Error saving habits:', error);
-  }
+  return persist(HABITS_KEY, JSON.stringify(habits));
 }
 
 /**
@@ -424,11 +440,7 @@ export async function getHabitGoals(): Promise<HabitChangeGoal[]> {
  * Persist habit goals
  */
 export async function saveHabitGoals(goals: HabitChangeGoal[]): Promise<void> {
-  try {
-    await AsyncStorage.setItem(HABIT_GOALS_KEY, JSON.stringify(goals));
-  } catch (error) {
-    console.error('Error saving habit goals:', error);
-  }
+  return persist(HABIT_GOALS_KEY, JSON.stringify(goals));
 }
 
 // =====================
@@ -465,11 +477,7 @@ export async function getCoachMomentState(): Promise<CoachMomentState> {
  * Persist the Coach Moment dedup/rotation state.
  */
 export async function saveCoachMomentState(state: CoachMomentState): Promise<void> {
-  try {
-    await AsyncStorage.setItem(COACH_MOMENTS_KEY, JSON.stringify(state));
-  } catch (error) {
-    console.error('Error saving coach moment state:', error);
-  }
+  return persist(COACH_MOMENTS_KEY, JSON.stringify(state));
 }
 
 // =====================
@@ -498,11 +506,7 @@ export async function getDashboardConfig(): Promise<DashboardConfig | null> {
  * Save dashboard config
  */
 export async function saveDashboardConfig(config: DashboardConfig): Promise<void> {
-  try {
-    await AsyncStorage.setItem(DASHBOARD_KEY, JSON.stringify(config));
-  } catch (error) {
-    console.error('Error saving dashboard config:', error);
-  }
+  return persist(DASHBOARD_KEY, JSON.stringify(config));
 }
 
 // =====================
@@ -531,11 +535,7 @@ export async function getOnboardingState(): Promise<OnboardingState | null> {
  * Save detailed onboarding state
  */
 export async function saveOnboardingState(state: OnboardingState): Promise<void> {
-  try {
-    await AsyncStorage.setItem(ONBOARDING_STATE_KEY, JSON.stringify(state));
-  } catch (error) {
-    console.error('Error saving onboarding state:', error);
-  }
+  return persist(ONBOARDING_STATE_KEY, JSON.stringify(state));
 }
 
 /**
@@ -560,11 +560,7 @@ export async function getProgressiveFeatureState(): Promise<ProgressiveFeatureSt
  * Save progressive feature state
  */
 export async function saveProgressiveFeatureState(state: ProgressiveFeatureState): Promise<void> {
-  try {
-    await AsyncStorage.setItem(PROGRESSIVE_FEATURES_KEY, JSON.stringify(state));
-  } catch (error) {
-    console.error('Error saving progressive feature state:', error);
-  }
+  return persist(PROGRESSIVE_FEATURES_KEY, JSON.stringify(state));
 }
 
 // =====================
@@ -588,20 +584,12 @@ export async function getAuditAnswers(): Promise<AuditAnswers | null> {
 
 /** Persist Door 1 Leak Audit answers. */
 export async function saveAuditAnswers(answers: AuditAnswers): Promise<void> {
-  try {
-    await AsyncStorage.setItem(AUDIT_ANSWERS_KEY, JSON.stringify(answers));
-  } catch (error) {
-    console.error('Error saving audit answers:', error);
-  }
+  return persist(AUDIT_ANSWERS_KEY, JSON.stringify(answers));
 }
 
 /** Clear Door 1 Leak Audit answers (used when the audit is fully re-completed). */
 export async function clearAuditAnswers(): Promise<void> {
-  try {
-    await AsyncStorage.removeItem(AUDIT_ANSWERS_KEY);
-  } catch (error) {
-    console.error('Error clearing audit answers:', error);
-  }
+  return remove(AUDIT_ANSWERS_KEY);
 }
 
 // =====================
@@ -688,11 +676,7 @@ export async function getScanSummary(): Promise<ScanSummary | null> {
  */
 export async function saveScanSummary(summary: ScanSummary | null): Promise<void> {
   if (!summary) return;
-  try {
-    await AsyncStorage.setItem(SCAN_SUMMARY_KEY, JSON.stringify(summary));
-  } catch (error) {
-    console.error('Error saving scan summary:', error);
-  }
+  return persist(SCAN_SUMMARY_KEY, JSON.stringify(summary));
 }
 
 // =====================
@@ -718,11 +702,7 @@ async function getQuoteSeq(key: string): Promise<number> {
 }
 
 async function setQuoteSeq(key: string, value: number): Promise<void> {
-  try {
-    await AsyncStorage.setItem(key, String(value));
-  } catch (error) {
-    console.error(`Error saving quote sequence ${key}:`, error);
-  }
+  return persist(key, String(value));
 }
 
 /** Get the persisted Spent-view quote counter. Defaults to 0. */

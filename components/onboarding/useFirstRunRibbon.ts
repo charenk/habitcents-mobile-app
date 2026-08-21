@@ -41,8 +41,9 @@ async function writeRecord(record: FirstRunRibbonRecord): Promise<void> {
   try {
     await AsyncStorage.setItem(FIRST_RUN_RIBBON_KEY, JSON.stringify(record));
   } catch {
-    // Best effort: a lost write just means the (harmless) message can show
-    // again next time, never a crash.
+    // Deliberate exception to the write policy in utils/storage.ts, and the
+    // reason is unchanged: a lost write just means the (harmless) one-time
+    // message can show again next time, never a crash and never lost data.
   }
 }
 
