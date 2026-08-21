@@ -82,6 +82,25 @@ export function ReportsProvider({ children }: { children: React.ReactNode }) {
     loadConfig();
   }, []);
 
+  /**
+   * The single dashboard write. Optimistic, then honest: a failed persist puts
+   * the previous layout back and rethrows, so the widgets on screen always
+   * match the widgets on disk (utils/storage.ts write policy).
+   */
+  const commitConfig = useCallback(async (next: DashboardConfig): Promise<void> => {
+    let previous: DashboardConfig = next;
+    setConfig((current) => {
+      previous = current;
+      return next;
+    });
+    try {
+      await saveDashboardConfig(next);
+    } catch (error) {
+      setConfig(previous);
+      throw error;
+    }
+  }, []);
+
   const reorderWidgets = useCallback(async (fromIndex: number, toIndex: number): Promise<void> => {
     const widgets = [...config.widgets];
     const [moved] = widgets.splice(fromIndex, 1);
@@ -93,9 +112,8 @@ export function ReportsProvider({ children }: { children: React.ReactNode }) {
       widgets: reordered,
       lastUpdated: new Date(),
     };
-    setConfig(updated);
-    await saveDashboardConfig(updated);
-  }, [config]);
+    await commitConfig(updated);
+  }, [config, commitConfig]);
 
   const toggleWidgetVisibility = useCallback(async (widgetId: string): Promise<void> => {
     const updated: DashboardConfig = {
@@ -104,9 +122,8 @@ export function ReportsProvider({ children }: { children: React.ReactNode }) {
       ),
       lastUpdated: new Date(),
     };
-    setConfig(updated);
-    await saveDashboardConfig(updated);
-  }, [config]);
+    await commitConfig(updated);
+  }, [config, commitConfig]);
 
   const updateWidgetTimeRange = useCallback(async (
     widgetId: string,
@@ -118,9 +135,8 @@ export function ReportsProvider({ children }: { children: React.ReactNode }) {
       ),
       lastUpdated: new Date(),
     };
-    setConfig(updated);
-    await saveDashboardConfig(updated);
-  }, [config]);
+    await commitConfig(updated);
+  }, [config, commitConfig]);
 
   const addWidget = useCallback(async (
     type: WidgetType,
@@ -138,10 +154,9 @@ export function ReportsProvider({ children }: { children: React.ReactNode }) {
       widgets: [...config.widgets, newWidget],
       lastUpdated: new Date(),
     };
-    setConfig(updated);
-    await saveDashboardConfig(updated);
+    await commitConfig(updated);
     return newWidget;
-  }, [config]);
+  }, [config, commitConfig]);
 
   const removeWidget = useCallback(async (widgetId: string): Promise<void> => {
     const filtered = config.widgets.filter(w => w.id !== widgetId);
@@ -150,15 +165,13 @@ export function ReportsProvider({ children }: { children: React.ReactNode }) {
       widgets: reordered,
       lastUpdated: new Date(),
     };
-    setConfig(updated);
-    await saveDashboardConfig(updated);
-  }, [config]);
+    await commitConfig(updated);
+  }, [config, commitConfig]);
 
   const resetToDefaults = useCallback(async (): Promise<void> => {
     const defaultConfig = getDefaultConfig();
-    setConfig(defaultConfig);
-    await saveDashboardConfig(defaultConfig);
-  }, []);
+    await commitConfig(defaultConfig);
+  }, [commitConfig]);
 
   const calculateSpendingByCategory = useCallback((
     expenses: Expense[],

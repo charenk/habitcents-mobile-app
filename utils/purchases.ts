@@ -153,7 +153,10 @@ async function writeMockEntitlement(next: Entitlement): Promise<void> {
       await AsyncStorage.removeItem(MOCK_ENTITLEMENT_KEY);
     }
   } catch {
-    // Best effort: the in-memory grant still holds for this session.
+    // Deliberate exception to the write policy in utils/storage.ts: this is
+    // the mock entitlement store, and the in-memory grant still holds for this
+    // session. Revisit when the real RevenueCat wiring replaces it, where a
+    // lost entitlement write is a support ticket rather than a dev-mode blip.
   }
 }
 

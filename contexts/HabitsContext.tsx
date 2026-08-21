@@ -206,6 +206,64 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
     loadData();
   }, []);
 
+  /**
+   * Every habits write goes through here. State and the ref move first so the
+   * UI stays instant; a failed persist puts both back and rethrows, so no
+   * caller can report success for a habit that is not on disk (see the write
+   * policy in utils/storage.ts). `previous` is passed in rather than read
+   * here because callers build `next` from their own closure, and that closure
+   * is the value they need restored.
+   */
+  const commitHabits = useCallback(async (
+    next: DetectedHabit[],
+    previous: DetectedHabit[]
+  ): Promise<void> => {
+    habitsRef.current = next;
+    setHabits(next);
+    try {
+      await saveHabits(next);
+    } catch (error) {
+      habitsRef.current = previous;
+      setHabits(previous);
+      throw error;
+    }
+  }, []);
+
+  /**
+   * Goals and habits are two AsyncStorage keys describing one fact: this habit
+   * is being broken, and this is its goal. A failure between the two writes
+   * would leave them disagreeing on disk, so both React states go back and the
+   * goals key is restored to what it held. That undo is best-effort by
+   * necessity, since a device that cannot write cannot write the undo either,
+   * but memory ends up consistent either way and the caller learns it failed.
+   */
+  const commitGoalsAndHabits = useCallback(async (
+    nextGoals: HabitChangeGoal[],
+    nextHabits: DetectedHabit[],
+    previousGoals: HabitChangeGoal[],
+    previousHabits: DetectedHabit[]
+  ): Promise<void> => {
+    setGoals(nextGoals);
+    habitsRef.current = nextHabits;
+    setHabits(nextHabits);
+    let goalsLanded = false;
+    try {
+      await saveHabitGoals(nextGoals);
+      goalsLanded = true;
+      await saveHabits(nextHabits);
+    } catch (error) {
+      setGoals(previousGoals);
+      habitsRef.current = previousHabits;
+      setHabits(previousHabits);
+      if (goalsLanded) {
+        await saveHabitGoals(previousGoals).catch((undoError) => {
+          console.error('Could not roll back habit goals after a partial write:', undoError);
+        });
+      }
+      throw error;
+    }
+  }, []);
+
   const ensureCoachState = useCallback(async (): Promise<CoachMomentState> => {
     if (!coachStateRef.current) {
       coachStateRef.current = await getCoachMomentState();
@@ -234,7 +292,13 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     coachStateRef.current = selection.nextState;
-    await saveCoachMomentState(selection.nextState);
+    // Degrades on purpose (writes otherwise throw, see utils/storage.ts). The
+    // answer this decorates has already been persisted and confirmed; failing
+    // the whole skip because a rotation counter did not save would punish the
+    // user for the wrong thing. Worst case the same card can show once more.
+    await saveCoachMomentState(selection.nextState).catch((error) => {
+      console.error('Error saving coach moment state:', error);
+    });
     setLastCoachMoment({ goalId, cardId: selection.result.cardId });
     track('coach_moment_shown', { trigger: selection.result.trigger, card_id: selection.result.cardId });
   }, [ensureCoachState]);
@@ -249,7 +313,13 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
     const selection = selectDetectionMoment(current);
     if (!selection) return null;
     coachStateRef.current = selection.nextState;
-    await saveCoachMomentState(selection.nextState);
+    // Degrades on purpose (writes otherwise throw, see utils/storage.ts). The
+    // answer this decorates has already been persisted and confirmed; failing
+    // the whole skip because a rotation counter did not save would punish the
+    // user for the wrong thing. Worst case the same card can show once more.
+    await saveCoachMomentState(selection.nextState).catch((error) => {
+      console.error('Error saving coach moment state:', error);
+    });
     track('coach_moment_shown', { trigger: selection.result.trigger, card_id: selection.result.cardId });
     return selection.result.cardId;
   }, [ensureCoachState]);
@@ -266,7 +336,13 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
     const selection = selectFirstLogMoment(current);
     if (!selection) return null;
     coachStateRef.current = selection.nextState;
-    await saveCoachMomentState(selection.nextState);
+    // Degrades on purpose (writes otherwise throw, see utils/storage.ts). The
+    // answer this decorates has already been persisted and confirmed; failing
+    // the whole skip because a rotation counter did not save would punish the
+    // user for the wrong thing. Worst case the same card can show once more.
+    await saveCoachMomentState(selection.nextState).catch((error) => {
+      console.error('Error saving coach moment state:', error);
+    });
     track('coach_moment_shown', { trigger: selection.result.trigger, card_id: selection.result.cardId });
     return selection.result.cardId;
   }, [ensureCoachState]);
@@ -279,8 +355,7 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
     const rules = await getScanRules();
     const detected = detectHabits(expenses, currency, rules.suppressedHabits);
     const merged = mergeHabits(habits, detected);
-    setHabits(merged);
-    await saveHabits(merged);
+    await commitHabits(merged, habits);
 
     // Fire detection_shown only when a new leak surfaces (discovered count grew),
     // so we measure the aha moment without spamming an event on every log.
@@ -290,16 +365,15 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
     if (after > before) {
       track('detection_shown', { habit_count: after });
     }
-  }, [habits, currency]);
+  }, [habits, currency, commitHabits]);
 
   const dismissHabit = useCallback(async (habitId: string): Promise<void> => {
     const updated = habits.map(h =>
       h.id === habitId ? { ...h, dismissedAt: new Date() } : h
     );
-    setHabits(updated);
-    await saveHabits(updated);
+    await commitHabits(updated, habits);
     track('habit_dismissed', { source: 'detection' });
-  }, [habits]);
+  }, [habits, commitHabits]);
 
   // UX-022: real undo, not a fake one. Clears the same field dismissHabit
   // set, so the habit is indistinguishable from one that was never dismissed.
@@ -310,13 +384,12 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
   // write a pre-dismiss snapshot back to storage and silently revert anything
   // else that changed while the toast was up.
   const restoreDismissedHabit = useCallback(async (habitId: string): Promise<void> => {
-    const updated = habitsRef.current.map(h =>
+    const previous = habitsRef.current;
+    const updated = previous.map(h =>
       h.id === habitId ? { ...h, dismissedAt: undefined } : h
     );
-    habitsRef.current = updated;
-    setHabits(updated);
-    await saveHabits(updated);
-  }, []);
+    await commitHabits(updated, previous);
+  }, [commitHabits]);
 
   /**
    * Admit a Leak Scan habit candidate into habits state. Reuses the same
@@ -339,10 +412,9 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
       result = habit;
       updated = [...habits, habit];
     }
-    setHabits(updated);
-    await saveHabits(updated);
+    await commitHabits(updated, habits);
     return result;
-  }, [habits]);
+  }, [habits, commitHabits]);
 
   /**
    * Pick-one sheet "Start breaking it" (spec §3.1, §4.3). Nothing exists
@@ -395,21 +467,17 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
     };
 
     const updatedGoals = [...goals, newGoal];
-    setGoals(updatedGoals);
-    await saveHabitGoals(updatedGoals);
-
     const updatedHabits = habits.map(h =>
       h.id === habitId
         ? { ...h, status: 'changing' as HabitStatus, changeGoal: newGoal }
         : h
     );
-    setHabits(updatedHabits);
-    await saveHabits(updatedHabits);
+    await commitGoalsAndHabits(updatedGoals, updatedHabits, goals, habits);
 
     track('habit_goal_created', { cadence: habit.frequency, value_edited: valueEdited });
     track('habit_tracking_started', { cadence: habit.frequency, source: source ?? 'unknown' });
     return newGoal;
-  }, [habits, goals]);
+  }, [habits, goals, commitGoalsAndHabits]);
 
   const seedDiscoveredHabit = useCallback(async (input: {
     merchantPattern: string;
@@ -445,9 +513,7 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
         totalMonthlySpend: input.totalMonthlySpend,
       };
       const updatedHabits = habits.map(h => (h.id === existing.id ? refreshed : h));
-      habitsRef.current = updatedHabits;
-      setHabits(updatedHabits);
-      await saveHabits(updatedHabits);
+      await commitHabits(updatedHabits, habits);
       return refreshed;
     }
 
@@ -487,23 +553,17 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
     };
 
     const updatedHabits = [...habits, habit];
-    habitsRef.current = updatedHabits;
-    setHabits(updatedHabits);
-    await saveHabits(updatedHabits);
+    await commitHabits(updatedHabits, habits);
     return habit;
-  }, [habits]);
+  }, [habits, commitHabits]);
 
   const persistGoalAndHabit = useCallback(async (updatedGoal: HabitChangeGoal) => {
     const updatedGoals = goals.map(g => (g.id === updatedGoal.id ? updatedGoal : g));
-    setGoals(updatedGoals);
-    await saveHabitGoals(updatedGoals);
-
     const updatedHabits = habits.map(h =>
       h.id === updatedGoal.habitId ? { ...h, changeGoal: updatedGoal } : h
     );
-    setHabits(updatedHabits);
-    await saveHabits(updatedHabits);
-  }, [goals, habits]);
+    await commitGoalsAndHabits(updatedGoals, updatedHabits, goals, habits);
+  }, [goals, habits, commitGoalsAndHabits]);
 
   /**
    * first_kept (PRD v3.1 sect 7.5 / sect 11): the first time this install ever
@@ -518,7 +578,16 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
    */
   const reportFirstKept = useCallback(async (goal: HabitChangeGoal): Promise<void> => {
     if (await hasFiredFirstKept()) return;
-    await setFirstKeptFired();
+    // Fail closed, matching hasFiredFirstKept's read: if the once-per-install
+    // flag did not land, a later skip would fire first_kept a second time, and
+    // a metric that can fire twice is not a first. Losing the event is the
+    // cheaper error, and this must never fail the skip that triggered it.
+    try {
+      await setFirstKeptFired();
+    } catch (error) {
+      console.error('Error saving first-kept flag; skipping first_kept:', error);
+      return;
+    }
     // Read off the goal, not the nearest preceding habit_tracking_started: a
     // first skip can land days later, and after a second habit was started,
     // which would misattribute it. Goals created before the field existed
@@ -755,9 +824,8 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
     const updatedHabits = habits.map(h =>
       h.id === goal.habitId ? { ...h, status: 'discovered' as HabitStatus, changeGoal: undefined } : h
     );
-    setHabits(updatedHabits);
-    await saveHabits(updatedHabits);
-  }, [goals, habits]);
+    await commitHabits(updatedHabits, habits);
+  }, [goals, habits, commitHabits]);
 
   const getHabitById = useCallback((id: string): DetectedHabit | undefined => {
     return habits.find(h => h.id === id);

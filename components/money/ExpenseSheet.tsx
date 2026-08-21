@@ -58,7 +58,7 @@
  * unchanged: onSaved still fires once, synchronously, right before onClose,
  * built from the values just sent to addExpense rather than its return value.
  */
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Keyboard, Platform, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AmountField } from '@/components/ui/AmountField';
@@ -77,7 +77,7 @@ import { useExpenses } from '@/contexts/ExpensesContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import type { Expense, ExpenseCategory } from '@/types/expense';
 import { toExpenseCategory } from '@/utils/expenseCategory';
-import { hapticSuccess } from '@/utils/motion';
+import { hapticError, hapticSuccess } from '@/utils/motion';
 import { CategoryChipRow } from './CategoryChipRow';
 
 /**
@@ -160,6 +160,13 @@ export function ExpenseSheet({
   const [cents, setCents] = useState(0);
   const [category, setCategory] = useState<ExpenseCategory | null>(null);
   const [merchant, setMerchant] = useState('');
+  // The sheet now stays open until the write resolves, so Save is reachable
+  // twice on a slow device. Same in-flight guard the other write paths use
+  // (useTrackLeak's startInFlightRef, ResultsScreen's bringingInDays): a ref
+  // so the second tap is rejected in the same tick, plus state so the button
+  // visibly goes disabled rather than silently swallowing the tap.
+  const savingRef = useRef(false);
+  const [saving, setSaving] = useState(false);
 
   // Every open starts from a clean slate for the row it's actually editing
   // (or a blank one, for log), so a dismissed half-typed field never leaks
@@ -214,27 +221,52 @@ export function ExpenseSheet({
     );
   };
 
-  const handleSave = () => {
+  // The save confirmation waits for the write. This used to be
+  // `void addExpense(...)` followed immediately by a success haptic and
+  // "Logged.", which meant a full disk still felt and read like a save; the
+  // row was gone at the next launch. Now the haptic, the toast and the close
+  // all happen after the persist resolves, and a rejection keeps the sheet
+  // open with the user's amount still typed so a retry costs one tap.
+  const handleSave = async () => {
     // Unreachable from the UI now that Save is disabled until cents > 0
     // (Charen's call, 2026-08-16); kept as a defensive guard.
     if (cents <= 0) return;
+    if (savingRef.current) return;
+    savingRef.current = true;
+    setSaving(true);
+    try {
+      await performSave();
+    } finally {
+      savingRef.current = false;
+      setSaving(false);
+    }
+  };
+
+  const performSave = async () => {
 
     if (mode === 'log') {
       const resolved = category ?? 'Other';
       const match = categories.find((c) => toExpenseCategory(c.name) === resolved);
 
-      void addExpense({
-        // A named place titles its own row; only an unnamed log falls back to
-        // the category name.
-        title: typedMerchant || (match?.name ?? resolved),
-        amount: cents,
-        category: resolved,
-        categoryId: match?.id,
-        merchant: typedMerchant || undefined,
-        date: new Date(),
-        isRecurring: false,
-        reminderEnabled: false,
-      });
+      try {
+        await addExpense({
+          // A named place titles its own row; only an unnamed log falls back to
+          // the category name.
+          title: typedMerchant || (match?.name ?? resolved),
+          amount: cents,
+          category: resolved,
+          categoryId: match?.id,
+          merchant: typedMerchant || undefined,
+          date: new Date(),
+          isRecurring: false,
+          reminderEnabled: false,
+        });
+      } catch (error) {
+        console.error('Error logging expense:', error);
+        hapticError();
+        show(strings.toasts.logFailed);
+        return;
+      }
 
       hapticSuccess();
       show(strings.toasts.logged);
@@ -260,15 +292,22 @@ export function ExpenseSheet({
       categories.some((c) => c.name === expense.title) ||
       (!!expense.merchant && expense.title === expense.merchant);
 
-    void updateExpense(expense.id, {
-      amount: cents,
-      category: resolved,
-      categoryId: match?.id,
-      // Cleared to undefined rather than '', because detection treats an
-      // empty merchant as no merchant and storage drops the key entirely.
-      merchant: typedMerchant || undefined,
-      ...(titleWasDerived ? { title: typedMerchant || (match?.name ?? resolved) } : null),
-    });
+    try {
+      await updateExpense(expense.id, {
+        amount: cents,
+        category: resolved,
+        categoryId: match?.id,
+        // Cleared to undefined rather than '', because detection treats an
+        // empty merchant as no merchant and storage drops the key entirely.
+        merchant: typedMerchant || undefined,
+        ...(titleWasDerived ? { title: typedMerchant || (match?.name ?? resolved) } : null),
+      });
+    } catch (error) {
+      console.error('Error editing expense:', error);
+      hapticError();
+      show(strings.toasts.saveFailed);
+      return;
+    }
 
     show(strings.toasts.saved);
     onClose();
@@ -282,17 +321,32 @@ export function ExpenseSheet({
     const index = expenses.findIndex((e) => e.id === removed.id);
 
     onClose();
-    void deleteExpense(removed.id);
-    show(strings.toasts.deleted, {
-      action: {
-        label: strings.toasts.undo,
-        onPress: () => {
-          void restoreExpense(removed, index < 0 ? 0 : index).then(() => {
-            show(strings.toasts.restored);
-          });
-        },
+    // The sheet closes first (the row is going either way from the user's
+    // point of view), but "Deleted." only appears once the delete is on disk.
+    void deleteExpense(removed.id).then(
+      () => {
+        show(strings.toasts.deleted, {
+          action: {
+            label: strings.toasts.undo,
+            onPress: () => {
+              void restoreExpense(removed, index < 0 ? 0 : index).then(
+                () => show(strings.toasts.restored),
+                (error) => {
+                  console.error('Error restoring expense:', error);
+                  hapticError();
+                  show(strings.toasts.restoreFailed);
+                }
+              );
+            },
+          },
+        });
       },
-    });
+      (error) => {
+        console.error('Error deleting expense:', error);
+        hapticError();
+        show(strings.toasts.deleteFailed);
+      }
+    );
   };
 
   const eyebrow = mode === 'log' ? strings.expenseSheet.logEyebrow : strings.expenseSheet.editEyebrow;
@@ -331,7 +385,7 @@ export function ExpenseSheet({
             label={saveLabel}
             onPress={handleSave}
             variant="primary"
-            disabled={cents <= 0}
+            disabled={cents <= 0 || saving}
             // ADR 0028: a disabled primary names the first missing thing, so a
             // VoiceOver user is not left with a dimmed button and no reason.
             // This sheet was the first converted to disabled-until-valid and

@@ -5,6 +5,7 @@ import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useHabits } from '@/contexts/HabitsContext';
+import { useCheckInFeedback } from '@/components/habit-logging/useCheckInFeedback';
 import { CheckInCard } from '@/components/habit-logging/CheckInCard';
 import { LongArc } from '@/components/habit-logging/LongArc';
 import { HistoryCalendar } from '@/components/habit-logging/HistoryCalendar';
@@ -22,7 +23,7 @@ import type { CoachMomentCardId } from '@/utils/coachMoments';
 import { typeScale, layout, type AppTheme } from '@/constants/theme';
 import type { DetectedHabit, HabitChangeGoal } from '@/types/habit';
 import { strings } from '@/constants/strings';
-import { hapticWarning } from '@/utils/motion';
+import { hapticError, hapticWarning } from '@/utils/motion';
 
 export default function HabitDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -71,6 +72,7 @@ export default function HabitDetailScreen() {
   const [editSkipVisible, setEditSkipVisible] = useState(false);
   const [stopConfirmVisible, setStopConfirmVisible] = useState(false);
   const toast = useToast();
+  const answerFeedback = useCheckInFeedback();
 
   if (!habit) {
     return (
@@ -98,7 +100,17 @@ export default function HabitDetailScreen() {
 
   const confirmStopBreaking = async () => {
     if (!goal) return;
-    await stopBreakingHabit(goal.id);
+    try {
+      await stopBreakingHabit(goal.id);
+    } catch (error) {
+      // Leave the sheet up and stay on the screen: the habit is still being
+      // broken, and navigating back would show the user a state that did not
+      // change while telling them it did.
+      console.error('Error stopping habit:', error);
+      hapticError();
+      toast.show(strings.toasts.stopHabitFailed);
+      return;
+    }
     setStopConfirmVisible(false);
     toast.show(strings.toasts.stoppedHistoryKept);
     router.back();
@@ -125,10 +137,10 @@ export default function HabitDetailScreen() {
             goal={goal}
             milestoneJustHit={lastMilestone?.goalId === goal.id ? lastMilestone.threshold : null}
             coachMoment={lastCoachMoment}
-            onSkip={() => (habit.frequency === 'daily' ? answerToday(goal.id, 'skipped') : answerEvent(goal.id, 'skipped'))}
-            onSlip={() => (habit.frequency === 'daily' ? answerToday(goal.id, 'slipped') : answerEvent(goal.id, 'slipped'))}
-            onChangeAnswer={() => changeTodayAnswer(goal.id)}
-            onBackfill={(state) => backfillYesterday(goal.id, state)}
+            onSkip={() => answerFeedback(() => (habit.frequency === 'daily' ? answerToday(goal.id, 'skipped') : answerEvent(goal.id, 'skipped')))}
+            onSlip={() => answerFeedback(() => (habit.frequency === 'daily' ? answerToday(goal.id, 'slipped') : answerEvent(goal.id, 'slipped')))}
+            onChangeAnswer={() => answerFeedback(() => changeTodayAnswer(goal.id))}
+            onBackfill={(state) => answerFeedback(() => backfillYesterday(goal.id, state))}
             onOpenPartial={() => setPartialVisible(true)}
             onEditSkipValue={() => setEditSkipVisible(true)}
             onStopBreaking={handleStopBreaking}
@@ -176,7 +188,16 @@ export default function HabitDetailScreen() {
           initialValue={goal.skipValue}
           onCancel={() => setEditSkipVisible(false)}
           onSave={async (value) => {
-            await updateSkipValue(goal.id, value);
+            try {
+              await updateSkipValue(goal.id, value);
+            } catch (error) {
+              // Sheet stays open with the typed value intact, so a retry is
+              // one tap rather than a re-entry.
+              console.error('Error saving skip value:', error);
+              hapticError();
+              toast.show(strings.toasts.skipValueFailed);
+              return;
+            }
             setEditSkipVisible(false);
             toast.show(strings.toasts.skipValueSaved(format(value)));
           }}

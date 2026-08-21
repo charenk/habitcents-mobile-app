@@ -24,6 +24,15 @@ type ExpensesContextValue = {
   expenses: Expense[];
   isLoading: boolean;
   addExpense: (input: AddExpenseInput) => Promise<Expense>;
+  /**
+   * Write many expenses in one commit. The leak-scan imports used to loop over
+   * addExpense, which re-serialized the whole array once per row: 30 writes for
+   * one user action, and a failure on row 17 left 16 rows on disk with no
+   * honest way to describe what happened. One commit means the import either
+   * lands whole or rolls back whole. Fires no per-expense analytics; the
+   * import surfaces own that (scan_seed_applied, bills_imported).
+   */
+  addExpenses: (inputs: AddExpenseInput[]) => Promise<Expense[]>;
   updateExpense: (id: string, updates: Partial<Omit<Expense, 'id'>>) => Promise<void>;
   deleteExpense: (id: string) => Promise<void>;
   /**
@@ -97,10 +106,24 @@ export function ExpensesProvider({ children }: { children: React.ReactNode }) {
   const materializeChainRef = useRef<Promise<void>>(Promise.resolve());
   const appStateRef = useRef(AppState.currentState);
 
+  /**
+   * The single write funnel. State moves first so the UI stays instant, but a
+   * failed persist puts it straight back and rethrows: the list a user is
+   * looking at must never contain a row that is not on disk, because these
+   * contexts rehydrate from storage on the next cold start and the row would
+   * simply vanish. Callers that report success are required to await this.
+   */
   const commit = useCallback(async (next: Expense[]): Promise<void> => {
+    const previous = expensesRef.current;
     expensesRef.current = next;
     setExpenses(next);
-    await saveExpenses(next);
+    try {
+      await saveExpenses(next);
+    } catch (error) {
+      expensesRef.current = previous;
+      setExpenses(previous);
+      throw error;
+    }
   }, []);
 
   // Plans and writes every due-but-unmaterialized recurring occurrence
@@ -120,6 +143,10 @@ export function ExpensesProvider({ children }: { children: React.ReactNode }) {
         await commit([...expensesRef.current, ...children]);
       })
       .catch((error) => {
+        // Deliberate exception to the speak-up rule now that writes reject
+        // (utils/storage.ts write policy): nobody asked for this pass, it has
+        // no moment to interrupt, and commit has already rolled the list back.
+        // The next foreground or cold start simply replans the same dates.
         console.error('Error running recurring materializer:', error);
       });
     materializeChainRef.current = run;
@@ -186,6 +213,20 @@ export function ExpensesProvider({ children }: { children: React.ReactNode }) {
     return newExpense;
   }, [commit]);
 
+  const addExpenses = useCallback(async (inputs: AddExpenseInput[]): Promise<Expense[]> => {
+    if (inputs.length === 0) return [];
+    // Same hydration guard as addExpense: writing before the stored history
+    // has loaded would persist the import over the top of it.
+    if (!loadedRef.current) {
+      expensesRef.current = await getExpenses();
+      loadedRef.current = true;
+    }
+    const created = inputs.map(createExpense);
+    // Newest-first, matching addExpense's single-row ordering.
+    await commit([...created.slice().reverse(), ...expensesRef.current]);
+    return created;
+  }, [commit]);
+
   const updateExpense = useCallback(async (
     id: string,
     updates: Partial<Omit<Expense, 'id'>>
@@ -204,12 +245,21 @@ export function ExpensesProvider({ children }: { children: React.ReactNode }) {
     // exact same (parentId, date) occurrence from the parent's schedule and
     // silently resurrect the row the user just deleted.
     const target = expensesRef.current.find((exp) => exp.id === id);
+    const previousTombstones = tombstonesRef.current;
     if (target?.source === 'recurring' && target.parentId) {
       const key = occurrenceKey(target.parentId, target.date);
       const next = new Set(tombstonesRef.current);
       next.add(key);
       tombstonesRef.current = next;
-      void saveRecurringTombstones(Array.from(next));
+      // Awaited, not floated: if the tombstone does not land, the next
+      // materializer run resurrects the row the user just deleted. Better to
+      // fail the delete loudly than to un-delete it silently an hour later.
+      try {
+        await saveRecurringTombstones(Array.from(next));
+      } catch (error) {
+        tombstonesRef.current = previousTombstones;
+        throw error;
+      }
     }
     await commit(expensesRef.current.filter(exp => exp.id !== id));
     track('expense_deleted', {});
@@ -267,6 +317,7 @@ export function ExpensesProvider({ children }: { children: React.ReactNode }) {
     expenses,
     isLoading,
     addExpense,
+    addExpenses,
     updateExpense,
     deleteExpense,
     restoreExpense,
@@ -277,7 +328,7 @@ export function ExpensesProvider({ children }: { children: React.ReactNode }) {
     getTotalSpent,
     getExpenseCount,
   }), [
-    expenses, isLoading, addExpense, updateExpense, deleteExpense, restoreExpense,
+    expenses, isLoading, addExpense, addExpenses, updateExpense, deleteExpense, restoreExpense,
     getExpenseById, getExpensesByCategory, getExpensesByDateRange,
     getTotalByCategory, getTotalSpent, getExpenseCount,
   ]);

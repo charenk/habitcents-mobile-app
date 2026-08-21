@@ -18,6 +18,8 @@ import { useCurrency } from '@/contexts/CurrencyContext';
 import { typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
+import { useToast } from '@/components/ui/Toast';
+import { hapticError } from '@/utils/motion';
 import { CURRENCIES, type CurrencyCode } from '@/utils/currency';
 import { selectableLabel } from '@/utils/a11y';
 
@@ -29,11 +31,19 @@ export type CurrencySheetProps = {
 export function CurrencySheet({ visible, onClose }: CurrencySheetProps): React.JSX.Element {
   const theme = useTheme();
   const { currency, setCurrency } = useCurrency();
+  const { show } = useToast();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   const handleSelect = (code: CurrencyCode) => {
-    void setCurrency(code);
+    // Close first: the picker's job is done either way, and CurrencyContext
+    // rolls the displayed currency back on a failed write. The toast is the
+    // only thing that has to wait for the outcome.
     onClose();
+    void setCurrency(code).catch((error) => {
+      console.error('Error saving currency:', error);
+      hapticError();
+      show(strings.toasts.currencyFailed);
+    });
   };
 
   return (

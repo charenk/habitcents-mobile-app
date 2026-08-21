@@ -24,7 +24,7 @@ import {
   weekStats,
 } from '@/utils/habitLogging';
 import { cardText, isMilestoneCard, type CoachMomentCardId } from '@/utils/coachMoments';
-import { useReducedMotion, hapticSuccess } from '@/utils/motion';
+import { useReducedMotion } from '@/utils/motion';
 import { motion, radii, shadows, spacing, typeScale, type AppTheme } from '@/constants/theme';
 import type { DetectedHabit, HabitChangeGoal } from '@/types/habit';
 import { strings } from '@/constants/strings';
@@ -39,10 +39,15 @@ type CheckInCardProps = {
    * Change-answer correction or once the next render has no fresh event).
    */
   coachMoment?: { goalId: string; cardId: CoachMomentCardId } | null;
-  onSkip: () => void;
-  onSlip: () => void;
-  onChangeAnswer: () => void;
-  onBackfill: (state: 'skipped' | 'slipped') => void;
+  /**
+   * The answer handlers persist, so they return a promise this card awaits
+   * before it celebrates. Typed to allow a plain void return so a test or a
+   * future caller can still pass a synchronous stub.
+   */
+  onSkip: () => void | Promise<void>;
+  onSlip: () => void | Promise<void>;
+  onChangeAnswer: () => void | Promise<void>;
+  onBackfill: (state: 'skipped' | 'slipped') => void | Promise<void>;
   onOpenPartial: () => void;
   onOpenDetail?: () => void;
 };
@@ -173,8 +178,13 @@ function CheckInCardImpl({
   const skipValueLabel = format(goal.skipValue);
   const todayEntry = goal.dayLogs.find((e) => atMidnight(e.date).getTime() === today.getTime());
 
+  // No haptic here any more. This card cannot see whether an answer reached
+  // disk, and it used to fire hapticSuccess on tap, before the write had even
+  // started, so a failed skip still felt like a kept dollar. The screens that
+  // own the write own the feedback now (useCheckInFeedback), which is the only
+  // place the outcome is actually known. The card stays presentational, and
+  // stays renderable in a test without the whole provider stack.
   const handleSkip = () => {
-    hapticSuccess();
     onSkip();
   };
 

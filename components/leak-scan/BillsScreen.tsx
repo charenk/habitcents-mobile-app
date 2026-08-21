@@ -7,6 +7,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { radii, spacing, typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
+import { hapticError } from '@/utils/motion';
 import { categoryEmoji, categoryIdentityColor } from '@/constants/categoryEmoji';
 import { defaultSelection, offerCount, type BillsOffer } from '@/utils/leakScan/bills';
 import {
@@ -51,7 +52,7 @@ export function BillsScreen({ offer, result, onDone }: BillsScreenProps) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const { format } = useCurrency();
-  const { addExpense, expenses } = useExpenses();
+  const { addExpenses, expenses } = useExpenses();
   const toast = useToast();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
@@ -85,8 +86,17 @@ export function BillsScreen({ offer, result, onDone }: BillsScreenProps) {
       if (result && selected.size > 0) {
         const candidates = recurringToExpenses(result, { onlyStems: selected });
         const fresh = filterAlreadyImported(candidates, expenses);
-        for (const expense of fresh) {
-          await addExpense(toAddExpenseInput(expense));
+        // One commit, so `accepted` counts bills that are on disk rather than
+        // bills that were attempted. It used to be set to fresh.length whether
+        // or not the writes landed, which put a fictional number into both the
+        // toast and the bills_imported event.
+        try {
+          await addExpenses(fresh.map(toAddExpenseInput));
+        } catch (error) {
+          console.error('Error filing bills:', error);
+          hapticError();
+          toast.show(strings.toasts.importFailed);
+          return;
         }
         accepted = fresh.length;
       }

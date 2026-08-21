@@ -24,6 +24,7 @@ import { useOnboarding } from '@/contexts/OnboardingContext';
 import { KeptHero } from '@/components/habit-logging/KeptHero';
 import { LeakCard } from '@/components/habit-logging/LeakCard';
 import { CheckInCard } from '@/components/habit-logging/CheckInCard';
+import { useCheckInFeedback } from '@/components/habit-logging/useCheckInFeedback';
 import { PickOneSheet } from '@/components/habit-logging/PickOneSheet';
 import { PartialSlipSheet } from '@/components/habit-logging/PartialSlipSheet';
 import { CoachMomentSlot } from '@/components/habit-logging/CoachMomentSlot';
@@ -46,7 +47,7 @@ import { cardText, type CoachMomentCardId } from '@/utils/coachMoments';
 import { progressTowardDetection } from '@/utils/habitDetection';
 import { formatDate } from '@/utils/dates';
 import { track } from '@/utils/analytics';
-import { useReducedMotion } from '@/utils/motion';
+import { hapticError, useReducedMotion } from '@/utils/motion';
 import { radii, spacing, typeScale, layout, type AppTheme } from '@/constants/theme';
 import type { DetectedHabit, HabitChangeGoal } from '@/types/habit';
 import { strings } from '@/constants/strings';
@@ -107,6 +108,7 @@ export default function TodayScreen() {
   const { width: screenWidth } = useWindowDimensions();
   const reducedMotion = useReducedMotion();
   const { show } = useToast();
+  const answerFeedback = useCheckInFeedback();
   // DT-1 (P2-2): resolved once, attached to whichever leak is first in the
   // list at that moment, so the card only ever renders on one LeakCard.
   const [detectionMoment, setDetectionMoment] = useState<{ habitId: string; cardId: CoachMomentCardId } | null>(null);
@@ -702,7 +704,14 @@ export default function TodayScreen() {
   }, [discoveredHabits, sortedBreakingItems]);
 
   const handleDismissHabit = useCallback(async (habit: DetectedHabit) => {
-    await dismissHabit(habit.id);
+    try {
+      await dismissHabit(habit.id);
+    } catch (error) {
+      console.error('Error dismissing leak:', error);
+      hapticError();
+      show(strings.toasts.dismissLeakFailed);
+      return;
+    }
     // UX-022: every mutating action fires exactly one toast (Toast contract).
     // "Not this one" discards a detected leak the user may never see
     // surfaced again, so it gets a real undo, not just an announcement.
@@ -710,7 +719,11 @@ export default function TodayScreen() {
       action: {
         label: strings.toasts.undo,
         onPress: () => {
-          void restoreDismissedHabit(habit.id);
+          void restoreDismissedHabit(habit.id).catch((error) => {
+            console.error('Error restoring dismissed leak:', error);
+            hapticError();
+            show(strings.toasts.restoreFailed);
+          });
         },
       },
     });
@@ -840,10 +853,10 @@ export default function TodayScreen() {
           goal={goal}
           milestoneJustHit={milestoneJustHit}
           coachMoment={lastCoachMoment}
-          onSkip={() => (habit.frequency === 'daily' ? answerToday(goal.id, 'skipped') : answerEvent(goal.id, 'skipped'))}
-          onSlip={() => (habit.frequency === 'daily' ? answerToday(goal.id, 'slipped') : answerEvent(goal.id, 'slipped'))}
-          onChangeAnswer={() => changeTodayAnswer(goal.id)}
-          onBackfill={(state) => backfillYesterday(goal.id, state)}
+          onSkip={() => answerFeedback(() => (habit.frequency === 'daily' ? answerToday(goal.id, 'skipped') : answerEvent(goal.id, 'skipped')))}
+          onSlip={() => answerFeedback(() => (habit.frequency === 'daily' ? answerToday(goal.id, 'slipped') : answerEvent(goal.id, 'slipped')))}
+          onChangeAnswer={() => answerFeedback(() => changeTodayAnswer(goal.id))}
+          onBackfill={(state) => answerFeedback(() => backfillYesterday(goal.id, state))}
           onOpenPartial={() => setPartialGoalId(goal.id)}
           onOpenDetail={() => handleHabitPress(habit.id)}
         />

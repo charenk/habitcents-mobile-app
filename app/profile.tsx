@@ -34,6 +34,7 @@ import { SettingsRow } from '@/components/settings/SettingsRow';
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { useToast } from '@/components/ui/Toast';
+import { hapticError } from '@/utils/motion';
 import { typeScale, layout } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
@@ -101,8 +102,17 @@ export default function ProfileScreen(): React.JSX.Element {
   // onboarding, so there is nothing to swipe back into after start-over.
   const confirmStartOver = async () => {
     setStartOverConfirmVisible(false);
-    await resetOnboarding();
-    await clearOnboarding();
+    try {
+      await resetOnboarding();
+      await clearOnboarding();
+    } catch (error) {
+      // Stay put. Sending the user into onboarding on a reset that did not
+      // land would strand them in a flow their real state has already passed.
+      console.error('Error starting over:', error);
+      hapticError();
+      show(strings.toasts.startOverFailed);
+      return;
+    }
     router.back();
     router.replace('/onboarding/welcome');
     show(strings.settings.startOverToast);
