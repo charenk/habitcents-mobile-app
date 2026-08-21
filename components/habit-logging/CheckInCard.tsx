@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Text,
   View,
+  useWindowDimensions,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
@@ -102,6 +103,21 @@ function CheckInCardImpl({
 }: CheckInCardProps) {
   const theme = useTheme();
   const { format } = useCurrency();
+  /**
+   * Spec 09 section 2, "Check-in card": the two answer buttons stack
+   * vertically past XL. It was specified and never built, so at the
+   * accessibility text sizes the primary answer -- "Skip it, keep $6.00" in
+   * roughly 55% of the screen width, with no flexWrap -- wrapped to three or
+   * four lines beside a two-line "I bought it". This is the core loop, so it
+   * is the one place large text absolutely cannot be allowed to degrade.
+   *
+   * fontScale, not width: the trigger is the user's text size, and RN reports
+   * it live, so the layout follows a change made in Settings without a
+   * relaunch. 1.3 is where the ratified chrome cap (1.5) starts to bite on the
+   * longest ratified label.
+   */
+  const { fontScale } = useWindowDimensions();
+  const stackAnswers = fontScale >= 1.3;
   const styles = useMemo(() => createStyles(theme), [theme]);
   const reduceMotion = useReducedMotion();
 
@@ -300,18 +316,18 @@ function CheckInCardImpl({
         <View style={styles.questionBlock}>
           <Text style={styles.question}>{strings.habitLogging.dailyQuestion}</Text>
           {goal.firstRun && <Text style={styles.firstRun}>{strings.habitLogging.firstRunLine}</Text>}
-          <View style={styles.buttonsRow}>
+          <View style={[styles.buttonsRow, stackAnswers && styles.buttonsStacked]}>
             <Button
               label={strings.today.skipWithValue(skipValueLabel)}
               onPress={handleSkip}
               variant="primary"
-              style={styles.skipButton}
+              style={stackAnswers ? undefined : styles.skipButton}
             />
             <Button
               label={strings.today.boughtIt}
               onPress={onSlip}
               variant="secondary"
-              style={styles.slipButton}
+              style={stackAnswers ? undefined : styles.slipButton}
             />
           </View>
         </View>
@@ -390,18 +406,18 @@ function CheckInCardImpl({
           {canBackfill && (
             <View style={styles.backfillBlock}>
               <Text style={styles.backfillPrompt}>{strings.habitLogging.missedYesterday}</Text>
-              <View style={styles.buttonsRow}>
+              <View style={[styles.buttonsRow, stackAnswers && styles.buttonsStacked]}>
                 <Button
                   label={strings.habitLogging.backfillSkip}
                   onPress={() => onBackfill('skipped')}
                   variant="secondary"
-                  style={styles.backfillButton}
+                  style={stackAnswers ? undefined : styles.backfillButton}
                 />
                 <Button
                   label={strings.habitLogging.backfillBought}
                   onPress={() => onBackfill('slipped')}
                   variant="secondary"
-                  style={styles.backfillButton}
+                  style={stackAnswers ? undefined : styles.backfillButton}
                 />
               </View>
             </View>
@@ -694,6 +710,11 @@ function createStyles(theme: AppTheme) {
       flexDirection: 'row',
       gap: 8,
       marginTop: 12,
+    },
+    // Past XL the pair goes full width, one above the other, and the flex
+    // ratios come off so each button is sized by its own label.
+    buttonsStacked: {
+      flexDirection: 'column',
     },
     // The skip is the point of the card, so it carries the wider share of the
     // row as well as the only sage fill on this surface.

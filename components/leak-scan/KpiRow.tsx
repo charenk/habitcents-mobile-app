@@ -29,9 +29,27 @@ export function KpiRow({ kpi, evidenceWindow }: KpiRowProps) {
 
   const purchasesPerDayLabel = strings.leakScan.kpiPurchasesPerDay(kpi.purchasesPerDay.toFixed(1));
 
+  /**
+   * Each card is one VoiceOver stop, not four. Left bare, the row read as
+   * roughly a dozen loose fragments: a tier word, then a number with no unit,
+   * then a label, then a date range, three times over. `accessible` collapses
+   * a card into a single node and the label orders it the way a person would
+   * say it: what it is, then the figure, then the caveat.
+   */
+  const cardLabel = (label: string, value: string, subtitle?: string) =>
+    [label, value, subtitle].filter(Boolean).join(', ');
+
   return (
     <View style={styles.row}>
-      <View style={styles.card}>
+      <View
+        style={styles.card}
+        accessible
+        accessibilityLabel={cardLabel(
+          strings.leakScan.kpiTotalSpent,
+          format(kpi.totalSpentCents),
+          evidenceWindow
+        )}
+      >
         <View style={styles.badgeSlot}>
           <TierBadge tier={kpi.totalSpentTier} />
         </View>
@@ -40,7 +58,15 @@ export function KpiRow({ kpi, evidenceWindow }: KpiRowProps) {
         {evidenceWindow ? <Text style={styles.subtitle}>{evidenceWindow}</Text> : null}
       </View>
 
-      <View style={styles.card}>
+      <View
+        style={styles.card}
+        accessible
+        accessibilityLabel={cardLabel(
+          strings.leakScan.kpiPerDay,
+          format(kpi.perDayCents),
+          strings.leakScan.kpiOverSpanDays(kpi.spanDays)
+        )}
+      >
         <View style={styles.badgeSlot}>
           <TierBadge tier={kpi.totalSpentTier} />
         </View>
@@ -49,7 +75,15 @@ export function KpiRow({ kpi, evidenceWindow }: KpiRowProps) {
         <Text style={styles.subtitle}>{strings.leakScan.kpiOverSpanDays(kpi.spanDays)}</Text>
       </View>
 
-      <View style={styles.card}>
+      <View
+        style={styles.card}
+        accessible
+        accessibilityLabel={cardLabel(
+          strings.leakScan.kpiTransactions,
+          String(kpi.transactionCount),
+          purchasesPerDayLabel
+        )}
+      >
         <View style={styles.badgeSlot}>
           <TierBadge tier={kpi.totalSpentTier} />
         </View>

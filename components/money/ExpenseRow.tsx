@@ -76,7 +76,15 @@ function ExpenseRowImpl({ expense, onPress, subtitle }: ExpenseRowProps): React.
           accessible node -- the parent's `accessible` + accessibilityLabel
           already collapses everything below it into one VoiceOver stop. */}
       {recurring ? <Icon name="Repeat" size={14} color={theme.slate} /> : null}
-      <Text style={styles.amount} numberOfLines={1}>
+      {/* Money scales, never truncates (spec 09 section 1 rule 6): the row
+          keeps its single line, but the amount shrinks to stay readable
+          instead of ellipsizing the number itself. */}
+      <Text
+        style={styles.amount}
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.7}
+      >
         {amountLabel}
       </Text>
     </>
