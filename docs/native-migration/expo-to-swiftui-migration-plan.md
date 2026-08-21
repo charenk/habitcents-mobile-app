@@ -2,6 +2,8 @@
 
 Plan-only task. Based on latest `main` (eee6898, 2026-08-21). No implementation performed.
 
+> **STATUS: SHELVED (decision by Charen, 2026-08-21).** Staying on React Native / Expo for now to keep the OTA ship loop and focus on Phase 3 (monetization) and product validation. This plan is kept for later. If revisited, re-verify the inventory against `main` first (it will have drifted) and note the plan's own advice: the cheapest moment to migrate is before store launch and real users.
+
 ## Context
 
 Charen asked for an end-to-end analysis of migrating HabitCents from React Native / Expo SDK 54 to a fully native Apple (SwiftUI) app, with: (1) a full roadmap if viable, (2) time estimates under three Claude Code operating modes (single session, multi-agent, self-planning Routines loop), and (3) the open questions that must be answered to unblock the migration.
