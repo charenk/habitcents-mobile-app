@@ -94,7 +94,9 @@ function HabitCardImpl({
     return (
       <View style={[styles.card, styles.tipCard]}>
         <View style={[styles.classPill, { backgroundColor: classBadge.bg }]}>
-          <Text style={[styles.classPillText, { color: classBadge.ink }]}>{classBadge.label}</Text>
+          <Text style={[styles.classPillText, { color: classBadge.ink }]} maxFontSizeMultiplier={1.5}>
+            {classBadge.label}
+          </Text>
         </View>
         <View style={styles.titleRow}>
           <EmojiTile emoji={emoji} size={40} color={identityColor} />
@@ -117,7 +119,9 @@ function HabitCardImpl({
         >
           <Text style={styles.rank}>{rank}</Text>
           <View style={[styles.classPill, { backgroundColor: classBadge.bg }]}>
-            <Text style={[styles.classPillText, { color: classBadge.ink }]}>{classBadge.label}</Text>
+            <Text style={[styles.classPillText, { color: classBadge.ink }]} maxFontSizeMultiplier={1.5}>
+            {classBadge.label}
+          </Text>
           </View>
           <TierBadge tier={candidate.tier} />
         </View>
@@ -145,7 +149,7 @@ function HabitCardImpl({
 
       <View style={styles.footerRow}>
         <View style={styles.pacePill}>
-          <Text style={styles.pacePillText}>
+          <Text style={styles.pacePillText} maxFontSizeMultiplier={1.5}>
             {strings.leakScan.yearlyPacePill(format(candidate.annualizedLeakCents))}
           </Text>
         </View>
@@ -245,7 +249,10 @@ function createStyles(theme: AppTheme) {
     },
     classPill: {
       paddingHorizontal: 10,
-      height: 22,
+      // minHeight so the pill grows with its own scaling label instead of
+      // clipping it; see TierBadge for the same fix on the same shape.
+      minHeight: 22,
+      paddingVertical: 2,
       borderRadius: radii.pill,
       justifyContent: 'center',
       alignSelf: 'flex-start',
@@ -311,7 +318,8 @@ function createStyles(theme: AppTheme) {
     pacePill: {
       backgroundColor: theme.amberBg,
       paddingHorizontal: 10,
-      height: 22,
+      minHeight: 22,
+      paddingVertical: 2,
       borderRadius: radii.pill,
       justifyContent: 'center',
     },

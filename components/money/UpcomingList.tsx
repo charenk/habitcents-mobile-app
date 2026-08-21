@@ -259,7 +259,16 @@ function UpcomingRow({
         </Text>
       </View>
       <View style={styles.rowAmount}>
-        <Text style={styles.amount} numberOfLines={1}>
+        {/* Spec 09 section 1 rule 6: money numbers scale, they never
+            truncate. numberOfLines={1} keeps the row's shape, so the amount
+            shrinks to fit rather than turning into an ellipsis that hides
+            what the bill costs. */}
+        <Text
+          style={styles.amount}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.7}
+        >
           {amountLabel}
         </Text>
         <Text style={styles.cadence} numberOfLines={1}>

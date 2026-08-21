@@ -283,7 +283,9 @@ export default function CategoryDetailScreen() {
 
         {/* Trend Chart */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{strings.categoryDetail.sixMonthTrend}</Text>
+          <Text style={styles.sectionTitle} accessibilityRole="header">
+            {strings.categoryDetail.sixMonthTrend}
+          </Text>
           <View style={styles.trendCard}>
             {hasTrendData ? (
               <View style={styles.trendChart}>
@@ -316,7 +318,9 @@ export default function CategoryDetailScreen() {
         {/* Top Merchants */}
         {stats.topMerchants.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{strings.categoryDetail.topMerchants}</Text>
+            <Text style={styles.sectionTitle} accessibilityRole="header">
+              {strings.categoryDetail.topMerchants}
+            </Text>
             <View style={styles.merchantsCard}>
               {/* UX-056: keyed by index before; merchant.name is already
                   the merchantMap key upstream, so it is guaranteed unique
@@ -351,7 +355,7 @@ export default function CategoryDetailScreen() {
               Silent when shown === total (nothing to disclose). Separator
               matches the house convention for a combined eyebrow, e.g.
               strings.money.spentGroupHeader's " · ". */}
-          <Text style={styles.sectionTitle}>
+          <Text style={styles.sectionTitle} accessibilityRole="header">
             {recentLogs.length < categoryExpenses.length
               ? `${strings.categoryDetail.recentLogs} · ${strings.categoryDetail.recentLogsCount(recentLogs.length, categoryExpenses.length)}`
               : strings.categoryDetail.recentLogs}

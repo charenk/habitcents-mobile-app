@@ -25,7 +25,7 @@ export function TierBadge({ tier }: TierBadgeProps) {
     return (
       <View style={[styles.pill, { backgroundColor: theme.tierSolidBg }]}>
         <View style={[styles.dotSolid, { backgroundColor: theme.tierSolidInk }]} />
-        <Text style={[styles.label, { color: theme.tierSolidInk }]}>{strings.leakScan.tierSolid}</Text>
+        <Text style={[styles.label, { color: theme.tierSolidInk }]} maxFontSizeMultiplier={1.5}>{strings.leakScan.tierSolid}</Text>
       </View>
     );
   }
@@ -35,14 +35,14 @@ export function TierBadge({ tier }: TierBadgeProps) {
         <View style={styles.dotHalfWrap}>
           <View style={[styles.dotHalfFilled, { backgroundColor: theme.tierLikelyInk }]} />
         </View>
-        <Text style={[styles.label, { color: theme.tierLikelyInk }]}>{strings.leakScan.tierLikely}</Text>
+        <Text style={[styles.label, { color: theme.tierLikelyInk }]} maxFontSizeMultiplier={1.5}>{strings.leakScan.tierLikely}</Text>
       </View>
     );
   }
   return (
     <View style={[styles.pill, { backgroundColor: theme.tierReviewBg }]}>
       <View style={[styles.dotRing, { borderColor: theme.tierReviewRing }]} />
-      <Text style={[styles.label, { color: theme.tierReviewInk }]}>{strings.leakScan.tierReview}</Text>
+      <Text style={[styles.label, { color: theme.tierReviewInk }]} maxFontSizeMultiplier={1.5}>{strings.leakScan.tierReview}</Text>
     </View>
   );
 }
@@ -53,7 +53,12 @@ function createStyles(theme: AppTheme) {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 5,
-      height: 22,
+      // minHeight, not height: this pill wraps 11pt text that scales with the
+      // user's text size, and a fixed 22 clipped it. The badge renders three
+      // times in KpiRow alone plus once per HabitCard, so it was the first
+      // thing to break on the leak-scan results screen at large type.
+      minHeight: 22,
+      paddingVertical: 2,
       paddingHorizontal: 10,
       borderRadius: 999,
       alignSelf: 'flex-start',

@@ -91,7 +91,21 @@ export function LongArc({ displayTotal, chapter }: LongArcProps) {
       <Text style={styles.identityLine}>{identityLineForTotal(displayTotal)}</Text>
       <Text style={styles.supportLine}>{strings.habitLogging.arcSupportLine(displayTotal)}</Text>
 
-      <View style={styles.trackRow}>
+      {/*
+        The ring's geometry was silent: the pill beside it says "30 of 66
+        skips, Cruising", but the bar itself was an unlabeled decorative View,
+        so VoiceOver either skipped it or stopped on an empty node. Given the
+        real semantics (progressbar with a value), the rotor can report it and
+        the track's children stay hidden as the decoration they are.
+        accessibilityValue was used nowhere in the app before this.
+      */}
+      <View
+        style={styles.trackRow}
+        accessible
+        accessibilityRole="progressbar"
+        accessibilityLabel={arcLabel(displayTotal, chapter)}
+        accessibilityValue={{ min: 0, max: ARC_TOTAL, now: displayTotal }}
+      >
         {CHAPTERS.map((c) => (
           <View key={c.name} style={[styles.trackSegment, { flex: c.hi - c.lo }]}>
             <Animated.View

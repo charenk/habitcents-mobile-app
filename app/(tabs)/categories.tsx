@@ -170,7 +170,9 @@ export default function CategoriesScreen() {
         ) : (
           sections.map((section) => (
             <View key={section.title} style={styles.section}>
-              <Text style={styles.eyebrow}>{section.title}</Text>
+              <Text style={styles.eyebrow} accessibilityRole="header">
+                {section.title}
+              </Text>
               <View style={styles.card}>
                 {section.data.map((category, index) => (
                   <CategoryRow

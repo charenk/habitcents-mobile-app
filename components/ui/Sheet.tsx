@@ -11,6 +11,7 @@
  */
 import React, { useEffect, useRef, useState } from 'react';
 import {
+  AccessibilityInfo,
   Animated,
   Easing,
   KeyboardAvoidingView,
@@ -19,6 +20,7 @@ import {
   Pressable,
   StyleSheet,
   View,
+  findNodeHandle,
   type LayoutChangeEvent,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -52,6 +54,13 @@ export function Sheet({
 
   // Keep the Modal mounted through the exit animation before unmounting.
   const [rendered, setRendered] = useState(visible);
+  // The panel node, so VoiceOver focus can be moved onto the sheet when it
+  // opens (spec 09 section 3 flow 2). accessibilityViewIsModal already stops
+  // focus escaping to the screen behind, but nothing put it INSIDE: a screen
+  // reader user opening a sheet was left wherever they had been, with no
+  // announcement that anything had appeared. setAccessibilityFocus was used
+  // nowhere in the app before this.
+  const panelRef = useRef<View | null>(null);
   const progress = useRef(new Animated.Value(0)).current;
   // Panel height, measured on layout; drives the slide distance. Start with a
   // generous fallback so the first frame is off-screen, not mid-panel.
@@ -73,6 +82,19 @@ export function Sheet({
         easing: Easing.bezier(...motion.easing),
         useNativeDriver: true,
       }).start();
+      // After the enter animation, not before it: iOS drops a focus request
+      // aimed at a node that is still off-screen. Guarded on the screen
+      // reader being on so nothing changes for everyone else, and wrapped
+      // because findNodeHandle returns null for an unmounted panel.
+      AccessibilityInfo.isScreenReaderEnabled()
+        .then((enabled) => {
+          if (!enabled) return;
+          setTimeout(() => {
+            const node = panelRef.current ? findNodeHandle(panelRef.current) : null;
+            if (node) AccessibilityInfo.setAccessibilityFocus(node);
+          }, motion.sheet);
+        })
+        .catch(() => {});
     } else if (rendered) {
       Animated.timing(progress, {
         toValue: 0,
@@ -110,6 +132,7 @@ export function Sheet({
 
   const panel = (
     <Animated.View
+      ref={panelRef}
       style={[styles.panel, { paddingBottom: insets.bottom }, panelAnimatedStyle]}
       onLayout={onPanelLayout}
       accessibilityViewIsModal

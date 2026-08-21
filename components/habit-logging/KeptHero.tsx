@@ -39,13 +39,30 @@ export function KeptHero({ cents, style }: KeptHeroProps) {
       accessibilityRole="text"
       accessibilityLabel={keptHeroLabel(format(cents))}
     >
-      <Text style={styles.label} importantForAccessibility="no">
+      <Text style={styles.label} importantForAccessibility="no" maxFontSizeMultiplier={1.5}>
         {strings.habitLogging.keptSoFar}
       </Text>
-      <Text style={styles.amount} importantForAccessibility="no">
+      {/*
+        The kept band is the app's biggest number: a 42pt display serif,
+        centered, with nothing to wrap onto. Uncapped it reached roughly 130pt
+        at the top accessibility sizes and broke mid-currency-string.
+        maxFontSizeMultiplier 1.3 is the ratified serif-money cap
+        (design/PATTERN_VOCABULARY.md), and adjustsFontSizeToFit +
+        numberOfLines keep a long amount on one line inside the band, which is
+        what spec 09 row "Kept hero" asks for: the number scales, and never
+        truncates. Same treatment SpentKeptChips already got under UX-067.
+      */}
+      <Text
+        style={styles.amount}
+        importantForAccessibility="no"
+        maxFontSizeMultiplier={1.3}
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.6}
+      >
         {format(cents)}
       </Text>
-      <Text style={styles.caption} importantForAccessibility="no">
+      <Text style={styles.caption} importantForAccessibility="no" maxFontSizeMultiplier={1.5}>
         {cents === 0 ? strings.habitLogging.keptZeroCaption : strings.habitLogging.keptCaption}
       </Text>
     </View>
