@@ -48,3 +48,6 @@ __tests__/leakScanEval/private/
 
 # node_modules as a symlink (worktree setups); the trailing-slash pattern above misses links
 node_modules
+
+# Generated Claude Design canvas payload (re-seeded from the .dc.html sources)
+design/canvas-current-ui/habitcents-main-pages.html
