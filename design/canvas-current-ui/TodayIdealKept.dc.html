@@ -24,87 +24,27 @@
     </div>
     <div style="display: flex; flex-direction: row; gap: 8px;">
       <div style="width: 40px; height: 40px; border-radius: 999px; background: #FFFFFF; border: 1px solid #E8EDF2; display: flex; align-items: center; justify-content: center;">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4A5568" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="10" r="3"></circle><path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662"></path></svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4A5568" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3"/><path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662"/></svg>
       </div>
     </div>
   </div>
 
-  <!-- ============ SpentKeptChips: the segmented Today control (Spent selected) ============ -->
+  <!-- ============ SpentKeptChips: the segmented Today control (Kept selected) ============ -->
   <div style="padding: 0 20px; margin-top: 8px; margin-bottom: 12px;">
-    <div style="display: flex; flex-direction: row; background: #E8EDF2; border-radius: 24px; padding: 3px; gap: 3px">
-      <!-- Spent segment: selected (white thumb + card shadow) -->
-      <div style="flex: 1; border-radius: 20px; padding: 12px 14px; background: #FFFFFF; box-shadow: 0 4px 8px rgba(26,29,35,0.04);">
-        <div style="font-size: 11px; font-family: 'Inter', system-ui, sans-serif; font-weight: 600; letter-spacing: 0.88px; text-transform: uppercase; color: #1A1D23;">Spent today</div>
-        <div style="font-size: 22px; font-family: 'Instrument Serif', Georgia, 'Times New Roman', serif; font-variant-numeric: tabular-nums; color: #1A1D23; margin-top: 6px;">$29.15</div>
-      </div>
-      <!-- Kept segment: unselected, with pending check-in dot -->
+    <div style="display: flex; flex-direction: row; background: #E8EDF2; border-radius: 23px; padding: 3px; gap: 3px;">
+      <!-- Spent segment: unselected -->
       <div style="flex: 1; border-radius: 20px; padding: 12px 14px;">
+        <div style="font-size: 11px; font-family: 'Inter', system-ui, sans-serif; font-weight: 600; letter-spacing: 0.88px; text-transform: uppercase; color: #4A5568;">Spent today</div>
+        <div style="font-size: 22px; font-family: 'Instrument Serif', Georgia, 'Times New Roman', serif; font-variant-numeric: tabular-nums; color: #4A5568; margin-top: 6px;">$29.15</div>
+      </div>
+      <!-- Kept segment: selected (white thumb + card shadow, sage ink), with pending check-in dot -->
+      <div style="flex: 1; border-radius: 20px; padding: 12px 14px; background: #FFFFFF; box-shadow: 0 4px 8px rgba(26,29,35,0.04);">
         <div style="display: flex; flex-direction: row; align-items: center; gap: 6px;">
-          <div style="font-size: 11px; font-family: 'Inter', system-ui, sans-serif; font-weight: 600; letter-spacing: 0.88px; text-transform: uppercase; color: #4A5568;">Kept today</div>
+          <div style="font-size: 11px; font-family: 'Inter', system-ui, sans-serif; font-weight: 600; letter-spacing: 0.88px; text-transform: uppercase; color: #2C7851;">Kept today</div>
           <div style="width: 6px; height: 6px; border-radius: 4px; background: #2C7851;"></div>
         </div>
-        <div style="font-size: 22px; font-family: 'Instrument Serif', Georgia, 'Times New Roman', serif; font-variant-numeric: tabular-nums; color: #4A5568; margin-top: 6px;">$18.00</div>
+        <div style="font-size: 22px; font-family: 'Instrument Serif', Georgia, 'Times New Roman', serif; font-variant-numeric: tabular-nums; color: #2C7851; margin-top: 6px;">$18.00</div>
       </div>
-    </div>
-  </div>
-
-  <!-- ============ SPENT PANE (default view): quick log, today's log, watch-nudge, closing quote ============ -->
-  <div style="padding: 16px 20px 0 20px; display: flex; flex-direction: column;">
-
-    <!-- QuickLogRow: amount-first enclosed field + plus square -->
-    <div style="background: #FFFFFF; border-radius: 20px; border: 1px solid #E8EDF2; padding: 18px;">
-      <div style="display: flex; flex-direction: row; align-items: stretch; gap: 12px;">
-        <div style="flex: 1; min-height: 44px; background: #F7F9FC; border-radius: 14px; padding: 12px 16px; display: flex; align-items: center;">
-          <div style="display: flex; flex-direction: row; align-items: flex-start;">
-            <span style="font-family: 'Instrument Serif', Georgia, 'Times New Roman', serif; font-size: 24px; color: #677481; margin-right: 2px; line-height: 1;">$</span>
-            <span style="font-family: 'Instrument Serif', Georgia, 'Times New Roman', serif; font-size: 40px; font-variant-numeric: tabular-nums; color: #677481; line-height: 1;">0.00</span>
-          </div>
-        </div>
-        <div style="align-self: stretch; aspect-ratio: 1; min-width: 44px; border-radius: 14px; background: #2C7851; display: flex; align-items: center; justify-content: center;">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
-        </div>
-      </div>
-    </div>
-
-    <!-- Today's log: eyebrow + View all -->
-    <div style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; margin-top: 24px; margin-bottom: 8px;">
-      <div style="font-size: 11px; font-family: 'Inter', system-ui, sans-serif; font-weight: 600; letter-spacing: 0.88px; text-transform: uppercase; color: #677481;">Today's log</div>
-      <div style="font-size: 13px; font-family: 'Inter', system-ui, sans-serif; color: #4A5568;">View all</div>
-    </div>
-
-    <!-- Today's log card: two ExpenseRows with hairline separator -->
-    <div style="background: #FFFFFF; border-radius: 20px; border: 1px solid #E8EDF2; padding: 0 18px;">
-      <!-- Row 1 -->
-      <div style="min-height: 44px; display: flex; flex-direction: row; align-items: center; gap: 12px; padding: 8px 0;">
-        <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(255,107,107,0.12); display: flex; align-items: center; justify-content: center; font-size: 18px;">🍕</div>
-        <div style="flex: 1;">
-          <div style="font-family: 'Inter', system-ui, sans-serif; font-weight: 600; font-size: 15px; color: #1A1D23;">Blue Bottle Coffee</div>
-          <div style="font-family: 'Inter', system-ui, sans-serif; font-size: 12.5px; color: #677481; margin-top: 1px;">8:24 AM</div>
-        </div>
-        <div style="font-family: 'Inter', system-ui, sans-serif; font-weight: 600; font-size: 15px; color: #1A1D23; font-variant-numeric: tabular-nums;">$5.75</div>
-      </div>
-      <!-- Row 2 (hairline separator) -->
-      <div style="border-top: 1px solid #F1F4F8; min-height: 44px; display: flex; flex-direction: row; align-items: center; gap: 12px; padding: 8px 0;">
-        <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(236,72,153,0.12); display: flex; align-items: center; justify-content: center; font-size: 18px;">🛍</div>
-        <div style="flex: 1;">
-          <div style="font-family: 'Inter', system-ui, sans-serif; font-weight: 600; font-size: 15px; color: #1A1D23;">Amazon</div>
-          <div style="font-family: 'Inter', system-ui, sans-serif; font-size: 12.5px; color: #677481; margin-top: 1px;">7:10 AM</div>
-        </div>
-        <div style="font-family: 'Inter', system-ui, sans-serif; font-weight: 600; font-size: 15px; color: #1A1D23; font-variant-numeric: tabular-nums;">$23.40</div>
-      </div>
-    </div>
-
-    <!-- Watch-nudge: dashed UpcomingList-style card -->
-    <div style="display: flex; flex-direction: row; align-items: center; gap: 8px; min-height: 48px; border-radius: 14px; border: 1.5px dashed #D6DEE8; background: #FFFFFF; padding: 0 16px; margin-top: 10px;">
-      <div style="flex: 1; padding: 12px 0; font-family: 'Inter', system-ui, sans-serif; font-weight: 600; font-size: 14px; color: #2C7851;">Buy this often? Watch it as a leak</div>
-      <div style="font-family: 'Inter', system-ui, sans-serif; font-size: 14px; color: #677481;">·</div>
-      <div style="font-family: 'Inter', system-ui, sans-serif; font-size: 14px; color: #677481;">not now</div>
-    </div>
-
-    <!-- Closing quote (Spent) -->
-    <div style="margin-top: 20px;">
-      <div style="font-family: 'Instrument Serif', Georgia, 'Times New Roman', serif; font-style: italic; font-size: 20px; line-height: 26px; color: #1A1D23;">“Beware of little expenses; a small leak will sink a great ship.”</div>
-      <div style="font-family: 'Inter', system-ui, sans-serif; font-size: 12.5px; color: #677481; margin-top: 4px;">Benjamin Franklin</div>
     </div>
   </div>
 
@@ -113,7 +53,7 @@
 
     <!-- Opening quote (Kept) -->
     <div style="padding: 0 20px; margin-bottom: 14px;">
-      <div style="font-family: 'Instrument Serif', Georgia, 'Times New Roman', serif; font-style: italic; font-size: 20px; line-height: 26px; color: #1A1D23;">“What you skip today is still yours tomorrow.”</div>
+      <div style="font-family: 'Instrument Serif', Georgia, 'Times New Roman', serif; font-style: italic; font-size: 20px; line-height: 26px; color: #1A1D23;">&ldquo;What you skip today is still yours tomorrow.&rdquo;</div>
     </div>
 
     <!-- KeptHero band: sage-light feature card -->
@@ -145,7 +85,7 @@
         <!-- CoachMomentSlot (DT-1), snow tone -->
         <div style="display: flex; flex-direction: row; align-items: flex-start; gap: 8px; border-radius: 14px; padding: 12px; margin-top: 10px; background: #F7F9FC;">
           <div style="margin-top: 2px; flex-shrink: 0;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#677481" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 20h10"></path><path d="M10 20c5.5-2.5.8-6.4 3-10"></path><path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z"></path><path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z"></path></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#677481" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 20h10"/><path d="M10 20c5.5-2.5.8-6.4 3-10"/><path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z"/><path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z"/></svg>
           </div>
           <div style="flex: 1; font-family: 'Inter', system-ui, sans-serif; font-size: 13.5px; color: #4A5568; line-height: 19px;">Here's your leak. You don't have to quit it, just decide, one day at a time, whether it's worth it.</div>
         </div>
@@ -162,7 +102,7 @@
         <div style="display: flex; flex-direction: row; align-items: center; gap: 8px;">
           <div style="font-family: 'Inter', system-ui, sans-serif; font-weight: 600; font-size: 16px; color: #1A1D23; flex-shrink: 1;">Afternoon DoorDash</div>
           <div style="flex: 1;"></div>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#677481" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#677481" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
         </div>
 
         <!-- WeekStrip: 7 dots Mon-Sun -->
@@ -171,14 +111,14 @@
             <!-- Mon skipped -->
             <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
               <div style="width: 26px; height: 26px; border-radius: 13px; background: #2C7851; display: flex; align-items: center; justify-content: center;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
               </div>
               <div style="font-size: 9px; font-family: 'Inter', system-ui, sans-serif; font-weight: 700; color: #677481;">M</div>
             </div>
             <!-- Tue skipped -->
             <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
               <div style="width: 26px; height: 26px; border-radius: 13px; background: #2C7851; display: flex; align-items: center; justify-content: center;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
               </div>
               <div style="font-size: 9px; font-family: 'Inter', system-ui, sans-serif; font-weight: 700; color: #677481;">T</div>
             </div>
@@ -190,14 +130,14 @@
             <!-- Thu skipped -->
             <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
               <div style="width: 26px; height: 26px; border-radius: 13px; background: #2C7851; display: flex; align-items: center; justify-content: center;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
               </div>
               <div style="font-size: 9px; font-family: 'Inter', system-ui, sans-serif; font-weight: 700; color: #677481;">T</div>
             </div>
             <!-- Fri skipped -->
             <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
               <div style="width: 26px; height: 26px; border-radius: 13px; background: #2C7851; display: flex; align-items: center; justify-content: center;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
               </div>
               <div style="font-size: 9px; font-family: 'Inter', system-ui, sans-serif; font-weight: 700; color: #677481;">F</div>
             </div>
@@ -231,7 +171,7 @@
 
       <!-- Break-another affordance: dashed card -->
       <div style="margin-top: 24px; display: flex; flex-direction: row; align-items: center; gap: 12px; min-height: 56px; border-radius: 14px; border: 1.5px dashed #D6DEE8; background: #FFFFFF; padding: 12px 16px;">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2C7851" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2C7851" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
         <div style="flex: 1;">
           <div style="font-size: 14px; font-family: 'Inter', system-ui, sans-serif; font-weight: 600; color: #2C7851;">Break another habit</div>
           <div style="font-size: 12.5px; font-family: 'Inter', system-ui, sans-serif; color: #4A5568; margin-top: 2px;">1 habit on the free plan</div>
@@ -241,28 +181,28 @@
   </div>
 
   <!-- bottom breathing room before the tab bar -->
-  <div style="height: 24px;"></div>
+  <div style="flex: 1; min-height: 24px;"></div>
 
   <!-- ============ Bottom tab bar (canonical): white, 1px top hairline #E8EDF2, active = Today (sage). ============ -->
   <div style="background: #FFFFFF; border-top: 1px solid #E8EDF2; padding-top: 8px; padding-bottom: 20px; display: flex; flex-direction: row;">
     <!-- Today (active) -->
     <div style="flex: 1; min-height: 44px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: #2C7851;">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path></svg>
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
       <span style="font-family: 'Inter', system-ui, sans-serif; font-size: 11px; font-weight: 600; color: #2C7851;">Today</span>
     </div>
     <!-- Money -->
     <div style="flex: 1; min-height: 44px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: #677481;">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"></path><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"></path><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"></path></svg>
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
       <span style="font-family: 'Inter', system-ui, sans-serif; font-size: 11px; font-weight: 600; color: #677481;">Money</span>
     </div>
     <!-- Insights -->
     <div style="flex: 1; min-height: 44px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: #677481;">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 7h6v6"></path><path d="m22 7-8.5 8.5-5-5L2 17"></path></svg>
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 7h6v6"/><path d="m22 7-8.5 8.5-5-5L2 17"/></svg>
       <span style="font-family: 'Inter', system-ui, sans-serif; font-size: 11px; font-weight: 600; color: #677481;">Insights</span>
     </div>
     <!-- Categories -->
     <div style="flex: 1; min-height: 44px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: #677481;">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"></rect><rect width="7" height="7" x="14" y="3" rx="1"></rect><rect width="7" height="7" x="14" y="14" rx="1"></rect><rect width="7" height="7" x="3" y="14" rx="1"></rect></svg>
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
       <span style="font-family: 'Inter', system-ui, sans-serif; font-size: 11px; font-weight: 600; color: #677481;">Categories</span>
     </div>
   </div>
