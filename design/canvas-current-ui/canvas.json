@@ -1,0 +1,12 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html",       "x": 0,    "y": 0, "w": 390, "h": 1520, "title": "Today" },
+    { "file": "Money.dc.html",      "x": 470,  "y": 0, "w": 390, "h": 900,  "title": "Money" },
+    { "file": "Insights.dc.html",   "x": 940,  "y": 0, "w": 390, "h": 960,  "title": "Insights" },
+    { "file": "Categories.dc.html", "x": 1410, "y": 0, "w": 390, "h": 920,  "title": "Categories" }
+  ],
+  "annotations": [
+    { "id": "context", "x": 0, "y": -96, "w": 560, "text": "HabitCents main pages, recreated from the as-built app (Today, Money, Insights, Categories). Light mode, exact theme tokens." }
+  ],
+  "launch": { "view": "canvas" }
+}
