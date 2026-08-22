@@ -25,7 +25,7 @@ import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { arcProgress, identityLineForTotal } from '@/utils/habitLogging';
 import { arcLabel } from '@/utils/a11y';
-import { motion, radii, typeScale } from '@/constants/theme';
+import { motion, radii, spacing, typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
 import type { ChapterName } from '@/types/habit';
 import { strings } from '@/constants/strings';
@@ -190,24 +190,24 @@ function createStyles(theme: AppTheme) {
     },
     trackRow: {
       flexDirection: 'row',
-      gap: 5,
+      gap: spacing.xs,
       marginTop: 18,
     },
     trackSegment: {
       height: 6,
-      borderRadius: 3,
+      borderRadius: radii.micro,
       backgroundColor: theme.cloud,
       overflow: 'hidden',
     },
     trackFill: {
       height: '100%',
       backgroundColor: theme.lavender,
-      borderRadius: 3,
+      borderRadius: radii.micro,
     },
     labelsRow: {
       flexDirection: 'row',
-      gap: 5,
-      marginTop: 7,
+      gap: spacing.xs,
+      marginTop: spacing.xs,
     },
     trackLabel: {
       fontFamily: theme.fonts.ui,

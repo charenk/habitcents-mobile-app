@@ -5,7 +5,7 @@ import { Sheet } from '@/components/ui/Sheet';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { formatDate, parseDateOnly } from '@/utils/dates';
-import { radii, typeScale, type AppTheme } from '@/constants/theme';
+import { radii, spacing, typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import { categoryDisplayLabel } from '@/utils/leakScanBridge';
 import type { ScanRow } from '@/utils/leakScan/types';
@@ -187,7 +187,7 @@ function createStyles(theme: AppTheme) {
     chipButton: {
       alignSelf: 'flex-start',
       paddingHorizontal: 10,
-      paddingVertical: 5,
+      paddingVertical: spacing.xs,
       borderRadius: radii.pill,
       backgroundColor: theme.snow,
       borderWidth: 1,

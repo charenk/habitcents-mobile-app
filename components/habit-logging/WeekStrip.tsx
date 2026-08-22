@@ -5,7 +5,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { weekStrip, weekStats } from '@/utils/habitLogging';
 import { weekDotLabel } from '@/utils/a11y';
-import { typeScale, type AppTheme } from '@/constants/theme';
+import { spacing, typeScale, type AppTheme } from '@/constants/theme';
 import type { HabitLogEntry } from '@/types/habit';
 import { strings } from '@/constants/strings';
 import { formatDate } from '@/utils/dates';
@@ -100,7 +100,7 @@ function createStyles(theme: AppTheme) {
     },
     dayColumn: {
       alignItems: 'center',
-      gap: 5,
+      gap: spacing.xs,
     },
     dot: {
       width: DOT_SIZE,

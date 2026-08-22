@@ -663,7 +663,7 @@ function createStyles(theme: AppTheme) {
       backgroundColor: theme.coachMomentMilestoneBg,
       borderRadius: radii.pill,
       paddingHorizontal: 8,
-      paddingVertical: 3,
+      paddingVertical: spacing.tight,
     },
     // UX-005: ink on the lavender tint, not lavender on lavender. Same fix as
     // LongArc's chapter pill: lavender text on this 14% lavender background

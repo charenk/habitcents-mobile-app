@@ -190,7 +190,7 @@ function createStyles(theme: AppTheme) {
     pendingDot: {
       width: 6,
       height: 6,
-      borderRadius: 3,
+      borderRadius: radii.micro,
       backgroundColor: theme.primary,
     },
     amount: {

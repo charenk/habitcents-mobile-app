@@ -35,7 +35,7 @@ import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { useToast } from '@/components/ui/Toast';
 import { hapticError } from '@/utils/motion';
-import { typeScale, layout } from '@/constants/theme';
+import { spacing, typeScale, layout } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -250,7 +250,7 @@ function createStyles(theme: AppTheme) {
       letterSpacing: typeScale.eyebrowLetterSpacing,
       textTransform: 'uppercase',
       color: theme.mistText,
-      marginTop: 22,
+      marginTop: spacing.xxl,
       marginBottom: 2,
     },
     group: {
@@ -304,7 +304,7 @@ function createStyles(theme: AppTheme) {
       fontSize: typeScale.caption,
       color: theme.mistText,
       textAlign: 'center',
-      marginTop: 22,
+      marginTop: spacing.xxl,
     },
   });
 }

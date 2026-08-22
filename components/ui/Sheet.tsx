@@ -16,12 +16,14 @@ import {
   Easing,
   KeyboardAvoidingView,
   Modal,
+  PanResponder,
   Platform,
   Pressable,
   StyleSheet,
   View,
   findNodeHandle,
   type LayoutChangeEvent,
+  type PanResponderGestureState,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -66,6 +68,93 @@ export function Sheet({
   // generous fallback so the first frame is off-screen, not mid-panel.
   const panelHeight = useRef(new Animated.Value(600)).current;
   const measuredHeight = useRef(600);
+
+  // UX-041: swipe-to-dismiss. The PanResponder is created once (useRef) so it
+  // must not close over render-scoped values that change; onClose and the
+  // reduce-motion flag are mirrored into refs read live inside the handlers.
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+  const reduceMotionRef = useRef(reduceMotion);
+  reduceMotionRef.current = reduceMotion;
+  // progress at the instant the drag began, so the finger tracks from wherever
+  // the panel actually is (e.g. grabbed mid open-animation), not from a
+  // presumed fully-open state.
+  const dragStartProgress = useRef(1);
+
+  // The gesture drives the SAME `progress` value that the open/close timings
+  // drive, and only ever through setValue (during the drag) or a native-driver
+  // Animated.spring/timing (on release). There is never a second animation
+  // driver on the panel's translate node: translateY is derived from
+  // `progress` (native) and `panelHeight` (setValue only), so the single-driver
+  // rule from INCIDENT-build5-launch-crash / PATTERN_VOCABULARY holds.
+  const panResponder = useRef(
+    PanResponder.create({
+      // Do not claim on touch-down: a tap on the handle strip should still let
+      // its children (and the scrim) behave normally.
+      onStartShouldSetPanResponder: () => false,
+      // Claim only a clearly-downward drag. Attached to the handle strip only
+      // (see render), so a scroll inside the sheet body never reaches here.
+      onMoveShouldSetPanResponder: (_evt, g) =>
+        g.dy > 4 && Math.abs(g.dy) > Math.abs(g.dx),
+      onPanResponderGrant: () => {
+        // Interruptible: read the live presentation value and start from it.
+        progress.stopAnimation((v) => {
+          dragStartProgress.current = typeof v === 'number' ? v : 1;
+        });
+      },
+      onPanResponderMove: (_evt, g) => {
+        const h = measuredHeight.current || 1;
+        // Downward only (clamp upward past the open position): negative dy is
+        // ignored so the panel cannot be dragged above open.
+        const dyDown = Math.max(0, g.dy);
+        const next = dragStartProgress.current - dyDown / h;
+        progress.setValue(Math.max(0, Math.min(1, next)));
+      },
+      onPanResponderRelease: (_evt, g: PanResponderGestureState) => {
+        const h = measuredHeight.current || 1;
+        const draggedFraction = Math.max(0, g.dy) / h;
+        // Dismiss on distance past ~25% OR a downward flick past ~0.5 px/ms.
+        const shouldClose = draggedFraction > 0.25 || g.vy > 0.5;
+        if (shouldClose) {
+          // Reuse the existing close animation: calling onClose flips `visible`
+          // false, and the effect below runs the same 220ms native-driver
+          // timing from the current dragged position to 0. No extra driver.
+          onCloseRef.current();
+        } else {
+          settleOpen(g.vy, h);
+        }
+      },
+      onPanResponderTerminate: () => settleOpen(0, measuredHeight.current || 1),
+    })
+  ).current;
+
+  // Spring the panel back to fully open after a released-but-not-dismissed
+  // drag. Momentum interaction, so a touch of bounce under normal motion; under
+  // reduced motion, a plain timing with no overshoot. Both use the native
+  // driver, keeping `progress` single-driver.
+  const settleOpen = (releaseVy: number, h: number) => {
+    if (reduceMotionRef.current) {
+      Animated.timing(progress, {
+        toValue: 1,
+        duration: motion.sheet,
+        easing: Easing.bezier(...motion.easing),
+        useNativeDriver: true,
+      }).start();
+      return;
+    }
+    // Hand off the finger's velocity. gesture vy is px/ms downward-positive;
+    // progress increases as the panel closes the gap upward, so the sign flips
+    // and it is scaled into progress-units per second.
+    const velocity = (-releaseVy * 1000) / h;
+    Animated.spring(progress, {
+      toValue: 1,
+      velocity,
+      damping: 22,
+      stiffness: 240,
+      mass: 0.8,
+      useNativeDriver: true,
+    }).start();
+  };
 
   useEffect(() => {
     if (visible) {
@@ -144,16 +233,15 @@ export function Sheet({
       onAccessibilityEscape={onClose}
     >
       {/*
-       * UX-041: this handle promises a swipe-to-dismiss gesture the sheet does
-       * not implement (no PanResponder/gesture-handler wiring exists in this
-       * file), and app/(tabs)/index.tsx documents "backdrop, swipe" as if both
-       * dismiss paths exist. The pattern vocabulary mandates the handle but
-       * not the gesture, so this is a real system gap, not a local bug. Do
-       * not add a pan gesture here without an ADR (new motion behaviour);
-       * this is flagged for Charen to pick: (a) add swipe-to-dismiss, or
-       * (b) drop the handle since it currently over-promises.
+       * UX-041 (resolved): the grab handle now backs its promise. The
+       * PanResponder above lives on this handle strip only, so a downward drag
+       * here tracks the finger and dismisses past threshold, while a scroll in
+       * the sheet body is never intercepted. onAccessibilityEscape below still
+       * carries screen-reader dismissal.
        */}
-      <View style={styles.handle} />
+      <View style={styles.handleZone} hitSlop={{ top: 8, bottom: 8 }} {...panResponder.panHandlers}>
+        <View style={styles.handle} />
+      </View>
       {children}
     </Animated.View>
   );
@@ -211,6 +299,10 @@ function createStyles(theme: AppTheme) {
       borderTopRightRadius: radii.feature,
       alignItems: 'stretch',
       ...shadows.sheet,
+    },
+    handleZone: {
+      alignSelf: 'stretch',
+      alignItems: 'center',
     },
     handle: {
       width: 36,

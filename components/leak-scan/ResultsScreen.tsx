@@ -1,5 +1,5 @@
 import React, { memo, useCallback, useMemo, useRef, useState } from 'react';
-import { AccessibilityInfo, View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { AccessibilityInfo, InteractionManager, View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button, Icon } from '@/components/ui';
@@ -208,6 +208,14 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
       const fresh = await getScanRules();
       const updatedRules = correct(fresh);
       await saveScanRules(updatedRules);
+      // UX-012: runScan is the same synchronous, JS-thread-blocking pass the
+      // intake hook runs. A correction here re-runs it against the full file
+      // set, so yield one frame first: React commits any pending correction UI
+      // (the closing sheet, the toast) and VoiceOver settles before the parse
+      // blocks the thread, instead of the tap freezing the frame mid-gesture.
+      await new Promise<void>((resolve) => {
+        InteractionManager.runAfterInteractions(() => resolve());
+      });
       // A re-run rebuilds the candidate list from scratch, so the user's scope
       // has to be re-applied or every correction would resurrect the categories
       // they placed out of bounds. Dismissing a leak is itself a re-run, which
@@ -690,6 +698,8 @@ function createStyles(theme: AppTheme) {
       // insets added; these stay as the zero-inset baseline.
       paddingHorizontal: spacing.gutter,
       paddingVertical: 16,
+      // Intentional end-of-scroll clearance so the last card clears the footer;
+      // off the token scale on purpose (the spacing scale tops out below 40).
       paddingBottom: 40,
     },
     header: {

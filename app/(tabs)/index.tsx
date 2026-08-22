@@ -1382,14 +1382,14 @@ function createStyles(theme: AppTheme) {
     progressMeterTrack: {
       alignSelf: 'stretch',
       height: 6,
-      borderRadius: 3,
+      borderRadius: radii.micro,
       backgroundColor: theme.border,
       marginTop: spacing.md,
       overflow: 'hidden',
     },
     progressMeterFill: {
       height: 6,
-      borderRadius: 3,
+      borderRadius: radii.micro,
       backgroundColor: theme.primary,
     },
     progressCount: {

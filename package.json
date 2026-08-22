@@ -8,6 +8,7 @@
     "android": "expo run:android",
     "web": "expo start --web",
     "lint": "expo lint",
+    "typecheck": "tsc --noEmit",
     "test": "jest",
     "scan:eval": "jest --testPathPattern=leakScanEval --verbose",
     "ota:check": "scripts/ota-eligible.sh"
