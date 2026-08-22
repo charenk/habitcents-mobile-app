@@ -1,0 +1,194 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&display=swap');
+    body { margin: 0; font-family: 'Inter', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    a { color: #2C7851; } a:hover { color: #246242; }
+  </style>
+</helmet>
+
+<!-- Money tab, "Spent" segment selected. Root artboard: 390 x 866px. -->
+<div style="width:390px;min-height:844px;background:#F7F9FC;display:flex;flex-direction:column;font-family:'Inter',system-ui,sans-serif;color:#1A1D23;position:relative;overflow:hidden;">
+
+  <!-- Content column (everything above the tab bar) -->
+  <div style="flex:1;padding-top:20px;">
+
+    <!-- ScreenHeader: paddingH 20, paddingTop 16, paddingBottom 4 -->
+    <div style="display:flex;flex-direction:row;align-items:flex-start;justify-content:space-between;padding:16px 20px 4px 20px;">
+      <div style="flex:1;">
+        <div style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:34px;line-height:40px;color:#1A1D23;">Money.</div>
+      </div>
+      <!-- CircleUser action pill, 40x40 -->
+      <div style="width:40px;height:40px;border-radius:999px;background:#FFFFFF;border:1px solid #E8EDF2;display:flex;align-items:center;justify-content:center;color:#4A5568;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M18 20a6 6 0 0 0-12 0"/><circle cx="12" cy="10" r="4"/></svg>
+      </div>
+    </div>
+
+    <!-- SegmentedControl: track cloud #E8EDF2, radius 17 (14+3), padding 3, gap 3. Spent selected. -->
+    <div style="padding:0 20px;margin-top:8px;">
+      <div style="display:flex;flex-direction:row;background:#E8EDF2;border-radius:17px;padding:3px;gap:3px;">
+        <!-- selected: white thumb (radius 14) + card shadow, label ink 600 -->
+        <div style="flex:1;min-height:38px;border-radius:14px;display:flex;align-items:center;justify-content:center;padding:0 12px;background:#FFFFFF;box-shadow:0 4px 8px rgba(26,29,35,0.04);">
+          <span style="font-family:'Inter',system-ui,sans-serif;font-weight:600;font-size:13px;color:#1A1D23;">Spent</span>
+        </div>
+        <div style="flex:1;min-height:38px;border-radius:14px;display:flex;align-items:center;justify-content:center;padding:0 12px;">
+          <span style="font-family:'Inter',system-ui,sans-serif;font-weight:600;font-size:13px;color:#4A5568;">Upcoming</span>
+        </div>
+        <div style="flex:1;min-height:38px;border-radius:14px;display:flex;align-items:center;justify-content:center;padding:0 12px;">
+          <span style="font-family:'Inter',system-ui,sans-serif;font-weight:600;font-size:13px;color:#4A5568;">Habits</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SpentList: paddingH 20, paddingTop 12, paddingBottom 24 -->
+    <div style="padding:12px 20px 24px 20px;">
+
+      <!-- ===================== Section: Today ===================== -->
+      <div style="margin-bottom:14px;">
+        <div style="font-family:'Inter',system-ui,sans-serif;font-weight:600;font-size:11px;letter-spacing:0.88px;text-transform:uppercase;color:#677481;margin:0 0 6px 4px;font-variant-numeric:tabular-nums;">Today · Aug 22 · $37.45</div>
+        <div style="background:#FFFFFF;border:1px solid #E8EDF2;border-radius:14px;padding:0 16px;">
+          <!-- row 1 (first, no inner hairline) -->
+          <div style="display:flex;flex-direction:row;align-items:center;gap:12px;padding:8px 0;min-height:44px;box-sizing:border-box;">
+            <div style="width:36px;height:36px;border-radius:10px;background:rgba(255,107,107,0.12);display:flex;align-items:center;justify-content:center;font-size:18px;line-height:1;">🍕</div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-family:'Inter',system-ui,sans-serif;font-weight:600;font-size:15px;color:#1A1D23;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Blue Bottle Coffee</div>
+              <div style="font-family:'Inter',system-ui,sans-serif;font-weight:400;font-size:12.5px;color:#677481;margin-top:1px;">8:12 AM · Food</div>
+            </div>
+            <div style="font-family:'Inter',system-ui,sans-serif;font-weight:600;font-size:15px;color:#1A1D23;font-variant-numeric:tabular-nums;margin-left:8px;">$6.50</div>
+          </div>
+          <!-- row 2 (inner hairline) -->
+          <div style="border-top:1px solid #F1F4F8;">
+            <div style="display:flex;flex-direction:row;align-items:center;gap:12px;padding:8px 0;min-height:44px;box-sizing:border-box;">
+              <div style="width:36px;height:36px;border-radius:10px;background:rgba(74,144,217,0.12);display:flex;align-items:center;justify-content:center;font-size:18px;line-height:1;">🚗</div>
+              <div style="flex:1;min-width:0;">
+                <div style="font-family:'Inter',system-ui,sans-serif;font-weight:600;font-size:15px;color:#1A1D23;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Lyft</div>
+                <div style="font-family:'Inter',system-ui,sans-serif;font-weight:400;font-size:12.5px;color:#677481;margin-top:1px;">9:03 AM · Car</div>
+              </div>
+              <div style="font-family:'Inter',system-ui,sans-serif;font-weight:600;font-size:15px;color:#1A1D23;font-variant-numeric:tabular-nums;margin-left:8px;">$14.20</div>
+            </div>
+          </div>
+          <!-- row 3 (inner hairline) -->
+          <div style="border-top:1px solid #F1F4F8;">
+            <div style="display:flex;flex-direction:row;align-items:center;gap:12px;padding:8px 0;min-height:44px;box-sizing:border-box;">
+              <div style="width:36px;height:36px;border-radius:10px;background:rgba(255,107,107,0.12);display:flex;align-items:center;justify-content:center;font-size:18px;line-height:1;">🍕</div>
+              <div style="flex:1;min-width:0;">
+                <div style="font-family:'Inter',system-ui,sans-serif;font-weight:600;font-size:15px;color:#1A1D23;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Sweetgreen</div>
+                <div style="font-family:'Inter',system-ui,sans-serif;font-weight:400;font-size:12.5px;color:#677481;margin-top:1px;">12:40 PM · Food</div>
+              </div>
+              <div style="font-family:'Inter',system-ui,sans-serif;font-weight:600;font-size:15px;color:#1A1D23;font-variant-numeric:tabular-nums;margin-left:8px;">$16.75</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================== Section: Yesterday ===================== -->
+      <div style="margin-bottom:14px;">
+        <div style="font-family:'Inter',system-ui,sans-serif;font-weight:600;font-size:11px;letter-spacing:0.88px;text-transform:uppercase;color:#677481;margin:0 0 6px 4px;font-variant-numeric:tabular-nums;">Yesterday · Aug 21 · $135.97</div>
+        <div style="background:#FFFFFF;border:1px solid #E8EDF2;border-radius:14px;padding:0 16px;">
+          <div style="display:flex;flex-direction:row;align-items:center;gap:12px;padding:8px 0;min-height:44px;box-sizing:border-box;">
+            <div style="width:36px;height:36px;border-radius:10px;background:rgba(255,159,67,0.12);display:flex;align-items:center;justify-content:center;font-size:18px;line-height:1;">🛒</div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-family:'Inter',system-ui,sans-serif;font-weight:600;font-size:15px;color:#1A1D23;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Whole Foods</div>
+              <div style="font-family:'Inter',system-ui,sans-serif;font-weight:400;font-size:12.5px;color:#677481;margin-top:1px;">6:22 PM · Groceries</div>
+            </div>
+            <div style="font-family:'Inter',system-ui,sans-serif;font-weight:600;font-size:15px;color:#1A1D23;font-variant-numeric:tabular-nums;margin-left:8px;">$72.18</div>
+          </div>
+          <div style="border-top:1px solid #F1F4F8;">
+            <div style="display:flex;flex-direction:row;align-items:center;gap:12px;padding:8px 0;min-height:44px;box-sizing:border-box;">
+              <div style="width:36px;height:36px;border-radius:10px;background:rgba(6,182,212,0.12);display:flex;align-items:center;justify-content:center;font-size:18px;line-height:1;">📱</div>
+              <div style="flex:1;min-width:0;">
+                <div style="font-family:'Inter',system-ui,sans-serif;font-weight:600;font-size:15px;color:#1A1D23;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Netflix</div>
+                <div style="font-family:'Inter',system-ui,sans-serif;font-weight:400;font-size:12.5px;color:#677481;margin-top:1px;">3:00 PM · Software &amp; Subscriptions</div>
+              </div>
+              <div style="font-family:'Inter',system-ui,sans-serif;font-weight:600;font-size:15px;color:#1A1D23;font-variant-numeric:tabular-nums;margin-left:8px;">$15.49</div>
+            </div>
+          </div>
+          <div style="border-top:1px solid #F1F4F8;">
+            <div style="display:flex;flex-direction:row;align-items:center;gap:12px;padding:8px 0;min-height:44px;box-sizing:border-box;">
+              <div style="width:36px;height:36px;border-radius:10px;background:rgba(74,144,217,0.12);display:flex;align-items:center;justify-content:center;font-size:18px;line-height:1;">🚗</div>
+              <div style="flex:1;min-width:0;">
+                <div style="font-family:'Inter',system-ui,sans-serif;font-weight:600;font-size:15px;color:#1A1D23;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Shell</div>
+                <div style="font-family:'Inter',system-ui,sans-serif;font-weight:400;font-size:12.5px;color:#677481;margin-top:1px;">8:15 AM · Car</div>
+              </div>
+              <div style="font-family:'Inter',system-ui,sans-serif;font-weight:600;font-size:15px;color:#1A1D23;font-variant-numeric:tabular-nums;margin-left:8px;">$48.30</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================== Section: Aug 20 ===================== -->
+      <div style="margin-bottom:14px;">
+        <div style="font-family:'Inter',system-ui,sans-serif;font-weight:600;font-size:11px;letter-spacing:0.88px;text-transform:uppercase;color:#677481;margin:0 0 6px 4px;font-variant-numeric:tabular-nums;">Aug 20 · $60.14</div>
+        <div style="background:#FFFFFF;border:1px solid #E8EDF2;border-radius:14px;padding:0 16px;">
+          <div style="display:flex;flex-direction:row;align-items:center;gap:12px;padding:8px 0;min-height:44px;box-sizing:border-box;">
+            <div style="width:36px;height:36px;border-radius:10px;background:rgba(236,72,153,0.12);display:flex;align-items:center;justify-content:center;font-size:18px;line-height:1;">🛍</div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-family:'Inter',system-ui,sans-serif;font-weight:600;font-size:15px;color:#1A1D23;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Amazon</div>
+              <div style="font-family:'Inter',system-ui,sans-serif;font-weight:400;font-size:12.5px;color:#677481;margin-top:1px;">7:41 PM · Shopping</div>
+            </div>
+            <div style="font-family:'Inter',system-ui,sans-serif;font-weight:600;font-size:15px;color:#1A1D23;font-variant-numeric:tabular-nums;margin-left:8px;">$34.99</div>
+          </div>
+          <div style="border-top:1px solid #F1F4F8;">
+            <div style="display:flex;flex-direction:row;align-items:center;gap:12px;padding:8px 0;min-height:44px;box-sizing:border-box;">
+              <div style="width:36px;height:36px;border-radius:10px;background:rgba(52,195,154,0.12);display:flex;align-items:center;justify-content:center;font-size:18px;line-height:1;">💊</div>
+              <div style="flex:1;min-width:0;">
+                <div style="font-family:'Inter',system-ui,sans-serif;font-weight:600;font-size:15px;color:#1A1D23;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">CVS Pharmacy</div>
+                <div style="font-family:'Inter',system-ui,sans-serif;font-weight:400;font-size:12.5px;color:#677481;margin-top:1px;">5:12 PM · Healthcare</div>
+              </div>
+              <div style="font-family:'Inter',system-ui,sans-serif;font-weight:600;font-size:15px;color:#1A1D23;font-variant-numeric:tabular-nums;margin-left:8px;">$22.40</div>
+            </div>
+          </div>
+          <div style="border-top:1px solid #F1F4F8;">
+            <div style="display:flex;flex-direction:row;align-items:center;gap:12px;padding:8px 0;min-height:44px;box-sizing:border-box;">
+              <div style="width:36px;height:36px;border-radius:10px;background:rgba(141,110,99,0.12);display:flex;align-items:center;justify-content:center;font-size:18px;line-height:1;">🚌</div>
+              <div style="flex:1;min-width:0;">
+                <div style="font-family:'Inter',system-ui,sans-serif;font-weight:600;font-size:15px;color:#1A1D23;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Metro Transit</div>
+                <div style="font-family:'Inter',system-ui,sans-serif;font-weight:400;font-size:12.5px;color:#677481;margin-top:1px;">8:30 AM · Transportation</div>
+              </div>
+              <div style="font-family:'Inter',system-ui,sans-serif;font-weight:600;font-size:15px;color:#1A1D23;font-variant-numeric:tabular-nums;margin-left:8px;">$2.75</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ListFooter hint -->
+      <div style="font-family:'Inter',system-ui,sans-serif;font-weight:400;font-size:12.5px;color:#677481;text-align:center;margin-top:24px;">Tap a row to edit or delete it.</div>
+
+    </div>
+  </div>
+
+  <!-- Bottom tab bar: 56px content + home-indicator inset, white, top hairline #E8EDF2. Active = Money (sage). -->
+  <div style="background:#FFFFFF;border-top:1px solid #E8EDF2;padding-top:8px;padding-bottom:22px;display:flex;flex-direction:row;">
+    <!-- Today -->
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;color:#677481;">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+      <span style="font-family:'Inter',system-ui,sans-serif;font-weight:600;font-size:11px;color:#677481;">Today</span>
+    </div>
+    <!-- Money (active) -->
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;color:#2C7851;">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+      <span style="font-family:'Inter',system-ui,sans-serif;font-weight:600;font-size:11px;color:#2C7851;">Money</span>
+    </div>
+    <!-- Insights -->
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;color:#677481;">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 7h6v6"/><path d="m22 7-8.5 8.5-5-5L2 17"/></svg>
+      <span style="font-family:'Inter',system-ui,sans-serif;font-weight:600;font-size:11px;color:#677481;">Insights</span>
+    </div>
+    <!-- Categories -->
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;color:#677481;">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
+      <span style="font-family:'Inter',system-ui,sans-serif;font-weight:600;font-size:11px;color:#677481;">Categories</span>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>
