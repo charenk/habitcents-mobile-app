@@ -1,0 +1,46 @@
+name: EAS Build to TestFlight
+
+# Manual trigger only (Actions tab -> "EAS Build to TestFlight" -> Run workflow).
+# ADR 0029: agents may publish to preview/internal; production is a human action.
+# Running this workflow is itself a human action (a person clicks Run), and it
+# defaults to the internal (TestFlight) profile.
+on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: "EAS build profile"
+        type: choice
+        options:
+          - internal
+          - production
+        default: internal
+
+# Never let two device builds run at once.
+concurrency:
+  group: eas-testflight
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Build iOS and submit to TestFlight
+        run: eas build --platform ios --profile ${{ inputs.profile }} --non-interactive --auto-submit
