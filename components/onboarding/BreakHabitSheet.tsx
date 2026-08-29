@@ -30,7 +30,7 @@ import { Sheet } from '@/components/ui/Sheet';
 import { TextField } from '@/components/ui/TextField';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
-import { radii, typeScale } from '@/constants/theme';
+import { radii, spacing, typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
 import { vicePresets, VICE_IDS, type ViceId } from '@/constants/onboardingPresets';
 import type { HabitFrequency } from '@/types/habit';
@@ -366,7 +366,7 @@ function createStyles(theme: AppTheme) {
       marginTop: 12,
     },
     primary: {
-      marginTop: 22,
+      marginTop: spacing.xxl,
     },
     gateCard: {
       backgroundColor: theme.snow,

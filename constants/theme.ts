@@ -60,9 +60,12 @@ const palette = {
   // tint over white, 5.23 on it over snow, and 5.73 on the 8% fixed-tip
   // card. UX-002.
   amberInk: '#8F5500',
-  // Destructive only (delete, stop breaking, undo import). Darkened (was
-  // #F05A5A) because it failed BOTH directions at 3.33:1: as a label on white
-  // and as the destructive fill under a white label. Now 5.03 either way.
+  // Hard-destructive only (delete, undo import). The "stop breaking" trigger is
+  // intentionally rendered in muted slate, not coral: stopping a habit is a
+  // routine choice, not a data loss, so it does not earn the destructive signal.
+  // Darkened (was #F05A5A) because it failed BOTH directions at 3.33:1: as a
+  // label on white and as the destructive fill under a white label. Now 5.03
+  // either way.
   // Note pulseRamp keeps the lighter coral hue; it is a heat scale, not a
   // destructive signal, and ink already passes on every step. UX-047.
   coral: '#C93B3B',

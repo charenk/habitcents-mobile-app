@@ -11,7 +11,7 @@ import { EmojiTile, EmptyState } from '@/components/ui';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { categoryEmoji, categoryIdentityColor } from '@/constants/categoryEmoji';
-import { radii, typeScale, type AppTheme } from '@/constants/theme';
+import { radii, spacing, typeScale, type AppTheme } from '@/constants/theme';
 import type { SpendingByCategory } from '@/types/report';
 import { strings } from '@/constants/strings';
 
@@ -118,7 +118,7 @@ function createStyles(theme: AppTheme) {
       justifyContent: 'space-between',
       alignItems: 'baseline',
       gap: 12,
-      marginBottom: 5,
+      marginBottom: spacing.xs,
     },
     rowName: {
       flex: 1,
@@ -135,13 +135,13 @@ function createStyles(theme: AppTheme) {
     // Spend is not a win: the track is snow and the fill is mist. Never sage.
     barTrack: {
       height: 6,
-      borderRadius: 3,
+      borderRadius: radii.micro,
       backgroundColor: theme.snow,
       overflow: 'hidden',
     },
     barFill: {
       height: 6,
-      borderRadius: 3,
+      borderRadius: radii.micro,
       backgroundColor: theme.mist,
     },
     emptyWrap: {

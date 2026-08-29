@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
-import { radii, typeScale, type AppTheme } from '@/constants/theme';
+import { radii, spacing, typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import { TierBadge } from './TierBadge';
 import type { KpiSummary } from '@/utils/leakScan/resultsSummary';
@@ -123,7 +123,7 @@ function createStyles(theme: AppTheme) {
       fontSize: typeScale.eyebrow,
       fontFamily: theme.fonts.uiMedium,
       color: theme.slate,
-      marginTop: 3,
+      marginTop: spacing.tight,
     },
     subtitle: {
       // Informational metadata (evidence window, covered days), so it uses

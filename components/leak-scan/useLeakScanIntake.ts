@@ -1,4 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
+import { InteractionManager } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import { File } from 'expo-file-system';
 import { runScan, type ScanFileInput } from '@/utils/leakScan';
@@ -144,6 +145,18 @@ export function useLeakScanIntake() {
   const rulesChainRef = useRef<Promise<void>>(Promise.resolve());
 
   const runWithRules = useCallback(async (files: ScanFileInput[], currentRules: ScanRules) => {
+    // UX-012: runScan is a synchronous, JS-thread-blocking pass over up to
+    // 5 files x 50k rows. Callers commit the 'scanning' stage immediately
+    // before invoking this, so yield one frame first: React paints the spinner
+    // and VoiceOver settles on the "Reading your files" announcement BEFORE the
+    // blocking parse starts, instead of the whole thing freezing mid-transition.
+    // runAfterInteractions is the RN-idiomatic "let the frame land, then do the
+    // heavy work" primitive; awaiting it keeps the existing async contract, so
+    // the completion/failure setState (and its a11y announcement) still fire in
+    // the same order the caller expects.
+    await new Promise<void>((resolve) => {
+      InteractionManager.runAfterInteractions(() => resolve());
+    });
     const result = runScan(files, { rules: currentRules });
     if (result.questions.length > 0) {
       const question = result.questions[0];

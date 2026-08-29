@@ -1,0 +1,22 @@
+{
+  "pages": [
+    { "id": "main", "name": "Main pages" },
+    { "id": "today", "name": "Today states" }
+  ],
+  "artboards": [
+    { "file": "Main.dc.html",       "x": 0,    "y": 0, "w": 390, "h": 1520, "title": "Today",              "page": "main" },
+    { "file": "Money.dc.html",      "x": 470,  "y": 0, "w": 390, "h": 900,  "title": "Money",              "page": "main" },
+    { "file": "Insights.dc.html",   "x": 940,  "y": 0, "w": 390, "h": 960,  "title": "Insights",           "page": "main" },
+    { "file": "Categories.dc.html", "x": 1410, "y": 0, "w": 390, "h": 920,  "title": "Categories",         "page": "main" },
+
+    { "file": "TodayFteSpent.dc.html",   "x": 0,    "y": 0, "w": 390, "h": 900,  "title": "FTE / Spent",   "page": "today" },
+    { "file": "TodayFteKept.dc.html",    "x": 470,  "y": 0, "w": 390, "h": 900,  "title": "FTE / Kept",    "page": "today" },
+    { "file": "TodayIdealSpent.dc.html", "x": 940,  "y": 0, "w": 390, "h": 1120, "title": "Ideal / Spent", "page": "today" },
+    { "file": "TodayIdealKept.dc.html",  "x": 1410, "y": 0, "w": 390, "h": 1460, "title": "Ideal / Kept",  "page": "today" }
+  ],
+  "annotations": [
+    { "id": "context", "page": "main", "x": 0, "y": -96, "w": 560, "text": "HabitCents main pages, recreated from the as-built app (Today, Money, Insights, Categories). Light mode, exact theme tokens." },
+    { "id": "today-states", "page": "today", "x": 0, "y": -112, "w": 720, "text": "Today page states. FTE (first run) and ideal (with data), each split by the in-page Spent and Kept tabs. FTE screens match the supplied reference." }
+  ],
+  "launch": { "view": "canvas", "page": "today" }
+}

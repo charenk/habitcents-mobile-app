@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Switch } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { formatDate, parseDateOnly } from '@/utils/dates';
 import { useCurrency } from '@/contexts/CurrencyContext';
-import { radii, typeScale, type AppTheme } from '@/constants/theme';
+import { radii, spacing, typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import { TierBadge } from './TierBadge';
 import { categoryDisplayLabel } from '@/utils/leakScanBridge';
@@ -205,7 +205,7 @@ function createStyles(theme: AppTheme) {
     flagPill: {
       backgroundColor: theme.tierLikelyBg,
       paddingHorizontal: 8,
-      paddingVertical: 3,
+      paddingVertical: spacing.tight,
       borderRadius: radii.pill,
       alignSelf: 'flex-start',
       marginTop: 4,

@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Icon } from '@/components/ui/Icon';
 import { useTheme } from '@/contexts/ThemeContext';
-import { radii, typeScale, type AppTheme } from '@/constants/theme';
+import { radii, spacing, typeScale, type AppTheme } from '@/constants/theme';
 
 /**
  * Background tone of the slot (design/redesign-handoff/04-screens.md, "Today"):
@@ -73,7 +73,7 @@ function createStyles(theme: AppTheme) {
       backgroundColor: theme.coachMomentMilestoneBg,
       borderRadius: radii.pill,
       paddingHorizontal: 12,
-      paddingVertical: 5,
+      paddingVertical: spacing.xs,
       marginTop: 12,
     },
     // UX-005: ink on the lavender tint, not lavender on lavender. Same fix as

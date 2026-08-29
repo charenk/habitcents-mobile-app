@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
-import { typeScale } from '@/constants/theme';
+import { radii, spacing, typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import type { ConfidenceTier } from '@/utils/leakScan/types';
@@ -52,7 +52,7 @@ function createStyles(theme: AppTheme) {
     pill: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 5,
+      gap: spacing.xs,
       // minHeight, not height: this pill wraps 11pt text that scales with the
       // user's text size, and a fixed 22 clipped it. The badge renders three
       // times in KpiRow alone plus once per HabitCard, so it was the first
@@ -70,12 +70,14 @@ function createStyles(theme: AppTheme) {
     dotSolid: {
       width: 9,
       height: 9,
-      borderRadius: 5,
+      // 9pt discs: radii.pill guarantees a full circle. radii.micro (4) would
+      // fall short of the 4.5 a 9px round needs and square the corners.
+      borderRadius: radii.pill,
     },
     dotHalfWrap: {
       width: 9,
       height: 9,
-      borderRadius: 5,
+      borderRadius: radii.pill,
       overflow: 'hidden',
       backgroundColor: theme.tierLikelyBg,
     },
@@ -89,7 +91,7 @@ function createStyles(theme: AppTheme) {
     dotRing: {
       width: 9,
       height: 9,
-      borderRadius: 5,
+      borderRadius: radii.pill,
       borderWidth: 2,
       backgroundColor: 'transparent',
     },

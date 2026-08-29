@@ -18,7 +18,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
-import { radii, typeScale, type AppTheme } from '@/constants/theme';
+import { radii, spacing, typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import { formatDate } from '@/utils/dates';
 import { KpiRow } from '@/components/leak-scan/KpiRow';
@@ -207,7 +207,7 @@ function createStyles(theme: AppTheme) {
       justifyContent: 'space-between',
       alignItems: 'baseline',
       gap: 12,
-      marginBottom: 5,
+      marginBottom: spacing.xs,
     },
     categoryName: {
       flex: 1,
@@ -224,13 +224,13 @@ function createStyles(theme: AppTheme) {
     // Spend is not a win: the track is snow and the fill is mist. Never sage.
     barTrack: {
       height: 6,
-      borderRadius: 3,
+      borderRadius: radii.micro,
       backgroundColor: theme.snow,
       overflow: 'hidden',
     },
     barFill: {
       height: 6,
-      borderRadius: 3,
+      borderRadius: radii.micro,
       backgroundColor: theme.mist,
     },
     leakRow: {

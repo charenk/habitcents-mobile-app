@@ -385,7 +385,7 @@ function createStyles(theme: AppTheme) {
     },
     planBadge: {
       backgroundColor: theme.primary,
-      borderRadius: 6,
+      borderRadius: radii.micro,
       paddingHorizontal: 8,
       paddingVertical: 2,
     },
@@ -402,7 +402,7 @@ function createStyles(theme: AppTheme) {
       fontSize: typeScale.secondary,
       fontFamily: theme.fonts.ui,
       color: theme.textSecondary,
-      marginTop: 3,
+      marginTop: spacing.tight,
     },
     planPriceColumn: {
       alignItems: 'flex-end',

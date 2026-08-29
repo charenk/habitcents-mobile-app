@@ -30,6 +30,11 @@ type PeriodStop = { location: number; color: string; alpha: number };
  * headline far above AA; the aurora lives behind type, never over it.
  */
 function periodStops(theme: ReturnType<typeof useTheme>): PeriodStop[] {
+  // categoryColors.utility and .transport below are a sanctioned, deliberate
+  // decorative borrow: this aurora is one of exactly two decorative gradients
+  // the app allows (design/PATTERN_VOCABULARY.md "Color"), so these two hues
+  // read as atmosphere here, not as category identity. The borrow is intended,
+  // not drift (UX-065).
   return [
     { location: 0.02, color: theme.lavender, alpha: 0 },
     { location: 0.1, color: theme.lavender, alpha: 0.38 },

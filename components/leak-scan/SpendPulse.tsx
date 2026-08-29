@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
-import { radii, typeScale, type AppTheme } from '@/constants/theme';
+import { radii, spacing, typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import { buildSpendPulse } from '@/utils/leakScan/spendPulse';
 import type { PulseCell, PulseGranularity } from '@/utils/leakScan/spendPulse';
@@ -250,12 +250,12 @@ function createStyles(theme: AppTheme) {
     legendItem: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 5,
+      gap: spacing.xs,
     },
     legendHatchBox: {
       width: 13,
       height: 13,
-      borderRadius: 3,
+      borderRadius: radii.micro,
       borderWidth: 0.5,
       borderColor: theme.pulseHatchBorder,
       overflow: 'hidden',
@@ -263,7 +263,7 @@ function createStyles(theme: AppTheme) {
     legendColorBox: {
       width: 13,
       height: 13,
-      borderRadius: 3,
+      borderRadius: radii.micro,
     },
     legendLabel: {
       fontSize: typeScale.eyebrow,
