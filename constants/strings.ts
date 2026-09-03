@@ -806,6 +806,14 @@ export const strings = {
     keptChipLabel: 'Kept today',
     spentKeptTabsLabel: 'Today view',
     checkInPendingA11y: 'check-in waiting',
+    // First-run chip placeholders (Charen, 2026-09-03): before the activity
+    // exists, $0.00 would read as a measured verdict ("you kept nothing")
+    // when the truth is not-started, so the amount slot carries these words
+    // instead. Deliberately no numbers; "logs" and "skips" teach the
+    // mechanic in the locked vocabulary. Amounts return for good after the
+    // first expense log / first habit break, including an honest $0.00.
+    spentChipNoLogs: 'No logs yet',
+    keptChipNoSkips: 'No skips yet',
     // Kept band. The eyebrow and caption already live in habitLogging
     // (keptSoFar, keptCaption, keptZeroCaption); nothing is duplicated here.
     // Check-in card

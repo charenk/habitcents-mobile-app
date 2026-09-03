@@ -255,6 +255,40 @@ describe('Today: Spent/Kept chips', () => {
     expect(within(view.getByTestId('kept-chip')).getByText(formatMoney(700))).toBeTruthy();
   });
 
+  it('first run shows the not-started placeholders, never a measured $0.00 (Charen, 2026-09-03)', async () => {
+    // No expenses ever, no habit break ever: $0.00 would read as a verdict
+    // ("you kept nothing") on a game that has not started, so the amount
+    // slots carry words instead (SpentKeptChips file header).
+    const view = await renderToday();
+
+    const spentChip = within(view.getByTestId('spent-chip'));
+    const keptChip = within(view.getByTestId('kept-chip'));
+    expect(spentChip.getByText(strings.today.spentChipNoLogs)).toBeTruthy();
+    expect(keptChip.getByText(strings.today.keptChipNoSkips)).toBeTruthy();
+    expect(spentChip.queryByText(formatMoney(0))).toBeNull();
+    expect(keptChip.queryByText(formatMoney(0))).toBeNull();
+    // VoiceOver reads a clause, not a number that was never measured.
+    expect(view.getByLabelText(/^Spent today, no logs yet/)).toBeTruthy();
+    expect(view.getByLabelText(/^Kept today, no skips yet/)).toBeTruthy();
+  });
+
+  it('the first logged expense flips Spent to an amount while Kept stays not-started', async () => {
+    mockExpenses = [makeExpense({ id: 'e1', amount: 500, class: 'spend' })];
+
+    const view = await renderToday();
+
+    expect(within(view.getByTestId('spent-chip')).getByText(formatMoney(500))).toBeTruthy();
+    expect(within(view.getByTestId('kept-chip')).getByText(strings.today.keptChipNoSkips)).toBeTruthy();
+  });
+
+  it('a started habit break with nothing kept today shows an honest $0.00 on Kept', async () => {
+    mockGoals = [makeGoal({ id: 'g1', habitId: 'h1', dayLogs: [] })];
+
+    const view = await renderToday();
+
+    expect(within(view.getByTestId('kept-chip')).getByText(formatMoney(0))).toBeTruthy();
+  });
+
   it('defaults to the Spent view with the quick-log control open', async () => {
     const view = await renderToday();
 

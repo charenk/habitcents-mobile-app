@@ -889,6 +889,11 @@ export default function TodayScreen() {
           value={todayView}
           onChange={handleTodayViewChange}
           checkInPending={checkInPending}
+          // Not-started is not zero (SpentKeptChips file header): amounts
+          // only render once the activity exists, all-time, so a fresh
+          // install never claims a measured $0.00.
+          spentStarted={!spentIsEmpty}
+          keptStarted={goals.length > 0}
         />
       </View>
 
