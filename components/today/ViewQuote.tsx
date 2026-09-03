@@ -74,12 +74,18 @@ function createStyles(theme: AppTheme) {
       fontSize: typeScale.quote,
       lineHeight: 26,
       color: theme.ink,
+      // Centered, both panes: Charen's 2026-09-03 call, matching the FTE
+      // artboards (design/canvas-current-ui/TodayFteSpent.dc.html and
+      // TodayFteKept.dc.html), where the editorial voice sits on the
+      // screen's center axis.
+      textAlign: 'center',
     },
     attribution: {
       fontFamily: theme.fonts.ui,
       fontSize: typeScale.caption,
       color: theme.mistText,
       marginTop: 4,
+      textAlign: 'center',
     },
   });
 }

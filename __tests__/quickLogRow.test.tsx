@@ -3,9 +3,12 @@
  * redesign (design/quick-log-trigger). The card's $0.00 now sits in a
  * snow-filled rounded field instead of a bare number on an underline, and
  * the plus button is a rounded square that shares the field's radius and
- * stretches to its full height. See __tests__/uiPrimitives.test.tsx for the
- * AmountDisplay underline={false} prop-level assertion this wiring depends
- * on.
+ * stretches to its full height. Geometry pairs with SpentKeptChips (Charen's
+ * consistency call, 2026-09-03): the card takes the chips track's outer
+ * radius (radii.feature + 3) and derives the field radius concentrically
+ * (outer minus the card's spacing.control padding). See
+ * __tests__/uiPrimitives.test.tsx for the AmountDisplay underline={false}
+ * prop-level assertion this wiring depends on.
  */
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock')
@@ -18,7 +21,12 @@ import { ThemeProvider } from '@/contexts/ThemeContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { QuickLogRow } from '@/components/money/QuickLogRow';
 import { strings } from '@/constants/strings';
-import { radii, lightTheme } from '@/constants/theme';
+import { radii, spacing, lightTheme } from '@/constants/theme';
+
+// The concentric pair QuickLogRow derives its radii from (see its file-top
+// comment): outer = the chips track's radius, inner = outer - card padding.
+const CARD_RADIUS = radii.feature + 3;
+const FIELD_RADIUS = CARD_RADIUS - spacing.control;
 
 function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -38,7 +46,7 @@ describe('QuickLogRow', () => {
     const field = view.getByTestId('quick-log-field');
     const flat = StyleSheet.flatten(field.props.style);
     expect(flat.backgroundColor).toBe(lightTheme.snow);
-    expect(flat.borderRadius).toBe(radii.card);
+    expect(flat.borderRadius).toBe(FIELD_RADIUS);
     // Press feedback: the field had no pressed style at all, so the primary
     // entry to the core loop acknowledged a touch with nothing until the sheet
     // began to rise. It now takes Button.tsx's stated convention, a pressed
@@ -68,7 +76,7 @@ describe('QuickLogRow', () => {
     );
     const plusButton = view.getByTestId('quick-log-plus', { includeHiddenElements: true });
     const flat = StyleSheet.flatten(plusButton.props.style);
-    expect(flat.borderRadius).toBe(radii.card);
+    expect(flat.borderRadius).toBe(FIELD_RADIUS);
     expect(flat.alignSelf).toBe('stretch');
     expect(flat.backgroundColor).toBe(lightTheme.primary);
     // Was a TouchableOpacity on its default activeOpacity fade, so the two
