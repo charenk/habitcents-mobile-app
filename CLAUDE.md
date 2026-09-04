@@ -29,6 +29,10 @@ only. **`production` is a human action**, OTA or build alike, because Lane 2
 review exists so a person sees anything a user can feel. Full reasoning in the
 umbrella repo's `docs/decisions/0029-release-credentials-and-channel-boundary.md`.
 
+## Design decisions context (living, in this repo)
+
+`design/decisions/` holds the current design direction as living files: `modules/` (one per surface: Today, drawers...) and `components/` (one per component, named after its source file). Read the module file and the component files for anything you touch before changing it, and update them in the same commit: one-line dated decisions with the why, findings under Open, shipped changes under Iterations. Ratified choices link to an ADR in the ops repo (`../docs/decisions/`); these files are the current truth between ADRs. Shape and rules: `design/decisions/README.md`.
+
 ## UI craft skills (vendored 2026-08-17)
 
 Emil Kowalski's design engineering and animation skills live in
