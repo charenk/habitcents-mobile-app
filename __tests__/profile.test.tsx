@@ -38,11 +38,19 @@ jest.mock('@/utils/storage', () => {
   return { ...actual, clearOnboarding: jest.fn(async () => {}) };
 });
 
+// LocaleProvider resolves the device locale on mount (routine/localization
+// plan item 1); this suite does not exercise language selection, so a fixed
+// English device locale keeps it out of the way.
+jest.mock('expo-localization', () => ({
+  getLocales: () => [{ languageCode: 'en', languageScriptCode: null, regionCode: 'US' }],
+}));
+
 import React from 'react';
 import { Linking } from 'react-native';
 import { act, cleanup, fireEvent, render } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '@/contexts/ThemeContext';
+import { LocaleProvider } from '@/contexts/LocaleContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { OnboardingProvider } from '@/contexts/OnboardingContext';
 import { ToastProvider } from '@/components/ui/Toast';
@@ -68,11 +76,13 @@ function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SafeAreaProvider initialMetrics={initialMetrics}>
       <ThemeProvider>
-        <CurrencyProvider>
-          <OnboardingProvider>
-            <ToastProvider>{children}</ToastProvider>
-          </OnboardingProvider>
-        </CurrencyProvider>
+        <LocaleProvider>
+          <CurrencyProvider>
+            <OnboardingProvider>
+              <ToastProvider>{children}</ToastProvider>
+            </OnboardingProvider>
+          </CurrencyProvider>
+        </LocaleProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );
