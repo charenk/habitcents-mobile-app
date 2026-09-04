@@ -23,11 +23,23 @@ are done and verified (tsc clean, npm test green) on this branch.
         `app/(tabs)/insights.tsx`, `app/(tabs)/categories.tsx`,
         `app/habit/[id].tsx`, `app/category/[id].tsx`, `app/profile.tsx`,
         `app/paywall.tsx`. Done 2026-09-04.
-  - [ ] 2c. Apply to the onboarding screens: `app/onboarding/welcome.tsx`,
-        `app/onboarding/intent.tsx`, and the components they render from
-        `components/onboarding/` (OnboardingCarousel and friends). Not
-        started; onboarding has its own scroll/carousel structure and needs
-        its own read before touching it.
+  - [x] 2c. Onboarding screens read and handled. `app/onboarding/welcome.tsx`
+        renders only `OnboardingCarousel` (no layout of its own);
+        `app/onboarding/intent.tsx` is a bare `Redirect`, so neither needed a
+        change. `OnboardingCarousel.tsx`'s paged beats are the one real case:
+        each `beat` View is deliberately full window width because it is the
+        paging unit `handleScroll` measures offsets against (dividing by that
+        same `width`), so the shared cap could not go on `beat` itself the
+        way it goes into a `contentContainerStyle` elsewhere. Added one new
+        `beatContent` wrapper View (spreading `contentColumnStyle`) around
+        each beat's media/headline/hook/CTA, leaving `beat`'s own width
+        untouched so paging math is unaffected; below the cap `beatContent`
+        is a pass-through (`width: '100%'`), so phone rendering is
+        unchanged. Checked `components/onboarding/BreakHabitSheet.tsx`
+        (routes through the already-capped `Sheet`, no change needed) and
+        `AuroraBackground.tsx` (a full-bleed decorative gradient strip, not
+        content; capping it would leave gaps, left alone, already on item
+        5's audit list). Done 2026-09-04.
   - [ ] 2d. Apply to the Leak Scan flow: `app/leak-scan.tsx` composes
         `IntakeScreen`, `ScopeScreen`, `DeckScreen`, `PayoffScreen`,
         `BillsScreen`, `GracefulFailure`, `ResultsScreen` from
@@ -74,10 +86,11 @@ are done and verified (tsc clean, npm test green) on this branch.
 - [ ] 6. Add targeted jest tests exercising tablet dimensions.
       `__tests__/tabletLayout.test.tsx` added 2026-09-04, pinning the shared
       `contentColumnStyle`/`layout.contentMaxWidth` contract and that
-      `Sheet`'s panel carries the same cap. Extend this file (or add
-      siblings) as items 2c, 2d and 4 land; jest cannot run RN's real
-      flexbox layout engine, so these pin the style contract, not measured
-      pixels (see the file's own header comment).
+      `Sheet`'s panel carries the same cap. Extended 2026-09-04 with a case
+      for `OnboardingCarousel`'s `beatContent` wrapper (item 2c). Extend
+      further (or add siblings) as items 2d and 4 land; jest cannot run RN's
+      real flexbox layout engine, so these pin the style contract, not
+      measured pixels (see the file's own header comment).
 - [ ] 7. Keep portrait-only orientation. `app.json` already sets
       `"orientation": "portrait"`; nothing in this plan changes that.
       Re-verify this line stays untouched at the end of every run.
