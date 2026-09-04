@@ -1,0 +1,398 @@
+{
+  "pages": [
+    {
+      "id": "spent",
+      "name": "Spent pane"
+    },
+    {
+      "id": "kept",
+      "name": "Kept pane"
+    },
+    {
+      "id": "sheets",
+      "name": "Sheets from Today"
+    }
+  ],
+  "artboards": [
+    {
+      "file": "SpentZero.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "Spent \u00b7 Zero",
+      "page": "spent"
+    },
+    {
+      "file": "SpentFirstLog.dc.html",
+      "x": 470,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "Spent \u00b7 First log (Door 1)",
+      "page": "spent"
+    },
+    {
+      "file": "SpentQuiet.dc.html",
+      "x": 940,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "Spent \u00b7 Quiet",
+      "page": "spent"
+    },
+    {
+      "file": "Main.dc.html",
+      "x": 1410,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "Spent \u00b7 Live",
+      "page": "spent"
+    },
+    {
+      "file": "LogSheet.dc.html",
+      "x": 1880,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "Sheet \u00b7 Log expense",
+      "page": "spent"
+    },
+    {
+      "file": "EditSheet.dc.html",
+      "x": 2350,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "Sheet \u00b7 Edit expense",
+      "page": "spent"
+    },
+    {
+      "file": "KeptZero.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "Kept \u00b7 Zero",
+      "page": "kept"
+    },
+    {
+      "file": "KeptProgress.dc.html",
+      "x": 470,
+      "y": 0,
+      "w": 390,
+      "h": 875,
+      "title": "Kept \u00b7 Quiet (detection meter)",
+      "page": "kept"
+    },
+    {
+      "file": "KeptDoor3.dc.html",
+      "x": 940,
+      "y": 0,
+      "w": 390,
+      "h": 941,
+      "title": "Kept \u00b7 Door 3 first run",
+      "page": "kept"
+    },
+    {
+      "file": "KeptLeaksFound.dc.html",
+      "x": 1410,
+      "y": 0,
+      "w": 390,
+      "h": 1139,
+      "title": "Kept \u00b7 Leaks found",
+      "page": "kept"
+    },
+    {
+      "file": "KeptCheckInPending.dc.html",
+      "x": 1880,
+      "y": 0,
+      "w": 390,
+      "h": 912,
+      "title": "Kept \u00b7 Check-in pending",
+      "page": "kept"
+    },
+    {
+      "file": "KeptLive.dc.html",
+      "x": 2350,
+      "y": 0,
+      "w": 390,
+      "h": 1120,
+      "title": "Kept \u00b7 Live (both sections)",
+      "page": "kept"
+    },
+    {
+      "file": "KeptCheckInSkipped.dc.html",
+      "x": 0,
+      "y": 1439,
+      "w": 390,
+      "h": 1000,
+      "title": "Kept \u00b7 Skipped",
+      "page": "kept"
+    },
+    {
+      "file": "KeptCheckInSlipped.dc.html",
+      "x": 470,
+      "y": 1439,
+      "w": 390,
+      "h": 1030,
+      "title": "Kept \u00b7 Slipped (bought it)",
+      "page": "kept"
+    },
+    {
+      "file": "KeptMilestone.dc.html",
+      "x": 940,
+      "y": 1439,
+      "w": 390,
+      "h": 1062,
+      "title": "Kept \u00b7 Milestone",
+      "page": "kept"
+    },
+    {
+      "file": "KeptBackfill.dc.html",
+      "x": 1410,
+      "y": 1439,
+      "w": 390,
+      "h": 1104,
+      "title": "Kept \u00b7 Backfill",
+      "page": "kept"
+    },
+    {
+      "file": "KeptWeekly.dc.html",
+      "x": 1880,
+      "y": 1439,
+      "w": 390,
+      "h": 1025,
+      "title": "Kept \u00b7 Weekly habit",
+      "page": "kept"
+    },
+    {
+      "file": "KeptLoading.dc.html",
+      "x": 2350,
+      "y": 1439,
+      "w": 390,
+      "h": 844,
+      "title": "Kept \u00b7 Loading",
+      "page": "kept"
+    },
+    {
+      "file": "PickOneSheet.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "Sheet \u00b7 Pick one",
+      "page": "sheets"
+    },
+    {
+      "file": "PickOneGate.dc.html",
+      "x": 470,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "Sheet \u00b7 Pick one, gated",
+      "page": "sheets"
+    },
+    {
+      "file": "BreakHabitSheet.dc.html",
+      "x": 940,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "Sheet \u00b7 Break a habit",
+      "page": "sheets"
+    },
+    {
+      "file": "PartialSlipSheet.dc.html",
+      "x": 1410,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "Sheet \u00b7 Partial slip",
+      "page": "sheets"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "n-SpentZero",
+      "page": "spent",
+      "x": 0,
+      "y": -200,
+      "w": 390,
+      "text": "ZERO (true zero, nothing ever logged): expenses.length === 0 (index.tsx:227). Chips read words, not $0.00 (ADR 0030). Quote + hook center in the space under the quick log.\nReach: Developer > Persona: new user > Log my first expense > close the sheet."
+    },
+    {
+      "id": "n-SpentFirstLog",
+      "page": "spent",
+      "x": 470,
+      "y": -200,
+      "w": 390,
+      "text": "After the Door 1 first log: FirstRunRibbon \"saved\" line (door1RibbonPending) + one row + the watch-nudge (watchNudgeVisible needs a merchant). Ribbon and nudge are one-shot.\nReach: Persona: new user > Log my first expense > amount + merchant > Save."
+    },
+    {
+      "id": "n-SpentQuiet",
+      "page": "spent",
+      "x": 940,
+      "y": -200,
+      "w": 390,
+      "text": "QUIET: history exists, nothing today. Spent chip is an honest $0.00; the card carries the one-line empty body; no View all (LoggedTodayList.tsx:49).\nReach: Persona: returning user > delete today's rows via the edit sheet."
+    },
+    {
+      "id": "n-Main",
+      "page": "spent",
+      "x": 1410,
+      "y": -200,
+      "w": 390,
+      "text": "LIVE: rows for today, View all to Money > Spent, closing quote (index.tsx:958-1012). Tap a row to edit.\nReach: Persona: returning user (or log a few)."
+    },
+    {
+      "id": "n-LogSheet",
+      "page": "spent",
+      "x": 1880,
+      "y": -200,
+      "w": 390,
+      "text": "ExpenseSheet mode=log over Spent. Save disabled until an amount (ADR 0028). Door 1 adds one coach line above the amount: \"The real thing, not a practice run. Amount first.\"\nReach: tap the quick-log field or the plus."
+    },
+    {
+      "id": "n-EditSheet",
+      "page": "spent",
+      "x": 2350,
+      "y": -200,
+      "w": 390,
+      "text": "ExpenseSheet mode=edit: Save changes enabled, merchant + category preselected, Delete expense row (instant, Undo from the toast).\nReach: tap a row in Today's log."
+    },
+    {
+      "id": "n-KeptZero",
+      "page": "kept",
+      "x": 0,
+      "y": -200,
+      "w": 390,
+      "text": "ZERO: no leak, no habit, no logs. No hero band at all (index.tsx:1053-1063); quote + hook centered; Break another below. CTA switches the pager to Spent.\nReach: Persona: new user > close Door 1 sheet > swipe to Kept."
+    },
+    {
+      "id": "n-KeptProgress",
+      "page": "kept",
+      "x": 470,
+      "y": -200,
+      "w": 390,
+      "text": "QUIET: logs exist, no leak yet. detectionProgress = progressTowardDetection(expenses), threshold 4 (index.tsx:793). FL-1 coach slot after the first log.\nReach: log 1 to 3 expenses at one merchant."
+    },
+    {
+      "id": "n-KeptDoor3",
+      "page": "kept",
+      "x": 940,
+      "y": -200,
+      "w": 390,
+      "text": "After Break a habit from onboarding: door3 ribbon over the pane, hero at $0.00 with the zero caption, first-run line on the card.\nReach: Persona: new user > carousel > Break a habit."
+    },
+    {
+      "id": "n-KeptLeaksFound",
+      "page": "kept",
+      "x": 1410,
+      "y": -200,
+      "w": 390,
+      "text": "discoveredHabits.length > 0, no goal yet: \"No skips yet\" chip, hero $0.00, LeakCard observed (4 buys, keep logging) vs reliable (monthly rate). DT-1 coach slot on the first card.\nReach: 4 logs at one merchant."
+    },
+    {
+      "id": "n-KeptCheckInPending",
+      "page": "kept",
+      "x": 1880,
+      "y": -200,
+      "w": 390,
+      "text": "Daily habit, unanswered today: pending dot on the chip (checkInPending), week strip with today's sage ring, question + Skipped it / Bought it.\nReach: Persona: returning user > Kept."
+    },
+    {
+      "id": "n-KeptLive",
+      "page": "kept",
+      "x": 2350,
+      "y": -200,
+      "w": 390,
+      "text": "Leaks found + Breaking now. Free tier at its limit: Break another routes to /paywall?placement=habit_gate_today, not the gated sheet.\nReach: Persona: returning user + a second detected leak."
+    },
+    {
+      "id": "n-KeptCheckInSkipped",
+      "page": "kept",
+      "x": 0,
+      "y": 1239,
+      "w": 390,
+      "text": "Answered skipped: sage check dot, summary line, +$ kept headline, sage coach slot (sk0 on the first ever skip), Change answer. The one motion in the app (280ms pulse) fires here.\nReach: tap Skipped it."
+    },
+    {
+      "id": "n-KeptCheckInSlipped",
+      "page": "kept",
+      "x": 470,
+      "y": 1239,
+      "w": 390,
+      "text": "Answered bought: cloud dot, neutral minus badge, \"Logged.\" + kept stays yours, snow coach slot, Change answer + Spent less than usual? (opens the partial slip sheet).\nReach: tap Bought it."
+    },
+    {
+      "id": "n-KeptMilestone",
+      "page": "kept",
+      "x": 940,
+      "y": 1239,
+      "w": 390,
+      "text": "A chapter crossing (10/30/50/66 skips): lavender coach slot with the \"n total skips \u00b7 Chapter\" pill (CheckInCard.tsx:177-180).\nNot reachable from personas; canvas only."
+    },
+    {
+      "id": "n-KeptBackfill",
+      "page": "kept",
+      "x": 1410,
+      "y": 1239,
+      "w": 390,
+      "text": "Yesterday unanswered and backfill unused: \"Missed yesterday? Answer for it:\" pair under a hairline (CheckInCard.tsx:406-423). One use per goal.\nNot reachable from personas; canvas only."
+    },
+    {
+      "id": "n-KeptWeekly",
+      "page": "kept",
+      "x": 1880,
+      "y": 1239,
+      "w": 390,
+      "text": "Event cadence: weekly pill, no strip, period chip, single \"I skipped one\" button; the confirmation shows only on the day of the tap.\nReach: Break a habit with cadence Weekly."
+    },
+    {
+      "id": "n-KeptLoading",
+      "page": "kept",
+      "x": 2350,
+      "y": 1239,
+      "w": 390,
+      "text": "isLoading: quote + hero mount early with $0.00, then the one-word loading line (index.tsx:1065-1068). Usually sub-second.\nReach: seen for a moment on cold launch; canvas only otherwise."
+    },
+    {
+      "id": "n-PickOneSheet",
+      "page": "sheets",
+      "x": 0,
+      "y": -160,
+      "w": 390,
+      "text": "PickOneSheet from Break it on a LeakCard: name, evidence, one skip keeps (median prefill), cadence note, Start breaking it / Not this one."
+    },
+    {
+      "id": "n-PickOneGate",
+      "page": "sheets",
+      "x": 470,
+      "y": -160,
+      "w": 390,
+      "text": "Free tier already breaking one habit: Break it on a LeakCard opens a different sheet, not a disabled one (PickOneSheet.tsx:151-181). See Premium / Maybe later.\nReach: Persona: returning user > log 4 at one merchant > Break it."
+    },
+    {
+      "id": "n-BreakHabitSheet",
+      "page": "sheets",
+      "x": 940,
+      "y": -160,
+      "w": 390,
+      "text": "BreakHabitSheet (Door 3 and Break another when under the limit): preset chips or Something else, amount, cadence, yearly line, bought today."
+    },
+    {
+      "id": "n-PartialSlipSheet",
+      "page": "sheets",
+      "x": 1410,
+      "y": -160,
+      "w": 390,
+      "text": "PartialSlipSheet from \"Spent less than usual?\": header Save disabled until an amount; difference below the skip value counts as kept."
+    }
+  ],
+  "launch": {
+    "view": "canvas",
+    "page": "spent"
+  }
+}
