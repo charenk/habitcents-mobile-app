@@ -42,17 +42,38 @@ work, tracked elsewhere).
 
 ## 2. Typed strings API + catalog conversion (~640 keys)
 
-- [ ] Design the typed API: call sites should barely change
-      (`strings.expenses.recent` style stays, or a thin `t()` wrapper with
-      the same shape) while the values become locale-aware.
-- [ ] Convert `constants/strings.ts` into an English catalog under the new
-      API. Function-valued strings (pluralized/interpolated) become ICU
+- [x] Design the typed API: `utils/i18n.ts` adds `Catalog` (`typeof strings`,
+      so every section including function-valued ones stays in sync with no
+      hand-duplicated type), `getCatalog(locale)` (the seam item 4 fills
+      with real catalogs; every locale resolves to English for now, same
+      catalog object) and `useStrings()` (reads `useLocale()`, mirrors
+      `useCurrency()`). `constants/strings.ts` is unchanged (still the
+      English catalog, still exported as `strings`), so this is additive:
+      no call site was touched, no behavior changed. Tests:
+      `__tests__/i18n.test.tsx` (getCatalog, useStrings throws outside
+      LocaleProvider same as useLocale, resolves and re-resolves on locale
+      change).
+- [ ] Call-site migration, file by file: replace
+      `import { strings } from '@/constants/strings'` with
+      `const strings = useStrings();` inside the component (same local
+      name, so the rest of the file is unchanged). This requires
+      `LocaleProvider` in that file's test render tree, same as
+      `CurrencyProvider` did for currency, so **before** converting a
+      shared/foundational component (`components/ui/Sheet.tsx`,
+      `components/ui/ScreenHeader.tsx`), add `LocaleProvider` to every test
+      file that renders it (their local `Providers` wrapper, mirroring how
+      `CurrencyProvider` rolled out) in the same commit as the conversion,
+      not after. Suggested order: leaf/single-section files first
+      (`components/onboarding/FirstRunRibbon.tsx`,
+      `components/leak-scan/CategoryTransactionsSheet.tsx`), then the
+      foundational `common`-only pair (`Sheet.tsx`, `ScreenHeader.tsx`) once
+      their test blast radius is scoped, then the remaining ~22 sections'
+      files.
+- [ ] Convert function-valued strings (pluralized/interpolated) to ICU
       messages with proper CLDR plural rules, not the current hand-rolled
-      `n === 1 ? '' : 's'` ternaries.
-- [ ] Add the ICU formatting dependency this needs (`i18n-js` or
-      alternative) at this point, once its actual usage is known.
-- [ ] `strings` resolves against the active `LocaleContext` locale, English
-      fallback for any missing key in a provisional catalog.
+      `n === 1 ? '' : 's'` ternaries, and add the ICU formatting dependency
+      this needs (`i18n-js` or alternative) at that point, once actual
+      catalog usage (item 4) shows what it needs.
 
 ## 3. Test migration
 
