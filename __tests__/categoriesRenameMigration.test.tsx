@@ -95,26 +95,39 @@ describe('default category rename migration', () => {
     expect(toExpenseCategory('Mortgage/Rent')).toBe('Mortgage');
   });
 
-  it('matches stored expenses to renamed categories, and never leaks Other onto customs', () => {
-    const home = { id: 'default-0', name: 'Home' };
-    // A Home category owns rows stored as 'Mortgage' (the frozen value)...
+  it('matches stored expenses to renamed defaults, and never leaks onto customs', () => {
+    const home = { id: 'default-0', name: 'Home', isDefault: true };
+    // A Home default owns rows stored as 'Mortgage' (the frozen value)...
     expect(expenseBelongsToCategory({ category: 'Mortgage' }, home)).toBe(true);
     // ...and Subscriptions owns 'Software & Subscriptions' rows.
     expect(
       expenseBelongsToCategory(
         { category: 'Software & Subscriptions' },
-        { id: 'default-8', name: 'Subscriptions' }
+        { id: 'default-8', name: 'Subscriptions', isDefault: true }
       )
     ).toBe(true);
     // Exact-name and id matches still work.
-    expect(expenseBelongsToCategory({ category: 'Food' }, { id: 'default-3', name: 'Food' })).toBe(true);
     expect(
-      expenseBelongsToCategory({ category: 'Other', categoryId: 'cat-x' }, { id: 'cat-x', name: 'Streaming' })
+      expenseBelongsToCategory({ category: 'Food' }, { id: 'default-3', name: 'Food', isDefault: true })
+    ).toBe(true);
+    expect(
+      expenseBelongsToCategory(
+        { category: 'Other', categoryId: 'cat-x' },
+        { id: 'cat-x', name: 'Streaming', isDefault: false }
+      )
     ).toBe(true);
     // A custom category must NOT claim the Other bucket via the
-    // toExpenseCategory fallback (the trap expenseBelongsToCategory exists
-    // to avoid).
-    expect(expenseBelongsToCategory({ category: 'Other' }, { id: 'cat-y', name: 'Streaming' })).toBe(false);
+    // toExpenseCategory fallback, and a custom named like a default's
+    // display name (or a retired alias) must not claim the default's rows.
+    expect(
+      expenseBelongsToCategory({ category: 'Other' }, { id: 'cat-y', name: 'Streaming', isDefault: false })
+    ).toBe(false);
+    expect(
+      expenseBelongsToCategory({ category: 'Mortgage' }, { id: 'cat-z', name: 'Mortgage/Rent', isDefault: false })
+    ).toBe(false);
+    expect(
+      expenseBelongsToCategory({ category: 'Mortgage' }, { id: 'cat-w', name: 'Home', isDefault: false })
+    ).toBe(false);
   });
 
   it('never touches a custom category that shares an old default name', async () => {

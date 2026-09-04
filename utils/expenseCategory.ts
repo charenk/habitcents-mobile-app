@@ -50,22 +50,24 @@ export function toExpenseCategory(name: string): ExpenseCategory {
 
 /**
  * True when an expense row belongs to the category. The stored
- * expense.category is compared against the category's name AND its mapped
- * stored value, because two default categories display under names that are
- * not their stored value (Home, Subscriptions). Deliberately NOT
- * toExpenseCategory(name) === expense.category: that helper falls back to
- * 'Other' for unknown names, which would make every custom category claim
- * the whole Other bucket. Fixes a latent miss where "Mortgage/Rent" detail
- * screens matched nothing stored as 'Mortgage'.
+ * expense.category is compared against the category's name AND, for DEFAULT
+ * categories only, its mapped stored value, because two defaults display
+ * under names that are not their stored value (Home, Subscriptions).
+ * Deliberately NOT toExpenseCategory(name) === expense.category: that helper
+ * falls back to 'Other' for unknown names, which would make every custom
+ * category claim the whole Other bucket, and the isDefault gate keeps a
+ * custom category someone names "Home" or "Mortgage/Rent" from claiming the
+ * default's rows. Fixes a latent miss where "Mortgage/Rent" detail screens
+ * matched nothing stored as 'Mortgage'.
  */
 export function expenseBelongsToCategory(
   expense: { category: string; categoryId?: string },
-  category: Pick<Category, 'id' | 'name'>
+  category: Pick<Category, 'id' | 'name' | 'isDefault'>
 ): boolean {
   return (
     expense.categoryId === category.id ||
     expense.category === category.name ||
-    DISPLAY_TO_STORED[category.name] === expense.category
+    (category.isDefault && DISPLAY_TO_STORED[category.name] === expense.category)
   );
 }
 
