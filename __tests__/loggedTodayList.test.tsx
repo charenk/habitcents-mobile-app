@@ -92,3 +92,23 @@ describe('LoggedTodayList: View all link', () => {
     expect(view.queryByText(strings.today.loggedTodayViewAll)).toBeNull();
   });
 });
+
+describe('LoggedTodayList: quiet day (InfoRibbon, persistent variant)', () => {
+  // Charen's Today annotations (2026-09-04): "nothing yet" is the same sage
+  // band the first-run line uses, inside the list section, but with no X,
+  // because a dismissible placeholder would leave an empty section behind.
+  it('renders the quiet-day line as a persistent ribbon with no dismiss control', async () => {
+    const view = await renderList({ expenses: [] });
+
+    expect(view.getByTestId('logged-today-quiet')).toBeTruthy();
+    expect(view.getByText(strings.today.loggedTodayEmpty)).toBeTruthy();
+    expect(view.queryByLabelText(strings.common.dismiss)).toBeNull();
+  });
+
+  it('does not render the ribbon once a row exists', async () => {
+    const view = await renderList({ expenses: [makeExpense({ id: 'e1' })] });
+
+    expect(view.queryByTestId('logged-today-quiet')).toBeNull();
+    expect(view.queryByText(strings.today.loggedTodayEmpty)).toBeNull();
+  });
+});

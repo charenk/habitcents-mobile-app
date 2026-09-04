@@ -398,18 +398,21 @@ export function EditSkipValueSheet({
       onClose={onCancel}
       avoidKeyboard
       accessibilityLabel={strings.habitDetailV2.skipValueSheetTitle}
+      // Pinned header-save (ADR 0031) inside Sheet's drag zone: the old
+      // small grey label became the shared serif header and the bottom
+      // Save/Cancel pair is gone. Grab handle, header drag, scrim, and
+      // VoiceOver escape run onCancel via Sheet's onClose. Hint only while
+      // disabled (ADR 0028).
+      header={
+        <SheetHeader
+          title={strings.habitDetailV2.skipValueSheetTitle}
+          saveLabel={strings.habitDetailV2.skipValueSave}
+          onSave={handleSave}
+          saveDisabled={!canSave}
+          saveHint={canSave ? undefined : strings.sheets.saveHintAmount}
+        />
+      }
     >
-      {/* Pinned header-save (ADR 0031): the old small grey label becomes
-          the shared serif header, and the bottom Save/Cancel pair is gone.
-          Grab handle, scrim, and VoiceOver escape run onCancel via Sheet's
-          onClose. Hint only while disabled (ADR 0028). */}
-      <SheetHeader
-        title={strings.habitDetailV2.skipValueSheetTitle}
-        saveLabel={strings.habitDetailV2.skipValueSave}
-        onSave={handleSave}
-        saveDisabled={!canSave}
-        saveHint={canSave ? undefined : strings.sheets.saveHintAmount}
-      />
       <View style={styles.editSheetContainer}>
         <AmountField
           valueCents={cents}

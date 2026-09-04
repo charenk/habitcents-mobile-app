@@ -596,11 +596,15 @@ export function AddUpcomingSheet({
   const saveLabel = mode === 'edit' ? strings.addUpcoming.saveChanges : strings.addUpcoming.save;
 
   return (
-    <Sheet visible={visible} onClose={onClose} avoidKeyboard accessibilityLabel={title}>
-      <View style={[styles.body, { maxHeight: height * 0.82 }]}>
-        {/* Pinned header-save (ADR 0031); hint only while disabled, so
-            VoiceOver never reads stale guidance on an enabled button
-            (ADR 0028). */}
+    <Sheet
+      visible={visible}
+      onClose={onClose}
+      avoidKeyboard
+      accessibilityLabel={title}
+      // Pinned header-save (ADR 0031) inside Sheet's drag zone, so the title
+      // row drags the sheet too; hint only while disabled, so VoiceOver
+      // never reads stale guidance on an enabled button (ADR 0028).
+      header={
         <SheetHeader
           title={title}
           saveLabel={saveLabel}
@@ -608,6 +612,9 @@ export function AddUpcomingSheet({
           saveDisabled={!canSave || saving}
           saveHint={canSave ? undefined : strings.sheets.saveHintAmount}
         />
+      }
+    >
+      <View style={[styles.body, { maxHeight: height * 0.82 }]}>
         <ScrollView
           style={styles.scroll}
           contentContainerStyle={styles.content}

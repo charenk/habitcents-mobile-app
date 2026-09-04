@@ -854,14 +854,14 @@ export const strings = {
     loggedTodayEmpty: 'A quiet day so far. Anything you log lands here.',
     // Spent pane, true zero state (no expenses ever, not just today):
     // replaces the logged-today list entirely rather than showing it empty.
+    // Icon, title, CTA only (Charen's Today annotations, 2026-09-04); the
+    // body line was removed from both Today zero states.
     spentEmptyTitle: 'Start with what you just spent',
-    spentEmptyBody: 'Amount first, then a category. About ten seconds.',
     spentEmptyCta: 'Log an expense',
     // Kept pane, true zero state. Deliberately the same visible words as
     // insights.leaksEmptyTitle/Body/Cta (kept has its own keys so the two
     // surfaces stop sharing one string).
     keptEmptyTitle: 'Your leaks will show up here',
-    keptEmptyBody: 'Keep logging expenses. Around 4 logs at the same place is enough to spot a pattern.',
     keptEmptyCta: 'Log an expense',
     alreadyBreakingToast: "You're already breaking this habit.",
     editExpenseLabel: (title: string, amountLabel: string) => `Edit ${title}, ${amountLabel}`,
@@ -936,8 +936,12 @@ export const strings = {
     // flow can ever produce a leak. The field label and placeholder are the
     // ones the old form used (strings.expenses.merchant*), reused as is.
     whereEyebrow: 'Where',
-    saveExpense: 'Save expense',
-    saveChanges: 'Save changes',
+    // Both modes say Save (Charen's drawer feedback, 2026-09-04): the serif
+    // header already names the sheet, so the button stops repeating the
+    // noun and stops wrapping at large text sizes. Keys kept; every form
+    // sheet's header now reads the same one word.
+    saveExpense: 'Save',
+    saveChanges: 'Save',
     deleteExpense: 'Delete expense',
     amountLabel: (formattedAmount: string) => `Amount, ${formattedAmount}`,
     // Expense-sheet workflow redesign (2026-08-16): label for the Done bar
@@ -1031,7 +1035,8 @@ export const strings = {
   addUpcoming: {
     title: 'Add upcoming.',
     editTitle: 'Edit upcoming.',
-    saveChanges: 'Save changes',
+    // One word on every form-sheet header (see expenseSheet.saveExpense).
+    saveChanges: 'Save',
     deleteUpcoming: 'Delete upcoming expense',
     whatIsIt: 'What is it?',
     namePlaceholder: 'Name it',
@@ -1074,7 +1079,7 @@ export const strings = {
     everyNDaysValue: (n: number) => `Every ${n} days`,
     everyNDaysDecrease: 'Fewer days',
     everyNDaysIncrease: 'More days',
-    save: 'Add to upcoming',
+    save: 'Save',
     // ADR 0023: AmountField's accessibility label, same shape as
     // strings.expenseSheet.amountLabel.
     amountLabel: (formattedAmount: string) => `Amount, ${formattedAmount}`,
