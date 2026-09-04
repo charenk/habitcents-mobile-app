@@ -9,12 +9,17 @@
  * change), and that Sheet's panel actually carries the cap. A real iPad
  * width check is a device-pass item (docs/routines/HANDOFF.md).
  */
+jest.mock('@react-native-async-storage/async-storage', () =>
+  require('@react-native-async-storage/async-storage/jest/async-storage-mock')
+);
+
 import React from 'react';
 import { Text } from 'react-native';
 import { cleanup, render } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { Sheet } from '@/components/ui/Sheet';
+import { OnboardingCarousel } from '@/components/onboarding/OnboardingCarousel';
 import { contentColumnStyle, layout } from '@/constants/theme';
 
 const initialMetrics = {
@@ -58,6 +63,26 @@ describe('Sheet panel width (components/ui/Sheet.tsx)', () => {
 
     const panel = view.getByLabelText('test-sheet-panel');
     const flat = flattenStyle(panel.props.style);
+
+    expect(flat.width).toBe('100%');
+    expect(flat.maxWidth).toBe(layout.contentMaxWidth);
+    expect(flat.alignSelf).toBe('center');
+  });
+});
+
+describe('OnboardingCarousel beat content (components/onboarding/OnboardingCarousel.tsx)', () => {
+  it('caps and centers each beat\'s content while the beat itself stays window width', async () => {
+    const view = await render(
+      <Providers>
+        <OnboardingCarousel onPick={() => {}} onSkip={() => {}} />
+      </Providers>
+    );
+
+    // 'track' is BEATS[0]; the pager unit (beat) must keep window width for
+    // handleScroll's paging math, so only beatContent, the inner wrapper,
+    // carries the cap.
+    const beatContent = view.getByTestId('beat-content-track');
+    const flat = flattenStyle(beatContent.props.style);
 
     expect(flat.width).toBe('100%');
     expect(flat.maxWidth).toBe(layout.contentMaxWidth);
