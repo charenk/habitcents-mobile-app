@@ -64,18 +64,21 @@ describe('AddCategoryModal', () => {
     expect(view.queryByText(/budget/i)).toBeNull();
   });
 
-  it('save stays live on an empty name and toasts instead of saving, then calls onSave with no budget argument once named', async () => {
-    // UX-021-adjacent: Save used to be disabled until a name was entered
-    // (dead button, no explanation). It is now always live, matching the
-    // house pattern (ExpenseSheet): an empty-name press toasts instead of
-    // silently doing nothing.
+  it('save is disabled with a hint until a name is entered, then calls onSave with no budget argument (ADR 0028)', async () => {
+    // ADR 0028 / ADR 0031: the header Save is disabled until valid and,
+    // while disabled, carries a hint naming the missing thing. This replaced
+    // the always-live button that toasted "Enter a category name first.",
+    // the last of that toast family.
     const { view, onSave, onClose } = await renderModal();
 
+    const save = view.getByRole('button', { name: strings.common.save });
+    expect(save.props.accessibilityState?.disabled).toBe(true);
+    expect(save.props.accessibilityHint).toBe(strings.sheets.saveHintCategoryName);
+
     await act(async () => {
-      fireEvent.press(view.getByText(strings.common.save));
+      fireEvent.press(save);
     });
     expect(onSave).not.toHaveBeenCalled();
-    expect(view.getByText(strings.toasts.enterCategoryNameFirst)).toBeTruthy();
 
     await act(async () => {
       fireEvent.changeText(
@@ -84,8 +87,13 @@ describe('AddCategoryModal', () => {
       );
     });
 
+    const enabledSave = view.getByRole('button', { name: strings.common.save });
+    expect(enabledSave.props.accessibilityState?.disabled).toBe(false);
+    // Hint only while disabled, so VoiceOver never reads stale guidance.
+    expect(enabledSave.props.accessibilityHint).toBeUndefined();
+
     await act(async () => {
-      fireEvent.press(view.getByText(strings.common.save));
+      fireEvent.press(enabledSave);
     });
 
     expect(onSave).toHaveBeenCalledTimes(1);
@@ -171,14 +179,17 @@ describe('AddCategoryModal', () => {
     expect(swatches[0].props.accessibilityState?.selected).toBe(true);
   });
 
-  it('cancel closes without saving', async () => {
+  it('scrim close dismisses without saving (no in-sheet Cancel since ADR 0031)', async () => {
     const { view, onSave, onClose } = await renderModal();
 
+    // The Cancel button is gone; the Sheet's scrim close control (labelled
+    // strings.common.close) is the accessible dismissal.
     await act(async () => {
-      fireEvent.press(view.getByText(strings.common.cancel));
+      fireEvent.press(view.getByRole('button', { name: strings.common.close }));
     });
 
     expect(onSave).not.toHaveBeenCalled();
     expect(onClose).toHaveBeenCalledTimes(1);
+    expect(view.queryByText(strings.common.cancel)).toBeNull();
   });
 });

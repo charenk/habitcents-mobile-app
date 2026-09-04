@@ -39,7 +39,7 @@ Sources of truth this page compresses: `design/redesign-handoff/01-tokens-and-fo
 
 ## Surfaces
 
-- Feature card: radius 20, white, 1px cloud border, `shadows.card`. List card: radius 14. Sheets: bottom-anchored, radius 20 top, grab handle. Toasts: ink pill, one per mutating action.
+- Feature card: radius 20, white, 1px cloud border, `shadows.card`. List card: radius 14. Sheets: bottom-anchored, radius 20 top, grab handle; form sheets head with `ui/SheetHeader` (serif title left, compact primary Save top-right, disabled until valid, no in-sheet Cancel, ADR 0031), decision sheets keep bottom CTAs. Toasts: ink pill, one per mutating action.
 - Bottom sheets head with the serif `sheetTitle` treatment (`theme.fonts.display` at `typeScale.sheetTitle`), not an eyebrow. AddUpcomingSheet, AddCategoryModal, CurrencySheet, and ExpenseSheet all follow it; a new sheet reaching for an 11pt eyebrow head instead is a deviation, not a second pattern (UX-040).
 - One 20pt horizontal gutter per screen. Full-bleed is reserved for nothing currently; if you think you need it, that is a named deviation.
 - Vertical rhythm inside a view is a 12pt stack gap.

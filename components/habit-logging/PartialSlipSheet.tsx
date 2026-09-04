@@ -15,8 +15,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { AmountField } from '@/components/ui/AmountField';
-import { Button } from '@/components/ui/Button';
 import { Sheet } from '@/components/ui/Sheet';
+import { SheetHeader } from '@/components/ui/SheetHeader';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { typeScale } from '@/constants/theme';
@@ -66,15 +66,25 @@ export function PartialSlipSheet({ visible, skipValue, onCancel, onSave }: Parti
       accessibilityLabel={strings.habitLogging.partialSheetTitle}
     >
       <View style={[styles.body, { maxHeight: height * 0.86 }]}>
+        {/* Pinned header-save (ADR 0031): this sheet takes an amount and
+            saves, so it heads with sheetTitle like every form sheet rather
+            than the displayMid decision treatment it launched with. No
+            Cancel button; grab handle, scrim, and VoiceOver escape all run
+            onCancel via Sheet's onClose. Hint only while disabled
+            (ADR 0028). */}
+        <SheetHeader
+          title={strings.habitLogging.partialSheetTitle}
+          saveLabel={strings.common.save}
+          onSave={handleSave}
+          saveDisabled={!canSave}
+          saveHint={canSave ? undefined : strings.sheets.saveHintAmount}
+        />
         <ScrollView
           style={styles.scroll}
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <Text style={styles.title} accessibilityRole="header" maxFontSizeMultiplier={1.5}>
-            {strings.habitLogging.partialSheetTitle}
-          </Text>
           <Text style={styles.subtitle}>
             {strings.habitLogging.partialSheetSubtitle(format(skipValue))}
           </Text>
@@ -87,19 +97,6 @@ export function PartialSlipSheet({ visible, skipValue, onCancel, onSave }: Parti
             accessibilityLabel={`${strings.habitLogging.partialAmountLabel}, ${format(cents)}`}
           />
         </ScrollView>
-
-        <View style={styles.footer}>
-          <Button
-            label={strings.common.save}
-            onPress={handleSave}
-            disabled={!canSave}
-            // Only carried while disabled, so VoiceOver never reads stale
-            // guidance on an already-enabled button (Button.tsx passes the
-            // hint straight through unconditionally).
-            accessibilityHint={canSave ? undefined : strings.sheets.saveHintAmount}
-          />
-          <Button label={strings.common.cancel} variant="tertiary" onPress={onCancel} />
-        </View>
       </View>
     </Sheet>
   );
@@ -114,30 +111,15 @@ function createStyles(theme: AppTheme) {
       flexShrink: 1,
     },
     content: {
-      paddingTop: 10,
+      paddingTop: 16,
       paddingHorizontal: 20,
       paddingBottom: 16,
-    },
-    footer: {
-      paddingHorizontal: 20,
-      paddingTop: 12,
-      gap: 8,
-    },
-    title: {
-      fontFamily: theme.fonts.display,
-      // Batch 2: token, was a literal 32. displayMid (30) is now the one
-      // size for every decision-moment sheet title (partial slip, pick one,
-      // break habit).
-      fontSize: typeScale.displayMid,
-      lineHeight: 38,
-      color: theme.ink,
     },
     subtitle: {
       fontFamily: theme.fonts.ui,
       fontSize: typeScale.label,
       lineHeight: 20,
       color: theme.slate,
-      marginTop: 4,
       marginBottom: 20,
     },
   });
