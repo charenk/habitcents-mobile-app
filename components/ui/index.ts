@@ -9,6 +9,8 @@ export { AmountDisplay } from './AmountDisplay';
 export { AmountField } from './AmountField';
 export { Button } from './Button';
 export { Sheet } from './Sheet';
+export { SheetHeader } from './SheetHeader';
+export type { SheetHeaderProps } from './SheetHeader';
 export { ConfirmSheet } from './ConfirmSheet';
 export type { ConfirmSheetProps } from './ConfirmSheet';
 export { ToastProvider, useToast } from './Toast';

@@ -19,9 +19,9 @@ import {
   ScrollView,
   useWindowDimensions,
 } from 'react-native';
-import { Button } from '@/components/ui/Button';
 import { Icon, categoryIconName } from '@/components/ui/Icon';
 import { Sheet } from '@/components/ui/Sheet';
+import { SheetHeader } from '@/components/ui/SheetHeader';
 import { TextField } from '@/components/ui/TextField';
 import { useToast } from '@/components/ui/Toast';
 import { hapticError } from '@/utils/motion';
@@ -143,15 +143,10 @@ export function AddCategoryModal({
     }
   }, [visible, initialName, initialIcon, initialColor]);
 
-  // UX-021-adjacent: this used to disable Save on an empty name, a dead
-  // button with no explanation. The house pattern (ExpenseSheet.tsx
-  // handleSave, ~:182-186) keeps the primary button live and toasts an
-  // explanation instead.
   const handleSave = async () => {
-    if (!name.trim()) {
-      show(strings.toasts.enterCategoryNameFirst);
-      return;
-    }
+    // ADR 0028: unreachable from the UI (the header Save is disabled until
+    // the name is non-empty, with a hint naming the gap); kept as a guard.
+    if (!name.trim()) return;
     if (savingRef.current) return;
     savingRef.current = true;
     setSaving(true);
@@ -185,16 +180,24 @@ export function AddCategoryModal({
 
   return (
     <Sheet visible={visible} onClose={handleClose} avoidKeyboard accessibilityLabel={title}>
-      <ScrollView
-        style={{ maxHeight: height * 0.86 }}
-        contentContainerStyle={styles.content}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        <Text style={styles.title} accessibilityRole="header" maxFontSizeMultiplier={1.5}>
-          {title}
-        </Text>
-
+      <View style={[styles.body, { maxHeight: height * 0.86 }]}>
+        {/* Pinned header-save (ADR 0031): title + Save fixed above the
+            scroll, no in-sheet Cancel (grab handle, scrim, and VoiceOver
+            escape dismiss; handleClose still resets the form via Sheet's
+            onClose). Hint only while disabled, per ADR 0028. */}
+        <SheetHeader
+          title={title}
+          saveLabel={strings.common.save}
+          onSave={handleSave}
+          saveDisabled={!name.trim() || saving}
+          saveHint={name.trim() ? undefined : strings.sheets.saveHintCategoryName}
+        />
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
         {/* Preview */}
         <View style={styles.previewContainer}>
           <View style={[styles.previewIcon, { backgroundColor: withAlpha(selectedColor, 0.12) }]}>
@@ -267,31 +270,24 @@ export function AddCategoryModal({
           ))}
         </View>
 
-        <Button
-          label={strings.common.save}
-          onPress={handleSave}
-          disabled={saving}
-          style={styles.save}
-        />
-        <Button label={strings.common.cancel} variant="tertiary" onPress={handleClose} />
-      </ScrollView>
+        </ScrollView>
+      </View>
     </Sheet>
   );
 }
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
+    body: {
+      flexShrink: 1,
+    },
+    scroll: {
+      flexShrink: 1,
+    },
     content: {
-      paddingTop: 10,
+      paddingTop: 16,
       paddingHorizontal: 20,
       paddingBottom: 16,
-    },
-    title: {
-      fontFamily: theme.fonts.display,
-      fontSize: typeScale.sheetTitle,
-      lineHeight: 32,
-      color: theme.ink,
-      includeFontPadding: false,
     },
     previewContainer: {
       alignItems: 'center',
@@ -352,9 +348,6 @@ function createStyles(theme: AppTheme) {
     colorOptionSelected: {
       borderWidth: 3,
       borderColor: theme.ink,
-    },
-    save: {
-      marginTop: 20,
     },
   });
 }

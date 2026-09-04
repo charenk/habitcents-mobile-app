@@ -401,10 +401,12 @@ export const typeScale = {
   displayLarge: 36,
   // Mid-size display serif: bigger than a stat card, smaller than the kept
   // hero. Ratified from the design audit (UX-018 scale gap). Batch 2 also
-  // makes this the ONE size for decision-moment sheet titles (partial slip,
-  // pick one, break habit), which had drifted to 32, 32 and 28. Two ranks now
-  // exist and mean something: sheetTitle 26 for utility sheets, displayMid 30
-  // for the sheets that ask you to decide something.
+  // made this the ONE size for decision-moment sheet titles (pick one, break
+  // habit), which had drifted to 32, 32 and 28. Two ranks exist and mean
+  // something: sheetTitle 26 for form sheets that save (all on ui/SheetHeader
+  // since ADR 0031; partial slip moved here from displayMid because it takes
+  // an amount and saves), displayMid 30 for the sheets that ask you to
+  // decide something.
   displayMid: 30,
   keptHero: 42,
   statCard: 22,

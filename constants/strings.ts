@@ -22,11 +22,13 @@ export const strings = {
   // Shared sheet chrome for the disabled-until-valid Save/Start convention
   // (ops ADR 0028, 2026-08-16): a disabled primary action carries an
   // accessibilityHint naming what is missing, so VoiceOver hears why instead
-  // of hitting a dead end. One amount hint, reused by every sheet whose only
-  // requirement is a nonzero amount, rather than five copies of the same
-  // sentence.
+  // of hitting a dead end. The amount hint is reused by every sheet whose
+  // only requirement is a nonzero amount, rather than five copies of the
+  // same sentence; the category-name hint joined when AddCategoryModal, the
+  // last toast-instead-of-disabling holdout, converged (ADR 0031).
   sheets: {
     saveHintAmount: 'Enter an amount first',
+    saveHintCategoryName: 'Enter a category name first',
   },
   // Tab bar (redesign step 02): Today / Money / Insights / Categories.
   tabs: {
@@ -792,10 +794,10 @@ export const strings = {
     currencyFailed: 'That did not save. Try again.',
     startOverFailed: 'That did not reset. Try again.',
     importFailed: 'That did not save. Nothing was imported. Try again.',
-    // UX-021-adjacent: AddCategoryModal used to disable Save on an empty name.
-    // The house pattern is a live button plus an explanatory toast, so the
-    // control never goes dead with no reason given.
-    enterCategoryNameFirst: 'Enter a category name first.',
+    // enterCategoryNameFirst removed (ADR 0031): the last of the
+    // toast-instead-of-disabling family died when AddCategoryModal converged
+    // on disabled-until-valid; the guidance lives in
+    // sheets.saveHintCategoryName now.
   },
 
   // Today tab (spec 04 "Today").
@@ -806,6 +808,14 @@ export const strings = {
     keptChipLabel: 'Kept today',
     spentKeptTabsLabel: 'Today view',
     checkInPendingA11y: 'check-in waiting',
+    // First-run chip placeholders (Charen, 2026-09-03): before the activity
+    // exists, $0.00 would read as a measured verdict ("you kept nothing")
+    // when the truth is not-started, so the amount slot carries these words
+    // instead. Deliberately no numbers; "logs" and "skips" teach the
+    // mechanic in the locked vocabulary. Amounts return for good after the
+    // first expense log / first habit break, including an honest $0.00.
+    spentChipNoLogs: 'No logs yet',
+    keptChipNoSkips: 'No skips yet',
     // Kept band. The eyebrow and caption already live in habitLogging
     // (keptSoFar, keptCaption, keptZeroCaption); nothing is duplicated here.
     // Check-in card
@@ -913,10 +923,10 @@ export const strings = {
   // pinned header next to the title and is disabled until an amount is
   // entered (cents > 0), replacing the old always-live button that toasted
   // "Enter an amount first." on an empty tap. This was the first sheet
-  // converted to the disabled-until-valid convention (ops ADR 0028); every
-  // other amount-gated sheet has since converged on it too (see
-  // sheets.saveHintAmount), so nothing in the app still toasts on an empty
-  // amount.
+  // converted to the disabled-until-valid convention (ops ADR 0028), and its
+  // header became the shared ui/SheetHeader that every form sheet now uses
+  // (ADR 0031): title left, Save top-right, no in-sheet Cancel. Nothing in
+  // the app toasts on an empty required field anymore.
   expenseSheet: {
     logEyebrow: 'Log expense',
     editEyebrow: 'Edit expense',

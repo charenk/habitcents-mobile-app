@@ -16,6 +16,17 @@ import { radii, spacing, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import type { ExpenseCategory } from '@/types/expense';
 
+// Geometry pairs with SpentKeptChips (Charen's consistency call, 2026-09-03):
+// this card and the chips track directly above it read as one symmetric pair,
+// so the card takes the track's exact outer radius (thumb radii.feature 20 +
+// track padding 3; see SpentKeptChips.tsx TRACK_PADDING) and follows the same
+// concentric nesting rule inward: inner radius = outer radius - padding. The
+// card must also never render taller than the chips (~77pt), which is what
+// the compact padding and the 28pt amount below are for.
+const CARD_RADIUS = radii.feature + 3;
+const CARD_PADDING = spacing.control;
+const FIELD_RADIUS = CARD_RADIUS - CARD_PADDING;
+
 export type QuickLogRowProps = {
   onOpenSheet: (category?: ExpenseCategory) => void;
 };
@@ -46,7 +57,7 @@ export function QuickLogRow({
           accessibilityLabel={strings.today.quickLogOpenLabel}
           testID="quick-log-field"
         >
-          <AmountDisplay valueCents={0} size={40} zeroAsPlaceholder underline={false} />
+          <AmountDisplay valueCents={0} size={28} zeroAsPlaceholder underline={false} />
         </Pressable>
         {/* UX-055: this and the amount Pressable above shared the same
             accessibilityLabel and the same action, so VoiceOver announced
@@ -83,13 +94,14 @@ function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     quickLogCard: {
       backgroundColor: theme.white,
-      borderRadius: radii.feature,
+      // CARD_RADIUS/CARD_PADDING, not the radii.feature + spacing.xl grammar
+      // the other top-level Today cards use: this card's sibling is the chips
+      // track, not the list cards, and it matches the track's radius and
+      // stays under its height (file-top comment).
+      borderRadius: CARD_RADIUS,
       borderWidth: 1,
       borderColor: theme.border,
-      // A top-level Today card is radii.feature + spacing.xl interior padding.
-      // Was 16, which put this card's content 2pt left of the check-in and leak
-      // cards and 4pt right of the logged-today card.
-      padding: spacing.xl,
+      padding: CARD_PADDING,
     },
     quickLogAmountRow: {
       flexDirection: 'row',
@@ -106,9 +118,9 @@ function createStyles(theme: AppTheme) {
       flex: 1,
       minHeight: 44,
       backgroundColor: theme.snow,
-      borderRadius: radii.card,
+      borderRadius: FIELD_RADIUS,
       paddingHorizontal: spacing.lg,
-      paddingVertical: spacing.stack,
+      paddingVertical: spacing.sm,
       justifyContent: 'center',
     },
     quickLogAmountFieldPressed: {
@@ -122,7 +134,7 @@ function createStyles(theme: AppTheme) {
       // under Dynamic Type instead of stretching into a tall bar.
       alignSelf: 'stretch',
       aspectRatio: 1,
-      borderRadius: radii.card,
+      borderRadius: FIELD_RADIUS,
       backgroundColor: theme.primary,
       alignItems: 'center',
       justifyContent: 'center',

@@ -13,6 +13,7 @@ import { EventHistory } from '@/components/habit-logging/EventHistory';
 import { PickOneSheet } from '@/components/habit-logging/PickOneSheet';
 import { PartialSlipSheet } from '@/components/habit-logging/PartialSlipSheet';
 import { Sheet } from '@/components/ui/Sheet';
+import { SheetHeader } from '@/components/ui/SheetHeader';
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
 import { Button } from '@/components/ui/Button';
 import { AmountField } from '@/components/ui/AmountField';
@@ -398,10 +399,18 @@ export function EditSkipValueSheet({
       avoidKeyboard
       accessibilityLabel={strings.habitDetailV2.skipValueSheetTitle}
     >
+      {/* Pinned header-save (ADR 0031): the old small grey label becomes
+          the shared serif header, and the bottom Save/Cancel pair is gone.
+          Grab handle, scrim, and VoiceOver escape run onCancel via Sheet's
+          onClose. Hint only while disabled (ADR 0028). */}
+      <SheetHeader
+        title={strings.habitDetailV2.skipValueSheetTitle}
+        saveLabel={strings.habitDetailV2.skipValueSave}
+        onSave={handleSave}
+        saveDisabled={!canSave}
+        saveHint={canSave ? undefined : strings.sheets.saveHintAmount}
+      />
       <View style={styles.editSheetContainer}>
-        <Text style={styles.editSheetTitle} maxFontSizeMultiplier={1.5}>
-          {strings.habitDetailV2.skipValueSheetTitle}
-        </Text>
         <AmountField
           valueCents={cents}
           onChangeCents={setCents}
@@ -409,16 +418,6 @@ export function EditSkipValueSheet({
           size={48}
           accessibilityLabel={`${strings.habitDetailV2.skipValueSheetTitle}, ${format(cents)}`}
         />
-        <Button
-          label={strings.habitDetailV2.skipValueSave}
-          onPress={handleSave}
-          disabled={!canSave}
-          // Only carried while disabled, so VoiceOver never reads stale
-          // guidance on an already-enabled button (Button.tsx passes the
-          // hint straight through unconditionally).
-          accessibilityHint={canSave ? undefined : strings.sheets.saveHintAmount}
-        />
-        <Button label={strings.common.cancel} variant="tertiary" onPress={onCancel} />
       </View>
     </Sheet>
   );
@@ -504,21 +503,15 @@ function createStyles(theme: AppTheme) {
     // UX-039: secondaryButton/secondaryButtonText and plainButton/
     // plainButtonText removed; the footer actions now render on the shared
     // Button component (variant="secondary" / variant="tertiary").
-    editSheetContainer: {
-      paddingHorizontal: 20,
-      paddingTop: 4,
-      paddingBottom: 12,
-      gap: 8,
-    },
     // UX-061: grabber, inputRow and input removed. Sheet (components/ui/
     // Sheet.tsx) renders its own grab handle, and EditSkipValueSheet has used
-    // AmountField, not a plain TextInput, since ADR 0023; none of the three
-    // styles had a call site left.
-    editSheetTitle: {
-      fontSize: typeScale.secondary,
-      fontFamily: theme.fonts.uiSemibold,
-      color: theme.textSecondary,
-      marginBottom: 8,
+    // AmountField, not a plain TextInput, since ADR 0023. editSheetTitle
+    // removed with ADR 0031: the title renders in the shared SheetHeader.
+    editSheetContainer: {
+      paddingHorizontal: 20,
+      paddingTop: 16,
+      paddingBottom: 12,
+      gap: 8,
     },
   });
 }

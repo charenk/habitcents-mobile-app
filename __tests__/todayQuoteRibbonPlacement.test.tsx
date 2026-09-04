@@ -164,6 +164,36 @@ function makeExpense(overrides: Partial<Expense> & { id: string }): Expense {
   return { ...base, ...overrides } as Expense;
 }
 
+// Mirrors door3BreakSheet.test.tsx's fixture: the minimum shape LeakCard can
+// render, used to populate the Kept pane so KeptHero mounts (FTE pass: the
+// hero only exists once a leak or breaking habit does).
+function makeHabit(overrides: Partial<DetectedHabit> & { id: string }): DetectedHabit {
+  const base: DetectedHabit = {
+    id: overrides.id,
+    name: 'Existing habit',
+    description: '',
+    categoryId: 'cat-other',
+    averageAmount: 500,
+    frequency: 'daily',
+    occurrencesPerPeriod: 1,
+    totalMonthlySpend: 15000,
+    observedTotal: 500,
+    observedCount: 1,
+    spanDays: 0,
+    hasReliableRate: true,
+    medianAmount: 500,
+    minAmount: 500,
+    maxAmount: 500,
+    trend: 'stable',
+    trendPercentage: 0,
+    triggers: [],
+    status: 'discovered',
+    sentiment: 'bad',
+    discoveredAt: new Date('2026-06-01T00:00:00'),
+  };
+  return { ...base, ...overrides };
+}
+
 async function renderToday(): Promise<View> {
   const view = await render(
     <Providers>
@@ -214,7 +244,11 @@ beforeEach(async () => {
 afterEach(cleanup);
 
 describe('Today: quote placement', () => {
-  it('Kept opens with a quote, above the KeptHero band', async () => {
+  it('Kept opens with a quote, above the KeptHero band, once kept content exists', async () => {
+    // FTE pass (TodayFteKept artboard, 2026-09-03): the hero band only
+    // mounts once a leak or breaking habit exists, so this placement test
+    // populates the pane with a discovered habit first.
+    mockHabits = [makeHabit({ id: 'h1' })];
     const view = await renderToday();
 
     const keptPane = within(view.getByTestId('kept-pane'));
@@ -224,6 +258,17 @@ describe('Today: quote placement', () => {
     // render order, is the placement this test protects.
     expect(quote).toBeTruthy();
     expect(keptPane.getByText(strings.habitLogging.keptSoFar)).toBeTruthy();
+  });
+
+  it('Kept first run has the quote in the centered zero block and no KeptHero band', async () => {
+    // FTE pass: with nothing logged and no habits, the artboard shows quote
+    // plus the leaks-will-show-up hook, and explicitly no hero band.
+    const view = await renderToday();
+
+    const keptPane = within(view.getByTestId('kept-pane'));
+    expect(keptPane.getByTestId('kept-quote')).toBeTruthy();
+    expect(keptPane.getByText(strings.today.keptEmptyTitle)).toBeTruthy();
+    expect(keptPane.queryByText(strings.habitLogging.keptSoFar)).toBeNull();
   });
 
   it('Spent closes with a quote, below the logged-today block', async () => {

@@ -889,6 +889,11 @@ export default function TodayScreen() {
           value={todayView}
           onChange={handleTodayViewChange}
           checkInPending={checkInPending}
+          // Not-started is not zero (SpentKeptChips file header): amounts
+          // only render once the activity exists, all-time, so a fresh
+          // install never claims a measured $0.00.
+          spentStarted={!spentIsEmpty}
+          keptStarted={goals.length > 0}
         />
       </View>
 
@@ -920,7 +925,7 @@ export default function TodayScreen() {
         testID="today-pager"
       >
         <View
-          style={{ width: screenWidth }}
+          style={[styles.pane, { width: screenWidth }]}
           testID="spent-pane"
           // Both panes stay mounted for the pager, so the off-screen one must
           // be hidden from assistive tech or VoiceOver walks into content the
@@ -997,21 +1002,34 @@ export default function TodayScreen() {
               </View>
             ) : null}
             {/* U6: Spent closes with a quote, below the logged-today block
-                and the watch-nudge (Charen-approved live preview placement). */}
-            <ViewQuote quote={spentQuote} style={styles.spentQuoteWrap} testID="spent-quote" />
-            {spentIsEmpty ? (
-              <EmptyState
-                layout="fill"
-                title={strings.today.spentEmptyTitle}
-                body={strings.today.spentEmptyBody}
-                cta={{ label: strings.today.spentEmptyCta, onPress: handleSpentEmptyLog }}
-              />
-            ) : null}
+                and the watch-nudge (Charen-approved live preview placement).
+                In the true zero state the quote instead joins the empty-state
+                hook in one block, vertically centered in the space left below
+                the quick-log card (FTE artboard TodayFteSpent.dc.html,
+                Charen's 2026-09-03 direction). Either branch renders the
+                spent-quote instance exactly once. */}
+            {!spentIsEmpty ? (
+              <ViewQuote quote={spentQuote} style={styles.spentQuoteWrap} testID="spent-quote" />
+            ) : (
+              <View style={styles.spentZeroWrap}>
+                <ViewQuote quote={spentQuote} testID="spent-quote" />
+                {/* inline + explicit icon, not layout="fill": fill's 40pt top
+                    padding is this composition's quote-to-hook gap, carried by
+                    the wrap's gap instead so the pair centers as one block. */}
+                <EmptyState
+                  layout="inline"
+                  icon="ChartLine"
+                  title={strings.today.spentEmptyTitle}
+                  body={strings.today.spentEmptyBody}
+                  cta={{ label: strings.today.spentEmptyCta, onPress: handleSpentEmptyLog }}
+                />
+              </View>
+            )}
           </ScrollView>
         </View>
 
         <View
-          style={{ width: screenWidth }}
+          style={[styles.pane, { width: screenWidth }]}
           testID="kept-pane"
           accessibilityElementsHidden={todayView !== 'kept'}
           importantForAccessibility={todayView !== 'kept' ? 'no-hide-descendants' : 'auto'}
@@ -1025,13 +1043,24 @@ export default function TodayScreen() {
             </View>
           ) : null}
           {/* U6: Kept opens with a quote, above the KeptHero band
-              (Charen-approved live preview placement). */}
-          <ViewQuote quote={keptQuote} style={styles.keptQuoteWrap} testID="kept-quote" />
-          {/* DI-6 gutter fix: the band renders full-bleed by default (see
-              onboarding success, which supplies its own padded container
-              instead); Today has no such wrapper, so it passes the same 20pt
-              horizontal gutter the chips row and both list content styles use. */}
-          <KeptHero cents={totalKept} style={styles.keptHeroGutter} />
+              (Charen-approved live preview placement). FTE exception
+              (TodayFteKept artboard, Charen's 2026-09-03 direction): while no
+              leak or breaking habit exists there is no hero band at all, and
+              the quote renders inside the centered zero block below instead,
+              so this pair only mounts once real kept content exists (or while
+              loading, when isEmpty is not yet trustworthy). Exactly one
+              kept-quote instance renders either way. */}
+          {isLoading || !isEmpty ? (
+            <>
+              <ViewQuote quote={keptQuote} style={styles.keptQuoteWrap} testID="kept-quote" />
+              {/* DI-6 gutter fix: the band renders full-bleed by default (see
+                  onboarding success, which supplies its own padded container
+                  instead); Today has no such wrapper, so it passes the same
+                  20pt horizontal gutter the chips row and both list content
+                  styles use. */}
+              <KeptHero cents={totalKept} style={styles.keptHeroGutter} />
+            </>
+          ) : null}
 
           {isLoading ? (
             <View style={styles.loadingContainer}>
@@ -1039,14 +1068,22 @@ export default function TodayScreen() {
             </View>
           ) : isEmpty ? (
             <ScrollView
-              contentContainerStyle={detectionProgress ? styles.emptyContainer : styles.emptyContainerFill}
+              contentContainerStyle={styles.keptEmptyContent}
               showsVerticalScrollIndicator={false}
               refreshControl={
                 <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={theme.primary} />
               }
             >
-              {detectionProgress ? (
-                <View style={styles.progressCard}>
+              {/* One centered zero block for both pre-leak states (FTE
+                  artboard TodayFteKept.dc.html): the quote, then either the
+                  detection progress card (some logs, no leak yet) or the
+                  leaks-will-show-up hook (nothing logged). The in-between
+                  progress state reusing this composition is a chosen default,
+                  flagged in the PR's what-to-test list. */}
+              <View style={styles.keptZeroWrap}>
+                <ViewQuote quote={keptQuote} testID="kept-quote" />
+                {detectionProgress ? (
+                  <View style={styles.progressCard}>
                   <Text style={styles.progressTitle}>{strings.habits.spottingYourLeak}</Text>
                   <View style={styles.progressMeterTrack}>
                     <View
@@ -1073,24 +1110,30 @@ export default function TodayScreen() {
                     style={styles.progressCta}
                   />
                 </View>
-              ) : (
-                <EmptyState
-                  layout="fill"
-                  title={strings.today.keptEmptyTitle}
-                  body={strings.today.keptEmptyBody}
-                  cta={{
-                    // The quick-log card now lives on the Spent view, not the
-                    // Money tab, so the CTA switches views in place rather
-                    // than navigating away (was router.push('/(tabs)/money')).
-                    // Routed through the same tap-like interaction flag as a
-                    // chip tap so the pager animates over to match (DI-7), and
-                    // through useEmptyStateAction so a skipper's tap reports
-                    // the surface (handleKeptEmptyLog, defined above).
-                    label: strings.today.keptEmptyCta,
-                    onPress: handleKeptEmptyLog,
-                  }}
-                />
-              )}
+                ) : (
+                  <EmptyState
+                    // inline + explicit icon, same reasoning as the Spent
+                    // zero block: the wrap's gap carries the quote-to-hook
+                    // spacing that fill's top padding used to supply.
+                    layout="inline"
+                    icon="ChartLine"
+                    title={strings.today.keptEmptyTitle}
+                    body={strings.today.keptEmptyBody}
+                    cta={{
+                      // The quick-log card now lives on the Spent view, not
+                      // the Money tab, so the CTA switches views in place
+                      // rather than navigating away (was
+                      // router.push('/(tabs)/money')). Routed through the
+                      // same tap-like interaction flag as a chip tap so the
+                      // pager animates over to match (DI-7), and through
+                      // useEmptyStateAction so a skipper's tap reports the
+                      // surface (handleKeptEmptyLog, defined above).
+                      label: strings.today.keptEmptyCta,
+                      onPress: handleKeptEmptyLog,
+                    }}
+                  />
+                )}
+              </View>
               {firstLogCardId && (
                 <View style={styles.emptyCoachMoment}>
                   <CoachMomentSlot text={cardText(firstLogCardId)} />
@@ -1202,6 +1245,16 @@ function createStyles(theme: AppTheme) {
     pager: {
       flex: 1,
     },
+    // Applied to both panes alongside their inline screenWidth. On native the
+    // pager's contentContainer (a row, default alignItems: stretch) already
+    // stretches each pane to full height, and there is no free main-axis
+    // space for flexGrow to claim, so this is inert. On web, pagingEnabled
+    // wraps each pane in a column snap-align div that does NOT stretch its
+    // child, which left the FTE zero blocks below with no height to center
+    // in; flexGrow fills that wrapper.
+    pane: {
+      flexGrow: 1,
+    },
     // DI-6: shares the 20pt gutter the chips row and both list content styles
     // use below, so the band no longer renders full-bleed on Today.
     keptHeroGutter: {
@@ -1227,8 +1280,23 @@ function createStyles(theme: AppTheme) {
     },
     spentScrollContent: {
       paddingHorizontal: spacing.gutter,
-      paddingTop: spacing.lg,
+      // No paddingTop (was spacing.lg): the chips row's 12pt marginBottom is
+      // the whole gap, so chips-to-quick-log matches the 12pt the header
+      // already leaves above the chips (Charen's 2026-09-03 spacing call).
+      // flexGrow lets the zero-state wrap below center in the leftover space;
+      // populated content taller than the viewport scrolls exactly as before.
+      flexGrow: 1,
       paddingBottom: layout.screenBottomClearance,
+    },
+    // FTE zero state (TodayFteSpent artboard): quote + hook as one centered
+    // block filling the space under the quick-log card. The 40pt gap is the
+    // same section + stack sum EmptyState's fill layout uses for its top
+    // padding. ViewQuote's own 20pt gutter stacks on the content gutter for
+    // a 40pt quote inset, matching the artboard's centered measure.
+    spentZeroWrap: {
+      flex: 1,
+      justifyContent: 'center',
+      gap: spacing.section + spacing.stack,
     },
     loggedTodaySpacer: {
       marginTop: spacing.stack,
@@ -1296,26 +1364,25 @@ function createStyles(theme: AppTheme) {
       fontFamily: theme.fonts.ui,
       color: theme.textSecondary,
     },
-    // Scrolls rather than centering in a fixed height: on shorter screens the
-    // content would otherwise overlap the kept band above it.
-    // Used only by the "spotting your leak" progress card branch, untouched
-    // by the empty-state unification pass below.
-    emptyContainer: {
+    // Shared by both pre-leak Kept branches (progress card and true zero)
+    // since the FTE pass gave them one centered composition. flexGrow, not a
+    // fixed height, so content taller than the viewport (Dynamic Type, small
+    // screens) still scrolls; paddingHorizontal is also the coach-moment slot
+    // and break-another affordance's only horizontal inset.
+    keptEmptyContent: {
+      flexGrow: 1,
       alignItems: 'center',
       paddingHorizontal: spacing.gutter,
-      paddingTop: spacing.xxl,
       paddingBottom: layout.screenBottomClearance,
     },
-    // Used by the true-zero EmptyState branch. Slimmed off its own
-    // paddingTop: layout="fill" already supplies a (more generous) 40pt top
-    // padding, so stacking this container's 24pt on top of it would be a
-    // duplicate gap between KeptHero and the icon. paddingHorizontal stays:
-    // it is the coach-moment slot and break-another affordance's only
-    // horizontal inset, not just the empty state's.
-    emptyContainerFill: {
-      alignItems: 'center',
-      paddingHorizontal: spacing.gutter,
-      paddingBottom: layout.screenBottomClearance,
+    // FTE zero block (TodayFteKept artboard): quote + progress card or hook,
+    // centered in the pane; mirror of spentZeroWrap above, plus the stretch
+    // the parent's alignItems: 'center' would otherwise deny it.
+    keptZeroWrap: {
+      flex: 1,
+      alignSelf: 'stretch',
+      justifyContent: 'center',
+      gap: spacing.section + spacing.stack,
     },
     emptyCoachMoment: {
       alignSelf: 'stretch',
@@ -1357,7 +1424,7 @@ function createStyles(theme: AppTheme) {
     },
     // Wraps the affordance wherever it is placed (empty ScrollView content or
     // the populated SectionList's footer): alignSelf stretch matters in the
-    // empty case, whose ScrollView centers its content (styles.emptyContainer,
+    // empty case, whose ScrollView centers its content (styles.keptEmptyContent,
     // alignItems: 'center'); the cards above never carry their own bottom
     // margin, so both spots need the same explicit top spacing too.
     breakAnotherWrap: {

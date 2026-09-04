@@ -103,13 +103,14 @@ describe('PartialSlipSheet', () => {
     expect(onSave).toHaveBeenCalledWith(500);
   });
 
-  it('Cancel closes without saving', async () => {
+  it('scrim close dismisses without saving (no in-sheet Cancel since ADR 0031)', async () => {
     const view = await renderSheet();
     await act(async () => {
-      fireEvent.press(view.getByRole('button', { name: strings.common.cancel }));
+      fireEvent.press(view.getByRole('button', { name: strings.common.close }));
     });
     expect(onCancel).toHaveBeenCalledTimes(1);
     expect(onSave).not.toHaveBeenCalled();
+    expect(view.queryByText(strings.common.cancel)).toBeNull();
   });
 
   // UX-020: a $0.00 save would silently credit the entire skip value on a day

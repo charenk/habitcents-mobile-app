@@ -24,6 +24,16 @@
  * the rule and used a derived magic number for the segment; this replaces
  * both with the named tokens the rule expects.
  *
+ * Not-started is not zero (Charen, 2026-09-03): until the underlying
+ * activity exists (any expense logged for Spent, any habit break started
+ * for Kept), the amount slot renders quiet placeholder words instead of a
+ * currency amount, because $0.00 would read as a measured verdict on a game
+ * that has not begun. The spentStarted/keptStarted props carry the gates;
+ * once true, amounts show for good, including an honest $0.00. The
+ * placeholder is Inter, never the display serif (serif is locked to titles
+ * and money, and a word is neither), and slate in both selection states
+ * (mistText is only 4.06:1 on the cloud track, UX-003).
+ *
  * No motion (house style, like SegmentedControl): the thumb swaps instantly.
  */
 import { useMemo } from 'react';
@@ -51,6 +61,12 @@ export type SpentKeptChipsProps = {
   onChange: (v: SpentKeptView) => void;
   /** True while today's check-in question is unanswered; renders a quiet dot on the Kept chip. */
   checkInPending?: boolean;
+  /** True once any expense has ever been logged; false renders "No logs yet"
+   *  in the Spent amount slot (file header, not-started is not zero). */
+  spentStarted?: boolean;
+  /** True once any habit break has ever been started; false renders
+   *  "No skips yet" in the Kept amount slot. */
+  keptStarted?: boolean;
 };
 
 export function SpentKeptChips({
@@ -59,6 +75,8 @@ export function SpentKeptChips({
   value,
   onChange,
   checkInPending = false,
+  spentStarted = true,
+  keptStarted = true,
 }: SpentKeptChipsProps): React.JSX.Element {
   const theme = useTheme();
   const { format } = useCurrency();
@@ -73,6 +91,15 @@ export function SpentKeptChips({
   // element: VoiceOver never sees the dot, just the extra clause.
   const pendingSuffix = checkInPending ? `, ${strings.today.checkInPendingA11y}` : '';
 
+  // Not-started labels read as a clause ("Spent today, no logs yet"), not a
+  // value, so VoiceOver never announces a number that was not measured.
+  const spentValueLabel = spentStarted
+    ? `${strings.today.spentChipLabel} ${formattedSpent}`
+    : `${strings.today.spentChipLabel}, ${strings.today.spentChipNoLogs.toLowerCase()}`;
+  const keptValueLabel = keptStarted
+    ? `${strings.today.keptChipLabel} ${formattedKept}`
+    : `${strings.today.keptChipLabel}, ${strings.today.keptChipNoSkips.toLowerCase()}`;
+
   return (
     <View
       style={styles.track}
@@ -83,7 +110,7 @@ export function SpentKeptChips({
         onPress={() => onChange('spent')}
         accessibilityRole="tab"
         accessibilityState={{ selected: spentSelected }}
-        accessibilityLabel={selectableLabel(`${strings.today.spentChipLabel} ${formattedSpent}`, spentSelected)}
+        accessibilityLabel={selectableLabel(spentValueLabel, spentSelected)}
         style={[styles.segment, spentSelected ? styles.segmentSelected : null]}
         // DI-7: a stable non-a11y hook for tests, since both Today panes now
         // stay mounted and can carry their own "Kept"/"Spent"-prefixed a11y
@@ -99,26 +126,30 @@ export function SpentKeptChips({
         </Text>
         {/* Spend is never a win: it never takes the sage fill, selected or
             not, only slate at rest and ink when selected. */}
-        <Text
-          style={[styles.amount, spentSelected ? styles.spentAmountSelected : null]}
-          maxFontSizeMultiplier={1.3}
-          // UX-067: without a line cap a long formatted amount could wrap and
-          // misalign the Spent/Kept pair; adjustsFontSizeToFit shrinks the
-          // glyphs to fit the one line instead.
-          numberOfLines={1}
-          adjustsFontSizeToFit
-        >
-          {formattedSpent}
-        </Text>
+        {spentStarted ? (
+          <Text
+            style={[styles.amount, spentSelected ? styles.spentAmountSelected : null]}
+            maxFontSizeMultiplier={1.3}
+            // UX-067: without a line cap a long formatted amount could wrap and
+            // misalign the Spent/Kept pair; adjustsFontSizeToFit shrinks the
+            // glyphs to fit the one line instead.
+            numberOfLines={1}
+            adjustsFontSizeToFit
+          >
+            {formattedSpent}
+          </Text>
+        ) : (
+          <Text style={styles.placeholder} maxFontSizeMultiplier={1.5} numberOfLines={1}>
+            {strings.today.spentChipNoLogs}
+          </Text>
+        )}
       </Pressable>
 
       <Pressable
         onPress={() => onChange('kept')}
         accessibilityRole="tab"
         accessibilityState={{ selected: keptSelected }}
-        accessibilityLabel={
-          selectableLabel(`${strings.today.keptChipLabel} ${formattedKept}`, keptSelected) + pendingSuffix
-        }
+        accessibilityLabel={selectableLabel(keptValueLabel, keptSelected) + pendingSuffix}
         style={[styles.segment, keptSelected ? styles.segmentSelected : null]}
         testID="kept-chip"
       >
@@ -131,15 +162,21 @@ export function SpentKeptChips({
           </Text>
           {checkInPending ? <View style={styles.pendingDot} /> : null}
         </View>
-        <Text
-          style={[styles.amount, keptSelected ? styles.keptAmountSelected : null]}
-          maxFontSizeMultiplier={1.3}
-          // UX-067: same fix as the Spent amount above.
-          numberOfLines={1}
-          adjustsFontSizeToFit
-        >
-          {formattedKept}
-        </Text>
+        {keptStarted ? (
+          <Text
+            style={[styles.amount, keptSelected ? styles.keptAmountSelected : null]}
+            maxFontSizeMultiplier={1.3}
+            // UX-067: same fix as the Spent amount above.
+            numberOfLines={1}
+            adjustsFontSizeToFit
+          >
+            {formattedKept}
+          </Text>
+        ) : (
+          <Text style={styles.placeholder} maxFontSizeMultiplier={1.5} numberOfLines={1}>
+            {strings.today.keptChipNoSkips}
+          </Text>
+        )}
       </Pressable>
     </View>
   );
@@ -199,6 +236,18 @@ function createStyles(theme: AppTheme) {
       fontVariant: ['tabular-nums'],
       color: theme.slate,
       marginTop: 6,
+    },
+    // Not-started slot (file header): Inter at secondary size, slate in both
+    // selection states. lineHeight pins the slot to the 22pt serif amount's
+    // measured line box (29, verified on web against a rendered amount) so
+    // the chip is pixel-identical in every start-state mix, including one
+    // side showing an amount and the other this placeholder.
+    placeholder: {
+      fontSize: typeScale.secondary,
+      fontFamily: theme.fonts.ui,
+      color: theme.slate,
+      marginTop: 6,
+      lineHeight: 29,
     },
     spentAmountSelected: {
       color: theme.ink,

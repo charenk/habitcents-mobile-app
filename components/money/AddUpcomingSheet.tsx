@@ -49,6 +49,7 @@ import { Chip } from '@/components/ui/Chip';
 import { Icon } from '@/components/ui/Icon';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { Sheet } from '@/components/ui/Sheet';
+import { SheetHeader } from '@/components/ui/SheetHeader';
 import { TextField } from '@/components/ui/TextField';
 import { useToast } from '@/components/ui/Toast';
 import { strings } from '@/constants/strings';
@@ -597,16 +598,22 @@ export function AddUpcomingSheet({
   return (
     <Sheet visible={visible} onClose={onClose} avoidKeyboard accessibilityLabel={title}>
       <View style={[styles.body, { maxHeight: height * 0.82 }]}>
+        {/* Pinned header-save (ADR 0031); hint only while disabled, so
+            VoiceOver never reads stale guidance on an enabled button
+            (ADR 0028). */}
+        <SheetHeader
+          title={title}
+          saveLabel={saveLabel}
+          onSave={handleSave}
+          saveDisabled={!canSave || saving}
+          saveHint={canSave ? undefined : strings.sheets.saveHintAmount}
+        />
         <ScrollView
           style={styles.scroll}
           contentContainerStyle={styles.content}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.title} accessibilityRole="header" maxFontSizeMultiplier={1.5}>
-            {title}
-          </Text>
-
           <AmountField
             valueCents={cents}
             onChangeCents={setCents}
@@ -770,27 +777,20 @@ export function AddUpcomingSheet({
           )}
         </ScrollView>
 
-        <View style={styles.footer}>
-          <Button
-            label={saveLabel}
-            onPress={handleSave}
-            variant="primary"
-            disabled={!canSave || saving}
-            // Only carried while disabled, so VoiceOver never reads stale
-            // guidance on an already-enabled button (Button.tsx passes the
-            // hint straight through unconditionally).
-            accessibilityHint={canSave ? undefined : strings.sheets.saveHintAmount}
-            style={styles.save}
-          />
-          {mode === 'edit' ? (
+        {/* Save moved into the pinned header (ADR 0031); the destructive
+            action stays at the bottom like ExpenseSheet's edit footer. Add
+            mode renders no footer at all, so its padding never leaves a
+            dead gap. */}
+        {mode === 'edit' ? (
+          <View style={styles.footer}>
             <Button
               label={strings.addUpcoming.deleteUpcoming}
               onPress={handleDelete}
               variant="destructive"
               style={styles.delete}
             />
-          ) : null}
-        </View>
+          </View>
+        ) : null}
       </View>
     </Sheet>
   );
@@ -841,17 +841,9 @@ function createStyles(theme: AppTheme) {
       flexShrink: 1,
     },
     content: {
-      paddingTop: 10,
+      paddingTop: 16,
       paddingHorizontal: 20,
       paddingBottom: 16,
-    },
-    title: {
-      fontFamily: theme.fonts.display,
-      fontSize: typeScale.sheetTitle,
-      lineHeight: 32,
-      color: theme.ink,
-      includeFontPadding: false,
-      marginBottom: 12,
     },
     eyebrow: {
       fontFamily: theme.fonts.uiSemibold,
@@ -917,9 +909,6 @@ function createStyles(theme: AppTheme) {
       paddingHorizontal: 20,
       paddingTop: 12,
       gap: 8,
-    },
-    save: {
-      marginTop: 0,
     },
     delete: {
       marginTop: 0,

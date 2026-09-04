@@ -66,6 +66,7 @@ import { Button } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
 import { Icon } from '@/components/ui/Icon';
 import { Sheet } from '@/components/ui/Sheet';
+import { SheetHeader } from '@/components/ui/SheetHeader';
 import { TextField } from '@/components/ui/TextField';
 import { useToast } from '@/components/ui/Toast';
 import { strings } from '@/constants/strings';
@@ -370,31 +371,17 @@ export function ExpenseSheet({
   return (
     <Sheet visible={visible} onClose={onClose} avoidKeyboard accessibilityLabel={eyebrow}>
       <View style={[styles.body, { maxHeight: height * 0.82 }]}>
-        {/* Expense-sheet workflow redesign (2026-08-16): title + Save pinned
-            above the scroll area, a sibling of the ScrollView rather than its
-            first child, so it stays fixed while everything else scrolls. */}
-        <View style={styles.header}>
-          {/* UX-040: was an 11pt eyebrow, the only Money sheet not heading
-              itself with the serif sheetTitle treatment that AddUpcomingSheet,
-              AddCategoryModal and CurrencySheet all share. Brought onto the
-              majority pattern so the two Money sheets read as one system. */}
-          <Text style={styles.title} accessibilityRole="header" maxFontSizeMultiplier={1.5}>
-            {eyebrow}
-          </Text>
-          <Button
-            label={saveLabel}
-            onPress={handleSave}
-            variant="primary"
-            disabled={cents <= 0 || saving}
-            // ADR 0028: a disabled primary names the first missing thing, so a
-            // VoiceOver user is not left with a dimmed button and no reason.
-            // This sheet was the first converted to disabled-until-valid and
-            // was the only amount-gated sheet still missing the hint that
-            // AddUpcomingSheet already carried.
-            accessibilityHint={cents > 0 ? undefined : strings.sheets.saveHintAmount}
-            style={styles.headerSave}
-          />
-        </View>
+        {/* This sheet originated the pinned header-save pattern (2026-08-16
+            workflow redesign, UX-040 serif title); the anatomy now lives in
+            ui/SheetHeader (ADR 0031) and every form sheet shares it. Hint
+            only while disabled, per ADR 0028. */}
+        <SheetHeader
+          title={eyebrow}
+          saveLabel={saveLabel}
+          onSave={handleSave}
+          saveDisabled={cents <= 0 || saving}
+          saveHint={cents > 0 ? undefined : strings.sheets.saveHintAmount}
+        />
 
         <ScrollView
           style={styles.scroll}
@@ -497,37 +484,6 @@ function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     body: {
       flexShrink: 1,
-    },
-    // Pinned header row: title left, Save right. A hairline bottom border
-    // marks the fixed edge; no scroll-driven shadow or animation.
-    header: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      paddingHorizontal: 20,
-      paddingTop: 14,
-      paddingBottom: 12,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: theme.cloud,
-    },
-    // UX-040: sheet header, matching CurrencySheet/AddUpcomingSheet/
-    // AddCategoryModal's serif treatment (theme.fonts.display at
-    // typeScale.sheetTitle) instead of the old 11pt uppercase eyebrow.
-    title: {
-      flex: 1,
-      fontFamily: theme.fonts.display,
-      fontSize: typeScale.sheetTitle,
-      lineHeight: 32,
-      color: theme.ink,
-      includeFontPadding: false,
-      marginRight: 12,
-    },
-    // Compact enough to sit in a header row without touching Button.tsx: a
-    // shorter minHeight than the default primary (50) and tighter horizontal
-    // padding than the default 20.
-    headerSave: {
-      minHeight: 44,
-      paddingHorizontal: 16,
     },
     scroll: {
       flexShrink: 1,
