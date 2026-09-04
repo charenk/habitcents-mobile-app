@@ -14,6 +14,13 @@
 
 Branch, never main. Fill the PR template (Was/Now, Why, Improvement, Measure, Lane). Lane 1 `auto-merge` = ops/backend/infra with zero user-visible change, CI green, agent merges. Lane 2 `needs-user-test` = anything a user sees or feels, plus always pricing/payments/legal/analytics contracts; attach capture + what-to-test, wait for Charen. Debatable = Lane 2. Full policy: ../docs/decisions/0012-pr-merge-policy.md (habitcents-ops repo).
 
+Routine branches (`routine/*`, the long-lived draft PRs the cloud routines
+keep open) are outside both lanes. A session never labels, rebases, merges,
+closes or reports on them as part of its own PR work; they have their own
+worktree, branch and merge flow, run from claude.ai/code/routines (Charen,
+2026-09-04). Check the "Routine status board" issue before touching files a
+routine owns (constants/strings.ts above all).
+
 ## Shipping: OTA or native build (ADR 0029)
 
 Before shipping, run `npm run ota:check` (optionally with a base and head).
