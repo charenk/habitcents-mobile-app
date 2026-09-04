@@ -30,6 +30,7 @@ import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
 import { DevMenuSection } from '@/components/dev/DevMenuSection';
 import { CurrencySheet } from '@/components/settings/CurrencySheet';
+import { LanguageSheet } from '@/components/settings/LanguageSheet';
 import { SettingsRow } from '@/components/settings/SettingsRow';
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
@@ -39,10 +40,12 @@ import { spacing, typeScale, layout } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import { useLocale } from '@/contexts/LocaleContext';
 import { useOnboarding } from '@/contexts/OnboardingContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { settingsRowLabel } from '@/utils/a11y';
 import { DEV_MENU_ENABLED } from '@/utils/devMenu';
+import { localeMeta } from '@/utils/locale';
 import { clearOnboarding } from '@/utils/storage';
 import { isPremium } from '@/utils/purchases';
 
@@ -56,8 +59,10 @@ export default function ProfileScreen(): React.JSX.Element {
   const router = useRouter();
   const { show } = useToast();
   const { currency } = useCurrency();
+  const { override: languageOverride } = useLocale();
   const { resetOnboarding } = useOnboarding();
   const [currencySheetVisible, setCurrencySheetVisible] = useState(false);
+  const [languageSheetVisible, setLanguageSheetVisible] = useState(false);
   const [startOverConfirmVisible, setStartOverConfirmVisible] = useState(false);
   // Gating audit (build 12): the row used to always read Free, even after a
   // completed (mock) purchase. isPremium() reads getEntitlement() directly,
@@ -71,6 +76,14 @@ export default function ProfileScreen(): React.JSX.Element {
   const handleCurrencyPress = () => {
     setCurrencySheetVisible(true);
   };
+
+  const handleLanguagePress = () => {
+    setLanguageSheetVisible(true);
+  };
+
+  const languageValue = languageOverride
+    ? localeMeta(languageOverride).nativeName
+    : strings.settings.languageSystemDefault;
 
   // Pushing the paywall on top of Profile reads naturally, so this does not
   // back() first. Placement stays 'settings' for funnel continuity even
@@ -139,6 +152,15 @@ export default function ProfileScreen(): React.JSX.Element {
             onPress={handleCurrencyPress}
             chevron
             accessibilityLabel={settingsRowLabel(strings.settings.currency, currency)}
+          />
+          <SettingsRow
+            styles={styles}
+            theme={theme}
+            label={strings.settings.language}
+            value={languageValue}
+            onPress={handleLanguagePress}
+            chevron
+            accessibilityLabel={settingsRowLabel(strings.settings.language, languageValue)}
           />
           <SettingsRow
             styles={styles}
@@ -214,6 +236,11 @@ export default function ProfileScreen(): React.JSX.Element {
       <CurrencySheet
         visible={currencySheetVisible}
         onClose={() => setCurrencySheetVisible(false)}
+      />
+
+      <LanguageSheet
+        visible={languageSheetVisible}
+        onClose={() => setLanguageSheetVisible(false)}
       />
 
       <ConfirmSheet

@@ -7,6 +7,7 @@ import type { DashboardConfig } from '@/types/report';
 import type { OnboardingState, ProgressiveFeatureState, AuditAnswers } from '@/types/onboarding';
 import type { ScanSummary } from '@/types/scanSummary';
 import { type CurrencyCode, DEFAULT_CURRENCY, isCurrencyCode } from '@/utils/currency';
+import { type LocaleCode, isLocaleCode } from '@/utils/locale';
 import { type CoachMomentState, createInitialCoachMomentState } from '@/utils/coachMoments';
 import {
   DEFAULT_UPCOMING_WINDOW_DAYS,
@@ -18,6 +19,7 @@ import {
 const ONBOARDING_KEY = '@habitcents_onboarded';
 const THEME_MODE_KEY = '@habitcents_theme_mode';
 const CURRENCY_KEY = '@habitcents_currency';
+const LOCALE_OVERRIDE_KEY = '@habitcents_locale_override';
 const UPCOMING_WINDOW_KEY = '@habitcents_upcoming_window';
 const EXPENSES_KEY = '@habitcents_expenses';
 const CATEGORIES_KEY = '@habitcents_categories';
@@ -255,6 +257,28 @@ export async function getCurrency(): Promise<CurrencyCode> {
  */
 export async function setCurrency(code: CurrencyCode): Promise<void> {
   return persist(CURRENCY_KEY, code);
+}
+
+/**
+ * Get the persisted language override (routine/localization plan item 1).
+ * null means "follow the device locale" -- distinct from an unset key, which
+ * also reads back as null, since there is nothing else a missing or invalid
+ * value could mean.
+ */
+export async function getLocaleOverride(): Promise<LocaleCode | null> {
+  try {
+    const value = await AsyncStorage.getItem(LOCALE_OVERRIDE_KEY);
+    return isLocaleCode(value) ? value : null;
+  } catch (error) {
+    console.error('Error reading locale override:', error);
+    return null;
+  }
+}
+
+/** Persist the language override, or clear it to follow the device locale. */
+export async function setLocaleOverride(code: LocaleCode | null): Promise<void> {
+  if (code === null) return remove(LOCALE_OVERRIDE_KEY);
+  return persist(LOCALE_OVERRIDE_KEY, code);
 }
 
 /**
