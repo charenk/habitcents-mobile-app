@@ -34,7 +34,7 @@ import { getEntitlement } from '@/utils/purchases';
 import { formatDate } from '@/utils/dates';
 import { getLeakFinderInterest, getScanSummary, saveLeakFinderInterest } from '@/utils/storage';
 import { track } from '@/utils/analytics';
-import { layout, spacing, typeScale, type AppTheme } from '@/constants/theme';
+import { contentColumnStyle, layout, spacing, typeScale, type AppTheme } from '@/constants/theme';
 import type { DetectedHabit } from '@/types/habit';
 import type { ScanSummary } from '@/types/scanSummary';
 import { strings } from '@/constants/strings';
@@ -408,6 +408,7 @@ function createStyles(theme: AppTheme) {
       paddingTop: layout.paneContentTop,
       paddingBottom: layout.screenBottomClearance,
       gap: 12,
+      ...contentColumnStyle,
     },
     // Zero states only: grow to the pane so the block centres, and trade the
     // 100pt end clearance for 24 so the centre is not pulled 50pt high.
