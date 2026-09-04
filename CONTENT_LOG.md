@@ -718,3 +718,92 @@ VISUAL NOTE: 2x2 grid: scoreboard, break sheet, honest-zero welcome, harness sco
 
 CASE STUDY MOMENT
 One session turned an annotated design review into a fully-built two-batch redesign with an evidence-gated pipeline fix: the end-to-end story for the "designing with an AI team" case study.
+
+---
+
+## 2026-09-04 — Design refresh shipped to TestFlight; three worker routines + an orchestrator went live
+
+### Session scan
+
+**Scope:** end of session
+**Built this session:** Merged seven PRs to main and shipped TestFlight build 18: first-time-empty states, "not-started is not zero" chips, one shared sheet header with top-right save across every form sheet, category renames (Home, Subscriptions) that surfaced and fixed a latent spend-matching bug, and a category detail refresh (gutter back arrow, one stat band, honest trend bars, unified list rows). Then stood up three recurring cloud workers (localization, iPad, core P3) on long-lived branches with a Fable 5 orchestrator reviewing them daily.
+**Pillar scores:** P1: None · P2: Strong · P3: Weak (findNodeHandle web guard + hidden-pane RAF freeze, logged in memory, too niche for a post) · P4: Strong · P5: Strong
+**P6:** not generated (not Friday)
+
+---
+
+### P2 ITERATION WITH RATIONALE — The chart was lying politely
+
+**TWITTER POST**
+Our 6-month trend chart drew a full-height ghost track behind every month. Looked "designed". Read as data: six tall gray columns, even for months with zero spend.
+
+Fix: bars rise from a shared baseline. A zero month gets a 4px tick, because zero is a measurement, not missing data.
+
+VISUAL NOTE: before/after crop of the trend card (ghost tracks vs baseline bars).
+
+---
+
+**LINKEDIN POST**
+A small chart lesson from this week.
+
+Our category screen shows a 6-month spending trend. The first version drew a light full-height "track" behind every month's bar, a pattern borrowed from progress bars, where the track means something: the remaining part of a whole.
+
+In a month-by-month chart there is no whole. The tracks were decoration that read as data: every month looked tall, including months with zero spending.
+
+The fix was mostly deletion. Bars now rise from a shared baseline. A month with zero spend draws a quiet 4px tick, because zero is a real measurement and deserves a mark, just not a monument. Tiny amounts keep a 6% height floor so they stay visible next to the biggest month.
+
+The principle: every pixel that looks like data will be read as data. If it is not data, delete it.
+
+VISUAL NOTE: side-by-side of the old ghost-track chart and the new baseline version.
+
+---
+
+### P4 PRODUCT AND DESIGN JUDGMENT — A save is not a start
+
+**TWITTER POST**
+We moved Save to the top-right of every form sheet in our app. One shared header component, disabled until valid, no Cancel button.
+
+But "Start breaking this habit" stayed at the bottom, in the thumb zone.
+
+A save commits a form. A start commits a decision. Different moments, different placement.
+
+VISUAL NOTE: two screenshots side by side, a form sheet with header save vs the decision sheet with its bottom CTA.
+
+---
+
+**LINKEDIN POST**
+We just unified the save pattern across our finance app, and the most useful part was deciding what NOT to unify.
+
+Every form sheet (log an expense, add a category, edit a value) now shares one header: title on the left, Save on the top-right, disabled until the form is valid, with the reason read out to screen readers. The in-sheet Cancel buttons are gone; the sheet itself already dismisses three ways.
+
+But two sheets kept their big bottom buttons: the ones where you commit to breaking a spending habit. We wrote the distinction into the decision record: a save commits a form, a start commits a decision. Decision moments earn thumb-zone prominence and a bigger title; utility moments get quiet, consistent chrome.
+
+Consistency is not sameness. It is the same reasoning applied everywhere, which sometimes produces different designs.
+
+VISUAL NOTE: the ADR excerpt with the form-vs-decision vocabulary, over the two sheet screenshots.
+
+---
+
+### P5 BUILDING WITH AI HONESTLY — The rename that found a bug, and the bots now on payroll
+
+**TWITTER POST**
+Renamed two categories today ("Mortgage/Rent" -> "Home"). The rename surfaced a latent bug: spend totals matched expenses by comparing STORED values against DISPLAY names. Equal strings by coincidence. The old name had been silently missing rows for weeks.
+
+Renames are free audits.
+
+VISUAL NOTE: NONE
+
+---
+
+**LINKEDIN POST**
+Two honest notes from today's session with Claude.
+
+First: a "trivial" rename was not. Changing "Mortgage/Rent" to "Home" surfaced a latent bug: our category screens matched expenses by comparing stored database values against display names, which only worked when the two happened to be equal strings. The old display name had been silently missing every stored row for weeks. The fix is a proper mapping layer with a test that pins the leak paths, including the one where a user names a custom category "Home" and would otherwise inherit the default's spending. Renames are free audits: they break every coincidence that was holding the system together.
+
+Second: I put agents on a schedule. Three workers now run every six hours on their own branches (localization for 10 languages, iPad adaptation, monetization and legal prep), and a stronger model reviews all of them once a day: reads their commits, writes fix-it feedback into their handoff files, maintains a status board, and queues the decisions that are mine to make (like how "kept" translates into Japanese). None of them can merge. The interesting design constraint was not the automation, it was deciding which decisions must never be automated.
+
+VISUAL NOTE: screenshot of the routine status board issue once the orchestrator seeds it.
+
+CASE STUDY MOMENT
+The form-vs-decision sheet vocabulary (ADR 0031) and the not-started-is-not-zero chips (ADR 0030) both came from user feedback screenshots and ended as named, reusable design rules: good material for a design-systems case study.
+

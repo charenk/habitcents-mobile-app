@@ -63,3 +63,11 @@ npm test -- leakScanEval                           # scan pipeline eval harness 
 #
 # Verify design/audit/UXUI_AUDIT.html's embedded findings array parses and has no duplicate/gap ids:
 # node -e "const fs=require('fs');const h=fs.readFileSync('design/audit/UXUI_AUDIT.html','utf8');const m=h.match(/<script>([\s\S]*)<\/script>/);new Function(m[1]);const a=m[1].match(/const F = (\[[\s\S]*?\]);\n\nconst DIMS/);const F=eval(a[1]);const ids=F.map(f=>f.id);console.log('findings',F.length,'unique',new Set(ids).size===ids.length,'resolved',F.filter(f=>f.res).length);"
+
+# --- Added 2026-09-04 (TestFlight from agent + routine watching) ---
+npx eas-cli build -p ios --profile internal --non-interactive --no-wait --auto-submit   # TestFlight build, agent-permitted lane (ADR 0029)
+npx eas-cli build:view <build-id>                  # build status
+npx eas-cli submit:list --platform ios --limit 1   # submission status; "in queue" 30+ min is normal before upload
+npm run ota:check -- <base> <head>                 # OTA vs native-build eligibility for a merged range
+# Cloud routines (workers on routine/* branches + Fable 5 orchestrator): manage at https://claude.ai/code/routines
+# Their state lives on-branch at docs/routines/PLAN.md and docs/routines/HANDOFF.md; daily board = "Routine status board" GitHub issue
