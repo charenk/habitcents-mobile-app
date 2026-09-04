@@ -42,6 +42,7 @@ import type { AppTheme } from '@/constants/theme';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import type { Expense } from '@/types/expense';
+import { categoryDisplayLabel } from '@/utils/leakScanBridge';
 import {
   daysUntilLabel,
   describeSchedule,
@@ -210,7 +211,9 @@ function UpcomingRow({
   const { format } = useCurrency();
 
   const { expense, nextDate, daysUntil, occurrencesInWindow } = item;
-  const name = expense.title || expense.category;
+  // Same display fallback as ExpenseRow: stored category values map to their
+  // display names before rendering.
+  const name = expense.title || categoryDisplayLabel(expense.category);
   const amountLabel = format(expense.amount);
   const cadenceLabel = daysUntilLabel(daysUntil);
 

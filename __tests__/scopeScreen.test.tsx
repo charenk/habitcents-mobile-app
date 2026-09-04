@@ -55,17 +55,20 @@ describe('scope screen', () => {
 
     const switches = view.getAllByRole('switch');
     const labels = switches.map((s) => s.props.accessibilityLabel).sort();
+    // Display labels, not stored values: 'Software & Subscriptions' renders
+    // as 'Subscriptions' (Charen, 2026-09-04).
     expect(labels).toEqual([
       'Car',
       'Entertainment',
       'Food',
       'Other',
       'Shopping',
-      'Software & Subscriptions',
+      'Subscriptions',
       'Transportation',
       'Utilities',
     ]);
     expect(labels).not.toContain('Mortgage');
+    expect(labels).not.toContain('Home');
     expect(labels).not.toContain('Healthcare');
   });
 
@@ -74,7 +77,8 @@ describe('scope screen', () => {
 
     expect(view.getByText(strings.leakScan.scopeLockedReason)).toBeTruthy();
     // Named, so the user can see the app did not simply lose the spend.
-    expect(view.getByText('Mortgage')).toBeTruthy();
+    // The stored 'Mortgage' value renders under its display name.
+    expect(view.getByText('Home')).toBeTruthy();
     expect(view.getByText('Healthcare')).toBeTruthy();
   });
 

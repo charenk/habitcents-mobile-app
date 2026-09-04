@@ -32,6 +32,30 @@ function initializeDefaultCategories(): Category[] {
   }));
 }
 
+// Display renames of DEFAULT seed rows (Charen, 2026-09-04): stored default
+// categories carry the display name from whenever they were seeded, so a
+// rename of DEFAULT_CATEGORIES only ever reaches fresh installs on its own.
+// This map renames already-persisted default rows once at load. Applies to
+// isDefault rows only; a custom category the user happened to give one of
+// these names keeps it. Stored ExpenseCategory values are untouched
+// ('Mortgage' / 'Software & Subscriptions' stay on the rows, ADR 0006).
+const DEFAULT_RENAMES: Record<string, string> = {
+  Mortgage: 'Home', // pre-taxonomy-v2 seeds never renamed to Mortgage/Rent
+  'Mortgage/Rent': 'Home',
+  'Software & Subscriptions': 'Subscriptions',
+};
+
+function renameStoredDefaults(stored: Category[]): { next: Category[]; changed: boolean } {
+  let changed = false;
+  const next = stored.map((cat) => {
+    const newName = cat.isDefault ? DEFAULT_RENAMES[cat.name] : undefined;
+    if (!newName) return cat;
+    changed = true;
+    return { ...cat, name: newName };
+  });
+  return { next, changed };
+}
+
 export function CategoriesProvider({ children }: { children: React.ReactNode }) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -64,8 +88,20 @@ export function CategoriesProvider({ children }: { children: React.ReactNode }) 
         categoriesRef.current = defaults;
         setCategories(defaults);
       } else {
-        categoriesRef.current = stored;
-        setCategories(stored);
+        // One-time display rename of persisted default rows; hydration, not a
+        // user action, so a failed persist just retries next launch while the
+        // session runs on the renamed rows in memory (same policy as the seed
+        // write above).
+        const { next, changed } = renameStoredDefaults(stored);
+        if (changed) {
+          try {
+            await saveCategories(next);
+          } catch (error) {
+            console.error('Error persisting default category renames:', error);
+          }
+        }
+        categoriesRef.current = next;
+        setCategories(next);
       }
       setIsLoading(false);
     }

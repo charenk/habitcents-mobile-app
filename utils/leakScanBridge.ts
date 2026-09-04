@@ -19,12 +19,14 @@ import { MIN_SPAN_DAYS_FOR_RATE } from '@/utils/habitDetection';
 
 /**
  * Display label for an ExpenseCategory value written by the scan. The type
- * keeps the legacy 'Mortgage' literal for storage backward-compatibility
- * (ADR 0006), but the taxonomy-v2 category list renders it as "Mortgage/Rent";
- * every other category's display label is its own value unchanged.
+ * keeps the legacy 'Mortgage' and 'Software & Subscriptions' literals for
+ * storage backward-compatibility (ADR 0006); the category list renders them
+ * as "Home" and "Subscriptions" (Charen, 2026-09-04, no "/" in category
+ * names). Every other category's display label is its own value unchanged.
  */
 export function categoryDisplayLabel(category: ExpenseCategory): string {
-  if (category === 'Mortgage') return 'Mortgage/Rent';
+  if (category === 'Mortgage') return 'Home';
+  if (category === 'Software & Subscriptions') return 'Subscriptions';
   return category;
 }
 
