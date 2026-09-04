@@ -175,15 +175,21 @@ export function Sheet({
       // aimed at a node that is still off-screen. Guarded on the screen
       // reader being on so nothing changes for everyone else, and wrapped
       // because findNodeHandle returns null for an unmounted panel.
-      AccessibilityInfo.isScreenReaderEnabled()
-        .then((enabled) => {
-          if (!enabled) return;
-          setTimeout(() => {
-            const node = panelRef.current ? findNodeHandle(panelRef.current) : null;
-            if (node) AccessibilityInfo.setAccessibilityFocus(node);
-          }, motion.sheet);
-        })
-        .catch(() => {});
+      // Native only: findNodeHandle throws on web ("not supported on web"),
+      // which crashed the expo web dev overlay on every sheet open whenever
+      // the environment reported a screen reader; web screen readers land on
+      // the modal panel through accessibilityViewIsModal on their own.
+      if (Platform.OS !== 'web') {
+        AccessibilityInfo.isScreenReaderEnabled()
+          .then((enabled) => {
+            if (!enabled) return;
+            setTimeout(() => {
+              const node = panelRef.current ? findNodeHandle(panelRef.current) : null;
+              if (node) AccessibilityInfo.setAccessibilityFocus(node);
+            }, motion.sheet);
+          })
+          .catch(() => {});
+      }
     } else if (rendered) {
       Animated.timing(progress, {
         toValue: 0,
