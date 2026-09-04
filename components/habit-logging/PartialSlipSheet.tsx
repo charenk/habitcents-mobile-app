@@ -64,14 +64,13 @@ export function PartialSlipSheet({ visible, skipValue, onCancel, onSave }: Parti
       onClose={onCancel}
       avoidKeyboard
       accessibilityLabel={strings.habitLogging.partialSheetTitle}
-    >
-      <View style={[styles.body, { maxHeight: height * 0.86 }]}>
-        {/* Pinned header-save (ADR 0031): this sheet takes an amount and
-            saves, so it heads with sheetTitle like every form sheet rather
-            than the displayMid decision treatment it launched with. No
-            Cancel button; grab handle, scrim, and VoiceOver escape all run
-            onCancel via Sheet's onClose. Hint only while disabled
-            (ADR 0028). */}
+      // Pinned header-save (ADR 0031) inside Sheet's drag zone: this sheet
+      // takes an amount and saves, so it heads with sheetTitle like every
+      // form sheet rather than the displayMid decision treatment it launched
+      // with. No Cancel button; grab handle, header drag, scrim, and
+      // VoiceOver escape all run onCancel via Sheet's onClose. Hint only
+      // while disabled (ADR 0028).
+      header={
         <SheetHeader
           title={strings.habitLogging.partialSheetTitle}
           saveLabel={strings.common.save}
@@ -79,6 +78,9 @@ export function PartialSlipSheet({ visible, skipValue, onCancel, onSave }: Parti
           saveDisabled={!canSave}
           saveHint={canSave ? undefined : strings.sheets.saveHintAmount}
         />
+      }
+    >
+      <View style={[styles.body, { maxHeight: height * 0.86 }]}>
         <ScrollView
           style={styles.scroll}
           contentContainerStyle={styles.content}

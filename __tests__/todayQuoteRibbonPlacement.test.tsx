@@ -244,19 +244,17 @@ beforeEach(async () => {
 afterEach(cleanup);
 
 describe('Today: quote placement', () => {
-  it('Kept opens with a quote, above the KeptHero band, once kept content exists', async () => {
-    // FTE pass (TodayFteKept artboard, 2026-09-03): the hero band only
-    // mounts once a leak or breaking habit exists, so this placement test
-    // populates the pane with a discovered habit first.
+  it('Kept opens straight on the KeptHero band, with no quote, once kept content exists', async () => {
+    // Quotes belong to the Zero state only (Charen's Today annotations,
+    // 2026-09-04): the hero band mounts once a leak or breaking habit
+    // exists, and the quote that used to sit above it is gone.
     mockHabits = [makeHabit({ id: 'h1' })];
     const view = await renderToday();
 
     const keptPane = within(view.getByTestId('kept-pane'));
-    const quote = keptPane.getByTestId('kept-quote');
+    expect(keptPane.queryByTestId('kept-quote')).toBeNull();
     // "keptSoFar" is KeptHero's own eyebrow text (components/habit-logging/
-    // KeptHero.tsx); its presence in the same pane, after the quote in
-    // render order, is the placement this test protects.
-    expect(quote).toBeTruthy();
+    // KeptHero.tsx).
     expect(keptPane.getByText(strings.habitLogging.keptSoFar)).toBeTruthy();
   });
 
@@ -271,12 +269,12 @@ describe('Today: quote placement', () => {
     expect(keptPane.queryByText(strings.habitLogging.keptSoFar)).toBeNull();
   });
 
-  it('Spent closes with a quote, below the logged-today block', async () => {
+  it('Spent carries no quote once any expense exists (First log, Quiet, Live)', async () => {
     mockExpenses = [makeExpense({ id: 'e1' })];
     const view = await renderToday();
 
     const spentPane = within(view.getByTestId('spent-pane'));
-    expect(spentPane.getByTestId('spent-quote')).toBeTruthy();
+    expect(spentPane.queryByTestId('spent-quote')).toBeNull();
     // UX-060: sentence case in the tree, uppercased by the style.
     expect(spentPane.getByText(strings.today.loggedTodayEyebrow)).toBeTruthy();
   });
@@ -330,20 +328,24 @@ describe('Today: View all', () => {
 });
 
 describe('Today: per-view FirstRunRibbon (door1 -> Spent, door3 -> Kept)', () => {
-  it("door1's gentle ribbon renders in the Spent pane only, never Kept", async () => {
-    mockParams = { view: 'spent', firstLog: '1' };
+  it("door1's saved ribbon renders in the Spent pane only, under the log card, never Kept", async () => {
+    // The InfoRibbon sits inside the logged-today block (Charen's Today
+    // annotations, 2026-09-04), so a pending saved record plus one logged
+    // row is the quickest way to the placement without driving the sheet.
+    await AsyncStorage.setItem(
+      '@habitcents_first_run_ribbon',
+      JSON.stringify({ door: 'door1', messageKey: 'door1_saved', dismissed: false })
+    );
+    mockExpenses = [makeExpense({ id: 'e1' })];
     const view = await renderToday();
-
-    // Dismiss the auto-opened ExpenseSheet without saving (Sheet's own
-    // backdrop close), the same path door1FirstRun.test.tsx uses to reach
-    // the gentle ribbon quickly.
-    await tap(view.getByLabelText('Close'));
 
     const spentPane = within(view.getByTestId('spent-pane'));
     const keptPane = within(view.getByTestId('kept-pane'));
 
-    expect(spentPane.getByText(strings.today.firstRunRibbonGentle)).toBeTruthy();
-    expect(keptPane.queryByText(strings.today.firstRunRibbonGentle)).toBeNull();
+    expect(spentPane.getByText(strings.today.firstRunRibbonSaved)).toBeTruthy();
+    expect(keptPane.queryByText(strings.today.firstRunRibbonSaved)).toBeNull();
+    // Receipt under the card: the eyebrow row precedes the ribbon in the tree.
+    expect(spentPane.getByText(strings.today.loggedTodayEyebrow)).toBeTruthy();
   });
 
   it("door3's gentle ribbon renders in the Kept pane only, never Spent", async () => {

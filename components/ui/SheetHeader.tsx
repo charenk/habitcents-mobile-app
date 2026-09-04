@@ -15,16 +15,32 @@
  * guidance. The disabled computation stays in the caller because zero
  * guards deliberately differ across sheets (cents > 0 vs cents !== 0).
  *
- * No generic right-content slot on purpose: all five consumers are exactly
- * title + save. Widen the API only when a real sixth consumer needs more.
- * No motion (house style): the header never shadows or animates on scroll.
+ * No generic right-content slot on purpose: the consumers are title + save,
+ * plus at most one optional icon action (`secondaryAction`, the sixth
+ * consumer this comment used to wait for: the edit expense sheet's delete,
+ * Charen's drawer feedback 2026-09-04). It renders as a 44pt tertiary icon
+ * button with a 12pt gap left of Save, never flush against it, since a
+ * destructive control beside the most-tapped button is the classic mis-tap
+ * layout; the consumer keeps its Undo path. Icon-only, so the spoken label
+ * is required. No motion (house style): the header never shadows or
+ * animates on scroll.
  */
 import React, { useMemo } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import type { AppTheme } from '@/constants/theme';
 import { typeScale } from '@/constants/theme';
 import { Button } from './Button';
+import { Icon, type IconName } from './Icon';
+
+export type SheetHeaderSecondaryAction = {
+  icon: IconName;
+  /** Spoken label; the action is icon-only. */
+  accessibilityLabel: string;
+  onPress: () => void;
+  /** 'destructive' paints the glyph coral. Default is slate. */
+  tone?: 'default' | 'destructive';
+};
 
 export type SheetHeaderProps = {
   title: string;
@@ -33,6 +49,8 @@ export type SheetHeaderProps = {
   saveDisabled?: boolean;
   /** ADR 0028: pass only while disabled, naming the first missing thing. */
   saveHint?: string;
+  /** One optional icon action left of Save (see the file header). */
+  secondaryAction?: SheetHeaderSecondaryAction;
 };
 
 export function SheetHeader({
@@ -41,6 +59,7 @@ export function SheetHeader({
   onSave,
   saveDisabled = false,
   saveHint,
+  secondaryAction,
 }: SheetHeaderProps): React.JSX.Element {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -50,14 +69,30 @@ export function SheetHeader({
       <Text style={styles.title} accessibilityRole="header" maxFontSizeMultiplier={1.5}>
         {title}
       </Text>
-      <Button
-        label={saveLabel}
-        onPress={onSave}
-        variant="primary"
-        disabled={saveDisabled}
-        accessibilityHint={saveHint}
-        style={styles.save}
-      />
+      <View style={styles.actions}>
+        {secondaryAction ? (
+          <Pressable
+            onPress={secondaryAction.onPress}
+            accessibilityRole="button"
+            accessibilityLabel={secondaryAction.accessibilityLabel}
+            style={({ pressed }) => [styles.secondary, pressed ? styles.secondaryPressed : null]}
+          >
+            <Icon
+              name={secondaryAction.icon}
+              size={20}
+              color={secondaryAction.tone === 'destructive' ? theme.coral : theme.slate}
+            />
+          </Pressable>
+        ) : null}
+        <Button
+          label={saveLabel}
+          onPress={onSave}
+          variant="primary"
+          disabled={saveDisabled}
+          accessibilityHint={saveHint}
+          style={styles.save}
+        />
+      </View>
     </View>
   );
 }
@@ -89,6 +124,22 @@ function createStyles(theme: AppTheme) {
     save: {
       minHeight: 44,
       paddingHorizontal: 16,
+    },
+    actions: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+    },
+    // Tertiary icon button: no fill, 44pt square, pressed like Button's
+    // tertiary (opacity swap, never a scale).
+    secondary: {
+      width: 44,
+      height: 44,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    secondaryPressed: {
+      opacity: 0.6,
     },
   });
 }

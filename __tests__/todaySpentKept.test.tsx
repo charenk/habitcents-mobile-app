@@ -496,7 +496,9 @@ describe('Today: Spent pane true-zero state', () => {
     const view = await renderToday();
 
     expect(view.getByText(strings.today.spentEmptyTitle)).toBeTruthy();
-    expect(view.getByText(strings.today.spentEmptyBody)).toBeTruthy();
+    // Icon, title, CTA and nothing else (Charen's Today annotations,
+    // 2026-09-04): the empty state carries no body line any more.
+    expect(view.getByTestId('spent-pane')).toBeTruthy();
     // The logged-today block never renders alongside the fill state: there's
     // nothing for it to show.
     expect(view.queryByText(strings.today.loggedTodayEmpty)).toBeNull();

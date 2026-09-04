@@ -14,7 +14,7 @@ import { memo, useCallback, useMemo } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { ExpenseRow } from '@/components/money/ExpenseRow';
-import { EmptyState } from '@/components/ui';
+import { InfoRibbon } from '@/components/ui/InfoRibbon';
 import { radii, spacing, typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import type { Expense } from '@/types/expense';
@@ -68,9 +68,11 @@ export function LoggedTodayList({ expenses, onEditExpense, onViewAll }: LoggedTo
         ) : null}
       </View>
       {expenses.length === 0 ? (
-        <View style={[styles.loggedTodayCard, styles.loggedTodayEmptyWrap]}>
-          <EmptyState body={strings.today.loggedTodayEmpty} />
-        </View>
+        // Quiet day: the persistent InfoRibbon (no X) stands in for the card
+        // (Charen's Today annotations, 2026-09-04), the same band the
+        // first-run line uses under a populated card, so "nothing yet" and
+        // "just logged" speak in one voice inside the list section.
+        <InfoRibbon line={strings.today.loggedTodayEmpty} testID="logged-today-quiet" />
       ) : (
         <View style={styles.loggedTodayCard}>
           {expenses.map((expense, i) => (
@@ -127,9 +129,6 @@ function createStyles(theme: AppTheme) {
     loggedTodaySeparator: {
       borderTopWidth: 1,
       borderTopColor: theme.hairlineSubtle,
-    },
-    loggedTodayEmptyWrap: {
-      paddingVertical: 16,
     },
   });
 }

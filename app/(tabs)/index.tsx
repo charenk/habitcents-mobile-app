@@ -32,7 +32,7 @@ import { SpentKeptChips, type SpentKeptView } from '@/components/habit-logging/S
 import { ExpenseSheet, type LogExpenseSavedInfo } from '@/components/money/ExpenseSheet';
 import { QuickLogRow } from '@/components/money/QuickLogRow';
 import { LoggedTodayList } from '@/components/money/LoggedTodayList';
-import { FirstRunRibbon } from '@/components/onboarding/FirstRunRibbon';
+import { InfoRibbon } from '@/components/ui/InfoRibbon';
 import { useFirstRunRibbon } from '@/components/onboarding/useFirstRunRibbon';
 import { useEmptyStateAction } from '@/components/onboarding/useEmptyStateAction';
 import { ViewQuote } from '@/components/today/ViewQuote';
@@ -197,6 +197,21 @@ export default function TodayScreen() {
     showRibbon: showDoor3Ribbon,
     dismissRibbon: dismissDoor3Ribbon,
   } = useFirstRunRibbon(DOOR3_KEY);
+
+  // A gentle first-run line ("whenever you're ready") waits for something;
+  // once that thing exists the line is false, and a ribbon saying something
+  // false is worse than none (2026-09-04 walk: the door1 gentle line was
+  // still up after four real logs). Each resolves itself, once, idempotent.
+  useEffect(() => {
+    if (door1RibbonPending && door1MessageKey === 'door1_gentle' && expenses.length > 0) {
+      void dismissDoor1Ribbon();
+    }
+  }, [door1RibbonPending, door1MessageKey, expenses.length, dismissDoor1Ribbon]);
+  useEffect(() => {
+    if (door3RibbonPending && door3MessageKey === 'door3_gentle' && goals.length > 0) {
+      void dismissDoor3Ribbon();
+    }
+  }, [door3RibbonPending, door3MessageKey, goals.length, dismissDoor3Ribbon]);
 
   const loggedToday = useMemo(() => {
     const start = atMidnight(new Date()).getTime();
@@ -941,14 +956,6 @@ export default function TodayScreen() {
               <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={theme.primary} />
             }
           >
-            {/* U6: door1's ribbon used to render once above the pager on
-                both panes; it renders only here now, at the top of Spent,
-                the same spot its old global slot occupied visually. */}
-            {door1RibbonPending && door1RibbonLine ? (
-              <View style={styles.ribbonWrapInline}>
-                <FirstRunRibbon line={door1RibbonLine} onDismiss={dismissDoor1Ribbon} />
-              </View>
-            ) : null}
             <QuickLogRow onOpenSheet={openLogSheet} />
             {/* Spent pane, true zero state (PRD v3.1 sect 5): no expense has
                 ever been logged. The logged-today list and watch-nudge have
@@ -962,6 +969,18 @@ export default function TodayScreen() {
                   onEditExpense={setEditingExpense}
                   onViewAll={handleViewAllExpenses}
                 />
+                {/* Door 1's first-run line, the InfoRibbon pattern (Charen's
+                    Today annotations, 2026-09-04): inside the list section,
+                    directly under the log card, never above the quick-log
+                    field. It used to sit above QuickLogRow, where it read as
+                    an instruction about the field; here it reads as the
+                    receipt for the log. The watch-nudge follows it: receipt
+                    first, next action second. */}
+                {door1RibbonPending && door1RibbonLine ? (
+                  <View style={styles.ribbonWrapInline}>
+                    <InfoRibbon line={door1RibbonLine} onDismiss={dismissDoor1Ribbon} />
+                  </View>
+                ) : null}
                 {watchNudgeVisible ? (
                   // The watch-nudge (W2 item 3): UpcomingList's dashed-card
                   // grammar (components/money/UpcomingList.tsx `add`), one-shot
@@ -1001,30 +1020,27 @@ export default function TodayScreen() {
                 ) : null}
               </View>
             ) : null}
-            {/* U6: Spent closes with a quote, below the logged-today block
-                and the watch-nudge (Charen-approved live preview placement).
-                In the true zero state the quote instead joins the empty-state
-                hook in one block, vertically centered in the space left below
-                the quick-log card (FTE artboard TodayFteSpent.dc.html,
-                Charen's 2026-09-03 direction). Either branch renders the
-                spent-quote instance exactly once. */}
-            {!spentIsEmpty ? (
-              <ViewQuote quote={spentQuote} style={styles.spentQuoteWrap} testID="spent-quote" />
-            ) : (
+            {/* The quote belongs to the Zero state only (Charen's Today
+                annotations, 2026-09-04): with rows on the page it competed
+                with them, so First log, Quiet and Live carry no quote. In
+                Zero it joins the empty-state hook in one block, vertically
+                centered in the space left below the quick-log card (FTE
+                artboard TodayFteSpent.dc.html). */}
+            {spentIsEmpty ? (
               <View style={styles.spentZeroWrap}>
                 <ViewQuote quote={spentQuote} testID="spent-quote" />
                 {/* inline + explicit icon, not layout="fill": fill's 40pt top
                     padding is this composition's quote-to-hook gap, carried by
-                    the wrap's gap instead so the pair centers as one block. */}
+                    the wrap's gap instead so the pair centers as one block.
+                    Icon, title, CTA and nothing else (same annotations). */}
                 <EmptyState
                   layout="inline"
                   icon="ChartLine"
                   title={strings.today.spentEmptyTitle}
-                  body={strings.today.spentEmptyBody}
                   cta={{ label: strings.today.spentEmptyCta, onPress: handleSpentEmptyLog }}
                 />
               </View>
-            )}
+            ) : null}
           </ScrollView>
         </View>
 
@@ -1039,27 +1055,23 @@ export default function TodayScreen() {
               same spot its old global slot occupied visually. */}
           {door3RibbonPending && door3RibbonLine ? (
             <View style={styles.ribbonWrap}>
-              <FirstRunRibbon line={door3RibbonLine} onDismiss={dismissDoor3Ribbon} />
+              <InfoRibbon line={door3RibbonLine} onDismiss={dismissDoor3Ribbon} />
             </View>
           ) : null}
-          {/* U6: Kept opens with a quote, above the KeptHero band
-              (Charen-approved live preview placement). FTE exception
-              (TodayFteKept artboard, Charen's 2026-09-03 direction): while no
-              leak or breaking habit exists there is no hero band at all, and
-              the quote renders inside the centered zero block below instead,
-              so this pair only mounts once real kept content exists (or while
-              loading, when isEmpty is not yet trustworthy). Exactly one
-              kept-quote instance renders either way. */}
+          {/* The kept quote belongs to the Zero state only (Charen's Today
+              annotations, 2026-09-04, same rule as Spent): once a leak or a
+              breaking habit exists the pane opens straight on the KeptHero
+              band. While no kept content exists there is no band at all, and
+              the quote renders inside the centered zero block below. The
+              band still mounts while loading, when isEmpty is not yet
+              trustworthy. */}
           {isLoading || !isEmpty ? (
-            <>
-              <ViewQuote quote={keptQuote} style={styles.keptQuoteWrap} testID="kept-quote" />
-              {/* DI-6 gutter fix: the band renders full-bleed by default (see
-                  onboarding success, which supplies its own padded container
-                  instead); Today has no such wrapper, so it passes the same
-                  20pt horizontal gutter the chips row and both list content
-                  styles use. */}
-              <KeptHero cents={totalKept} style={styles.keptHeroGutter} />
-            </>
+            // DI-6 gutter fix: the band renders full-bleed by default (see
+            // onboarding success, which supplies its own padded container
+            // instead); Today has no such wrapper, so it passes the same
+            // 20pt horizontal gutter the chips row and both list content
+            // styles use.
+            <KeptHero cents={totalKept} style={styles.keptHeroGutter} />
           ) : null}
 
           {isLoading ? (
@@ -1118,7 +1130,6 @@ export default function TodayScreen() {
                     layout="inline"
                     icon="ChartLine"
                     title={strings.today.keptEmptyTitle}
-                    body={strings.today.keptEmptyBody}
                     cta={{
                       // The quick-log card now lives on the Spent view, not
                       // the Money tab, so the CTA switches views in place
@@ -1234,11 +1245,11 @@ function createStyles(theme: AppTheme) {
       paddingHorizontal: spacing.gutter,
       marginBottom: spacing.stack,
     },
-    // FirstRunRibbon, door1 (U6): renders inside spentScrollContent, which
-    // already carries the 20pt gutter for every child, so this only adds the
-    // bottom spacing, not a second horizontal inset.
+    // InfoRibbon, door1: renders inside the logged-today block under the log
+    // card, which already carries the 20pt gutter, so this only adds the
+    // same 10pt the watch-nudge below it uses, not a second horizontal inset.
     ribbonWrapInline: {
-      marginBottom: spacing.stack,
+      marginTop: spacing.control,
     },
     // DI-7: the pager fills whatever vertical space is left below the chips
     // row, same as the single conditional pane did before it.
@@ -1259,21 +1270,6 @@ function createStyles(theme: AppTheme) {
     // use below, so the band no longer renders full-bleed on Today.
     keptHeroGutter: {
       marginHorizontal: spacing.gutter,
-    },
-    // U6 opening quote (Kept): the Kept pane's top-level View has no ambient
-    // padding, so ViewQuote's own 20pt gutter is the only inset it needs;
-    // this only adds the space above KeptHero below it.
-    keptQuoteWrap: {
-      marginBottom: spacing.md,
-    },
-    // U6 closing quote (Spent): spentScrollContent already carries the
-    // screen's 20pt gutter for every child, and ViewQuote applies its own
-    // 20pt gutter too, so this negative margin cancels the ambient one --
-    // otherwise the quote would sit at a 40pt inset instead of the 20pt
-    // every other pane edge uses, including the Kept opening quote above.
-    spentQuoteWrap: {
-      marginHorizontal: -spacing.gutter,
-      marginTop: spacing.gutter,
     },
     spentScroll: {
       flex: 1,

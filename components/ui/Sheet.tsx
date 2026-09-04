@@ -39,6 +39,15 @@ export type SheetProps = {
   avoidKeyboard?: boolean;
   dismissOnScrim?: boolean;
   accessibilityLabel?: string;
+  /**
+   * Pinned header (usually ui/SheetHeader) rendered inside the drag zone,
+   * directly under the grab handle. Drawer feedback (Charen, 2026-09-04):
+   * the drag used to live on the 36x5 handle alone, so a finger on the
+   * title row moved nothing. With the header in the same zone the whole
+   * top of the sheet tracks the finger; the body below stays free for its
+   * own ScrollView.
+   */
+  header?: React.ReactNode;
 };
 
 export function Sheet({
@@ -48,6 +57,7 @@ export function Sheet({
   avoidKeyboard,
   dismissOnScrim,
   accessibilityLabel,
+  header,
 }: SheetProps): React.JSX.Element | null {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
@@ -245,8 +255,16 @@ export function Sheet({
        * the sheet body is never intercepted. onAccessibilityEscape below still
        * carries screen-reader dismissal.
        */}
-      <View style={styles.handleZone} hitSlop={{ top: 8, bottom: 8 }} {...panResponder.panHandlers}>
-        <View style={styles.handle} />
+      <View
+        style={styles.dragZone}
+        hitSlop={{ top: 8 }}
+        testID="sheet-drag-zone"
+        {...panResponder.panHandlers}
+      >
+        <View style={styles.handleZone}>
+          <View style={styles.handle} />
+        </View>
+        {header}
       </View>
       {children}
     </Animated.View>
@@ -305,6 +323,11 @@ function createStyles(theme: AppTheme) {
       borderTopRightRadius: radii.feature,
       alignItems: 'stretch',
       ...shadows.sheet,
+    },
+    // The one PanResponder lives here: grab handle plus the optional pinned
+    // header, so the drag starts anywhere across the top of the sheet.
+    dragZone: {
+      alignSelf: 'stretch',
     },
     handleZone: {
       alignSelf: 'stretch',

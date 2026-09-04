@@ -91,7 +91,7 @@
       "x": 940,
       "y": 0,
       "w": 390,
-      "h": 941,
+      "h": 901,
       "title": "Kept \u00b7 Door 3 first run",
       "page": "kept"
     },
@@ -100,7 +100,7 @@
       "x": 1410,
       "y": 0,
       "w": 390,
-      "h": 1139,
+      "h": 1054,
       "title": "Kept \u00b7 Leaks found",
       "page": "kept"
     },
@@ -109,7 +109,7 @@
       "x": 1880,
       "y": 0,
       "w": 390,
-      "h": 912,
+      "h": 844,
       "title": "Kept \u00b7 Check-in pending",
       "page": "kept"
     },
@@ -118,7 +118,7 @@
       "x": 2350,
       "y": 0,
       "w": 390,
-      "h": 1120,
+      "h": 1035,
       "title": "Kept \u00b7 Live (both sections)",
       "page": "kept"
     },
@@ -127,7 +127,7 @@
       "x": 0,
       "y": 1439,
       "w": 390,
-      "h": 1000,
+      "h": 915,
       "title": "Kept \u00b7 Skipped",
       "page": "kept"
     },
@@ -136,7 +136,7 @@
       "x": 470,
       "y": 1439,
       "w": 390,
-      "h": 1030,
+      "h": 945,
       "title": "Kept \u00b7 Slipped (bought it)",
       "page": "kept"
     },
@@ -145,7 +145,7 @@
       "x": 940,
       "y": 1439,
       "w": 390,
-      "h": 1062,
+      "h": 977,
       "title": "Kept \u00b7 Milestone",
       "page": "kept"
     },
@@ -154,7 +154,7 @@
       "x": 1410,
       "y": 1439,
       "w": 390,
-      "h": 1104,
+      "h": 1019,
       "title": "Kept \u00b7 Backfill",
       "page": "kept"
     },
@@ -163,7 +163,7 @@
       "x": 1880,
       "y": 1439,
       "w": 390,
-      "h": 1025,
+      "h": 959,
       "title": "Kept \u00b7 Weekly habit",
       "page": "kept"
     },
@@ -228,7 +228,7 @@
       "x": 470,
       "y": -200,
       "w": 390,
-      "text": "After the Door 1 first log: FirstRunRibbon \"saved\" line (door1RibbonPending) + one row + the watch-nudge (watchNudgeVisible needs a merchant). Ribbon and nudge are one-shot.\nReach: Persona: new user > Log my first expense > amount + merchant > Save."
+      "text": "After the Door 1 first log: the InfoRibbon receipt sits under the log card (never above the input), then the dashed watch-nudge (needs a merchant). Both one-shot. No quote outside Zero.\nReach: Persona: new user > Log my first expense > amount + merchant > Save."
     },
     {
       "id": "n-SpentQuiet",
@@ -236,7 +236,7 @@
       "x": 940,
       "y": -200,
       "w": 390,
-      "text": "QUIET: history exists, nothing today. Spent chip is an honest $0.00; the card carries the one-line empty body; no View all (LoggedTodayList.tsx:49).\nReach: Persona: returning user > delete today's rows via the edit sheet."
+      "text": "QUIET: history exists, nothing today. Spent chip is an honest $0.00; the quiet-day line is the persistent InfoRibbon (no X) inside the list section; no quote.\nReach: Persona: returning user > delete today's rows via the edit sheet."
     },
     {
       "id": "n-Main",
@@ -244,7 +244,7 @@
       "x": 1410,
       "y": -200,
       "w": 390,
-      "text": "LIVE: rows for today, View all to Money > Spent, closing quote (index.tsx:958-1012). Tap a row to edit.\nReach: Persona: returning user (or log a few)."
+      "text": "LIVE: rows for today, View all to Money > Spent, no quote (quotes belong to Zero only). Tap a row to edit.\nReach: Persona: returning user (or log a few)."
     },
     {
       "id": "n-LogSheet",
@@ -252,7 +252,7 @@
       "x": 1880,
       "y": -200,
       "w": 390,
-      "text": "ExpenseSheet mode=log over Spent. Save disabled until an amount (ADR 0028). Door 1 adds one coach line above the amount: \"The real thing, not a practice run. Amount first.\"\nReach: tap the quick-log field or the plus."
+      "text": "ExpenseSheet mode=log over Spent. Save disabled until an amount (ADR 0028); one-word Save on every form sheet. Door 1 adds one coach line above the amount. Drag from the handle or the title row.\nReach: tap the quick-log field or the plus."
     },
     {
       "id": "n-EditSheet",
@@ -260,7 +260,7 @@
       "x": 2350,
       "y": -200,
       "w": 390,
-      "text": "ExpenseSheet mode=edit: Save changes enabled, merchant + category preselected, Delete expense row (instant, Undo from the toast).\nReach: tap a row in Today's log."
+      "text": "ExpenseSheet mode=edit: header reads Save; delete is the header icon action (trash, coral, 44pt, 12pt left of Save), instant with Undo from the toast; merchant and category chips share the pill radius. Drag from the title row dismisses.\nReach: tap a row in Today's log."
     },
     {
       "id": "n-KeptZero",
@@ -300,7 +300,7 @@
       "x": 1880,
       "y": -200,
       "w": 390,
-      "text": "Daily habit, unanswered today: pending dot on the chip (checkInPending), week strip with today's sage ring, question + Skipped it / Bought it.\nReach: Persona: returning user > Kept."
+      "text": "Daily habit, unanswered today: pending dot on the chip (checkInPending), pane opens straight on the kept band (no quote outside Zero), week strip with today's sage ring, question + Skipped it / Bought it.\nReach: Persona: returning user > Kept."
     },
     {
       "id": "n-KeptLive",

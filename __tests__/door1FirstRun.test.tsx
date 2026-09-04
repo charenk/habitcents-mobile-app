@@ -281,17 +281,57 @@ describe('Door 1 real-app first run: close without saving', () => {
     expect(mockCompleteOnboarding).toHaveBeenCalledTimes(1);
     expect(mockCompleteStep).not.toHaveBeenCalledWith('guided_log');
 
-    expect(view.getByText(strings.today.firstRunRibbonGentle)).toBeTruthy();
+    // The InfoRibbon lives inside the logged-today block (Charen's Today
+    // annotations, 2026-09-04), and in the Zero state that block does not
+    // exist: the zero hook ("Start with what you just spent") already says
+    // what the gentle line used to say above the quick-log field, so the
+    // gentle line shows nowhere. The record is still written, and resolves
+    // itself once a real log exists (next describe).
+    expect(view.queryByText(strings.today.firstRunRibbonGentle)).toBeNull();
+    expect(view.getByText(strings.today.spentEmptyTitle)).toBeTruthy();
   });
 
-  it('the ribbon dismiss (X) hides it permanently', async () => {
+  it('the saved ribbon dismiss (X) hides it permanently', async () => {
     mockParams = { view: 'spent', firstLog: '1' };
     const view = await renderToday();
-    await tap(view.getByLabelText('Close'));
+    await typeAmount(view, '5');
+    await tap(view.getByText(strings.expenseSheet.saveExpense));
 
-    expect(view.getByText(strings.today.firstRunRibbonGentle)).toBeTruthy();
+    expect(view.getByText(strings.today.firstRunRibbonSaved)).toBeTruthy();
     await tap(view.getByLabelText(strings.common.dismiss));
+    expect(view.queryByText(strings.today.firstRunRibbonSaved)).toBeNull();
+  });
+});
+
+describe('Door 1 real-app first run: a gentle line resolves itself', () => {
+  it('a pending gentle record is dismissed as soon as any expense exists', async () => {
+    // 2026-09-04 walk: the gentle line ("whenever you're ready") was still
+    // up after four real logs, because only the X ever set `dismissed`.
+    const storageModule = require('@react-native-async-storage/async-storage');
+    const AsyncStorage = storageModule.default ?? storageModule;
+    await AsyncStorage.setItem(
+      '@habitcents_first_run_ribbon',
+      JSON.stringify({ door: 'door1', messageKey: 'door1_gentle', dismissed: false })
+    );
+    mockExpenses = [
+      {
+        id: 'e1',
+        title: 'Blue Bottle',
+        amount: 575,
+        category: 'Food',
+        date: new Date(),
+        time: '9:00 AM',
+        isRecurring: false,
+        reminderEnabled: false,
+        iconVariant: 'green',
+      },
+    ];
+    const view = await renderToday();
+    await act(async () => {});
+
     expect(view.queryByText(strings.today.firstRunRibbonGentle)).toBeNull();
+    const raw = await AsyncStorage.getItem('@habitcents_first_run_ribbon');
+    expect(JSON.parse(raw as string)).toMatchObject({ door: 'door1', dismissed: true });
   });
 });
 

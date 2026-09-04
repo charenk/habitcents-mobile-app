@@ -14,12 +14,14 @@
  *    coachLine prop (Door 1's first-run open does; a plain log open shows
  *    none since Charen's 2026-08-16 device feedback removed the sheet's own
  *    stock line). Edit never shows one.
- * 3. Primary button label: "Save expense" / "Save changes".
- * 4. Edit adds a "Delete expense" row. No confirm dialog: delete is instant
- *    and reversible from the toast's Undo, which is faster to use and easier
- *    to recover from than an alert nobody reads. Undo restores the row at the
- *    index it held, so the list looks exactly as it did before, not as if
- *    the row were re-logged.
+ * 3. Primary button label: both modes read "Save" since Charen's drawer
+ *    feedback (2026-09-04); the keys saveExpense / saveChanges survive.
+ * 4. Edit adds a delete action: the header's one icon button (trash, coral,
+ *    left of Save, see ui/SheetHeader), no longer a footer row. No confirm
+ *    dialog: delete is instant and reversible from the toast's Undo, which
+ *    is faster to use and easier to recover from than an alert nobody
+ *    reads. Undo restores the row at the index it held, so the list looks
+ *    exactly as it did before, not as if the row were re-logged.
  *
  * Amount (ADR 0023): AmountField is a real TextInput on the native decimal
  * pad, full width, auto-focused on open.
@@ -369,20 +371,39 @@ export function ExpenseSheet({
   const doneBarLift = insets.bottom > 0 ? { marginBottom: -insets.bottom } : undefined;
 
   return (
-    <Sheet visible={visible} onClose={onClose} avoidKeyboard accessibilityLabel={eyebrow}>
-      <View style={[styles.body, { maxHeight: height * 0.82 }]}>
-        {/* This sheet originated the pinned header-save pattern (2026-08-16
-            workflow redesign, UX-040 serif title); the anatomy now lives in
-            ui/SheetHeader (ADR 0031) and every form sheet shares it. Hint
-            only while disabled, per ADR 0028. */}
+    <Sheet
+      visible={visible}
+      onClose={onClose}
+      avoidKeyboard
+      accessibilityLabel={eyebrow}
+      // This sheet originated the pinned header-save pattern (2026-08-16
+      // workflow redesign, UX-040 serif title); the anatomy now lives in
+      // ui/SheetHeader (ADR 0031) and every form sheet shares it, rendered
+      // inside Sheet's drag zone so the title row drags the sheet. Hint only
+      // while disabled, per ADR 0028. Edit mode's delete moved up here as
+      // the header's one icon action (Charen's drawer feedback, 2026-09-04):
+      // instant, with Undo from the toast, same as the old footer row.
+      header={
         <SheetHeader
           title={eyebrow}
           saveLabel={saveLabel}
           onSave={handleSave}
           saveDisabled={cents <= 0 || saving}
           saveHint={cents > 0 ? undefined : strings.sheets.saveHintAmount}
+          secondaryAction={
+            mode === 'edit'
+              ? {
+                  icon: 'Trash2',
+                  accessibilityLabel: strings.expenseSheet.deleteExpense,
+                  onPress: handleDelete,
+                  tone: 'destructive',
+                }
+              : undefined
+          }
         />
-
+      }
+    >
+      <View style={[styles.body, { maxHeight: height * 0.82 }]}>
         <ScrollView
           style={styles.scroll}
           contentContainerStyle={styles.content}
@@ -439,6 +460,9 @@ export function ExpenseSheet({
                   key={name.toLowerCase()}
                   label={name}
                   tone="soft"
+                  // pill, like the category rail below (Charen, 2026-09-04):
+                  // two chip rows 30pt apart on one sheet carried two radii.
+                  pill
                   selected={typedMerchant.toLowerCase() === name.toLowerCase()}
                   onPress={() => pickMerchant(name)}
                 />
@@ -454,17 +478,6 @@ export function ExpenseSheet({
             scrollToSelected={mode === 'edit' && visible}
           />
         </ScrollView>
-
-        {mode === 'edit' ? (
-          <View style={styles.footer}>
-            <Button
-              label={strings.expenseSheet.deleteExpense}
-              onPress={handleDelete}
-              variant="destructive"
-              style={styles.delete}
-            />
-          </View>
-        ) : null}
 
         {showDoneBar ? (
           <View style={[styles.doneBar, doneBarLift]}>
@@ -526,14 +539,6 @@ function createStyles(theme: AppTheme) {
       flexDirection: 'row',
       gap: 8,
       paddingRight: 12,
-    },
-    footer: {
-      paddingHorizontal: 20,
-      paddingTop: 12,
-      gap: 8,
-    },
-    delete: {
-      marginTop: 0,
     },
     // iOS-only Done bar, last child of the body View so it rides the Sheet's
     // own KeyboardAvoidingView.

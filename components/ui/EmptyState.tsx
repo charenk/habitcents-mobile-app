@@ -26,7 +26,10 @@ import { spacing, typeScale, type AppTheme } from '@/constants/theme';
 export type EmptyStateProps = {
   /** Optional heading. Omit for a body-only empty state (e.g. a single row's placeholder). */
   title?: string;
-  body: string;
+  /** Optional since Charen's Today annotations (2026-09-04): the Today zero
+   *  states are icon, title, CTA and nothing else. Other surfaces keep
+   *  their body line. */
+  body?: string;
   /** Single icon scale for every empty state: 28pt, slate. */
   icon?: IconName;
   cta?: {
@@ -74,7 +77,7 @@ export function EmptyState({ title, body, icon, cta, layout = 'inline' }: EmptyS
           what a screen is for and how to get started. Capping it at 1.5 would
           hand a low-vision user 19.5pt where iOS offered them about 40pt,
           which is an accessibility regression dressed up as polish. */}
-      <Text style={styles.body}>{body}</Text>
+      {body ? <Text style={styles.body}>{body}</Text> : null}
       {cta ? (
         <Button variant="secondary" label={cta.label} onPress={cta.onPress} style={styles.cta} />
       ) : null}

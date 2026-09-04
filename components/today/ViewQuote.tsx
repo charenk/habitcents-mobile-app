@@ -73,7 +73,11 @@ function createStyles(theme: AppTheme) {
       // fractionally larger than before.
       fontSize: typeScale.quote,
       lineHeight: 26,
-      color: theme.ink,
+      // mistText, not ink (Charen's canvas comment, 2026-09-04): the quote
+      // is the settled voice of a Zero state, not a headline. Mist is the
+      // lightest token that still clears AA on snow (4.5:1), the same color
+      // the attribution below already uses, so the block reads as one.
+      color: theme.mistText,
       // Centered, both panes: Charen's 2026-09-03 call, matching the FTE
       // artboards (design/canvas-current-ui/TodayFteSpent.dc.html and
       // TodayFteKept.dc.html), where the editorial voice sits on the

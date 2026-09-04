@@ -179,12 +179,16 @@ export function AddCategoryModal({
   const title = isEditing ? strings.addCategoryModal.editCategory : strings.addCategoryModal.newCategory;
 
   return (
-    <Sheet visible={visible} onClose={handleClose} avoidKeyboard accessibilityLabel={title}>
-      <View style={[styles.body, { maxHeight: height * 0.86 }]}>
-        {/* Pinned header-save (ADR 0031): title + Save fixed above the
-            scroll, no in-sheet Cancel (grab handle, scrim, and VoiceOver
-            escape dismiss; handleClose still resets the form via Sheet's
-            onClose). Hint only while disabled, per ADR 0028. */}
+    <Sheet
+      visible={visible}
+      onClose={handleClose}
+      avoidKeyboard
+      accessibilityLabel={title}
+      // Pinned header-save (ADR 0031) inside Sheet's drag zone: title + Save
+      // fixed above the scroll, no in-sheet Cancel (grab handle, header
+      // drag, scrim, and VoiceOver escape dismiss; handleClose still resets
+      // the form via Sheet's onClose). Hint only while disabled, per ADR 0028.
+      header={
         <SheetHeader
           title={title}
           saveLabel={strings.common.save}
@@ -192,6 +196,9 @@ export function AddCategoryModal({
           saveDisabled={!name.trim() || saving}
           saveHint={name.trim() ? undefined : strings.sheets.saveHintCategoryName}
         />
+      }
+    >
+      <View style={[styles.body, { maxHeight: height * 0.86 }]}>
         <ScrollView
           style={styles.scroll}
           contentContainerStyle={styles.content}
