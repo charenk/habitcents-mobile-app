@@ -366,6 +366,15 @@ export const strings = {
     // visible, non-blaming, and pointing at where the state actually lives.
     remindersDeniedValue: 'Off in device settings',
     remindersOpenSettings: 'Open device settings',
+    // Language row + sheet (routine/localization plan item 1). Selecting a
+    // language only sets the override for now; no catalog exists yet to
+    // change any other on-screen text (plan item 2), so this row is a
+    // foundation piece, not a finished feature.
+    language: 'Language',
+    languageSheetTitle: 'Language.',
+    languageSystemDefault: 'System default',
+    languageRowLabel: (nativeName: string, englishName: string) =>
+      nativeName === englishName ? nativeName : `${nativeName} (${englishName})`,
     // Restore purchases (BET-004, mock mode). No purchases exist to restore yet.
     // The row itself moved off Profile onto the paywall footer (design/
     // profile-restructure U9); these two outcome messages stay here because
@@ -850,6 +859,7 @@ export const strings = {
     dismissLeakFailed: 'That did not save. Try again.',
     categoryFailed: 'That did not save. Try again.',
     currencyFailed: 'That did not save. Try again.',
+    languageFailed: 'That did not save. Try again.',
     startOverFailed: 'That did not reset. Try again.',
     importFailed: 'That did not save. Nothing was imported. Try again.',
     // enterCategoryNameFirst removed (ADR 0031): the last of the
