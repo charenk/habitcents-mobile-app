@@ -40,7 +40,7 @@ else in this worksheet follows from what that one pipe carries.
 | User Content (photos, videos, files, audio) | **No** | The Leak Scan CSV picked via `expo-document-picker` is parsed entirely on-device (`utils/leakScan/`) and never uploaded; file contents are explicitly excluded from analytics per D-9 (see `utils/analytics.ts` comment above `scan_started`). | N/A | N/A |
 | Browsing / Search History | **No** | Not applicable. | N/A | N/A |
 | Identifiers (User ID, Device ID) | **Yes** | PostHog's auto-generated anonymous device ID. `identify()` is never called (`utils/analytics.ts` line 5); no HabitCents-issued user ID exists. | **No** | **No** |
-| Purchases | **No, today** | `utils/purchases.ts` is mock-only; no `react-native-purchases` / RevenueCat SDK is installed or imported (`import type` only). **This answer must be revisited before the first build that ships live IAP**; see section 4. | N/A | N/A |
+| Purchases | **No, today** | `react-native-purchases` is now a `package.json` dependency (2026-09-04), but `utils/purchases.ts` only dynamically imports and configures it when `EXPO_PUBLIC_REVENUECAT_API_KEY` is set, which it is not anywhere this app is currently built or tested; mock mode (no data leaves the device) stays the default. **This answer must be revisited before the first build that ships a real key**; see section 4. | N/A | N/A |
 | Usage Data (product interaction) | **Yes** | The structural event catalog in `utils/analytics.ts` (`AnalyticsEventMap`): screen views, taps, counts, booleans, coarse buckets. `sanitizeProps`/`bucketCents`/`bucketCount` strip free text, merchant names, and raw amounts before anything is sent. | **No** (tied only to the anonymous device ID, never to a person) | **No** (no cross-app/cross-site tracking, no ad SDK, no data sold or used for advertising) |
 | Diagnostics (crash/performance data) | **No** | No crash-reporting or performance-monitoring SDK is in `package.json` (checked for Sentry, Bugsnag, Crashlytics; none present). | N/A | N/A |
 | Other Data | **No** | Nothing else leaves the device. | N/A | N/A |
@@ -65,12 +65,13 @@ accept or override before submission.
 
 ## 4. What changes this worksheet (must be redone before the affected submission)
 
-1. **Live RevenueCat / `react-native-purchases`.** The day that dependency is
-   installed and wired for real (see `utils/purchases.ts`'s "Activation (Charen,
-   later)" note), the Purchases row flips to "Collected" and RevenueCat's own SDK
-   data-collection disclosure needs to be folded in (RevenueCat publishes its own
-   Apple-privacy-manifest guidance; check their current docs at activation time
-   rather than trusting this worksheet's date).
+1. **Live RevenueCat / `react-native-purchases`.** The dependency itself was added
+   2026-09-04 (still inert; row 43 above already reflects this), but the day a real
+   `EXPO_PUBLIC_REVENUECAT_API_KEY` ships in a build (see `utils/purchases.ts`'s
+   "Activation (Charen, later)" note), the Purchases row flips to "Collected" and
+   RevenueCat's own SDK data-collection disclosure needs to be folded in (RevenueCat
+   publishes its own Apple-privacy-manifest guidance; check their current docs at
+   activation time rather than trusting this worksheet's date).
 2. **Any new SDK.** Adding a crash reporter, a different analytics vendor, or an ad
    SDK invalidates the Diagnostics/Usage Data/Purchases rows respectively.
 3. **PostHog IP handling.** The current PostHog init (`utils/analytics.ts`,

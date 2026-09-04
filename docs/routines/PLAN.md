@@ -55,20 +55,36 @@ Legend: `[x]` verified done in this repo, `[~]` partially done / gap identified,
       habit-limit gate).
 - [x] Entitlement gating replaces the hardcoded habit-count check.
 - [x] The four paywall analytics events fire.
-- [~] **Live RevenueCat client.** `utils/purchases.ts` has a `PurchasesClient` seam
-      (`impl`) built for exactly this, mirroring how `utils/analytics.ts` dynamically
-      imports `posthog-react-native` only when a key is set. The equivalent for
-      `react-native-purchases` has not been written; the module comment says
-      "Activation (Charen, later): install react-native-purchases, run a dev/device
-      build." **Run 2 candidate.** Adding the dependency touches `package.json` (ADR
-      0029: forces a native build, never an OTA) and the live path can only be
-      end-to-end verified on a real device with sandbox purchases, which this session
-      cannot do. What this routine CAN do safely: write the live client behind the
-      existing seam with the SDK's calls type-checked against its real types, add a
-      unit test that injects a fake `PurchasesClient` (the existing test seam already
-      supports this), and leave it inert (mock mode stays the default) until Charen
-      supplies a real device build to verify against sandbox. Never flips mock mode
-      off by default; never picks a go-live date.
+- [x] **Live RevenueCat client (run 2, 2026-09-04).** `react-native-purchases`
+      ^10.9.0 added to `package.json` (this forces the next build to be `eas build`,
+      never an OTA, per ADR 0029; confirmed with `npm run ota:check` after committing).
+      `utils/purchases.ts` `initPurchases()` dynamically imports the SDK only when
+      `EXPO_PUBLIC_REVENUECAT_API_KEY` is set (never on `main`'s default env, never in
+      tests, mirrors `utils/analytics.ts`'s PostHog import), configures it, reads
+      `getCustomerInfo()`, and wires `addCustomerInfoUpdateListener` to keep a
+      synchronous local cache current. `purchase()`/`restore()` call `getProducts` +
+      `purchaseStoreProduct` / `restorePurchases` against the SDK's real types (typed
+      against the installed package, not guessed). New env var
+      `EXPO_PUBLIC_REVENUECAT_ENTITLEMENT_ID` (default `'premium'`) names the
+      RevenueCat-dashboard entitlement identifier that means premium; documented in
+      `.env.example`.
+      Found and fixed one real bug while writing this: the old fallback logic was
+      `if (impl) return impl.X(); <mock path>`, so a live-enabled install whose real
+      client merely failed to initialize (bad key, offline at boot) would silently
+      fall into the mock branch and comp a free "premium" grant that charged nobody.
+      `getEntitlement()`/`purchase()`/`restore()` now branch on `purchasesEnabled()`
+      explicitly: the mock grant only ever fires when purchases are disabled outright;
+      a configured-but-broken live path reports a real failure instead. Three new
+      tests lock this in (`__tests__/purchases.test.ts`, "live mode configured but the
+      client fails to initialize"). Still mock-mode by default (no key in this
+      environment or in tests); never flips mock mode on; never picked a go-live date.
+      Still unverified end-to-end (needs a real device + sandbox purchase, which this
+      session cannot do) and still carries the two structural gaps filed 2026-08-11
+      (non-reactive entitlement reads; at-ceiling-premium upsell copy) that PLAN.md's
+      run-1 note deliberately deferred to "the real RevenueCat activation work",
+      reassessed this run and still deferred: fixing entitlement-read reactivity
+      touches every gate site (5 call sites) and is its own bounded unit of work, not
+      a rider on this one. Listed again under Next run below.
 - [~] The two structural gaps PUNCHLIST already filed and deliberately deferred
       ("Backlog from the gating audit", 2026-08-11): (1) gated-sheet copy always
       pitches the free-tier upsell even to a premium user already at the real 5-habit
@@ -131,10 +147,14 @@ Legend: `[x]` verified done in this repo, `[~]` partially done / gap identified,
 ## Next run
 
 1. Address any REVIEW FEEDBACK in HANDOFF.md first.
-2. P3-1 live RevenueCat client (the `~` item above): write it behind the existing
-   `PurchasesClient` seam, dynamic-imported, inert until a real key is configured,
-   with the same unit-test seam pattern `utils/analytics.ts` already proves out.
-   `npx tsc --noEmit` and `npm test` must pass with mock mode still the default
-   behavior (no key set in this environment).
-3. If that lands cleanly with room left in the run's time budget, start P4-3
-   (shareable counter card), otherwise leave it queued.
+2. Start P4-3 (shareable counter card v1): no dependency exists yet
+   (`react-native-view-shot` or equivalent), no external account needed, Lane 2 per
+   ADR 0012 (needs a capture + what-to-test on the PR). Note this also touches
+   `package.json` (a new dependency), so it is native-build-only per ADR 0029 like
+   this run's RevenueCat work was; confirm with `npm run ota:check` after committing.
+3. Optional, smaller: the two structural entitlement gaps filed 2026-08-11 and
+   reconfirmed still-deferred in the P3-1 checklist entry above (non-reactive
+   entitlement reads across mounted screens; gated-sheet copy not distinguishing an
+   at-ceiling premium user from a free user). Worth its own bounded run rather than
+   riding on P4-3.
+4. `npx tsc --noEmit` and `npm test` must pass before committing, same as every run.

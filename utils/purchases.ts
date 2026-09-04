@@ -1,6 +1,7 @@
 /**
  * Purchases: a thin, env-gated entitlement + purchase layer over RevenueCat
- * (task BET-004, Phase 3 monetization). MOCK MODE ONLY for now.
+ * (task BET-004, Phase 3 monetization / P3-1). Mock mode by default; a live
+ * client behind the same seam (below).
  *
  * Why mock-first (mirrors website/lib/register.ts): the whole purchase and
  * entitlement flow needs to be wired, testable, and demoable before Charen's
@@ -17,27 +18,32 @@
  * really opens. Nothing is charged, the planned-pricing banner stays on the
  * paywall, and every log line still says mock.
  *
- * Zero-native guarantee (mirrors utils/analytics.ts): react-native-purchases is
- * never installed or imported at module scope. The only reference to its type is
- * an `import type` (erased at compile time). This keeps the module pure TS and
- * jest-testable, and means no native prebuild is needed until the live
- * implementation lands. When the key ships, the live branch will dynamically
- * `await import('react-native-purchases')` exactly the way analytics loads
- * PostHog, and this file is where that swap happens.
+ * Live client (this run): `react-native-purchases` is now a real dependency
+ * (package.json), which per ADR 0029 means the next ship of this file needs
+ * `eas build`, not an OTA. Its module is still never imported at module scope
+ * in the compiled JS, only dynamically via `initPurchases()` below, and then
+ * only when a key is configured (mirrors utils/analytics.ts's PostHog import).
+ * Mock mode stays the default: no key is set in this environment or in tests,
+ * so the dynamic import never runs on `main` or in CI. The one reference to
+ * the SDK's types is an `import type`, erased at compile time.
  *
- * Activation (Charen, later): install react-native-purchases, run a dev/device
- * build, put the RevenueCat public SDK key in a local untracked .env
- * (EXPO_PUBLIC_REVENUECAT_API_KEY). See .env.example. Until then, MOCK stands.
+ * Activation (Charen, later): run a dev/device build (this dependency forces
+ * one, per ADR 0029), create the `premium` entitlement in the RevenueCat
+ * dashboard (or point EXPO_PUBLIC_REVENUECAT_ENTITLEMENT_ID at whatever it is
+ * actually named there), and put the RevenueCat public SDK key in a local
+ * untracked .env (EXPO_PUBLIC_REVENUECAT_API_KEY). See .env.example. Until
+ * then, MOCK stands. Sandbox purchase/restore/cancel verification needs that
+ * real device build; this repo cannot do it.
  */
 
-// Type-only import placeholder for the eventual live SDK. Erased at compile
-// time, adds nothing to the bundle, and does not require the package to be
-// installed for typecheck (the reference below is commented until it lands).
-// import type Purchases from 'react-native-purchases';
+// Type-only import: erased at compile time, so it adds nothing to the bundle
+// and does not pull the SDK in when purchases are disabled (mirrors how
+// utils/analytics.ts type-imports posthog-react-native).
+import type { default as RNPurchases, CustomerInfo } from 'react-native-purchases';
 
 // AsyncStorage IS a real dependency and is imported the same way utils/storage.ts
-// imports it. The zero-native rule above is about react-native-purchases, which
-// is not installed; it does not apply here.
+// imports it. The dynamic-import rule above is about react-native-purchases;
+// it does not apply here.
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // ---------------------------------------------------------------------------
@@ -85,6 +91,16 @@ function apiKey(): string | undefined {
 }
 
 /**
+ * The RevenueCat entitlement identifier that means "premium" here. Configured
+ * in the RevenueCat dashboard (a Charen action, not code); defaults to the
+ * conventional name so activation needs no env change unless the dashboard
+ * entitlement ends up named something else.
+ */
+function entitlementId(): string {
+  return process.env.EXPO_PUBLIC_REVENUECAT_ENTITLEMENT_ID || 'premium';
+}
+
+/**
  * True only when a RevenueCat key is configured. Until then the module runs in
  * mock mode and this returns false, which is the signal every caller uses to
  * know purchases are not real yet.
@@ -100,8 +116,9 @@ function mode(): 'live' | 'mock' {
 
 // ---------------------------------------------------------------------------
 // Test/live seam. In mock mode `impl` is null and every call takes the mock
-// path. The live implementation (later) sets a real client here through init;
-// unit tests inject a fake to exercise the forwarding path without native code.
+// path. initPurchases() (below) sets a real client here once a key is
+// configured and the live SDK initializes; unit tests inject a fake to
+// exercise the forwarding path without native code.
 // ---------------------------------------------------------------------------
 
 export interface PurchasesClient {
@@ -112,13 +129,35 @@ export interface PurchasesClient {
 
 let impl: PurchasesClient | null = null;
 
+// Read through a function rather than the bare module variable wherever a
+// second read follows an `await`: TS narrows a directly-referenced `impl` to
+// `null` for the rest of a branch once an earlier `if (impl)` falls through,
+// and does not know initPurchases() can reassign it in between. A function
+// call return value is a fresh, unnarrowed read each time.
+function currentImpl(): PurchasesClient | null {
+  return impl;
+}
+
 /**
  * @internal test-only seam (mirrors analytics __setClientForTests). Also drops
- * the in-memory mock grant so each test starts from 'free'.
+ * the in-memory mock grant so each test starts from 'free', and marks live
+ * init "already done" so no test accidentally kicks off a real dynamic import
+ * of react-native-purchases. __resetPurchasesInitForTests() below undoes that
+ * last part for the one test that needs to exercise initPurchases() itself.
  */
 export function __setPurchasesForTests(c: PurchasesClient | null): void {
   impl = c;
   mockEntitlement = 'free';
+  liveEntitlement = 'free';
+  purchasesInitialized = true;
+  purchasesInitPromise = null;
+}
+
+/** @internal test-only: let a test re-trigger initPurchases() from scratch. */
+export function __resetPurchasesInitForTests(): void {
+  purchasesInitialized = false;
+  purchasesInitPromise = null;
+  liveEntitlement = 'free';
 }
 
 // ---------------------------------------------------------------------------
@@ -162,10 +201,15 @@ async function writeMockEntitlement(next: Entitlement): Promise<void> {
 
 /**
  * Read the stored mock grant back into memory. Called once at app start
- * (app/_layout.tsx) so a mock premium survives a relaunch. No-op in live mode.
+ * (app/_layout.tsx) so a mock premium survives a relaunch. In live mode this
+ * instead waits for initPurchases() so the first render sees a real
+ * entitlement rather than the transient 'free' default.
  */
 export async function hydrateEntitlement(): Promise<Entitlement> {
-  if (purchasesEnabled()) return getEntitlement();
+  if (purchasesEnabled()) {
+    await initPurchases();
+    return getEntitlement();
+  }
   try {
     const raw = await AsyncStorage.getItem(MOCK_ENTITLEMENT_KEY);
     mockEntitlement = raw === MOCK_ENTITLEMENT_VALUE ? 'premium' : 'free';
@@ -174,6 +218,114 @@ export async function hydrateEntitlement(): Promise<Entitlement> {
     // than silently revoking it.
   }
   return mockEntitlement;
+}
+
+// ---------------------------------------------------------------------------
+// Live client. Dynamically imports react-native-purchases only when a key is
+// configured (never on `main`'s default env, never in tests), exactly the way
+// utils/analytics.ts's initAnalytics() loads PostHog. Sets `impl` above once
+// ready, which every public function already prefers over the mock path.
+// ---------------------------------------------------------------------------
+
+/** In-memory cache of the live entitlement, since getEntitlement() must stay
+ * synchronous. Starts 'free' and is updated from getCustomerInfo() at init
+ * and from the SDK's customerInfoUpdateListener after every purchase/restore/
+ * renewal/refund RevenueCat reports for the rest of the app session. */
+let liveEntitlement: Entitlement = 'free';
+
+let purchasesInitialized = false;
+let purchasesInitPromise: Promise<void> | null = null;
+
+function entitlementFromCustomerInfo(info: CustomerInfo): Entitlement {
+  return info.entitlements.active[entitlementId()] ? 'premium' : 'free';
+}
+
+/**
+ * Start a real purchase against the store. Not a mock: whatever RevenueCat's
+ * getProducts/purchaseStoreProduct calls do (a real charge, in a sandbox or
+ * production) is what happens. `mod` is the awaited react-native-purchases
+ * module (passed through from initPurchases() so this stays a plain function,
+ * not a closure re-importing the SDK on every call).
+ */
+async function purchaseLive(
+  mod: typeof import('react-native-purchases'),
+  productId: ProductId
+): Promise<PurchaseResult> {
+  try {
+    const products = await mod.default.getProducts([productId]);
+    const product = products[0];
+    if (!product) {
+      return {
+        ok: false,
+        mode: 'live',
+        error: `Product not found in the store: ${productId} (check it is configured in App Store Connect / Play Console and attached to the RevenueCat offering)`,
+      };
+    }
+    const result = await mod.default.purchaseStoreProduct(product);
+    liveEntitlement = entitlementFromCustomerInfo(result.customerInfo);
+    return { ok: true, mode: 'live', entitlement: liveEntitlement, productId };
+  } catch (e) {
+    const err = e as { code?: string; message?: string };
+    if (err.code === mod.PURCHASES_ERROR_CODE.PURCHASE_CANCELLED_ERROR) {
+      return { ok: false, mode: 'live', error: 'cancelled' };
+    }
+    return { ok: false, mode: 'live', error: err.message || 'Purchase failed' };
+  }
+}
+
+async function restoreLive(
+  mod: typeof import('react-native-purchases')
+): Promise<RestoreResult> {
+  try {
+    const info = await mod.default.restorePurchases();
+    liveEntitlement = entitlementFromCustomerInfo(info);
+    return { ok: true, mode: 'live', entitlement: liveEntitlement };
+  } catch (e) {
+    const err = e as { message?: string };
+    return { ok: false, mode: 'live', error: err.message || 'Restore failed' };
+  }
+}
+
+/**
+ * Initialize the live RevenueCat client once, only when a key is configured.
+ * Safe to call repeatedly and from anywhere; never throws. On success it sets
+ * `impl` so every public function below switches from the mock path to the
+ * real SDK. On failure (SDK unavailable, configure() rejects, network down at
+ * boot) it leaves `impl` null: purchase()/restore()/getEntitlement() then
+ * report a live-mode failure instead of falling through to the mock branch,
+ * which would otherwise hand out a free "premium" grant whenever the real
+ * client merely failed to come up. That fallback is deliberate: a broken live
+ * path must fail loudly, never silently comp the user.
+ */
+export async function initPurchases(): Promise<void> {
+  if (purchasesInitialized) return;
+  if (purchasesInitPromise) return purchasesInitPromise;
+  if (!purchasesEnabled()) {
+    purchasesInitialized = true;
+    return;
+  }
+  purchasesInitPromise = (async () => {
+    try {
+      const mod = await import('react-native-purchases');
+      const client: typeof RNPurchases = mod.default;
+      client.configure({ apiKey: apiKey() as string });
+      const info = await client.getCustomerInfo();
+      liveEntitlement = entitlementFromCustomerInfo(info);
+      client.addCustomerInfoUpdateListener((updated) => {
+        liveEntitlement = entitlementFromCustomerInfo(updated);
+      });
+      impl = {
+        getEntitlement: () => liveEntitlement,
+        purchase: (productId) => purchaseLive(mod, productId),
+        restore: () => restoreLive(mod),
+      };
+    } catch {
+      impl = null;
+    } finally {
+      purchasesInitialized = true;
+    }
+  })();
+  return purchasesInitPromise;
 }
 
 /**
@@ -211,6 +363,15 @@ export async function resetMockEntitlement(): Promise<void> {
  */
 export function getEntitlement(): Entitlement {
   if (impl) return impl.getEntitlement();
+  if (purchasesEnabled()) {
+    // Live mode is configured but not yet initialized (or init failed):
+    // report 'free' rather than falling through to the mock branch below,
+    // which would otherwise hand out a mock premium grant whenever live is
+    // merely still starting up. Kick off init (no-op if already running) so
+    // a render shortly after picks up the real value.
+    void initPurchases();
+    return 'free';
+  }
   return mockEntitlement;
 }
 
@@ -228,6 +389,20 @@ export function isPremium(): boolean {
  */
 export async function purchase(productId: ProductId): Promise<PurchaseResult> {
   if (impl) return impl.purchase(productId);
+  if (purchasesEnabled()) {
+    await initPurchases();
+    const ready = currentImpl();
+    if (ready) return ready.purchase(productId);
+    // Live is configured but never came up (bad key, SDK unavailable, no
+    // network at the moment of purchase): report the real failure. Never
+    // fall through to the mock grant below, which would comp a "purchase"
+    // that charged nobody.
+    return {
+      ok: false,
+      mode: 'live',
+      error: 'RevenueCat did not initialize. Check the configured API key and network connection.',
+    };
+  }
   await writeMockEntitlement('premium');
   logMock(`purchase ${productId} -> ok (mock, no real charge, MOCK premium granted locally)`);
   return { ok: true, mode: 'mock', entitlement: getEntitlement(), productId };
@@ -235,11 +410,21 @@ export async function purchase(productId: ProductId): Promise<PurchaseResult> {
 
 /**
  * Restore prior purchases. In mock mode the only thing that can exist is the
- * local mock grant, so it re-reads that and reports it. The live client will
- * query RevenueCat and return the real entitlement.
+ * local mock grant, so it re-reads that and reports it. In live mode this
+ * queries RevenueCat and returns the real entitlement.
  */
 export async function restore(): Promise<RestoreResult> {
   if (impl) return impl.restore();
+  if (purchasesEnabled()) {
+    await initPurchases();
+    const ready = currentImpl();
+    if (ready) return ready.restore();
+    return {
+      ok: false,
+      mode: 'live',
+      error: 'RevenueCat did not initialize. Check the configured API key and network connection.',
+    };
+  }
   const entitlement = await hydrateEntitlement();
   logMock(`restore -> ok (mock, local grant is ${entitlement})`);
   return { ok: true, mode: 'mock', entitlement };
