@@ -33,7 +33,7 @@ import { getEntitlement } from '@/utils/purchases';
 import { formatDate } from '@/utils/dates';
 import { getLeakFinderInterest, getScanSummary, saveLeakFinderInterest } from '@/utils/storage';
 import { track } from '@/utils/analytics';
-import { layout, typeScale, type AppTheme } from '@/constants/theme';
+import { contentColumnStyle, layout, typeScale, type AppTheme } from '@/constants/theme';
 import type { DetectedHabit } from '@/types/habit';
 import type { ScanSummary } from '@/types/scanSummary';
 import { strings } from '@/constants/strings';
@@ -386,6 +386,7 @@ function createStyles(theme: AppTheme) {
       paddingTop: 14,
       paddingBottom: layout.screenBottomClearance,
       gap: 12,
+      ...contentColumnStyle,
     },
     loadingContainer: {
       flex: 1,

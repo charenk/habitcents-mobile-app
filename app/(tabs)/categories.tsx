@@ -21,7 +21,7 @@ import { useExpenses } from '@/contexts/ExpensesContext';
 import { CategoryRow } from '@/components/CategoryRow';
 import { AddCategoryModal } from '@/components/AddCategoryModal';
 import { useEmptyStateAction } from '@/components/onboarding/useEmptyStateAction';
-import { layout, radii, typeScale, type AppTheme } from '@/constants/theme';
+import { contentColumnStyle, layout, radii, typeScale, type AppTheme } from '@/constants/theme';
 import type { Category, CategoryIcon } from '@/types/category';
 import { strings } from '@/constants/strings';
 import { expenseBelongsToCategory } from '@/utils/expenseCategory';
@@ -228,6 +228,7 @@ function createStyles(theme: AppTheme) {
       paddingTop: 14,
       paddingBottom: layout.screenBottomClearance,
       gap: 20,
+      ...contentColumnStyle,
     },
     section: {
       gap: 8,

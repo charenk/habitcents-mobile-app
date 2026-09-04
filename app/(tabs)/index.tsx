@@ -43,9 +43,9 @@ import { cardText, type CoachMomentCardId } from '@/utils/coachMoments';
 import { progressTowardDetection } from '@/utils/habitDetection';
 import { formatDate } from '@/utils/dates';
 import { track } from '@/utils/analytics';
-import { hapticError } from '@/utils/motion';
+import { hapticError, useReducedMotion } from '@/utils/motion';
 import { useSegmentPager } from '@/utils/useSegmentPager';
-import { radii, spacing, typeScale, type AppTheme } from '@/constants/theme';
+import { contentColumnStyle, radii, spacing, typeScale, type AppTheme } from '@/constants/theme';
 import type { DetectedHabit, HabitChangeGoal } from '@/types/habit';
 import { strings } from '@/constants/strings';
 import { useToast, useToastLift } from '@/components/ui/Toast';
@@ -1268,6 +1268,7 @@ function createStyles(theme: AppTheme) {
       // stacked on the dock's own padding (ADR 0038). This is breathing room
       // between the last row and the dock's top edge, nothing more.
       paddingBottom: spacing.xxl,
+      ...contentColumnStyle,
     },
     // FTE zero state (TodayFteSpent artboard): the hook centered in the
     // scroller, which since ADR 0038 runs from the chips down to the dock
@@ -1326,6 +1327,7 @@ function createStyles(theme: AppTheme) {
       // Was screenBottomClearance (100); the dock below reserves its own
       // height now (ADR 0038), so this is breathing room only.
       paddingBottom: spacing.xxl,
+      ...contentColumnStyle,
     },
     sectionHeader: {
       marginTop: spacing.gutter,
@@ -1363,6 +1365,7 @@ function createStyles(theme: AppTheme) {
       // Was screenBottomClearance (100); the dock below reserves its own
       // height now (ADR 0038), so this is breathing room only.
       paddingBottom: spacing.xxl,
+      ...contentColumnStyle,
     },
     // FTE zero block (TodayFteKept artboard): the progress card or the hook,
     // centered in the pane; mirror of spentZeroWrap above, plus the stretch
