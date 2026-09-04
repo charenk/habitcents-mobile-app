@@ -27,13 +27,19 @@ function candidate(overrides: Partial<HabitCandidate> = {}): HabitCandidate {
 }
 
 describe('categoryDisplayLabel', () => {
-  it('renames the legacy Mortgage value to Mortgage/Rent', () => {
-    expect(categoryDisplayLabel('Mortgage')).toBe('Mortgage/Rent');
+  // Display renames (Charen, 2026-09-04): stored values stay frozen for
+  // backward compatibility, the labels moved to Home / Subscriptions (no "/"
+  // in any category name).
+  it('renames the stored Mortgage value to Home', () => {
+    expect(categoryDisplayLabel('Mortgage')).toBe('Home');
+  });
+
+  it('renames the stored Software & Subscriptions value to Subscriptions', () => {
+    expect(categoryDisplayLabel('Software & Subscriptions')).toBe('Subscriptions');
   });
 
   it('passes every other category through unchanged', () => {
     expect(categoryDisplayLabel('Food')).toBe('Food');
-    expect(categoryDisplayLabel('Software & Subscriptions')).toBe('Software & Subscriptions');
     expect(categoryDisplayLabel('Other')).toBe('Other');
   });
 });

@@ -12,9 +12,13 @@ import type { Category } from '@/types/category';
 import type { ExpenseCategory } from '@/types/expense';
 
 /**
- * Every ExpenseCategory value, as stored. 'Mortgage/Rent' is the taxonomy v2
- * DISPLAY name for the 'Mortgage' value (types/category.ts DEFAULT_CATEGORIES),
- * so a Category.name has to be mapped back before it is written to an expense.
+ * Every ExpenseCategory value, as stored. Display names diverge from two of
+ * them (types/category.ts DEFAULT_CATEGORIES): 'Home' renders the stored
+ * 'Mortgage' value, 'Subscriptions' renders the stored
+ * 'Software & Subscriptions' value, so a Category.name has to be mapped back
+ * before it is written to an expense. 'Mortgage/Rent' was the 2026-07..09
+ * display name and is kept as an accepted alias in case a stored default row
+ * loads before its one-time rename has persisted.
  */
 const STORED_CATEGORIES: readonly ExpenseCategory[] = [
   'Mortgage',
@@ -31,7 +35,8 @@ const STORED_CATEGORIES: readonly ExpenseCategory[] = [
 
 /** Map a Category.name onto the ExpenseCategory that gets stored on the row. */
 export function toExpenseCategory(name: string): ExpenseCategory {
-  if (name === 'Mortgage/Rent') return 'Mortgage';
+  if (name === 'Home' || name === 'Mortgage/Rent') return 'Mortgage';
+  if (name === 'Subscriptions') return 'Software & Subscriptions';
   const match = STORED_CATEGORIES.find((c) => c === name);
   return match ?? 'Other';
 }

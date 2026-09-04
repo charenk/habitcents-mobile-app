@@ -8,6 +8,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { radii, spacing, typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import { categoryEmoji, categoryIdentityColor } from '@/constants/categoryEmoji';
+import { categoryDisplayLabel } from '@/utils/leakScanBridge';
 import { categoriesInTier, selectedCategories, type ScanScope } from '@/utils/leakScan/scope';
 import type { ExpenseCategory } from '@/types/expense';
 
@@ -89,7 +90,9 @@ export function ScopeScreen({ scope, onToggle, onConfirm, onBack }: ScopeScreenP
                 onPress={() => onToggle(category)}
                 accessibilityRole="switch"
                 accessibilityState={{ checked: on }}
-                accessibilityLabel={category}
+                // Display label, not the stored value: the stored 'Mortgage'
+                // and 'Software & Subscriptions' render as Home/Subscriptions.
+                accessibilityLabel={categoryDisplayLabel(category)}
                 // Status is carried by colour AND by the label, so the state is
                 // never colour-only (PATTERN_VOCABULARY, accessibility).
                 accessibilityHint={on ? strings.leakScan.scopeOn : strings.leakScan.scopeOff}
@@ -99,7 +102,7 @@ export function ScopeScreen({ scope, onToggle, onConfirm, onBack }: ScopeScreenP
                   size={40}
                   color={categoryIdentityColor(category)}
                 />
-                <Text style={styles.rowLabel}>{category}</Text>
+                <Text style={styles.rowLabel}>{categoryDisplayLabel(category)}</Text>
                 <View style={[styles.check, on ? styles.checkOn : null]}>
                   {on ? <Icon name="Check" size={14} color={theme.white} /> : null}
                 </View>
@@ -118,14 +121,14 @@ export function ScopeScreen({ scope, onToggle, onConfirm, onBack }: ScopeScreenP
               <View
                 key={category}
                 style={styles.lockedRow}
-                accessibilityLabel={`${category}. ${strings.leakScan.scopeLockedHint}`}
+                accessibilityLabel={`${categoryDisplayLabel(category)}. ${strings.leakScan.scopeLockedHint}`}
               >
                 <EmojiTile
                   emoji={categoryEmoji(category)}
                   size={36}
                   color={categoryIdentityColor(category)}
                 />
-                <Text style={styles.lockedLabel}>{category}</Text>
+                <Text style={styles.lockedLabel}>{categoryDisplayLabel(category)}</Text>
                 {/* Spelled out rather than a padlock glyph: the icon map is a
                     curated vocabulary and this state is clearer in words. */}
                 <Text style={styles.lockedHint}>{strings.leakScan.scopeLockedHint}</Text>

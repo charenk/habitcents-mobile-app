@@ -28,6 +28,7 @@ import { strings } from '@/constants/strings';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import type { Expense } from '@/types/expense';
+import { categoryDisplayLabel } from '@/utils/leakScanBridge';
 import { isRecurringLedgerRow } from '@/utils/recurring';
 
 export type ExpenseRowProps = {
@@ -44,7 +45,9 @@ function ExpenseRowImpl({ expense, onPress, subtitle }: ExpenseRowProps): React.
 
   const amountLabel = format(expense.amount);
   const secondary = subtitle ?? expense.time;
-  const name = expense.title || expense.category;
+  // Untitled rows fall back to the category, mapped to its display name so a
+  // stored 'Mortgage' / 'Software & Subscriptions' never reaches the screen.
+  const name = expense.title || categoryDisplayLabel(expense.category);
   const recurring = isRecurringLedgerRow(expense);
 
   const baseLabel = onPress
