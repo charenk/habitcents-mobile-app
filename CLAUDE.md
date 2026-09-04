@@ -10,12 +10,12 @@
 >
 > **PHASE 1 COMPLETE (2026-07-02).** Core-loop repair done and browser-verified (P0-1, P0-5, P1-1..P1-7). What now works for real: correct habit-detection math, a live dollars-kept counter, real streak history, merchant-based detection, real categories + merchant field on the add form, expense edit/delete, and a **real Upcoming view** (recurring weekly/monthly expenses → projected next occurrences; brought back as a genuine feature after the initial fake version was cut). Storage is hardened against corruption/data-loss; tests live in `__tests__/` (run `npm test`). STILL CUT / do not re-add as fakes: mic/voice FAB, reminder-time no-ops, budgets, Reports widget edit mode, progressive reveals, lessons library. Notifications/reminders and a calendar for Upcoming are deferred to v1.x (real implementations only). Dev-only demo seeding lives on the `dev/seed-data` branch (flag-gated), never on `main`.
 
-## PR flow (ADR 0012, umbrella repo)
+## PR flow (ADR 0012, amended by ADR 0035; umbrella repo)
 
-Branch, never main. Fill the PR template (Was/Now, Why, Improvement, Measure, Lane). Lane 1 `auto-merge` = ops/backend/infra with zero user-visible change, CI green, agent merges. Lane 2 `needs-user-test` = anything a user sees or feels, plus always pricing/payments/legal/analytics contracts; attach capture + what-to-test, wait for Charen. Debatable = Lane 2. Full policy: ../docs/decisions/0012-pr-merge-policy.md (habitcents-ops repo).
+Branch, never main. Fill the PR template (Was/Now, Why, Improvement, Measure, Lane). Every PR merges once CI is green, and the agent that opened it merges it (Charen, 2026-09-04). `needs-user-test` means "look at this on the next TestFlight build"; it no longer holds a merge. The human gate stays for pricing, payments, legal wording, analytics contracts, data migration or deletion, and the `production` channel. Real testing happens on TestFlight builds from main (`internal` profile, auto-submit), started on demand and never from a branch; feedback comes back as new PRs. Full policy: ../docs/decisions/0035-merge-on-green-test-from-main.md and 0012 (habitcents-ops repo).
 
 Routine branches (`routine/*`, the long-lived draft PRs the cloud routines
-keep open) are outside both lanes. A session never labels, rebases, merges,
+keep open) are outside this flow. A session never labels, rebases, merges,
 closes or reports on them as part of its own PR work; they have their own
 worktree, branch and merge flow, run from claude.ai/code/routines (Charen,
 2026-09-04). Check the "Routine status board" issue before touching files a

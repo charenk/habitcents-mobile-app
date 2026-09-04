@@ -12,12 +12,13 @@
 ## How we measure success
 <!-- Metric or check. "CI + 282-test suite" is a valid answer for infra. -->
 
-## Lane (ADR 0012)
-<!-- auto-merge: ops/backend/infra, zero user-visible change, CI green, agent merges.
-     needs-user-test: anything a user could see or feel; attach simulator capture + what to test, wait for Charen. -->
+## Lane (ADR 0012, amended by 0035)
+<!-- auto-merge: the default. CI green, the agent that opened the PR merges it.
+     human gate: pricing, payments, legal wording, analytics contracts, data migration/deletion, production channel. Wait for Charen.
+     needs-user-test is a note for the next TestFlight build from main, not a hold. -->
 
 ## Capture / screenshots
-<!-- Required for needs-user-test: simulator screenshots or a short clip, before/after. -->
+<!-- Welcome for anything a user can see; simulator screenshots or a short clip, before/after. -->
 
 ## Design vocabulary
 - [ ] matches design/PATTERN_VOCABULARY.md: yes / deviation noted
