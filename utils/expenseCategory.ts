@@ -33,12 +33,40 @@ const STORED_CATEGORIES: readonly ExpenseCategory[] = [
   'Other',
 ];
 
+/** Display names whose stored value differs (current names and retired aliases). */
+const DISPLAY_TO_STORED: Record<string, ExpenseCategory> = {
+  Home: 'Mortgage',
+  'Mortgage/Rent': 'Mortgage',
+  Subscriptions: 'Software & Subscriptions',
+};
+
 /** Map a Category.name onto the ExpenseCategory that gets stored on the row. */
 export function toExpenseCategory(name: string): ExpenseCategory {
-  if (name === 'Home' || name === 'Mortgage/Rent') return 'Mortgage';
-  if (name === 'Subscriptions') return 'Software & Subscriptions';
+  const mapped = DISPLAY_TO_STORED[name];
+  if (mapped) return mapped;
   const match = STORED_CATEGORIES.find((c) => c === name);
   return match ?? 'Other';
+}
+
+/**
+ * True when an expense row belongs to the category. The stored
+ * expense.category is compared against the category's name AND its mapped
+ * stored value, because two default categories display under names that are
+ * not their stored value (Home, Subscriptions). Deliberately NOT
+ * toExpenseCategory(name) === expense.category: that helper falls back to
+ * 'Other' for unknown names, which would make every custom category claim
+ * the whole Other bucket. Fixes a latent miss where "Mortgage/Rent" detail
+ * screens matched nothing stored as 'Mortgage'.
+ */
+export function expenseBelongsToCategory(
+  expense: { category: string; categoryId?: string },
+  category: Pick<Category, 'id' | 'name'>
+): boolean {
+  return (
+    expense.categoryId === category.id ||
+    expense.category === category.name ||
+    DISPLAY_TO_STORED[category.name] === expense.category
+  );
 }
 
 /** True when a Category is the one currently selected on the sheet. */

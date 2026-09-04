@@ -19,7 +19,7 @@ import React from 'react';
 import { act, cleanup, render } from '@testing-library/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CategoriesProvider, useCategories } from '@/contexts/CategoriesContext';
-import { toExpenseCategory } from '@/utils/expenseCategory';
+import { expenseBelongsToCategory, toExpenseCategory } from '@/utils/expenseCategory';
 import type { Category } from '@/types/category';
 
 const CATEGORIES_KEY = '@habitcents_categories';
@@ -93,6 +93,28 @@ describe('default category rename migration', () => {
     // The retired display name stays accepted (a stored default row could
     // load before its one-time rename has persisted).
     expect(toExpenseCategory('Mortgage/Rent')).toBe('Mortgage');
+  });
+
+  it('matches stored expenses to renamed categories, and never leaks Other onto customs', () => {
+    const home = { id: 'default-0', name: 'Home' };
+    // A Home category owns rows stored as 'Mortgage' (the frozen value)...
+    expect(expenseBelongsToCategory({ category: 'Mortgage' }, home)).toBe(true);
+    // ...and Subscriptions owns 'Software & Subscriptions' rows.
+    expect(
+      expenseBelongsToCategory(
+        { category: 'Software & Subscriptions' },
+        { id: 'default-8', name: 'Subscriptions' }
+      )
+    ).toBe(true);
+    // Exact-name and id matches still work.
+    expect(expenseBelongsToCategory({ category: 'Food' }, { id: 'default-3', name: 'Food' })).toBe(true);
+    expect(
+      expenseBelongsToCategory({ category: 'Other', categoryId: 'cat-x' }, { id: 'cat-x', name: 'Streaming' })
+    ).toBe(true);
+    // A custom category must NOT claim the Other bucket via the
+    // toExpenseCategory fallback (the trap expenseBelongsToCategory exists
+    // to avoid).
+    expect(expenseBelongsToCategory({ category: 'Other' }, { id: 'cat-y', name: 'Streaming' })).toBe(false);
   });
 
   it('never touches a custom category that shares an old default name', async () => {

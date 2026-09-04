@@ -19,6 +19,7 @@ import { withAlpha, compositeOver, mixHex, contrastRatio } from '@/utils/color';
 import { radii, typeScale, layout, type AppTheme } from '@/constants/theme';
 import type { CategoryIcon } from '@/types/category';
 import type { Expense } from '@/types/expense';
+import { expenseBelongsToCategory } from '@/utils/expenseCategory';
 import { strings } from '@/constants/strings';
 
 // UX-067: the 40pt category identity icon renders in the raw category hue on
@@ -57,12 +58,11 @@ export default function CategoryDetailScreen() {
 
   const category = getCategoryById(id || '');
 
-  // Get expenses for this category
+  // Get expenses for this category. expenseBelongsToCategory handles the
+  // display-vs-stored name split (Home rows are stored as 'Mortgage').
   const categoryExpenses = useMemo(() => {
     if (!category) return [];
-    return expenses.filter(
-      e => e.category === category.name || e.categoryId === category.id
-    );
+    return expenses.filter(e => expenseBelongsToCategory(e, category));
   }, [expenses, category]);
 
   // Calculate stats

@@ -24,6 +24,7 @@ import { useEmptyStateAction } from '@/components/onboarding/useEmptyStateAction
 import { layout, radii, typeScale, type AppTheme } from '@/constants/theme';
 import type { Category, CategoryIcon } from '@/types/category';
 import { strings } from '@/constants/strings';
+import { expenseBelongsToCategory } from '@/utils/expenseCategory';
 import { hapticError, hapticWarning } from '@/utils/motion';
 import { useToast } from '@/components/ui/Toast';
 
@@ -128,8 +129,10 @@ export default function CategoriesScreen() {
     // app/category/[id].tsx's thisMonthStart/thisMonthExpenses.
     const now = new Date();
     const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    // expenseBelongsToCategory handles the display-vs-stored name split
+    // (Home rows are stored as 'Mortgage').
     const categoryExpenses = expenses.filter(
-      e => (e.category === category.name || e.categoryId === category.id) && e.date >= thisMonthStart
+      e => expenseBelongsToCategory(e, category) && e.date >= thisMonthStart
     );
     return categoryExpenses.reduce((sum, e) => sum + e.amount, 0);
   }, [expenses]);
