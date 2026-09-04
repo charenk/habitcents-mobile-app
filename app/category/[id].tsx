@@ -178,17 +178,16 @@ export default function CategoryDetailScreen() {
   const hasTrendData = trendData.some(d => d.amount > 0);
   const maxTrendAmount = Math.max(...trendData.map(d => d.amount), 1);
 
-  // UX-044: borderTopWidth lives on logRow itself, so the first-row
+  // UX-044: borderTopWidth lives on listRow itself, so the first-row
   // suppression has to be applied on that style, not on a wrapper View
-  // (matches how merchantRow does it below, styles.merchantRow +
-  // styles.rowNoBorder in one array).
+  // (both lists apply styles.listRow + styles.rowNoBorder in one array).
   const renderLogRow = ({ item, isFirst }: { item: Expense; isFirst?: boolean }) => (
-    <View key={item.id} style={[styles.logRow, isFirst && styles.rowNoBorder]}>
-      <View style={styles.logContent}>
-        <Text style={styles.logTitle} numberOfLines={1}>
+    <View key={item.id} style={[styles.listRow, isFirst && styles.rowNoBorder]}>
+      <View style={styles.rowContent}>
+        <Text style={styles.rowTitle} numberOfLines={1}>
           {item.title}
         </Text>
-        <Text style={styles.logDate}>
+        <Text style={styles.rowCaption}>
           {/* UX-072: this called item.date.toLocaleDateString() with no
               options, which on Hermes without full ICU returns an unformatted
               ISO-ish string, so recent logs read "2026-08-01 at 8:14 AM". Every
@@ -200,7 +199,10 @@ export default function CategoryDetailScreen() {
           )}
         </Text>
       </View>
-      <Text style={styles.logAmount}>{format(item.amount, { signed: true })}</Text>
+      {/* Unsigned (U7, ExpenseRow's rule): every row in this list is a
+          spend, so the minus carried no information, and Top merchants
+          right above it was already unsigned. */}
+      <Text style={styles.rowAmount}>{format(item.amount)}</Text>
     </View>
   );
 
@@ -325,27 +327,30 @@ export default function CategoryDetailScreen() {
             <Text style={styles.sectionTitle} accessibilityRole="header">
               {strings.categoryDetail.topMerchants}
             </Text>
-            <View style={styles.merchantsCard}>
+            <View style={styles.listCard}>
               {/* UX-056: keyed by index before; merchant.name is already
                   the merchantMap key upstream, so it is guaranteed unique
-                  within topMerchants. */}
+                  within topMerchants. Rank circles removed (Charen,
+                  2026-09-04): the list is sorted, so order already carries
+                  the rank, and the 28pt circles pushed this card's text
+                  40pt right of the recent-logs card below it, making two
+                  cards on one screen read as two designs. Both lists now
+                  share one row grammar (styles.listRow/rowTitle/rowCaption/
+                  rowAmount, the ExpenseRow type ramp). */}
               {stats.topMerchants.map((merchant, index) => (
                 <View
                   key={merchant.name}
-                  style={[styles.merchantRow, index === 0 && styles.rowNoBorder]}
+                  style={[styles.listRow, index === 0 && styles.rowNoBorder]}
                 >
-                  <View style={styles.merchantRank}>
-                    <Text style={styles.merchantRankText}>{index + 1}</Text>
-                  </View>
-                  <View style={styles.merchantContent}>
-                    <Text style={styles.merchantName} numberOfLines={1}>
+                  <View style={styles.rowContent}>
+                    <Text style={styles.rowTitle} numberOfLines={1}>
                       {merchant.name}
                     </Text>
-                    <Text style={styles.merchantCount}>
+                    <Text style={styles.rowCaption}>
                       {strings.categoryDetail.logCount(merchant.count)}
                     </Text>
                   </View>
-                  <Text style={styles.merchantTotal}>{format(merchant.total)}</Text>
+                  <Text style={styles.rowAmount}>{format(merchant.total)}</Text>
                 </View>
               ))}
             </View>
@@ -364,7 +369,7 @@ export default function CategoryDetailScreen() {
               ? `${strings.categoryDetail.recentLogs} · ${strings.categoryDetail.recentLogsCount(recentLogs.length, categoryExpenses.length)}`
               : strings.categoryDetail.recentLogs}
           </Text>
-          <View style={styles.logsCard}>
+          <View style={styles.listCard}>
             {recentLogs.map((expense, index) => renderLogRow({ item: expense, isFirst: index === 0 }))}
             {categoryExpenses.length === 0 && (
               <EmptyState body={strings.categoryDetail.noExpensesLogged} />
@@ -559,14 +564,20 @@ function createStyles(theme: AppTheme) {
       color: theme.slate,
       marginTop: 8,
     },
-    merchantsCard: {
+    // One row grammar for both lists on this screen (Charen, 2026-09-04):
+    // Top merchants and Recent logs were two hand-rolled near-twins (rank
+    // circles, uiMedium titles, slate secondary captions, one signed
+    // amount) that read as two designs stacked on one screen. Both now use
+    // this shared set, on ExpenseRow's type ramp (uiSemibold body title,
+    // caption mistText line, uiSemibold tabular amount, unsigned).
+    listCard: {
       backgroundColor: theme.white,
       borderWidth: 1,
       borderColor: theme.cloud,
       borderRadius: radii.card,
       paddingHorizontal: 16,
     },
-    merchantRow: {
+    listRow: {
       flexDirection: 'row',
       alignItems: 'center',
       paddingVertical: 10,
@@ -578,71 +589,26 @@ function createStyles(theme: AppTheme) {
     rowNoBorder: {
       borderTopWidth: 0,
     },
-    merchantRank: {
-      width: 28,
-      height: 28,
-      borderRadius: radii.pill,
-      backgroundColor: theme.snow,
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginRight: 12,
-    },
-    merchantRankText: {
-      fontSize: typeScale.secondary,
-      fontFamily: theme.fonts.uiSemibold,
-      color: theme.slate,
-    },
-    merchantContent: {
+    rowContent: {
       flex: 1,
     },
-    merchantName: {
+    rowTitle: {
       fontSize: typeScale.body,
-      fontFamily: theme.fonts.uiMedium,
+      fontFamily: theme.fonts.uiSemibold,
       color: theme.ink,
     },
-    merchantCount: {
-      fontSize: typeScale.secondary,
+    rowCaption: {
+      fontSize: typeScale.caption,
       fontFamily: theme.fonts.ui,
-      color: theme.slate,
+      color: theme.mistText,
+      marginTop: 1,
     },
-    merchantTotal: {
+    rowAmount: {
       fontSize: typeScale.body,
       fontFamily: theme.fonts.uiSemibold,
       color: theme.ink,
       fontVariant: ['tabular-nums'],
-    },
-    logsCard: {
-      backgroundColor: theme.white,
-      borderWidth: 1,
-      borderColor: theme.cloud,
-      borderRadius: radii.card,
-      paddingHorizontal: 16,
-    },
-    logRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingVertical: 10,
-      borderTopWidth: 1,
-      borderTopColor: theme.hairlineSubtle,
-    },
-    logContent: {
-      flex: 1,
-    },
-    logTitle: {
-      fontSize: typeScale.body,
-      fontFamily: theme.fonts.uiMedium,
-      color: theme.ink,
-    },
-    logDate: {
-      fontSize: typeScale.secondary,
-      fontFamily: theme.fonts.ui,
-      color: theme.slate,
-    },
-    logAmount: {
-      fontSize: typeScale.body,
-      fontFamily: theme.fonts.uiSemibold,
-      color: theme.ink,
-      fontVariant: ['tabular-nums'],
+      marginLeft: 8,
     },
   });
 }
