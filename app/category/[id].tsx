@@ -290,16 +290,24 @@ export default function CategoryDetailScreen() {
                     stable, non-positional key. */}
                 {trendData.map((item) => (
                   <View key={item.month} style={styles.trendBar}>
-                    {/* UX-009: spend bars are mist on snow, never the raw
-                        category identity color. Matches the track/fill
-                        approach in WhereItWentCard and ScanSnapshotCard. */}
-                    <View style={styles.trendBarTrack}>
-                      <View
-                        style={[
-                          styles.trendBarFill,
-                          { height: `${(item.amount / maxTrendAmount) * 100}%` },
-                        ]}
-                      />
+                    {/* UX-009: spend bars are mist, never sage, never the
+                        raw category identity color. No full-height track
+                        (Charen, 2026-09-04): six ghost columns made every
+                        month read as a tall block, so bars rise from the
+                        shared baseline and a zero month shows only a quiet
+                        baseline tick. Tiny spends keep a 6% floor so they
+                        stay visible next to the max month. */}
+                    <View style={styles.trendBarArea}>
+                      {item.amount > 0 ? (
+                        <View
+                          style={[
+                            styles.trendBarFill,
+                            { height: `${Math.max((item.amount / maxTrendAmount) * 100, 6)}%` },
+                          ]}
+                        />
+                      ) : (
+                        <View style={styles.trendBarZero} />
+                      )}
                     </View>
                     <Text style={styles.trendLabel}>{item.month}</Text>
                   </View>
@@ -426,18 +434,27 @@ function createStyles(theme: AppTheme) {
       alignItems: 'stretch',
       marginBottom: 24,
     },
+    // Left-aligned inside every column (Charen, 2026-09-04): value, label,
+    // and trend caption share one left edge per column, so the band reads
+    // as three aligned blocks instead of three centered islands.
     statBandCol: {
       flex: 1,
-      alignItems: 'center',
+      alignItems: 'flex-start',
       justifyContent: 'center',
       gap: 3,
-      paddingHorizontal: 8,
+      paddingHorizontal: 12,
     },
     // The month total leads: a wider column and one serif rank up (26 vs 22)
     // so the primary number reads first without dwarfing its neighbors the
-    // way the old 36pt hero card did.
+    // way the old 36pt hero card did. Its left padding matches trendCard's
+    // 16pt inner padding so the two cards' content edges line up.
     statBandLead: {
-      flex: 1.35,
+      // 1.6, not 1.35: left alignment costs the centered layout's shared
+      // slack, and the trend caption ("97% vs last month") needs the room
+      // to stay on one line at the default type size.
+      flex: 1.6,
+      paddingLeft: 16,
+      paddingRight: 4,
     },
     statBandColWide: {
       flex: 1.15,
@@ -512,22 +529,29 @@ function createStyles(theme: AppTheme) {
       alignItems: 'center',
       marginHorizontal: 4,
     },
-    // UX-009: spend bars are mist on snow (never sage, never the category's
-    // raw identity color). Track reserves the full column height; fill grows
-    // from the bottom within it.
-    trendBarTrack: {
+    // UX-009: spend bars are mist (never sage, never the category's raw
+    // identity color). The area is an invisible full-height column so the
+    // percentage heights resolve; only the fill and the zero tick paint.
+    trendBarArea: {
       flex: 1,
       width: '100%',
-      borderRadius: 4,
-      backgroundColor: theme.categoryBarTrack,
       justifyContent: 'flex-end',
-      overflow: 'hidden',
     },
     trendBarFill: {
       width: '100%',
-      borderRadius: 4,
-      minHeight: 4,
+      borderTopLeftRadius: 6,
+      borderTopRightRadius: 6,
+      borderBottomLeftRadius: 3,
+      borderBottomRightRadius: 3,
       backgroundColor: theme.categoryBarFill,
+    },
+    // A month with zero spend is a measurement, not missing data: it keeps
+    // a quiet baseline tick instead of a full-height ghost column.
+    trendBarZero: {
+      width: '100%',
+      height: 4,
+      borderRadius: 3,
+      backgroundColor: theme.hairlineSubtle,
     },
     trendLabel: {
       fontSize: typeScale.caption,
