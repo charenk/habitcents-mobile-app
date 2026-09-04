@@ -51,7 +51,14 @@ export function ScreenHeader({ title, eyebrow, actions, onBack }: ScreenHeaderPr
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   return (
-    <View style={[styles.row, onBack ? { paddingTop: insets.top + 16 } : null]}>
+    // Pushed mode also zeroes the header's own horizontal padding: pushed
+    // routes render this as the first child of scroll content that already
+    // carries the 20pt gutter, so the header's own 20 doubled it and the
+    // back pill sat at 40pt from the edge (Charen, 2026-09-04). Tabs render
+    // the header outside any padded container and keep the built-in gutter.
+    <View
+      style={[styles.row, onBack ? { paddingTop: insets.top + 16, paddingHorizontal: 0 } : null]}
+    >
       <View style={styles.leftGroup}>
         {onBack ? (
           <TouchableOpacity

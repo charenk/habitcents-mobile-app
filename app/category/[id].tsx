@@ -240,44 +240,40 @@ export default function CategoryDetailScreen() {
           </View>
         </View>
 
-        {/* Summary Card */}
-        <View style={styles.summaryCard}>
-          <View style={styles.summaryMain}>
-            <Text style={styles.summaryAmount}>{format(stats.thisMonth)}</Text>
-            <Text style={styles.summaryLabel}>{strings.categoryDetail.thisMonth}</Text>
+        {/* Stat band (Charen, 2026-09-04): the full-width this-month card
+            and the two half-width stat cards merged into one horizontal
+            band, three columns with hairline dividers. The lead column
+            keeps the trend line. */}
+        <View style={styles.statBand}>
+          <View style={[styles.statBandCol, styles.statBandLead]}>
+            <Text style={styles.statBandAmount}>{format(stats.thisMonth)}</Text>
+            <Text style={styles.statBandLabel}>{strings.categoryDetail.thisMonth}</Text>
+            {stats.lastMonth > 0 && (
+              // UX-008: both directions render in theme.slate. Coral/sage
+              // (red/green P&L coding) shame-coded a month where someone
+              // spent more; the arrow direction and the wording already
+              // carry the meaning, color should not add judgment on top.
+              <View style={styles.summaryTrend}>
+                <Icon
+                  name={trendPercentage > 0 ? 'TrendingUp' : 'TrendingDown'}
+                  size={14}
+                  color={theme.slate}
+                />
+                <Text style={[styles.summaryTrendText, { color: theme.slate }]}>
+                  {strings.categoryDetail.vsLastMonth(Math.abs(trendPercentage))}
+                </Text>
+              </View>
+            )}
           </View>
-          {stats.lastMonth > 0 && (
-            // UX-008: both directions render in theme.slate. Coral/sage
-            // (red/green P&L coding) shame-coded a month where someone spent
-            // more; the arrow direction and the wording already carry the
-            // meaning, color should not add judgment on top.
-            <View style={styles.summaryTrend}>
-              <Icon
-                name={trendPercentage > 0 ? 'TrendingUp' : 'TrendingDown'}
-                size={18}
-                color={theme.slate}
-              />
-              <Text
-                style={[
-                  styles.summaryTrendText,
-                  { color: theme.slate },
-                ]}
-              >
-                {strings.categoryDetail.vsLastMonth(Math.abs(trendPercentage))}
-              </Text>
-            </View>
-          )}
-        </View>
-
-        {/* Stats Grid */}
-        <View style={styles.statsGrid}>
-          <View style={styles.statCard}>
+          <View style={styles.statBandDivider} />
+          <View style={styles.statBandCol}>
             <Text style={styles.statValue}>{stats.logCount}</Text>
-            <Text style={styles.statLabel}>{strings.categoryDetail.logsStat}</Text>
+            <Text style={styles.statBandLabel}>{strings.categoryDetail.logsStat}</Text>
           </View>
-          <View style={styles.statCard}>
+          <View style={styles.statBandDivider} />
+          <View style={[styles.statBandCol, styles.statBandColWide]}>
             <Text style={styles.statValue}>{format(stats.average)}</Text>
-            <Text style={styles.statLabel}>{strings.categoryDetail.averageStat}</Text>
+            <Text style={styles.statBandLabel}>{strings.categoryDetail.averageStat}</Text>
           </View>
         </View>
 
@@ -417,55 +413,62 @@ function createStyles(theme: AppTheme) {
       justifyContent: 'center',
       marginBottom: 16,
     },
-    summaryCard: {
+    // One horizontal band replaces summaryCard + statsGrid (Charen,
+    // 2026-09-04): feature-card chrome, three centered columns, hairline
+    // dividers between them.
+    statBand: {
       backgroundColor: theme.white,
       borderWidth: 1,
       borderColor: theme.cloud,
       borderRadius: radii.feature,
-      padding: 20,
-      alignItems: 'center',
-      marginBottom: 16,
+      paddingVertical: 18,
+      flexDirection: 'row',
+      alignItems: 'stretch',
+      marginBottom: 24,
     },
-    summaryMain: {
+    statBandCol: {
+      flex: 1,
       alignItems: 'center',
-      marginBottom: 8,
+      justifyContent: 'center',
+      gap: 3,
+      paddingHorizontal: 8,
     },
-    // Money, hero scale: the display serif with tabular figures
+    // The month total leads: a wider column and one serif rank up (26 vs 22)
+    // so the primary number reads first without dwarfing its neighbors the
+    // way the old 36pt hero card did.
+    statBandLead: {
+      flex: 1.35,
+    },
+    statBandColWide: {
+      flex: 1.15,
+    },
+    statBandDivider: {
+      width: 1,
+      backgroundColor: theme.hairlineSubtle,
+      marginVertical: 2,
+    },
+    // Money at band scale: the display serif with tabular figures
     // (design/PATTERN_VOCABULARY.md, "Instrument Serif ... money").
-    summaryAmount: {
-      // Batch 2 token pass: literal 36 -> typeScale.displayLarge.
-      fontSize: typeScale.displayLarge,
+    statBandAmount: {
+      fontSize: typeScale.sheetTitle,
       fontFamily: theme.fonts.display,
       fontVariant: ['tabular-nums'],
       color: theme.ink,
     },
-    summaryLabel: {
-      fontSize: typeScale.body,
+    statBandLabel: {
+      fontSize: typeScale.secondary,
       fontFamily: theme.fonts.ui,
       color: theme.slate,
     },
     summaryTrend: {
       flexDirection: 'row',
       alignItems: 'center',
+      marginTop: 2,
     },
     summaryTrendText: {
-      fontSize: typeScale.secondary,
+      fontSize: typeScale.caption,
       fontFamily: theme.fonts.uiMedium,
       marginLeft: 4,
-    },
-    statsGrid: {
-      flexDirection: 'row',
-      gap: 12,
-      marginBottom: 24,
-    },
-    statCard: {
-      flex: 1,
-      backgroundColor: theme.white,
-      borderWidth: 1,
-      borderColor: theme.cloud,
-      borderRadius: radii.card,
-      padding: 16,
-      alignItems: 'center',
     },
     // Stat numbers are currency or counts, so they take the display serif
     // with tabular figures (same convention as app/habit/[id].tsx statValue).
@@ -474,12 +477,6 @@ function createStyles(theme: AppTheme) {
       fontFamily: theme.fonts.display,
       fontVariant: ['tabular-nums'],
       color: theme.ink,
-    },
-    statLabel: {
-      fontSize: typeScale.eyebrow,
-      fontFamily: theme.fonts.ui,
-      color: theme.slate,
-      marginTop: 4,
     },
     section: {
       marginBottom: 24,
