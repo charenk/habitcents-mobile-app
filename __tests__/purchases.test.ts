@@ -14,6 +14,7 @@ import {
   resetMockEntitlement,
   setMockEntitlement,
   __setPurchasesForTests,
+  __resetPurchasesInitForTests,
   MOCK_ENTITLEMENT_KEY,
   PRODUCT_ANNUAL,
   PRODUCT_MONTHLY,
@@ -175,6 +176,54 @@ describe('injected client seam (live path)', () => {
     expect(calls).toEqual([PRODUCT_ANNUAL]);
     const restored = await restore();
     expect(restored).toEqual({ ok: true, mode: 'live', entitlement: 'premium' });
+  });
+});
+
+/**
+ * Live mode configured, but the live client never came up (bad key, no
+ * network, SDK unavailable). This is the one behavior the live client had to
+ * get right (2026-09-04): before this run, purchase()/restore() only checked
+ * `impl`, so a live-enabled install whose real client merely failed to start
+ * would silently fall into the mock branch and comp a free "premium" grant
+ * that charged nobody. Now the mock branch only runs when purchases are
+ * disabled outright; a configured-but-broken live path reports a failure.
+ *
+ * The mechanism that fails initPurchases() here is incidental: this project's
+ * Jest/Babel config can't execute a real ESM dynamic import (no
+ * --experimental-vm-modules), so `await import('react-native-purchases')`
+ * itself rejects. On a real device the same code path would instead fail at
+ * configure()/getCustomerInfo() (bad key, offline at boot, native module
+ * missing). Either way initPurchases() catches it and leaves `impl` null,
+ * which is the invariant these tests actually check.
+ */
+describe('live mode configured but the client fails to initialize', () => {
+  const KEY_ORIGINAL = process.env[KEY];
+  beforeEach(() => {
+    process.env[KEY] = 'rcat_test_key';
+    __setPurchasesForTests(null);
+    __resetPurchasesInitForTests();
+  });
+  afterEach(() => {
+    if (KEY_ORIGINAL === undefined) delete process.env[KEY];
+    else process.env[KEY] = KEY_ORIGINAL;
+  });
+
+  it('getEntitlement() reports free while live init is pending or failed, never a mock grant', () => {
+    expect(getEntitlement()).toBe('free');
+  });
+
+  it('purchase() reports a live failure, never a mock premium grant', async () => {
+    const result = await purchase(PRODUCT_ANNUAL);
+    expect(result.ok).toBe(false);
+    expect(result.mode).toBe('live');
+    expect(getEntitlement()).toBe('free');
+  });
+
+  it('restore() reports a live failure, never a mock premium grant', async () => {
+    const result = await restore();
+    expect(result.ok).toBe(false);
+    expect(result.mode).toBe('live');
+    expect(getEntitlement()).toBe('free');
   });
 });
 
