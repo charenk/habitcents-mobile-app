@@ -29,6 +29,7 @@ import React from 'react';
 import { act, cleanup, fireEvent, render } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '@/contexts/ThemeContext';
+import { LocaleProvider } from '@/contexts/LocaleContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { CategoriesProvider } from '@/contexts/CategoriesContext';
 import { ExpensesProvider } from '@/contexts/ExpensesContext';
@@ -48,13 +49,15 @@ function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SafeAreaProvider initialMetrics={initialMetrics}>
       <ThemeProvider>
-        <ToastProvider>
-          <CurrencyProvider>
-            <CategoriesProvider>
-              <ExpensesProvider>{children}</ExpensesProvider>
-            </CategoriesProvider>
-          </CurrencyProvider>
-        </ToastProvider>
+        <LocaleProvider>
+          <ToastProvider>
+            <CurrencyProvider>
+              <CategoriesProvider>
+                <ExpensesProvider>{children}</ExpensesProvider>
+              </CategoriesProvider>
+            </CurrencyProvider>
+          </ToastProvider>
+        </LocaleProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );
