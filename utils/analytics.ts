@@ -281,6 +281,16 @@ export interface AnalyticsEventMap {
   // longer fixed at 15 days, so `days` travels with the row count.
   scan_seed_applied: { rows: number; days: number };
   scan_undone: Record<string, never>;
+
+  // Shareable counter card (P4-3, roadmap accept criterion "PostHog tracks
+  // shares"). Structural only, mirrors paywall_shown's pattern: fires on the
+  // affordance appearing and on the OS share sheet actually being invoked.
+  // `shared` does not confirm the user completed a share (Sharing.shareAsync
+  // resolves on dismissal either way, both platforms), only that the sheet
+  // opened successfully; that is the same honesty level as paywall_shown
+  // meaning "shown", not "converted".
+  share_card_opened: Record<string, never>;
+  share_card_shared: Record<string, never>;
 }
 
 export type AnalyticsEventName = keyof AnalyticsEventMap;

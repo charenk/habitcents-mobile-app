@@ -107,6 +107,7 @@ export default function RootLayout() {
                     <Stack.Screen name="category" />
                     <Stack.Screen name="profile" />
                     <Stack.Screen name="leak-scan" />
+                    <Stack.Screen name="share-card" />
                     <Stack.Screen name="paywall" options={{ presentation: 'modal' }} />
                   </Stack>
                 </ToastProvider>
