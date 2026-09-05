@@ -5,7 +5,7 @@ import { Button } from '@/components/ui';
 import { KeptHero } from '@/components/habit-logging/KeptHero';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
-import { spacing, typeScale, type AppTheme } from '@/constants/theme';
+import { contentColumnStyle, spacing, typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import type { DetectedHabit } from '@/types/habit';
 
@@ -93,6 +93,7 @@ function createStyles(theme: AppTheme) {
     body: {
       flex: 1,
       justifyContent: 'center',
+      ...contentColumnStyle,
     },
     title: {
       fontSize: typeScale.screenTitle,
