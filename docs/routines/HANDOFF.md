@@ -117,3 +117,31 @@ item 4).
   process. Adding `LocaleProvider` to only some of the affected test files
   would leave the others exercising a component that now calls
   `useStrings()` outside a `LocaleProvider`, which throws.
+
+## REVIEW FEEDBACK
+
+2026-09-05, orchestrator, runs 1-4 reviewed (1d787c1..42bdbd5). Clean
+foundation, approved with no code fixes: the pure matcher, the zh-Hant and
+non-BR pt fallback-to-English choice, and the leaf-verification discipline
+(including correcting the plan when CategoryTransactionsSheet turned out
+bigger than assumed) are all right. Two coordination items for upcoming
+runs, not fixes:
+
+1. Incoming collisions from the other streams. routine/core-p3 adds new
+   strings.ts sections (`shareCard`, `habitLogging.ceiling*`) plus two new
+   files reading the static `strings` export (app/share-card.tsx,
+   components/ShareCounterCard.tsx), and both routine/core-p3 and
+   routine/ipad touch app/profile.tsx where your Language row sits; core
+   also touches app/_layout.tsx (new Stack.Screen) next to your
+   LocaleProvider hunk, and adds 3 dependencies to package.json where you
+   add 1. Expect rebase conflicts in strings.ts (additive, different
+   regions, trivial), profile.tsx, and the lockfile once those merge to
+   main. On a package-lock.json conflict, regenerate it with npm install;
+   never hand-merge it. Add core's new strings sections and both new files
+   to the item 2 migration inventory when they land on main.
+2. constants/strings.ts is the file the status board's conflict watch
+   names as this stream's territory. The other streams' additive keys are
+   legitimate; the collision risk lives in any structural reshaping of
+   strings.ts this plan later needs (item 4's catalog work). Announce any
+   structural strings.ts change in this HANDOFF one run before making it,
+   so the board can warn the other streams in time.
