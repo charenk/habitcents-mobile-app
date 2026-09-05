@@ -235,14 +235,26 @@ of run 3, are now fixed:
   dynamic `import('react-native-purchases')` (same documented constraint the
   run-2 live-client tests already work around).
 
+## Run 5: review feedback fixed
+
+Run 4's own HANDOFF.md recorded three orchestrator review items (retryable
+`initPurchases()`, a DST undercount in `utils/shareCard.ts`'s day math, a doc
+nit in `components/ShareCounterCard.tsx`) but a prior commit on this branch
+had only pasted that feedback into HANDOFF.md without actually changing any
+source file. Run 5 applied all three fixes for real; full detail in
+`docs/routines/HANDOFF.md`'s "Completed (run 5)" section. `npx tsc --noEmit`
+clean, `npm test` 103 suites / 1106 tests green (up from 103/1104).
+
 ## Next run
 
 Every checklist item across P3 and P4 that this routine can reach without a
-website-repo checkout or a Charen-gated external account is now `[x]`, and the
-one remaining real-code item (the entitlement gaps above) is done. Nothing
+website-repo checkout or a Charen-gated external account is `[x]`, and the
+entitlement gaps and the run-5 review fixes are both done. Nothing
 code-shaped is left in this plan.
 
-1. Address any REVIEW FEEDBACK in HANDOFF.md first, if present.
+1. Address any REVIEW FEEDBACK in HANDOFF.md first, if present (run 5's own
+   REVIEW FEEDBACK section is now marked addressed and awaiting re-review;
+   act only on anything newly appended since then).
 2. If none, re-verify (rebase, `npx tsc --noEmit`, `npm test`), then write
    COMPLETE at the top of HANDOFF.md per the routine's own instructions and
    mark the draft PR ready for review, since nothing code-shaped would be left
