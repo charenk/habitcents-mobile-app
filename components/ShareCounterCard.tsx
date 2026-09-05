@@ -15,8 +15,9 @@ export type ShareCounterCardProps = {
  * hero treatment as KeptHero (components/habit-logging/KeptHero.tsx): same
  * background, same display serif for the money, same eyebrow/wordmark
  * vocabulary. Kept as its own component (not a reuse of KeptHero) because it
- * renders off-screen for a view-shot capture, never live app chrome, and
- * carries a wordmark KeptHero has no reason to show.
+ * renders on-screen (mounted and visible in app/share-card.tsx, not hidden
+ * off-screen) for a view-shot capture, never live app chrome, and carries a
+ * wordmark KeptHero has no reason to show.
  *
  * Plain View, not a Pressable or anything interactive: it exists only to be
  * captured by react-native-view-shot's captureRef in app/share-card.tsx.
