@@ -2,95 +2,97 @@
 
 ## Status
 
-In progress. Run 4 of the routine. Rebased cleanly onto origin/main (no new
-commits there since run 3; nothing to resolve). `npm install` was needed
-again at the start of this run (fresh container, `node_modules` not
-present, same as runs 1-3). tsc clean, full test suite green (100 suites,
-1081 tests, no flake this run). No simulator or device in this
-environment, so nothing in this run has been eyeballed on an actual iPad;
-see DEVICE PASS NEEDED below, unchanged in substance from runs 1-3 (one
-line added for this run's changes).
+In progress. Run 5 of the routine. Branch was already even with
+origin/main at rebase time (no new upstream commits since run 4; nothing to
+resolve). `npm install` was needed again at the start of this run (fresh
+container, `node_modules` not present, same as runs 1-4). tsc clean, full
+test suite green (100 suites, 1081 tests) both after the review-feedback
+docs commit and again unchanged after the item 5 audit (which made no code
+changes). No simulator or device in this environment, so nothing in this
+run has been eyeballed on an actual iPad; DEVICE PASS NEEDED below is
+unchanged from run 4.
 
 ## Completed
 
-- Runs 1-3: plan items 1, 2a, 2b, 2c, 2d, 3, and a first pass at 6. See
+- Runs 1-4: plan items 1, 2 (all of a-e), 3, 4, and a first pass at 6. See
   PLAN.md for detail; unchanged this run.
-- Run 4, plan item 2e (the Today Kept pane's header chrome): capped the
-  door3 ribbon and `KeptHero`, the two elements that render directly in the
-  Kept pane above and outside the ScrollView/SectionList content items
-  2b/2d already capped. Re-checked the item's original wording first: "the
-  kept quote" turned out to already be inside `keptEmptyContent`'s
-  ScrollView (capped by item 2d already), not a real gap, so only the
-  ribbon and the hero needed work.
-  - `ribbonWrap` uses `paddingHorizontal`, so it took the same direct
-    `...contentColumnStyle` spread as `listContent`/`keptEmptyContent`, no
-    conflict.
-  - `keptHeroGutter` uses `marginHorizontal` and merges directly onto
-    `KeptHero`'s own `card` root (which carries `card`'s background, via
-    `style={[styles.card, style]}` in KeptHero.tsx). Spreading
-    `contentColumnStyle` straight into it would size that background box
-    to 100% of the pane BEFORE margin is added outside it, pushing the
-    card past the 600pt cap by `2 * spacing.gutter` on iPad. Fixed with a
-    new wrapping View, `keptHeroCapWrap`, around `<KeptHero>` instead: the
-    wrapper caps and centers at 600pt first, and `keptHeroGutter`'s margin
-    then insets `KeptHero` within that already-capped width, same as it
-    insets within the full screen width on phones today. Below the cap the
-    wrapper is a pass-through, so phone rendering is unchanged. This is the
-    same shape as item 2c's `beatContent` wrapper (new wrapper View, not a
-    style spread, because the existing style couldn't safely take the
-    spread directly).
-  - Added `testID`s (`door3-ribbon-wrap`, `kept-hero-cap-wrap`) to both new/
-    touched wrappers for the item 6 tests below.
-- Run 4, plan item 4 (the Today pager's `screenWidth`-driven width math):
-  investigated, resolved with no code change beyond item 2e. This is the
-  same shape as `OnboardingCarousel`'s `beat`/`beatContent` split (item
-  2c): the paging unit (`pane`) has to stay window width because
-  `handlePagerMomentumEnd`'s offset math divides by that same width, so the
-  fix is capping the content inside the page, never the page itself. Every
-  content path inside both panes is now capped (Spent: `spentScrollContent`;
-  Kept: `keptEmptyContent`, `listContent`, and this run's `keptHeroCapWrap`/
-  `ribbonWrap`). Also confirmed `useWindowDimensions()`'s width reliably
-  matches the pager's own rendered frame width on iOS, including in iPad
-  Split View / Slide Over (it reflects the app's actual window bounds, not
-  the full device screen), so there is no real divergence for an on-layout
-  measured width to fix.
-- Run 4, plan item 6: extended `__tests__/todayQuoteRibbonPlacement.test.tsx`
-  (not `tabletLayout.test.tsx`, which lacks the Habits/Expenses/Categories/
-  Onboarding provider mocks this needs) with three cases: `kept-hero-cap-
-  wrap` carries the cap, `door3-ribbon-wrap` carries the cap, and
-  `kept-pane` itself does not (pins the item 4 invariant).
+- Run 5, REVIEW FEEDBACK (addressed first, per this file's own instruction):
+  the orchestrator's 2026-09-05 review of runs 1-4 found the layout work
+  itself sound but flagged that design decision records had not been
+  updated alongside it, per `design/decisions/README.md`'s same-commit
+  rule. Added, in one docs-only commit:
+  - `design/decisions/components/Sheet.md`: dated line for the 600pt panel
+    cap and centering, and why phones are unaffected.
+  - `design/decisions/modules/today.md`: dated line for the pane content
+    caps (all five paths) and the item 4 conclusion that the pager's paging
+    unit stays window width by design.
+  - `design/decisions/components/OnboardingCarousel.md`: new file, first
+    recorded decision for this component (the `beat`/`beatContent` split
+    and why `beat` must stay window width), and added to the
+    `design/decisions/README.md` index.
+  - `design/PATTERN_VOCABULARY.md` Surfaces section: added the readable
+    column rule (cap via `contentColumnStyle` spread at the call site;
+    reach for a wrapping View only when the target style merges margin onto
+    a background-carrying root; paging units are never capped).
+  No code changed in this commit; tsc and the full suite were still run and
+  are green, per the standing rule.
+- Run 5, plan item 5 (the `useWindowDimensions` audit): done, no code
+  change needed anywhere. Re-grepped the repo (19 files matched; docs/plan/
+  test files and the two already-resolved sites, `app/(tabs)/index.tsx`
+  (item 4) and `OnboardingCarousel.tsx` (item 2c), set aside, leaving 7 real
+  sites plus the two already-known non-issues):
+  - `AddCategoryModal`, `PartialSlipSheet`, `AddUpcomingSheet`,
+    `ExpenseSheet`, `BreakHabitSheet`, `CategoryTransactionsSheet`,
+    `ReviewQueueSheet`, `PickOneSheet` all read `height` only (never
+    `width`), for a `maxHeight: height * 0.82` or `* 0.86` keyboard-clearing
+    cap on the sheet body. That is orientation- and device-size-agnostic
+    math; it does not interact with `Sheet`'s width cap (item 3) and needed
+    no change.
+  - `AuroraBackground.tsx` reads `width` to size a full-bleed gradient, but
+    confirmed (grep for its import) that it renders nowhere in the app: it
+    is unreferenced dead code, the retired welcome screen's documented
+    revert path per `PATTERN_VOCABULARY.md`. No live tablet surface to fix.
+  - `CheckInCard.tsx` reads `fontScale`, confirmed out of this plan's scope
+    (Dynamic Type, not window sizing).
+  Did not decide the fixed-footer cap question as part of this audit, per
+  the review feedback below (it is on the ops status board for Charen now).
 
 ## Next
 
 Per PLAN.md, in order:
-1. Item 5: the `useWindowDimensions` audit (list already gathered in
-   PLAN.md item 5), now unblocked since items 2 and 4 both landed. Also
-   carries the fixed-footer cap question from item 2d/run 3 (see DECISIONS
-   NEEDED below).
-2. Item 6: extend tablet jest coverage further as item 5's audit lands (a
-   real structural change, like items 2c/2e before it, is more likely to be
-   worth a dedicated test than a mechanical style spread).
-3. Once item 5 is done: re-read PLAN.md top to bottom to confirm every
-   item is checked before touching the COMPLETE / device-pass-ready state
-   this file's own header describes.
+1. Item 6: no new tablet jest coverage was needed this run, since item 5
+   concluded with no code change. Revisit once Charen's footer-cap decision
+   (see DECISIONS NEEDED) lands: if it adds a cap to `ScopeScreen`/
+   `BillsScreen`/paywall/`PayoffScreen`, that is a real structural change
+   and, like items 2c/2e before it, likely earns a dedicated test case.
+2. Item 7: re-verify `app.json`'s `"orientation": "portrait"` stays
+   untouched (confirmed unchanged this run; keep checking every run).
+3. With items 1-5 and 7 all satisfied, item 6 is the only plan line not
+   checked off, and it is blocked on a human decision rather than on
+   agent work. Do not treat the plan as fully checked or touch the
+   COMPLETE state until either that decision lands and its follow-up test
+   work is done, or Charen says item 6 can close without it.
 
 ## Blockers
 
-None currently. `npm install` was needed again at the start of this run
-(fresh container, `node_modules` not present); expected, not a real
-blocker, same as runs 1-3.
+None. `npm install` was needed again at the start of this run (fresh
+container, `node_modules` not present); expected, not a real blocker, same
+as runs 1-4. Item 6 is soft-blocked on Charen's footer-cap decision (see
+DECISIONS NEEDED), not on anything this routine can resolve itself; that is
+noted here for visibility, not logged as a runs.log `blocked` outcome,
+since the routine still made forward progress this run (items 5 and the
+review feedback both landed) and has further plan-adjacent work (item 7's
+re-verification, watching for the decision) it can keep doing.
 
 ## DECISIONS NEEDED
 
 - Whether the fixed footer/CTA bars outside a capped ScrollView (
   `ScopeScreen`, `BillsScreen`, `app/paywall.tsx`, `PayoffScreen`'s Continue
   button) should get the same 600pt cap on iPad, or are meant to stay full
-  width by design. Flagged for the item 5 audit pass rather than decided in
-  this or any prior run; carried over unchanged from run 3's handoff.
-- No new decisions raised this run. Item 4's pager investigation
-  (see Completed above) concluded with no visible behavior change, so the
-  Lane 2 flag run 3 raised for a possible pager behavior change did not
-  come up; nothing to raise here for it.
+  width by design. Per the run 5 review feedback, this is now on the ops
+  status board's DECISIONS NEEDED queue for Charen, not something this
+  routine re-raises or decides in item 5 (done this run) or anywhere else.
+- No new decisions raised this run.
 
 ## DEVICE PASS NEEDED
 
@@ -172,3 +174,7 @@ house-rule gap to fix next run, before or alongside item 5:
   PayoffScreen Continue) is now on the status board's DECISIONS NEEDED
   queue for Charen; no need to re-raise it, and do not decide it in the
   item 5 audit.
+
+Addressed run 5 (2026-09-05): all four doc updates landed in one commit
+before any other run 5 work, per the instruction above. See Completed
+above for detail. The footer question was left alone as instructed.
