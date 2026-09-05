@@ -274,8 +274,14 @@ End to end, VoiceOver only, no peeking at the screen:
 
 ### 6. Tab bar and headers at XL
 
-- [ ] Tab labels: is "Categories" ellipsized? Capped at 1.5, but the tab is a
-      quarter of the screen.
+- [x] Tab labels: is "Categories" ellipsized? **It was**, verified on the iPhone 16
+      simulator 2026-09-05: at accessibility-XXXL it read "Cate" and Insights read
+      "Ins". The 1.5 cap did not help because the clipping is horizontal, not
+      vertical. Fixed by ADR 0037 with `adjustsFontSizeToFit` floored at the
+      default 11pt; all four labels are whole words at XXXL now. Re-check on
+      device.
+- [ ] Tab bar selected state: is the pill plus heavier stroke obvious at arm's
+      length, and does the 1px sage border read as too heavy? (ADR 0037)
 - [ ] Screen headers: 34pt serif titles at 1.5 wrap to two or three lines. Do
       they still sit correctly beside the header action buttons?
 

@@ -35,8 +35,6 @@ import { LoggedTodayList } from '@/components/money/LoggedTodayList';
 import { InfoRibbon } from '@/components/ui/InfoRibbon';
 import { useFirstRunRibbon } from '@/components/onboarding/useFirstRunRibbon';
 import { useEmptyStateAction } from '@/components/onboarding/useEmptyStateAction';
-import { ViewQuote } from '@/components/today/ViewQuote';
-import { useViewQuote } from '@/components/today/useViewQuote';
 import { BreakHabitSheet, type BreakHabitStartData } from '@/components/onboarding/BreakHabitSheet';
 import { useCategories } from '@/contexts/CategoriesContext';
 import { VICE_CATEGORIES } from '@/constants/onboardingPresets';
@@ -537,11 +535,11 @@ export default function TodayScreen() {
   const door1RibbonLine = door1MessageKey ? FIRST_RUN_RIBBON_LINES[door1MessageKey] ?? null : null;
   const door3RibbonLine = door3MessageKey ? FIRST_RUN_RIBBON_LINES[door3MessageKey] ?? null : null;
 
-  // U6 quote rotation (components/today/useViewQuote.ts): one hook instance
-  // per pane, `active` tracks which pane todayView currently points at so
-  // the counter advances on activation, not on mount.
-  const spentQuote = useViewQuote('spent', todayView === 'spent');
-  const keptQuote = useViewQuote('kept', todayView === 'kept');
+  // U6's rotating quote was retired from both Today panes (ADR 0037): it did
+  // not fit the app, and the zero states now give their single hook the whole
+  // pane. `components/today/ViewQuote.tsx` and `useViewQuote.ts` are kept
+  // unreferenced as the documented revert path, the same way the dark theme
+  // and AuroraBackground are.
 
   const handleViewAllExpenses = useCallback(() => {
     router.push('/(tabs)/money');
@@ -1028,13 +1026,11 @@ export default function TodayScreen() {
                 artboard TodayFteSpent.dc.html). */}
             {spentIsEmpty ? (
               <View style={styles.spentZeroWrap}>
-                <ViewQuote quote={spentQuote} testID="spent-quote" />
-                {/* inline + explicit art, not layout="fill": fill's 40pt top
-                    padding is this composition's quote-to-hook gap, carried by
-                    the wrap's gap instead so the pair centers as one block.
-                    Mark, title, CTA and nothing else (same annotations). The
-                    illustration prop is layout-independent for exactly this
-                    reason (ADR 0036). */}
+                {/* inline, not layout="fill": the wrap centers the hook in the
+                    space under the quick-log card, so fill's own top padding
+                    would push it off centre. Mark, title, CTA and nothing
+                    else. The illustration prop is layout-independent for
+                    exactly this reason (ADR 0036). */}
                 <EmptyState
                   layout="inline"
                   illustration="today-spent"
@@ -1095,7 +1091,6 @@ export default function TodayScreen() {
                   progress state reusing this composition is a chosen default,
                   flagged in the PR's what-to-test list. */}
               <View style={styles.keptZeroWrap}>
-                <ViewQuote quote={keptQuote} testID="kept-quote" />
                 {detectionProgress ? (
                   <View style={styles.progressCard}>
                   <Text style={styles.progressTitle}>{strings.habits.spottingYourLeak}</Text>
@@ -1286,11 +1281,11 @@ function createStyles(theme: AppTheme) {
       flexGrow: 1,
       paddingBottom: layout.screenBottomClearance,
     },
-    // FTE zero state (TodayFteSpent artboard): quote + hook as one centered
-    // block filling the space under the quick-log card. The 40pt gap is the
-    // same section + stack sum EmptyState's fill layout uses for its top
-    // padding. ViewQuote's own 20pt gutter stacks on the content gutter for
-    // a 40pt quote inset, matching the artboard's centered measure.
+    // FTE zero state (TodayFteSpent artboard): the hook centered in the space
+    // under the quick-log card. The quote that used to sit above it was
+    // retired (ADR 0037), so this is now a single child and the gap only
+    // matters if a second one ever returns. `justifyContent: 'center'` is what
+    // does the work.
     spentZeroWrap: {
       flex: 1,
       justifyContent: 'center',
@@ -1373,9 +1368,10 @@ function createStyles(theme: AppTheme) {
       paddingHorizontal: spacing.gutter,
       paddingBottom: layout.screenBottomClearance,
     },
-    // FTE zero block (TodayFteKept artboard): quote + progress card or hook,
+    // FTE zero block (TodayFteKept artboard): the progress card or the hook,
     // centered in the pane; mirror of spentZeroWrap above, plus the stretch
-    // the parent's alignItems: 'center' would otherwise deny it.
+    // the parent's alignItems: 'center' would otherwise deny it. The quote
+    // above it was retired (ADR 0037).
     keptZeroWrap: {
       flex: 1,
       alignSelf: 'stretch',

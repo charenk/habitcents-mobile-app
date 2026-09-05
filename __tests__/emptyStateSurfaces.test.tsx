@@ -115,7 +115,7 @@ describe('every reachable empty state offers a first action', () => {
     // HabitsList no longer reuses insights.leaksEmptyTitle/Body (empty-state
     // unification pass): it has its own money.habitsEmptyTitle/Body keys.
     expect(view.getByText(strings.money.habitsEmptyTitle)).toBeTruthy();
-    expect(view.getByText(strings.money.habitsEmptyBody)).toBeTruthy();
+    expect(view.getByText(strings.money.habitsEmptyTitle)).toBeTruthy();
 
     fireEvent.press(view.getByRole('button', { name: strings.money.habitsEmptyCta }));
     expect(onBreakHabit).toHaveBeenCalledTimes(1);

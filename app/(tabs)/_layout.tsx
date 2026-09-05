@@ -1,7 +1,7 @@
 import { Tabs } from 'expo-router';
 import { Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Icon } from '@/components/ui/Icon';
+import { TabBarIcon } from '@/components/ui/TabBarIcon';
 import { useTheme } from '@/contexts/ThemeContext';
 import { strings } from '@/constants/strings';
 import { layout, typeScale } from '@/constants/theme';
@@ -34,25 +34,36 @@ export default function TabLayout() {
           paddingTop: 8,
           paddingBottom: tabBarBottomPad,
         },
-        tabBarLabelStyle: {
-          fontSize: typeScale.eyebrow,
-          // Loaded font families ignore fontWeight on Android, so the weight
-          // has to come from the family itself (Inter 600).
-          fontFamily: theme.fonts.uiSemibold,
-        },
-        // UX-067: the default tabBarLabel scales with Dynamic Type
-        // unbounded, and the bar's height is fixed (layout.tabBarHeight),
-        // so a large accessibility size clips. Cap at 1.5x, matching the
-        // pattern vocabulary's chrome/eyebrow Dynamic Type ceiling.
-        tabBarLabel: ({ color, children }) => (
+        // No tabBarLabelStyle: the tabBarLabel render prop below owns every
+        // label style, and two sources for one thing is how they drift apart.
+        //
+        // UX-067: the default tabBarLabel scales with Dynamic Type unbounded
+        // and the bar's height is fixed, so a large accessibility size clips.
+        // Capped at 1.5x, matching the vocabulary's chrome/eyebrow ceiling.
+        //
+        // The cap alone was not enough. The clipping is HORIZONTAL, not
+        // vertical: four tabs split a 393pt screen into 98pt columns, and
+        // "Categories" at the capped size needs about 91pt before React
+        // Navigation's own item padding, so it shipped as "Cate".
+        // adjustsFontSizeToFit shrinks it to fit instead of truncating, and
+        // minimumFontScale floors that shrink at the 11pt a default-size user
+        // already sees, so nobody who asked for large text lands below the
+        // baseline. Whole word, every size (ADR 0037).
+        //
+        // Weight carries the selected state alongside colour, because colour
+        // alone measured 1.12:1 between the two states. Loaded font families
+        // ignore fontWeight on Android, so it has to come from the family.
+        tabBarLabel: ({ color, children, focused }) => (
           <Text
             style={{
               fontSize: typeScale.eyebrow,
-              fontFamily: theme.fonts.uiSemibold,
+              fontFamily: focused ? theme.fonts.uiBold : theme.fonts.uiMedium,
               color,
             }}
             maxFontSizeMultiplier={1.5}
             numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={1 / 1.5}
           >
             {children}
           </Text>
@@ -63,28 +74,36 @@ export default function TabLayout() {
         name="index"
         options={{
           title: strings.tabs.today,
-          tabBarIcon: ({ color, size }) => <Icon name="Sun" size={size} color={color} />,
+          tabBarIcon: ({ color, size, focused }) => (
+            <TabBarIcon name="Sun" size={size} color={color} focused={focused} />
+          ),
         }}
       />
       <Tabs.Screen
         name="money"
         options={{
           title: strings.tabs.money,
-          tabBarIcon: ({ color, size }) => <Icon name="Wallet" size={size} color={color} />,
+          tabBarIcon: ({ color, size, focused }) => (
+            <TabBarIcon name="Wallet" size={size} color={color} focused={focused} />
+          ),
         }}
       />
       <Tabs.Screen
         name="insights"
         options={{
           title: strings.tabs.insights,
-          tabBarIcon: ({ color, size }) => <Icon name="TrendingUp" size={size} color={color} />,
+          tabBarIcon: ({ color, size, focused }) => (
+            <TabBarIcon name="TrendingUp" size={size} color={color} focused={focused} />
+          ),
         }}
       />
       <Tabs.Screen
         name="categories"
         options={{
           title: strings.tabs.categories,
-          tabBarIcon: ({ color, size }) => <Icon name="LayoutGrid" size={size} color={color} />,
+          tabBarIcon: ({ color, size, focused }) => (
+            <TabBarIcon name="LayoutGrid" size={size} color={color} focused={focused} />
+          ),
         }}
       />
     </Tabs>

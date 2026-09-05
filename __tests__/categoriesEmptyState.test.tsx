@@ -94,11 +94,13 @@ describe('categories empty state', () => {
 
   // The copy stopped DESCRIBING an action ("Tap Add category at the top")
   // once the state started offering one; a body that narrates a control is
-  // the shape sect 5 rules out.
+  // the shape sect 5 rules out. ADR 0037 went further and dropped the body
+  // entirely: the hook and the CTA are the whole state now. The string is
+  // kept so the rule it encodes survives if a subtitle ever returns.
   it('does not tell the user to go find a control elsewhere', async () => {
     const view = await renderScreen();
 
-    expect(view.getByText(strings.categories.emptySubtitle)).toBeTruthy();
+    expect(view.queryByText(strings.categories.emptySubtitle)).toBeNull();
     expect(strings.categories.emptySubtitle).not.toMatch(/tap/i);
   });
 });

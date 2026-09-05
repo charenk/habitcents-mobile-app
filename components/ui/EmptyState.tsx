@@ -4,8 +4,8 @@
  * structural treatments and two icon sizes; this is the single primitive
  * every zero state renders through.
  *
- * An optional mark, an optional title, the body, and an optional CTA, in a
- * 12pt stack, centered. The mark is either a 96pt illustration (`illustration`,
+ * An optional mark, an optional title, the body, and an optional text CTA,
+ * in a 12pt stack, centered. The mark is either a 96pt illustration (`illustration`,
  * ADR 0036) or a 28pt slate icon (`icon`); a state names one or the other,
  * never both.
  *
@@ -19,11 +19,11 @@
  *   padding around an inline EmptyState.
  *
  * Why the illustration is NOT gated on layout='fill': Today's two zero states
- * are deliberately inline (app/(tabs)/index.tsx), because fill's 40pt top
- * padding is the quote-to-hook gap in that composition and is carried by the
- * pane's own wrapper instead. Gating art on the layout would have left Today
- * on a 28pt glyph while every sibling pane grew to 96pt, which is exactly the
- * two-scale drift this primitive exists to end.
+ * are deliberately inline (app/(tabs)/index.tsx), because their own wrapper
+ * centers the hook in the space under the quick-log card and fill's top
+ * padding would push it off centre. Gating art on the layout would have left
+ * Today on a 28pt glyph while every sibling pane grew to 96pt, which is
+ * exactly the two-scale drift this primitive exists to end.
  */
 import { useMemo } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
@@ -36,9 +36,11 @@ import { spacing, typeScale, type AppTheme } from '@/constants/theme';
 export type EmptyStateProps = {
   /** Optional heading. Omit for a body-only empty state (e.g. a single row's placeholder). */
   title?: string;
-  /** Optional since Charen's Today annotations (2026-09-04): the Today zero
-   *  states are icon, title, CTA and nothing else. Other surfaces keep
-   *  their body line. */
+  /** Optional. No pane-level zero state passes one any more: every one of
+   *  them is mark, one hook line, text CTA (ADR 0037). The prop stays for the
+   *  in-card empty states, which are a single body line with no title at all
+   *  (leaks, pace, where it went, event history, category detail, and
+   *  Upcoming's window-empty branch). */
   body?: string;
   /** Single icon scale for every empty state that uses a glyph: 28pt, slate.
    *  Ignored when `illustration` is set. */
@@ -122,7 +124,11 @@ export function EmptyState({
           which is an accessibility regression dressed up as polish. */}
       {body ? <Text style={styles.body}>{body}</Text> : null}
       {cta ? (
-        <Button variant="secondary" label={cta.label} onPress={cta.onPress} style={styles.cta} />
+        // Tertiary, not secondary (ADR 0037): beside a 96pt illustration and a
+        // single hook line, a bordered pill was the heaviest thing in a pane
+        // meant to read quiet. Tertiary is transparent with a 44pt minimum, so
+        // the target rule and the PRD's "concrete first action" both still hold.
+        <Button variant="tertiary" label={cta.label} onPress={cta.onPress} style={styles.cta} />
       ) : null}
     </View>
   );

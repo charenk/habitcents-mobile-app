@@ -167,7 +167,6 @@ export default function CategoriesScreen() {
             layout="fill"
             icon="Folder"
             title={strings.categories.emptyTitle}
-            body={strings.categories.emptySubtitle}
             cta={{ label: strings.categories.emptyCta, onPress: handleEmptyAddCategory }}
           />
         ) : (
