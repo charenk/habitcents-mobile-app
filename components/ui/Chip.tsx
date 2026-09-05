@@ -8,9 +8,11 @@
  * `tone="soft"` (U2, the expense drawer rebuild) is a second selected
  * treatment: sage-light fill + 1.5px sage border + ink text, no inversion to
  * white. It exists for surfaces where a solid sage fill would read as a CTA
- * rather than a selection (the drawer's category tag rail and, so the two
- * match as specified, its recent-merchant chips). `tone` never changes the
- * UNSELECTED look, which stays identical across both tones.
+ * rather than a selection: the drawer's category tag rail, its recent-merchant
+ * chips, and, since ADR 0037, the tab bar's selected pill, which
+ * components/ui/TabBarIcon.tsx re-implements (a tab item is not a Chip).
+ * A change to this tone's colours must visit both files. `tone` never changes
+ * the UNSELECTED look, which stays identical across both tones.
  *
  * `pill` (U2) switches the shape to radius 999 / min height 44pt / a
  * 1.5px border and a 12.5pt label, for the drawer's category tags. Plain

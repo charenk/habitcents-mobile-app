@@ -17,6 +17,7 @@ It has none of its own. The contents change, the container does not, which is th
 ## Open
 - Only Today uses it. Money's Spent segment is the app's longest list and has no quick log at all; whether it earns one is a separate question.
 - The dock costs vertical space on every Today state, including ones with nothing to scroll. Worth a look at arm's length before deciding it is free.
+- iPad (routine/ipad, unmerged): that branch caps content per scroller at a 600pt column and deliberately not per pane, so this dock would render full width under the centred column, the quick-log card stretched to ~984pt on a 1024pt iPad. Same shape as the un-capped leak-scan/paywall footers already sitting in Charen's footer-cap decision on the status board; the dock belongs in that decision, not in a fix here. Only live once supportsTablet flips.
 
 ## Iterations
 - 2026-09-05: created; both Today panes migrated onto it. ADR 0038.

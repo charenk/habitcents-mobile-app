@@ -22,7 +22,6 @@ Vocabulary (ADR 0034): **Zero** nothing ever happened here; **Quiet** history el
 - Upcoming keeps two distinct empty states (true-zero and window-empty). Why: hiding the window picker when a window is merely empty would strand the user away from data they have.
 
 ## Open
-- Whether Money's empty states drop their body line as Today's did (carried over from EmptyState.md).
 
 ## Iterations
 - 2026-09-05: illustrations on all three Zero states, Zero copy rewritten. ADR 0036.

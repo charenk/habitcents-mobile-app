@@ -3,6 +3,9 @@
 All layouts are clickable in `App Prototype.dc.html`; static annotated versions in `App Workflow Canvas.dc.html` (R-numbers below).
 
 ## Today (R4/R5/R11/R12/R13) — `app/(tabs)/index.tsx`
+
+> SUPERSEDED in part by ADR 0038: the quick-log card is no longer item 3. It lives in an ActionDock at the BOTTOM of the Spent pane (the Kept pane's break-habit affordance docks the same way), the logged-today list is the pane's first content block, and item 3's eyebrow/"amount first"/emoji-tile row was already retired at U13. The order below is the pre-dock record.
+
 Order top→bottom, snow bg, 20px side padding, 12 gap:
 1. Header: eyebrow date ("THURSDAY, JULY 24") + serif 34 "Today." + gear button right.
 2. **Kept band**: sage-light card radius 20, centered: eyebrow "KEPT SO FAR" (sage-dark) · serif 40–44 tabular `$37.50` · caption "money you didn't spend" (zero state: "your first skip starts this counter").

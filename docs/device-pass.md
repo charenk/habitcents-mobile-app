@@ -156,9 +156,25 @@ Try: log an expense, add an upcoming bill, add a category, the pick-one sheet.
 The EmptyState rollout carries the onboarding burden for anyone who skips. Easiest seen
 via dev menu → "Persona: new user", **after** stage 1.
 
-- [ ] Spent, Upcoming, habits, categories, kept, leaks, and the insights zero state: do
-      they read as one system?
-- [ ] Does each one tell you what to do next, rather than only stating that a list is empty?
+- [ ] The seven illustrated zero states (Today spent, Today kept, Money spent,
+      Money upcoming, Money habits, Insights this month, Insights first scan)
+      plus Categories on its Folder glyph: do they read as one system?
+      (ADR 0036 count; "leaks" is an in-card line now, not a pane state.)
+- [ ] Does each one tell you what to do next, rather than only stating that a
+      list is empty? (The copy pass answered this on paper, ADR 0036; confirm
+      it reads that way on glass.)
+- [ ] The ActionDock at arm's length: does the bottom strip earn its height on
+      states with nothing to scroll, and does the top hairline read as an edge
+      rather than a border-on-border with the tab bar? (ADR 0038)
+- [ ] The today-kept sack: at 96pt does it read as money kept, or as a blue
+      ball with a ribbon? It is the one remaining placeholder (ADR 0036).
+- [ ] Kept true-zero explainer at the largest text sizes: three steps reachable
+      by scrolling, one VoiceOver stop per step with the numeral composed in.
+      (ADR 0039)
+- [ ] Tab bar at the largest non-accessibility Dynamic Type: the selected pill
+      and the label both whole, nothing clipped at the bar's bottom edge.
+      (BottomTabItem adds 5pt padding the 64pt arithmetic does not count;
+      looked right on the simulator, confirm on glass.)
 
 ## Results, part 1
 

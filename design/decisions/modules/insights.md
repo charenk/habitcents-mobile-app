@@ -25,7 +25,6 @@ Vocabulary (ADR 0034): **Zero** nothing ever happened here; **Live** data presen
 
 ## Open
 - The This month pie is lavender, which the palette reserves for the habit arc and premium. It is the one illustration whose colour claims a meaning on a surface that does not own it. Low severity: a pie chart is unambiguous enough that the hue reads as decoration. Watch it on the device pass.
-- Whether Insights' empty states drop their body line as Today's did (carried over from EmptyState.md).
 
 ## Iterations
 - 2026-09-05: illustrations on both Zero states, `monthEmptyTitle` rewritten. ADR 0036.
