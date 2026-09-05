@@ -1,6 +1,18 @@
 # core-worker HANDOFF
 
-## Status
+## Status (run 5, 2026-09-05)
+
+`git fetch origin main` showed no new commits since run 4 (branch already
+even with `origin/main`, no rebase needed). This run addressed the
+orchestrator's REVIEW FEEDBACK below, which run 4's session had recorded
+into this file but had not actually applied to code (the commit that added
+the REVIEW FEEDBACK section touched only `docs/routines/HANDOFF.md`, no
+source files). All three items are now fixed in commit on this branch; see
+Completed. `npx tsc --noEmit` clean. `npm test`: 103 suites / 1106 tests
+green (up from 103/1104; +2 new tests). PLAN.md's checklist itself is
+unchanged by this run (it was already fully `[x]`/`(C)` before this fix).
+
+## Prior status (run 4)
 
 Run 4 of the `routine/core-p3` branch. `git fetch origin main` showed no new
 commits since run 3 (branch already up to date, 3 commits ahead of
@@ -12,7 +24,50 @@ clean: `npx tsc --noEmit` clean, `npm test` 102 suites / 1093 tests green
 PLAN.md's queued item: the two structural entitlement gaps filed 2026-08-11
 and reconfirmed still-deferred at the end of run 3.
 
-## Completed
+## Completed (run 5)
+
+Fixed all three items from the REVIEW FEEDBACK section below, in
+`9a0d3d7`:
+
+1. **Retryable `initPurchases()`.** The old code set
+   `purchasesInitialized = true` in a `finally` regardless of outcome, so
+   one failed boot-time init locked every later `purchase()`/`restore()`
+   into "did not initialize" for the rest of the app session, even after
+   the network came back. On the catch path this now leaves
+   `purchasesInitialized` false and clears `purchasesInitPromise` to
+   `null`, so the next call re-attempts `import()`/`configure()`/
+   `getCustomerInfo()` from scratch. `client.isConfigured()` guards
+   against calling `configure()` a second time if the SDK actually came
+   up but failed later (e.g. `getCustomerInfo()` threw). New test-only
+   `__isPurchasesInitializedForTests()` plus a test in
+   `__tests__/purchases.test.ts` asserting the flag is false after a
+   failed `purchase()` call. Note: this project's Jest/Babel setup can't
+   execute a real dynamic `import('react-native-purchases')` at all (it
+   throws the same `--experimental-vm-modules` TypeError every time,
+   confirmed by hand with a throwaway probe test), so a black-box
+   call/response check can't distinguish "retryable" from "permanently
+   stuck" (both look like the same repeated failure). The internal flag
+   is the only thing that actually proves the fix; that's why the new
+   exported getter exists rather than trying to fake a successful retry.
+2. **DST day-math undercount.** `utils/shareCard.ts` now uses
+   `Math.round(spanMs / MS_PER_DAY) + 1` instead of `Math.floor(...) + 1`.
+   A span crossing a spring-forward transition is n*24h minus 1h, which
+   `Math.floor` reads as one whole day short; `Math.round` absorbs the
+   one-hour drift (and the symmetric fall-back gain) without changing any
+   non-DST result, since those spans are always exact day multiples. New
+   test in `__tests__/shareCard.test.ts` sets `process.env.TZ =
+   'America/New_York'` for the 2026-03-08 transition (confirmed by hand
+   that Node's Date respects a runtime `process.env.TZ` reassignment) and
+   restores the original `TZ` afterward.
+3. **Doc nit.** `components/ShareCounterCard.tsx`'s header now says the
+   card renders on-screen, matching `app/share-card.tsx` (which was
+   already correct: the card is mounted and visible, captured live, never
+   hidden off-screen).
+
+`npx tsc --noEmit` clean. `npm test`: 103 suites / 1106 tests green (up
+from 103/1104; +2 new tests, zero regressions).
+
+## Completed (run 4)
 
 - **Non-reactive entitlement reads, fixed.** `utils/purchases.ts` gained a
   listener set (`entitlementListeners`, `subscribeToEntitlementChanges`) and a
@@ -85,13 +140,17 @@ and reconfirmed still-deferred at the end of run 3.
 
 ## Next
 
-PLAN.md's checklist is now fully `[x]` or `(C)`; nothing code-shaped remains
-that this routine can reach without a website-repo checkout or a
-Charen-gated external account. Next run:
-1. Address any REVIEW FEEDBACK below first, if present.
+REVIEW FEEDBACK below is now addressed (run 5) but not yet re-reviewed by
+the orchestrator. Next run:
+1. Address any NEW REVIEW FEEDBACK below first, if the orchestrator has
+   appended one since run 5.
 2. If none, re-verify (rebase onto `origin/main`, `npx tsc --noEmit`,
    `npm test`), then write COMPLETE at the top of this file and mark the
-   draft PR ready for review, per the routine's own instructions.
+   draft PR ready for review, per the routine's own instructions. PLAN.md's
+   checklist is fully `[x]`/`(C)` and nothing code-shaped remains that this
+   routine can reach without a website-repo checkout or a Charen-gated
+   external account, so COMPLETE is the expected outcome once run 5's fixes
+   clear review.
 
 ## Blockers
 
@@ -136,6 +195,11 @@ None for this run's own work. Standing blockers, unchanged from runs 1-3:
    a decision.
 
 ## REVIEW FEEDBACK
+
+**Status: addressed in run 5 (`9a0d3d7`), pending re-review.** All three
+numbered items below are fixed; see "Completed (run 5)" above for what
+changed and why. Left in place rather than deleted so the orchestrator's
+next pass can verify against the original ask.
 
 2026-09-05, orchestrator, runs 1-4 reviewed (d1d2cf1..4e79863). Strong
 work: catching and fixing the impl-null fallback that silently granted mock
