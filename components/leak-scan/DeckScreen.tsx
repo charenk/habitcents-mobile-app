@@ -8,8 +8,7 @@ import { spacing, typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import { BiggestLeakCard } from './BiggestLeakCard';
 import { useTrackLeak } from './useTrackLeak';
-import { track } from '@/utils/analytics';
-import { bucketCents } from '@/utils/analytics';
+import { bucketCents, track } from '@/utils/analytics';
 import type { HabitCandidate } from '@/utils/leakScan/types';
 import type { DetectedHabit } from '@/types/habit';
 

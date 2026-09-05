@@ -292,7 +292,12 @@ function createStyles(theme: AppTheme) {
       // always visible, that lands on every first-time user, so it takes the
       // same 20pt gutter as the rest of the app's screen chrome.
       paddingHorizontal: 20,
-      marginTop: 12,
+      // Was 12, which made the control sit 4pt lower than Money's and jump
+      // visibly when switching tabs. ScreenHeader ends in a 4pt paddingBottom,
+      // so 8 here gives the same 12pt title-to-control gap Money and Today's
+      // chips row both use. Insights was the only one of the three that had
+      // not been revisited since the shared-header migration. ADR 0039.
+      marginTop: 8,
     },
     scrollView: {
       flex: 1,

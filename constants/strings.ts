@@ -864,6 +864,25 @@ export const strings = {
     // keys so they can diverge further without one edit moving both.
     keptEmptyTitle: 'Every skip lands here as money kept',
     keptEmptyCta: 'Log an expense',
+    // Kept true-zero explainer (ADR 0039). The one surface where a user has no
+    // evidence of their own to read, so it earns three lines the one-hook rule
+    // otherwise forbids. Every claim here is checked against utils/
+    // habitDetection.ts and types/habit.ts:
+    //  - the merchant really is required; an expense logged without a place
+    //    can never be detected, because merchant is the only grouping key.
+    //  - four is a COUNT of logs at one merchant inside 90 days, not an amount,
+    //    and it is necessary rather than sufficient (a monthly-spend floor and
+    //    a confidence floor also apply), which is why "around" and "enough to
+    //    spot" carry the hedge the detection meter already uses.
+    //  - a skip is the only thing that moves Kept forward; a slip is neutral.
+    // Do not let a rate, a total or "the one you buy most often" back in here:
+    // leaks are ranked by projected monthly cost, not frequency (ADR 0022).
+    keptHowItWorksTitle: 'Here is how it works',
+    keptHowItWorks: [
+      'Log what you spend, and where you spent it.',
+      'Around four logs at one place is enough to spot a leak.',
+      "Break a leak, and every skip keeps the money you didn't spend.",
+    ] as const,
     alreadyBreakingToast: "You're already breaking this habit.",
     editExpenseLabel: (title: string, amountLabel: string) => `Edit ${title}, ${amountLabel}`,
     // The break-habit affordance (DI-6, ADR 0019), which since ADR 0038 lives

@@ -72,7 +72,7 @@ import { SheetHeader } from '@/components/ui/SheetHeader';
 import { TextField } from '@/components/ui/TextField';
 import { useToast } from '@/components/ui/Toast';
 import { strings } from '@/constants/strings';
-import { spacing, typeScale } from '@/constants/theme';
+import { typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
 import { useCategories } from '@/contexts/CategoriesContext';
 import { useCurrency } from '@/contexts/CurrencyContext';

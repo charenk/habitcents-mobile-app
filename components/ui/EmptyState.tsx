@@ -49,6 +49,16 @@ export type EmptyStateProps = {
    *  (ADR 0036). Takes precedence over `icon`, renders at 96pt, and is hidden
    *  from assistive tech: the title and CTA carry the meaning. */
   illustration?: EmptyArtName;
+  /** An ordered explainer between the hook and the CTA (ADR 0039).
+   *
+   *  The deliberate exception to the one-hook rule, and it has exactly one
+   *  caller: Today's Kept true-zero. That state is the only place in the app
+   *  where the user has no evidence of their own to read, so the mechanic has
+   *  to be told rather than shown. Everywhere else, one line still stands.
+   *
+   *  `stepsTitle` labels the list; omit both and nothing renders. */
+  steps?: readonly string[];
+  stepsTitle?: string;
   cta?: {
     label: string;
     onPress: () => void;
@@ -64,6 +74,8 @@ export function EmptyState({
   body,
   icon,
   illustration,
+  steps,
+  stepsTitle,
   cta,
   layout = 'inline',
 }: EmptyStateProps) {
@@ -123,6 +135,24 @@ export function EmptyState({
           hand a low-vision user 19.5pt where iOS offered them about 40pt,
           which is an accessibility regression dressed up as polish. */}
       {body ? <Text style={styles.body}>{body}</Text> : null}
+      {steps && steps.length > 0 ? (
+        <View style={styles.steps} testID="empty-state-steps">
+          {stepsTitle ? (
+            // Capped: this is a label for the list, not the content of it.
+            <Text style={styles.stepsTitle} maxFontSizeMultiplier={1.5}>
+              {stepsTitle}
+            </Text>
+          ) : null}
+          {steps.map((step, i) => (
+            // The index is the numeral, so the copy never carries "1." itself
+            // and a translation cannot renumber the list by accident.
+            <View key={step} style={styles.stepRow}>
+              <Text style={styles.stepNumber}>{`${i + 1}.`}</Text>
+              <Text style={styles.stepText}>{step}</Text>
+            </View>
+          ))}
+        </View>
+      ) : null}
       {cta ? (
         // Text, not a bordered pill (ADR 0037): beside a 96pt illustration and
         // a single hook line, the pill was the heaviest thing in a pane meant
@@ -167,6 +197,38 @@ function createStyles(theme: AppTheme) {
       fontSize: typeScale.secondary,
       color: theme.slate,
       textAlign: 'center',
+      lineHeight: 20,
+    },
+    // Left-aligned, unlike everything else in this stack: a numbered list reads
+    // as a list only when its numerals line up, and centring them turns three
+    // steps into three unrelated sentences.
+    steps: {
+      alignSelf: 'stretch',
+      gap: spacing.xs,
+    },
+    stepsTitle: {
+      fontFamily: theme.fonts.uiSemibold,
+      fontSize: typeScale.secondary,
+      color: theme.ink,
+      marginBottom: spacing.tight,
+    },
+    stepRow: {
+      flexDirection: 'row',
+      gap: spacing.sm,
+    },
+    stepNumber: {
+      fontFamily: theme.fonts.uiSemibold,
+      fontSize: typeScale.secondary,
+      color: theme.slate,
+      lineHeight: 20,
+      // Tabular so 1. 2. 3. share one gutter and the text edges align.
+      fontVariant: ['tabular-nums'],
+    },
+    stepText: {
+      flex: 1,
+      fontFamily: theme.fonts.ui,
+      fontSize: typeScale.secondary,
+      color: theme.slate,
       lineHeight: 20,
     },
     cta: {

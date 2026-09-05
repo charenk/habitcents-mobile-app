@@ -524,6 +524,47 @@ describe('Today: the break-habit affordance (DI-6, states per ADR 0038)', () => 
   });
 });
 
+describe("Today: the Kept zero explainer (ADR 0039)", () => {
+  // The deliberate exception to the one-hook rule. It exists because true
+  // zero is the only state where the user has no evidence of their own to
+  // read, so the mechanic has to be told rather than shown.
+  it('renders its three steps on Kept true zero', async () => {
+    const view = await renderToday();
+
+    await tap(view.getByTestId('kept-chip'));
+
+    const keptPane = within(view.getByTestId('kept-pane'));
+    expect(keptPane.getByText(strings.today.keptHowItWorksTitle)).toBeTruthy();
+    for (const step of strings.today.keptHowItWorks) {
+      expect(keptPane.getByText(step)).toBeTruthy();
+    }
+  });
+
+  // Guards the exception from spreading. Once logs exist the pane shows a live
+  // detection meter counting toward the real threshold, which says the same
+  // thing with the user's own numbers, so the static explainer would be a
+  // second telling.
+  it('does not render once logs exist and the detection meter takes over', async () => {
+    mockExpenses = [makeExpense({ id: 'e1' })];
+
+    const view = await renderToday();
+
+    await tap(view.getByTestId('kept-chip'));
+
+    const keptPane = within(view.getByTestId('kept-pane'));
+    expect(keptPane.queryByText(strings.today.keptHowItWorksTitle)).toBeNull();
+    expect(keptPane.getByText(strings.habits.spottingYourLeak)).toBeTruthy();
+  });
+
+  // The Spent pane keeps its single hook; the exception is Kept only.
+  it('does not reach the Spent pane', async () => {
+    const view = await renderToday();
+
+    const spentPane = within(view.getByTestId('spent-pane'));
+    expect(spentPane.queryByText(strings.today.keptHowItWorksTitle)).toBeNull();
+  });
+});
+
 describe('Today: the action dock (ADR 0038)', () => {
   // The point of the dock is that the action does not move when the pager
   // swipes. Before this, Spent's quick log was its scroller's FIRST child and

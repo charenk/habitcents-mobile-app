@@ -51,7 +51,19 @@ export function LoggedTodayList({ expenses, onEditExpense, onViewAll }: LoggedTo
   return (
     <View>
       <View style={styles.eyebrowRow}>
-        <Text style={styles.eyebrow}>{strings.today.loggedTodayEyebrow}</Text>
+        {/* Capped and single-line (ADR 0039). Both of these were raw Text, so
+            the 1.5 chrome/eyebrow cap baked into the seven primitives never
+            reached them. Uncapped at 3x they each took their full intrinsic
+            width, space-between ran out of free space and degenerated to
+            flex-start, and the link ran off the right edge. The eyebrow is the
+            one that yields, because the link is the affordance. */}
+        <Text
+          style={styles.eyebrow}
+          numberOfLines={1}
+          maxFontSizeMultiplier={1.5}
+        >
+          {strings.today.loggedTodayEyebrow}
+        </Text>
         {showViewAll ? (
           <TouchableOpacity
             onPress={onViewAll}
@@ -63,7 +75,9 @@ export function LoggedTodayList({ expenses, onEditExpense, onViewAll }: LoggedTo
             accessibilityRole="button"
             accessibilityLabel={strings.today.loggedTodayViewAll}
           >
-            <Text style={styles.viewAllLink}>{strings.today.loggedTodayViewAll}</Text>
+            <Text style={styles.viewAllLink} numberOfLines={1} maxFontSizeMultiplier={1.5}>
+              {strings.today.loggedTodayViewAll}
+            </Text>
           </TouchableOpacity>
         ) : null}
       </View>
@@ -92,6 +106,8 @@ function createStyles(theme: AppTheme) {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
+      // So the two can never abut even when the eyebrow has shrunk.
+      gap: spacing.sm,
       // Was 24, which was clearance from the quick-log card that used to sit
       // directly above this block. The card moved to the pane's dock in ADR
       // 0038, so that 24 stacked on the chips' own 12pt marginBottom and left
@@ -100,6 +116,9 @@ function createStyles(theme: AppTheme) {
       marginBottom: 8,
     },
     eyebrow: {
+      // RN defaults flexShrink to 0, unlike the web. Without this the eyebrow
+      // refuses to give up width and pushes the link off screen.
+      flexShrink: 1,
       fontSize: typeScale.eyebrow,
       fontFamily: theme.fonts.uiSemibold,
       letterSpacing: typeScale.eyebrowLetterSpacing,
@@ -113,6 +132,8 @@ function createStyles(theme: AppTheme) {
     // Tertiary text link (design/PATTERN_VOCABULARY.md controls: "tertiary
     // bare slate text"), sentence case, not an eyebrow.
     viewAllLink: {
+      // The link keeps its width; the eyebrow above is the one that truncates.
+      flexShrink: 0,
       fontSize: typeScale.secondary,
       fontFamily: theme.fonts.ui,
       color: theme.slate,

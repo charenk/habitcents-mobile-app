@@ -13,6 +13,8 @@ Vocabulary (ADR 0034): **Zero** nothing ever happened here; **Live** data presen
 - First scan indeterminate: while the stored summary is still loading the pane renders nothing at all, so the zero state never flashes before a real answer lands.
 
 ## Decisions
+- 2026-09-05: the segment wrapper's top margin drops 12 to 8, matching Money and Today. Why: it was the only one of the three not revisited after the shared-header migration, and the 4pt made the control visibly jump when switching tabs. ADR 0039.
+- 2026-09-05: the leaks card's in-card empty state loses its title. Why: the card header already reads "Your leaks" and the title read "Your leaks will show up here" directly beneath it. The body is the half carrying the honest detection threshold. ADR 0039.
 - 2026-09-05: both Zero states drop their body line and their CTA becomes text only. Why: one hook is the app standard now. Dropping the scan body is safe because "Nothing uploads, ever" is restated on the scan intake screen the CTA leads to, in the onboarding beat and in the intent picker. ADR 0037.
 - 2026-09-05: both Zero states carry 96pt illustrations instead of the shared 28pt ChartLine glyph. Why: This month and First scan are different questions and rendered the same mark. ADR 0036.
 - 2026-09-05: `scanEmptyTitle` ("Find the leaks you already have") was left untouched in the copy pass and used as the model for every other zero state. Why: it is the only line in the app that names a benefit the user already owns rather than an action they must take.

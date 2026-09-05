@@ -47,7 +47,7 @@ import { progressTowardDetection } from '@/utils/habitDetection';
 import { formatDate } from '@/utils/dates';
 import { track } from '@/utils/analytics';
 import { hapticError, useReducedMotion } from '@/utils/motion';
-import { radii, spacing, typeScale, layout, type AppTheme } from '@/constants/theme';
+import { radii, spacing, typeScale, type AppTheme } from '@/constants/theme';
 import type { DetectedHabit, HabitChangeGoal } from '@/types/habit';
 import { strings } from '@/constants/strings';
 import { useToast, useToastLift } from '@/components/ui/Toast';
@@ -140,7 +140,7 @@ export default function TodayScreen() {
   } = useHabits();
 
   const { expenses, addExpense } = useExpenses();
-  const { getVisibleCategories, getCategoryByName } = useCategories();
+  const { getCategoryByName } = useCategories();
   const {
     isLoading: onboardingLoading,
     isOnboardingComplete,
@@ -854,8 +854,14 @@ export default function TodayScreen() {
     >
       <Icon name="Plus" size={18} color={theme.primaryDark} />
       <View style={styles.breakAnotherText}>
-        <Text style={styles.breakAnotherLabel}>{breakLabel}</Text>
-        {breakCaption ? <Text style={styles.breakAnotherCaption}>{breakCaption}</Text> : null}
+        <Text style={styles.breakAnotherLabel} maxFontSizeMultiplier={1.5}>
+          {breakLabel}
+        </Text>
+        {breakCaption ? (
+          <Text style={styles.breakAnotherCaption} maxFontSizeMultiplier={1.5}>
+            {breakCaption}
+          </Text>
+        ) : null}
       </View>
     </TouchableOpacity>
   );
@@ -900,7 +906,9 @@ export default function TodayScreen() {
 
   const renderSectionHeader = ({ section }: { section: HabitSection }) => (
     <View style={styles.sectionHeader}>
-      <Text style={styles.sectionTitle}>{section.title}</Text>
+      <Text style={styles.sectionTitle} maxFontSizeMultiplier={1.5}>
+        {section.title}
+      </Text>
     </View>
   );
 
@@ -1146,11 +1154,18 @@ export default function TodayScreen() {
                 ) : (
                   <EmptyState
                     // inline + explicit art, same reasoning as the Spent
-                    // zero block: the wrap's gap carries the quote-to-hook
-                    // spacing that fill's top padding used to supply.
+                    // zero block: the wrap centers this in the pane rather
+                    // than letting fill's own top padding place it.
                     layout="inline"
                     illustration="today-kept"
                     title={strings.today.keptEmptyTitle}
+                    // The one explainer in the app (ADR 0039). This is true
+                    // zero: no expenses at all, so nothing on screen can show
+                    // the mechanic and it has to be told. The adjacent Quiet
+                    // state does not get one, because by then the detection
+                    // meter is showing real progress toward the threshold.
+                    stepsTitle={strings.today.keptHowItWorksTitle}
+                    steps={strings.today.keptHowItWorks}
                     cta={{
                       // The quick-log card now lives on the Spent view, not
                       // the Money tab, so the CTA switches views in place
@@ -1315,14 +1330,15 @@ function createStyles(theme: AppTheme) {
     },
     // FTE zero state (TodayFteSpent artboard): the hook centered in the
     // scroller, which since ADR 0038 runs from the chips down to the dock
-    // rather than from the quick-log card down to the tab bar. The quote
-    // above it was retired (ADR 0037), so this is a single child and the gap
-    // only matters if a second one ever returns. `justifyContent: 'center'`
-    // is what does the work.
+    // rather than from the quick-log card down to the tab bar. One child, so
+    // `justifyContent: 'center'` is the whole mechanism; the gap that used to
+    // separate it from the retired quote went with it (ADR 0039).
     spentZeroWrap: {
-      flex: 1,
+      // flexGrow, not flex: `flex: 1` also sets flexShrink, which let this
+      // squash below its own content at large Dynamic Type and clipped the
+      // hook. flexGrow fills the leftover space and never shrinks (ADR 0039).
+      flexGrow: 1,
       justifyContent: 'center',
-      gap: spacing.section + spacing.stack,
     },
     // The Spent pane's first content block. The chips row's own 12pt
     // marginBottom is the whole gap (Charen's 2026-09-03 spacing call), so
@@ -1412,10 +1428,10 @@ function createStyles(theme: AppTheme) {
     // the parent's alignItems: 'center' would otherwise deny it. The quote
     // above it was retired (ADR 0037).
     keptZeroWrap: {
-      flex: 1,
+      // See spentZeroWrap: flexGrow, never flex, or the explainer clips.
+      flexGrow: 1,
       alignSelf: 'stretch',
       justifyContent: 'center',
-      gap: spacing.section + spacing.stack,
     },
     emptyCoachMoment: {
       alignSelf: 'stretch',

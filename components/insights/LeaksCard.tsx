@@ -39,8 +39,12 @@ export function LeaksCard({ rows, onBreak, onOpenHabit, onLogExpense }: LeaksCar
 
       {rows.length === 0 ? (
         <View style={styles.empty}>
+          {/* No title: the card's own "Your leaks" header sits directly above,
+              and "Your leaks will show up here" repeated it word for word.
+              One line plus the CTA is also what ADR 0037 asks of an in-card
+              empty state. The body is the half that carries information, the
+              honest detection threshold. ADR 0039. */}
           <EmptyState
-            title={strings.insights.leaksEmptyTitle}
             body={strings.insights.leaksEmptyBody}
             cta={onLogExpense ? { label: strings.insights.leaksEmptyCta, onPress: onLogExpense } : undefined}
           />
