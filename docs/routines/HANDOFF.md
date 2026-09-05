@@ -140,3 +140,35 @@ This app also carries a standing device-pass item from Phase 2 sign-off
 (decision 0008, umbrella repo): the VoiceOver walk + Accessibility
 Inspector audit, scheduled for the Phase 4 TestFlight beta. This iPad
 device pass is separate and additional to that one, not a substitute.
+
+## REVIEW FEEDBACK
+
+2026-09-05, orchestrator, runs 1-4 reviewed (57321e3..963559d). The layout
+work is sound: the wrapper-not-container reasoning on `keptHeroCapWrap` and
+`beatContent` is correct and well documented in code, and pinning the
+pane-stays-window-width invariant in tests was the right call. One
+house-rule gap to fix next run, before or alongside item 5:
+
+- Design decision records were not updated with the code
+  (design/decisions/README.md requires updating them in the same commit
+  that touches a surface). Add, in one commit on this branch:
+  - `design/decisions/components/Sheet.md`: one dated line for the 600pt
+    cap + centering on the sheet panel and why phones are unaffected.
+  - `design/decisions/modules/today.md`: one dated line for the pane
+    content caps (spentScrollContent, listContent, keptEmptyContent,
+    ribbonWrap, keptHeroCapWrap) and the item 4 conclusion that the
+    pager's paging unit stays window width by design.
+  - `design/decisions/components/OnboardingCarousel.md`: new file (first
+    recorded decision about this component): the beat/beatContent split
+    and why the beat itself must stay window width.
+  - `design/PATTERN_VOCABULARY.md` (Surfaces section): add the readable
+    column rule: scroll content caps at `layout.contentMaxWidth` (600pt)
+    via `contentColumnStyle`; use a wrapping View instead of a spread when
+    the target style merges margin onto a background-carrying root; paging
+    units are never capped, only the content inside them. The pattern
+    ships with this branch, so its vocabulary entry belongs in this
+    branch, not on main ahead of it.
+- The fixed-footer cap question (ScopeScreen, BillsScreen, paywall,
+  PayoffScreen Continue) is now on the status board's DECISIONS NEEDED
+  queue for Charen; no need to re-raise it, and do not decide it in the
+  item 5 audit.
