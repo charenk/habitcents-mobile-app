@@ -20,7 +20,7 @@ With or without each part; inline / fill; art or glyph.
 - Three illustrations are placeholders and want replacing (ADR 0036). Seen on the simulator walk, 2026-09-05: `money-upcoming` is a calculator under copy about a next date, the clearest mismatch of the seven; `insights-month` is a book under "See where the month went", where a pie or bar chart belongs; `money-habits` is a dartboard where a dripping tap would name the product's own word. Swapping one is a file replacement in `assets/empty-states/`, no call site changes.
 - The kept illustration is blue and gold while kept is sage everywhere else, including the chip label directly above it. Seen 2026-09-05 on Today, Kept Zero. Recolour if the source allows.
 - At 96pt the kept sack reads as a blue ball with an orange ribbon; its gold speckle becomes noise. Busiest render in the set.
-- Dynamic Type: the art is a fixed 96pt square above uncapped body text. Deliberate, so the CTA is not pushed off screen at the largest sizes, but it has not had a device pass at 200 percent.
+- Dynamic Type: verified 2026-09-05 at accessibility-extra-extra-extra-large on the iPhone 16 simulator. The art holds 96pt while the body grows uncapped; Today's Spent Zero and Money's Spent Zero both keep art, title, body and CTA on screen with room to spare. Fixing the art's size is what makes that work, since art that grew with the text would push the CTA off. Still owed a real device pass with VoiceOver.
 
 ## Iterations
 - 2026-09-05: `illustration` prop, `constants/emptyArt.ts` registry, seven zero states moved off `ChartLine`. ADR 0036.
