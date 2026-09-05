@@ -38,7 +38,7 @@ import { useCategories } from '@/contexts/CategoriesContext';
 import { VICE_CATEGORIES } from '@/constants/onboardingPresets';
 import type { Expense, ExpenseCategory } from '@/types/expense';
 import { atMidnight, dayStateFor, isHabitLimitReached, keptOnDay } from '@/utils/habitLogging';
-import { getEntitlement } from '@/utils/purchases';
+import { useEntitlement } from '@/utils/purchases';
 import { cardText, type CoachMomentCardId } from '@/utils/coachMoments';
 import { progressTowardDetection } from '@/utils/habitDetection';
 import { formatDate } from '@/utils/dates';
@@ -717,7 +717,7 @@ export default function TodayScreen() {
   const pickOneHabit = pickOneHabitId ? getHabitById(pickOneHabitId) : null;
   // Entitlement touchpoint (ADR 0007, BET-004): blocked once the active-habit
   // count reaches the current entitlement's ceiling (free = 1, premium = 5).
-  const entitlement = getEntitlement();
+  const entitlement = useEntitlement();
   const freeTierBlocked = isHabitLimitReached(activeHabits.length, entitlement);
 
   // Break-another affordance (DI-6, ADR 0019): same gate freeTierBlocked
@@ -1169,6 +1169,7 @@ export default function TodayScreen() {
         monthTotal={pickOneHabit?.totalMonthlySpend ?? 0}
         occurrences={pickOneHabit?.occurrencesPerPeriod ?? 0}
         freeTierBlocked={freeTierBlocked}
+        entitlement={entitlement}
         onCancel={() => setPickOneHabitId(null)}
         onStart={handleStart}
         onStartTrial={() => {
@@ -1206,6 +1207,7 @@ export default function TodayScreen() {
       <BreakHabitSheet
         visible={breakSheetVisible}
         freeTierBlocked={freeTierBlocked}
+        entitlement={entitlement}
         onClose={handleBreakSheetClose}
         onStart={handleBreakSheetStart}
         onStartTrial={handleBreakSheetStartTrial}

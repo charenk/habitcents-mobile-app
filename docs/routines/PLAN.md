@@ -85,14 +85,12 @@ Legend: `[x]` verified done in this repo, `[~]` partially done / gap identified,
       reassessed this run and still deferred: fixing entitlement-read reactivity
       touches every gate site (5 call sites) and is its own bounded unit of work, not
       a rider on this one. Listed again under Next run below.
-- [~] The two structural gaps PUNCHLIST already filed and deliberately deferred
-      ("Backlog from the gating audit", 2026-08-11): (1) gated-sheet copy always
-      pitches the free-tier upsell even to a premium user already at the real 5-habit
-      ceiling; (2) entitlement reads are non-reactive, so a purchase does not repaint
-      already-mounted screens. Both were explicitly filed as "not urgent while
-      purchases are mock... address both with the real RevenueCat activation work."
-      Respecting that standing call: **not picked up ahead of the live client work**,
-      but listed here so a future run doesn't have to rediscover them.
+- [x] **Both structural gaps closed (run 4, 2026-09-05).** PUNCHLIST's
+      "Backlog from the gating audit" (2026-08-11): (1) gated-sheet copy always
+      pitched the free-tier upsell even to a premium user already at the real
+      5-habit ceiling; (2) entitlement reads were non-reactive, so a purchase
+      did not repaint already-mounted screens. Full detail in this file's "Run
+      4" section below.
 - (C) Apple Small Business Program enrollment.
 - (C) Sandbox purchase/restore/cancel device verification once live.
 
@@ -187,19 +185,66 @@ Legend: `[x]` verified done in this repo, `[~]` partially done / gap identified,
   Nothing for this routine to build; it's a Calendly-link-in-email + session process
   item, entirely Charen's court.
 
+## Run 4: the two structural entitlement gaps, closed
+
+Both gaps filed 2026-08-11 ("Backlog from the gating audit... address both with
+the real RevenueCat activation work") and reconfirmed still-deferred at the end
+of run 3, are now fixed:
+
+- **Non-reactive entitlement reads.** `utils/purchases.ts` gained a listener
+  set (`subscribeToEntitlementChanges`) and a `notifyEntitlementChanged()` call
+  at every point that actually changes `mockEntitlement`/`liveEntitlement`
+  (`writeMockEntitlement`, `hydrateEntitlement`'s mock branch, `purchaseLive`,
+  `restoreLive`, `initPurchases`'s initial fetch and its
+  `addCustomerInfoUpdateListener` callback). A new `useEntitlement()` hook
+  (`useSyncExternalStore(subscribeToEntitlementChanges, getEntitlement,
+  getEntitlement)`) is the reactive read; `getEntitlement()` itself is
+  untouched and stays the right call outside a component. All 5 gate call
+  sites (`app/(tabs)/index.tsx`, `money.tsx`, `insights.tsx`,
+  `app/habit/[id].tsx`, `components/leak-scan/useTrackLeak.tsx`) now call
+  `useEntitlement()` instead of a one-shot `getEntitlement()`, and
+  `components/dev/DevMenuSection.tsx` (the only other reader) switched from its
+  own local `useState` mirror to the same hook, so a mock-mode toggle there now
+  repaints every mounted gate immediately instead of needing a navigation to
+  force a re-render.
+- **Gated-sheet copy not distinguishing an at-ceiling premium user from a free
+  user.** `PickOneSheet` and `BreakHabitSheet` both gained an optional
+  `entitlement?: Entitlement` prop (frozen-props signature grown by addition,
+  never broken: omitting it keeps the existing free-tier pitch). When
+  `freeTierBlocked` is true and `entitlement === 'premium'`, the gate now shows
+  distinct honest copy (`strings.habitLogging.ceilingTitle` /`ceilingBody`
+  /`ceilingDismiss`, no price line, no `plannedBanner`, no upgrade CTA) instead
+  of pitching a paying user something they cannot buy. All 6 sheet mounts
+  across the 5 gate call sites pass the resolved `entitlement` through.
+- Tests: `__tests__/purchases.test.ts` gained an `entitlement reactivity`
+  describe block (`subscribeToEntitlementChanges` fires/stops firing,
+  `useEntitlement()` re-renders via `renderHook`). `__tests__/pickOneSheet.test.tsx`
+  gained a `PickOneSheet gated (premium at ceiling)` describe block.
+  `__tests__/breakHabitSheetGate.test.tsx` is new (BreakHabitSheet had zero
+  test coverage before this run; scoped to the gated state only, since the full
+  ungated flow's missing coverage is a separate, larger unit of work).
+  `npx tsc --noEmit` clean. `npm test`: 103 suites / 1104 tests green (up from
+  102/1093; +11 new, zero regressions).
+- Design decisions: added `design/decisions/components/PickOneSheet.md` and
+  `BreakHabitSheet.md` (both previously undocumented despite being decision-
+  bearing components), indexed in the README.
+- Not touched: `DevMenuSection.tsx`'s own gated-copy story (it has none; it is
+  a raw toggle, not a gate) and the live-path notify calls in `purchaseLive`/
+  `restoreLive`/`initPurchases`'s listener callback are wired but not directly
+  unit-tested, since this sandbox's Jest/Babel config cannot execute the real
+  dynamic `import('react-native-purchases')` (same documented constraint the
+  run-2 live-client tests already work around).
+
 ## Next run
 
-1. Address any REVIEW FEEDBACK in HANDOFF.md first.
-2. Every checklist item across P3 and P4 that this routine can reach without a
-   website-repo checkout or a Charen-gated external account is now `[x]`. The one
-   remaining real code candidate: the two structural entitlement gaps filed
-   2026-08-11 and reconfirmed still-deferred in the P3-1 checklist entry above
-   (non-reactive entitlement reads across mounted screens; gated-sheet copy not
-   distinguishing an at-ceiling premium user from a free user). Worth its own
-   bounded run.
-3. Otherwise this plan is at COMPLETE-modulo-Charen: every open item left is a
-   `(C)` decision or device verification (see HANDOFF.md's DECISIONS NEEDED). If
-   run 4 starts and item 2 above is the only code candidate, do it, then write
-   COMPLETE at the top of HANDOFF.md per the routine's own instructions and mark
-   the draft PR ready for review.
-4. `npx tsc --noEmit` and `npm test` must pass before committing, same as every run.
+Every checklist item across P3 and P4 that this routine can reach without a
+website-repo checkout or a Charen-gated external account is now `[x]`, and the
+one remaining real-code item (the entitlement gaps above) is done. Nothing
+code-shaped is left in this plan.
+
+1. Address any REVIEW FEEDBACK in HANDOFF.md first, if present.
+2. If none, re-verify (rebase, `npx tsc --noEmit`, `npm test`), then write
+   COMPLETE at the top of HANDOFF.md per the routine's own instructions and
+   mark the draft PR ready for review, since nothing code-shaped would be left
+   to plan around.
+3. `npx tsc --noEmit` and `npm test` must pass before committing, same as every run.

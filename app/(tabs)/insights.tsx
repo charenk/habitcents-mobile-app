@@ -29,7 +29,7 @@ import { categoryEmoji, categoryIdentityColor } from '@/constants/categoryEmoji'
 import { habitLeakGlyph } from '@/constants/onboardingPresets';
 import { hasFullMonthOfData } from '@/utils/recurring';
 import { isHabitLimitReached } from '@/utils/habitLogging';
-import { getEntitlement } from '@/utils/purchases';
+import { useEntitlement } from '@/utils/purchases';
 import { formatDate } from '@/utils/dates';
 import { getLeakFinderInterest, getScanSummary, saveLeakFinderInterest } from '@/utils/storage';
 import { track } from '@/utils/analytics';
@@ -225,7 +225,8 @@ export default function InsightsScreen() {
 
   // Entitlement touchpoint (ADR 0007, BET-004): the pick-one sheet blocks Start
   // once the active-habit count reaches the entitlement ceiling.
-  const freeTierBlocked = isHabitLimitReached(getActiveHabits().length, getEntitlement());
+  const entitlement = useEntitlement();
+  const freeTierBlocked = isHabitLimitReached(getActiveHabits().length, entitlement);
   const pickOneHabit = pickOneHabitId ? getHabitById(pickOneHabitId) : null;
 
   const handleStart = useCallback(
@@ -344,6 +345,7 @@ export default function InsightsScreen() {
         monthTotal={pickOneHabit?.totalMonthlySpend ?? 0}
         occurrences={pickOneHabit?.occurrencesPerPeriod ?? 0}
         freeTierBlocked={freeTierBlocked}
+        entitlement={entitlement}
         onCancel={() => setPickOneHabitId(null)}
         onStart={handleStart}
         onStartTrial={() => {

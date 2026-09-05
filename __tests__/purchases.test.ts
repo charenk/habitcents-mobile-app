@@ -2,6 +2,7 @@ jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock')
 );
 
+import { act, renderHook } from '@testing-library/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   purchasesEnabled,
@@ -13,6 +14,8 @@ import {
   hydrateEntitlement,
   resetMockEntitlement,
   setMockEntitlement,
+  subscribeToEntitlementChanges,
+  useEntitlement,
   __setPurchasesForTests,
   __resetPurchasesInitForTests,
   MOCK_ENTITLEMENT_KEY,
@@ -224,6 +227,71 @@ describe('live mode configured but the client fails to initialize', () => {
     expect(result.ok).toBe(false);
     expect(result.mode).toBe('live');
     expect(getEntitlement()).toBe('free');
+  });
+});
+
+/**
+ * Reactivity (backlog from the gating audit, 2026-08-11): getEntitlement()
+ * itself stays a plain synchronous read (utils/devMenu.ts and the tests above
+ * still call it directly), but a mounted screen that renders through
+ * useEntitlement() must repaint the moment the grant actually changes,
+ * without needing an unrelated re-render to happen to pick up the new value.
+ */
+describe('entitlement reactivity', () => {
+  beforeEach(async () => {
+    delete process.env[KEY];
+    __setPurchasesForTests(null);
+    await AsyncStorage.clear();
+  });
+
+  it('subscribeToEntitlementChanges fires on a mock purchase, and stops firing once unsubscribed', async () => {
+    const listener = jest.fn();
+    const unsubscribe = subscribeToEntitlementChanges(listener);
+
+    await purchase(PRODUCT_ANNUAL);
+    expect(listener).toHaveBeenCalledTimes(1);
+
+    await resetMockEntitlement();
+    expect(listener).toHaveBeenCalledTimes(2);
+
+    unsubscribe();
+    await purchase(PRODUCT_MONTHLY);
+    expect(listener).toHaveBeenCalledTimes(2);
+  });
+
+  it('subscribeToEntitlementChanges fires on setMockEntitlement (the dev menu path)', async () => {
+    const listener = jest.fn();
+    subscribeToEntitlementChanges(listener);
+
+    await setMockEntitlement('premium');
+    expect(listener).toHaveBeenCalledTimes(1);
+    await setMockEntitlement('free');
+    expect(listener).toHaveBeenCalledTimes(2);
+  });
+
+  it('useEntitlement() re-renders a mounted component when a mock purchase changes the grant', async () => {
+    const { result } = await renderHook(() => useEntitlement());
+    expect(result.current).toBe('free');
+
+    await act(async () => {
+      await purchase(PRODUCT_ANNUAL);
+    });
+    expect(result.current).toBe('premium');
+
+    await act(async () => {
+      await resetMockEntitlement();
+    });
+    expect(result.current).toBe('free');
+  });
+
+  it('useEntitlement() picks up setMockEntitlement (the dev menu path) without an unrelated re-render', async () => {
+    const { result } = await renderHook(() => useEntitlement());
+    expect(result.current).toBe('free');
+
+    await act(async () => {
+      await setMockEntitlement('premium');
+    });
+    expect(result.current).toBe('premium');
   });
 });
 

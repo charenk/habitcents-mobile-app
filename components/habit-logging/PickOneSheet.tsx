@@ -25,6 +25,14 @@
  *    greyed out. No amount, no field, no daily-question note: all three are
  *    inert while gated. The user sees the leak, the situation, the price, and a
  *    live way out.
+ *
+ * A third gated variant (backlog from the gating audit, 2026-08-11): a
+ * premium user already at the real 5-habit ceiling used to see the same
+ * free-tier upsell pitch as a free user, which is dishonest (they are already
+ * paying) and pitches nothing they can buy. `entitlement` (optional, so the
+ * frozen signature only grows) tells the gated state which honest copy to
+ * show; omitting it keeps the free-tier pitch, which is right for every
+ * existing call site that has never passed an entitlement.
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
@@ -36,6 +44,7 @@ import { useCurrency } from '@/contexts/CurrencyContext';
 import { radii, typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
 import type { DetectedHabit, HabitFrequency } from '@/types/habit';
+import type { Entitlement } from '@/utils/purchases';
 import { strings } from '@/constants/strings';
 
 type PickOneSheetProps = {
@@ -62,6 +71,13 @@ type PickOneSheetProps = {
    * can omit it.
    */
   onStartTrial?: () => void;
+  /**
+   * Which honest gated copy to show when freeTierBlocked is true: a free
+   * user sees the upgrade pitch, a premium user at the real ceiling sees the
+   * ceiling copy with no upgrade CTA. Optional and defaults to the free-tier
+   * pitch, so every call site written before this prop existed is unchanged.
+   */
+  entitlement?: Entitlement;
 };
 
 function cadenceLabel(frequency: HabitFrequency): string {
@@ -84,6 +100,7 @@ export function PickOneSheet({
   onStart,
   freeTierBlocked = false,
   onStartTrial,
+  entitlement,
 }: PickOneSheetProps) {
   const theme = useTheme();
   const { format } = useCurrency();
@@ -149,6 +166,11 @@ export function PickOneSheet({
   // Gated: a different sheet, not a disabled one. Nothing here pretends to be
   // usable, and the only live control leads somewhere real.
   if (freeTierBlocked) {
+    // A premium user can reach this gate too (already at the real 5-habit
+    // ceiling), and the free-tier upsell pitch below is wrong for them: they
+    // are already paying, and there is nothing left to sell. Distinct honest
+    // copy, no upgrade CTA (backlog from the gating audit, 2026-08-11).
+    const atCeiling = entitlement === 'premium';
     return (
       <Sheet visible={visible} onClose={onCancel} accessibilityLabel={habit.name}>
         <ScrollView
@@ -159,26 +181,45 @@ export function PickOneSheet({
           {header}
 
           <View style={styles.gateCard}>
-            <Text style={styles.gateEyebrow}>{strings.habitLogging.freeTierNote}</Text>
-            <Text style={styles.gateTitle}>{strings.habitLogging.gateTitle}</Text>
-            <Text style={styles.gateBody}>
-              {strings.habitLogging.gateBody(strings.paywall.planMonthlyPrice)}
+            <Text style={styles.gateEyebrow}>
+              {atCeiling ? strings.habitLogging.ceilingNote : strings.habitLogging.freeTierNote}
             </Text>
-            {/* Same honesty note the paywall carries: nothing is charged yet. */}
-            <Text style={styles.gatePlanned}>{strings.paywall.plannedBanner}</Text>
+            <Text style={styles.gateTitle}>
+              {atCeiling ? strings.habitLogging.ceilingTitle : strings.habitLogging.gateTitle}
+            </Text>
+            <Text style={styles.gateBody}>
+              {atCeiling
+                ? strings.habitLogging.ceilingBody
+                : strings.habitLogging.gateBody(strings.paywall.planMonthlyPrice)}
+            </Text>
+            {/* Same honesty note the paywall carries: nothing is charged yet.
+                Not shown at the ceiling: nobody is being asked to pay. */}
+            {!atCeiling && (
+              <Text style={styles.gatePlanned}>{strings.paywall.plannedBanner}</Text>
+            )}
           </View>
 
-          <Button
-            label={strings.habitLogging.gateUpgradeCta}
-            onPress={() => onStartTrial?.()}
-            style={styles.primary}
-          />
-          {/* Neutral exit: the leak is not being rejected, just deferred. */}
-          <Button
-            label={strings.habitLogging.gateMaybeLater}
-            variant="tertiary"
-            onPress={onCancel}
-          />
+          {atCeiling ? (
+            <Button
+              label={strings.habitLogging.ceilingDismiss}
+              onPress={onCancel}
+              style={styles.primary}
+            />
+          ) : (
+            <>
+              <Button
+                label={strings.habitLogging.gateUpgradeCta}
+                onPress={() => onStartTrial?.()}
+                style={styles.primary}
+              />
+              {/* Neutral exit: the leak is not being rejected, just deferred. */}
+              <Button
+                label={strings.habitLogging.gateMaybeLater}
+                variant="tertiary"
+                onPress={onCancel}
+              />
+            </>
+          )}
         </ScrollView>
       </Sheet>
     );

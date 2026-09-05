@@ -34,6 +34,7 @@ import { radii, spacing, typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
 import { vicePresets, VICE_IDS, type ViceId } from '@/constants/onboardingPresets';
 import type { HabitFrequency } from '@/types/habit';
+import type { Entitlement } from '@/utils/purchases';
 import { strings } from '@/constants/strings';
 
 const CUSTOM_CHIP_ID = 'custom' as const;
@@ -94,6 +95,14 @@ export type BreakHabitSheetProps = {
   /** Opens the paywall from the gate's upgrade CTA. Optional, like
    * PickOneSheet's, since a caller that never gates can omit it. */
   onStartTrial?: () => void;
+  /**
+   * Which honest gated copy to show when freeTierBlocked is true (mirrors
+   * PickOneSheet's prop, backlog from the gating audit, 2026-08-11): a free
+   * user sees the upgrade pitch, a premium user at the real ceiling sees the
+   * ceiling copy with no upgrade CTA. Optional, defaults to the free-tier
+   * pitch.
+   */
+  entitlement?: Entitlement;
 };
 
 export function BreakHabitSheet({
@@ -102,6 +111,7 @@ export function BreakHabitSheet({
   onClose,
   onStart,
   onStartTrial,
+  entitlement,
 }: BreakHabitSheetProps) {
   const theme = useTheme();
   const { currency, format } = useCurrency();
@@ -184,6 +194,10 @@ export function BreakHabitSheet({
   };
 
   if (freeTierBlocked) {
+    // Same distinction PickOneSheet's gate makes: a premium user reaching
+    // this sheet (restart-onboarding while already at the 5-habit ceiling)
+    // is not a free-tier upsell target.
+    const atCeiling = entitlement === 'premium';
     return (
       <Sheet visible={visible} onClose={onClose} accessibilityLabel={strings.onboarding.breakSheetTitle}>
         <ScrollView
@@ -197,20 +211,38 @@ export function BreakHabitSheet({
           <Text style={styles.caption}>{strings.onboarding.breakSheetCaption}</Text>
 
           <View style={styles.gateCard}>
-            <Text style={styles.gateEyebrow}>{strings.habitLogging.freeTierNote}</Text>
-            <Text style={styles.gateTitle}>{strings.habitLogging.gateTitle}</Text>
-            <Text style={styles.gateBody}>
-              {strings.habitLogging.gateBody(strings.paywall.planMonthlyPrice)}
+            <Text style={styles.gateEyebrow}>
+              {atCeiling ? strings.habitLogging.ceilingNote : strings.habitLogging.freeTierNote}
             </Text>
-            <Text style={styles.gatePlanned}>{strings.paywall.plannedBanner}</Text>
+            <Text style={styles.gateTitle}>
+              {atCeiling ? strings.habitLogging.ceilingTitle : strings.habitLogging.gateTitle}
+            </Text>
+            <Text style={styles.gateBody}>
+              {atCeiling
+                ? strings.habitLogging.ceilingBody
+                : strings.habitLogging.gateBody(strings.paywall.planMonthlyPrice)}
+            </Text>
+            {!atCeiling && (
+              <Text style={styles.gatePlanned}>{strings.paywall.plannedBanner}</Text>
+            )}
           </View>
 
-          <Button
-            label={strings.habitLogging.gateUpgradeCta}
-            onPress={() => onStartTrial?.()}
-            style={styles.primary}
-          />
-          <Button label={strings.habitLogging.gateMaybeLater} variant="tertiary" onPress={onClose} />
+          {atCeiling ? (
+            <Button
+              label={strings.habitLogging.ceilingDismiss}
+              onPress={onClose}
+              style={styles.primary}
+            />
+          ) : (
+            <>
+              <Button
+                label={strings.habitLogging.gateUpgradeCta}
+                onPress={() => onStartTrial?.()}
+                style={styles.primary}
+              />
+              <Button label={strings.habitLogging.gateMaybeLater} variant="tertiary" onPress={onClose} />
+            </>
+          )}
         </ScrollView>
       </Sheet>
     );

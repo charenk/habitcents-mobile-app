@@ -157,6 +157,15 @@ export const strings = {
       `Free keeps 1 habit, always. Premium breaks up to 5 at once, from ${monthlyPrice} a month.`,
     gateUpgradeCta: 'See Premium',
     gateMaybeLater: 'Maybe later',
+    // Same gate, a premium user already at the real 5-habit ceiling (backlog
+    // from the gating audit, 2026-08-11): the free-tier pitch above is wrong
+    // for someone already paying, so this is a distinct honest state, not a
+    // copy tweak on the same strings. No upgrade CTA: there is nothing left to
+    // sell them.
+    ceilingNote: '5 habits on Premium',
+    ceilingTitle: "You're breaking 5 habits already",
+    ceilingBody: 'Finish or stop one to start another.',
+    ceilingDismiss: 'Got it',
     // Partial slip sheet (4.7)
     partialSheetTitle: 'How much did it cost?',
     partialSheetSubtitle: (skipValue: string) =>
