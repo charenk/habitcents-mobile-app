@@ -121,24 +121,39 @@ are done and verified (tsc clean, npm test green) on this branch.
       for this item specifically: `__tests__/todayQuoteRibbonPlacement.test.tsx`'s
       new "leaves the pane itself at window width" case (item 6) already
       pins the invariant this item was worried about.
-- [ ] 5. Audit remaining `useWindowDimensions` call sites for tablet
-      correctness. Items 2 and 4 landed 2026-09-05 (2e and 4 this run), so
-      this is unblocked and next in order. Known sites (from a repo
-      grep, 2026-09-04): `components/money/AddUpcomingSheet.tsx`,
-      `components/money/ExpenseSheet.tsx`, `components/habit-logging/
-      PickOneSheet.tsx`, `components/habit-logging/PartialSlipSheet.tsx`,
-      `components/leak-scan/ReviewQueueSheet.tsx`, `components/leak-scan/
-      CategoryTransactionsSheet.tsx`, `components/onboarding/
-      OnboardingCarousel.tsx`, `components/onboarding/AuroraBackground.tsx`,
-      `components/onboarding/BreakHabitSheet.tsx`,
-      `components/AddCategoryModal.tsx` (most read `height` for keyboard
-      sizing, not width; each needs a look, not necessarily a change).
-      `components/habit-logging/CheckInCard.tsx` reads `fontScale`, not
-      width or height, and is Dynamic Type territory, not this plan.
-      Also decide as part of this audit: whether fixed footer/CTA bars
-      outside a capped ScrollView (`ScopeScreen`, `BillsScreen`,
-      `app/paywall.tsx`, `PayoffScreen`'s Continue button) should get the
-      same cap, or stay full width by design (found 2026-09-05, item 2d).
+- [x] 5. Audit remaining `useWindowDimensions` call sites for tablet
+      correctness. Done 2026-09-05: a fresh repo grep confirms the run
+      3/4-era site list was complete (19 files, 7 real call sites once
+      docs/plan/test files and the two already-resolved ones, `app/(tabs)/
+      index.tsx` (item 4) and `OnboardingCarousel.tsx` (item 2c), are set
+      aside). No code change needed for any of them:
+      - `components/AddCategoryModal.tsx`, `components/habit-logging/
+        PartialSlipSheet.tsx`, `components/money/AddUpcomingSheet.tsx`,
+        `components/money/ExpenseSheet.tsx`, `components/onboarding/
+        BreakHabitSheet.tsx`, `components/leak-scan/
+        CategoryTransactionsSheet.tsx`, `components/leak-scan/
+        ReviewQueueSheet.tsx`, `components/habit-logging/PickOneSheet.tsx`
+        all destructure `height` only (never `width`), used solely for a
+        `maxHeight: height * 0.82` or `* 0.86` cap on the sheet's scrollable
+        body so it clears the keyboard. That math is orientation- and
+        cap-independent: it is correct against the real window height on a
+        phone, on iPad, and in iPad Split View/Slide Over alike, and needs
+        no change now that `Sheet`'s panel is width-capped (item 3) since
+        the two axes do not interact.
+      - `components/onboarding/AuroraBackground.tsx` reads `width` to size
+        a full-bleed decorative gradient strip, which would need a look if
+        it rendered on tablet, but it does not: it is unreferenced dead
+        code (the retired welcome screen's revert path, per
+        PATTERN_VOCABULARY.md and the item 2c note), imported nowhere in
+        the app, only in its own test. No live tablet surface to fix.
+      - `components/habit-logging/CheckInCard.tsx` reads `fontScale`, not
+        width or height, confirmed out of scope (Dynamic Type, not this
+        plan).
+      The fixed footer/CTA bar question (`ScopeScreen`, `BillsScreen`,
+      `app/paywall.tsx`, `PayoffScreen`'s Continue button) is NOT decided
+      here per the 2026-09-05 review feedback: it is on the ops status
+      board's DECISIONS NEEDED queue for Charen now, not a call this audit
+      makes.
 - [ ] 6. Add targeted jest tests exercising tablet dimensions.
       `__tests__/tabletLayout.test.tsx` added 2026-09-04, pinning the shared
       `contentColumnStyle`/`layout.contentMaxWidth` contract and that
@@ -150,8 +165,12 @@ are done and verified (tsc clean, npm test green) on this branch.
       and the door3 ribbon to render): `kept-hero-cap-wrap` and
       `door3-ribbon-wrap` both carry the cap, and `kept-pane` itself does
       not (the pager's paging unit stays window width). Kept as an ongoing
-      item, not checked off: still open for items 2d's footer question (if
-      item 5 decides to cap them) and item 5's audit generally.
+      item, not checked off: item 5 landed 2026-09-05 with no code change
+      (see above), so nothing new needs a test from it right now. Still
+      open pending Charen's footer-cap decision (item 2d/5): if that
+      decision adds a cap to `ScopeScreen`/`BillsScreen`/paywall/
+      `PayoffScreen`, it is a real structural change and earns a dedicated
+      case here, same as items 2c/2e did.
 - [ ] 7. Keep portrait-only orientation. `app.json` already sets
       `"orientation": "portrait"`; nothing in this plan changes that.
       Re-verify this line stays untouched at the end of every run.
