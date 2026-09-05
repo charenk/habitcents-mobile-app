@@ -245,18 +245,25 @@ source file. Run 5 applied all three fixes for real; full detail in
 `docs/routines/HANDOFF.md`'s "Completed (run 5)" section. `npx tsc --noEmit`
 clean, `npm test` 103 suites / 1106 tests green (up from 103/1104).
 
-## Next run
+## Run 6: closed out
 
-Every checklist item across P3 and P4 that this routine can reach without a
-website-repo checkout or a Charen-gated external account is `[x]`, and the
-entitlement gaps and the run-5 review fixes are both done. Nothing
-code-shaped is left in this plan.
+No new commits on `origin/main` since run 5, no new REVIEW FEEDBACK on
+PR #132 (checked the PR's comments directly, none). Re-verified clean:
+`npx tsc --noEmit` clean, `npm test` 103 suites / 1106 tests green,
+exactly matching run 5's ending count. Every checklist item above is
+`[x]` or `(C)`; nothing code-shaped remains that this routine can reach
+without a website-repo checkout or a Charen-gated external account.
+Marked HANDOFF.md `COMPLETE` and PR #132 ready for review, per the
+routine's own completion instructions. Full decision queue for Charen is
+in HANDOFF.md's `COMPLETE (run 6, ...)` section.
 
-1. Address any REVIEW FEEDBACK in HANDOFF.md first, if present (run 5's own
-   REVIEW FEEDBACK section is now marked addressed and awaiting re-review;
-   act only on anything newly appended since then).
-2. If none, re-verify (rebase, `npx tsc --noEmit`, `npm test`), then write
-   COMPLETE at the top of HANDOFF.md per the routine's own instructions and
-   mark the draft PR ready for review, since nothing code-shaped would be left
-   to plan around.
-3. `npx tsc --noEmit` and `npm test` must pass before committing, same as every run.
+## If this routine fires again
+
+The branch and PR stay open until Charen merges or closes them (routine
+branches sit outside the normal PR lanes per CLAUDE.md). If a future run
+finds new commits on `origin/main` or a new REVIEW FEEDBACK section, treat
+that as new work: rebase, address the feedback, re-verify
+(`npx tsc --noEmit`, `npm test`), and update this file and HANDOFF.md
+accordingly. Do not re-open PLAN.md items already checked off without a
+concrete reason (a regression, a changed roadmap accept criterion, or an
+explicit Charen ask).
