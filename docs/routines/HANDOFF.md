@@ -2,61 +2,74 @@
 
 ## Status
 
-In progress. Plan item 2's call-site migration is underway: 3 files
-converted this run, ~69 remaining. No REVIEW FEEDBACK pending.
+In progress. Plan item 2's call-site migration continues: 3 more files
+converted this run (6 of ~67 total), plus the `Sheet.tsx` / `ScreenHeader.tsx`
+blast radius is now measured and documented in PLAN.md ahead of converting
+them. No REVIEW FEEDBACK pending.
 
 ## Completed
 
-- Plan item 1, full (prior run): `expo-localization`, `utils/locale.ts`,
+- Plan item 1, full (earlier run): `expo-localization`, `utils/locale.ts`,
   `utils/storage.ts` override get/set, `contexts/LocaleContext.tsx`,
   Profile's Language row + `LanguageSheet` (cosmetic only, no catalog yet).
-- Plan item 2, typed-API slice (prior run): `utils/i18n.ts` (`Catalog`,
+- Plan item 2, typed-API slice (earlier run): `utils/i18n.ts` (`Catalog`,
   `getCatalog`, `useStrings()`). No call sites touched that run.
-- Plan item 2, call-site migration (this run): converted 3 files from
-  `import { strings } from '@/constants/strings'` to
-  `const strings = useStrings();`: `components/ui/InfoRibbon.tsx`,
-  `components/settings/SettingsRow.tsx`,
-  `components/insights/WhereItWentCard.tsx`. Added `LocaleProvider` to the
-  6 test files that needed it (their own `Providers` wrapper, matching how
-  `CurrencyProvider` rolled out): `__tests__/door1FirstRun.test.tsx`,
-  `__tests__/door3BreakSheet.test.tsx`, `__tests__/todaySpentKept.test.tsx`,
-  `__tests__/loggedTodayList.test.tsx`,
-  `__tests__/todayQuoteRibbonPlacement.test.tsx` (all pull in InfoRibbon
-  through Today's logged-today list), `__tests__/emptyStateSurfaces.test.tsx`
-  and `__tests__/insightsFirstScan.test.tsx` (WhereItWentCard). No test
-  needed a new wrapper for SettingsRow: `__tests__/profile.test.tsx`
-  already had `LocaleProvider` wired in from a prior run.
-- Correction to the file order this run's diff also records in
-  `docs/routines/PLAN.md`: `CategoryTransactionsSheet.tsx` looked like a
-  small leaf in the original plan text but is not one. It is mounted
-  unconditionally inside `ResultsScreen.tsx` (only its own return value is
-  conditionally null), so migrating it would require adding
-  `LocaleProvider` to 7 test files, not "a couple." Left unconverted this
-  run; see PLAN.md item 2 for the full affected-file list and the
-  before-picking check to run next time (grep the component in
-  `__tests__/`, then grep where its parent is imported to rule out an
-  unconditionally-mounted bigger screen sitting upstream).
+- Plan item 2, call-site migration (earlier run): converted
+  `components/ui/InfoRibbon.tsx`, `components/settings/SettingsRow.tsx`,
+  `components/insights/WhereItWentCard.tsx`, with `LocaleProvider` added to
+  the 6 test files that needed it.
+- Plan item 2, call-site migration (this run): converted 3 more files, all
+  verified as safe leaves before touching them (same technique as before:
+  grep the component in `__tests__/`, then grep its real importers outside
+  `__tests__/`, watching for comment-only false-positive hits):
+  `components/insights/PaceCard.tsx`, `components/insights/LeaksCard.tsx`,
+  `components/insights/ScanSnapshotCard.tsx`. All three are conditionally
+  mounted from the same single parent, `app/(tabs)/insights.tsx` (behind
+  `view === 'scan'` / `monthHasData`), and the only two test files that
+  actually render that screen tree, `__tests__/emptyStateSurfaces.test.tsx`
+  and `__tests__/insightsFirstScan.test.tsx`, already had `LocaleProvider`
+  wired in from a prior run, so this run needed no test file changes at
+  all, just the 3 component edits (`import { strings } from
+  '@/constants/strings'` to `import { useStrings } from '@/utils/i18n'` plus
+  `const strings = useStrings();` inside the component).
+- Measured (not converted) the `Sheet.tsx` / `ScreenHeader.tsx` blast radius
+  this run, per the prior run's flag that it needed scoping before starting.
+  Full findings are in PLAN.md item 2. Summary: both are genuinely large.
+  `ScreenHeader.tsx` is imported by 13 files (nearly every top-level
+  screen); `Sheet.tsx` by 13 sheet components. Of the 91
+  `__tests__/*.test.tsx` files, only 10 currently have `LocaleProvider`
+  wired in; the other 53 do not, and most of them render something that
+  touches one of these two files. Confirmed this deserves its own full run
+  per file (`ScreenHeader.tsx` first, then `Sheet.tsx`), not a slice
+  alongside other leaf conversions.
 - tsc clean, 103 suites / 1099 tests passing (unchanged count from last
-  run's baseline; this run only touched imports/wrappers, added no new
-  tests).
+  run's baseline; this run only touched imports/hook calls inside existing
+  components, added no new tests).
 
 ## Next
 
-- Continue call-site migration. `components/insights/PaceCard.tsx` is
-  verified as the same safe shape as `WhereItWentCard.tsx` (single parent,
-  `app/(tabs)/insights.tsx`, only 2 test files, neither yet checked for
-  existing `LocaleProvider` wiring) and is a good next pick.
-- After that, `components/ui/Sheet.tsx` and `components/ui/ScreenHeader.tsx`
-  are the two foundational files most of the app depends on. Their test
-  blast radius has not been measured yet; do that measurement (same grep
-  technique) before starting the conversion, and expect it to be large
-  enough to want its own bounded run rather than combining it with other
-  file conversions.
+- Continue picking genuinely small single-parent leaf files for plan item 2
+  (re-run the leaf-verification grep per candidate every time; do not
+  assume a file's shape from its name or its position in a list, per the
+  `CategoryTransactionsSheet.tsx` lesson from two runs ago).
+- `components/ui/ScreenHeader.tsx`: convert as its own full bounded run.
+  PLAN.md item 2 has the exact importer list and the LocaleProvider-adding
+  process to follow (build the deduplicated test-file list first, add
+  `LocaleProvider` to all of them in the same commit as the conversion,
+  then run the full suite).
+- `components/ui/Sheet.tsx`: same treatment, its own run, after
+  `ScreenHeader.tsx`.
 - `CategoryTransactionsSheet.tsx` and its `ResultsScreen`-tree neighbors
   (`CategoryList.tsx`, `CategoryRow.tsx`, `TierBadge.tsx`, `KpiRow.tsx`,
-  `HabitCard.tsx`, `ProjectionSection.tsx`, `ReviewQueueSheet.tsx`) are
-  best done together as one batch once picked up, since they share the
-  same 7+ test files needing `LocaleProvider`.
+  `HabitCard.tsx`, `ProjectionSection.tsx`, `ReviewQueueSheet.tsx`) come
+  after `Sheet.tsx` is converted, as one deliberate batch (they share the
+  same 7+ test files needing `LocaleProvider`, and by then `Sheet.tsx`
+  underneath them will already be converted).
+- `utils/coachMoments.ts`, `utils/recurring.ts` are plain functions (not
+  components or hooks) that import `strings`; they cannot call
+  `useStrings()` directly and need the catalog passed in as a parameter
+  instead. Decide that shape when their turn comes; noted in PLAN.md so it
+  is not mistaken for a normal leaf conversion.
 - Once a meaningful slice of files is migrated, plan item 3 (test
   migration away from literal-English assertions) can start for those
   files.
@@ -93,4 +106,14 @@ item 4).
   few files, AND (b) every file that imports the component outside
   `__tests__/` mounts it conditionally, or is itself only reachable from a
   small test surface. Skipping check (b) is what made
-  `CategoryTransactionsSheet.tsx` look smaller than it is (see PLAN.md).
+  `CategoryTransactionsSheet.tsx` look smaller than it is. Also watch for
+  false-positive matches on the component's own name inside a `/** ... */`
+  doc comment cross-referencing another file (e.g. `HabitsList.tsx` and
+  `HabitLeakRow.tsx` both mention "LeaksCard.tsx" in comments without
+  importing it); read the matched line before counting it as a real
+  importer.
+- `Sheet.tsx` / `ScreenHeader.tsx`: do not start converting either without
+  first building the deduplicated test-file list per PLAN.md item 2's
+  process. Adding `LocaleProvider` to only some of the affected test files
+  would leave the others exercising a component that now calls
+  `useStrings()` outside a `LocaleProvider`, which throws.
