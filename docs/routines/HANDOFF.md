@@ -2,13 +2,19 @@
 
 ## Status
 
-In progress. Run 5 of the routine. Branch was already even with
-origin/main at rebase time (no new upstream commits since run 4; nothing to
+In progress. Run 6 of the routine. Branch was already even with
+origin/main at rebase time (no new upstream commits since run 5; nothing to
 resolve). `npm install` was needed again at the start of this run (fresh
-container, `node_modules` not present, same as runs 1-4). tsc clean, full
-test suite green (100 suites, 1081 tests) both after the review-feedback
-docs commit and again unchanged after the item 5 audit (which made no code
-changes). No simulator or device in this environment, so nothing in this
+container, `node_modules` not present, same as runs 1-5). tsc clean, full
+test suite green (100 suites, 1081 tests), unchanged from run 5 since no
+code changed this run. No new REVIEW FEEDBACK section was present at the
+start of this run (run 5's was already addressed and is recorded below).
+Checked the status board (`charenk/habitcents-mobile-app#139`) for an
+answer to the footer-cap DECISIONS NEEDED item: still open, zero comments,
+Charen has not weighed in. That is the only plan item (6) not yet checked
+off and it stays soft-blocked on that decision, exactly as run 5 left it;
+nothing else in the plan is actionable without it, so this run made no code
+changes. No simulator or device in this environment, so nothing in this
 run has been eyeballed on an actual iPad; DEVICE PASS NEEDED below is
 unchanged from run 4.
 
@@ -56,15 +62,23 @@ unchanged from run 4.
     (Dynamic Type, not window sizing).
   Did not decide the fixed-footer cap question as part of this audit, per
   the review feedback below (it is on the ops status board for Charen now).
+- Run 6: no plan work was actionable. Rebase was a no-op, no new REVIEW
+  FEEDBACK was present, and item 6 (the only unchecked line besides the
+  standing item 7 re-verification) stays blocked on the footer-cap
+  decision, confirmed still unanswered on `#139` (see DECISIONS NEEDED).
+  Re-ran tsc and the full suite to confirm the branch is still green with
+  zero drift; both are unchanged from run 5. Re-verified item 7 (`app.json`
+  orientation still `"portrait"`).
 
 ## Next
 
 Per PLAN.md, in order:
 1. Item 6: no new tablet jest coverage was needed this run, since item 5
-   concluded with no code change. Revisit once Charen's footer-cap decision
-   (see DECISIONS NEEDED) lands: if it adds a cap to `ScopeScreen`/
-   `BillsScreen`/paywall/`PayoffScreen`, that is a real structural change
-   and, like items 2c/2e before it, likely earns a dedicated test case.
+   concluded with no code change and item 6 stays blocked. Revisit once
+   Charen's footer-cap decision (see DECISIONS NEEDED) lands: if it adds a
+   cap to `ScopeScreen`/`BillsScreen`/paywall/`PayoffScreen`, that is a
+   real structural change and, like items 2c/2e before it, likely earns a
+   dedicated test case.
 2. Item 7: re-verify `app.json`'s `"orientation": "portrait"` stays
    untouched (confirmed unchanged this run; keep checking every run).
 3. With items 1-5 and 7 all satisfied, item 6 is the only plan line not
@@ -77,21 +91,25 @@ Per PLAN.md, in order:
 
 None. `npm install` was needed again at the start of this run (fresh
 container, `node_modules` not present); expected, not a real blocker, same
-as runs 1-4. Item 6 is soft-blocked on Charen's footer-cap decision (see
-DECISIONS NEEDED), not on anything this routine can resolve itself; that is
-noted here for visibility, not logged as a runs.log `blocked` outcome,
-since the routine still made forward progress this run (items 5 and the
-review feedback both landed) and has further plan-adjacent work (item 7's
-re-verification, watching for the decision) it can keep doing.
+as runs 1-5. Item 6 is soft-blocked on Charen's footer-cap decision (see
+DECISIONS NEEDED), not on anything this routine can resolve itself; still
+open on `#139` with zero comments as of this run. Noted here for
+visibility, not logged as a runs.log `blocked` outcome: per the retry and
+failure policy, that classification is for a routine that cannot proceed
+at all, and this one confirmed the branch is still green and the plan
+state is still accurate, which is itself the bounded work this run had
+available. If the decision is still unanswered next run too, this remains
+the correct call, not a growing backlog.
 
 ## DECISIONS NEEDED
 
 - Whether the fixed footer/CTA bars outside a capped ScrollView (
   `ScopeScreen`, `BillsScreen`, `app/paywall.tsx`, `PayoffScreen`'s Continue
   button) should get the same 600pt cap on iPad, or are meant to stay full
-  width by design. Per the run 5 review feedback, this is now on the ops
-  status board's DECISIONS NEEDED queue for Charen, not something this
-  routine re-raises or decides in item 5 (done this run) or anywhere else.
+  width by design. Per the run 5 review feedback, this is on the ops
+  status board's DECISIONS NEEDED queue for Charen (`#139`), not something
+  this routine re-raises or decides itself. Still open, unanswered, as of
+  run 6.
 - No new decisions raised this run.
 
 ## DEVICE PASS NEEDED
