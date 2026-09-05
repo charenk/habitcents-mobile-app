@@ -9,6 +9,7 @@ Closed, opening, open, dragging, settling, closing; reduced motion swaps the tra
 ## Decisions
 - 2026-09-10: `avoidKeyboard` removed; every sheet is keyboard-aware through the clamp instead of a KeyboardAvoidingView that lifted the panel off the top of the screen. The height rule is a pure function so Jest pins it (sheetLayout.test.ts).
 - 2026-09-10: `footer` slot with the cloud hairline; the bottom-most fixed element owns insets.bottom and the keyboard supersedes it.
+- 2026-09-05: `panel` caps at `layout.contentMaxWidth` (600pt), centered (`alignSelf: 'center'`), on tablet widths. Why: a full-width sheet on iPad read as an unfinished stretch, not a considered layout. Phones are unaffected: `width: '100%'` already equals the phone screen width below the cap, so this is a pass-through there. routine/ipad.
 - 2026-09-04: `header` prop renders inside the drag zone under the handle. Why: a finger on the title row moved nothing. ADR 0033.
 - Close rule: 25% of the panel height or a 0.5 px/ms flick; otherwise spring back (damping 22, stiffness 240, mass 0.8). Unchanged since UX-041.
 - Grant reads the live `progress` so a mid-animation grab tracks from where the panel is.
@@ -18,4 +19,5 @@ Closed, opening, open, dragging, settling, closing; reduced motion swaps the tra
 
 ## Iterations
 - 2026-09-10: clamp + keyboard hook + footer/scrollable/contentContainerStyle props; `sheet-footer` testID.
+- 2026-09-05: `panel` capped and centered at 600pt on tablet widths (routine/ipad).
 - 2026-09-04 d739f59: drag zone wraps handle + header; `sheet-drag-zone` testID.
