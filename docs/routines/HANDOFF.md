@@ -1,5 +1,63 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 6, 2026-09-05)
+
+`git fetch origin main` showed no new commits since run 5 (branch already
+even with `origin/main`, 7 commits ahead, no rebase needed). No new REVIEW
+FEEDBACK was appended to this file or to PR #132 since run 5's fixes
+(checked the PR's comment list directly: empty). Re-verified from a clean
+`npm install`: `npx tsc --noEmit` clean, `npm test` 103 suites / 1106 tests
+green, exactly matching run 5's ending count (no regression, nothing new
+to add since every checklist item was already `[x]`/`(C)` before this run).
+
+PLAN.md's P3/P4 checklist is fully `[x]` or `(C)` (Charen-only actions).
+Nothing code-shaped remains that this routine can reach without a website
+repo checkout or a Charen-gated external account. Marking PR #132 ready
+for review per the routine's own completion instructions.
+
+**Decision queue Charen must clear (all carried from runs 1-5, none new):**
+
+1. App Store privacy label: review `docs/legal/app-store-privacy-labels.md`
+   in full, accept or override its one judgment call (section 3: bucketed
+   spend amounts under "Financial Info" vs "Usage Data"; recommendation
+   stands: "Usage Data"), and resolve the one open verification (section 4
+   item 3: PostHog's IP-handling default). Then transcribe into App Store
+   Connect. Not code; nothing to merge for this specifically.
+2. RevenueCat dashboard entitlement name must match
+   `EXPO_PUBLIC_REVENUECAT_ENTITLEMENT_ID` (defaults to `'premium'`).
+3. When to actually build and test the live RevenueCat client (needs a
+   real device build; still mock-mode by default, no go-live date picked).
+4. A real device pass for the share card once a native build exists:
+   confirm the captured PNG and that the OS share sheet receives a usable
+   image on both iOS and Android.
+5. The live-path entitlement-reactivity wiring (customerInfo update
+   listener repainting a mounted screen) is code-reviewable but not
+   unit-testable in this sandbox (documented under Blockers below). Worth
+   a manual check once RevenueCat activation gets a real device build.
+6. Informational, not a decision: this branch adds `react-native-purchases`
+   (RevenueCat) as a second env-gated exception to the CLAUDE.md "no
+   network calls in app source" rule, alongside PostHog. Same shape (gated
+   on an env key, inert by default, zero network calls unless the key is
+   set) but the locked rule's wording still names PostHog as "the single
+   sanctioned exception." Worth a CLAUDE.md wording amendment when this
+   PR is reviewed. PR #132 sits behind the payments human gate regardless
+   of CI state either way (pricing/payments is always Lane 2, ADR
+   unchanged).
+
+Standing blockers (unchanged from runs 1-5, none block this routine's own
+work, listed so a reviewer has them in one place):
+- No website repo access, so P3-3/P3-4/P3-5 cannot be verified or advanced
+  here.
+- Live RevenueCat end-to-end verification (a real sandbox purchase) needs
+  a real device build.
+- The share card's capture-and-share path has no real-device pass.
+- The live-path reactivity wiring (customerInfo update listener) is
+  code-reviewable but not unit-testable in this sandbox: this project's
+  Jest/Babel setup cannot execute a real dynamic
+  `import('react-native-purchases')` at all (confirmed by hand with a
+  throwaway probe test), so no test here can distinguish "wired
+  correctly" from "wired but silently broken" for that one listener path.
+
 ## Status (run 5, 2026-09-05)
 
 `git fetch origin main` showed no new commits since run 4 (branch already
