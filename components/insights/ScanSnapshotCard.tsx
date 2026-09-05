@@ -21,7 +21,7 @@ import { useRouter } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { radii, spacing, typeScale, type AppTheme } from '@/constants/theme';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
 import { formatDate } from '@/utils/dates';
 import { KpiRow } from '@/components/leak-scan/KpiRow';
 import { TierBadge } from '@/components/leak-scan/TierBadge';
@@ -38,6 +38,7 @@ export function ScanSnapshotCard({ summary }: ScanSnapshotCardProps) {
   const theme = useTheme();
   const router = useRouter();
   const { format } = useCurrency();
+  const strings = useStrings();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   // Re-scan entry (build 12): the only prior paths to /leak-scan were
