@@ -26,6 +26,7 @@ import { ThemeProvider } from '@/contexts/ThemeContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { OnboardingProvider } from '@/contexts/OnboardingContext';
 import { EmptyState } from '@/components/ui';
+import { EMPTY_ART } from '@/constants/emptyArt';
 import { SpentList } from '@/components/money/SpentList';
 import { UpcomingList } from '@/components/money/UpcomingList';
 import { HabitsList } from '@/components/money/HabitsList';
@@ -274,6 +275,59 @@ describe('layout="fill" renders the icon on every pane-level surface', () => {
   it('inline mode stays icon-less when the caller supplies none', async () => {
     const view = await renderWith(<EmptyState body="body" />);
     expect(view.queryByTestId('empty-state-icon', HIDDEN)).toBeNull();
+  });
+});
+
+// Zero-state illustrations (ADR 0036). The art replaced a single shared
+// ChartLine glyph that seven surfaces rendered identically; these pin the
+// three properties that made the swap safe rather than the art itself, which
+// is expected to be re-sourced.
+describe('illustration', () => {
+  const HIDDEN = { hidden: true };
+
+  // Deliberately NOT gated on layout="fill". Today's two zero states are
+  // inline (fill's top padding is their quote-to-hook gap), so a layout gate
+  // would have left Today on a 28pt glyph beside 96pt siblings.
+  it('renders on inline layout, not only on fill', async () => {
+    const view = await renderWith(<EmptyState illustration="today-kept" title="t" />);
+    expect(view.getByTestId('empty-state-art', HIDDEN)).toBeTruthy();
+  });
+
+  // The pinned contract in this file is "a zero state carries a visual mark".
+  // Both branches satisfy it, so both answer to the same testID and a caller
+  // swapping a glyph for art does not silently drop the mark.
+  it('keeps the empty-state-icon contract that the glyph branch satisfies', async () => {
+    const view = await renderWith(<EmptyState layout="fill" illustration="money-spent" />);
+    expect(view.getByTestId('empty-state-icon', HIDDEN)).toBeTruthy();
+  });
+
+  // One mark, never two: art wins and the fill default does not sneak back in
+  // underneath it.
+  it('suppresses the glyph, including fill mode\'s ChartLine default', async () => {
+    const view = await renderWith(
+      <EmptyState layout="fill" illustration="insights-scan" icon="Folder" />
+    );
+    expect(view.getAllByTestId('empty-state-art', HIDDEN)).toHaveLength(1);
+    expect(view.getByTestId('empty-state-icon', HIDDEN)).toBeTruthy();
+  });
+
+  // Decorative: the title and CTA carry every word a screen reader needs, so
+  // the art adds no utterance (same convention as EmojiTile's decorative mode
+  // and the glyph it replaced).
+  it('is hidden from assistive tech', async () => {
+    const view = await renderWith(<EmptyState illustration="money-habits" title="t" />);
+    expect(view.queryByTestId('empty-state-art')).toBeNull();
+    expect(view.getByTestId('empty-state-art', HIDDEN)).toBeTruthy();
+  });
+
+  // Every name in the registry resolves to a real bundled asset. Guards the
+  // swap path: replacing one piece of art must not leave a dangling require.
+  it('resolves every registered name to a source', async () => {
+    const names = Object.keys(EMPTY_ART) as (keyof typeof EMPTY_ART)[];
+    expect(names).toHaveLength(7);
+    for (const name of names) {
+      expect(EMPTY_ART[name]).toBeTruthy();
+    }
   });
 });
 

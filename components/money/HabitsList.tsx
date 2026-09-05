@@ -44,6 +44,7 @@ export function HabitsList({ rows, managedMonthlyTotal, onBreak, onOpenHabit, on
     return (
       <EmptyState
         layout="fill"
+        illustration="money-habits"
         title={strings.money.habitsEmptyTitle}
         body={strings.money.habitsEmptyBody}
         cta={onBreakHabit ? { label: strings.money.habitsEmptyCta, onPress: onBreakHabit } : undefined}

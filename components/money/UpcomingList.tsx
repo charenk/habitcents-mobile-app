@@ -123,6 +123,7 @@ export function UpcomingList({
     return (
       <EmptyState
         layout="fill"
+        illustration="money-upcoming"
         title={strings.money.upcomingEmptyTitle}
         body={strings.money.upcomingEmptyBody}
         cta={{ label: strings.money.upcomingEmptyCta, onPress: onEmptyAdd ?? onAdd }}

@@ -1029,13 +1029,15 @@ export default function TodayScreen() {
             {spentIsEmpty ? (
               <View style={styles.spentZeroWrap}>
                 <ViewQuote quote={spentQuote} testID="spent-quote" />
-                {/* inline + explicit icon, not layout="fill": fill's 40pt top
+                {/* inline + explicit art, not layout="fill": fill's 40pt top
                     padding is this composition's quote-to-hook gap, carried by
                     the wrap's gap instead so the pair centers as one block.
-                    Icon, title, CTA and nothing else (same annotations). */}
+                    Mark, title, CTA and nothing else (same annotations). The
+                    illustration prop is layout-independent for exactly this
+                    reason (ADR 0036). */}
                 <EmptyState
                   layout="inline"
-                  icon="ChartLine"
+                  illustration="today-spent"
                   title={strings.today.spentEmptyTitle}
                   cta={{ label: strings.today.spentEmptyCta, onPress: handleSpentEmptyLog }}
                 />
@@ -1124,11 +1126,11 @@ export default function TodayScreen() {
                 </View>
                 ) : (
                   <EmptyState
-                    // inline + explicit icon, same reasoning as the Spent
+                    // inline + explicit art, same reasoning as the Spent
                     // zero block: the wrap's gap carries the quote-to-hook
                     // spacing that fill's top padding used to supply.
                     layout="inline"
-                    icon="ChartLine"
+                    illustration="today-kept"
                     title={strings.today.keptEmptyTitle}
                     cta={{
                       // The quick-log card now lives on the Spent view, not

@@ -39,7 +39,7 @@ Newest first. Date, commit or PR, one line on what changed.
 
 ## Index
 
-Modules: [today](modules/today.md), [drawers](modules/drawers.md).
+Modules: [today](modules/today.md), [drawers](modules/drawers.md), [money](modules/money.md), [insights](modules/insights.md), [categories](modules/categories.md).
 
 Components: [Sheet](components/Sheet.md), [SheetHeader](components/SheetHeader.md), [ExpenseSheet](components/ExpenseSheet.md), [Chip](components/Chip.md), [InfoRibbon](components/InfoRibbon.md), [EmptyState](components/EmptyState.md), [ViewQuote](components/ViewQuote.md), [SpentKeptChips](components/SpentKeptChips.md), [QuickLogRow](components/QuickLogRow.md), [LoggedTodayList](components/LoggedTodayList.md), [KeptHero](components/KeptHero.md), [CheckInCard](components/CheckInCard.md), [LeakCard](components/LeakCard.md).
 

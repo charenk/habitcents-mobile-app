@@ -231,6 +231,7 @@ export default function InsightsScreen() {
           ) : (
             <EmptyState
               layout="fill"
+              illustration="insights-scan"
               title={strings.insights.scanEmptyTitle}
               body={strings.insights.scanEmptyBody}
               cta={{ label: strings.insights.scanEmptyCta, onPress: handleScanEmptyOpen }}
@@ -255,6 +256,7 @@ export default function InsightsScreen() {
         ) : (
           <EmptyState
             layout="fill"
+            illustration="insights-month"
             title={strings.insights.monthEmptyTitle}
             body={strings.insights.monthEmptyBody}
             cta={{ label: strings.insights.monthEmptyCta, onPress: handleMonthEmptyLog }}

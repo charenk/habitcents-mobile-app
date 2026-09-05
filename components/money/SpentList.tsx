@@ -186,6 +186,7 @@ export function SpentList({ sections, onEditExpense, onLogExpense }: SpentListPr
   const listEmpty = neverLogged ? (
     <EmptyState
       layout="fill"
+      illustration="money-spent"
       title={strings.money.spentEmptyTitle}
       body={strings.money.spentEmptyBody}
       cta={onLogExpense ? { label: strings.money.spentEmptyCta, onPress: onLogExpense } : undefined}
