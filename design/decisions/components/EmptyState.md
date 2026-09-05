@@ -17,9 +17,8 @@ With or without each part; inline / fill; art or glyph.
 
 ## Open
 - Decide whether Money's, Insights' and Categories' empty states drop their body too.
-- Three illustrations are placeholders and want replacing (ADR 0036). Seen on the simulator walk, 2026-09-05: `money-upcoming` is a calculator under copy about a next date, the clearest mismatch of the seven; `insights-month` is a book under "See where the month went", where a pie or bar chart belongs; `money-habits` is a dartboard where a dripping tap would name the product's own word. Swapping one is a file replacement in `assets/empty-states/`, no call site changes.
-- The kept illustration is blue and gold while kept is sage everywhere else, including the chip label directly above it. Seen 2026-09-05 on Today, Kept Zero. Recolour if the source allows.
-- At 96pt the kept sack reads as a blue ball with an orange ribbon; its gold speckle becomes noise. Busiest render in the set.
+- `today-kept` is the last placeholder. It is blue and gold while kept is sage everywhere else, including the chip label directly above it, and at 96pt it reads as a blue ball with an orange ribbon because the gold speckle becomes noise. Seen 2026-09-05 on Today, Kept Zero. A stack of coins (which depicts accumulation, as the kept counter does) or a piggy bank would fix both problems; a green variant would be better still, since kept is the one concept in this app that owns a colour and no illustration currently honours it.
+- Rejected for this slot, 2026-09-05: a leather wallet with cards. The Money tab's own icon is a wallet (`app/(tabs)/_layout.tsx`), so it would point at another tab from directly above that tab's icon; cards fanned out is the gesture of paying, not of keeping; and a wallet cannot show accumulation.
 - Dynamic Type: verified 2026-09-05 at accessibility-extra-extra-extra-large on the iPhone 16 simulator. The art holds 96pt while the body grows uncapped; Today's Spent Zero and Money's Spent Zero both keep art, title, body and CTA on screen with room to spare. Fixing the art's size is what makes that work, since art that grew with the text would push the CTA off. Still owed a real device pass with VoiceOver.
 
 ## Iterations

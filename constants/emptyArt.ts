@@ -14,13 +14,15 @@
  * committed. Re-export with:
  *   sips -z 288 288 <source>.png --out assets/empty-states/<slug>.png
  *
- * Three of the seven are placeholders standing in for art that has not been
- * sourced yet, recorded in ADR 0036 and in design/decisions/components/
- * EmptyState.md: 'money-upcoming' wants a calendar or clock rather than a
- * calculator, 'money-habits' wants a dripping tap (the product's own word is
- * "leak") rather than a dartboard, and 'insights-month' wants a pie or bar
- * chart rather than a book. Swapping one is a single file replacement here;
- * no call site changes.
+ * Six of the seven are settled. 'today-kept' is the one still standing in:
+ * it is a blue and gold money sack under a sage "KEPT TODAY" label, so it
+ * inverts the one colour this app reserves for a meaning, and at 96pt its
+ * speckle reads as noise rather than money. A stack of coins or a piggy bank
+ * would say "money that never left" without the collision. Recorded in
+ * ADR 0036.
+ *
+ * Swapping any of these is a single file replacement here; no call site
+ * changes. That is the point of the registry.
  */
 
 /** Rendered edge length in points. One scale for every zero state. */
