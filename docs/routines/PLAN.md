@@ -63,7 +63,8 @@ work, tracked elsewhere).
       `components/ui/ScreenHeader.tsx`), add `LocaleProvider` to every test
       file that renders it (their local `Providers` wrapper, mirroring how
       `CurrencyProvider` rolled out) in the same commit as the conversion,
-      not after. Converted so far (6 of ~67 remaining files):
+      not after. Converted so far (8 of ~67 remaining files, plus the 2
+      shared components `ScreenHeader.tsx` and `Sheet.tsx` detailed below):
       `components/ui/InfoRibbon.tsx`, `components/settings/SettingsRow.tsx`,
       `components/insights/WhereItWentCard.tsx`,
       `components/insights/PaceCard.tsx`, `components/insights/LeaksCard.tsx`,
@@ -134,27 +135,71 @@ work, tracked elsewhere).
       for those two importers. Full suite run (not just touched files)
       confirmed 103/103 green before committing, tsc clean.
 
-      **`Sheet.tsx` still not converted, do its own run next**, same
-      process as `ScreenHeader.tsx` just did: one usage
-      (`accessibilityLabel={strings.common.close}`), imported by 13 sheet
-      components across money/, habit-logging/, leak-scan/, settings/,
-      onboarding/, plus `components/AddCategoryModal.tsx` and
-      `app/habit/[id].tsx` directly. Build the deduplicated test-file list
-      the same way (grep each importer's component name in `__tests__/`,
-      watch for a route-level indirection like `LeakScanRoute` above, watch
-      for a second `render()`/`rerender()` tree like `deckScreen.test.tsx`
-      had), add `LocaleProvider` to that whole list in the same commit as
-      the `Sheet.tsx` conversion, then run the full suite before committing.
+      **`Sheet.tsx` converted this run.** Its one usage
+      (`accessibilityLabel={strings.common.close}`) now reads
+      `const strings = useStrings();` inside the component. Imported by 13
+      sheet components across money/ (`AddUpcomingSheet`, `ExpenseSheet`),
+      habit-logging/ (`PartialSlipSheet`, `PickOneSheet`), leak-scan/
+      (`CategoryTransactionsSheet`, `PulseDayDetailSheet`,
+      `ReviewQueueSheet`), settings/ (`CurrencySheet`, `LanguageSheet`),
+      onboarding/ (`BreakHabitSheet`), plus `components/AddCategoryModal.tsx`,
+      `components/ui/ConfirmSheet.tsx`, and `app/habit/[id].tsx` directly
+      (its `EditSkipValueSheet`). This is the shared component conversion
+      only: none of those 13 leaf sheets' own `strings` usage was touched.
+
+      Blast radius lesson worth keeping: unlike a normal leaf component,
+      Sheet's hooks (`useTheme`, `useReducedMotion`, and now `useStrings`)
+      run whenever `<Sheet>` is mounted at all, before the `visible`-driven
+      early return, so a leaf-component-only test-file grep undercounts.
+      3 of the 13 importers (`CategoryTransactionsSheet`, `PulseDayDetailSheet`,
+      `ReviewQueueSheet`) have no dedicated unit test and are reached only by
+      being unconditionally mounted inside `ResultsScreen.tsx`; `BreakHabitSheet`
+      the same way inside `app/(tabs)/index.tsx` (Today). The fix: because
+      `ScreenHeader.tsx` (converted last run) is rendered on every one of
+      these same screens (Today, Money, Insights, Categories, Profile,
+      habit/category detail, the leak-scan screens), that run's test-file
+      list already exhaustively covers this same full-screen blast radius,
+      confirmed by checking every full-screen test file
+      (`moneyHabitsTab`, `moneyMaterializerIntegration`, `moneyUpcomingTab`,
+      `categoriesDeleteConfirm`, `categoriesEmptyState`, `profile`,
+      `categoryDetailScreen`, Today's `door1FirstRun`/`door3BreakSheet`/
+      `todayQuoteRibbonPlacement`/`todaySpentKept`, and the `resultsScreen*`/
+      `deckScreen`/`leakScanOnboardingExit` leak-scan set) already had
+      `LocaleProvider` before this run touched anything. Only the leaf-only
+      unit tests needed a fresh addition: `partialSlipSheet`, `pickOneSheet`,
+      `addUpcomingSheet`, `silentWrite`, `expenseSheet`, `currencySheet`,
+      `confirmSheet`, `addCategoryModal`, `editSkipValueSheet`, plus
+      `sheetHeader.test.tsx` (tests `Sheet.tsx` itself directly via its
+      `header` prop, found separately since it is not one of the 13
+      importers). `habitsSeedStartSameTick.test.tsx` looked like a Today-screen
+      match on a first grep but only mentions `app/(tabs)/index.tsx` in a
+      comment; it renders a bare `HabitsProvider` harness with no `Sheet` in
+      the tree at all, so it needed no change; same doc-comment-vs-real-import
+      caution as `CategoryList.tsx`/`HabitsList.tsx`/`HabitLeakRow.tsx` before it.
+
+      Two more fixes needed once `LocaleProvider` was added, both because
+      `LocaleContext.tsx` pulls in `utils/storage.ts` (AsyncStorage) where the
+      component under test previously did not: `confirmSheet.test.tsx` had no
+      `jest.mock('@react-native-async-storage/async-storage', ...)` at all
+      (added); `sheetHeader.test.tsx` already had the mock. Check for this on
+      any future test file whose only provider was `ThemeProvider` before.
+
+      Full suite run (not just touched files) confirmed 103/103 green before
+      committing, tsc clean.
 
       Remaining suggested order: continue picking genuinely small
       single-parent leaf files (re-run the leaf check above per candidate;
       do not assume shape from a file's name or its position in the list),
-      then `Sheet.tsx` as its own run, then `CategoryTransactionsSheet.tsx`
-      and its ResultsScreen-tree neighbors as one deliberate batch (by then
-      `Sheet.tsx` will already be converted underneath them, so only their
-      own `strings` usage remains), then the remaining sections' files, then
-      the 13 `ScreenHeader` importers' and 13 `Sheet` importers' own
-      `strings` usage as further leaf picks. Note for that later pass:
+      then `CategoryTransactionsSheet.tsx` and its ResultsScreen-tree
+      neighbors as one deliberate batch (`Sheet.tsx` is already converted
+      underneath them now, so only their own `strings` usage remains, and
+      their test-file list is already known: the same `resultsScreen*` /
+      `leakScanImportUndo` / `leakScanOnboardingExit` set noted above), then
+      the remaining sections' files, then the 13 `ScreenHeader` importers'
+      and 13 `Sheet` importers' own `strings` usage as further leaf picks
+      (for these, re-run the same "does the parent screen already carry
+      `LocaleProvider` for a shared-component reason" check before assuming
+      a fresh test-file list is needed). Note for that later pass:
       `utils/coachMoments.ts`, `utils/recurring.ts`, and
       `contexts/ReportsContext.tsx` import `strings` but are not simple
       hook-eligible leaves (`coachMoments.ts` and `recurring.ts` are plain
