@@ -134,3 +134,40 @@ None for this run's own work. Standing blockers, unchanged from runs 1-3:
    the real 5-habit ceiling, stating a fact about the product's own limit,
    not a price or a legal position. Flagging so it is visible, not asking for
    a decision.
+
+## REVIEW FEEDBACK
+
+2026-09-05, orchestrator, runs 1-4 reviewed (d1d2cf1..4e79863). Strong
+work: catching and fixing the impl-null fallback that silently granted mock
+premium on a live init failure was a real save, and the useSyncExternalStore
+reactivity fix is the right shape. Three items to fix next run, before
+marking PR #132 ready for review:
+
+1. `initPurchases()` failure is permanent for the session. The catch
+   leaves `impl` null and the finally sets `purchasesInitialized = true`,
+   so one failed boot-time init (offline at launch, a transient RevenueCat
+   outage) makes every later `purchase()`/`restore()` report "did not
+   initialize" until the app relaunches, even after the network returns.
+   Make a failed init retryable: on the catch path, clear
+   `purchasesInitPromise` and leave `purchasesInitialized` false, guarding
+   against calling `configure()` twice on retry (the SDK's
+   `Purchases.isConfigured()`, or a local configured flag). Cover the
+   retry via the injectable seam plus `__resetPurchasesInitForTests`, same
+   as the existing init-failure test.
+2. `utils/shareCard.ts` day math undercounts across spring-forward DST:
+   the midnight-to-midnight diff over such a span is n*24h minus 1h, and
+   `Math.floor` then yields n-1, so the card can claim one fewer day than
+   the real span. `Math.round(spanMs / MS_PER_DAY) + 1` fixes it; add a
+   DST test case with explicit dates (the suite runs under a fixed TZ, so
+   pick one that crosses a US or EU transition).
+3. Doc nit: `components/ShareCounterCard.tsx`'s header says it "renders
+   off-screen for a view-shot capture"; `app/share-card.tsx` correctly
+   says it renders on-screen (mounted and visible). Align both on
+   on-screen.
+
+Not yours to fix, tracked on the status board for Charen: the CLAUDE.md
+locked rule still names PostHog "the single sanctioned exception" to
+no-network, and this branch makes RevenueCat a second env-gated exception;
+that amendment is queued as a decision, and PR #132 sits behind the
+payments human gate regardless of CI state. Worth one line in the PR body
+when you mark it ready, so a reviewer sees both flags.
