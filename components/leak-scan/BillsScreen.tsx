@@ -5,7 +5,7 @@ import { Button, Icon } from '@/components/ui';
 import { EmojiTile } from '@/components/ui/EmojiTile';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
-import { radii, spacing, typeScale, type AppTheme } from '@/constants/theme';
+import { contentColumnStyle, radii, spacing, typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import { hapticError } from '@/utils/motion';
 import { categoryEmoji, categoryIdentityColor } from '@/constants/categoryEmoji';
@@ -219,6 +219,7 @@ function createStyles(theme: AppTheme) {
     },
     content: {
       paddingHorizontal: spacing.gutter,
+      ...contentColumnStyle,
     },
     title: {
       fontSize: typeScale.screenTitle,

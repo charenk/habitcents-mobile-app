@@ -40,13 +40,30 @@ are done and verified (tsc clean, npm test green) on this branch.
         `AuroraBackground.tsx` (a full-bleed decorative gradient strip, not
         content; capping it would leave gaps, left alone, already on item
         5's audit list). Done 2026-09-04.
-  - [ ] 2d. Apply to the Leak Scan flow: `app/leak-scan.tsx` composes
-        `IntakeScreen`, `ScopeScreen`, `DeckScreen`, `PayoffScreen`,
-        `BillsScreen`, `GracefulFailure`, `ResultsScreen` from
-        `components/leak-scan/`, each with its own layout. Not started.
-        Note: `IntakeScreen.tsx` already has an unrelated `maxWidth: '100%'`
-        on some element; check it does not collide before adding the shared
-        cap there.
+  - [x] 2d. Applied to the Leak Scan flow: `IntakeScreen` (`container`,
+        shared by its scroll and its two plain-View stages; the pre-existing
+        `maxWidth: '100%'` is on the unrelated `fileChip` row, no collision),
+        `ScopeScreen` (`content`), `DeckScreen` (`content`), `BillsScreen`
+        (`content`), `GracefulFailure` (`container`), `ResultsScreen`
+        (`scrollContent` and the separate `undoneCenter` early-return state),
+        and `PayoffScreen` (`body`; this screen has no ScrollView, so the cap
+        goes directly on its single content View). All seven are the same
+        mechanical `...contentColumnStyle` spread as item 2b, not a new
+        wrapper, so no per-screen jest case was added, consistent with 2b's
+        screens (money.tsx, insights.tsx, etc.) also getting none; the
+        general contract test already pins the shared style object every one
+        of them spreads. Done 2026-09-05.
+      - Note (fixed-footer gap, discovered this run): `ScopeScreen` and
+        `BillsScreen` each have a `footer` View that sits outside the capped
+        ScrollView (a confirm/skip button bar), left un-capped this run. This
+        matches an existing, older gap in `app/paywall.tsx`'s own `footer`
+        (from item 2b, not touched there either) and `PayoffScreen`'s
+        Continue button (a sibling of the now-capped `body`, also left full
+        width) — so it is an existing, consistent pattern in this codebase
+        for CTA bars outside scroll content, not a one-off miss. Whether
+        full-width footer buttons on iPad are the intended look or a gap to
+        close is a design call, not a mechanical one; added to item 5's audit
+        so it gets decided in one pass rather than piecemeal.
   - [ ] 2e. Known gap in 2b: on the Today Kept pane, the door3 ribbon, the
         kept quote, and `KeptHero` render directly inside the
         `{ width: screenWidth }` pane, above and outside the
@@ -83,6 +100,10 @@ are done and verified (tsc clean, npm test green) on this branch.
       sizing, not width; each needs a look, not necessarily a change).
       `components/habit-logging/CheckInCard.tsx` reads `fontScale`, not
       width or height, and is Dynamic Type territory, not this plan.
+      Also decide as part of this audit: whether fixed footer/CTA bars
+      outside a capped ScrollView (`ScopeScreen`, `BillsScreen`,
+      `app/paywall.tsx`, `PayoffScreen`'s Continue button) should get the
+      same cap, or stay full width by design (found 2026-09-05, item 2d).
 - [ ] 6. Add targeted jest tests exercising tablet dimensions.
       `__tests__/tabletLayout.test.tsx` added 2026-09-04, pinning the shared
       `contentColumnStyle`/`layout.contentMaxWidth` contract and that

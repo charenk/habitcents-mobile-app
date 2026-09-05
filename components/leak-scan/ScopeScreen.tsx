@@ -5,7 +5,7 @@ import { Button, Icon } from '@/components/ui';
 import { EmojiTile } from '@/components/ui/EmojiTile';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { useTheme } from '@/contexts/ThemeContext';
-import { radii, spacing, typeScale, type AppTheme } from '@/constants/theme';
+import { contentColumnStyle, radii, spacing, typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import { categoryEmoji, categoryIdentityColor } from '@/constants/categoryEmoji';
 import { categoryDisplayLabel } from '@/utils/leakScanBridge';
@@ -164,6 +164,7 @@ function createStyles(theme: AppTheme) {
     content: {
       paddingHorizontal: spacing.gutter,
       paddingTop: 8,
+      ...contentColumnStyle,
     },
     title: {
       fontSize: typeScale.screenTitle,
