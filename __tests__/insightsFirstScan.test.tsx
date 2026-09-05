@@ -78,6 +78,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { OnboardingProvider } from '@/contexts/OnboardingContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
+import { LocaleProvider } from '@/contexts/LocaleContext';
 import { ToastProvider } from '@/components/ui/Toast';
 import { CategoriesProvider } from '@/contexts/CategoriesContext';
 import { ExpensesProvider } from '@/contexts/ExpensesContext';
@@ -103,17 +104,19 @@ function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SafeAreaProvider initialMetrics={initialMetrics}>
       <ThemeProvider>
-        <CurrencyProvider>
-          <ToastProvider>
-            <CategoriesProvider>
-              <ExpensesProvider>
-                <HabitsProvider>
-                  <ReportsProvider><OnboardingProvider>{children}</OnboardingProvider></ReportsProvider>
-                </HabitsProvider>
-              </ExpensesProvider>
-            </CategoriesProvider>
-          </ToastProvider>
-        </CurrencyProvider>
+        <LocaleProvider>
+          <CurrencyProvider>
+            <ToastProvider>
+              <CategoriesProvider>
+                <ExpensesProvider>
+                  <HabitsProvider>
+                    <ReportsProvider><OnboardingProvider>{children}</OnboardingProvider></ReportsProvider>
+                  </HabitsProvider>
+                </ExpensesProvider>
+              </CategoriesProvider>
+            </ToastProvider>
+          </CurrencyProvider>
+        </LocaleProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );

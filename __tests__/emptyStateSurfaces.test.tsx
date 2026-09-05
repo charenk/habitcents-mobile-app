@@ -24,6 +24,7 @@ import { act, cleanup, fireEvent, render } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
+import { LocaleProvider } from '@/contexts/LocaleContext';
 import { OnboardingProvider } from '@/contexts/OnboardingContext';
 import { EmptyState } from '@/components/ui';
 import { EMPTY_ART } from '@/constants/emptyArt';
@@ -48,9 +49,11 @@ function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SafeAreaProvider initialMetrics={initialMetrics}>
       <ThemeProvider>
-        <CurrencyProvider>
-          <OnboardingProvider>{children}</OnboardingProvider>
-        </CurrencyProvider>
+        <LocaleProvider>
+          <CurrencyProvider>
+            <OnboardingProvider>{children}</OnboardingProvider>
+          </CurrencyProvider>
+        </LocaleProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );
