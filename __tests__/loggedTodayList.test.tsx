@@ -13,6 +13,7 @@ import { StyleSheet } from 'react-native';
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
+import { LocaleProvider } from '@/contexts/LocaleContext';
 import { LoggedTodayList } from '@/components/money/LoggedTodayList';
 import { strings } from '@/constants/strings';
 import type { Expense } from '@/types/expense';
@@ -39,13 +40,15 @@ function makeExpense(overrides: Partial<Expense> & { id: string }): Expense {
 async function renderList(props: Partial<React.ComponentProps<typeof LoggedTodayList>> = {}) {
   return render(
     <ThemeProvider>
-      <CurrencyProvider>
-        <LoggedTodayList
-          expenses={props.expenses ?? []}
-          onEditExpense={props.onEditExpense ?? jest.fn()}
-          onViewAll={props.onViewAll}
-        />
-      </CurrencyProvider>
+      <LocaleProvider>
+        <CurrencyProvider>
+          <LoggedTodayList
+            expenses={props.expenses ?? []}
+            onEditExpense={props.onEditExpense ?? jest.fn()}
+            onViewAll={props.onViewAll}
+          />
+        </CurrencyProvider>
+      </LocaleProvider>
     </ThemeProvider>
   );
 }

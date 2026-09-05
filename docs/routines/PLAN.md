@@ -63,12 +63,36 @@ work, tracked elsewhere).
       `components/ui/ScreenHeader.tsx`), add `LocaleProvider` to every test
       file that renders it (their local `Providers` wrapper, mirroring how
       `CurrencyProvider` rolled out) in the same commit as the conversion,
-      not after. Suggested order: leaf/single-section files first
-      (`components/onboarding/FirstRunRibbon.tsx`,
-      `components/leak-scan/CategoryTransactionsSheet.tsx`), then the
-      foundational `common`-only pair (`Sheet.tsx`, `ScreenHeader.tsx`) once
-      their test blast radius is scoped, then the remaining ~22 sections'
-      files.
+      not after. Converted so far (3 of ~69 remaining files):
+      `components/ui/InfoRibbon.tsx`, `components/settings/SettingsRow.tsx`,
+      `components/insights/WhereItWentCard.tsx`. Correction to the order
+      below (found this run): `components/leak-scan/CategoryTransactionsSheet.tsx`
+      is NOT a small leaf despite the name. `ResultsScreen.tsx` mounts it
+      unconditionally (it only returns null internally when no category is
+      open), so any hook it calls unconditionally runs on every
+      `ResultsScreen` render; that pulled in 7 test files
+      (`resultsScreenActivation`, `resultsScreenUndo`, `resultsScreenLadder`,
+      `resultsScreenPaywallPlacement`, `leakScanImportUndo`,
+      `leakScanOnboardingExit`, `useCompleteScanOnboarding`), not "a couple."
+      Do it later as its own deliberate slice with that full list in hand,
+      not as a quick leaf pick. Same caution applies to any component
+      reachable from `ResultsScreen`'s tree (`CategoryList.tsx`,
+      `CategoryRow.tsx`, `TierBadge.tsx`, `KpiRow.tsx`, `HabitCard.tsx`,
+      `ProjectionSection.tsx`, `ReviewQueueSheet.tsx`) — check
+      `grep -rl "<ComponentName" __tests__` AND whether the parent that
+      renders it is itself conditionally mounted before assuming a small
+      blast radius. Genuinely small candidates verified this run before
+      picking (worth reusing this check next time): grep the component name
+      across `__tests__/`, then grep where the component itself is imported
+      outside `__tests__/` to make sure it is not also reachable through a
+      bigger, unconditionally-mounted screen. Remaining suggested order:
+      other single-parent leaf files next
+      (`components/insights/PaceCard.tsx` is the same shape as
+      `WhereItWentCard.tsx`, only reachable from `app/(tabs)/insights.tsx`,
+      2 test files), then the foundational `common`-only pair (`Sheet.tsx`,
+      `ScreenHeader.tsx`) once their test blast radius is scoped, then
+      `CategoryTransactionsSheet.tsx` and its ResultsScreen-tree neighbors
+      as one deliberate batch, then the remaining sections' files.
 - [ ] Convert function-valued strings (pluralized/interpolated) to ICU
       messages with proper CLDR plural rules, not the current hand-rolled
       `n === 1 ? '' : 's'` ternaries, and add the ICU formatting dependency
