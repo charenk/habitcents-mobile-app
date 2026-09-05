@@ -131,13 +131,56 @@ Legend: `[x]` verified done in this repo, `[~]` partially done / gap identified,
       Process, not code.
 
 ### P4-3 Shareable counter card v1 (roadmap P4-3)
-- [ ] Not started. No `react-native-view-shot` / `expo-sharing`-equivalent dependency
-      exists yet. This is real, bounded, buildable work that needs no external account
-      (unlike P3-1/P4-1's Charen-gated items): image-export a branded "I kept $X in Y
-      days" card and wire the native share sheet, then have `purchase_completed`-style
-      analytics track shares (new event, structural only per D-9: a share fired, not
-      what was shared). **Run 2 or 3 candidate**, Lane 2 (user-visible), needs a
-      capture + what-to-test on the PR per ADR 0012 same as any UI change.
+- [x] **Built run 3 (2026-09-05).** `expo-sharing` ~14.0.8 (SDK-matched via
+      `node_modules/expo/bundledNativeModules.json`, `npx expo install` itself failed:
+      the sandbox has no route to Expo's compatibility API, "Host not i..." JSON parse
+      error) and `react-native-view-shot` ^4.0.3 added to `package.json` (native-build-
+      only per ADR 0029, confirmed with `npm run ota:check`: NEEDS A NATIVE BUILD,
+      `package.json`/`package-lock.json` changed).
+      - `utils/shareCard.ts`: pure `computeShareCardStats(goals, today)`, returns
+        `{ keptCents, days } | null`. `days` is the real elapsed calendar span from
+        the earliest habit's `trackingStart` through today (inclusive), deliberately
+        NOT a streak (resets on a miss) and NOT `totalSkips` (a skip count, not a
+        span) so the headline is never a fabricated statistic. Returns null with no
+        goals or a zero total, so the screen shows an honest empty state rather than
+        a $0 card.
+      - `components/ShareCounterCard.tsx`: the branded square card, reusing KeptHero's
+        palette/type (sage-light, display serif) rather than inventing a new look.
+        `forwardRef<View>` so `app/share-card.tsx` can `captureRef` it.
+      - `app/share-card.tsx`: new pushed screen (registered in `app/_layout.tsx`).
+        Renders the card live and on-screen (no off-screen capture dance needed),
+        captures it to a local PNG, hands that file to `expo-sharing`'s
+        `shareAsync`. `share_card_opened` fires on mount, `share_card_shared` fires
+        once the OS share sheet is actually invoked (mirrors `paywall_shown`'s
+        honesty level: "shown"/"invoked", not "user definitely completed a share",
+        since `shareAsync` resolves on dismissal either way on both platforms).
+        A failed capture, an unavailable share sheet, or a thrown `shareAsync` all
+        surface the same toast and never fire the tracked event.
+      - Entry point: a new Profile row ("Share your kept total", General group),
+        **not** a change to Today/KeptHero. Keeps this off the heavily-audited Today
+        surface; see `design/decisions/components/ShareCounterCard.md`.
+      - Two new analytics events in `utils/analytics.ts`'s `AnalyticsEventMap`:
+        `share_card_opened`, `share_card_shared`, both structural (`Record<string,
+        never>`), satisfying the roadmap's "PostHog tracks shares" accept criterion.
+      - New `Share2` glyph added to `components/ui/Icon.tsx`'s `GLYPHS` (lucide
+        already ships it; nothing else changed there).
+      - New strings: `strings.settings.shareRow`, `strings.shareCard.*` (title,
+        headline, wordmark, CTA, empty state, failure toast). All additive; no
+        existing key touched, per the constants/strings.ts ownership note in
+        CLAUDE.md.
+      - 15 new tests across three files (`shareCard.test.ts` pins the day-count math
+        including the inclusive/1-day/time-of-day edge cases; `shareCounterCard.test.tsx`
+        covers the render including "1 day" vs "N days" pluralization;
+        `shareCardScreen.test.tsx` covers the empty state, the headline, and the
+        capture/share/track wiring with `expo-sharing` and `react-native-view-shot`
+        mocked, matching the existing `expo-document-picker` mocking pattern).
+        `npx tsc --noEmit` clean. `npm test`: 102 suites / 1093 tests green (up from
+        99/1078).
+      - Not done, deliberately: no real-device capture/share verification (this
+        session cannot run a native build or drive the real OS share sheet); the
+        card is text-only v1, no app-icon image embedded. Both flagged in
+        `design/decisions/components/ShareCounterCard.md`'s Open section rather than
+        decided here.
 
 ### P4-4 (roadmap P4-4)
 - Explicitly "no in-app UI built for this" per the roadmap's own accept criterion.
@@ -147,14 +190,16 @@ Legend: `[x]` verified done in this repo, `[~]` partially done / gap identified,
 ## Next run
 
 1. Address any REVIEW FEEDBACK in HANDOFF.md first.
-2. Start P4-3 (shareable counter card v1): no dependency exists yet
-   (`react-native-view-shot` or equivalent), no external account needed, Lane 2 per
-   ADR 0012 (needs a capture + what-to-test on the PR). Note this also touches
-   `package.json` (a new dependency), so it is native-build-only per ADR 0029 like
-   this run's RevenueCat work was; confirm with `npm run ota:check` after committing.
-3. Optional, smaller: the two structural entitlement gaps filed 2026-08-11 and
-   reconfirmed still-deferred in the P3-1 checklist entry above (non-reactive
-   entitlement reads across mounted screens; gated-sheet copy not distinguishing an
-   at-ceiling premium user from a free user). Worth its own bounded run rather than
-   riding on P4-3.
+2. Every checklist item across P3 and P4 that this routine can reach without a
+   website-repo checkout or a Charen-gated external account is now `[x]`. The one
+   remaining real code candidate: the two structural entitlement gaps filed
+   2026-08-11 and reconfirmed still-deferred in the P3-1 checklist entry above
+   (non-reactive entitlement reads across mounted screens; gated-sheet copy not
+   distinguishing an at-ceiling premium user from a free user). Worth its own
+   bounded run.
+3. Otherwise this plan is at COMPLETE-modulo-Charen: every open item left is a
+   `(C)` decision or device verification (see HANDOFF.md's DECISIONS NEEDED). If
+   run 4 starts and item 2 above is the only code candidate, do it, then write
+   COMPLETE at the top of HANDOFF.md per the routine's own instructions and mark
+   the draft PR ready for review.
 4. `npx tsc --noEmit` and `npm test` must pass before committing, same as every run.

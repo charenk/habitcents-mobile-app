@@ -161,6 +161,14 @@ export default function ProfileScreen(): React.JSX.Element {
               strings.profile.supportRow,
               strings.settings.supportEmail
             )}
+          />
+          <SettingsRow
+            styles={styles}
+            theme={theme}
+            label={strings.settings.shareRow}
+            onPress={() => router.push('/share-card')}
+            chevron
+            accessibilityLabel={strings.settings.shareRow}
             last
           />
         </View>
