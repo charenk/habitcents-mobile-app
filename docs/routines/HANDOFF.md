@@ -2,138 +2,135 @@
 
 ## Status
 
-Run 3 of the `routine/core-p3` branch. `git fetch origin main` showed no new
-commits since run 2 (branch already up to date), so no rebase was needed.
-Baseline verified before any change: `npx tsc --noEmit` clean, `npm test` 99
-suites / 1078 tests green (matches run 2's own ending count exactly, so
-nothing drifted underneath this branch between runs). No REVIEW FEEDBACK
-section was present in run 2's HANDOFF, so this run went straight to PLAN.md's
-queued item: P4-3, the shareable counter card v1.
+Run 4 of the `routine/core-p3` branch. `git fetch origin main` showed no new
+commits since run 3 (branch already up to date, 3 commits ahead of
+`origin/main`), so no rebase was needed. No REVIEW FEEDBACK section was
+present in run 3's HANDOFF. `node_modules` did not exist in this checkout
+(fresh container); `npm install` ran first, then the baseline was verified
+clean: `npx tsc --noEmit` clean, `npm test` 102 suites / 1093 tests green
+(matches run 3's own ending count exactly). This run went straight to
+PLAN.md's queued item: the two structural entitlement gaps filed 2026-08-11
+and reconfirmed still-deferred at the end of run 3.
 
 ## Completed
 
-- **P4-3 shareable counter card v1, built end to end** (roadmap accept
-  criterion: "share sheet exports a branded card; PostHog tracks shares.").
-  Full detail lives in `docs/routines/PLAN.md`'s P4-3 entry (what each new
-  file does and why); the summary:
-  - New deps `expo-sharing` ~14.0.8 and `react-native-view-shot` ^4.0.3.
-    `npx expo install expo-sharing` itself failed in this sandbox (no route to
-    Expo's compatibility API: "Unable to fetch compatibility data... Host not
-    i... is not valid JSON"), so the version was read directly out of
-    `node_modules/expo/bundledNativeModules.json` (the SDK's own pinned
-    version) and installed with plain `npm install`. `react-native-view-shot`
-    has no Expo-bundled version to match against; its peer deps are `"*"` for
-    both `react`/`react-native`, so the latest stable (4.0.3) was used as-is.
-  - `utils/shareCard.ts`: pure `computeShareCardStats(goals, today)`. Returns
-    null (no card, not a $0 card) when there are no goals or the total kept is
-    zero. `days` is the real elapsed calendar span from the earliest habit's
-    `trackingStart` through today, inclusive: deliberately not a streak
-    (resets on a missed day) and not `totalSkips` (a count of skip days, not a
-    span), so the headline can never be read as a fabricated statistic.
-  - `components/ShareCounterCard.tsx`: the branded card, reusing KeptHero's
-    palette and type rather than inventing a new visual language.
-  - `app/share-card.tsx`: new pushed screen, registered in `app/_layout.tsx`.
-    Renders the card live (not off-screen), captures it with
-    `react-native-view-shot`'s `captureRef`, hands the PNG to `expo-sharing`'s
-    `shareAsync`. Fires `share_card_opened` on mount and `share_card_shared`
-    once the OS share sheet is actually invoked; a failed capture or an
-    unavailable/erroring share sheet surfaces a toast and never fires the
-    tracked event.
-  - Entry point: a new Profile row, "Share your kept total" (General group).
-    Deliberately not a change to Today/KeptHero, so this stayed off the
-    heavily design-audited Today surface; see
-    `design/decisions/components/ShareCounterCard.md` (new file, added to the
-    design-decisions README index) for that call and its Open items.
-  - Two new structural analytics events (`share_card_opened`,
-    `share_card_shared`) in `utils/analytics.ts`'s `AnalyticsEventMap`, both
-    `Record<string, never>`, satisfying the "PostHog tracks shares" half of
-    the accept criterion. No amounts, no merchant/habit names in either
-    payload.
-  - New `Share2` icon glyph in `components/ui/Icon.tsx` (lucide already ships
-    it as `share-2`, just wasn't wired into the app's `GLYPHS` map yet).
-  - New strings, all additive to `constants/strings.ts`: `settings.shareRow`
-    plus a new `shareCard` section (title, headline, wordmark, CTA, empty
-    state, failure toast). No existing key touched, respecting the file's
-    routine-ownership note in CLAUDE.md; searched the mobile-app repo's
-    issues for a "Routine status board" issue first (none exists), so this is
-    the routine's own read of the file, not a check against a status board
-    that doesn't exist yet.
-  - 15 new tests, three new files: `__tests__/shareCard.test.ts` (pure day-
-    count math, including the inclusive-count, 1-day-minimum, and
-    time-of-day-ignored edge cases), `__tests__/shareCounterCard.test.tsx`
-    (render, including the "1 day" vs "N days" pluralization), and
-    `__tests__/shareCardScreen.test.tsx` (empty state, headline, and the
-    capture/share/track wiring, with `expo-sharing` and
-    `react-native-view-shot` mocked the same way the existing
-    `expo-document-picker` tests mock that native seam).
-  - `npm run ota:check` confirms NEEDS A NATIVE BUILD (`package.json` +
-    `package-lock.json` changed), exactly as expected for a new native
-    dependency per ADR 0029.
-  - `npx tsc --noEmit` clean. `npm test`: 102 suites / 1093 tests green (up
-    from 99/1078; +15 new, zero regressions).
-- Did not start the deferred entitlement-reactivity gaps this run (see
-  PLAN.md's P3-1 entry). P4-3 filled this run's bounded-increment budget on
-  its own: two new native deps, a new screen, a new pure-math module, and 15
-  tests is a full unit of work; stacking a second unrelated fix on top would
-  have stretched past "roughly one to two hours."
+- **Non-reactive entitlement reads, fixed.** `utils/purchases.ts` gained a
+  listener set (`entitlementListeners`, `subscribeToEntitlementChanges`) and a
+  `notifyEntitlementChanged()` call at every point that actually changes
+  `mockEntitlement` or `liveEntitlement`: `writeMockEntitlement` (covers
+  `setMockEntitlement`, `resetMockEntitlement`, and the mock `purchase()`
+  path), `hydrateEntitlement`'s mock branch (covers mock `restore()`),
+  `purchaseLive`, `restoreLive`, and `initPurchases`'s initial
+  `getCustomerInfo()` fetch plus its `addCustomerInfoUpdateListener` callback
+  (the actual point of this fix: a renewal or a purchase completed elsewhere
+  now propagates). A new `useEntitlement()` hook
+  (`useSyncExternalStore(subscribeToEntitlementChanges, getEntitlement,
+  getEntitlement)`) is the reactive read for components.
+  `getEntitlement()` itself is untouched, still synchronous, still the right
+  call for `utils/devMenu.ts` or any one-off non-component read.
+  All 5 gate call sites switched from a one-shot `getEntitlement()` to
+  `useEntitlement()`: `app/(tabs)/index.tsx`, `app/(tabs)/money.tsx`,
+  `app/(tabs)/insights.tsx`, `app/habit/[id].tsx`,
+  `components/leak-scan/useTrackLeak.tsx`. `components/dev/DevMenuSection.tsx`
+  (the dev-menu entitlement toggle, the only other reader) switched from its
+  own local `useState` mirror plus a manual `setEntitlement(next)` call to the
+  same `useEntitlement()` hook, which both simplifies it (one source of truth
+  instead of two) and means toggling entitlement there now repaints every
+  other mounted gate immediately, which is the whole bug this fixes.
+- **Gated-sheet copy not distinguishing an at-ceiling premium user, fixed.**
+  `PickOneSheet` and `BreakHabitSheet` both gained an optional
+  `entitlement?: Entitlement` prop. PickOneSheet's header comment says "PROPS
+  ARE FROZEN"; this grows the signature by addition only (every existing call
+  site that omits the prop keeps the exact free-tier pitch it always
+  rendered), never breaks it. When `freeTierBlocked` is true and
+  `entitlement === 'premium'`, the gated block now renders distinct honest
+  copy: `strings.habitLogging.ceilingNote` / `ceilingTitle` / `ceilingBody` /
+  `ceilingDismiss` (new strings, `constants/strings.ts`), no price line, no
+  `plannedBanner` honesty note (nobody is being asked to pay), and a single
+  dismiss button instead of an upgrade CTA + "Maybe later" (there is nothing
+  left to sell a paying user). Free/omitted `entitlement` is unchanged. All 6
+  sheet mounts across the 5 gate call sites now pass the resolved
+  `entitlement` value through as a prop, alongside the existing
+  `freeTierBlocked`.
+- **Tests.** `__tests__/purchases.test.ts` gained an `entitlement reactivity`
+  describe block: `subscribeToEntitlementChanges` fires on a mock
+  purchase/`resetMockEntitlement`/`setMockEntitlement` and stops firing once
+  unsubscribed; `useEntitlement()` re-renders (via `renderHook` +
+  `act`) when the mock grant changes. `__tests__/pickOneSheet.test.tsx` gained
+  a `PickOneSheet gated (premium at ceiling)` describe block (3 tests: shows
+  ceiling copy and drops the price/upgrade CTA, dismisses without ever calling
+  `onStartTrial`, still shows the free-tier pitch when entitlement is
+  free/omitted). `__tests__/breakHabitSheetGate.test.tsx` is new:
+  BreakHabitSheet had zero test coverage of any kind before this run;
+  deliberately scoped to just the gated state (both branches) rather than
+  building out the full ungated chip/amount/cadence flow's coverage, which is
+  a separate, larger unit of work and not part of this backlog item.
+  `npx tsc --noEmit` clean. `npm test`: 103 suites / 1104 tests green (up from
+  102/1093; +11 new, zero regressions).
+- **Design decisions.** Added `design/decisions/components/PickOneSheet.md`
+  and `BreakHabitSheet.md` (both were undocumented despite being
+  decision-bearing components; the README's own rule is "add a file when you
+  first make a decision about a component"), indexed in
+  `design/decisions/README.md`.
+- Considered and left alone: the live-path `notifyEntitlementChanged()` calls
+  in `purchaseLive`/`restoreLive`/`initPurchases`'s
+  `addCustomerInfoUpdateListener` callback are wired but not directly
+  exercised by a test, because this sandbox's Jest/Babel config cannot run a
+  real dynamic `import('react-native-purchases')` (the same documented
+  constraint run 2's live-client tests already work around by testing the
+  injected-client seam and the init-failure path instead, never the real
+  dynamic import itself). Not a gap introduced this run; the mock-mode
+  reactivity tests exercise the identical `notifyEntitlementChanged()` call
+  sites through the reachable path.
 
 ## Next
 
-See PLAN.md's "Next run" section (updated this run). In order:
+PLAN.md's checklist is now fully `[x]` or `(C)`; nothing code-shaped remains
+that this routine can reach without a website-repo checkout or a
+Charen-gated external account. Next run:
 1. Address any REVIEW FEEDBACK below first, if present.
-2. The two structural entitlement gaps (non-reactive gate reads across
-   mounted screens; gated-sheet copy not distinguishing an at-ceiling premium
-   user from a free user), filed 2026-08-11, still deliberately deferred (see
-   PLAN.md's P3-1 entry for why). This is now the only remaining real-code
-   item this routine can reach; everything else left in PLAN.md's checklist
-   is a `(C)` Charen action or a device verification.
-3. If item 2 is picked up and lands clean, this plan is COMPLETE-modulo-
-   Charen: write COMPLETE at the top of this file (per the routine's own
-   instructions) and mark the draft PR ready for review, since nothing code-
-   shaped would be left.
+2. If none, re-verify (rebase onto `origin/main`, `npx tsc --noEmit`,
+   `npm test`), then write COMPLETE at the top of this file and mark the
+   draft PR ready for review, per the routine's own instructions.
 
 ## Blockers
 
-None for this run's own work. Standing blockers, unchanged from runs 1-2:
+None for this run's own work. Standing blockers, unchanged from runs 1-3:
 - No website repo access, so P3-3/P3-4/P3-5 cannot be verified or advanced
   here.
 - Live RevenueCat end-to-end verification (a real sandbox purchase) needs a
-  real device build; unchanged from run 2.
-- **New this run:** the share card's capture-and-share path is fully unit-
-  tested against mocked native seams but has never run on a real device.
-  `react-native-view-shot`'s actual pixel capture and the real iOS/Android
-  share sheet cannot be exercised in this sandbox. Needs a device/TestFlight
-  pass once a build carries this dependency (it will ride the same native
-  build P3-1's RevenueCat activation already needs).
+  real device build.
+- The share card's capture-and-share path (run 3) still has no real-device
+  pass.
+- **New this run:** the live-path reactivity wiring (customerInfo update
+  listener notifying mounted screens) is code-reviewable but not unit-testable
+  in this sandbox, for the reason given above under Completed. Worth a manual
+  check once RevenueCat activation gets a real device build: trigger a
+  renewal or a second-device purchase and confirm an already-open habit
+  detail screen's gate updates without navigating away and back.
 
 ## DECISIONS NEEDED (for Charen)
 
-1. **Carried over from runs 1-2, still open.** App Store privacy label:
+1. **Carried over from runs 1-3, still open.** App Store privacy label:
    review `docs/legal/app-store-privacy-labels.md` in full, accept or
    override its one judgment call (section 3: bucketed spend amounts under
    "Financial Info" vs "Usage Data"; recommendation stands: "Usage Data"),
    and resolve the one open verification (section 4 item 3: PostHog's
    IP-handling default). Then transcribe into App Store Connect. Not code;
-   nothing to merge for this specifically. (Not touched this run: the share
-   card adds no new data collection. It renders a card on-device, writes a
-   temporary local PNG, and hands it to the OS share sheet the same way any
-   app's "share" button does; the destination is the user's own choice at
-   share time, not something the app collects or controls. No worksheet
-   update was made for it.)
+   nothing to merge for this specifically.
 2. **Carried over from run 2, still open.** RevenueCat dashboard entitlement
    name must match `EXPO_PUBLIC_REVENUECAT_ENTITLEMENT_ID` (defaults to
    `'premium'`).
 3. **Carried over from run 2, still open.** When to actually build and test
-   the live RevenueCat client (needs a real device build; this session
-   cannot do that).
-4. **New this run: a real device pass for the share card.** Once a native
-   build exists (it can ride the same build item 3 above already needs),
-   worth a few minutes on a real device: confirm the captured PNG looks
-   right (text not clipped at Dynamic Type extremes, colors correct), and
-   that the OS share sheet actually receives a usable image on both iOS and
-   Android. Not urgent, and not blocking anything else; flagging so it is a
-   visible next step.
-
-No pricing, product id, or legal wording positions were picked by this
-routine. No mock-mode default was flipped. No go-live date was picked. No
-existing `constants/strings.ts` key was changed, only new ones added.
+   the live RevenueCat client (needs a real device build).
+4. **Carried over from run 3, still open.** A real device pass for the share
+   card once a native build exists: confirm the captured PNG and that the OS
+   share sheet receives a usable image on both iOS and Android.
+5. **New this run, not blocking, informational.** No pricing, product id, or
+   legal wording positions were touched. No mock-mode default was flipped.
+   The new `ceilingNote`/`ceilingTitle`/`ceilingBody`/`ceilingDismiss` copy
+   (constants/strings.ts) is new customer-facing text but not a pricing or
+   legal decision: it only ever shows to a premium user who has already hit
+   the real 5-habit ceiling, stating a fact about the product's own limit,
+   not a price or a legal position. Flagging so it is visible, not asking for
+   a decision.

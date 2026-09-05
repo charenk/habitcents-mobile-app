@@ -46,6 +46,12 @@ import type { default as RNPurchases, CustomerInfo } from 'react-native-purchase
 // it does not apply here.
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+// React IS a real dependency, imported only for useSyncExternalStore (the
+// useEntitlement() hook below). Every other export in this file stays plain
+// functions so utils/devMenu.ts and __tests__/purchases.test.ts can keep
+// calling them outside a component.
+import { useSyncExternalStore } from 'react';
+
 // ---------------------------------------------------------------------------
 // Product catalog (PLANNED prices, Phase 3 decisions pending Charen's sign-off).
 // These ids are placeholders until the real RevenueCat products are created;
@@ -129,6 +135,35 @@ export interface PurchasesClient {
 
 let impl: PurchasesClient | null = null;
 
+// ---------------------------------------------------------------------------
+// Reactivity (backlog from the gating audit, 2026-08-11): getEntitlement() is
+// a plain synchronous read, so a mounted screen that captured its value on
+// render never learns about a purchase, a restore, or a live renewal that
+// happens after that render. Every place below that actually changes
+// mockEntitlement or liveEntitlement calls notifyEntitlementChanged() so
+// useEntitlement() (bottom of this file) can repaint every mounted gate.
+// getEntitlement() itself is untouched: it stays the synchronous source of
+// truth this subscription mechanism reads from.
+// ---------------------------------------------------------------------------
+
+const entitlementListeners = new Set<() => void>();
+
+function notifyEntitlementChanged(): void {
+  entitlementListeners.forEach((listener) => listener());
+}
+
+/**
+ * Subscribe to entitlement changes. Returns an unsubscribe function. Powers
+ * useEntitlement(); call sites that render a gate should use the hook, not
+ * this directly.
+ */
+export function subscribeToEntitlementChanges(listener: () => void): () => void {
+  entitlementListeners.add(listener);
+  return () => {
+    entitlementListeners.delete(listener);
+  };
+}
+
 // Read through a function rather than the bare module variable wherever a
 // second read follows an `await`: TS narrows a directly-referenced `impl` to
 // `null` for the rest of a branch once an earlier `if (impl)` falls through,
@@ -185,6 +220,7 @@ let mockEntitlement: Entitlement = 'free';
 
 async function writeMockEntitlement(next: Entitlement): Promise<void> {
   mockEntitlement = next;
+  notifyEntitlementChanged();
   try {
     if (next === 'premium') {
       await AsyncStorage.setItem(MOCK_ENTITLEMENT_KEY, MOCK_ENTITLEMENT_VALUE);
@@ -213,6 +249,7 @@ export async function hydrateEntitlement(): Promise<Entitlement> {
   try {
     const raw = await AsyncStorage.getItem(MOCK_ENTITLEMENT_KEY);
     mockEntitlement = raw === MOCK_ENTITLEMENT_VALUE ? 'premium' : 'free';
+    notifyEntitlementChanged();
   } catch {
     // Storage unavailable: keep whatever this session already granted rather
     // than silently revoking it.
@@ -263,6 +300,7 @@ async function purchaseLive(
     }
     const result = await mod.default.purchaseStoreProduct(product);
     liveEntitlement = entitlementFromCustomerInfo(result.customerInfo);
+    notifyEntitlementChanged();
     return { ok: true, mode: 'live', entitlement: liveEntitlement, productId };
   } catch (e) {
     const err = e as { code?: string; message?: string };
@@ -279,6 +317,7 @@ async function restoreLive(
   try {
     const info = await mod.default.restorePurchases();
     liveEntitlement = entitlementFromCustomerInfo(info);
+    notifyEntitlementChanged();
     return { ok: true, mode: 'live', entitlement: liveEntitlement };
   } catch (e) {
     const err = e as { message?: string };
@@ -311,8 +350,10 @@ export async function initPurchases(): Promise<void> {
       client.configure({ apiKey: apiKey() as string });
       const info = await client.getCustomerInfo();
       liveEntitlement = entitlementFromCustomerInfo(info);
-      client.addCustomerInfoUpdateListener((updated) => {
+      notifyEntitlementChanged();
+      client.addCustomerInfoUpdateListener((updated: CustomerInfo) => {
         liveEntitlement = entitlementFromCustomerInfo(updated);
+        notifyEntitlementChanged();
       });
       impl = {
         getEntitlement: () => liveEntitlement,
@@ -433,4 +474,19 @@ export async function restore(): Promise<RestoreResult> {
 /** Current mode, for callers that want to surface "planned" vs real copy. */
 export function purchasesMode(): 'live' | 'mock' {
   return mode();
+}
+
+/**
+ * Reactive entitlement (backlog from the gating audit, 2026-08-11): every gate
+ * site used to call getEntitlement() directly during render, which reads the
+ * right value once but never again, so a purchase or a live renewal never
+ * repainted an already-mounted screen until something else happened to
+ * re-render it. This hook subscribes through useSyncExternalStore, so every
+ * gate that switches to it repaints the moment notifyEntitlementChanged()
+ * fires (a mock purchase/restore, setMockEntitlement, or a live
+ * customerInfoUpdateListener event). getEntitlement() itself is unchanged and
+ * still the right call outside a component (utils/devMenu.ts, one-off reads).
+ */
+export function useEntitlement(): Entitlement {
+  return useSyncExternalStore(subscribeToEntitlementChanges, getEntitlement, getEntitlement);
 }
