@@ -44,8 +44,14 @@ export function computeShareCardStats(
     goals[0].trackingStart
   );
 
+  // Math.round rather than Math.floor (review feedback, 2026-09-05): a
+  // midnight-to-midnight span that crosses a spring-forward DST transition is
+  // n*24h minus 1h, so Math.floor(spanMs / MS_PER_DAY) undercounts by one day
+  // right after the clocks jump forward. Rounding absorbs that one-hour drift
+  // (and the symmetric one-hour gain on fall-back) without affecting any
+  // non-DST span, since those are always exact multiples of a day.
   const spanMs = atMidnight(today).getTime() - atMidnight(earliestStart).getTime();
-  const days = Math.max(1, Math.floor(spanMs / MS_PER_DAY) + 1);
+  const days = Math.max(1, Math.round(spanMs / MS_PER_DAY) + 1);
 
   return { keptCents, days };
 }

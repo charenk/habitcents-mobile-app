@@ -71,4 +71,27 @@ describe('computeShareCardStats', () => {
     const result = computeShareCardStats(goals, new Date('2026-09-02T00:01:00'));
     expect(result?.days).toBe(2);
   });
+
+  describe('DST spring-forward (review feedback, 2026-09-05)', () => {
+    const TZ_ORIGINAL = process.env.TZ;
+    beforeEach(() => {
+      // America/New_York clocks jump forward 2am -> 3am on 2026-03-08, so a
+      // midnight-to-midnight span crossing that day is 23 real hours, not 24.
+      // Math.floor(spanMs / MS_PER_DAY) used to read that as 0 whole days and
+      // undercount by one; Math.round reads it as 1, matching the calendar.
+      process.env.TZ = 'America/New_York';
+    });
+    afterEach(() => {
+      if (TZ_ORIGINAL === undefined) delete process.env.TZ;
+      else process.env.TZ = TZ_ORIGINAL;
+    });
+
+    it('does not undercount the day span across the transition', () => {
+      const goals = [goal({ kept: 100, trackingStart: new Date('2026-03-08T00:00:00') })];
+      const result = computeShareCardStats(goals, new Date('2026-03-09T00:00:00'));
+      // March 8 through March 9 inclusive = 2 days, same as any other
+      // adjacent-day span; only the transition made the raw ms span short.
+      expect(result?.days).toBe(2);
+    });
+  });
 });
