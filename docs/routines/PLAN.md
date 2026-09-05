@@ -63,15 +63,23 @@ work, tracked elsewhere).
       `components/ui/ScreenHeader.tsx`), add `LocaleProvider` to every test
       file that renders it (their local `Providers` wrapper, mirroring how
       `CurrencyProvider` rolled out) in the same commit as the conversion,
-      not after. Converted so far (3 of ~69 remaining files):
+      not after. Converted so far (6 of ~67 remaining files):
       `components/ui/InfoRibbon.tsx`, `components/settings/SettingsRow.tsx`,
-      `components/insights/WhereItWentCard.tsx`. Correction to the order
-      below (found this run): `components/leak-scan/CategoryTransactionsSheet.tsx`
-      is NOT a small leaf despite the name. `ResultsScreen.tsx` mounts it
-      unconditionally (it only returns null internally when no category is
-      open), so any hook it calls unconditionally runs on every
-      `ResultsScreen` render; that pulled in 7 test files
-      (`resultsScreenActivation`, `resultsScreenUndo`, `resultsScreenLadder`,
+      `components/insights/WhereItWentCard.tsx`,
+      `components/insights/PaceCard.tsx`, `components/insights/LeaksCard.tsx`,
+      `components/insights/ScanSnapshotCard.tsx` (last 3 this run: all three
+      are conditionally mounted from the same parent, `app/(tabs)/insights.tsx`,
+      behind `view === 'scan'` / `monthHasData`, and the only two test files
+      that actually render that screen tree, `emptyStateSurfaces.test.tsx`
+      and `insightsFirstScan.test.tsx`, already had `LocaleProvider` wired
+      in from a prior run, so no test file changes were needed this run).
+      Correction to the order below (found in a prior run):
+      `components/leak-scan/CategoryTransactionsSheet.tsx` is NOT a small
+      leaf despite the name. `ResultsScreen.tsx` mounts it unconditionally
+      (it only returns null internally when no category is open), so any
+      hook it calls unconditionally runs on every `ResultsScreen` render;
+      that pulled in 7 test files (`resultsScreenActivation`,
+      `resultsScreenUndo`, `resultsScreenLadder`,
       `resultsScreenPaywallPlacement`, `leakScanImportUndo`,
       `leakScanOnboardingExit`, `useCompleteScanOnboarding`), not "a couple."
       Do it later as its own deliberate slice with that full list in hand,
@@ -81,18 +89,59 @@ work, tracked elsewhere).
       `ProjectionSection.tsx`, `ReviewQueueSheet.tsx`) — check
       `grep -rl "<ComponentName" __tests__` AND whether the parent that
       renders it is itself conditionally mounted before assuming a small
-      blast radius. Genuinely small candidates verified this run before
-      picking (worth reusing this check next time): grep the component name
-      across `__tests__/`, then grep where the component itself is imported
-      outside `__tests__/` to make sure it is not also reachable through a
-      bigger, unconditionally-mounted screen. Remaining suggested order:
-      other single-parent leaf files next
-      (`components/insights/PaceCard.tsx` is the same shape as
-      `WhereItWentCard.tsx`, only reachable from `app/(tabs)/insights.tsx`,
-      2 test files), then the foundational `common`-only pair (`Sheet.tsx`,
-      `ScreenHeader.tsx`) once their test blast radius is scoped, then
-      `CategoryTransactionsSheet.tsx` and its ResultsScreen-tree neighbors
-      as one deliberate batch, then the remaining sections' files.
+      blast radius. Genuinely small candidates verified before picking
+      (worth reusing this check next time): grep the component name across
+      `__tests__/`, then grep where the component itself is imported outside
+      `__tests__/` to make sure it is not also reachable through a bigger,
+      unconditionally-mounted screen; a hit inside a `/** ... */` comment
+      (a cross-reference like "reused verbatim via HabitLeakRow, see
+      LeaksCard.tsx") is not a real import, check the surrounding line.
+
+      **`Sheet.tsx` / `ScreenHeader.tsx` blast radius, measured this run
+      (not yet converted, do not start without re-reading this):** these
+      are genuinely large, confirming the prior run's caution, and should
+      each be their own bounded run, ScreenHeader first (it is the smaller
+      of the two: only `accessibilityLabel={strings.common.back}`, one
+      usage). `ScreenHeader.tsx` is imported by 13 files, nearly every
+      top-level screen (`app/(tabs)/index.tsx`, `money.tsx`, `insights.tsx`,
+      `categories.tsx`, `app/profile.tsx`, `app/paywall.tsx`,
+      `app/habit/[id].tsx`, `app/category/[id].tsx`, and 5 leak-scan
+      screens: `IntakeScreen`, `ScopeScreen`, `ResultsScreen`, `DeckScreen`,
+      `GracefulFailure`). `Sheet.tsx` (one usage,
+      `accessibilityLabel={strings.common.close}`) is imported by 13 sheet
+      components across money/, habit-logging/, leak-scan/, settings/,
+      onboarding/, plus `components/AddCategoryModal.tsx` and
+      `app/habit/[id].tsx` directly. Measured directly rather than assumed:
+      of the 91 `__tests__/*.test.tsx` files, only 10 currently have
+      `LocaleProvider` wired in; the other 53 do not, and a large fraction
+      of those 53 render a screen or sheet that touches one of these two
+      files (mounting any top-level screen pulls in `ScreenHeader`, so this
+      conversion's real test list is close to "most of the 53", not a
+      short one). Do this as: (1) list the exact test files each of the 13
+      + 13 importers appears in (`grep -rl "<ComponentName"` per file, same
+      technique as above, deduplicated into one list), (2) add
+      `LocaleProvider` to that whole list in one commit alongside the
+      `ScreenHeader.tsx` (or `Sheet.tsx`) conversion itself, since a partial
+      add would leave some tests exercising a component that now throws
+      outside a `LocaleProvider`, (3) run the full suite, not just the
+      touched files, before committing. Given the size, expect this to
+      legitimately take a full run per file (ScreenHeader, then Sheet), not
+      a slice of a run alongside other conversions.
+
+      Remaining suggested order: continue picking genuinely small
+      single-parent leaf files (re-run the leaf check above per candidate;
+      do not assume shape from a file's name or its position in the list),
+      then `ScreenHeader.tsx` as its own run, then `Sheet.tsx` as its own
+      run, then `CategoryTransactionsSheet.tsx` and its ResultsScreen-tree
+      neighbors as one deliberate batch (by then `Sheet.tsx` will already
+      be converted underneath them, so only their own `strings` usage
+      remains), then the remaining sections' files. Note for that later
+      pass: `utils/coachMoments.ts`, `utils/recurring.ts`, and
+      `contexts/ReportsContext.tsx` import `strings` but are not simple
+      hook-eligible leaves (`coachMoments.ts` and `recurring.ts` are plain
+      functions, not components or hooks, so they cannot call
+      `useStrings()` directly; they need the catalog passed in as a
+      parameter instead, decide the shape when their turn comes).
 - [ ] Convert function-valued strings (pluralized/interpolated) to ICU
       messages with proper CLDR plural rules, not the current hand-rolled
       `n === 1 ? '' : 's'` ternaries, and add the ICU formatting dependency
