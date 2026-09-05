@@ -12,9 +12,11 @@
  *   inside Today's log, which must never leave an empty card behind.
  *
  * Placement rule: always inside a list section, below the content it
- * comments on, never above an input. A message over the quick-log field
- * reads as an instruction about the field; under the log it reads as a
- * receipt for what just happened.
+ * comments on, so it reads as a receipt for what just happened (ADR 0033).
+ * The rule's original "never above an input" clause was positional shorthand
+ * for a top-anchored quick log, where a message over the field read as an
+ * instruction about it; ADR 0038 docked the input at the bottom, everything
+ * is above it now, and only the below-its-content half is operative.
  */
 import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';

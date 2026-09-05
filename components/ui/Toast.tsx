@@ -69,6 +69,10 @@ export function useToast(): ToastApi {
  * A separate context from ToastApi on purpose: ToastApi's value is memoized
  * to one stable identity because ~10 files consume it, and folding a changing
  * number into it would re-render all of them on every layout pass.
+ *
+ * Single-writer by design: the setter is last-writer-wins, which is fine while
+ * Today is the only caller. A second docked screen would need a ref-counted
+ * registry here, not a second bare call.
  */
 const ToastLiftContext = createContext<(height: number) => void>(() => {});
 

@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Text } from 'react-native';
+import { Platform, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TabBarIcon } from '@/components/ui/TabBarIcon';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -16,8 +16,9 @@ import { layout, typeScale } from '@/constants/theme';
 export default function TabLayout() {
   const theme = useTheme();
   // Tab bar metrics derive from the device's real bottom inset (ADA-022):
-  // 8 top padding + 48 content + home-indicator inset (min 8 on inset-less
-  // devices), instead of the old fixed height 84 / paddingBottom 28.
+  // 8 top padding + 56 content (tabBarHeight 64 since ADR 0037, room for the
+  // selected pill) + home-indicator inset (min 8 on inset-less devices),
+  // instead of the old fixed height 84 / paddingBottom 28.
   const insets = useSafeAreaInsets();
   const tabBarBottomPad = Math.max(insets.bottom, 8);
   return (
@@ -47,8 +48,14 @@ export default function TabLayout() {
         // Navigation's own item padding, so it shipped as "Cate".
         // adjustsFontSizeToFit shrinks it to fit instead of truncating, and
         // minimumFontScale floors that shrink at the 11pt a default-size user
-        // already sees, so nobody who asked for large text lands below the
-        // baseline. Whole word, every size (ADR 0037).
+        // already sees. Whole word, every size (ADR 0037).
+        //
+        // iOS ONLY. Under the New Architecture, RN's Android path serializes
+        // minimumFontSize but never minimumFontScale, and its fallback floor
+        // is 4dp, so on Android this pair shrinks large-text labels toward
+        // unreadable instead of stopping at the baseline. Android keeps the
+        // cap and truncates with an ellipsis, which is the lesser harm until
+        // upstream forwards the scale floor (ADR 0039 review).
         //
         // Weight carries the selected state alongside colour, because colour
         // alone measured 1.12:1 between the two states. Loaded font families
@@ -62,7 +69,7 @@ export default function TabLayout() {
             }}
             maxFontSizeMultiplier={1.5}
             numberOfLines={1}
-            adjustsFontSizeToFit
+            adjustsFontSizeToFit={Platform.OS === 'ios'}
             minimumFontScale={1 / 1.5}
           >
             {children}

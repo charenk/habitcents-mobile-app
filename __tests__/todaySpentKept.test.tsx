@@ -485,6 +485,25 @@ describe('Today: the break-habit affordance (DI-6, states per ADR 0038)', () => 
   // (ceiling 5) is granted. Still true under ADR 0038, and now for a second
   // reason: one habit is nowhere near premium's ceiling, so nothing is being
   // refused either.
+  // Premium at its own ceiling (5 of 5): still "another", still captionless,
+  // even though pressing routes to the paywall. The missing forewarning there
+  // is the open routing question three records carry; this pins the current
+  // deliberate behaviour so a change to it is a decision, not drift.
+  it('at the premium ceiling, says "another" with no plan caption', async () => {
+    await setMockEntitlement('premium');
+    mockHabits = [1, 2, 3, 4, 5].map((n) =>
+      makeHabit({ id: `h${n}`, frequency: 'daily', status: 'changing' })
+    );
+    mockGoals = mockHabits.map((h, n) => makeGoal({ id: `g${n}`, habitId: h.id, dayLogs: [] }));
+
+    const view = await renderToday();
+
+    await tap(view.getByTestId('kept-chip'));
+
+    expect(view.getByText(strings.today.breakAnotherHabitCta)).toBeTruthy();
+    expect(view.queryByText(strings.habitLogging.freeTierNote)).toBeNull();
+  });
+
   it('says nothing about the free plan once premium', async () => {
     await setMockEntitlement('premium');
     mockHabits = [makeHabit({ id: 'h1', frequency: 'daily', status: 'changing' })];
@@ -535,9 +554,15 @@ describe("Today: the Kept zero explainer (ADR 0039)", () => {
 
     const keptPane = within(view.getByTestId('kept-pane'));
     expect(keptPane.getByText(strings.today.keptHowItWorksTitle)).toBeTruthy();
+    expect(keptPane.getByTestId('empty-state-steps')).toBeTruthy();
     for (const step of strings.today.keptHowItWorks) {
       expect(keptPane.getByText(step)).toBeTruthy();
     }
+    // Each row is ONE VoiceOver stop with the numeral composed in, so the
+    // rotor reads "1. Log what..." rather than "1." and the sentence apart.
+    expect(
+      keptPane.getByLabelText(`1. ${strings.today.keptHowItWorks[0]}`)
+    ).toBeTruthy();
   });
 
   // Guards the exception from spreading. Once logs exist the pane shows a live
@@ -610,12 +635,15 @@ describe('Today: Spent pane true-zero state', () => {
     // ("Log an expense" is both quickLogOpenLabel and spentEmptyCta by
     // design, and the Kept pane's own true-zero CTA reads identically too).
     // Scoped to the Spent pane rules out Kept's; within the Spent pane the
-    // fill state's CTA is the second (QuickLogRow's own control renders
-    // first, above it).
+    // EmptyState CTA is the FIRST since ADR 0038, because the quick log now
+    // lives in the dock rendered after the scroller. Index [0] is the one
+    // that goes through handleSpentEmptyLog and the skip_activation path;
+    // [1] would be QuickLogRow, which opens the same sheet and would let
+    // this test pass without exercising what it names.
     const spentPane = view.getByTestId('spent-pane');
     const spentPaneCtas = within(spentPane).getAllByRole('button', { name: strings.today.spentEmptyCta });
     expect(spentPaneCtas).toHaveLength(2);
-    await tap(spentPaneCtas[1]);
+    await tap(spentPaneCtas[0]);
 
     expect(view.getByText(strings.expenseSheet.logEyebrow)).toBeTruthy();
   });

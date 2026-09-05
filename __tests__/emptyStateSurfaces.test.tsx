@@ -112,10 +112,12 @@ describe('every reachable empty state offers a first action', () => {
       />
     );
 
-    // HabitsList no longer reuses insights.leaksEmptyTitle/Body (empty-state
-    // unification pass): it has its own money.habitsEmptyTitle/Body keys.
+    // HabitsList no longer reuses insights.leaksEmptyTitle (empty-state
+    // unification pass): it has its own money.habitsEmptyTitle key. The body
+    // key still exists in strings.ts for the localization migration but is no
+    // longer rendered anywhere; one hook line is the standard (ADR 0037).
     expect(view.getByText(strings.money.habitsEmptyTitle)).toBeTruthy();
-    expect(view.getByText(strings.money.habitsEmptyTitle)).toBeTruthy();
+    expect(view.queryByText(strings.money.habitsEmptyBody)).toBeNull();
 
     fireEvent.press(view.getByRole('button', { name: strings.money.habitsEmptyCta }));
     expect(onBreakHabit).toHaveBeenCalledTimes(1);
@@ -377,7 +379,7 @@ describe('UpcomingList: true zero-data vs window-empty are two different empties
 
     expect(view.getByTestId('upcoming-total-text')).toBeTruthy();
     expect(view.getByLabelText(strings.money.upcomingWindowSegmentLabel)).toBeTruthy();
-    expect(view.getByText(strings.money.upcomingEmptyBody)).toBeTruthy();
+    expect(view.getByText(strings.money.upcomingWindowEmptyBody)).toBeTruthy();
     expect(view.queryByText(strings.money.upcomingEmptyTitle)).toBeNull();
   });
 });

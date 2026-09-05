@@ -237,7 +237,7 @@ export default function TodayScreen() {
 
   // Spent pane, true zero state (PRD v3.1 sect 5): no expense has ever been
   // logged, not just today. Hides the logged-today list and watch-nudge and
-  // shows a fill EmptyState below the quote instead.
+  // centers the inline EmptyState hook in the scroller instead.
   const spentIsEmpty = expenses.length === 0;
   const handleSpentEmptyLog = useEmptyStateAction('today_spent', () => openLogSheet());
 
@@ -762,9 +762,23 @@ export default function TodayScreen() {
   // a "Logged." toast would cover the field that produced it. Each dock
   // reports its measured height and the visible pane's is the one that counts,
   // because the two docks hold different controls at different heights.
+  //
+  // FOCUS-GATED, and that gate is load-bearing. Tab screens stay mounted when
+  // the user switches tabs (bottom-tabs v7 has no unmountOnBlur) and
+  // ToastProvider sits at the app root, so an unconditional lift from Today
+  // would push every toast in the app, Money's sheets and the pushed
+  // habit/profile/paywall routes included, a dock height too high. The lift
+  // applies only while Today is the focused screen.
   const [spentDockHeight, setSpentDockHeight] = useState(0);
   const [keptDockHeight, setKeptDockHeight] = useState(0);
-  useToastLift(todayView === 'spent' ? spentDockHeight : keptDockHeight);
+  const [todayFocused, setTodayFocused] = useState(true);
+  useFocusEffect(
+    useCallback(() => {
+      setTodayFocused(true);
+      return () => setTodayFocused(false);
+    }, [])
+  );
+  useToastLift(todayFocused ? (todayView === 'spent' ? spentDockHeight : keptDockHeight) : 0);
 
   const handleBreakAnother = useCallback(() => {
     if (freeTierBlocked) {
@@ -824,22 +838,24 @@ export default function TodayScreen() {
   //
   // LABEL BY STATE. "Break another habit" is a lie to someone with none, and
   // the first habit is the whole point of the Kept pane, so zero habits gets
-  // its own line naming the milestone.
+  // its own line naming the milestone. Keyed on goals.length, the same
+  // predicate the chips' keptStarted uses, so the dock and the scoreboard
+  // can never disagree about whether anything is going. (activeHabits counts
+  // tracking-status habits too, which can exist without a goal.)
   const breakLabel =
-    activeHabits.length === 0
-      ? strings.today.breakFirstHabitCta
-      : strings.today.breakAnotherHabitCta;
+    goals.length === 0 ? strings.today.breakFirstHabitCta : strings.today.breakAnotherHabitCta;
 
   // CAPTION BY STATE (ADR 0038). This used to check entitlement alone, so a
   // brand-new user with ZERO habits was told "1 habit on the free plan"
   // before anything had been refused: a growth line where there was nothing
-  // to grow out of. It now shows only at the ceiling, which is the one state
-  // where it is both true and about to matter.
+  // to grow out of. It now shows only at the FREE ceiling, which is the one
+  // state where it is both true and about to matter: pressing there jumps to
+  // the paywall (handleBreakAnother), and this line is the forewarning.
   //
-  // It is not removed outright, because pressing this AT the limit jumps
-  // straight to the paywall (see handleBreakAnother, and the routing question
-  // three records still carry). The caption is the only forewarning of that
-  // jump; deleting it would make an unannounced paywall worse, not quieter.
+  // Premium at its own ceiling (5) gets no caption and still jumps to the
+  // paywall. That routing question is carried as open by three records
+  // (today.md, ADR 0034, the status board) and is a monetization call behind
+  // the human gate; this line deliberately does not resolve it.
   const breakCaption =
     freeTierBlocked && entitlement !== 'premium' ? strings.habitLogging.freeTierNote : null;
 
@@ -984,8 +1000,8 @@ export default function TodayScreen() {
             {/* Spent pane, true zero state (PRD v3.1 sect 5): no expense has
                 ever been logged. The logged-today list and watch-nudge have
                 nothing to show, so they're hidden entirely rather than
-                rendering empty, and the fill EmptyState below the quote
-                carries the first action instead. */}
+                rendering empty; the centered EmptyState hook carries the
+                first action, with the quick log in the dock below. */}
             {!spentIsEmpty ? (
               <View style={styles.loggedTodaySpacer}>
                 <LoggedTodayList
@@ -993,13 +1009,13 @@ export default function TodayScreen() {
                   onEditExpense={setEditingExpense}
                   onViewAll={handleViewAllExpenses}
                 />
-                {/* Door 1's first-run line, the InfoRibbon pattern (Charen's
-                    Today annotations, 2026-09-04): inside the list section,
-                    directly under the log card, never above the quick-log
-                    field. It used to sit above QuickLogRow, where it read as
-                    an instruction about the field; here it reads as the
-                    receipt for the log. The watch-nudge follows it: receipt
-                    first, next action second. */}
+                {/* Door 1's first-run line, the InfoRibbon pattern (ADR
+                    0033, amended by 0038): inside the list section, directly
+                    under the logged-today list it comments on, so it reads
+                    as the receipt for the log. The old "never above an
+                    input" clause retired with the dock, since the input now
+                    sits at the bottom and everything is above it. The
+                    watch-nudge follows: receipt first, next action second. */}
                 {door1RibbonPending && door1RibbonLine ? (
                   <View style={styles.ribbonWrapInline}>
                     <InfoRibbon line={door1RibbonLine} onDismiss={dismissDoor1Ribbon} />
@@ -1081,20 +1097,17 @@ export default function TodayScreen() {
           importantForAccessibility={todayView !== 'kept' ? 'no-hide-descendants' : 'auto'}
         >
           {/* U6: door3's ribbon used to render once above the pager on both
-              panes; it renders only here now, above the opening quote, the
-              same spot its old global slot occupied visually. */}
+              panes; it renders only here now, at the top of the Kept pane,
+              the same spot its old global slot occupied visually. */}
           {door3RibbonPending && door3RibbonLine ? (
             <View style={styles.ribbonWrap}>
               <InfoRibbon line={door3RibbonLine} onDismiss={dismissDoor3Ribbon} />
             </View>
           ) : null}
-          {/* The kept quote belongs to the Zero state only (Charen's Today
-              annotations, 2026-09-04, same rule as Spent): once a leak or a
-              breaking habit exists the pane opens straight on the KeptHero
-              band. While no kept content exists there is no band at all, and
-              the quote renders inside the centered zero block below. The
-              band still mounts while loading, when isEmpty is not yet
-              trustworthy. */}
+          {/* Once a leak or a breaking habit exists the pane opens straight
+              on the KeptHero band. While no kept content exists there is no
+              band at all, only the centered zero block below. The band still
+              mounts while loading, when isEmpty is not yet trustworthy. */}
           {isLoading || !isEmpty ? (
             // DI-6 gutter fix: the band renders full-bleed by default (see
             // onboarding success, which supplies its own padded container
@@ -1116,12 +1129,11 @@ export default function TodayScreen() {
                 <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={theme.primary} />
               }
             >
-              {/* One centered zero block for both pre-leak states (FTE
-                  artboard TodayFteKept.dc.html): the quote, then either the
-                  detection progress card (some logs, no leak yet) or the
-                  leaks-will-show-up hook (nothing logged). The in-between
-                  progress state reusing this composition is a chosen default,
-                  flagged in the PR's what-to-test list. */}
+              {/* One centered zero block for both pre-leak states: either
+                  the detection progress card (some logs, no leak yet) or the
+                  hook with its explainer (nothing logged, ADR 0039). The
+                  in-between progress state reusing this composition is a
+                  chosen default, flagged in the PR's what-to-test list. */}
               <View style={styles.keptZeroWrap}>
                 {detectionProgress ? (
                   <View style={styles.progressCard}>

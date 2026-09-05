@@ -166,6 +166,28 @@ describe('ToastProvider / useToast', () => {
 
       expect(bottomOf(view)).toBe(layout.tabBarHeight + 34 + DOCK_HEIGHT + 24);
     });
+
+    // The reset path is what the focus gate on Today depends on: tab screens
+    // stay mounted, so when Today blurs it reports 0 rather than unmounting.
+    // A lift that failed to come back down would float every other screen's
+    // toasts a dock height too high, which is the regression this pins.
+    it('returns to its usual spot when the screen reports 0 again', async () => {
+      const view = await render(
+        <Providers>
+          <Lifted height={DOCK_HEIGHT} />
+        </Providers>
+      );
+      await act(async () => {
+        view.rerender(
+          <Providers>
+            <Lifted height={0} />
+          </Providers>
+        );
+      });
+      await press(view, 'show-a');
+
+      expect(bottomOf(view)).toBe(layout.tabBarHeight + 34 + 24);
+    });
   });
 
   it('renders an action label and fires its callback on press', async () => {

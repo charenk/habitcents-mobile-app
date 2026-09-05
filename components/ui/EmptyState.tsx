@@ -20,7 +20,7 @@
  *
  * Why the illustration is NOT gated on layout='fill': Today's two zero states
  * are deliberately inline (app/(tabs)/index.tsx), because their own wrapper
- * centers the hook in the space under the quick-log card and fill's top
+ * centers the hook between the chips and the ActionDock, and fill's top
  * padding would push it off centre. Gating art on the layout would have left
  * Today on a 28pt glyph while every sibling pane grew to 96pt, which is
  * exactly the two-scale drift this primitive exists to end.
@@ -144,9 +144,20 @@ export function EmptyState({
             </Text>
           ) : null}
           {steps.map((step, i) => (
-            // The index is the numeral, so the copy never carries "1." itself
-            // and a translation cannot renumber the list by accident.
-            <View key={step} style={styles.stepRow}>
+            // The index is the numeral AND the key: the copy never carries
+            // "1." itself so a translation cannot renumber the list, and an
+            // ordered list's identity is its position, so two identical lines
+            // in some locale cannot collide.
+            //
+            // One VoiceOver stop per step, not two: without the wrapper's
+            // composed label the numeral is announced on its own ("1.")
+            // disconnected from its sentence. Same idiom as ExpenseRow.
+            <View
+              key={i}
+              style={styles.stepRow}
+              accessible
+              accessibilityLabel={`${i + 1}. ${step}`}
+            >
               <Text style={styles.stepNumber}>{`${i + 1}.`}</Text>
               <Text style={styles.stepText}>{step}</Text>
             </View>

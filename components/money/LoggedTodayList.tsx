@@ -108,11 +108,11 @@ function createStyles(theme: AppTheme) {
       justifyContent: 'space-between',
       // So the two can never abut even when the eyebrow has shrunk.
       gap: spacing.sm,
-      // Was 24, which was clearance from the quick-log card that used to sit
-      // directly above this block. The card moved to the pane's dock in ADR
-      // 0038, so that 24 stacked on the chips' own 12pt marginBottom and left
-      // a 48pt hole under the scoreboard. Today (its only consumer) supplies
-      // the gap now, at the pane's 12pt stack rhythm.
+      // No marginTop. The old 24 was clearance from the quick-log card that
+      // sat directly above this block; the card moved to the pane's dock in
+      // ADR 0038, and the leftover margin stacked on the chips row's own 12pt
+      // marginBottom into a visible hole under the scoreboard. The chips'
+      // margin is now the whole gap; this block adds nothing above itself.
       marginBottom: 8,
     },
     eyebrow: {
