@@ -335,6 +335,16 @@ async function restoreLive(
  * which would otherwise hand out a free "premium" grant whenever the real
  * client merely failed to come up. That fallback is deliberate: a broken live
  * path must fail loudly, never silently comp the user.
+ *
+ * A failed attempt is retryable (review feedback, 2026-09-05): the old code
+ * set `purchasesInitialized = true` in a `finally`, which meant one bad boot
+ * (offline at launch, a transient RevenueCat outage) locked every later
+ * purchase()/restore() into "did not initialize" for the rest of the app
+ * session, even after the network came back. On failure this now leaves
+ * `purchasesInitialized` false and clears `purchasesInitPromise`, so the next
+ * call re-attempts from scratch. `client.isConfigured()` guards the retry
+ * against calling `configure()` a second time on an SDK instance that
+ * actually came up but failed later (e.g. `getCustomerInfo()` threw).
  */
 export async function initPurchases(): Promise<void> {
   if (purchasesInitialized) return;
@@ -347,7 +357,9 @@ export async function initPurchases(): Promise<void> {
     try {
       const mod = await import('react-native-purchases');
       const client: typeof RNPurchases = mod.default;
-      client.configure({ apiKey: apiKey() as string });
+      if (!(await client.isConfigured())) {
+        client.configure({ apiKey: apiKey() as string });
+      }
       const info = await client.getCustomerInfo();
       liveEntitlement = entitlementFromCustomerInfo(info);
       notifyEntitlementChanged();
@@ -360,13 +372,20 @@ export async function initPurchases(): Promise<void> {
         purchase: (productId) => purchaseLive(mod, productId),
         restore: () => restoreLive(mod),
       };
+      purchasesInitialized = true;
     } catch {
       impl = null;
+      purchasesInitialized = false;
     } finally {
-      purchasesInitialized = true;
+      purchasesInitPromise = null;
     }
   })();
   return purchasesInitPromise;
+}
+
+/** @internal test-only: expose the retry-relevant flag without a public getter. */
+export function __isPurchasesInitializedForTests(): boolean {
+  return purchasesInitialized;
 }
 
 /**

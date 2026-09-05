@@ -18,6 +18,7 @@ import {
   useEntitlement,
   __setPurchasesForTests,
   __resetPurchasesInitForTests,
+  __isPurchasesInitializedForTests,
   MOCK_ENTITLEMENT_KEY,
   PRODUCT_ANNUAL,
   PRODUCT_MONTHLY,
@@ -227,6 +228,31 @@ describe('live mode configured but the client fails to initialize', () => {
     expect(result.ok).toBe(false);
     expect(result.mode).toBe('live');
     expect(getEntitlement()).toBe('free');
+  });
+
+  /**
+   * Review feedback, 2026-09-05: a failed init used to set
+   * purchasesInitialized permanently true in a `finally`, so one bad boot
+   * (offline at launch, a transient RevenueCat outage) locked every later
+   * purchase()/restore() into "did not initialize" for the rest of the app
+   * session. This project's dynamic import always rejects the same way in
+   * this sandbox (see the file comment above), so a black-box call/response
+   * check can't distinguish "retryable" from "permanently stuck": both look
+   * like the same repeated failure from the outside. The observable
+   * difference is the internal flag itself, exposed for exactly this via
+   * __isPurchasesInitializedForTests().
+   */
+  it('a failed init leaves purchasesInitialized false, so the next call retries rather than sticking', async () => {
+    await purchase(PRODUCT_ANNUAL);
+    expect(__isPurchasesInitializedForTests()).toBe(false);
+
+    // A second call attempts initPurchases() again (not a permanent no-op)
+    // and fails the same deterministic way, still without ever comping a
+    // mock premium grant.
+    const result = await purchase(PRODUCT_ANNUAL);
+    expect(result.ok).toBe(false);
+    expect(result.mode).toBe('live');
+    expect(__isPurchasesInitializedForTests()).toBe(false);
   });
 });
 
