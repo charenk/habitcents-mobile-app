@@ -13,6 +13,7 @@ It has none of its own. The contents change, the container does not, which is th
 - 2026-09-05: **it does not hide on scroll**, though that is what was asked for. Why, specifically: there is no scroll-driven UI anywhere in this app; a smooth version needs the first `react-native-reanimated` import while an unexplained release-only launch crash is open; the toast occupies this exact band and fires on the save this dock performs; the sanctioned entrance travel is 8-12pt against a bar height near 80; and sliding surfaces were rejected twice, most recently ADR 0037. A composer stays put. Revisit needs its own ADR plus a Release-configuration boot walk.
 - 2026-09-05: geometry copied from the leak-scan footers rather than invented, so this is a re-use of existing chrome grammar.
 - 2026-09-05: it reports its measured height so the screen can lift the toast clear of it. Measured, not derived: the quick-log card and the habit affordance are different heights.
+- 2026-09-05 (review): the toast lift is FOCUS-GATED on Today. Why: tab screens stay mounted and ToastProvider is global, so an unconditional lift pushed every other screen's toasts a dock height too high; the reset path is pinned by a toast test. ADR 0039 review.
 
 ## Open
 - Only Today uses it. Money's Spent segment is the app's longest list and has no quick log at all; whether it earns one is a separate question.
