@@ -2,11 +2,10 @@
 
 ## Status
 
-In progress. Plan item 2: `ScreenHeader.tsx` converted to `useStrings()` this
-run (the first of the two flagged foundational components). `Sheet.tsx` is
-next, same process. REVIEW FEEDBACK from the orchestrator (runs 1-4,
-approved, no code fixes) landed mid-run and is addressed below; nothing
-pending on it.
+In progress. Plan item 2: `Sheet.tsx` converted to `useStrings()` this run,
+the second of the two flagged foundational components (`ScreenHeader.tsx`
+was the first, prior run). No REVIEW FEEDBACK pending from the orchestrator
+this run.
 
 ## Completed
 
@@ -17,52 +16,59 @@ pending on it.
   `getCatalog`, `useStrings()`). No call sites touched that run.
 - Plan item 2, call-site migration (earlier runs): converted 6 leaf files
   (`InfoRibbon`, `SettingsRow`, `WhereItWentCard`, `PaceCard`, `LeaksCard`,
-  `ScanSnapshotCard`), plus measured (not converted) the `Sheet.tsx` /
-  `ScreenHeader.tsx` blast radius.
-- Plan item 2, `ScreenHeader.tsx` conversion (this run): its one `strings`
-  usage (`accessibilityLabel={strings.common.back}`) now reads
-  `const strings = useStrings();` inside the component. The 13 screens that
-  render `ScreenHeader` still use the static `strings` import for their own
-  text; only the header itself now goes through the catalog. That is
-  deliberate scoping, not a shortcut: converting the shared component first
-  and its callers later (as their own leaf picks) is smaller and safer than
-  one big multi-file change.
-- Test-side prerequisite, same commit: added `LocaleProvider` to all 16 test
-  files that render `ScreenHeader`, directly or transitively, that did not
-  already have it: `screenHeader`, `categoryDetailScreen`,
-  `habitDetailPaywallPlacement`, `moneyUpcomingTab`,
-  `moneyMaterializerIntegration`, `moneyHabitsTab`, `categoriesEmptyState`,
-  `categoriesDeleteConfirm`, `scopeScreen`, `resultsScreenActivation`,
-  `resultsScreenUndo`, `resultsScreenLadder`, `leakScanImportUndo`,
-  `resultsScreenPaywallPlacement`, `deckScreen`, `leakScanOnboardingExit`.
-  (5 of the 21 files that render a `ScreenHeader`-mounting screen already had
-  `LocaleProvider` from earlier runs: `insightsFirstScan`, `door3BreakSheet`,
-  `todaySpentKept`, `todayQuoteRibbonPlacement`, `door1FirstRun`, `profile`.)
-  Two lessons from building this list, recorded in PLAN.md for the `Sheet.tsx`
-  run to reuse: `deckScreen.test.tsx` has a second, separate provider tree at
-  a `rerender()` call further down the file that is easy to miss; and
-  `leakScanOnboardingExit.test.tsx` reaches `IntakeScreen`/`GracefulFailure`
-  only transitively through `LeakScanRoute` (`@/app/leak-scan`), not a direct
-  `<ComponentName` match, so it does not show up in the simple grep and has
-  to be found by tracing the route file's own imports.
+  `ScanSnapshotCard`), then `ScreenHeader.tsx` (prior run, with `LocaleProvider`
+  added to 16 test files).
+- Plan item 2, `Sheet.tsx` conversion (this run): its one `strings` usage
+  (`accessibilityLabel={strings.common.close}`) now reads
+  `const strings = useStrings();` inside the component. `Sheet.tsx` is
+  imported by 13 leaf sheet components (`PartialSlipSheet`, `PickOneSheet`,
+  `CategoryTransactionsSheet`, `PulseDayDetailSheet`, `ReviewQueueSheet`,
+  `AddUpcomingSheet`, `ExpenseSheet`, `BreakHabitSheet`, `CurrencySheet`,
+  `LanguageSheet`, `ConfirmSheet`, `AddCategoryModal`,
+  `EditSkipValueSheet` in `app/habit/[id].tsx`); none of their own `strings`
+  usage was touched, this is the shared component only.
+- Blast-radius handling (this run, the reason this took the full run): unlike
+  a normal leaf, `Sheet`'s hooks run on every mount regardless of the
+  `visible` prop, and 4 of its 13 importers (`CategoryTransactionsSheet`,
+  `PulseDayDetailSheet`, `ReviewQueueSheet`, `BreakHabitSheet`) have no
+  dedicated unit test, reached only by being unconditionally mounted inside
+  `ResultsScreen.tsx` or Today (`app/(tabs)/index.tsx`). Verified that
+  `ScreenHeader.tsx`'s test-file list from last run already covers this,
+  since `ScreenHeader` renders on the same screens (Today, Money, Insights,
+  Categories, Profile, habit/category detail, the leak-scan screens): every
+  full-screen test file already carried `LocaleProvider` before this run
+  touched anything. Added `LocaleProvider` to the 10 remaining files that
+  needed it: the 9 leaf-sheet unit tests (`partialSlipSheet`, `pickOneSheet`,
+  `addUpcomingSheet`, `silentWrite`, `expenseSheet`, `currencySheet`,
+  `confirmSheet`, `addCategoryModal`, `editSkipValueSheet`) plus
+  `sheetHeader.test.tsx` (tests `Sheet.tsx` directly via its `header` prop,
+  not one of the 13 importers, found by a separate grep).
+  `habitsSeedStartSameTick.test.tsx` looked like a Today-screen match on the
+  first grep but only mentions `app/(tabs)/index.tsx` in a comment; it has no
+  `Sheet` in its render tree at all (a bare `HabitsProvider` harness), so
+  needed no change. Full list and reasoning recorded in PLAN.md item 2.
+- Two follow-on fixes surfaced by the full suite run, both from
+  `LocaleContext.tsx` pulling in `utils/storage.ts` (AsyncStorage) where the
+  component under test previously did not need it: `confirmSheet.test.tsx`
+  had no async-storage jest mock at all (added); `sheetHeader.test.tsx`
+  already had it. Worth checking on any future `ThemeProvider`-only test file.
 - `tsc --noEmit` clean, full suite run (not just touched files) 103/103
-  suites, 1099/1099 tests green (unchanged count: no new tests this run,
-  only test-provider wiring plus the one component's hook swap).
+  suites, 1099/1099 tests green.
 
 ## Next
 
-- `Sheet.tsx`: convert as its own full bounded run, same process
-  `ScreenHeader.tsx` just used (build the deduplicated importer + test-file
-  list first per PLAN.md item 2's exact steps, add `LocaleProvider` to the
-  whole list in the same commit as the conversion, run the full suite before
-  committing). PLAN.md has the importer list and both lessons above.
 - Continue picking genuinely small single-parent leaf files for plan item 2
-  in parallel with or after `Sheet.tsx` (re-run the leaf-verification grep
-  per candidate every time).
+  (re-run the leaf-verification grep per candidate every time; for
+  components whose parent screen already renders `ScreenHeader` or `Sheet`,
+  check whether that parent's test files already carry `LocaleProvider`
+  before assuming a fresh test-file list is needed).
 - `CategoryTransactionsSheet.tsx` and its `ResultsScreen`-tree neighbors
   (`CategoryList.tsx`, `CategoryRow.tsx`, `TierBadge.tsx`, `KpiRow.tsx`,
-  `HabitCard.tsx`, `ProjectionSection.tsx`, `ReviewQueueSheet.tsx`) come
-  after `Sheet.tsx` is converted, as one deliberate batch.
+  `HabitCard.tsx`, `ProjectionSection.tsx`, `ReviewQueueSheet.tsx`) as one
+  deliberate batch: `Sheet.tsx` is already converted underneath them now, so
+  only their own `strings` usage remains, and their test-file list is
+  already known (the `resultsScreen*` / `leakScanImportUndo` /
+  `leakScanOnboardingExit` set).
 - The 13 `ScreenHeader` importers' and 13 `Sheet` importers' own `strings`
   usage are themselves future leaf picks once the two shared components are
   done; `app/profile.tsx` is a special case among them (see Notes below).
@@ -99,29 +105,27 @@ item 4).
 - The Language picker in Settings is still cosmetic only: selecting a
   language persists the override and nothing on screen changes yet, because
   almost every component still reads the static English `strings` export and
-  no non-English catalog exists. `ScreenHeader`'s back-button label is the
-  first (and so far only) piece of on-screen text actually wired through
-  `useStrings()`; it is still English text either way until plan item 4
-  lands catalogs, so this is not yet observable. Expected, not a bug.
+  no non-English catalog exists. `ScreenHeader`'s back-button label and
+  `Sheet`'s scrim-close label are the only on-screen text actually wired
+  through `useStrings()` so far; both are still English text either way
+  until plan item 4 lands catalogs, so this is not yet observable. Expected,
+  not a bug.
 - Useful check before picking the next file to convert: a component is
   only a safe small leaf if (a) `grep -rl "<ComponentName" __tests__` finds
   few files, AND (b) every file that imports the component outside
   `__tests__/` mounts it conditionally, or is itself only reachable from a
-  small test surface. Skipping check (b) is what made
-  `CategoryTransactionsSheet.tsx` look smaller than it is. Also watch for
-  false-positive matches on the component's own name inside a `/** ... */`
-  doc comment cross-referencing another file (e.g. `HabitsList.tsx` and
-  `HabitLeakRow.tsx` both mention "LeaksCard.tsx" in comments without
-  importing it, and for a component reached only transitively through a
-  route file's default export rather than a direct JSX match (the
-  `leakScanOnboardingExit` case above); read the matched line, and trace
-  route-level imports, before ruling a file out.
-- `Sheet.tsx`: do not start converting without first building the
-  deduplicated test-file list per PLAN.md item 2's process (now includes the
-  two lessons from this run: the second-provider-tree case and the
-  transitive-route case). Adding `LocaleProvider` to only some of the
-  affected test files would leave the others exercising a component that
-  now calls `useStrings()` outside a `LocaleProvider`, which throws.
+  small test surface. For a component whose hooks run unconditionally on
+  mount (like `Sheet.tsx`, and unlike most leaves), check (b) has to trace
+  every importer's own mount site too, not just stop at "no direct test
+  file found": the importer may be reached only through a bigger screen.
+  Also watch for false-positive matches on the component's own name inside
+  a `/** ... */` doc comment cross-referencing another file (this run:
+  `CategoryList.tsx`'s and `CategoryTransactionsSheet.tsx`'s own doc
+  comments mention `CategoryTransactionsSheet`/`ReviewQueueSheet` without
+  importing them; `AmountField.tsx`/`TextField.tsx`/
+  `habitsSeedStartSameTick.test.tsx` mention `BreakHabitSheet`/
+  `app/(tabs)/index.tsx` the same way); read the matched line, and trace
+  route-level imports, before ruling a file in or out.
 - `app/profile.tsx` reads `strings.settings.supportEmail` at module scope
   (building `SUPPORT_MAILTO_URL` outside the component), so it is not a
   plain three-line hook swap like every leaf converted so far; note left in
@@ -129,40 +133,5 @@ item 4).
 
 ## REVIEW FEEDBACK
 
-2026-09-05, orchestrator, runs 1-4 reviewed (1d787c1..42bdbd5). Clean
-foundation, approved with no code fixes: the pure matcher, the zh-Hant and
-non-BR pt fallback-to-English choice, and the leaf-verification discipline
-(including correcting the plan when CategoryTransactionsSheet turned out
-bigger than assumed) are all right. Two coordination items for upcoming
-runs, not fixes:
-
-1. Incoming collisions from the other streams. routine/core-p3 adds new
-   strings.ts sections (`shareCard`, `habitLogging.ceiling*`) plus two new
-   files reading the static `strings` export (app/share-card.tsx,
-   components/ShareCounterCard.tsx), and both routine/core-p3 and
-   routine/ipad touch app/profile.tsx where your Language row sits; core
-   also touches app/_layout.tsx (new Stack.Screen) next to your
-   LocaleProvider hunk, and adds 3 dependencies to package.json where you
-   add 1. Expect rebase conflicts in strings.ts (additive, different
-   regions, trivial), profile.tsx, and the lockfile once those merge to
-   main. On a package-lock.json conflict, regenerate it with npm install;
-   never hand-merge it. Add core's new strings sections and both new files
-   to the item 2 migration inventory when they land on main.
-2. constants/strings.ts is the file the status board's conflict watch
-   names as this stream's territory. The other streams' additive keys are
-   legitimate; the collision risk lives in any structural reshaping of
-   strings.ts this plan later needs (item 4's catalog work). Announce any
-   structural strings.ts change in this HANDOFF one run before making it,
-   so the board can warn the other streams in time.
-
-**Addressed (this run, run 5):** this feedback landed on origin mid-run,
-after this run's own code change (ScreenHeader.tsx) was already committed
-locally; picked up via the rebase before push, no re-work needed since it
-calls for no code fixes. Both items are noted for when they become live:
-(1) no rebase conflict yet, since this run touched neither strings.ts nor
-profile.tsx nor package.json; the item 2 migration inventory will pick up
-core's new strings sections and its two new files once they land on main
-and get their turn as leaf picks. (2) No structural strings.ts change made
-or planned this run; item 4's catalog work is still several runs out, and
-this note will get its one-run-ahead announcement here when that work
-starts.
+None pending. The 2026-09-05 orchestrator review of runs 1-4 (approved, no
+code fixes) was addressed last run; nothing new has landed since.

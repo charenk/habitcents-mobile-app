@@ -20,6 +20,7 @@ import { act, cleanup, fireEvent, render } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
+import { LocaleProvider } from '@/contexts/LocaleContext';
 import { ToastProvider } from '@/components/ui/Toast';
 import { CurrencySheet } from '@/components/settings/CurrencySheet';
 import { strings } from '@/constants/strings';
@@ -34,11 +35,13 @@ function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SafeAreaProvider initialMetrics={initialMetrics}>
       <ThemeProvider>
-        <CurrencyProvider>
-          {/* The sheet now says so when a currency change fails to persist,
-              so it needs the toast the app root always provides. */}
-          <ToastProvider>{children}</ToastProvider>
-        </CurrencyProvider>
+        <LocaleProvider>
+          <CurrencyProvider>
+            {/* The sheet now says so when a currency change fails to persist,
+                so it needs the toast the app root always provides. */}
+            <ToastProvider>{children}</ToastProvider>
+          </CurrencyProvider>
+        </LocaleProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );
