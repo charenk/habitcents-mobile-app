@@ -866,10 +866,12 @@ export const strings = {
     keptEmptyCta: 'Log an expense',
     alreadyBreakingToast: "You're already breaking this habit.",
     editExpenseLabel: (title: string, amountLabel: string) => `Edit ${title}, ${amountLabel}`,
-    // Break-another affordance (DI-6, ADR 0019): quiet, always-present at the
-    // bottom of the Kept view. The caption reuses habitLogging.freeTierNote
-    // (the same gate copy PickOneSheet's locked sheet already states) rather
-    // than inventing a new pricing line.
+    // The break-habit affordance (DI-6, ADR 0019), which since ADR 0038 lives
+    // in Today's ActionDock and reads its state rather than one fixed line.
+    //
+    // Two labels, because "another" is a lie to someone with none. The first
+    // names the milestone; the second is the steady-state line.
+    breakFirstHabitCta: 'Break your first habit',
     breakAnotherHabitCta: 'Break another habit',
     // Door 1 real-app first run (W2, ratified onboarding redesign): Door 1 no
     // longer passes through a practice log screen, it opens the real

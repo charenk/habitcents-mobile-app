@@ -124,11 +124,15 @@ export function EmptyState({
           which is an accessibility regression dressed up as polish. */}
       {body ? <Text style={styles.body}>{body}</Text> : null}
       {cta ? (
-        // Tertiary, not secondary (ADR 0037): beside a 96pt illustration and a
-        // single hook line, a bordered pill was the heaviest thing in a pane
-        // meant to read quiet. Tertiary is transparent with a 44pt minimum, so
-        // the target rule and the PRD's "concrete first action" both still hold.
-        <Button variant="tertiary" label={cta.label} onPress={cta.onPress} style={styles.cta} />
+        // Text, not a bordered pill (ADR 0037): beside a 96pt illustration and
+        // a single hook line, the pill was the heaviest thing in a pane meant
+        // to read quiet. 44pt minimum, so the target rule and the PRD's
+        // "concrete first action" both still hold.
+        //
+        // Sage, not slate (ADR 0038): text alone made the pane's only action
+        // its quietest element. This is the surface the vocabulary means by
+        // "the action that produces a kept outcome".
+        <Button variant="tertiaryBrand" label={cta.label} onPress={cta.onPress} style={styles.cta} />
       ) : null}
     </View>
   );

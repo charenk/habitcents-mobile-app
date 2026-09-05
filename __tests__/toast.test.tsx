@@ -13,7 +13,8 @@ import { Pressable, Text } from 'react-native';
 import { act, cleanup, fireEvent, render } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '@/contexts/ThemeContext';
-import { ToastProvider, useToast, type ToastAction } from '@/components/ui/Toast';
+import { ToastProvider, useToast, useToastLift, type ToastAction } from '@/components/ui/Toast';
+import { layout } from '@/constants/theme';
 
 const onUndo = jest.fn();
 
@@ -122,6 +123,49 @@ describe('ToastProvider / useToast', () => {
     await advance(2500);
     await advance(300);
     expect(view.queryByText('Logged.')).toBeNull();
+  });
+
+  // ADR 0038: Today grew an ActionDock at the bottom of each pane, which sits
+  // exactly where the pill did. Without a lift, a "Logged." toast covers the
+  // very field that produced it.
+  describe('lift for docked chrome', () => {
+    const DOCK_HEIGHT = 96;
+
+    function Lifted({ height }: { height: number }) {
+      useToastLift(height);
+      return <Harness />;
+    }
+
+    /** The pill's own `bottom`, not the absolute-fill host's, which is 0. */
+    function bottomOf(view: { getByTestId: (id: string) => { props: Record<string, unknown> } }) {
+      const style = view.getByTestId('toast-pill').props.style;
+      const parts = (Array.isArray(style) ? style.flat(Infinity) : [style]) as unknown[];
+      const merged = Object.assign({}, ...parts.filter(Boolean)) as { bottom?: number };
+      return merged.bottom;
+    }
+
+    it('sits at its usual spot when no screen reports docked chrome', async () => {
+      const view = await render(
+        <Providers>
+          <Harness />
+        </Providers>
+      );
+      await press(view, 'show-a');
+
+      // tabBarHeight + max(inset, 8) + 0 + 24, with the 34pt inset above.
+      expect(bottomOf(view)).toBe(layout.tabBarHeight + 34 + 24);
+    });
+
+    it('clears the dock by exactly its height when a screen reports one', async () => {
+      const view = await render(
+        <Providers>
+          <Lifted height={DOCK_HEIGHT} />
+        </Providers>
+      );
+      await press(view, 'show-a');
+
+      expect(bottomOf(view)).toBe(layout.tabBarHeight + 34 + DOCK_HEIGHT + 24);
+    });
   });
 
   it('renders an action label and fires its callback on press', async () => {

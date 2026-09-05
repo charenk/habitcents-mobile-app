@@ -31,6 +31,7 @@ import { CoachMomentSlot } from '@/components/habit-logging/CoachMomentSlot';
 import { SpentKeptChips, type SpentKeptView } from '@/components/habit-logging/SpentKeptChips';
 import { ExpenseSheet, type LogExpenseSavedInfo } from '@/components/money/ExpenseSheet';
 import { QuickLogRow } from '@/components/money/QuickLogRow';
+import { ActionDock } from '@/components/today/ActionDock';
 import { LoggedTodayList } from '@/components/money/LoggedTodayList';
 import { InfoRibbon } from '@/components/ui/InfoRibbon';
 import { useFirstRunRibbon } from '@/components/onboarding/useFirstRunRibbon';
@@ -49,7 +50,7 @@ import { hapticError, useReducedMotion } from '@/utils/motion';
 import { radii, spacing, typeScale, layout, type AppTheme } from '@/constants/theme';
 import type { DetectedHabit, HabitChangeGoal } from '@/types/habit';
 import { strings } from '@/constants/strings';
-import { useToast } from '@/components/ui/Toast';
+import { useToast, useToastLift } from '@/components/ui/Toast';
 
 type BreakingItem = { habit: DetectedHabit; goal: HabitChangeGoal };
 
@@ -757,6 +758,14 @@ export default function TodayScreen() {
   // press-through leads to the identical outcome. Under the limit it opens
   // the break sheet in place (W3: the audit it used to route to,
   // /onboarding/welcome, is deleted; the sheet lives on Today now).
+  // Toast lift (ADR 0038): the pill's default spot is now behind the dock, so
+  // a "Logged." toast would cover the field that produced it. Each dock
+  // reports its measured height and the visible pane's is the one that counts,
+  // because the two docks hold different controls at different heights.
+  const [spentDockHeight, setSpentDockHeight] = useState(0);
+  const [keptDockHeight, setKeptDockHeight] = useState(0);
+  useToastLift(todayView === 'spent' ? spentDockHeight : keptDockHeight);
+
   const handleBreakAnother = useCallback(() => {
     if (freeTierBlocked) {
       router.push('/paywall?placement=habit_gate_today');
@@ -808,35 +817,45 @@ export default function TodayScreen() {
     [isEmpty, expenses]
   );
 
-  // Persistent break-another affordance (DI-6, ADR 0019): a dashed card like
-  // UpcomingList's add-upcoming row (components/money/UpcomingList.tsx).
-  // Rendered once, reused at the bottom of both the populated (SectionList
-  // footer) and empty Kept content; W3 consolidated the empty state's former
-  // separate reAuditLink text link into this single affordance.
+  // The break-habit affordance (DI-6, ADR 0019), which since ADR 0038 lives
+  // in the Kept pane's ActionDock instead of trailing the content. It used to
+  // be the SectionList's footer, so on a populated pane it could not be
+  // reached without scrolling past every leak and check-in card.
   //
-  // Gating audit (build 12): the caption used to always read "1 habit on the
-  // free plan" (habitLogging.freeTierNote), even for a premium entitlement
-  // whose real ceiling is 5. Premium never blocks on this affordance until
-  // its 5th habit, so the free-plan nudge only belongs on the free tier.
-  const breakAnotherCaption = entitlement === 'premium' ? null : strings.habitLogging.freeTierNote;
+  // LABEL BY STATE. "Break another habit" is a lie to someone with none, and
+  // the first habit is the whole point of the Kept pane, so zero habits gets
+  // its own line naming the milestone.
+  const breakLabel =
+    activeHabits.length === 0
+      ? strings.today.breakFirstHabitCta
+      : strings.today.breakAnotherHabitCta;
+
+  // CAPTION BY STATE (ADR 0038). This used to check entitlement alone, so a
+  // brand-new user with ZERO habits was told "1 habit on the free plan"
+  // before anything had been refused: a growth line where there was nothing
+  // to grow out of. It now shows only at the ceiling, which is the one state
+  // where it is both true and about to matter.
+  //
+  // It is not removed outright, because pressing this AT the limit jumps
+  // straight to the paywall (see handleBreakAnother, and the routing question
+  // three records still carry). The caption is the only forewarning of that
+  // jump; deleting it would make an unannounced paywall worse, not quieter.
+  const breakCaption =
+    freeTierBlocked && entitlement !== 'premium' ? strings.habitLogging.freeTierNote : null;
+
   const breakAnotherAffordance = (
     <TouchableOpacity
       style={styles.breakAnother}
       onPress={handleBreakAnother}
       accessibilityRole="button"
-      accessibilityLabel={
-        breakAnotherCaption
-          ? `${strings.today.breakAnotherHabitCta}, ${breakAnotherCaption}`
-          : strings.today.breakAnotherHabitCta
-      }
+      accessibilityLabel={breakCaption ? `${breakLabel}, ${breakCaption}` : breakLabel}
+      testID="break-habit-affordance"
       activeOpacity={0.7}
     >
       <Icon name="Plus" size={18} color={theme.primaryDark} />
       <View style={styles.breakAnotherText}>
-        <Text style={styles.breakAnotherLabel}>{strings.today.breakAnotherHabitCta}</Text>
-        {breakAnotherCaption ? (
-          <Text style={styles.breakAnotherCaption}>{breakAnotherCaption}</Text>
-        ) : null}
+        <Text style={styles.breakAnotherLabel}>{breakLabel}</Text>
+        {breakCaption ? <Text style={styles.breakAnotherCaption}>{breakCaption}</Text> : null}
       </View>
     </TouchableOpacity>
   );
@@ -954,7 +973,6 @@ export default function TodayScreen() {
               <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={theme.primary} />
             }
           >
-            <QuickLogRow onOpenSheet={openLogSheet} />
             {/* Spent pane, true zero state (PRD v3.1 sect 5): no expense has
                 ever been logged. The logged-today list and watch-nudge have
                 nothing to show, so they're hidden entirely rather than
@@ -1018,16 +1036,13 @@ export default function TodayScreen() {
                 ) : null}
               </View>
             ) : null}
-            {/* The quote belongs to the Zero state only (Charen's Today
-                annotations, 2026-09-04): with rows on the page it competed
-                with them, so First log, Quiet and Live carry no quote. In
-                Zero it joins the empty-state hook in one block, vertically
-                centered in the space left below the quick-log card (FTE
-                artboard TodayFteSpent.dc.html). */}
+            {/* Spent Zero: the hook centered in the scroller, which now runs
+                from the chips down to the dock (ADR 0038). The quote that
+                used to sit above it was retired in ADR 0037. */}
             {spentIsEmpty ? (
               <View style={styles.spentZeroWrap}>
-                {/* inline, not layout="fill": the wrap centers the hook in the
-                    space under the quick-log card, so fill's own top padding
+                {/* inline, not layout="fill": the wrap centers the hook
+                    between the chips and the dock, so fill's own top padding
                     would push it off centre. Mark, title, CTA and nothing
                     else. The illustration prop is layout-independent for
                     exactly this reason (ADR 0036). */}
@@ -1040,6 +1055,15 @@ export default function TodayScreen() {
               </View>
             ) : null}
           </ScrollView>
+          {/* The quick log moved out of the scroller and down here (ADR 0038).
+              It used to be the scroller's first child, pinned under the chips,
+              which put Spent's action at the top of the screen while Kept's sat
+              at the bottom of a long scroll. Now both panes end in an
+              ActionDock, so the action does not move while the pager swipes,
+              and it sits in the thumb zone CLAUDE.md asks for. */}
+          <ActionDock testID="spent-dock" onHeightChange={setSpentDockHeight}>
+            <QuickLogRow onOpenSheet={openLogSheet} />
+          </ActionDock>
         </View>
 
         <View
@@ -1147,7 +1171,6 @@ export default function TodayScreen() {
                   <CoachMomentSlot text={cardText(firstLogCardId)} />
                 </View>
               )}
-              <View style={styles.breakAnotherWrap}>{breakAnotherAffordance}</View>
             </ScrollView>
           ) : (
             <SectionList
@@ -1158,7 +1181,6 @@ export default function TodayScreen() {
               }}
               renderItem={renderItem}
               renderSectionHeader={renderSectionHeader}
-              ListFooterComponent={<View style={styles.breakAnotherWrap}>{breakAnotherAffordance}</View>}
               contentContainerStyle={styles.listContent}
               stickySectionHeadersEnabled={false}
               showsVerticalScrollIndicator={false}
@@ -1167,6 +1189,13 @@ export default function TodayScreen() {
               }
             />
           )}
+          {/* Same dock as the Spent pane (ADR 0038), so the action does not
+              move while the pager swipes. This was the SectionList's footer,
+              which meant a populated pane hid it behind every leak and
+              check-in card. It renders in all three branches, loading
+              included: the affordance is what a user with nothing yet is
+              here to press. */}
+          <ActionDock testID="kept-dock" onHeightChange={setKeptDockHeight}>{breakAnotherAffordance}</ActionDock>
         </View>
       </ScrollView>
 
@@ -1273,27 +1302,33 @@ function createStyles(theme: AppTheme) {
     },
     spentScrollContent: {
       paddingHorizontal: spacing.gutter,
-      // No paddingTop (was spacing.lg): the chips row's 12pt marginBottom is
-      // the whole gap, so chips-to-quick-log matches the 12pt the header
-      // already leaves above the chips (Charen's 2026-09-03 spacing call).
-      // flexGrow lets the zero-state wrap below center in the leftover space;
-      // populated content taller than the viewport scrolls exactly as before.
+      // No paddingTop: the chips row's 12pt marginBottom is the whole gap
+      // (Charen's 2026-09-03 spacing call). flexGrow lets the zero-state wrap
+      // center in the leftover space; populated content taller than the
+      // viewport scrolls exactly as before.
       flexGrow: 1,
-      paddingBottom: layout.screenBottomClearance,
+      // Was screenBottomClearance (100). The dock is now a real sibling that
+      // reserves its own height, so that allowance would be dead space
+      // stacked on the dock's own padding (ADR 0038). This is breathing room
+      // between the last row and the dock's top edge, nothing more.
+      paddingBottom: spacing.xxl,
     },
-    // FTE zero state (TodayFteSpent artboard): the hook centered in the space
-    // under the quick-log card. The quote that used to sit above it was
-    // retired (ADR 0037), so this is now a single child and the gap only
-    // matters if a second one ever returns. `justifyContent: 'center'` is what
-    // does the work.
+    // FTE zero state (TodayFteSpent artboard): the hook centered in the
+    // scroller, which since ADR 0038 runs from the chips down to the dock
+    // rather than from the quick-log card down to the tab bar. The quote
+    // above it was retired (ADR 0037), so this is a single child and the gap
+    // only matters if a second one ever returns. `justifyContent: 'center'`
+    // is what does the work.
     spentZeroWrap: {
       flex: 1,
       justifyContent: 'center',
       gap: spacing.section + spacing.stack,
     },
-    loggedTodaySpacer: {
-      marginTop: spacing.stack,
-    },
+    // The Spent pane's first content block. The chips row's own 12pt
+    // marginBottom is the whole gap (Charen's 2026-09-03 spacing call), so
+    // this adds nothing on top of it; it exists to group the list, the
+    // door-1 ribbon and the watch nudge as one unit.
+    loggedTodaySpacer: {},
     // Watch-nudge (W2 item 3): UpcomingList's dashed-card grammar
     // (components/money/UpcomingList.tsx `add`), placed directly under the
     // logged-today card so it reads as attached to the row that just landed.
@@ -1331,7 +1366,9 @@ function createStyles(theme: AppTheme) {
     },
     listContent: {
       paddingHorizontal: spacing.gutter,
-      paddingBottom: layout.screenBottomClearance,
+      // Was screenBottomClearance (100); the dock below reserves its own
+      // height now (ADR 0038), so this is breathing room only.
+      paddingBottom: spacing.xxl,
     },
     sectionHeader: {
       marginTop: spacing.gutter,
@@ -1366,7 +1403,9 @@ function createStyles(theme: AppTheme) {
       flexGrow: 1,
       alignItems: 'center',
       paddingHorizontal: spacing.gutter,
-      paddingBottom: layout.screenBottomClearance,
+      // Was screenBottomClearance (100); the dock below reserves its own
+      // height now (ADR 0038), so this is breathing room only.
+      paddingBottom: spacing.xxl,
     },
     // FTE zero block (TodayFteKept artboard): the progress card or the hook,
     // centered in the pane; mirror of spentZeroWrap above, plus the stretch
@@ -1415,15 +1454,6 @@ function createStyles(theme: AppTheme) {
       fontFamily: theme.fonts.ui,
       color: theme.textSecondary,
       marginTop: spacing.hairline,
-    },
-    // Wraps the affordance wherever it is placed (empty ScrollView content or
-    // the populated SectionList's footer): alignSelf stretch matters in the
-    // empty case, whose ScrollView centers its content (styles.keptEmptyContent,
-    // alignItems: 'center'); the cards above never carry their own bottom
-    // margin, so both spots need the same explicit top spacing too.
-    breakAnotherWrap: {
-      alignSelf: 'stretch',
-      marginTop: spacing.xxl,
     },
     progressCard: {
       alignSelf: 'stretch',

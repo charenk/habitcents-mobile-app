@@ -92,7 +92,11 @@ function createStyles(theme: AppTheme) {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      marginTop: 24,
+      // Was 24, which was clearance from the quick-log card that used to sit
+      // directly above this block. The card moved to the pane's dock in ADR
+      // 0038, so that 24 stacked on the chips' own 12pt marginBottom and left
+      // a 48pt hole under the scoreboard. Today (its only consumer) supplies
+      // the gap now, at the pane's 12pt stack rhythm.
       marginBottom: 8,
     },
     eyebrow: {

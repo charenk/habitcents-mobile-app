@@ -419,22 +419,29 @@ describe('Today: Spent/Kept chips', () => {
   });
 });
 
-describe('Today: break-another affordance (DI-6)', () => {
+describe('Today: the break-habit affordance (DI-6, states per ADR 0038)', () => {
   // Both panes stay mounted (DI-7), so the affordance's presence in the tree
   // no longer depends on the Kept tap; the tap here is kept for realism and
-  // to prove the chip actually reaches selected, which the DI-6 assertions
-  // below now check alongside the affordance text.
-  it('renders in the empty Kept view', async () => {
+  // to prove the chip actually reaches selected.
+  //
+  // What changed in ADR 0038: the label reads the habit count and the caption
+  // reads the ceiling, rather than one fixed line plus an entitlement check.
+  // The old version told a brand-new user with zero habits "1 habit on the
+  // free plan" before anything had been refused.
+
+  it('with no habits, names the first one and says nothing about the plan', async () => {
     const view = await renderToday();
 
     await tap(view.getByTestId('kept-chip'));
 
     expect(view.getByLabelText(/^Kept .*, selected/)).toBeTruthy();
-    expect(view.getByText(strings.today.breakAnotherHabitCta)).toBeTruthy();
-    expect(view.getByText(strings.habitLogging.freeTierNote)).toBeTruthy();
+    expect(view.getByText(strings.today.breakFirstHabitCta)).toBeTruthy();
+    expect(view.queryByText(strings.today.breakAnotherHabitCta)).toBeNull();
+    // Nothing has been refused yet, so there is no limit to warn about.
+    expect(view.queryByText(strings.habitLogging.freeTierNote)).toBeNull();
   });
 
-  it('renders in the populated Kept view', async () => {
+  it('at the free limit, says "another" and warns which plan you are on', async () => {
     mockHabits = [makeHabit({ id: 'h1', frequency: 'daily', status: 'changing' })];
     mockGoals = [makeGoal({ id: 'g1', habitId: 'h1', dayLogs: [] })];
 
@@ -444,6 +451,8 @@ describe('Today: break-another affordance (DI-6)', () => {
 
     expect(view.getByLabelText(/^Kept .*, selected/)).toBeTruthy();
     expect(view.getByText(strings.today.breakAnotherHabitCta)).toBeTruthy();
+    // The caption earns its place here and only here: pressing at the limit
+    // jumps to the paywall, and this line is the only forewarning of that.
     expect(view.getByText(strings.habitLogging.freeTierNote)).toBeTruthy();
   });
 
@@ -453,7 +462,7 @@ describe('Today: break-another affordance (DI-6)', () => {
     const view = await renderToday();
 
     await tap(view.getByTestId('kept-chip'));
-    await tap(view.getByLabelText(new RegExp(`^${strings.today.breakAnotherHabitCta}`)));
+    await tap(view.getByLabelText(new RegExp(`^${strings.today.breakFirstHabitCta}`)));
 
     expect(view.getByText(strings.onboarding.breakSheetTitle)).toBeTruthy();
     expect(mockPush).not.toHaveBeenCalled();
@@ -471,10 +480,12 @@ describe('Today: break-another affordance (DI-6)', () => {
     expect(mockPush).toHaveBeenCalledWith('/paywall?placement=habit_gate_today');
   });
 
-  // Gating audit (build 12): the caption used to always read "1 habit on the
-  // free plan" (habitLogging.freeTierNote) regardless of entitlement, which
-  // was dishonest once premium (ceiling 5) is granted.
-  it('hides the free-plan caption once premium', async () => {
+  // Gating audit (build 12): the caption used to read "1 habit on the free
+  // plan" regardless of entitlement, which was dishonest once premium
+  // (ceiling 5) is granted. Still true under ADR 0038, and now for a second
+  // reason: one habit is nowhere near premium's ceiling, so nothing is being
+  // refused either.
+  it('says nothing about the free plan once premium', async () => {
     await setMockEntitlement('premium');
     mockHabits = [makeHabit({ id: 'h1', frequency: 'daily', status: 'changing' })];
     mockGoals = [makeGoal({ id: 'g1', habitId: 'h1', dayLogs: [] })];
@@ -485,6 +496,57 @@ describe('Today: break-another affordance (DI-6)', () => {
 
     expect(view.getByText(strings.today.breakAnotherHabitCta)).toBeTruthy();
     expect(view.queryByText(strings.habitLogging.freeTierNote)).toBeNull();
+  });
+
+  // ADR 0038: it used to be the SectionList's footer, so a populated pane hid
+  // it behind every leak and check-in card. Both panes now end in a dock.
+  it('lives in the dock, not at the end of the Kept zero scroll', async () => {
+    const view = await renderToday();
+
+    await tap(view.getByTestId('kept-chip'));
+
+    expect(
+      within(view.getByTestId('kept-dock')).getByTestId('break-habit-affordance')
+    ).toBeTruthy();
+  });
+
+  it('lives in the dock, not at the end of the populated Kept list', async () => {
+    mockHabits = [makeHabit({ id: 'h1', frequency: 'daily', status: 'changing' })];
+    mockGoals = [makeGoal({ id: 'g1', habitId: 'h1', dayLogs: [] })];
+
+    const view = await renderToday();
+
+    await tap(view.getByTestId('kept-chip'));
+
+    expect(
+      within(view.getByTestId('kept-dock')).getByTestId('break-habit-affordance')
+    ).toBeTruthy();
+  });
+});
+
+describe('Today: the action dock (ADR 0038)', () => {
+  // The point of the dock is that the action does not move when the pager
+  // swipes. Before this, Spent's quick log was its scroller's FIRST child and
+  // Kept's affordance was its LAST, so the action jumped from the top of the
+  // screen to the bottom of a long scroll.
+  it('ends both panes, so the action does not move between them', async () => {
+    const view = await renderToday();
+
+    // Both panes stay mounted (DI-7) but the off-screen one is hidden from
+    // assistive tech, and RNTL honours that, so Kept needs { hidden: true }.
+    const spentPane = within(view.getByTestId('spent-pane'));
+    const keptPane = within(view.getByTestId('kept-pane', { includeHiddenElements: true }));
+
+    expect(spentPane.getByTestId('spent-dock')).toBeTruthy();
+    expect(keptPane.getByTestId('kept-dock', { includeHiddenElements: true })).toBeTruthy();
+  });
+
+  it('holds the quick log, which no longer sits inside the Spent scroller', async () => {
+    const view = await renderToday();
+
+    expect(
+      within(view.getByTestId('spent-dock')).getByLabelText(strings.today.quickLogOpenLabel)
+    ).toBeTruthy();
   });
 });
 

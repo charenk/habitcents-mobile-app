@@ -14,6 +14,7 @@ export type ButtonVariant =
   | 'primary'
   | 'secondary'
   | 'tertiary'
+  | 'tertiaryBrand'
   | 'destructive'
   | 'destructiveFill';
 
@@ -134,6 +135,31 @@ function createStyles(theme: AppTheme) {
     },
     tertiaryLabel: {
       color: theme.slate,
+      fontFamily: theme.fonts.uiSemibold,
+      fontSize: typeScale.label,
+    },
+
+    // tertiaryBrand: tertiary's geometry, sage label (ADR 0038).
+    //
+    // Exists for the empty-state CTA, which is its pane's PRIMARY action once
+    // the body line is gone and the button is text only. Sage is sanctioned
+    // there by the vocabulary's own wording, "a kept outcome or the action
+    // that produces one (CTA, ...)"; slate made the one thing the pane wants
+    // you to do its quietest element. 5.37:1 on white.
+    //
+    // Deliberately a separate variant rather than a colour prop on `tertiary`:
+    // the eight existing tertiary buttons are secondary exits (skip, cancel,
+    // try a different export) and must stay slate. A variant makes the
+    // distinction nameable; a prop would make it a judgment call per site.
+    tertiaryBrand: {
+      backgroundColor: 'transparent',
+      minHeight: 44,
+    },
+    tertiaryBrandPressed: {
+      opacity: 0.6,
+    },
+    tertiaryBrandLabel: {
+      color: theme.primary,
       fontFamily: theme.fonts.uiSemibold,
       fontSize: typeScale.label,
     },
