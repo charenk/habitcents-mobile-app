@@ -64,31 +64,66 @@ are done and verified (tsc clean, npm test green) on this branch.
         full-width footer buttons on iPad are the intended look or a gap to
         close is a design call, not a mechanical one; added to item 5's audit
         so it gets decided in one pass rather than piecemeal.
-  - [ ] 2e. Known gap in 2b: on the Today Kept pane, the door3 ribbon, the
-        kept quote, and `KeptHero` render directly inside the
-        `{ width: screenWidth }` pane, above and outside the
-        ScrollView/SectionList whose content got capped. They are not
-        capped yet, so on a wide window the list column narrows but that
-        header chrome stays full pane width. Revisit together with item 4,
-        since both live inside the same screenWidth-driven pane.
+  - [x] 2e. Fixed the gap in 2b: on the Today Kept pane, the door3 ribbon and
+        `KeptHero` render directly inside the `{ width: screenWidth }` pane,
+        above and outside the ScrollView/SectionList whose content got
+        capped. Re-checked "the kept quote" from this item's original
+        wording (2026-09-04): it turned out to already be inside
+        `keptEmptyContent`'s ScrollView (capped by item 2d), not a real gap;
+        only the ribbon and the hero needed work. `ribbonWrap` uses
+        `paddingHorizontal`, so it took the same direct `...contentColumnStyle`
+        spread as `listContent`/`keptEmptyContent` (item 2b/2d), no
+        conflict. `keptHeroGutter` uses `marginHorizontal` and is merged
+        directly onto `KeptHero`'s own `card` root (which carries `card`'s
+        background), via `style={[styles.card, style]}` in KeptHero.tsx:
+        spreading `contentColumnStyle`'s `width: '100%'` straight into it
+        would size that background box to 100% of the pane BEFORE margin is
+        added outside it, pushing the card past the 600pt cap by
+        `2 * spacing.gutter`. Fixed with a new wrapping View,
+        `keptHeroCapWrap` (own style, just `...contentColumnStyle`, no
+        other properties), around `<KeptHero>`: the wrapper caps and
+        centers at 600pt first, and `keptHeroGutter`'s margin then insets
+        `KeptHero` within that already-capped width, same as it insets
+        within the full screen width on phones today. Below the cap the
+        wrapper is a pass-through (matches item 2's pattern), so phone
+        rendering is unchanged. Both wrappers got a `testID`
+        (`door3-ribbon-wrap`, `kept-hero-cap-wrap`) for the item 6 tests.
+        Done 2026-09-05.
 - [x] 3. Cap and center bottom sheets at tablet widths: added the same
       `width: '100%', maxWidth: layout.contentMaxWidth, alignSelf: 'center'`
       to `components/ui/Sheet.tsx`'s `panel` style. Full-width sheets looked
       wrong on iPad; phones are unaffected since `100%` already equals every
       phone's screen width. Done 2026-09-04. Not yet touched: any modal that
       does not go through this shared `Sheet` (audit as part of item 5).
-- [ ] 4. Fix width math that assumes the window equals the content column.
+- [x] 4. Fix width math that assumes the window equals the content column.
       Highest-priority instance: the Today Spent/Kept pager in
       `app/(tabs)/index.tsx` scrolls by `screenWidth` (from
       `useWindowDimensions`) for both the pager's horizontal paging distance
-      and each pane's width (`{ width: screenWidth }`). That math is
-      internally consistent (pane width matches paging distance) but was
-      never meant to also equal a capped content column, so it is a
-      candidate for a real on-layout measured width once this plan reaches
-      it, not a change to make lightly given ADR 0019's plain-ScrollView,
-      no-reanimated constraint on this exact pager. Not started.
+      and each pane's width (`{ width: screenWidth }`).
+      Investigated 2026-09-05, resolved with no code change beyond item 2e:
+      this is the exact same shape as `OnboardingCarousel`'s `beat`/
+      `beatContent` split (item 2c, already pinned by
+      `__tests__/tabletLayout.test.tsx`) — the paging unit (`beat`, or here
+      `pane`) has to stay window width because the offset math divides by
+      that same width, so the fix is capping the CONTENT inside the page,
+      never the page itself. Every content path inside both panes was
+      already capped or got capped this run: the Spent pane's entire body
+      routes through `spentScrollContent` (item 2b); the Kept pane's three
+      paths (`keptEmptyContent`, `listContent`, the item 2e wrapper for the
+      ribbon and `KeptHero`) are now all capped too. `screenWidth` from
+      `useWindowDimensions()` also reliably equals the pager's own rendered
+      frame width on iOS (portrait-only per item 7 means no left/right safe
+      area insets, and `useWindowDimensions` already reflects the app's
+      actual window bounds even in iPad Split View / Slide Over, not the
+      full device screen), so there is no real divergence for an
+      on-layout measured width to fix; that alternative from this item's
+      original wording would only add redundant computation. No test added
+      for this item specifically: `__tests__/todayQuoteRibbonPlacement.test.tsx`'s
+      new "leaves the pane itself at window width" case (item 6) already
+      pins the invariant this item was worried about.
 - [ ] 5. Audit remaining `useWindowDimensions` call sites for tablet
-      correctness once items 2 and 4 have landed. Known sites (from a repo
+      correctness. Items 2 and 4 landed 2026-09-05 (2e and 4 this run), so
+      this is unblocked and next in order. Known sites (from a repo
       grep, 2026-09-04): `components/money/AddUpcomingSheet.tsx`,
       `components/money/ExpenseSheet.tsx`, `components/habit-logging/
       PickOneSheet.tsx`, `components/habit-logging/PartialSlipSheet.tsx`,
@@ -108,10 +143,15 @@ are done and verified (tsc clean, npm test green) on this branch.
       `__tests__/tabletLayout.test.tsx` added 2026-09-04, pinning the shared
       `contentColumnStyle`/`layout.contentMaxWidth` contract and that
       `Sheet`'s panel carries the same cap. Extended 2026-09-04 with a case
-      for `OnboardingCarousel`'s `beatContent` wrapper (item 2c). Extend
-      further (or add siblings) as items 2d and 4 land; jest cannot run RN's
-      real flexbox layout engine, so these pin the style contract, not
-      measured pixels (see the file's own header comment).
+      for `OnboardingCarousel`'s `beatContent` wrapper (item 2c). Extended
+      2026-09-05 with three cases in `__tests__/todayQuoteRibbonPlacement.test.tsx`
+      (item 2e/4, added there rather than in tabletLayout.test.tsx because
+      this file already has the full provider/mock wiring to get KeptHero
+      and the door3 ribbon to render): `kept-hero-cap-wrap` and
+      `door3-ribbon-wrap` both carry the cap, and `kept-pane` itself does
+      not (the pager's paging unit stays window width). Kept as an ongoing
+      item, not checked off: still open for items 2d's footer question (if
+      item 5 decides to cap them) and item 5's audit generally.
 - [ ] 7. Keep portrait-only orientation. `app.json` already sets
       `"orientation": "portrait"`; nothing in this plan changes that.
       Re-verify this line stays untouched at the end of every run.
