@@ -14,6 +14,7 @@ import React from 'react';
 import { act, cleanup, fireEvent, render } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '@/contexts/ThemeContext';
+import { LocaleProvider } from '@/contexts/LocaleContext';
 import { ScopeScreen } from '@/components/leak-scan/ScopeScreen';
 import { strings } from '@/constants/strings';
 import { defaultScope, toggleScope, type ScanScope } from '@/utils/leakScan/scope';
@@ -35,7 +36,9 @@ async function renderScope(overrides: Partial<React.ComponentProps<typeof ScopeS
   const view = await render(
     <SafeAreaProvider initialMetrics={initialMetrics}>
       <ThemeProvider>
-        <ScopeScreen {...props} />
+        <LocaleProvider>
+          <ScopeScreen {...props} />
+        </LocaleProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );
