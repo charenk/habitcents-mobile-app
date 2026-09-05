@@ -207,7 +207,11 @@ describe('Insights first scan segment', () => {
     });
 
     expect(view.getByText(strings.insights.scanEmptyTitle)).toBeTruthy();
-    expect(view.getByText(strings.insights.scanEmptyBody)).toBeTruthy();
+    // One hook line, no body (ADR 0037). Dropping this one is safe because
+    // "Nothing uploads, ever" is restated on the scan intake screen the CTA
+    // leads to (leakScan.intakeSubtitle), in the onboarding beat and in the
+    // intent picker, so no user's path loses the privacy promise.
+    expect(view.queryByText(strings.insights.scanEmptyBody)).toBeNull();
 
     const cta = view.getByRole('button', { name: strings.insights.scanEmptyCta });
     await act(async () => {
@@ -351,7 +355,8 @@ describe('Insights This month segment: true zero state', () => {
     const view = await renderInsights();
 
     expect(view.getByText(strings.insights.monthEmptyTitle)).toBeTruthy();
-    expect(view.getByText(strings.insights.monthEmptyBody)).toBeTruthy();
+    // One hook line, no body (ADR 0037).
+    expect(view.queryByText(strings.insights.monthEmptyBody)).toBeNull();
     expect(view.queryByText(strings.insights.leaksTitle)).toBeNull();
     expect(view.queryByText(strings.insights.whereItWentTitle)).toBeNull();
     const monthLabel = formatDate(new Date(), { month: 'long' });

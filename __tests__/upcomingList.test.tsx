@@ -155,7 +155,7 @@ describe('UpcomingList add affordance', () => {
     const view = await renderList({ items: [] });
     expect(view.getByLabelText(strings.money.upcomingAddAffordance)).toBeTruthy();
     expect(view.getByRole('tab', { name: /2 weeks/ })).toBeTruthy();
-    expect(view.getByText(strings.money.upcomingEmptyBody)).toBeTruthy();
+    expect(view.getByText(strings.money.upcomingWindowEmptyBody)).toBeTruthy();
   });
 });
 

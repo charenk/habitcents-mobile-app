@@ -14,8 +14,8 @@ Sources of truth this page compresses: `design/redesign-handoff/01-tokens-and-fo
 
 ## Type
 
-- Instrument Serif appears in exactly three places: screen titles ending in a period, money (hero, stat, reveal amounts), and the Today view quotes (italic, mist, with their small attribution line). Never body, never buttons.
-- Quotes belong to a pane's Zero state only (Charen, 2026-09-04). Once a row, a leak, or a habit exists the pane carries no quote: First log, Quiet, and Live open straight on their content.
+- Instrument Serif appears in exactly two places: screen titles ending in a period, and money (hero, stat, reveal amounts). The third, the Today view quotes, retired with them (ADR 0037). Never body, never buttons.
+- Quotes are retired (Charen, 2026-09-05, ADR 0037). No pane carries one in any state. `components/today/ViewQuote.tsx` and `useViewQuote.ts` are kept unreferenced as the documented revert path, so re-importing one would be a deviation, not a restoration.
 - Everything else is Inter, on the typeScale steps. No sizes off the scale.
 - Eyebrows are the only all-caps: 11pt, semibold, letterSpacing .88, uppercased by the component. Strings stay sentence case.
 - Every number that can sit above another number is tabular: `fontVariant: ['tabular-nums']`.
@@ -24,8 +24,8 @@ Sources of truth this page compresses: `design/redesign-handoff/01-tokens-and-fo
 
 - There is ONE switching pattern: the cloud track with a raised white thumb. Small scale = SegmentedControl (Money views, sheet toggles). Value scale = the Today scoreboard. Do not invent a third switcher; grow one of these.
 - Both scales are rounded rects, not pills (Charen, 2026-08-16), and both follow one nesting rule: **track radius = thumb radius + track padding (3)**. Small scale is thumb 14 on a 17 track; value scale is thumb 20 on a 23 track. The two track radii are the only derived values in the app; every other radius comes from the token set.
-- Buttons: primary sage (48 to 52pt min height), secondary white with cloud border, tertiary bare slate text, destructive coral. Pick from these four.
-- The dashed-border card is the app's "add another" affordance (add upcoming, break another habit). Reuse it for any add-an-item entry.
+- Buttons: primary sage (48 to 52pt min height), secondary white with cloud border, tertiary bare slate text, tertiaryBrand bare sage text (empty-state CTAs only, ADR 0038), destructive coral. Pick from these five.
+- The dashed-border card is the app's "add another" affordance (add upcoming, the break-habit trigger). Its label reads the state where that matters: "Break your first habit" at zero habits, "Break another habit" after (ADR 0038). Reuse the card for any add-an-item entry.
 - 40pt pill buttons with cloud borders are header chrome only, icons in slate, never sage.
 
 ## Rows
@@ -42,8 +42,10 @@ Sources of truth this page compresses: `design/redesign-handoff/01-tokens-and-fo
 
 - Feature card: radius 20, white, 1px cloud border, `shadows.card`. List card: radius 14. Sheets: bottom-anchored, radius 20 top, grab handle; form sheets head with `ui/SheetHeader` (serif title left, compact primary Save top-right, disabled until valid, no in-sheet Cancel, ADR 0031), decision sheets keep bottom CTAs. Toasts: ink pill, one per mutating action.
 - Sheet drag (Charen, 2026-09-04): the handle and the pinned header share one drag zone (`Sheet`'s `header` prop), so a finger anywhere across the top of a form sheet tracks it 1:1 and a 25% drag or a flick dismisses; the body keeps its own scroll. Form-sheet Save reads one word, "Save", on every sheet: the serif title already names the sheet. A form sheet may carry at most one icon action left of Save (`SheetHeader` `secondaryAction`, 44pt, tertiary, coral when destructive, 12pt gap, spoken label required); the edit expense sheet's delete is the first. Destructive text rows at the bottom are retired for that sheet.
-- Empty state on Today is icon, title, CTA (`ui/EmptyState` with no body). Other surfaces may keep a body line.
-- Persistent positive communication is one pattern, `ui/InfoRibbon`: sage-light band, sprout, one caption line. Dismissible (X) for one-shot lines such as the first-run receipts; persistent (no X) for standing lines such as the quiet-day placeholder. Always inside a list section, below the content it comments on, never above an input: under the log card it reads as a receipt, above the quick-log field it read as an instruction. A gentle first-run line resolves itself once the thing it waits for exists.
+- Every empty state is mark, one hook line, text CTA (`ui/EmptyState`, no body). One line is the standard app-wide since ADR 0037, not just on Today. The CTA is `variant="tertiaryBrand"` (sage text, ADR 0038; a bordered button was the heaviest thing in a pane meant to read quiet, and slate made the pane's only action its quietest element). In-card empty states are a single body line with no title, which is the same standard seen from the other side.
+- The mark on a pane-level zero state is a 96pt illustration from `constants/emptyArt.ts` (ADR 0036); in-card empty states carry no mark at all, and Categories keeps a 28pt glyph because its zero state is unreachable while default categories ship. This is the one place saturated raster art appears in the app, and it is a named deviation from the neutrals rule above, not a precedent: art anywhere else is a deviation to argue for on its own.
+- Persistent positive communication is one pattern, `ui/InfoRibbon`: sage-light band, sprout, one caption line. Dismissible (X) for one-shot lines such as the first-run receipts; persistent (no X) for standing lines such as the quiet-day placeholder. Always inside a list section, below the content it comments on, so it reads as a receipt for what just happened. The rule used to add "never above an input", written when the quick log sat at the top of the pane and a message over the field read as an instruction about it; ADR 0038 docked the input at the bottom, so everything is above it and only the below-its-content half is operative. A gentle first-run line resolves itself once the thing it waits for exists.
+- The ActionDock (`components/today/ActionDock.tsx`, ADR 0038) is the one bottom-docked chrome strip: full width, 1px cloud top edge, 20pt gutter, 12pt above and below, background fill, no bottom safe-area padding (the tab bar reserves that). Both Today panes end in one so the action holds its position across a swipe. It never hides and never floats; it is a flex sibling of the pane's scroller.
 - Bottom sheets head with the serif `sheetTitle` treatment (`theme.fonts.display` at `typeScale.sheetTitle`), not an eyebrow. AddUpcomingSheet, AddCategoryModal, CurrencySheet, and ExpenseSheet all follow it; a new sheet reaching for an 11pt eyebrow head instead is a deviation, not a second pattern (UX-040).
 - One 20pt horizontal gutter per screen. Full-bleed is reserved for nothing currently; if you think you need it, that is a named deviation.
 - Vertical rhythm inside a view is a 12pt stack gap.
@@ -58,7 +60,7 @@ Sources of truth this page compresses: `design/redesign-handoff/01-tokens-and-fo
 ## Accessibility
 
 - Screen titles carry `accessibilityRole="header"`. Switchers are tablist/tab with selected state. Targets are 44pt or padded to it with hitSlop.
-- Dynamic Type caps: 1.5 on chrome and eyebrows, 1.3 on serif amounts.
+- Dynamic Type caps: 1.5 on chrome and eyebrows, 1.3 on serif amounts. Tab labels additionally shrink to fit their column on iOS, floored at 1/1.5 so they never render below the default size; Android truncates instead, because RN never forwards the scale floor there (ADR 0039 review).
 - Anything mounted off-screen (pagers) is hidden from assistive tech.
 - Status conveyed by color (pending dot) is also in the accessible label.
 

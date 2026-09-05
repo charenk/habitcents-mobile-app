@@ -162,3 +162,24 @@ describe('pills that wrap scaling text are not fixed-height', () => {
     expect(body).not.toMatch(/^\s*height: \d/m);
   });
 });
+
+/**
+ * The Today zero wraps must use flexGrow, never flex (ADR 0039). `flex: 1`
+ * also sets flexShrink, which let the wraps squash below their own content at
+ * large Dynamic Type and clip the hook and its explainer. Source-read for the
+ * same reason as the pills above: the mistake is made in the style block, and
+ * "flex: 1" is exactly what a tidy-up would reach for.
+ */
+describe('Today zero wraps fill without shrinking', () => {
+  const read = (rel: string) =>
+    fs.readFileSync(path.join(__dirname, '..', rel), 'utf8');
+
+  it.each([['spentZeroWrap'], ['keptZeroWrap']])('%s uses flexGrow, not flex', (styleName) => {
+    const source = read('app/(tabs)/index.tsx');
+    const block = source.slice(source.indexOf(`${styleName}: {`));
+    const body = block.slice(0, block.indexOf('},'));
+
+    expect(body).toContain('flexGrow: 1');
+    expect(body).not.toMatch(/^\s*flex: 1/m);
+  });
+});

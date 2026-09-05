@@ -1,9 +1,10 @@
 /**
- * Today (U6, Charen-approved live preview placements): the quote system's
- * placement plus the per-view FirstRunRibbon split.
+ * Today: zero-state composition plus the per-view FirstRunRibbon split.
  *
- * - Kept opens with its quote, above KeptHero.
- * - Spent closes with its quote, below the logged-today block.
+ * The quote system this file was written for is RETIRED (ADR 0037). What was
+ * "the quote sits here" is now "no pane renders a quote in any state", which
+ * is worth pinning: ViewQuote and useViewQuote are kept unreferenced as the
+ * documented revert path, so an accidental re-import would be silent.
  * - door1's ribbon renders only in the Spent pane; door3's only in Kept.
  * - The View all link (LoggedTodayList's onViewAll) routes to Money's Spent
  *   segment and only when today has at least one logged expense.
@@ -243,55 +244,43 @@ beforeEach(async () => {
 
 afterEach(cleanup);
 
-describe('Today: quote placement', () => {
-  it('Kept opens straight on the KeptHero band, with no quote, once kept content exists', async () => {
-    // Quotes belong to the Zero state only (Charen's Today annotations,
-    // 2026-09-04): the hero band mounts once a leak or breaking habit
-    // exists, and the quote that used to sit above it is gone.
+describe('Today: zero-state composition (quotes retired, ADR 0037)', () => {
+  it('Kept opens straight on the KeptHero band once kept content exists', async () => {
     mockHabits = [makeHabit({ id: 'h1' })];
     const view = await renderToday();
 
     const keptPane = within(view.getByTestId('kept-pane'));
-    expect(keptPane.queryByTestId('kept-quote')).toBeNull();
     // "keptSoFar" is KeptHero's own eyebrow text (components/habit-logging/
     // KeptHero.tsx).
     expect(keptPane.getByText(strings.habitLogging.keptSoFar)).toBeTruthy();
+    expect(keptPane.queryByTestId('kept-quote')).toBeNull();
   });
 
-  it('Kept first run has the quote in the centered zero block and no KeptHero band', async () => {
-    // FTE pass: with nothing logged and no habits, the artboard shows quote
-    // plus the leaks-will-show-up hook, and explicitly no hero band.
+  it('Kept first run is the hook alone, no hero band', async () => {
     const view = await renderToday();
 
     const keptPane = within(view.getByTestId('kept-pane'));
-    expect(keptPane.getByTestId('kept-quote')).toBeTruthy();
     expect(keptPane.getByText(strings.today.keptEmptyTitle)).toBeTruthy();
     expect(keptPane.queryByText(strings.habitLogging.keptSoFar)).toBeNull();
   });
 
-  it('Spent carries no quote once any expense exists (First log, Quiet, Live)', async () => {
+  it('Spent shows the logged-today block once any expense exists', async () => {
     mockExpenses = [makeExpense({ id: 'e1' })];
     const view = await renderToday();
 
     const spentPane = within(view.getByTestId('spent-pane'));
-    expect(spentPane.queryByTestId('spent-quote')).toBeNull();
     // UX-060: sentence case in the tree, uppercased by the style.
     expect(spentPane.getByText(strings.today.loggedTodayEyebrow)).toBeTruthy();
   });
 
-  it('each pane shows only its own quote, never the other view\'s array', async () => {
+  // The replacement for the old "each pane shows only its own quote" test.
+  // Zero is the state that used to carry one, so it is the state worth
+  // checking: if the quote ever comes back by accident, it comes back here.
+  it('neither pane renders a quote in its Zero state', async () => {
     const view = await renderToday();
 
-    const spentQuoteLabel = view.getByTestId('spent-quote').props.accessibilityLabel as string;
-    const keptQuoteLabel = view.getByTestId('kept-quote').props.accessibilityLabel as string;
-
-    const spentTexts = strings.today.spentQuotes.map((q) => (q.by ? `${q.text}, ${q.by}` : q.text));
-    const keptTexts = strings.today.keptQuotes.map((q) => (q.by ? `${q.text}, ${q.by}` : q.text));
-
-    expect(spentTexts).toContain(spentQuoteLabel);
-    expect(keptTexts).not.toContain(spentQuoteLabel);
-    expect(keptTexts).toContain(keptQuoteLabel);
-    expect(spentTexts).not.toContain(keptQuoteLabel);
+    expect(view.queryByTestId('spent-quote')).toBeNull();
+    expect(view.queryByTestId('kept-quote')).toBeNull();
   });
 });
 

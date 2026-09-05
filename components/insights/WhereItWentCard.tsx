@@ -33,10 +33,17 @@ export function WhereItWentCard({ rows, rangeLabel }: WhereItWentCardProps) {
   return (
     <View style={styles.card}>
       <View style={styles.header}>
-        <Text style={styles.cardTitle} accessibilityRole="header">
+        <Text
+          style={styles.cardTitle}
+          accessibilityRole="header"
+          numberOfLines={1}
+          maxFontSizeMultiplier={1.5}
+        >
           {strings.insights.whereItWentTitle}
         </Text>
-        <Text style={styles.rangeLabel}>{rangeLabel}</Text>
+        <Text style={styles.rangeLabel} numberOfLines={1} maxFontSizeMultiplier={1.5}>
+          {rangeLabel}
+        </Text>
       </View>
 
       {sorted.length === 0 ? (
@@ -92,9 +99,13 @@ function createStyles(theme: AppTheme) {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
+      gap: 8,
       marginBottom: 8,
     },
     cardTitle: {
+      // Chrome, so it takes the ratified 1.5 cap and yields first (ADR 0039).
+      // The rows below this header were already correct; only it was missed.
+      flexShrink: 1,
       fontSize: typeScale.body,
       fontFamily: theme.fonts.uiSemibold,
       color: theme.ink,

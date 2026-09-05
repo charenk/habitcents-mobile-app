@@ -373,10 +373,16 @@ export const motion = { tap: 120, sheet: 220, toast: 220, screen: 360, pulse: 28
  *
  * `tabBarHeight` is the tab bar's base content height (app/(tabs)/_layout.tsx
  * adds the device's safe-area inset on top). Toast positions itself above the
- * bar and genuinely derives from this.
+ * bar and genuinely derives from this, so raising this value raises the toast
+ * with it, which is correct.
+ *
+ * 64 since ADR 0037, up from 56. The selected tab now sits on a 32pt pill, and
+ * 56 minus the bar's 8pt top padding left only 48pt for a 32pt pill above a
+ * label that reaches 16.5pt at the ratified 1.5x Dynamic Type cap. 64 gives
+ * 56pt of content, which fits both with room to spare.
  */
 export const layout = {
-  tabBarHeight: 56,
+  tabBarHeight: 64,
   /**
    * End-of-scroll breathing room at the bottom of a screen's content.
    *

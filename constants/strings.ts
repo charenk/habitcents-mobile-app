@@ -256,10 +256,12 @@ export const strings = {
     defaultCategories: 'Default Categories',
     customCategories: 'Custom Categories',
     loading: 'Loading.',
-    emptyTitle: 'No categories yet',
-    // Was "Tap Add category at the top", which described an action instead of
-    // offering one; the CTA below now IS the action (PRD v3.1 sect 5).
-    emptySubtitle: 'Group your spending so the patterns are easier to see.',
+    emptyTitle: 'Group spending your way',
+    // RETIRED FROM RENDERING (ADR 0037's one-hook pass); kept for the
+    // localization migration and the test encoding its no-"tap" rule. Its
+    // predecessor "Tap Add category at the top" described an action instead
+    // of offering one (PRD v3.1 sect 5).
+    emptySubtitle: 'Buckets make the patterns easier to see.',
     // Distinct from addCategoryLabel below on purpose: both buttons are on
     // screen together in the empty state, and two controls reading "Add
     // category" is a needless ambiguity for anyone navigating by button.
@@ -841,6 +843,11 @@ export const strings = {
     quickLogEyebrow: 'Quick log',
     quickLogHint: 'amount first',
     quickLogOpenLabel: 'Log an expense',
+    // Spoken hint, not a name change (ADR 0039 review): on Spent Zero,
+    // VoiceOver meets two buttons called "Log an expense" back to back, the
+    // empty state's text CTA and this field in the dock. The shared name is
+    // deliberate (one canonical CTA label); the hint is what tells them apart.
+    quickLogOpenHint: 'Opens the log sheet with the amount ready to type.',
     quickLogMoreLabel: 'More categories',
     quickLogCategoryLabel: (name: string) => `Log a ${name} expense`,
     // Logged today list
@@ -854,21 +861,47 @@ export const strings = {
     loggedTodayEmpty: 'A quiet day so far. Anything you log lands here.',
     // Spent pane, true zero state (no expenses ever, not just today):
     // replaces the logged-today list entirely rather than showing it empty.
-    // Icon, title, CTA only (Charen's Today annotations, 2026-09-04); the
-    // body line was removed from both Today zero states.
+    // Mark, title, CTA only (the mark is a 96pt illustration since ADR 0036;
+    // Charen's Today annotations, 2026-09-04): the body line was removed from
+    // both Today zero states.
     spentEmptyTitle: 'Start with what you just spent',
     spentEmptyCta: 'Log an expense',
-    // Kept pane, true zero state. Deliberately the same visible words as
-    // insights.leaksEmptyTitle/Body/Cta (kept has its own keys so the two
-    // surfaces stop sharing one string).
-    keptEmptyTitle: 'Your leaks will show up here',
+    // Kept pane, true zero state. Was word-for-word insights.leaksEmptyTitle;
+    // the zero-state copy pass (ADR 0036) made it skip-and-kept specific so
+    // the two surfaces no longer read as the same screen. Kept keeps its own
+    // keys so they can diverge further without one edit moving both.
+    keptEmptyTitle: 'Every skip lands here as money kept',
     keptEmptyCta: 'Log an expense',
+    // Kept true-zero explainer (ADR 0039). The one surface where a user has no
+    // evidence of their own to read, so it earns three lines the one-hook rule
+    // otherwise forbids. Every claim here is checked against utils/
+    // habitDetection.ts and types/habit.ts:
+    //  - the merchant really is required; an expense logged without a place
+    //    can never be detected, because merchant is the only grouping key.
+    //  - four is a COUNT of logs at one merchant inside 90 days, not an amount,
+    //    and it is necessary rather than sufficient (a monthly-spend floor and
+    //    a confidence floor also apply), which is why "around" and "enough to
+    //    spot" carry the hedge the detection meter already uses.
+    //  - a skip is the only thing that moves Kept forward; a slip is neutral.
+    // Do not let a rate, a total or "the one you buy most often" back in here:
+    // no invented statistics (ADR 0022), and the ranking really is projected
+    // monthly cost, not frequency (utils/habitDetection.ts sorts detected
+    // habits by totalMonthlySpend).
+    keptHowItWorksTitle: 'Here is how it works',
+    keptHowItWorks: [
+      'Log what you spend, and where you spent it.',
+      'Around four logs at one place is enough to spot a leak.',
+      "Break a leak, and every skip keeps the money you didn't spend.",
+      // No inner `as const`: the whole strings object already carries one.
+    ],
     alreadyBreakingToast: "You're already breaking this habit.",
     editExpenseLabel: (title: string, amountLabel: string) => `Edit ${title}, ${amountLabel}`,
-    // Break-another affordance (DI-6, ADR 0019): quiet, always-present at the
-    // bottom of the Kept view. The caption reuses habitLogging.freeTierNote
-    // (the same gate copy PickOneSheet's locked sheet already states) rather
-    // than inventing a new pricing line.
+    // The break-habit affordance (DI-6, ADR 0019), which since ADR 0038 lives
+    // in Today's ActionDock and reads its state rather than one fixed line.
+    //
+    // Two labels, because "another" is a lie to someone with none. The first
+    // names the milestone; the second is the steady-state line.
+    breakFirstHabitCta: 'Break your first habit',
     breakAnotherHabitCta: 'Break another habit',
     // Door 1 real-app first run (W2, ratified onboarding redesign): Door 1 no
     // longer passes through a practice log screen, it opens the real
@@ -893,9 +926,11 @@ export const strings = {
     // stated cadence); it never claims to "create a habit".
     watchLeakNudgeLabel: 'Buy this often? Watch it as a leak',
     watchLeakNudgeDismiss: 'not now',
-    // Quote rotation (U6, components/today/ViewQuote.tsx + useViewQuote.ts).
-    // Spent view closes with one of these, Kept view opens with one of
-    // these; each array rotates independently (its own persisted counter).
+    // RETIRED quote rotation (ADR 0037): nothing renders these any more.
+    // ViewQuote.tsx and useViewQuote.ts carry the same banner and stay as the
+    // documented revert path, so this register stays with them. When it was
+    // live, Spent closed with one of these and Kept opened with one; each
+    // array rotated independently on its own persisted counter.
     // Historical quotes keep their own original capitalization and
     // punctuation; nothing here is reworded. No em dash appears in any of
     // them, by the house content rule.
@@ -979,10 +1014,10 @@ export const strings = {
     // accessible label so the glyph's meaning survives VoiceOver rather than
     // relying on shape alone being noticed.
     recurringRowSuffix: 'recurring',
-    spentEmptyTitle: 'Nothing logged yet',
-    // Every expense you log lands in this list; the empty state says so
-    // rather than restating "log your first" (that's the CTA's job).
-    spentEmptyBody: 'Every expense you log lands here, newest first.',
+    spentEmptyTitle: 'Every expense in one place',
+    // RETIRED FROM RENDERING (ADR 0037's one-hook pass); kept for the
+    // localization migration and the tests that pin its absence.
+    spentEmptyBody: 'Log one and it lands here, newest first.',
     // Upcoming
     upcomingWindowEyebrow: (days: number) => `Next ${days} days`,
     // U8: the window presets picker (2 weeks / 1 month / 3 months).
@@ -1005,14 +1040,25 @@ export const strings = {
     // can reach has to offer something to DO, not just explain itself.
     spentEmptyCta: 'Log an expense',
     habitsEmptyCta: 'Break a habit',
-    habitsEmptyTitle: 'No leaks spotted yet',
+    habitsEmptyTitle: 'Find the leak worth breaking',
+    // RETIRED FROM RENDERING (ADR 0037's one-hook pass); kept for the
+    // localization migration and the tests that pin its absence.
     habitsEmptyBody: 'Keep logging and patterns surface on their own. Or pick a habit to break yourself.',
     upcomingListEyebrow: 'Scheduled',
     // True zero-data state (no recurring expense exists at all), distinct
     // from the window-empty state below (a recurring expense exists, just
     // none fall in the current window).
-    upcomingEmptyTitle: 'Nothing repeating yet',
-    upcomingEmptyBody: "Mark an expense as repeating and we'll show its next date here.",
+    upcomingEmptyTitle: "Know what's coming before it lands",
+    // Retired from rendering: the true-zero state dropped its body in the
+    // one-hook pass (ADR 0037) and the window-empty state got its own honest
+    // line below (ADR 0039 review). Kept for the localization migration and
+    // the tests that pin its absence.
+    upcomingEmptyBody: 'Mark an expense as repeating and its next date shows up here.',
+    // Window-empty only: this user already HAS a recurring expense, so
+    // telling them to mark one as repeating (the line above) instructed them
+    // to do a thing they had already done. States the actual situation; the
+    // window picker above the card is how they widen it.
+    upcomingWindowEmptyBody: 'None of your repeating expenses land in this window.',
     // Same words as upcomingAddAffordance (the header affordance), its own key
     // so the true-zero empty state's CTA can be targeted unambiguously.
     upcomingEmptyCta: 'Add an upcoming expense',
@@ -1096,10 +1142,10 @@ export const strings = {
     leakActionBreak: 'Break it',
     leakActionBreaking: 'Breaking',
     leakActionWatch: 'Watch',
-    // Shared across LeaksCard, HabitsList, and the Today Kept view's no-leaks
-    // state (was duplicated as habitLogging.emptyLeaksTitle/Subtitle;
-    // collapsed to this one key). Body keeps the honest detection threshold
-    // verbatim (house rule: real detection window, not a rounded claim).
+    // RETIRED FROM RENDERING (ADR 0039): LeaksCard dropped this title because
+    // its own card header, "Your leaks", sat directly above saying the same
+    // thing. The card's empty state is now leaksEmptyBody + CTA only. Kept
+    // for the localization migration.
     leaksEmptyTitle: 'Your leaks will show up here',
     leaksEmptyCta: 'Log an expense',
     leaksEmptyBody:
@@ -1119,7 +1165,9 @@ export const strings = {
     // This month segment, true zero state (no expenses and no leak rows at
     // all): replaces the three-card stack entirely rather than showing three
     // empty cards stacked on top of each other.
-    monthEmptyTitle: 'Your first insights are a few logs away',
+    monthEmptyTitle: 'See where the month went',
+    // RETIRED FROM RENDERING (ADR 0037's one-hook pass); kept for the
+    // localization migration and the tests that pin its absence.
     monthEmptyBody:
       'Log what you spend and this fills in: where it went, and which leaks are worth breaking.',
     monthEmptyCta: 'Log an expense',
@@ -1131,8 +1179,10 @@ export const strings = {
     scanSegmentControlLabel: 'Insights view',
     // Loaded, no scan on file yet (scanSummary resolved to null).
     scanEmptyTitle: 'Find the leaks you already have',
-    // The privacy line is quoted verbatim from the app's existing scan copy
-    // (onboarding.beatScanHook / intentScanDescription).
+    // RETIRED FROM RENDERING (ADR 0037's one-hook pass); the privacy promise
+    // it carried survives on the scan intake screen (intakeSubtitle), in the
+    // onboarding beat and in the intent picker. Kept for the localization
+    // migration and the tests that pin its absence.
     scanEmptyBody: 'Scan a bank statement on your phone. Nothing uploads, ever.',
     scanEmptyCta: 'Scan my statement',
     scanSnapshotEyebrow: (date: string) => `First scan · ${date}`,
@@ -1160,7 +1210,7 @@ export const strings = {
     subtitle: (merchant: string, timesPerMonth: number) =>
       `${merchant}, about ${timesPerMonth} times a month.`,
     subtitleNoMerchant: (timesPerMonth: number) => `About ${timesPerMonth} times a month.`,
-    eventHistoryEmpty: 'Nothing logged yet.',
+    eventHistoryEmpty: 'Your check-ins appear here.',
     arcPill: (total: number, chapter: string) => `${total} of 66 · ${chapter}`,
     skipValueSheetTitle: 'One skip keeps',
     skipValueSave: 'Save',

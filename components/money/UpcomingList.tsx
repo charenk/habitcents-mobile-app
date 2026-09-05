@@ -123,8 +123,8 @@ export function UpcomingList({
     return (
       <EmptyState
         layout="fill"
+        illustration="money-upcoming"
         title={strings.money.upcomingEmptyTitle}
-        body={strings.money.upcomingEmptyBody}
         cta={{ label: strings.money.upcomingEmptyCta, onPress: onEmptyAdd ?? onAdd }}
       />
     );
@@ -164,7 +164,10 @@ export function UpcomingList({
       {items.length === 0 ? (
         <View style={styles.emptyWrap}>
           <EmptyState
-            body={strings.money.upcomingEmptyBody}
+            // Its own line, not upcomingEmptyBody: that copy tells the user
+            // to mark an expense as repeating, which anyone reaching this
+            // branch has already done (ADR 0039 review).
+            body={strings.money.upcomingWindowEmptyBody}
             cta={{ label: strings.money.upcomingAddAffordance, onPress: onEmptyAdd ?? onAdd }}
           />
         </View>

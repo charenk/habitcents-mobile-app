@@ -1,4 +1,11 @@
 /**
+ * RETIRED 2026-09-05 (ADR 0037). Nothing renders this any more: the rotating
+ * quote was removed from both Today zero states because it did not fit the
+ * app. Kept unreferenced as the documented revert path, the same way
+ * constants/theme.ts keeps the dark theme and components/onboarding/
+ * AuroraBackground.tsx keeps the retired aurora. Its unit tests still run.
+ */
+/**
  * useViewQuote (U6): resolves the current quote for one Today pane (Spent or
  * Kept) and advances it once each time that pane becomes active.
  *

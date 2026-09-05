@@ -150,6 +150,12 @@ function createStyles(theme: AppTheme) {
       marginTop: 1,
     },
     amount: {
+      // Without this the adjustsFontSizeToFit above never fires (ADR 0039).
+      // RN defaults flexShrink to 0, so the amount took its full intrinsic
+      // width, nothing constrained it, and there was nothing to shrink. The
+      // name block beside it absorbed the whole deficit and starved to an
+      // ellipsis at large text. One line fixes both halves.
+      flexShrink: 1,
       fontFamily: theme.fonts.uiSemibold,
       fontSize: typeScale.body,
       color: theme.ink,

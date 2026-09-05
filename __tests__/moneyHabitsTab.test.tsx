@@ -215,6 +215,9 @@ describe('Money > Habits tab', () => {
     await openHabitsSegment(view);
 
     expect(view.getByText(strings.money.habitsEmptyTitle)).toBeTruthy();
-    expect(view.getByText(strings.money.habitsEmptyBody)).toBeTruthy();
+    // One hook line, no body (ADR 0037). This body was the only place that
+    // promised leaks surface automatically; that promise now lives on Today's
+    // kept pane as a live detection meter, which shows it rather than says it.
+    expect(view.queryByText(strings.money.habitsEmptyBody)).toBeNull();
   });
 });

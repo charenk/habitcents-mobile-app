@@ -55,6 +55,10 @@ export function QuickLogRow({
           onPress={() => onOpenSheet(undefined)}
           accessibilityRole="button"
           accessibilityLabel={strings.today.quickLogOpenLabel}
+          // Distinguishes this from the empty state's identically named CTA
+          // two stops earlier without changing the accessible name, so tests
+          // querying by role+name still find both.
+          accessibilityHint={strings.today.quickLogOpenHint}
           testID="quick-log-field"
         >
           <AmountDisplay valueCents={0} size={28} zeroAsPlaceholder underline={false} />

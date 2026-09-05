@@ -47,12 +47,12 @@ Replace Ionicons with **lucide-react-native**, 1.5px stroke, sizes 14/16/18/20/2
 **Keypad** — 4×3 grid (1-9, ., 0, ⌫), keys min-height 44–52, radius 10–12, bg snow, border cloud, 17–20px/600 ink. Logic: one decimal point max, 2 decimals max, 6 digits max.
 
 **Toast (NEW component — shipped app has none)**
-- Dark ink pill: bg `#1A1D23`, white text 13.5/600, radius 12, padding 12×18, centered horizontally, bottom-anchored ~110 above screen bottom (above tab bar), shadow above.
+- Dark ink pill: bg `#1A1D23`, white text 13.5/600, radius 12, padding 12×18, centered horizontally, bottom-anchored at `tabBarHeight + inset + lift + 24` (Toast.tsx; `lift` is Today's dock height via useToastLift, 0 elsewhere, ADR 0038), shadow above.
 - Enter: 220ms translateY(8)→0 + fade, ease-out. Auto-dismiss 2.5s. New toast replaces current.
 - Optional action link (e.g. "Undo"): color `#7FD4A8`, 700 weight, right of message with 14 gap.
 - Every mutating action fires one: "Logged." · "Saved." · "Deleted." + Undo · "Restored." · "Added to upcoming." · "+$6.50 kept. 4 of 5 days this week." · "Yesterday counted. +$6.50 kept." · "Stopped. Your history is kept." · "Trial started. 14 days free." · "Signed out. Your data stays on this device." · "Prototype reset." (dev only)
 - Implement as context/provider (`ToastProvider` + `useToast()`), rendered above the tab navigator.
 
-**Buttons** — primary: sage bg, white 15–16/600, min-height 48–52, radius 10; pressed = sage-dark (no scale). Secondary: white bg, cloud border, ink text. Tertiary: bare slate 14/600 text, min-height 44. Destructive: coral text (bare) or coral bg in confirm sheets. Disabled: cloud bg, white text.
+**Buttons** — primary: sage bg, white 15–16/600, min-height 48–52, radius 10; pressed = sage-dark (no scale). Secondary: white bg, cloud border, ink text. Tertiary: bare slate 14/600 text, min-height 44. TertiaryBrand: bare sage 14/600 text, min-height 44, empty-state CTAs only (ADR 0038). Destructive: coral text (bare) or coral bg in confirm sheets. Disabled: cloud bg, white text.
 
 **Sheets** — bottom sheets (not pageSheet modals): white, radius 20 top corners, grab handle 36×5 cloud, scrim `rgba(26,29,35,.4)`, slide-up 220ms.

@@ -156,9 +156,25 @@ Try: log an expense, add an upcoming bill, add a category, the pick-one sheet.
 The EmptyState rollout carries the onboarding burden for anyone who skips. Easiest seen
 via dev menu → "Persona: new user", **after** stage 1.
 
-- [ ] Spent, Upcoming, habits, categories, kept, leaks, and the insights zero state: do
-      they read as one system?
-- [ ] Does each one tell you what to do next, rather than only stating that a list is empty?
+- [ ] The seven illustrated zero states (Today spent, Today kept, Money spent,
+      Money upcoming, Money habits, Insights this month, Insights first scan)
+      plus Categories on its Folder glyph: do they read as one system?
+      (ADR 0036 count; "leaks" is an in-card line now, not a pane state.)
+- [ ] Does each one tell you what to do next, rather than only stating that a
+      list is empty? (The copy pass answered this on paper, ADR 0036; confirm
+      it reads that way on glass.)
+- [ ] The ActionDock at arm's length: does the bottom strip earn its height on
+      states with nothing to scroll, and does the top hairline read as an edge
+      rather than a border-on-border with the tab bar? (ADR 0038)
+- [ ] The today-kept sack: at 96pt does it read as money kept, or as a blue
+      ball with a ribbon? It is the one remaining placeholder (ADR 0036).
+- [ ] Kept true-zero explainer at the largest text sizes: three steps reachable
+      by scrolling, one VoiceOver stop per step with the numeral composed in.
+      (ADR 0039)
+- [ ] Tab bar at the largest non-accessibility Dynamic Type: the selected pill
+      and the label both whole, nothing clipped at the bar's bottom edge.
+      (BottomTabItem adds 5pt padding the 64pt arithmetic does not count;
+      looked right on the simulator, confirm on glass.)
 
 ## Results, part 1
 
@@ -274,8 +290,14 @@ End to end, VoiceOver only, no peeking at the screen:
 
 ### 6. Tab bar and headers at XL
 
-- [ ] Tab labels: is "Categories" ellipsized? Capped at 1.5, but the tab is a
-      quarter of the screen.
+- [x] Tab labels: is "Categories" ellipsized? **It was**, verified on the iPhone 16
+      simulator 2026-09-05: at accessibility-XXXL it read "Cate" and Insights read
+      "Ins". The 1.5 cap did not help because the clipping is horizontal, not
+      vertical. Fixed by ADR 0037 with `adjustsFontSizeToFit` floored at the
+      default 11pt; all four labels are whole words at XXXL now. Re-check on
+      device.
+- [ ] Tab bar selected state: is the pill plus heavier stroke obvious at arm's
+      length, and does the 1px sage border read as too heavy? (ADR 0037)
 - [ ] Screen headers: 34pt serif titles at 1.5 wrap to two or three lines. Do
       they still sit correctly beside the header action buttons?
 

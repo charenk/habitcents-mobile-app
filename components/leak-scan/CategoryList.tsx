@@ -48,7 +48,9 @@ function CategoryListImpl({ categories, onCategoryPress }: CategoryListProps) {
         >
           <View style={styles.rowHeader}>
             <View style={styles.rowHeaderLeft}>
-              <Text style={styles.categoryName}>{categoryDisplayLabel(c.category)}</Text>
+              <Text style={styles.categoryName} numberOfLines={1}>
+                {categoryDisplayLabel(c.category)}
+              </Text>
               <TierBadge tier={c.tier} />
             </View>
             {/* UX-038: this row opens CategoryTransactionsSheet; the rows
@@ -133,6 +135,9 @@ function createStyles(theme: AppTheme) {
       gap: 8,
     },
     categoryName: {
+      // Sits beside a tier badge and a chevron; names like "Software and
+      // subscriptions" need to yield rather than push them out (ADR 0039).
+      flexShrink: 1,
       fontSize: typeScale.label,
       fontFamily: theme.fonts.uiMedium,
       color: theme.ink,

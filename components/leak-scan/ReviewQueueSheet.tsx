@@ -88,7 +88,9 @@ export function ReviewQueueSheet({ visible, items, onCorrect, onClose }: ReviewQ
                 )}
               >
                 <View style={styles.itemHeader}>
-                  <Text style={styles.merchantName}>{item.merchantDisplay}</Text>
+                  <Text style={styles.merchantName} numberOfLines={1}>
+                    {item.merchantDisplay}
+                  </Text>
                   <TierBadge tier="needs-review" />
                 </View>
                 <Text style={styles.amount}>{format(item.totalCents)}</Text>
@@ -168,6 +170,9 @@ function createStyles(theme: AppTheme) {
       marginBottom: 6,
     },
     merchantName: {
+      // Bank data, arbitrary length: this breaks at the default text size on a
+      // long name, not only at accessibility sizes (ADR 0039).
+      flexShrink: 1,
       fontSize: typeScale.body,
       fontFamily: theme.fonts.uiBold,
       color: theme.ink,

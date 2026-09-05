@@ -61,7 +61,7 @@ export function PulseDayDetailSheet({ cell, rows, onClose }: PulseDayDetailSheet
     <Sheet visible={!!cell} onClose={onClose} accessibilityLabel={dateLabel}>
       <View style={styles.content}>
         <View style={styles.headerRow}>
-          <Text style={styles.date} accessibilityRole="header">
+          <Text style={styles.date} accessibilityRole="header" numberOfLines={1}>
             {dateLabel}
           </Text>
           <TouchableOpacity
@@ -112,6 +112,8 @@ function createStyles(theme: AppTheme) {
       marginBottom: 8,
     },
     date: {
+      // Sits beside the sheet's largest number; the date yields (ADR 0039).
+      flexShrink: 1,
       fontSize: typeScale.body,
       fontFamily: theme.fonts.uiBold,
       color: theme.ink,

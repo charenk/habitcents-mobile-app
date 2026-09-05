@@ -14,7 +14,7 @@ Update `constants/strings.ts`. Voice: knowledgeable honest friend. Sentence case
 | Save confirm | button morph "Saved" | toast "Logged." (new expense) / "Saved." (edits) |
 | Delete confirm | native alert | toast "Deleted." + Undo |
 | Edit modal title | "Edit Expense" | "Edit expense" (sheet eyebrow) |
-| Upcoming empty | "Nothing upcoming…" | "Mark an expense as repeating and its next date shows up here." + add affordance |
+| Upcoming empty | "Nothing upcoming…" | True zero: "Know what's coming before it lands" + add affordance (one hook, ADR 0037). Window-empty only: "None of your repeating expenses land in this window." (ADR 0039 review) |
 | Stop habit alert | native alert | sheet "Stop breaking this habit?" / "Your history is kept. You can start breaking it again any time." / "Stop breaking it" / "Keep going" |
 | Paywall dismiss | close ✕ only | + "Stay on free plan" |
 

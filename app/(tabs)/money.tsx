@@ -323,7 +323,10 @@ function createStyles(theme: AppTheme) {
     },
     scrollContent: {
       paddingHorizontal: 20,
-      paddingTop: 12,
+      // Was 12; Insights and Categories both use 14, so the first card landed
+      // 2pt higher here than everywhere else. Money was the outlier on this
+      // one, the opposite way round from the segments margin above. ADR 0039.
+      paddingTop: 14,
       paddingBottom: layout.screenBottomClearance,
     },
   });

@@ -419,22 +419,29 @@ describe('Today: Spent/Kept chips', () => {
   });
 });
 
-describe('Today: break-another affordance (DI-6)', () => {
+describe('Today: the break-habit affordance (DI-6, states per ADR 0038)', () => {
   // Both panes stay mounted (DI-7), so the affordance's presence in the tree
   // no longer depends on the Kept tap; the tap here is kept for realism and
-  // to prove the chip actually reaches selected, which the DI-6 assertions
-  // below now check alongside the affordance text.
-  it('renders in the empty Kept view', async () => {
+  // to prove the chip actually reaches selected.
+  //
+  // What changed in ADR 0038: the label reads the habit count and the caption
+  // reads the ceiling, rather than one fixed line plus an entitlement check.
+  // The old version told a brand-new user with zero habits "1 habit on the
+  // free plan" before anything had been refused.
+
+  it('with no habits, names the first one and says nothing about the plan', async () => {
     const view = await renderToday();
 
     await tap(view.getByTestId('kept-chip'));
 
     expect(view.getByLabelText(/^Kept .*, selected/)).toBeTruthy();
-    expect(view.getByText(strings.today.breakAnotherHabitCta)).toBeTruthy();
-    expect(view.getByText(strings.habitLogging.freeTierNote)).toBeTruthy();
+    expect(view.getByText(strings.today.breakFirstHabitCta)).toBeTruthy();
+    expect(view.queryByText(strings.today.breakAnotherHabitCta)).toBeNull();
+    // Nothing has been refused yet, so there is no limit to warn about.
+    expect(view.queryByText(strings.habitLogging.freeTierNote)).toBeNull();
   });
 
-  it('renders in the populated Kept view', async () => {
+  it('at the free limit, says "another" and warns which plan you are on', async () => {
     mockHabits = [makeHabit({ id: 'h1', frequency: 'daily', status: 'changing' })];
     mockGoals = [makeGoal({ id: 'g1', habitId: 'h1', dayLogs: [] })];
 
@@ -444,6 +451,8 @@ describe('Today: break-another affordance (DI-6)', () => {
 
     expect(view.getByLabelText(/^Kept .*, selected/)).toBeTruthy();
     expect(view.getByText(strings.today.breakAnotherHabitCta)).toBeTruthy();
+    // The caption earns its place here and only here: pressing at the limit
+    // jumps to the paywall, and this line is the only forewarning of that.
     expect(view.getByText(strings.habitLogging.freeTierNote)).toBeTruthy();
   });
 
@@ -453,7 +462,7 @@ describe('Today: break-another affordance (DI-6)', () => {
     const view = await renderToday();
 
     await tap(view.getByTestId('kept-chip'));
-    await tap(view.getByLabelText(new RegExp(`^${strings.today.breakAnotherHabitCta}`)));
+    await tap(view.getByLabelText(new RegExp(`^${strings.today.breakFirstHabitCta}`)));
 
     expect(view.getByText(strings.onboarding.breakSheetTitle)).toBeTruthy();
     expect(mockPush).not.toHaveBeenCalled();
@@ -471,10 +480,31 @@ describe('Today: break-another affordance (DI-6)', () => {
     expect(mockPush).toHaveBeenCalledWith('/paywall?placement=habit_gate_today');
   });
 
-  // Gating audit (build 12): the caption used to always read "1 habit on the
-  // free plan" (habitLogging.freeTierNote) regardless of entitlement, which
-  // was dishonest once premium (ceiling 5) is granted.
-  it('hides the free-plan caption once premium', async () => {
+  // Gating audit (build 12): the caption used to read "1 habit on the free
+  // plan" regardless of entitlement, which was dishonest once premium
+  // (ceiling 5) is granted. Still true under ADR 0038, and now for a second
+  // reason: one habit is nowhere near premium's ceiling, so nothing is being
+  // refused either.
+  // Premium at its own ceiling (5 of 5): still "another", still captionless,
+  // even though pressing routes to the paywall. The missing forewarning there
+  // is the open routing question three records carry; this pins the current
+  // deliberate behaviour so a change to it is a decision, not drift.
+  it('at the premium ceiling, says "another" with no plan caption', async () => {
+    await setMockEntitlement('premium');
+    mockHabits = [1, 2, 3, 4, 5].map((n) =>
+      makeHabit({ id: `h${n}`, frequency: 'daily', status: 'changing' })
+    );
+    mockGoals = mockHabits.map((h, n) => makeGoal({ id: `g${n}`, habitId: h.id, dayLogs: [] }));
+
+    const view = await renderToday();
+
+    await tap(view.getByTestId('kept-chip'));
+
+    expect(view.getByText(strings.today.breakAnotherHabitCta)).toBeTruthy();
+    expect(view.queryByText(strings.habitLogging.freeTierNote)).toBeNull();
+  });
+
+  it('says nothing about the free plan once premium', async () => {
     await setMockEntitlement('premium');
     mockHabits = [makeHabit({ id: 'h1', frequency: 'daily', status: 'changing' })];
     mockGoals = [makeGoal({ id: 'g1', habitId: 'h1', dayLogs: [] })];
@@ -485,6 +515,104 @@ describe('Today: break-another affordance (DI-6)', () => {
 
     expect(view.getByText(strings.today.breakAnotherHabitCta)).toBeTruthy();
     expect(view.queryByText(strings.habitLogging.freeTierNote)).toBeNull();
+  });
+
+  // ADR 0038: it used to be the SectionList's footer, so a populated pane hid
+  // it behind every leak and check-in card. Both panes now end in a dock.
+  it('lives in the dock, not at the end of the Kept zero scroll', async () => {
+    const view = await renderToday();
+
+    await tap(view.getByTestId('kept-chip'));
+
+    expect(
+      within(view.getByTestId('kept-dock')).getByTestId('break-habit-affordance')
+    ).toBeTruthy();
+  });
+
+  it('lives in the dock, not at the end of the populated Kept list', async () => {
+    mockHabits = [makeHabit({ id: 'h1', frequency: 'daily', status: 'changing' })];
+    mockGoals = [makeGoal({ id: 'g1', habitId: 'h1', dayLogs: [] })];
+
+    const view = await renderToday();
+
+    await tap(view.getByTestId('kept-chip'));
+
+    expect(
+      within(view.getByTestId('kept-dock')).getByTestId('break-habit-affordance')
+    ).toBeTruthy();
+  });
+});
+
+describe("Today: the Kept zero explainer (ADR 0039)", () => {
+  // The deliberate exception to the one-hook rule. It exists because true
+  // zero is the only state where the user has no evidence of their own to
+  // read, so the mechanic has to be told rather than shown.
+  it('renders its three steps on Kept true zero', async () => {
+    const view = await renderToday();
+
+    await tap(view.getByTestId('kept-chip'));
+
+    const keptPane = within(view.getByTestId('kept-pane'));
+    expect(keptPane.getByText(strings.today.keptHowItWorksTitle)).toBeTruthy();
+    expect(keptPane.getByTestId('empty-state-steps')).toBeTruthy();
+    for (const step of strings.today.keptHowItWorks) {
+      expect(keptPane.getByText(step)).toBeTruthy();
+    }
+    // Each row is ONE VoiceOver stop with the numeral composed in, so the
+    // rotor reads "1. Log what..." rather than "1." and the sentence apart.
+    expect(
+      keptPane.getByLabelText(`1. ${strings.today.keptHowItWorks[0]}`)
+    ).toBeTruthy();
+  });
+
+  // Guards the exception from spreading. Once logs exist the pane shows a live
+  // detection meter counting toward the real threshold, which says the same
+  // thing with the user's own numbers, so the static explainer would be a
+  // second telling.
+  it('does not render once logs exist and the detection meter takes over', async () => {
+    mockExpenses = [makeExpense({ id: 'e1' })];
+
+    const view = await renderToday();
+
+    await tap(view.getByTestId('kept-chip'));
+
+    const keptPane = within(view.getByTestId('kept-pane'));
+    expect(keptPane.queryByText(strings.today.keptHowItWorksTitle)).toBeNull();
+    expect(keptPane.getByText(strings.habits.spottingYourLeak)).toBeTruthy();
+  });
+
+  // The Spent pane keeps its single hook; the exception is Kept only.
+  it('does not reach the Spent pane', async () => {
+    const view = await renderToday();
+
+    const spentPane = within(view.getByTestId('spent-pane'));
+    expect(spentPane.queryByText(strings.today.keptHowItWorksTitle)).toBeNull();
+  });
+});
+
+describe('Today: the action dock (ADR 0038)', () => {
+  // The point of the dock is that the action does not move when the pager
+  // swipes. Before this, Spent's quick log was its scroller's FIRST child and
+  // Kept's affordance was its LAST, so the action jumped from the top of the
+  // screen to the bottom of a long scroll.
+  it('ends both panes, so the action does not move between them', async () => {
+    const view = await renderToday();
+
+    // Both panes stay mounted (DI-7) but the off-screen one is hidden from
+    // assistive tech, and RNTL honours that, so Kept needs { hidden: true }.
+    const spentPane = within(view.getByTestId('spent-pane'));
+    const keptPane = within(view.getByTestId('kept-pane', { includeHiddenElements: true }));
+
+    expect(spentPane.getByTestId('spent-dock')).toBeTruthy();
+    expect(keptPane.getByTestId('kept-dock', { includeHiddenElements: true })).toBeTruthy();
+  });
+
+  it('holds the quick log, which no longer sits inside the Spent scroller', async () => {
+    const view = await renderToday();
+
+    expect(
+      within(view.getByTestId('spent-dock')).getByLabelText(strings.today.quickLogOpenLabel)
+    ).toBeTruthy();
   });
 });
 
@@ -507,12 +635,15 @@ describe('Today: Spent pane true-zero state', () => {
     // ("Log an expense" is both quickLogOpenLabel and spentEmptyCta by
     // design, and the Kept pane's own true-zero CTA reads identically too).
     // Scoped to the Spent pane rules out Kept's; within the Spent pane the
-    // fill state's CTA is the second (QuickLogRow's own control renders
-    // first, above it).
+    // EmptyState CTA is the FIRST since ADR 0038, because the quick log now
+    // lives in the dock rendered after the scroller. Index [0] is the one
+    // that goes through handleSpentEmptyLog and the skip_activation path;
+    // [1] would be QuickLogRow, which opens the same sheet and would let
+    // this test pass without exercising what it names.
     const spentPane = view.getByTestId('spent-pane');
     const spentPaneCtas = within(spentPane).getAllByRole('button', { name: strings.today.spentEmptyCta });
     expect(spentPaneCtas).toHaveLength(2);
-    await tap(spentPaneCtas[1]);
+    await tap(spentPaneCtas[0]);
 
     expect(view.getByText(strings.expenseSheet.logEyebrow)).toBeTruthy();
   });

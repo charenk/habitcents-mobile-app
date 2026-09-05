@@ -59,6 +59,31 @@ export function useToast(): ToastApi {
   return ctx;
 }
 
+/**
+ * How far to lift the pill above its usual spot (ADR 0038).
+ *
+ * The toast sits at tabBarHeight + inset + 24, which since Today grew an
+ * ActionDock is behind the dock. A save toast would cover the very field the
+ * user might want again. Screens with docked chrome report its height here.
+ *
+ * A separate context from ToastApi on purpose: ToastApi's value is memoized
+ * to one stable identity because ~10 files consume it, and folding a changing
+ * number into it would re-render all of them on every layout pass.
+ *
+ * Single-writer by design: the setter is last-writer-wins, which is fine while
+ * Today is the only caller. A second docked screen would need a ref-counted
+ * registry here, not a second bare call.
+ */
+const ToastLiftContext = createContext<(height: number) => void>(() => {});
+
+export function useToastLift(height: number): void {
+  const setLift = useContext(ToastLiftContext);
+  useEffect(() => {
+    setLift(height);
+    return () => setLift(0);
+  }, [height, setLift]);
+}
+
 export function ToastProvider({
   children,
 }: {
@@ -103,10 +128,14 @@ export function ToastProvider({
   // twice per toast for no reason.
   const value = useMemo(() => ({ show }), [show]);
 
+  const [lift, setLift] = useState(0);
+
   return (
     <ToastContext.Provider value={value}>
-      {children}
-      <ToastHost toast={toast} onDismiss={hide} />
+      <ToastLiftContext.Provider value={setLift}>
+        {children}
+      </ToastLiftContext.Provider>
+      <ToastHost toast={toast} onDismiss={hide} lift={lift} />
     </ToastContext.Provider>
   );
 }
@@ -114,9 +143,12 @@ export function ToastProvider({
 function ToastHost({
   toast,
   onDismiss,
+  lift,
 }: {
   toast: ToastState | null;
   onDismiss: () => void;
+  /** Height of any docked chrome to clear (ADR 0038). 0 on most screens. */
+  lift: number;
 }) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
@@ -152,7 +184,7 @@ function ToastHost({
 
   if (!rendered) return null;
 
-  const bottom = layout.tabBarHeight + Math.max(insets.bottom, 8) + 24;
+  const bottom = layout.tabBarHeight + Math.max(insets.bottom, 8) + lift + 24;
   const translateY = progress.interpolate({
     inputRange: [0, 1],
     outputRange: [8, 0],
@@ -172,6 +204,7 @@ function ToastHost({
       <Animated.View
         style={[styles.pill, { bottom }, animatedStyle]}
         accessibilityLiveRegion="polite"
+        testID="toast-pill"
       >
         <Text style={styles.message} numberOfLines={2} maxFontSizeMultiplier={1.5}>
           {rendered.message}

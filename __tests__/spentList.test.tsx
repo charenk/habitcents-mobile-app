@@ -110,7 +110,9 @@ describe('SpentList: Today always first', () => {
 
     expect(view.queryByText(strings.money.spentTodayEmpty)).toBeNull();
     expect(view.getByText(strings.money.spentEmptyTitle)).toBeTruthy();
-    expect(view.getByText(strings.money.spentEmptyBody)).toBeTruthy();
+    // One hook line, no body (ADR 0037). Pinned as an absence so a future
+    // tidy-up cannot quietly reintroduce the second line.
+    expect(view.queryByText(strings.money.spentEmptyBody)).toBeNull();
     // No tappable rows exist anywhere, so the edit hint does not render.
     expect(view.queryByText(strings.money.spentEditHint)).toBeNull();
   });

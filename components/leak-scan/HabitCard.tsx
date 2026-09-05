@@ -160,7 +160,9 @@ function HabitCardImpl({
             accessibilityRole="button"
             hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
           >
-            <Text style={styles.trackButtonText}>{strings.leakScan.trackThisLeak}</Text>
+            <Text style={styles.trackButtonText} maxFontSizeMultiplier={1.5}>
+              {strings.leakScan.trackThisLeak}
+            </Text>
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
@@ -313,6 +315,9 @@ function createStyles(theme: AppTheme) {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
+      // The pill was capped and the button was not, so the two sides scaled
+      // apart and the button walked off the edge (ADR 0039).
+      gap: 8,
       marginTop: 12,
     },
     pacePill: {
