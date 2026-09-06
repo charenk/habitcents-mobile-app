@@ -33,7 +33,17 @@ import { selectableLabel } from '@/utils/a11y';
 const TRACK_PADDING = 3;
 
 export type SegmentedControlProps<T extends string | number> = {
-  options: ReadonlyArray<{ value: T; label: string }>;
+  /**
+   * `badge` is an optional annotation on a segment whose destination is not
+   * live yet (Insights' Leak finder, decision 0009). Keep it to a word: a
+   * segment carries roughly 148pt of content width on a small phone, and a
+   * two-word pill beside a two-word label overflows at large text sizes.
+   *
+   * `badgeSpoken` is what VoiceOver hears in its place, so the pill can stay
+   * short without the screen reader losing the meaning ("Soon" on screen,
+   * "coming soon" spoken). Omitted, the badge text itself is spoken.
+   */
+  options: ReadonlyArray<{ value: T; label: string; badge?: string; badgeSpoken?: string }>;
   value: T;
   onChange: (v: T) => void;
   /** Names the whole control, e.g. "Money view". */
@@ -57,12 +67,18 @@ export function SegmentedControl<T extends string | number>({
     >
       {options.map((option) => {
         const selected = option.value === value;
+        // The badge is part of what this tab IS, not decoration beside it, so
+        // it goes into the spoken label rather than being announced as its own
+        // stop after the tab. selectableLabel then appends the state, giving
+        // "Leak finder, coming soon, selected".
+        const spokenBadge = option.badge ? option.badgeSpoken ?? option.badge : null;
+        const spokenLabel = spokenBadge ? `${option.label}, ${spokenBadge}` : option.label;
         return (
           <Pressable
             key={option.value}
             onPress={() => onChange(option.value)}
             accessibilityRole="tab"
-            accessibilityLabel={selectableLabel(option.label, selected)}
+            accessibilityLabel={selectableLabel(spokenLabel, selected)}
             accessibilityState={{ selected }}
             // UX-030: minHeight 38 sits below the 44pt target floor. The
             // track's 3pt padding plus this segment's own edge leaves 3pt of
@@ -82,6 +98,21 @@ export function SegmentedControl<T extends string | number>({
             >
               {option.label}
             </Text>
+            {option.badge ? (
+              // Hidden from assistive tech: the spoken label above already
+              // carries it, and announcing it twice makes the tab read as two
+              // things. Same reasoning as EmptyState's art wrapper.
+              <View
+                testID="segment-badge"
+                style={[styles.badge, selected ? styles.badgeSelected : null]}
+                accessibilityElementsHidden
+                importantForAccessibility="no-hide-descendants"
+              >
+                <Text style={styles.badgeLabel} numberOfLines={1} maxFontSizeMultiplier={1.5}>
+                  {option.badge}
+                </Text>
+              </View>
+            ) : null}
           </Pressable>
         );
       })}
@@ -103,9 +134,13 @@ function createStyles(theme: AppTheme) {
       flex: 1,
       minHeight: 38,
       borderRadius: radii.card,
+      flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      paddingHorizontal: 12,
+      gap: 5,
+      // 12 with no badge; a badged segment needs the room, and the label
+      // already truncates to one line before the pill would be squeezed out.
+      paddingHorizontal: 10,
     },
     segmentSelected: {
       backgroundColor: theme.white,
@@ -121,6 +156,29 @@ function createStyles(theme: AppTheme) {
     },
     labelSelected: {
       color: theme.ink,
+    },
+    // Same pill geometry as TierBadge, one notch smaller because it sits
+    // inside a 38pt control rather than on a card. minHeight, never height:
+    // the label scales with the user's text size and a fixed box clips it.
+    badge: {
+      minHeight: 18,
+      paddingVertical: 1,
+      paddingHorizontal: 8,
+      borderRadius: radii.pill,
+      alignItems: 'center',
+      justifyContent: 'center',
+      // Unselected segments sit on the cloud track, so white reads as raised;
+      // the selected segment is itself white, so the pill inverts to cloud.
+      // Meaning is in the word, never the fill.
+      backgroundColor: theme.white,
+    },
+    badgeSelected: {
+      backgroundColor: theme.cloud,
+    },
+    badgeLabel: {
+      fontSize: typeScale.eyebrow,
+      fontFamily: theme.fonts.uiBold,
+      color: theme.slate,
     },
   });
 }

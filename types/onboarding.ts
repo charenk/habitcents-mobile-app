@@ -35,7 +35,15 @@ export type OnboardingState = {
   hasAddedFirstExpense: boolean;
   completedAt?: Date;
   skippedSteps: OnboardingStep[];
-  /** door_chosen (section 6): which door the two-door fork resolved to. */
+  /**
+   * door_chosen (section 6): which door the two-door fork resolved to.
+   *
+   * 'statements' is no longer reachable (decision 0009 removed the scan beat
+   * while the leak scan is dormant), and is kept in the union for the same
+   * reason the retired steps above are: installs in the wild have it
+   * persisted, and a value the parser cannot name is a crash waiting for the
+   * next cold start.
+   */
   doorChosen?: 'fresh' | 'statements' | 'skip';
   /**
    * onboarding_completed's habitStarted (section 6): true once "Plug the

@@ -433,15 +433,20 @@ export const strings = {
     welcomeSub: 'Everything stays on your phone. No bank login. No account.',
     getStarted: 'Get started',
     // ---------------------------------------------------------------------
-    // Carousel beats (PRD v3.1 sect 4, ADR 0026). Three beats, one per real
-    // workflow. Each shows a RECORDING of the app doing the thing, with a hook
-    // below and a CTA that triggers the real workflow, never a simulation of
-    // it. Beat order matches the intent order the picker used, so the funnel
-    // stays comparable across the change.
+    // Carousel beats (PRD v3.1 sect 4, ADR 0026). One beat per real workflow.
+    // Each shows a RECORDING of the app doing the thing, with a hook below and
+    // a CTA that triggers the real workflow, never a simulation of it. Beat
+    // order matches the intent order the picker used, so the funnel stays
+    // comparable across the change.
     // ---------------------------------------------------------------------
     beatTrackHeadline: 'Log it in ten seconds.',
     beatTrackHook: 'Amount first, one tap. The patterns show up on their own.',
     beatTrackCta: 'Log my first expense',
+    // RETIRED FROM RENDERING (decision 0009): the scan beat is out of the
+    // carousel while the flow is dormant behind SCAN_FLOW_ENABLED. A beat
+    // whose CTA cannot start its real workflow is exactly what ADR 0026
+    // forbids. Kept for the localization migration and the tests that pin
+    // their absence; restore the beat with the flag when the rework lands.
     beatScanHeadline: 'See where it all goes.',
     beatScanHook: 'Scan a bank statement on your phone. Nothing uploads, ever.',
     beatScanCta: 'Scan my statement',
@@ -1172,19 +1177,45 @@ export const strings = {
       'Log what you spend and this fills in: where it went, and which leaks are worth breaking.',
     monthEmptyCta: 'Log an expense',
 
-    // First scan segment (W5, OB-6 Insights half, ADR 0020: summary shown
+    // Leak finder segment (W5, OB-6 Insights half, ADR 0020: summary shown
     // until replaced, no expiry). Conditional on a persisted ScanSummary.
     monthSegment: 'This month',
-    scanSegment: 'First scan',
+    // Was 'First scan' until 2026-09-05 (decision 0009). The scan is dormant
+    // behind SCAN_FLOW_ENABLED, so the segment now names the outcome being
+    // built rather than a step the user cannot take. Key name kept: renaming
+    // it would ripple through tests for no user-visible gain.
+    scanSegment: 'Leak finder',
+    // Badge on the segment. Short on purpose: each segment carries about
+    // 148pt of content width, and 'Leak finder' plus a full 'Coming soon'
+    // pill overflows at large text sizes. The whole phrase is what VoiceOver
+    // reads (scanSegmentBadgeSpoken) and what the pane itself says.
+    scanSegmentBadge: 'Soon',
+    scanSegmentBadgeSpoken: 'coming soon',
     scanSegmentControlLabel: 'Insights view',
-    // Loaded, no scan on file yet (scanSummary resolved to null).
+    // Loaded, no scan on file yet (scanSummary resolved to null). Kept
+    // verbatim through the coming soon rework: it is still the one line in
+    // the app that names a benefit the user already owns rather than an
+    // action they must take.
     scanEmptyTitle: 'Find the leaks you already have',
     // RETIRED FROM RENDERING (ADR 0037's one-hook pass); the privacy promise
-    // it carried survives on the scan intake screen (intakeSubtitle), in the
-    // onboarding beat and in the intent picker. Kept for the localization
+    // it carried survives on the scan intake screen (intakeSubtitle) and now
+    // in the leak finder teaser body below. Kept for the localization
     // migration and the tests that pin its absence.
     scanEmptyBody: 'Scan a bank statement on your phone. Nothing uploads, ever.',
+    // RETIRED FROM RENDERING (decision 0009): the scan CTA is gone from the
+    // pane while the flow is dormant. Kept for the localization migration and
+    // the tests that pin its absence.
     scanEmptyCta: 'Scan my statement',
+
+    // Leak finder teaser (decision 0009), the pane's state while the scan is
+    // dormant. Says what is being built, asks the reader to help build it,
+    // and records interest on device: no network beyond the analytics event.
+    leakFinderBody:
+      'The leak finder will read a bank statement on your phone and point at the spending that leaks. Nothing uploads, ever. We are rebuilding it, and we want to build it with people who will actually use it.',
+    leakFinderReward: 'Join the research and you could win six months of HabitCents.',
+    leakFinderCta: 'Count me in',
+    leakFinderConfirmedTitle: 'You are on the list',
+    leakFinderConfirmedBody: 'Thanks. The leak finder will land in this tab first.',
     scanSnapshotEyebrow: (date: string) => `First scan · ${date}`,
     // Evidence line under the eyebrow: what this snapshot covers, honestly.
     // windowLabel is omitted when the scan carried no coverage window.
@@ -1196,11 +1227,19 @@ export const strings = {
     // management surface other than the leaks card in This month, above.
     scanLeaksCaption: 'Manage leaks from This month, above.',
     scanProjectionLockedInCaption: (amount: string) => `${amount} locked in from recurring`,
+    // DORMANT, not retired (decision 0009): both of these render again the
+    // moment SCAN_FLOW_ENABLED is on. While the scan is walled off there is
+    // no new scan to run, so the caption below replaces this one and the
+    // action is not rendered at all.
     scanUpdatedCaption: 'Updated when you run a new scan.',
     // Re-scan entry (build 12): the footer caption above was informational
     // only, with no path back to /leak-scan once onboarding finished. This
     // is that path, a 44pt tertiary control below the caption.
     scanRerunAction: 'Run a new scan',
+    // The honest footer while the scan is dormant. A summary already on file
+    // is still shown in full (ADR 0020, kept until replaced): the user earned
+    // those figures, and nothing about the pause makes them less true.
+    scanSavedCaption: 'Saved from your last scan.',
   },
 
   // Habit detail redesign (spec 04 "Habit detail"). The arc, chapter and

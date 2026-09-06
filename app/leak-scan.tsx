@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react';
-import { useRouter } from 'expo-router';
+import { Redirect, useRouter } from 'expo-router';
+import { SCAN_FLOW_ENABLED } from '@/utils/scanFlow';
 import { useLeakScanIntake } from '@/components/leak-scan/useLeakScanIntake';
 import { IntakeScreen } from '@/components/leak-scan/IntakeScreen';
 import { ResultsScreen } from '@/components/leak-scan/ResultsScreen';
@@ -12,14 +13,40 @@ import { useCompleteScanOnboarding } from '@/components/leak-scan/useCompleteSca
 import { useOnboarding } from '@/contexts/OnboardingContext';
 
 /**
- * The Leak Scan route (P2-1b, Door 2). Registered at the exact path
- * app/onboarding's Door 2 pushes to: router.push('/leak-scan'). Owns intake
- * through results end to end; the graceful-failure screen exits into Door 1
- * (docs/design-package-phase2/02-p2-1-onboarding-leak-audit.md section 7,
- * "Door 2 graceful failure re-entry") without touching app/onboarding/,
- * which a sibling build owns.
+ * The Leak Scan route (P2-1b, Door 2).
+ *
+ * DORMANT AS SHIPPED (2026-09-05, decision 0009). The flow below is whole,
+ * compiled and tested; SCAN_FLOW_ENABLED is what decides whether a user can
+ * reach it. With the flag off this route redirects to Insights, where the
+ * Leak finder segment carries the coming soon teaser instead.
+ *
+ * The redirect, rather than deleting the file, is the same reasoning
+ * app/onboarding/intent.tsx records: `habitcents://leak-scan` resolves from
+ * anything that stored that link, and a route that renders half a retired
+ * flow is the bug class that crashed build 5. A redirect answers every caller
+ * honestly, including one from an install that was mid-scan when it updated.
+ *
+ * When the rework starts: set EXPO_PUBLIC_SCAN_FLOW=1 in a local .env and
+ * everything below is live again, unchanged.
  */
 export default function LeakScanRoute() {
+  if (!SCAN_FLOW_ENABLED) {
+    return <Redirect href="/(tabs)/insights" />;
+  }
+  return <LeakScanFlow />;
+}
+
+/**
+ * The flow itself. Exported so the flow's own tests can render it directly
+ * without reaching through the gate (they set the env var instead, which is
+ * the honest test of the shipped path).
+ *
+ * Owns intake through results end to end; the graceful-failure screen exits
+ * into Door 1 (docs/design-package-phase2/02-p2-1-onboarding-leak-audit.md
+ * section 7, "Door 2 graceful failure re-entry") without touching
+ * app/onboarding/, which a sibling build owns.
+ */
+export function LeakScanFlow() {
   const router = useRouter();
   const {
     state,

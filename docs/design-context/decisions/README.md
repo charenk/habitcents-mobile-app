@@ -2,6 +2,7 @@
 
 HabitCents product decisions, newest first. Each links to its full record.
 
+- [0009. Leak finder wrapped as coming soon](0009-leak-finder-coming-soon.md): the scan goes dormant behind SCAN_FLOW_ENABLED with no code deleted; Insights' segment becomes Leak finder with a co-build teaser; the onboarding carousel drops to two beats
 - [0008. A11y verification deferred to beta](0008-a11y-verification-deferred-to-beta.md): Phase 2 complete without the on-device VoiceOver pass; the audit runs at Phase 4 TestFlight on final builds, still before store submission
 - [0007. Onboarding final: Door 1 pattern, preset table, free-tier touchpoint](0007-onboarding-final-and-free-tier.md): A chips + B inline edit, recognition framing; per-currency presets; quiet free-tier note with disabled Start
 - [0006. Category taxonomy v2](0006-category-taxonomy-v2.md): 10 spend categories incl. Software & Subscriptions; Transfers/Income/Cash as row classes, never categories; no data migration
