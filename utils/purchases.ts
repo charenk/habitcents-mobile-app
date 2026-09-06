@@ -34,6 +34,12 @@
  * untracked .env (EXPO_PUBLIC_REVENUECAT_API_KEY). See .env.example. Until
  * then, MOCK stands. Sandbox purchase/restore/cancel verification needs that
  * real device build; this repo cannot do it.
+ *
+ * Timed promotional grant (this run, 2026-09-06): a second, dated layer on
+ * top of the free/mock/live Entitlement above, never replacing it. Exists so
+ * LeakFinderTeaser's receipt ("your six months is saved", decision 0009) can
+ * actually be honored; see the "Timed promotional grants" section below for
+ * the mechanism and why the clock starts at unlock, not at opt-in.
  */
 
 // Type-only import: erased at compile time, so it adds nothing to the bundle
@@ -51,6 +57,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // functions so utils/devMenu.ts and __tests__/purchases.test.ts can keep
 // calling them outside a component.
 import { useSyncExternalStore } from 'react';
+
+// Neither of these creates a cycle: utils/storage.ts and utils/scanFlow.ts
+// import nothing from this file. getLeakFinderInterest reads the same local
+// opt-in record app/(tabs)/insights.tsx does; SCAN_FLOW_ENABLED is the one
+// gate that decides whether the feature the promo promises is reachable yet.
+import { getLeakFinderInterest } from '@/utils/storage';
+import { SCAN_FLOW_ENABLED } from '@/utils/scanFlow';
+import { track } from '@/utils/analytics';
 
 // ---------------------------------------------------------------------------
 // Product catalog (PLANNED prices, Phase 3 decisions pending Charen's sign-off).
@@ -175,10 +189,11 @@ function currentImpl(): PurchasesClient | null {
 
 /**
  * @internal test-only seam (mirrors analytics __setClientForTests). Also drops
- * the in-memory mock grant so each test starts from 'free', and marks live
- * init "already done" so no test accidentally kicks off a real dynamic import
- * of react-native-purchases. __resetPurchasesInitForTests() below undoes that
- * last part for the one test that needs to exercise initPurchases() itself.
+ * the in-memory mock grant so each test starts from 'free', clears any promo
+ * grant, and marks live init "already done" so no test accidentally kicks off
+ * a real dynamic import of react-native-purchases. __resetPurchasesInitForTests()
+ * below undoes that last part for the one test that needs to exercise
+ * initPurchases() itself.
  */
 export function __setPurchasesForTests(c: PurchasesClient | null): void {
   impl = c;
@@ -186,6 +201,7 @@ export function __setPurchasesForTests(c: PurchasesClient | null): void {
   liveEntitlement = 'free';
   purchasesInitialized = true;
   purchasesInitPromise = null;
+  promoGrant = null;
 }
 
 /** @internal test-only: let a test re-trigger initPurchases() from scratch. */
@@ -255,6 +271,125 @@ export async function hydrateEntitlement(): Promise<Entitlement> {
     // than silently revoking it.
   }
   return mockEntitlement;
+}
+
+// ---------------------------------------------------------------------------
+// Timed promotional grants (punch list, 2026-09-06: "dated entitlement, owed
+// before the leak finder ships"). LeakFinderTeaser's receipt promises
+// everyone who opts in six months of premium (decision 0009; Charen: no
+// draw, since an anonymous, backend-less app can neither run one nor
+// announce it). Nothing above this could grant that: Entitlement is
+// 'free' | 'premium' with no duration, the only grant path was the dev-menu-
+// only setMockEntitlement, and getEntitlement() is a synchronous read across
+// eight call sites, so an expiry has to resolve inside that same read. This
+// is that mechanism: a separate, dated grant layered on top of the free/
+// mock/live entitlement above, never replacing it. getEntitlement() (below)
+// reports 'premium' when EITHER the base entitlement says so OR an active
+// promo grant exists.
+//
+// When the clock starts is the actual decision, not just the mechanism. The
+// receipt says "your six months is saved... unlocks right here when it's
+// ready", which only stays true if the six months starts counting once the
+// leak finder is actually reachable, not while it sits dormant behind
+// SCAN_FLOW_ENABLED: a long dormancy must never eat into the offer.
+// activateLeakFinderPromoIfEligible() below is the one call site, gated on
+// that flag. Flagged in DECISIONS NEEDED in case Charen wants the clock to
+// start at the opt-in tap instead; that would be a one-line change (drop the
+// flag check).
+// ---------------------------------------------------------------------------
+
+/** The one source this exists for today. A union so a second promo (if one
+ *  is ever needed) is additive, not a rewrite. */
+export type PromoGrantSource = 'leak_finder_interest';
+
+export interface PromoGrantRecord {
+  source: PromoGrantSource;
+  /** When this install actually became eligible and was granted. */
+  activatedAt: string;
+  expiresAt: string;
+}
+
+export const PROMO_GRANT_KEY = '@habitcents_promo_entitlement';
+const LEAK_FINDER_PROMO_MONTHS = 6;
+
+let promoGrant: PromoGrantRecord | null = null;
+
+function isPromoGrantActive(record: PromoGrantRecord | null, now: Date = new Date()): boolean {
+  return record !== null && new Date(record.expiresAt).getTime() > now.getTime();
+}
+
+function isPromoGrantRecord(value: unknown): value is PromoGrantRecord {
+  if (!value || typeof value !== 'object') return false;
+  const v = value as Record<string, unknown>;
+  return (
+    v.source === 'leak_finder_interest' &&
+    typeof v.activatedAt === 'string' &&
+    typeof v.expiresAt === 'string'
+  );
+}
+
+async function writePromoGrant(record: PromoGrantRecord | null): Promise<void> {
+  promoGrant = record;
+  notifyEntitlementChanged();
+  try {
+    if (record) {
+      await AsyncStorage.setItem(PROMO_GRANT_KEY, JSON.stringify(record));
+    } else {
+      await AsyncStorage.removeItem(PROMO_GRANT_KEY);
+    }
+  } catch {
+    // Same posture as writeMockEntitlement: the in-memory grant still holds
+    // for this session even if the write fails.
+  }
+}
+
+/**
+ * Read the stored promo grant back into memory. Called once at app start
+ * (app/_layout.tsx), alongside hydrateEntitlement(), so a warm process's
+ * synchronous getEntitlement() sees an already-granted promo immediately
+ * rather than only after activateLeakFinderPromoIfEligible() re-derives it.
+ */
+export async function hydratePromoGrant(): Promise<void> {
+  try {
+    const raw = await AsyncStorage.getItem(PROMO_GRANT_KEY);
+    const parsed: unknown = raw ? JSON.parse(raw) : null;
+    promoGrant = isPromoGrantRecord(parsed) ? parsed : null;
+  } catch {
+    // Corrupt or unreadable: no grant rather than throwing into the boot path.
+    promoGrant = null;
+  }
+  notifyEntitlementChanged();
+}
+
+/**
+ * Activate the leak finder co-build promo if this install is eligible:
+ * opted in (utils/storage.ts's getLeakFinderInterest) and the feature the
+ * receipt promises is actually live (SCAN_FLOW_ENABLED). Idempotent and safe
+ * to call on every boot and right after a fresh opt-in: a grant already on
+ * file is never re-activated or extended, so this can never restart or
+ * stack the clock. Fires a structural, payload-free analytics event once a
+ * grant actually lands, matching leak_finder_interest_recorded's own D-9
+ * contract: a count of promises actually honored, nothing identifying.
+ */
+export async function activateLeakFinderPromoIfEligible(): Promise<void> {
+  if (!SCAN_FLOW_ENABLED || promoGrant) return;
+  const interest = await getLeakFinderInterest();
+  if (!interest) return;
+  const now = new Date();
+  const expires = new Date(now);
+  expires.setMonth(expires.getMonth() + LEAK_FINDER_PROMO_MONTHS);
+  await writePromoGrant({
+    source: 'leak_finder_interest',
+    activatedAt: now.toISOString(),
+    expiresAt: expires.toISOString(),
+  });
+  track('leak_finder_promo_activated', {});
+}
+
+/** @internal test-only: inject or clear the promo grant directly, bypassing
+ *  activateLeakFinderPromoIfEligible()'s eligibility checks. */
+export function __setPromoGrantForTests(record: PromoGrantRecord | null): void {
+  promoGrant = record;
 }
 
 // ---------------------------------------------------------------------------
@@ -419,9 +554,13 @@ export async function resetMockEntitlement(): Promise<void> {
  * The current entitlement. In mock mode this is the local mock grant: 'free'
  * until a mock purchase, 'premium' after one, restored on launch by
  * hydrateEntitlement(). When the live client is present it is the source of
- * truth. Synchronous because every feature gate reads it during render.
+ * truth. An active timed promo grant (leak finder co-build, see above) always
+ * reports 'premium' regardless of the underlying mode, since it is a separate
+ * dated layer on top rather than a replacement. Synchronous because every
+ * feature gate reads it during render.
  */
 export function getEntitlement(): Entitlement {
+  if (isPromoGrantActive(promoGrant)) return 'premium';
   if (impl) return impl.getEntitlement();
   if (purchasesEnabled()) {
     // Live mode is configured but not yet initialized (or init failed):

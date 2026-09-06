@@ -12,11 +12,13 @@ import {
   purchase,
   restore,
   hydrateEntitlement,
+  hydratePromoGrant,
   resetMockEntitlement,
   setMockEntitlement,
   subscribeToEntitlementChanges,
   useEntitlement,
   __setPurchasesForTests,
+  __setPromoGrantForTests,
   __resetPurchasesInitForTests,
   __isPurchasesInitializedForTests,
   MOCK_ENTITLEMENT_KEY,
@@ -318,6 +320,76 @@ describe('entitlement reactivity', () => {
       await setMockEntitlement('premium');
     });
     expect(result.current).toBe('premium');
+  });
+});
+
+/**
+ * Timed promotional grant (punch list, 2026-09-06: "dated entitlement, owed
+ * before the leak finder ships"). These tests cover the mechanism only, i.e.
+ * getEntitlement()'s composition with a promo grant and its storage
+ * round-trip; activateLeakFinderPromoIfEligible()'s own eligibility gate
+ * (SCAN_FLOW_ENABLED, a module-load constant) needs a fresh module per
+ * toggle and lives in __tests__/leakFinderPromo.test.ts instead.
+ */
+describe('timed promotional grant', () => {
+  beforeEach(async () => {
+    delete process.env[KEY];
+    __setPurchasesForTests(null);
+    await AsyncStorage.clear();
+  });
+
+  it('reports free with no promo grant on file', () => {
+    expect(getEntitlement()).toBe('free');
+  });
+
+  it('an active promo grant reports premium even though the base entitlement is free', () => {
+    __setPromoGrantForTests({
+      source: 'leak_finder_interest',
+      activatedAt: new Date().toISOString(),
+      expiresAt: new Date(Date.now() + 1000).toISOString(),
+    });
+    expect(getEntitlement()).toBe('premium');
+    expect(isPremium()).toBe(true);
+  });
+
+  it('an expired promo grant falls through to the base entitlement', () => {
+    __setPromoGrantForTests({
+      source: 'leak_finder_interest',
+      activatedAt: new Date(Date.now() - 2000).toISOString(),
+      expiresAt: new Date(Date.now() - 1000).toISOString(),
+    });
+    expect(getEntitlement()).toBe('free');
+  });
+
+  it('an active promo grant stacks with, never masks, a real mock premium purchase', async () => {
+    await purchase(PRODUCT_ANNUAL);
+    __setPromoGrantForTests({
+      source: 'leak_finder_interest',
+      activatedAt: new Date().toISOString(),
+      expiresAt: new Date(Date.now() + 1000).toISOString(),
+    });
+    expect(getEntitlement()).toBe('premium');
+    await resetMockEntitlement();
+    // The mock purchase is gone, but the promo grant alone still carries it.
+    expect(getEntitlement()).toBe('premium');
+  });
+
+  it('hydratePromoGrant() reads a stored grant back into memory on a cold start', async () => {
+    const record = {
+      source: 'leak_finder_interest',
+      activatedAt: new Date().toISOString(),
+      expiresAt: new Date(Date.now() + 1000).toISOString(),
+    };
+    await AsyncStorage.setItem('@habitcents_promo_entitlement', JSON.stringify(record));
+    expect(getEntitlement()).toBe('free'); // memory is cold before hydration
+    await hydratePromoGrant();
+    expect(getEntitlement()).toBe('premium');
+  });
+
+  it('hydratePromoGrant() treats a corrupt stored record as no grant, not a crash', async () => {
+    await AsyncStorage.setItem('@habitcents_promo_entitlement', 'not json');
+    await expect(hydratePromoGrant()).resolves.toBeUndefined();
+    expect(getEntitlement()).toBe('free');
   });
 });
 
