@@ -28,21 +28,10 @@ import { arcLabel } from '@/utils/a11y';
 import { motion, radii, spacing, typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
 import type { ChapterName } from '@/types/habit';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
 import { useReducedMotion } from '@/utils/motion';
 
 const ARC_TOTAL = 66;
-
-// Section 4.6 names only Deciding / Rhythm / Cruising / Rewired as the four
-// track segments (Rewiring is the identity-line/chapter-label stage between
-// Cruising and Rewired, not its own segment on the track). The lo/hi pairs are
-// both the fill math and the 10 / 20 / 20 / 16 segment weights.
-const CHAPTERS: { name: ChapterName; lo: number; hi: number; label: string }[] = [
-  { name: 'Deciding', lo: 0, hi: 10, label: strings.habitLogging.chapterDeciding },
-  { name: 'Rhythm', lo: 10, hi: 30, label: strings.habitLogging.chapterRhythm },
-  { name: 'Cruising', lo: 30, hi: 50, label: strings.habitLogging.chapterCruising },
-  { name: 'Rewired', lo: 50, hi: 66, label: strings.habitLogging.chapterRewired },
-];
 
 type LongArcProps = {
   /** Display total: max(live totalSkips, highestMilestoneReached) so the arc never falls (spec 4.6, 9). */
@@ -53,8 +42,23 @@ type LongArcProps = {
 
 export function LongArc({ displayTotal, chapter }: LongArcProps) {
   const theme = useTheme();
+  const strings = useStrings();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const reduceMotion = useReducedMotion();
+
+  // Section 4.6 names only Deciding / Rhythm / Cruising / Rewired as the four
+  // track segments (Rewiring is the identity-line/chapter-label stage between
+  // Cruising and Rewired, not its own segment on the track). The lo/hi pairs
+  // are both the fill math and the 10 / 20 / 20 / 16 segment weights.
+  const chapters = useMemo(
+    (): { name: ChapterName; lo: number; hi: number; label: string }[] => [
+      { name: 'Deciding', lo: 0, hi: 10, label: strings.habitLogging.chapterDeciding },
+      { name: 'Rhythm', lo: 10, hi: 30, label: strings.habitLogging.chapterRhythm },
+      { name: 'Cruising', lo: 30, hi: 50, label: strings.habitLogging.chapterCruising },
+      { name: 'Rewired', lo: 50, hi: 66, label: strings.habitLogging.chapterRewired },
+    ],
+    [strings]
+  );
 
   const target = arcProgress(displayTotal);
   const progress = useRef(new Animated.Value(target)).current;
@@ -106,7 +110,7 @@ export function LongArc({ displayTotal, chapter }: LongArcProps) {
         accessibilityLabel={arcLabel(displayTotal, chapter)}
         accessibilityValue={{ min: 0, max: ARC_TOTAL, now: displayTotal }}
       >
-        {CHAPTERS.map((c) => (
+        {chapters.map((c) => (
           <View key={c.name} style={[styles.trackSegment, { flex: c.hi - c.lo }]}>
             <Animated.View
               style={[
@@ -124,7 +128,7 @@ export function LongArc({ displayTotal, chapter }: LongArcProps) {
         ))}
       </View>
       <View style={styles.labelsRow}>
-        {CHAPTERS.map((c) => (
+        {chapters.map((c) => (
           <Text
             key={c.name}
             style={[styles.trackLabel, { flex: c.hi - c.lo }, c.name === chapter && styles.trackLabelActive]}
