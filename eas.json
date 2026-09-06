@@ -22,7 +22,8 @@
       "autoIncrement": true,
       "environment": "production",
       "env": {
-        "EXPO_PUBLIC_DEV_MENU": "1"
+        "EXPO_PUBLIC_DEV_MENU": "1",
+        "EXPO_PUBLIC_SCAN_FLOW": "0"
       }
     },
     "production": {
@@ -30,7 +31,8 @@
       "channel": "production",
       "environment": "production",
       "env": {
-        "EXPO_PUBLIC_DEV_MENU": "0"
+        "EXPO_PUBLIC_DEV_MENU": "0",
+        "EXPO_PUBLIC_SCAN_FLOW": "0"
       }
     }
   },

@@ -11,13 +11,17 @@ showing something fake.
 
 ## What to produce
 
-Three beats, each needing two files:
+Two beats, each needing two files:
 
 | Beat | Intent | Records | Files |
 |---|---|---|---|
 | 1 | track | Logging one expense end to end | `beat-track.mp4`, `beat-track.png` |
-| 2 | scan | Picking a CSV and the results appearing | `beat-scan.mp4`, `beat-scan.png` |
-| 3 | break | Naming a habit, pricing it, starting it | `beat-break.mp4`, `beat-break.png` |
+| 2 | break | Naming a habit, pricing it, starting it | `beat-break.mp4`, `beat-break.png` |
+
+The scan beat was removed from the carousel on 2026-09-05 (decision 0009):
+the leak scan is dormant behind `SCAN_FLOW_ENABLED`, and a beat whose CTA
+cannot start its real workflow is what ADR 0026 forbids. Do not capture
+`beat-scan.*` until that flag is on again.
 
 Both files per beat. The `.png` is the poster still, and it is NOT a
 placeholder for the video: it IS the reduced-motion rendering, so a beat

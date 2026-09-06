@@ -1,10 +1,12 @@
 /**
- * "First scan" segment on the Insights tab (W5, OB-6 Insights half, ADR 0020).
+ * "Leak finder" segment on the Insights tab (W5, OB-6 Insights half, ADR
+ * 0020), for an install that ran a scan before the flow went dormant.
  *
  * Renders the persisted ScanSummary (types/scanSummary.ts) verbatim: every
  * figure here was already shown on the results screen at scan time and is
  * never recomputed. The summary is kept until the next successful scan
- * replaces it, no expiry, so the footer caption says exactly that.
+ * replaces it, no expiry; the footer says which of those two worlds this
+ * build is in (decision 0009).
  *
  * Reuses two results-screen primitives that only need summary-shaped data,
  * never a live ScanResult: KpiRow (kpi: KpiSummary) and TierBadge (tier
@@ -25,6 +27,7 @@ import { KpiRow } from '@/components/leak-scan/KpiRow';
 import { TierBadge } from '@/components/leak-scan/TierBadge';
 import { Button } from '@/components/ui';
 import { MIN_SPAN_DAYS_FOR_RATE } from '@/utils/habitDetection';
+import { SCAN_FLOW_ENABLED } from '@/utils/scanFlow';
 import type { ScanSummary } from '@/types/scanSummary';
 
 type ScanSnapshotCardProps = {
@@ -155,14 +158,25 @@ export function ScanSnapshotCard({ summary }: ScanSnapshotCardProps) {
         </View>
       )}
 
+      {/* The re-scan offer only exists while the flow does (decision 0009).
+          With the scan dormant, /leak-scan redirects to this very tab, so an
+          ungated button would be a control that visibly does nothing, and
+          "updated when you run a new scan" would be a promise the app cannot
+          keep. Both come back with the flag. */}
       <View style={styles.footer}>
-        <Text style={styles.footerCaption}>{strings.insights.scanUpdatedCaption}</Text>
-        <Button
-          label={strings.insights.scanRerunAction}
-          onPress={handleRunNewScan}
-          variant="tertiary"
-          style={styles.footerAction}
-        />
+        <Text style={styles.footerCaption}>
+          {SCAN_FLOW_ENABLED
+            ? strings.insights.scanUpdatedCaption
+            : strings.insights.scanSavedCaption}
+        </Text>
+        {SCAN_FLOW_ENABLED ? (
+          <Button
+            label={strings.insights.scanRerunAction}
+            onPress={handleRunNewScan}
+            variant="tertiary"
+            style={styles.footerAction}
+          />
+        ) : null}
       </View>
     </>
   );

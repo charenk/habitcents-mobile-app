@@ -27,6 +27,10 @@ export type EmptyStateSurface =
   | 'today_spent'
   | 'today_kept'
   | 'insights_month'
+  // No caller since decision 0009: the Insights scan pane is the leak finder
+  // teaser now, and its CTA records research interest rather than starting an
+  // activation. Kept because this is a closed analytics vocabulary and past
+  // events carry the name; a future scan empty state should reuse it.
   | 'insights_scan';
 
 /**

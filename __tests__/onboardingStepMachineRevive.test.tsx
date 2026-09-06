@@ -38,6 +38,7 @@ import { ThemeProvider } from '@/contexts/ThemeContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { OnboardingProvider } from '@/contexts/OnboardingContext';
 import OnboardingWelcomeScreen from '@/app/onboarding/welcome';
+import { strings } from '@/constants/strings';
 import type { OnboardingState } from '@/types/onboarding';
 
 const ONBOARDING_STATE_KEY = '@habitcents_onboarding_state';
@@ -76,16 +77,18 @@ async function seedStoredStep(currentStep: OnboardingState['currentStep']): Prom
   await AsyncStorage.setItem(ONBOARDING_STATE_KEY, JSON.stringify(state));
 }
 
-async function renderWelcome(): Promise<void> {
+async function renderWelcome(): Promise<ReturnType<typeof render>> {
+  let view!: ReturnType<typeof render>;
   await act(async () => {
-    render(
+    view = render(
       <Providers>
         <OnboardingWelcomeScreen />
       </Providers>
     );
   });
-  // Flush the provider's storage load and the resume effect.
+  // Flush the provider's storage load.
   await act(async () => {});
+  return view;
 }
 
 beforeEach(() => {
@@ -123,10 +126,14 @@ describe('Onboarding step machine: retired steps revive on the carousel', () => 
     expect(mockReplace).not.toHaveBeenCalled();
   });
 
-  // The one genuine resume: the scan door owns state of its own (picked files,
-  // a partly answered question set) and belongs back in its flow, not at the
-  // start.
-  it('sends a mid-scan device back into the scan flow', async () => {
+  // This used to be the one genuine resume: a persisted statements door sent
+  // the device straight back into the scan flow, which owned state of its own.
+  // Decision 0009 removed it with the beat, so a device that updated
+  // mid-scan now revives on the carousel like every other stale state. That
+  // is the honest answer rather than a gap: the flow it wants to resume is
+  // dormant behind SCAN_FLOW_ENABLED, and re-picking is a real resume where
+  // routing into a redirect would just bounce it back here anyway.
+  it('revives a mid-scan device on the carousel, routing nowhere', async () => {
     const state = {
       currentStep: 'fork',
       hasSeenWelcome: true,
@@ -137,9 +144,12 @@ describe('Onboarding step machine: retired steps revive on the carousel', () => 
     };
     await AsyncStorage.setItem(ONBOARDING_STATE_KEY, JSON.stringify(state));
 
-    await renderWelcome();
+    const view = await renderWelcome();
 
-    expect(mockReplace).toHaveBeenCalledWith('/leak-scan');
+    expect(mockReplace).not.toHaveBeenCalled();
+    // The stored door value still parses (it stays in the union for exactly
+    // this reason); it simply no longer routes.
+    expect(view.getByText(strings.onboarding.beatTrackHeadline)).toBeTruthy();
   });
 });
 

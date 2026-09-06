@@ -19,10 +19,21 @@
  * (its own file-parsing/scan-pipeline behavior is exercised elsewhere); this
  * test is only about what each exit does to onboarding state. Provider wiring
  * mirrors __tests__/intentPicker.test.tsx.
+ *
+ * The gate is mocked ON (decision 0009). The flow is dormant as shipped, so
+ * this whole file describes what happens once the rework re-opens it, and
+ * these contracts have to keep passing in the meantime or the code being
+ * preserved would rot behind the flag. The dormant half (the route redirects
+ * and never reaches this screen) is pinned in __tests__/scanFlowGate.test.tsx.
  */
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock')
 );
+
+jest.mock('@/utils/scanFlow', () => ({
+  SCAN_FLOW_FLAG: 'EXPO_PUBLIC_SCAN_FLOW',
+  SCAN_FLOW_ENABLED: true,
+}));
 
 const mockPush = jest.fn();
 const mockReplace = jest.fn();

@@ -15,7 +15,12 @@ import { radii, spacing, typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import { BeatMedia, type BeatAsset } from './BeatMedia';
 
-export type BeatIntent = 'track' | 'scan' | 'break';
+// The scan beat was removed 2026-09-05 (decision 0009): the leak scan is
+// dormant behind SCAN_FLOW_ENABLED, and a beat whose CTA cannot start its
+// real workflow is the one thing ADR 0026 forbids. The analytics enum keeps
+// its 'scan' member (utils/analytics.ts) so the funnel stays readable across
+// the change; it simply stops being fired.
+export type BeatIntent = 'track' | 'break';
 
 export type Beat = {
   intent: BeatIntent;
@@ -26,8 +31,10 @@ export type Beat = {
 };
 
 /**
- * The three beats, in the order the intent picker used, so the funnel stays
- * comparable across the change.
+ * The beats, in the order the intent picker used, so the funnel stays
+ * comparable across the change. Two since decision 0009 (the scan beat sat
+ * between these two); every count in this file reads beats.length, so the
+ * dots, the paging and the "step n of total" hint all followed on their own.
  *
  * `asset` is absent until the captures land (see
  * design/captures/onboarding-beats/RUNBOOK.md). BeatMedia renders an honest
@@ -40,12 +47,6 @@ export const BEATS: Beat[] = [
     headline: strings.onboarding.beatTrackHeadline,
     hook: strings.onboarding.beatTrackHook,
     cta: strings.onboarding.beatTrackCta,
-  },
-  {
-    intent: 'scan',
-    headline: strings.onboarding.beatScanHeadline,
-    hook: strings.onboarding.beatScanHook,
-    cta: strings.onboarding.beatScanCta,
   },
   {
     intent: 'break',
@@ -66,9 +67,9 @@ type OnboardingCarouselProps = {
 /**
  * The onboarding carousel (PRD v3.1 sect 4, ADR 0026).
  *
- * Replaces the welcome screen and the intent picker with one surface: three
- * beats, each a recording of the real app doing the thing, a hook underneath,
- * and a CTA that starts that same workflow for real.
+ * Replaces the welcome screen and the intent picker with one surface: a beat
+ * per real workflow, each a recording of the app doing the thing, a hook
+ * underneath, and a CTA that starts that same workflow for real.
  *
  * Rules that do not bend (sect 10):
  *  - No auto-advance. The user moves it, or it does not move.

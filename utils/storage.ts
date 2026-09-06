@@ -37,6 +37,11 @@ const AUDIT_ANSWERS_KEY = '@habitcents_audit_answers';
 // Leak Scan summary snapshot (OB-4, ADR 0020): survives navigation so a later
 // Insights segment can read the last scan without re-running the pipeline.
 const SCAN_SUMMARY_KEY = '@habitcents_scan_summary';
+// Leak finder co-build interest (decision 0009). One local record that the
+// user asked to be part of the rework, so the teaser's CTA does not ask twice
+// after a restart. Nothing about the person is stored, only that they tapped
+// and when: the recruiting itself happens outside the app.
+const LEAK_FINDER_INTEREST_KEY = '@habitcents_leak_finder_interest';
 // first_kept one-shot (PRD v3.1 sect 7.5, phase 4). Activation certifies that
 // a habit was SET UP; engagement is the first time the user actually kept
 // money, and that is measured once per install across every route. A flag
@@ -677,6 +682,58 @@ export async function getScanSummary(): Promise<ScanSummary | null> {
 export async function saveScanSummary(summary: ScanSummary | null): Promise<void> {
   if (!summary) return;
   return persist(SCAN_SUMMARY_KEY, JSON.stringify(summary));
+}
+
+// =====================
+// LEAK FINDER INTEREST (decision 0009)
+// =====================
+
+/** When the user asked to help build the leak finder. */
+export type LeakFinderInterest = { recordedAt: Date };
+
+/**
+ * Read the co-build interest record, or null if the user has not opted in,
+ * the blob is corrupt, or its date is unreadable. Same defensive shape as
+ * getScanSummary: an unreadable record degrades to "not asked yet", which
+ * shows the CTA again, rather than throwing into the render path.
+ */
+export async function getLeakFinderInterest(): Promise<LeakFinderInterest | null> {
+  try {
+    const value = await AsyncStorage.getItem(LEAK_FINDER_INTEREST_KEY);
+    if (!value) return null;
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(value);
+    } catch {
+      await backupCorrupt(LEAK_FINDER_INTEREST_KEY, value);
+      return null;
+    }
+    if (!parsed || typeof parsed !== 'object') {
+      await backupCorrupt(LEAK_FINDER_INTEREST_KEY, value);
+      return null;
+    }
+    const recordedAt = toValidDate((parsed as Record<string, unknown>).recordedAt);
+    if (!recordedAt) {
+      await backupCorrupt(LEAK_FINDER_INTEREST_KEY, value);
+      return null;
+    }
+    return { recordedAt };
+  } catch (error) {
+    console.error('Error reading leak finder interest:', error);
+    return null;
+  }
+}
+
+/**
+ * Record that the user opted in. Writing twice is harmless (the second write
+ * just moves the timestamp), but the teaser guards the tap anyway so the
+ * analytics event stays one per person.
+ */
+export async function saveLeakFinderInterest(recordedAt: Date = new Date()): Promise<void> {
+  return persist(
+    LEAK_FINDER_INTEREST_KEY,
+    JSON.stringify({ recordedAt: recordedAt.toISOString() })
+  );
 }
 
 // =====================
