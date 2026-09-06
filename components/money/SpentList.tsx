@@ -38,7 +38,7 @@ import { ExpenseRow } from '@/components/money/ExpenseRow';
 import { EmptyState } from '@/components/ui';
 import { strings } from '@/constants/strings';
 import { CHROME_MAX_FONT_SCALE } from '@/utils/textScale';
-import { layout, radii, spacing, typeScale } from '@/constants/theme';
+import { contentColumnStyle, layout, radii, spacing, typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -202,6 +202,7 @@ export function SpentList({ sections, onEditExpense, onLogExpense }: SpentListPr
 
   return (
     <SectionList<Expense, ExpenseSection>
+      testID="spent-section-list"
       sections={listSections}
       keyExtractor={(item) => item.id}
       renderItem={renderItem}
@@ -240,6 +241,7 @@ function createStyles(theme: AppTheme) {
       // token now, so the three cannot drift again.
       paddingTop: layout.paneContentTop,
       paddingBottom: spacing.xxl,
+      ...contentColumnStyle,
     },
     listContentEmpty: {
       flexGrow: 1,
