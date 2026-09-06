@@ -191,6 +191,7 @@ function CheckInCardImpl({
     milestoneJustHit,
     todayState,
     lastEntry,
+    strings,
   ]);
 
   const skipValueLabel = format(goal.skipValue);
