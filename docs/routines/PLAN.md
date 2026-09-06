@@ -257,6 +257,73 @@ Marked HANDOFF.md `COMPLETE` and PR #132 ready for review, per the
 routine's own completion instructions. Full decision queue for Charen is
 in HANDOFF.md's `COMPLETE (run 6, ...)` section.
 
+## Run 8: dated entitlement for the leak finder promo
+
+New work, not on the original checklist: PUNCHLIST.md picked up a
+2026-09-06 item, filed against `main`'s `design/enhancements-zeroth-state`
+wave (mobile PR #144, decision 0009): LeakFinderTeaser's receipt tells
+everyone who opts in "Your six months is saved", and nothing in the app
+could grant that. `Entitlement` was `'free' | 'premium'` with no duration;
+the punch list item said explicitly "payments work, so it is a human gate
+and belongs with core-p3." Rebased onto `origin/main` first (10 commits
+ahead there since run 7, mostly the navigation wave and the leak-finder
+coming-soon wrap that introduced this gap); same mechanical
+`design/decisions/README.md` conflict as every prior rebase, resolved the
+same way (union of both sides' component index entries).
+
+Built `utils/purchases.ts`'s timed promotional grant: a separate, dated
+record (`@habitcents_promo_entitlement`) layered on top of the free/mock/
+live `Entitlement`, never replacing it. `getEntitlement()` reports
+`'premium'` while an active grant exists, composing with (not masking) a
+real mock or live purchase. `activateLeakFinderPromoIfEligible()` is the
+one call site: eligible only once `SCAN_FLOW_ENABLED` is true (the feature
+the receipt promises is actually reachable) AND the device has a leak
+finder opt-in on file, idempotent so a repeat call never re-activates or
+extends the clock. Wired at boot (`app/_layout.tsx`, alongside the existing
+`hydrateEntitlement`) and again right after a fresh opt-in tap
+(`app/(tabs)/insights.tsx`'s `handleRecordInterest`), so a device that
+opts in on a build where the flag is already live gets granted immediately
+rather than waiting for the next relaunch.
+
+**The real decision, not just the mechanism: when the six-month clock
+starts.** Built to the safer default, not Charen-ratified: it starts when
+`SCAN_FLOW_ENABLED` flips true, not at the opt-in tap. Reasoning: the
+receipt's own wording is "your six months is saved... unlocks right here
+when it's ready," which only stays true if a long dormancy behind the flag
+never eats into the offer. Starting the clock at the tap instead is a
+one-line change (drop the flag check in `activateLeakFinderPromoIfEligible`)
+if Charen would rather have it that way; flagged in DECISIONS NEEDED below
+and in `design/decisions/components/LeakFinderTeaser.md`'s Open section.
+
+New structural, payload-free analytics event `leak_finder_promo_activated`
+(`utils/analytics.ts`), fired once a grant actually lands, read against
+`leak_finder_interest_recorded` to see how much of the opt-in list the
+promo reached. D-9 compliant: no payload, no identify().
+
+Tests: `__tests__/purchases.test.ts` gained a "timed promotional grant"
+describe block (composition with `getEntitlement()` including stacking with
+a real mock purchase, expiry fall-through, storage round-trip via
+`hydratePromoGrant()`, corrupt-record handling). New
+`__tests__/leakFinderPromo.test.ts` covers `activateLeakFinderPromoIfEligible()`'s
+own eligibility gate, which needs `SCAN_FLOW_ENABLED` toggled via a fresh
+module per test (same idiom as `__tests__/scanFlowGate.test.tsx`): dormant
+flag is a no-op even with an opt-in on file, flag-on-but-no-opt-in is a
+no-op, a real grant lands with the right ~6-month expiry, a second call
+never re-activates or extends it, and a fresh opt-in on an already-live
+build grants immediately. `npx tsc --noEmit` clean. `npm test`: 110 suites
+/ 1165 tests green (up from 109/1154 after the rebase; +1 suite, +11
+tests).
+
+Design decisions: `design/decisions/components/LeakFinderTeaser.md`
+updated in place, the resolved Open item moved into Decisions, the grant-
+timing call added to Open as still needing Charen's ratification.
+
+Not touched, deliberately: the live RevenueCat path is untouched (the
+promo grant is additive and mode-agnostic, so it needs no live-client
+changes); the opt-in's device-local nature (a reinstall loses the claim)
+is unchanged and already documented as accepted; no pricing, product id,
+or legal wording was touched.
+
 ## If this routine fires again
 
 The branch and PR stay open until Charen merges or closes them (routine
@@ -266,4 +333,7 @@ that as new work: rebase, address the feedback, re-verify
 (`npx tsc --noEmit`, `npm test`), and update this file and HANDOFF.md
 accordingly. Do not re-open PLAN.md items already checked off without a
 concrete reason (a regression, a changed roadmap accept criterion, or an
-explicit Charen ask).
+explicit Charen ask). Also re-check PUNCHLIST.md's RESUME marker for new
+core-p3-flagged items the way run 8 found this one: this routine does not
+only re-verify a closed checklist, it watches for new payments/entitlement
+debt `main` accumulates.

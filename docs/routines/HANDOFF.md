@@ -1,5 +1,45 @@
 # core-worker HANDOFF
 
+## Status (run 8, 2026-09-06: dated entitlement for the leak finder promo)
+
+New work picked up from PUNCHLIST.md's 2026-09-06 RESUME marker (not a
+rebase-only run like 6 and 7): `main`'s leak-finder coming-soon wrap
+(mobile PR #144, decision 0009) shipped a receipt promising everyone who
+opts in six months of premium, and flagged in its own commit message and
+`design/decisions/components/LeakFinderTeaser.md`'s Open section that
+nothing in the app could grant it. The punch list item said this belongs
+with core-p3 (payments is always a human gate). Full detail of what was
+built is in `docs/routines/PLAN.md`'s "Run 8" section; short version:
+`utils/purchases.ts` gained a timed promotional grant
+(`activateLeakFinderPromoIfEligible`, called at boot and right after a
+fresh opt-in), composing with the existing free/mock/live `Entitlement`
+rather than replacing it. `npx tsc --noEmit` clean. `npm test`: 110 suites
+/ 1165 tests green (up from 109/1154 after rebasing onto `origin/main`,
+which had moved 10 commits since run 7; +1 suite, +11 tests from this
+run's own work).
+
+This is not marked COMPLETE: one real decision (see below, new, not on the
+run 6 decision queue) was made to a safer default rather than deferred,
+and PR #132 was already marked ready for review at the end of run 7, so it
+needs a fresh look now that new code landed on it. Next run: check for
+REVIEW FEEDBACK first as usual; if none, this is likely COMPLETE again
+(checklist-wise there is nothing else queued), but re-confirm
+PUNCHLIST.md's RESUME marker hasn't picked up another core-p3 item the way
+this one did, since that is now how new work reaches this branch between
+the original P3/P4 checklist items.
+
+**New decision for Charen, run 8 (not on run 6's queue below):** when the
+leak finder promo's six-month clock starts. Built to start when
+`SCAN_FLOW_ENABLED` flips true (the feature the receipt promises becomes
+reachable), not at the opt-in tap, on the reasoning that a long dormancy
+behind the flag would otherwise quietly eat into the offer, which is the
+exact broken promise the punch list item warned about. If the tap itself
+should start the clock instead, that is a one-line change
+(`utils/purchases.ts`'s `activateLeakFinderPromoIfEligible`, drop the
+`SCAN_FLOW_ENABLED` check). Not blocking: this is a promotional grant with
+no dashboard entitlement or pricing behind it, so nothing here needed an
+external account or key, unlike the run 6 queue's items.
+
 ## COMPLETE (run 7, 2026-09-06: rebase-only re-verify)
 
 `git fetch origin main` found 12 new commits since run 6 (mostly the
