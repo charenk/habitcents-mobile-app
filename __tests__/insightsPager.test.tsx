@@ -111,8 +111,21 @@ async function settle(view: View, page: number, event = 'momentumScrollEnd'): Pr
   });
 }
 
-function isSelected(view: View, label: string, selected: boolean): boolean {
-  return view.queryByLabelText(selectableLabel(label, selected)) !== null;
+/**
+ * The scan segment carries a "Soon" badge, and SegmentedControl folds its
+ * spoken form into the label ("Leak finder, coming soon, selected") rather than
+ * announcing it as a separate stop. Same helper shape as insightsFirstScan.
+ */
+function segmentLabel(segment: 'month' | 'scan', selected: boolean): string {
+  const spoken =
+    segment === 'scan'
+      ? `${strings.insights.scanSegment}, ${strings.insights.scanSegmentBadgeSpoken}`
+      : strings.insights.monthSegment;
+  return selectableLabel(spoken, selected);
+}
+
+function isSelected(view: View, segment: 'month' | 'scan', selected: boolean): boolean {
+  return view.queryByLabelText(segmentLabel(segment, selected)) !== null;
 }
 
 beforeEach(() => {
@@ -127,15 +140,15 @@ describe('Insights: the segment pager', () => {
     const view = await renderInsights();
 
     expect(view.getByTestId('insights-pager')).toBeTruthy();
-    expect(isSelected(view, strings.insights.monthSegment, true)).toBe(true);
-    expect(isSelected(view, strings.insights.scanSegment, false)).toBe(true);
+    expect(isSelected(view, 'month', true)).toBe(true);
+    expect(isSelected(view, 'scan', false)).toBe(true);
   });
 
   it('selects First scan when a swipe settles on the second page', async () => {
     const view = await renderInsights();
     await settle(view, 1);
 
-    expect(isSelected(view, strings.insights.scanSegment, true)).toBe(true);
+    expect(isSelected(view, 'scan', true)).toBe(true);
     expect(mockTrack).toHaveBeenCalledWith('insights_view_switched', {
       to: 'scan',
       method: 'swipe',
@@ -146,7 +159,7 @@ describe('Insights: the segment pager', () => {
     const view = await renderInsights();
     await settle(view, 0);
 
-    expect(isSelected(view, strings.insights.monthSegment, true)).toBe(true);
+    expect(isSelected(view, 'month', true)).toBe(true);
     expect(
       mockTrack.mock.calls.filter(([event]) => event === 'insights_view_switched')
     ).toHaveLength(0);
@@ -160,7 +173,7 @@ describe('Insights: the segment pager', () => {
     await settle(view, 1, 'scrollEndDrag');
     await settle(view, 1);
 
-    expect(isSelected(view, strings.insights.scanSegment, true)).toBe(true);
+    expect(isSelected(view, 'scan', true)).toBe(true);
     expect(
       mockTrack.mock.calls.filter(([event]) => event === 'insights_view_switched')
     ).toHaveLength(1);

@@ -206,6 +206,18 @@ export interface AnalyticsEventMap {
    * skipper who never acted.
    */
   skip_activation: { surface: string };
+  /**
+   * Someone asked to help build the leak finder (decision 0009).
+   *
+   * Structural only, no payload at all: the event is a count of people who
+   * tapped the teaser's CTA while the scan is dormant, read against Leak
+   * finder segment views. Who they are and how they are contacted is handled
+   * outside the app, so nothing identifying belongs here.
+   *
+   * Fires once per install: the teaser guards the tap and the opt-in is
+   * persisted, so a returning user sees the confirmed state instead.
+   */
+  leak_finder_interest_recorded: Record<string, never>;
   // Scope selection (PRD v3.1 sect 7.1 / sect 11). `used_defaults` is the one
   // to read first: heavy editing means the tier assignments are wrong, and
   // that has to be settled before any classifier conversation reopens.

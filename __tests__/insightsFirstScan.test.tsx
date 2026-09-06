@@ -1,16 +1,19 @@
 /**
- * Insights "First scan" segment (W5, OB-6 Insights half, ADR 0020: summary
- * shown until replaced, no expiry).
+ * Insights "Leak finder" segment (W5, OB-6 Insights half, ADR 0020: summary
+ * shown until replaced, no expiry; decision 0009: the scan itself is dormant
+ * behind SCAN_FLOW_ENABLED and the segment carries a coming soon teaser).
  *
- * Two things pinned here:
- * - No persisted ScanSummary: the segmented control is always present now
+ * Three things pinned here:
+ * - No persisted ScanSummary: the segmented control is always present
  *   (empty-state unification pass), defaulting to This month with its usual
- *   cards; switching to First scan shows a fill empty state whose CTA pushes
- *   the real scan route, not a hidden segment.
+ *   cards; switching to Leak finder shows the teaser, whose CTA records
+ *   co-build interest on device rather than opening a flow that is walled off.
+ * - The opt-in survives: a stored interest record renders the confirmed state
+ *   on mount with no CTA, and a double tap reports once.
  * - A persisted ScanSummary: the segmented control appears, defaults to This
- *   month, and switching to First scan renders the summary verbatim (dated
+ *   month, and switching to Leak finder renders the summary verbatim (dated
  *   eyebrow, KPI numbers, category rows, capped leaks with the evidence-
- *   honesty branching, and the updated caption).
+ *   honesty branching) with the dormant-flow footer.
  *
  * Provider wiring mirrors __tests__/settingsSheet.test.tsx and
  * __tests__/pickOneSheet.test.tsx: full context tree, AsyncStorage mocked,
@@ -48,9 +51,25 @@ jest.mock('expo-router', () => {
 });
 
 const mockGetScanSummary = jest.fn();
+// The leak finder opt-in (decision 0009) rides the same seam: only these two
+// reads are overridden, so every context in the tree still goes through the
+// real storage layer over mocked AsyncStorage.
+const mockGetLeakFinderInterest = jest.fn();
+const mockSaveLeakFinderInterest = jest.fn();
 jest.mock('@/utils/storage', () => {
   const actual = jest.requireActual('@/utils/storage');
-  return { ...actual, getScanSummary: (...args: unknown[]) => mockGetScanSummary(...args) };
+  return {
+    ...actual,
+    getScanSummary: (...args: unknown[]) => mockGetScanSummary(...args),
+    getLeakFinderInterest: (...args: unknown[]) => mockGetLeakFinderInterest(...args),
+    saveLeakFinderInterest: (...args: unknown[]) => mockSaveLeakFinderInterest(...args),
+  };
+});
+
+const mockTrack = jest.fn();
+jest.mock('@/utils/analytics', () => {
+  const actual = jest.requireActual('@/utils/analytics');
+  return { ...actual, track: (...args: unknown[]) => mockTrack(...args) };
 });
 
 import React from 'react';
@@ -168,15 +187,30 @@ function syntheticSummary(): ScanSummary {
   };
 }
 
+// The segment's spoken label carries the coming soon badge (decision 0009),
+// so every query for it goes through this rather than the bare label.
+function scanSegmentLabel(selected: boolean): string {
+  return selectableLabel(
+    `${strings.insights.scanSegment}, ${strings.insights.scanSegmentBadgeSpoken}`,
+    selected
+  );
+}
+
 beforeEach(() => {
   mockPush.mockClear();
   mockNavigate.mockClear();
   mockGetScanSummary.mockClear();
+  mockTrack.mockClear();
+  mockSaveLeakFinderInterest.mockClear();
+  mockSaveLeakFinderInterest.mockResolvedValue(undefined);
+  mockGetLeakFinderInterest.mockClear();
+  // Not opted in unless a test says otherwise.
+  mockGetLeakFinderInterest.mockResolvedValue(null);
 });
 
 afterEach(cleanup);
 
-describe('Insights first scan segment', () => {
+describe('Insights leak finder segment', () => {
   it('shows the segmented control and the three usual cards when there is no scan summary', async () => {
     mockGetScanSummary.mockResolvedValue(null);
     // This month needs at least one expense to clear monthHasData and render
@@ -190,7 +224,7 @@ describe('Insights first scan segment', () => {
     // fill empty state, not a segment that only appears once earned.
     expect(view.getByLabelText(strings.insights.scanSegmentControlLabel)).toBeTruthy();
     expect(view.getByLabelText(selectableLabel(strings.insights.monthSegment, true))).toBeTruthy();
-    expect(view.getByLabelText(selectableLabel(strings.insights.scanSegment, false))).toBeTruthy();
+    expect(view.getByLabelText(scanSegmentLabel(false))).toBeTruthy();
 
     expect(view.getByText(strings.insights.leaksTitle)).toBeTruthy();
     expect(view.getByText(strings.insights.whereItWentTitle)).toBeTruthy();
@@ -198,30 +232,88 @@ describe('Insights first scan segment', () => {
     expect(view.getByText(strings.insights.paceTitle(monthLabel))).toBeTruthy();
   });
 
-  it('pre-scan, selecting First scan shows the scan empty state and its CTA pushes /leak-scan', async () => {
+  it('the segment is labelled Leak finder and carries the coming soon badge', async () => {
+    mockGetScanSummary.mockResolvedValue(null);
+    const view = await renderInsights();
+
+    expect(view.getByText(strings.insights.scanSegment)).toBeTruthy();
+    // The pill is deliberately hidden from assistive tech (its meaning rides
+    // in the tab's own spoken label, so VoiceOver hears "Leak finder, coming
+    // soon, not selected" rather than stopping on it twice), which is why the
+    // visible word needs includeHiddenElements to be found at all.
+    expect(
+      view.getByText(strings.insights.scanSegmentBadge, { includeHiddenElements: true })
+    ).toBeTruthy();
+    expect(view.getByLabelText(scanSegmentLabel(false))).toBeTruthy();
+  });
+
+  it('pre-scan, selecting Leak finder shows the coming soon teaser and no scan CTA', async () => {
     mockGetScanSummary.mockResolvedValue(null);
     const view = await renderInsights();
 
     await act(async () => {
-      fireEvent.press(view.getByLabelText(selectableLabel(strings.insights.scanSegment, false)));
+      fireEvent.press(view.getByLabelText(scanSegmentLabel(false)));
     });
 
+    // The hook survives the rework unchanged: the promise is the same, only
+    // the timing moved.
     expect(view.getByText(strings.insights.scanEmptyTitle)).toBeTruthy();
-    // One hook line, no body (ADR 0037). Dropping this one is safe because
-    // "Nothing uploads, ever" is restated on the scan intake screen the CTA
-    // leads to (leakScan.intakeSubtitle), in the onboarding beat and in the
-    // intent picker, so no user's path loses the privacy promise.
-    expect(view.queryByText(strings.insights.scanEmptyBody)).toBeNull();
+    expect(view.getByText(strings.insights.leakFinderBody)).toBeTruthy();
+    expect(view.getByText(strings.insights.leakFinderReward)).toBeTruthy();
+    expect(view.getByRole('button', { name: strings.insights.leakFinderCta })).toBeTruthy();
 
-    const cta = view.getByRole('button', { name: strings.insights.scanEmptyCta });
+    // The old scan CTA is gone with the flow it opened; nothing offers a route
+    // that now redirects straight back to this tab.
+    expect(view.queryByText(strings.insights.scanEmptyCta)).toBeNull();
+    expect(mockPush).not.toHaveBeenCalledWith('/leak-scan');
+  });
+
+  it('recording interest persists it, reports it once, and flips to the confirmed state', async () => {
+    mockGetScanSummary.mockResolvedValue(null);
+    const view = await renderInsights();
+
     await act(async () => {
+      fireEvent.press(view.getByLabelText(scanSegmentLabel(false)));
+    });
+
+    const cta = view.getByRole('button', { name: strings.insights.leakFinderCta });
+    // Two presses in one tick: the in-flight guard has to hold, or a fast
+    // double tap would double-count the research signal.
+    await act(async () => {
+      fireEvent.press(cta);
       fireEvent.press(cta);
     });
 
-    expect(mockPush).toHaveBeenCalledWith('/leak-scan');
+    expect(mockSaveLeakFinderInterest).toHaveBeenCalledTimes(1);
+    // Counted by name: other events fire on this screen for their own reasons,
+    // and the property under test is that the research signal is one per
+    // person, not that nothing else was reported.
+    const interestCalls = mockTrack.mock.calls.filter(
+      ([event]) => event === 'leak_finder_interest_recorded'
+    );
+    expect(interestCalls).toEqual([['leak_finder_interest_recorded', {}]]);
+
+    expect(view.getByText(strings.insights.leakFinderConfirmedTitle)).toBeTruthy();
+    expect(view.getByText(strings.insights.leakFinderConfirmedBody)).toBeTruthy();
+    expect(view.queryByText(strings.insights.leakFinderCta)).toBeNull();
   });
 
-  it('shows the segmented control, defaults to This month, and switches to First scan with the summary rendered verbatim', async () => {
+  it('a stored opt-in renders confirmed on mount, so the ask is never repeated', async () => {
+    mockGetScanSummary.mockResolvedValue(null);
+    mockGetLeakFinderInterest.mockResolvedValue({ recordedAt: new Date('2026-09-05T10:00:00.000Z') });
+    const view = await renderInsights();
+
+    await act(async () => {
+      fireEvent.press(view.getByLabelText(scanSegmentLabel(false)));
+    });
+
+    expect(view.getByText(strings.insights.leakFinderConfirmedTitle)).toBeTruthy();
+    expect(view.queryByText(strings.insights.leakFinderCta)).toBeNull();
+    // Reading a stored opt-in is not a new one.
+    expect(mockTrack).not.toHaveBeenCalledWith('leak_finder_interest_recorded', {});
+  });
+
+  it('shows the segmented control, defaults to This month, and switches to Leak finder with the summary rendered verbatim', async () => {
     const summary = syntheticSummary();
     mockGetScanSummary.mockResolvedValue(summary);
     // This month needs data to clear monthHasData; see the note above.
@@ -231,13 +323,13 @@ describe('Insights first scan segment', () => {
     // Segmented control present, This month selected by default.
     expect(view.getByLabelText(strings.insights.scanSegmentControlLabel)).toBeTruthy();
     expect(view.getByLabelText(selectableLabel(strings.insights.monthSegment, true))).toBeTruthy();
-    expect(view.getByLabelText(selectableLabel(strings.insights.scanSegment, false))).toBeTruthy();
+    expect(view.getByLabelText(scanSegmentLabel(false))).toBeTruthy();
 
     // This month's usual cards still render by default.
     expect(view.getByText(strings.insights.leaksTitle)).toBeTruthy();
 
     await act(async () => {
-      fireEvent.press(view.getByLabelText(selectableLabel(strings.insights.scanSegment, false)));
+      fireEvent.press(view.getByLabelText(scanSegmentLabel(false)));
     });
 
     // Dated eyebrow: date revives from the persisted Date and formats correctly.
@@ -278,25 +370,26 @@ describe('Insights first scan segment', () => {
       view.getByText(strings.insights.scanProjectionLockedInCaption(money(summary.projection!.lockedInCents)))
     ).toBeTruthy();
 
-    // Until-replaced lifecycle caption (ADR 0020).
-    expect(view.getByText(strings.insights.scanUpdatedCaption)).toBeTruthy();
+    // Dormant-flow footer (decision 0009): the figures are still the user's,
+    // so they stay; "updated when you run a new scan" would not be true while
+    // there is no new scan to run.
+    expect(view.getByText(strings.insights.scanSavedCaption)).toBeTruthy();
+    expect(view.queryByText(strings.insights.scanUpdatedCaption)).toBeNull();
   });
 
-  it('the footer\'s "Run a new scan" action pushes to the leak-scan route (build 12 re-scan entry)', async () => {
+  // Build 12's re-scan entry is gated, not deleted: with the flow dormant the
+  // route redirects to this very tab, so a visible button would do nothing.
+  it('offers no re-scan action while the scan flow is dormant', async () => {
     const summary = syntheticSummary();
     mockGetScanSummary.mockResolvedValue(summary);
     const view = await renderInsights();
 
     await act(async () => {
-      fireEvent.press(view.getByLabelText(selectableLabel(strings.insights.scanSegment, false)));
+      fireEvent.press(view.getByLabelText(scanSegmentLabel(false)));
     });
 
-    const rerunButton = view.getByRole('button', { name: strings.insights.scanRerunAction });
-    await act(async () => {
-      fireEvent.press(rerunButton);
-    });
-
-    expect(mockPush).toHaveBeenCalledWith('/leak-scan');
+    expect(view.queryByText(strings.insights.scanRerunAction)).toBeNull();
+    expect(mockPush).not.toHaveBeenCalledWith('/leak-scan');
   });
 
   it('shows the observed-so-far leak line when the scan window is under the reliable-rate floor', async () => {
@@ -310,7 +403,7 @@ describe('Insights first scan segment', () => {
     const view = await renderInsights();
 
     await act(async () => {
-      fireEvent.press(view.getByLabelText(selectableLabel(strings.insights.scanSegment, false)));
+      fireEvent.press(view.getByLabelText(scanSegmentLabel(false)));
     });
 
     expect(view.getByText(strings.insights.leakSummaryObserved(money(11000), 18))).toBeTruthy();
@@ -331,7 +424,7 @@ describe('Insights first scan segment', () => {
     const view = await renderInsights();
 
     await act(async () => {
-      fireEvent.press(view.getByLabelText(selectableLabel(strings.insights.scanSegment, false)));
+      fireEvent.press(view.getByLabelText(scanSegmentLabel(false)));
     });
 
     expect(view.getByText(strings.insights.leakSummary(money(12000), 18))).toBeTruthy();

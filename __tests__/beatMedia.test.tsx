@@ -58,8 +58,8 @@ describe('before any capture exists', () => {
   it('shows an honest empty frame, never a mock-up of the app', async () => {
     const view = await renderCarousel();
 
-    expect(view.getAllByTestId('beat-media-pending')).toHaveLength(3);
-    expect(view.getAllByText(strings.onboarding.beatMediaPending)).toHaveLength(3);
+    expect(view.getAllByTestId('beat-media-pending')).toHaveLength(BEATS.length);
+    expect(view.getAllByText(strings.onboarding.beatMediaPending)).toHaveLength(BEATS.length);
   });
 });
 
@@ -67,7 +67,7 @@ describe('once captures land', () => {
   it('renders the poster for every beat and drops the pending frame', async () => {
     const view = await renderCarousel(CAPTURED);
 
-    expect(view.getAllByTestId('beat-media-poster')).toHaveLength(3);
+    expect(view.getAllByTestId('beat-media-poster')).toHaveLength(BEATS.length);
     expect(view.queryAllByTestId('beat-media-pending')).toHaveLength(0);
     expect(view.queryByText(strings.onboarding.beatMediaPending)).toBeNull();
   });
@@ -75,9 +75,12 @@ describe('once captures land', () => {
   it('names each poster with its beat headline for VoiceOver', async () => {
     const view = await renderCarousel(CAPTURED);
 
-    expect(view.getByLabelText(strings.onboarding.beatTrackHeadline)).toBeTruthy();
-    expect(view.getByLabelText(strings.onboarding.beatScanHeadline)).toBeTruthy();
-    expect(view.getByLabelText(strings.onboarding.beatBreakHeadline)).toBeTruthy();
+    // Every beat that ships, whichever they are: the contract is that a
+    // poster is named by its own headline, not that there are three of them
+    // (the scan beat left with decision 0009).
+    for (const beat of CAPTURED) {
+      expect(view.getByLabelText(beat.headline)).toBeTruthy();
+    }
   });
 
   // ADR 0026 condition 4. The poster is not a placeholder for the video, it IS
@@ -86,7 +89,7 @@ describe('once captures land', () => {
     mockReduceMotion = true;
     const view = await renderCarousel(CAPTURED);
 
-    expect(view.getAllByTestId('beat-media-static')).toHaveLength(3);
+    expect(view.getAllByTestId('beat-media-static')).toHaveLength(BEATS.length);
     expect(view.queryAllByTestId('beat-media-poster')).toHaveLength(0);
   });
 });

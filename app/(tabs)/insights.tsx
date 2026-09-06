@@ -6,7 +6,7 @@
  * from ReportsContext so the category and projection math has exactly one
  * implementation.
  */
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -20,6 +20,7 @@ import { useEmptyStateAction } from '@/components/onboarding/useEmptyStateAction
 import { WhereItWentCard } from '@/components/insights/WhereItWentCard';
 import { PaceCard, type PaceComparison } from '@/components/insights/PaceCard';
 import { ScanSnapshotCard } from '@/components/insights/ScanSnapshotCard';
+import { LeakFinderTeaser } from '@/components/insights/LeakFinderTeaser';
 import { PickOneSheet } from '@/components/habit-logging/PickOneSheet';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
@@ -30,12 +31,12 @@ import { hasFullMonthOfData } from '@/utils/recurring';
 import { isHabitLimitReached } from '@/utils/habitLogging';
 import { getEntitlement } from '@/utils/purchases';
 import { formatDate } from '@/utils/dates';
-import { getScanSummary } from '@/utils/storage';
+import { getLeakFinderInterest, getScanSummary, saveLeakFinderInterest } from '@/utils/storage';
+import { track } from '@/utils/analytics';
 import { layout, typeScale, type AppTheme } from '@/constants/theme';
 import type { DetectedHabit } from '@/types/habit';
 import type { ScanSummary } from '@/types/scanSummary';
 import { strings } from '@/constants/strings';
-import { track } from '@/utils/analytics';
 import { useSegmentPager } from '@/utils/useSegmentPager';
 
 type InsightsView = 'month' | 'scan';
@@ -65,10 +66,6 @@ export default function InsightsScreen() {
   const handleMonthEmptyLog = useEmptyStateAction('insights_month', useCallback(() => {
     router.navigate('/(tabs)?view=spent&sheet=log');
   }, [router]));
-  // First scan segment, loaded-but-no-scan state.
-  const handleScanEmptyOpen = useEmptyStateAction('insights_scan', useCallback(() => {
-    router.push('/leak-scan');
-  }, [router]));
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
@@ -91,6 +88,11 @@ export default function InsightsScreen() {
   // file): without the distinction, the pre-scan empty state flashed for a
   // beat before getScanSummary() resolved, on every focus.
   const [scanSummary, setScanSummary] = useState<ScanSummary | null | undefined>(undefined);
+  // Leak finder co-build opt-in (decision 0009). Same undefined-means-loading
+  // discipline as the summary above, and for the same reason: without it the
+  // "Count me in" CTA flashed for a beat on every focus for a user who had
+  // already tapped it.
+  const [interestRecorded, setInterestRecorded] = useState<boolean | undefined>(undefined);
   const [view, setView] = useState<InsightsView>('month');
   // The segments double as pager pages: tap one or swipe to it. See
   // utils/useSegmentPager.ts for why this stays a plain paging ScrollView.
@@ -112,11 +114,18 @@ export default function InsightsScreen() {
     [markInteracted]
   );
 
+  // Guards a fast double tap from writing and reporting the opt-in twice
+  // before the first await resolves (UX-062, same idiom as onboarding's pick).
+  const interestInFlightRef = useRef(false);
+
   useFocusEffect(
     useCallback(() => {
       let cancelled = false;
       getScanSummary().then((summary) => {
         if (!cancelled) setScanSummary(summary);
+      });
+      getLeakFinderInterest().then((interest) => {
+        if (!cancelled) setInterestRecorded(interest !== null);
       });
       return () => {
         cancelled = true;
@@ -124,11 +133,31 @@ export default function InsightsScreen() {
     }, [])
   );
 
+  const handleRecordInterest = useCallback(async () => {
+    if (interestInFlightRef.current) return;
+    interestInFlightRef.current = true;
+    try {
+      await saveLeakFinderInterest();
+      track('leak_finder_interest_recorded', {});
+      setInterestRecorded(true);
+    } finally {
+      interestInFlightRef.current = false;
+    }
+  }, []);
+
   const segments = useMemo(
     () =>
       [
         { value: 'month' as const, label: strings.insights.monthSegment },
-        { value: 'scan' as const, label: strings.insights.scanSegment },
+        {
+          value: 'scan' as const,
+          label: strings.insights.scanSegment,
+          // Coming soon (decision 0009): the segment is a real destination
+          // with a real teaser, so the badge sets the expectation before the
+          // tap rather than after it.
+          badge: strings.insights.scanSegmentBadge,
+          badgeSpoken: strings.insights.scanSegmentBadgeSpoken,
+        },
       ] as const,
     []
   );
@@ -229,9 +258,9 @@ export default function InsightsScreen() {
       {/* Same composition the Today tab uses: ScreenHeader owns the chrome,
           the switcher sits below it as its own row (merge of first-scan onto
           the DI stack, resolution per the independents review). Always
-          renders now: First scan is a real destination (a fill empty state
-          when nothing has been scanned yet) rather than a segment that only
-          exists once a scan has happened. */}
+          renders: Leak finder is a real destination (the coming soon teaser,
+          or a scan already on file) rather than a segment that only exists
+          once a scan has happened. */}
       <View style={styles.segments}>
         <SegmentedControl<InsightsView>
           options={segments}
@@ -287,18 +316,22 @@ export default function InsightsScreen() {
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
           >
-            {/* scanSummary undefined means getScanSummary() hasn't resolved
-                yet (this focus's fetch is still in flight): render nothing
-                rather than flashing the "no scan yet" empty state for a beat
-                before the real answer (truthy or null) lands. */}
-            {scanSummary === undefined ? null : scanSummary ? (
+            {/* Either fetch still in flight means this focus has no real
+                answer yet: render nothing rather than flashing a state for a
+                beat before the true one lands. */}
+            {scanSummary === undefined || interestRecorded === undefined ? null : scanSummary ? (
+              // A scan already on file is still shown in full (ADR 0020, kept
+              // until replaced). The figures were true when they were computed
+              // and the pause does not change that; only the footer's offer to
+              // run another one goes away with the flow.
               <ScanSnapshotCard summary={scanSummary} />
             ) : (
-              <EmptyState
-                layout="fill"
-                illustration="insights-scan"
-                title={strings.insights.scanEmptyTitle}
-                cta={{ label: strings.insights.scanEmptyCta, onPress: handleScanEmptyOpen }}
+              // Coming soon (decision 0009). The scan flow is dormant behind
+              // SCAN_FLOW_ENABLED, so the pane recruits for the rework instead
+              // of offering an action the app cannot honour.
+              <LeakFinderTeaser
+                interestRecorded={interestRecorded}
+                onRecordInterest={handleRecordInterest}
               />
             )}
           </ScrollView>

@@ -2,15 +2,21 @@
  * Onboarding carousel (PRD v3.1 sect 4, ADR 0026).
  *
  * Replaces __tests__/intentPicker.test.tsx and __tests__/welcomeHero.test.tsx:
- * the picker's three cards became the carousel's three beats and the splash was
- * folded into it, so every behavioural contract those suites pinned is carried
- * here rather than dropped. That contract is the acquisition metric for the
- * whole redesign, which is why it survives the screen it was written against.
+ * the picker's cards became the carousel's beats and the splash was folded
+ * into it, so every behavioural contract those suites pinned is carried here
+ * rather than dropped. That contract is the acquisition metric for the whole
+ * redesign, which is why it survives the screen it was written against.
  *
- * Carried over: the three intents are reachable by accessible name, each fires
- * onboarding_intent_selected with its own intent, track and break REPLACE into
- * Today with their deep-link params rather than pushing, scan pushes the scan
- * route, and skip fires onboarding_intent_skipped and lands on Today.
+ * Two beats since decision 0009, not three: the scan beat is out while the
+ * leak scan is dormant behind SCAN_FLOW_ENABLED, because a beat whose CTA
+ * cannot start its real workflow is the one thing ADR 0026 forbids. What that
+ * removal must not break is pinned below: nothing routes to /leak-scan, no
+ * scan copy renders, and the counts the pager derives all follow.
+ *
+ * Carried over: each intent is reachable by accessible name, fires
+ * onboarding_intent_selected with its own intent, REPLACES into Today with its
+ * deep-link params rather than pushing, and skip fires
+ * onboarding_intent_skipped and lands on Today.
  *
  * New here: no auto-advance, back never steps between beats, and the media
  * frame never renders a mock-up of the app.
@@ -86,15 +92,13 @@ function selectedIntents() {
     .map(([, props]) => (props as { intent: string }).intent);
 }
 
-describe('the three beats', () => {
-  it('offers all three at once, each with its own CTA', async () => {
+describe('the beats', () => {
+  it('offers both at once, each with its own CTA', async () => {
     const view = await renderCarousel();
 
     expect(view.getByText(strings.onboarding.beatTrackHeadline)).toBeTruthy();
-    expect(view.getByText(strings.onboarding.beatScanHeadline)).toBeTruthy();
     expect(view.getByText(strings.onboarding.beatBreakHeadline)).toBeTruthy();
     expect(view.getByRole('button', { name: strings.onboarding.beatTrackCta })).toBeTruthy();
-    expect(view.getByRole('button', { name: strings.onboarding.beatScanCta })).toBeTruthy();
     expect(view.getByRole('button', { name: strings.onboarding.beatBreakCta })).toBeTruthy();
   });
 
@@ -107,7 +111,6 @@ describe('the three beats', () => {
     expect(headers).toEqual(
       expect.arrayContaining([
         strings.onboarding.beatTrackHeadline,
-        strings.onboarding.beatScanHeadline,
         strings.onboarding.beatBreakHeadline,
       ])
     );
@@ -137,22 +140,18 @@ describe('the three beats', () => {
     expect(mockPush).not.toHaveBeenCalled();
   });
 
-  it('pushes the scan beat into the real scan flow exactly once', async () => {
+  // Decision 0009: the scan beat is gone while the flow is dormant, and the
+  // route it used to open now redirects straight back to the app. Onboarding
+  // must offer no path to it at all, by CTA or by the cold-start resume that
+  // a persisted statements door used to trigger.
+  it('offers no route into the dormant scan flow', async () => {
     const view = await renderCarousel();
 
-    await act(async () => {
-      fireEvent.press(view.getByRole('button', { name: strings.onboarding.beatScanCta }));
-    });
-
-    expect(selectedIntents()).toEqual(['scan']);
-    expect(mockPush).toHaveBeenCalledWith('/leak-scan');
-    expect(mockPush).toHaveBeenCalledTimes(1);
-    // The statements resume effect fires on exactly the doorChosen transition
-    // this press causes; unguarded it issued a replace('/leak-scan') alongside
-    // the push, double-entering the flow (review round 3, P1-h). The resume is
-    // for a COLD START that finds a persisted statements door, and that path
-    // is pinned in onboardingStepMachineRevive.test.tsx.
-    expect(mockReplace).not.toHaveBeenCalled();
+    expect(view.queryByText(strings.onboarding.beatScanHeadline)).toBeNull();
+    expect(view.queryByText(strings.onboarding.beatScanHook)).toBeNull();
+    expect(view.queryByText(strings.onboarding.beatScanCta)).toBeNull();
+    expect(mockPush).not.toHaveBeenCalled();
+    expect(mockReplace).not.toHaveBeenCalledWith('/leak-scan');
   });
 
   it('guards a double tap from starting two workflows', async () => {
@@ -221,7 +220,7 @@ describe('the rules that do not bend', () => {
         await jest.advanceTimersByTimeAsync(30000);
       });
 
-      expect(view.getByLabelText(strings.onboarding.beatProgress(1, 3))).toBeTruthy();
+      expect(view.getByLabelText(strings.onboarding.beatProgress(1, 2))).toBeTruthy();
     } finally {
       jest.useRealTimers();
     }
@@ -239,8 +238,8 @@ describe('the rules that do not bend', () => {
   it('shows an honest empty frame rather than a mock-up until captures land', async () => {
     const view = await renderCarousel();
 
-    expect(view.getAllByTestId('beat-media-pending')).toHaveLength(3);
-    expect(view.getAllByText(strings.onboarding.beatMediaPending)).toHaveLength(3);
+    expect(view.getAllByTestId('beat-media-pending')).toHaveLength(2);
+    expect(view.getAllByText(strings.onboarding.beatMediaPending)).toHaveLength(2);
   });
 
   it('invents no totals on the way in', async () => {
