@@ -7,7 +7,7 @@ import { useCurrency } from '@/contexts/CurrencyContext';
 import { categoryEmoji, categoryIdentityColor } from '@/constants/categoryEmoji';
 import { typeScale, type AppTheme } from '@/constants/theme';
 import type { Category } from '@/types/category';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
 
 type CategoryRowProps = {
   category: Category;
@@ -34,6 +34,7 @@ export function CategoryRow({
 }: CategoryRowProps) {
   const theme = useTheme();
   const { format } = useCurrency();
+  const strings = useStrings();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   const spentLabel = totalSpent > 0 ? strings.categories.thisMonthSuffix(format(totalSpent)) : null;
