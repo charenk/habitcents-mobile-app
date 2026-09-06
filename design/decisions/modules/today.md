@@ -39,6 +39,7 @@ Vocabulary (ADR 0034): **Zero** nothing ever happened here; **Quiet** history el
 - Door 3's ribbon still sits above the band on Kept, not inside a list section; decide whether the pattern rule applies there.
 
 ## Iterations
+- 2026-09-06: the pane pager moved into `utils/useSegmentPager.ts`, shared with Money and Insights, with no change to Today's behaviour. It gained the drag-settle fix on the way: a slow swipe released with no momentum used to leave the chips and the pager disagreeing. See [SegmentPager](../components/SegmentPager.md).
 - 2026-09-04 d739f59: Zero-only quotes in mist, empty states without body, InfoRibbon under the log card, Quiet as the persistent ribbon, gentle-line self-resolution.
 - 2026-09-04 763f0a8: Today flow states canvas, 22 artboards.
 - 2026-09-03 b4cd9db, 91941bd: FTE centered zero states, chip placeholders.

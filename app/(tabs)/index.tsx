@@ -7,9 +7,6 @@ import {
   ScrollView,
   RefreshControl,
   TouchableOpacity,
-  useWindowDimensions,
-  type NativeSyntheticEvent,
-  type NativeScrollEvent,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect, useLocalSearchParams } from 'expo-router';
@@ -46,7 +43,8 @@ import { cardText, type CoachMomentCardId } from '@/utils/coachMoments';
 import { progressTowardDetection } from '@/utils/habitDetection';
 import { formatDate } from '@/utils/dates';
 import { track } from '@/utils/analytics';
-import { hapticError, useReducedMotion } from '@/utils/motion';
+import { hapticError } from '@/utils/motion';
+import { useSegmentPager } from '@/utils/useSegmentPager';
 import { radii, spacing, typeScale, type AppTheme } from '@/constants/theme';
 import type { DetectedHabit, HabitChangeGoal } from '@/types/habit';
 import { strings } from '@/constants/strings';
@@ -86,6 +84,10 @@ const FIRST_RUN_RIBBON_LINES: Record<string, string> = {
  * Leaks live in Kept only; the quick-log category tiles are dropped (the log
  * sheet's own picker covers category choice).
  */
+/** Pane order, left to right. Matches the chips above them, and module-level
+ *  so the pager's handlers keep a stable identity across renders. */
+const TODAY_VIEWS = ['spent', 'kept'] as const satisfies readonly SpentKeptView[];
+
 export default function TodayScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -95,17 +97,16 @@ export default function TodayScreen() {
   const [pickOneHabitId, setPickOneHabitId] = useState<string | null>(null);
   const [partialGoalId, setPartialGoalId] = useState<string | null>(null);
   const [todayView, setTodayView] = useState<SpentKeptView>('spent');
-  // DI-7 pager plumbing (ADR 0019): see the comment block at the pager
-  // itself, below, for the no-new-drivers / drop-safety rationale.
-  const pagerRef = useRef<ScrollView>(null);
-  const [pagerReady, setPagerReady] = useState(false);
-  const pagerLayoutDone = useRef(false);
-  // False until the first tap or swipe; deep-link/init positioning stays
-  // silent (no animation) regardless of the reduced-motion setting because
-  // it never happens, it only reads the setting once a person has acted.
-  const pagerInteracted = useRef(false);
-  const { width: screenWidth } = useWindowDimensions();
-  const reducedMotion = useReducedMotion();
+  // DI-7 pager (ADR 0019). The plumbing lives in useSegmentPager, which Money
+  // and Insights share; its header carries the no-new-drivers rationale.
+  const { markInteracted, pagerProps, paneProps } = useSegmentPager<SpentKeptView>({
+    values: TODAY_VIEWS,
+    value: todayView,
+    onSwipe: useCallback((landed: SpentKeptView) => {
+      setTodayView(landed);
+      track('today_view_switched', { to: landed, method: 'swipe' });
+    }, []),
+  });
   const { show } = useToast();
   const answerFeedback = useCheckInFeedback();
   // DT-1 (P2-2): resolved once, attached to whichever leak is first in the
@@ -246,9 +247,9 @@ export default function TodayScreen() {
   const handleKeptEmptyLog = useEmptyStateAction(
     'today_kept',
     useCallback(() => {
-      pagerInteracted.current = true;
+      markInteracted();
       setTodayView('spent');
-    }, [])
+    }, [markInteracted])
   );
 
   // Eyebrow date line, locale-aware (ADA-008): "Thursday, July 24".
@@ -546,47 +547,13 @@ export default function TodayScreen() {
     router.push('/(tabs)/money');
   }, [router]);
 
+  // Chips stay the source of truth for the selected state; the hook's effect
+  // moves the pager to match whatever todayView becomes.
   const handleTodayViewChange = useCallback((view: SpentKeptView) => {
-    pagerInteracted.current = true;
+    markInteracted();
     setTodayView(view);
     track('today_view_switched', { to: view, method: 'tap' });
-  }, []);
-
-  // Chips stay the source of truth for the selected state; this only moves
-  // the pager to match whatever todayView currently is. animated is false
-  // for the very first positioning (deep link or default) because
-  // pagerInteracted is still false at that point, true once a person has
-  // tapped or swiped, unless reduced motion says otherwise.
-  const scrollPagerTo = useCallback((view: SpentKeptView, animated: boolean) => {
-    pagerRef.current?.scrollTo({ x: view === 'kept' ? screenWidth : 0, y: 0, animated });
-  }, [screenWidth]);
-
-  const handlePagerLayout = useCallback(() => {
-    if (pagerLayoutDone.current) return;
-    pagerLayoutDone.current = true;
-    setPagerReady(true);
-  }, []);
-
-  useEffect(() => {
-    if (!pagerReady) return;
-    scrollPagerTo(todayView, pagerInteracted.current && !reducedMotion);
-  }, [pagerReady, todayView, reducedMotion, scrollPagerTo]);
-
-  // Swipe path: the pager has already physically landed on a page by the
-  // time momentum ends, so this only reads where it landed and syncs
-  // todayView + analytics to match. A landing that matches the current
-  // todayView (e.g. momentum end firing for the same programmatic scroll a
-  // chip tap just triggered) fires nothing, so a tap never double-counts.
-  const handlePagerMomentumEnd = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    if (!screenWidth) return;
-    const landedIndex = Math.round(e.nativeEvent.contentOffset.x / screenWidth);
-    const landedView: SpentKeptView = landedIndex >= 1 ? 'kept' : 'spent';
-    pagerInteracted.current = true;
-    if (landedView !== todayView) {
-      setTodayView(landedView);
-      track('today_view_switched', { to: landedView, method: 'swipe' });
-    }
-  }, [screenWidth, todayView]);
+  }, [markInteracted]);
 
   // Coach Moment (P2-2, acceptance test 2): clear on blur (tab switch away)
   // so returning to an already-answered card does not re-show the same card.
@@ -954,41 +921,16 @@ export default function TodayScreen() {
       </View>
 
       {/*
-        DI-7 pager (ADR 0019): a plain horizontal ScrollView, pagingEnabled,
-        native scrolling only. No react-native-gesture-handler, no
-        Reanimated worklets, no mixed animation drivers (crash-history rule;
-        see design/REDESIGN_RUNBOOK.md and the release-only-animation-crash
-        lesson it captures). Both panes stay mounted so each keeps its own
-        scroll position across switches; selection lives in the chips'
-        accessibilityState and in which page the pager has scrolled to, not
-        in which pane exists. Drop-safe: this unit only touches this pager,
-        the handlers above (handleTodayViewChange, scrollPagerTo,
-        handlePagerLayout, handlePagerMomentumEnd, the pagerReady sync
-        effect) and the two callers that flip pagerInteracted. Reverting
-        them restores the plain todayView ? <SpentPane/> : <KeptPane/>
-        conditional with no other effect on the app.
+        DI-7 pager (ADR 0019). The mechanics, and the crash-history rule that
+        keeps them to a plain paging ScrollView with no new animation drivers,
+        live in utils/useSegmentPager.ts, shared with Money and Insights since
+        2026-09-06. Both panes stay mounted so each keeps its own scroll
+        position across switches; selection lives in the chips'
+        accessibilityState and in which page the pager has scrolled to, not in
+        which pane exists.
       */}
-      <ScrollView
-        ref={pagerRef}
-        horizontal
-        pagingEnabled
-        directionalLockEnabled
-        showsHorizontalScrollIndicator={false}
-        onMomentumScrollEnd={handlePagerMomentumEnd}
-        onLayout={handlePagerLayout}
-        scrollEventThrottle={16}
-        style={styles.pager}
-        testID="today-pager"
-      >
-        <View
-          style={[styles.pane, { width: screenWidth }]}
-          testID="spent-pane"
-          // Both panes stay mounted for the pager, so the off-screen one must
-          // be hidden from assistive tech or VoiceOver walks into content the
-          // eye cannot see.
-          accessibilityElementsHidden={todayView !== 'spent'}
-          importantForAccessibility={todayView !== 'spent' ? 'no-hide-descendants' : 'auto'}
-        >
+      <ScrollView {...pagerProps} style={styles.pager} testID="today-pager">
+        <View {...paneProps('spent')} testID="spent-pane">
           <ScrollView
             style={styles.spentScroll}
             contentContainerStyle={styles.spentScrollContent}
@@ -1090,12 +1032,7 @@ export default function TodayScreen() {
           </ActionDock>
         </View>
 
-        <View
-          style={[styles.pane, { width: screenWidth }]}
-          testID="kept-pane"
-          accessibilityElementsHidden={todayView !== 'kept'}
-          importantForAccessibility={todayView !== 'kept' ? 'no-hide-descendants' : 'auto'}
-        >
+        <View {...paneProps('kept')} testID="kept-pane">
           {/* U6: door3's ribbon used to render once above the pager on both
               panes; it renders only here now, at the top of the Kept pane,
               the same spot its old global slot occupied visually. */}
@@ -1157,7 +1094,7 @@ export default function TodayScreen() {
                     variant="secondary"
                     label={strings.habitLogging.logAnExpense}
                     onPress={() => {
-                      pagerInteracted.current = true;
+                      markInteracted();
                       setTodayView('spent');
                     }}
                     style={styles.progressCta}
@@ -1309,16 +1246,8 @@ function createStyles(theme: AppTheme) {
     pager: {
       flex: 1,
     },
-    // Applied to both panes alongside their inline screenWidth. On native the
-    // pager's contentContainer (a row, default alignItems: stretch) already
-    // stretches each pane to full height, and there is no free main-axis
-    // space for flexGrow to claim, so this is inert. On web, pagingEnabled
-    // wraps each pane in a column snap-align div that does NOT stretch its
-    // child, which left the FTE zero blocks below with no height to center
-    // in; flexGrow fills that wrapper.
-    pane: {
-      flexGrow: 1,
-    },
+    // Pane sizing (width and the web-only flexGrow) comes from the pager
+    // hook's paneProps, so both panes and every other screen's panes agree.
     // DI-6: shares the 20pt gutter the chips row and both list content styles
     // use below, so the band no longer renders full-bleed on Today.
     keptHeroGutter: {
