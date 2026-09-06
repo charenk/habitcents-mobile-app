@@ -298,39 +298,53 @@ work, tracked elsewhere).
       component body. Grouped with `SpendPulse.tsx` and `app/profile.tsx`
       below for a future dedicated pick.
 
+      **`WeekStrip.tsx`, `useCheckInFeedback.ts` converted (a later run):**
+      both scoped as good next candidates by the previous run's HANDOFF.
+      `WeekStrip.tsx` is an ordinary leaf, only importer `CheckInCard.tsx`
+      (already covered). `useCheckInFeedback.ts` is a hook (name starts
+      `use`), called unconditionally from `CheckInCard.tsx`, `app/habit/
+      [id].tsx`, and `app/(tabs)/index.tsx`, all already `LocaleProvider`-
+      covered; called `useStrings()` directly at its top level and added
+      `strings` to its one `useCallback`'s deps. No test file changes
+      needed. Full suite 109/109, tsc clean.
+
+      **`SpendPulse.tsx`, `LongArc.tsx`, `app/profile.tsx` converted (same
+      run):** the three module-scope picks. `SpendPulse.tsx`'s
+      `GRANULARITY_OPTIONS` and `LongArc.tsx`'s `CHAPTERS` (both the
+      module-level *array* shape) moved into a `useMemo` inside the
+      component, alongside the existing `styles` memo, with `strings` in
+      the deps array. `app/profile.tsx`'s `SUPPORT_MAILTO_URL` (a plain
+      module-level `const` reading `strings.settings.supportEmail`, a third
+      shape distinct from both the array and helper-function ones) became
+      a one-line `useMemo` the same way. All three importers already
+      `LocaleProvider`-covered (`ResultsScreen.tsx`, `app/habit/[id].tsx`,
+      and `profile.tsx`'s own test respectively, the last already carrying
+      it because the screen already calls `useLocale()` directly for the
+      language row). `LongArc.tsx`'s grep also hit `CheckInCard.tsx`,
+      `CoachMomentSlot.tsx`, `ViewQuote.tsx`; all three were doc-comment
+      cross-references, not real imports, confirmed before ruling them in
+      or out. No test file changes needed for any of the three. Full suite
+      109/109, tsc clean throughout.
+
       Remaining suggested order: continue picking genuinely small
       single-parent leaf files (re-run the leaf check above per candidate;
       do not assume shape from a file's name or its position in the list;
-      watch for the module-scope patterns above, both the array shape and
-      the helper-function shape, and check which one applies before
-      estimating cost). Good next candidates already scoped:
-      `components/habit-logging/WeekStrip.tsx` (imported only by the now-
-      converted `CheckInCard.tsx`, so likely covered by the same three test
-      files, re-check before assuming) and
-      `components/habit-logging/useCheckInFeedback.ts` (a hook, name starts
-      with `use`, so it can call `useStrings()` directly like a component;
-      confirm its call sites and test coverage before converting). Then
-      `SpendPulse.tsx`, `LongArc.tsx`, and `app/profile.tsx` as their own
-      picks (all three need the strings read moved inside the component,
-      not a plain hook swap, and `LongArc.tsx` now confirmed same shape as
-      `SpendPulse.tsx`), then the remaining sections' files, then the 13
-      `ScreenHeader` importers' and remaining `Sheet` importers' own
-      `strings` usage as further leaf picks (for these, re-run the same
-      "does the parent screen already carry `LocaleProvider` for a shared-
-      component reason" check before assuming a fresh test-file list is
-      needed; also check for the module-scope function pattern, found twice
-      now in this importer set). Note for that later pass:
+      three module-scope shapes are now confirmed, module-level array,
+      module-level helper function, and module-level plain const, so check
+      which one (if any) applies before estimating cost). ~36 files still
+      import the static `strings` catalog directly (grep
+      `from '@/constants/strings'` across `app/`, `components/`, `contexts/`,
+      `utils/`, excluding `__tests__/`), among them the 13 `ScreenHeader`
+      importers' and remaining `Sheet` importers' own `strings` usage (for
+      these, re-run the same "does the parent screen already carry
+      `LocaleProvider` for a shared-component reason" check before assuming
+      a fresh test-file list is needed). Note for that pass:
       `utils/coachMoments.ts`, `utils/recurring.ts`, and
       `contexts/ReportsContext.tsx` import `strings` but are not simple
       hook-eligible leaves (`coachMoments.ts` and `recurring.ts` are plain
       functions, not components or hooks, so they cannot call
       `useStrings()` directly; they need the catalog passed in as a
-      parameter instead, decide the shape when their turn comes). Also note:
-      `app/profile.tsx` reads `strings.settings.supportEmail` at module
-      scope (`const SUPPORT_MAILTO_URL = ...`, outside any component), so
-      its own conversion cannot be the same three-line hook swap as every
-      leaf so far; that module-level read needs to move inside the
-      component (or another shape) when profile.tsx's turn comes.
+      parameter instead, decide the shape when their turn comes).
 - [ ] Convert function-valued strings (pluralized/interpolated) to ICU
       messages with proper CLDR plural rules, not the current hand-rolled
       `n === 1 ? '' : 's'` ternaries, and add the ICU formatting dependency
