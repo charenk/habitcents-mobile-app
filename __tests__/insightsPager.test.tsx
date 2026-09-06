@@ -40,11 +40,19 @@ jest.mock('@/utils/storage', () => {
   return { ...actual, getScanSummary: (...args: unknown[]) => mockGetScanSummary(...args) };
 });
 
+// LocaleProvider resolves the device locale on mount (routine/localization);
+// this suite does not exercise language selection, so a fixed English
+// device locale keeps it out of the way.
+jest.mock('expo-localization', () => ({
+  getLocales: () => [{ languageCode: 'en', languageScriptCode: null, regionCode: 'US' }],
+}));
+
 import React from 'react';
 import { Dimensions } from 'react-native';
 import { act, cleanup, fireEvent, render } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '@/contexts/ThemeContext';
+import { LocaleProvider } from '@/contexts/LocaleContext';
 import { OnboardingProvider } from '@/contexts/OnboardingContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { ToastProvider } from '@/components/ui/Toast';
@@ -71,19 +79,21 @@ function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SafeAreaProvider initialMetrics={initialMetrics}>
       <ThemeProvider>
-        <CurrencyProvider>
-          <ToastProvider>
-            <CategoriesProvider>
-              <ExpensesProvider>
-                <HabitsProvider>
-                  <ReportsProvider>
-                    <OnboardingProvider>{children}</OnboardingProvider>
-                  </ReportsProvider>
-                </HabitsProvider>
-              </ExpensesProvider>
-            </CategoriesProvider>
-          </ToastProvider>
-        </CurrencyProvider>
+        <LocaleProvider>
+          <CurrencyProvider>
+            <ToastProvider>
+              <CategoriesProvider>
+                <ExpensesProvider>
+                  <HabitsProvider>
+                    <ReportsProvider>
+                      <OnboardingProvider>{children}</OnboardingProvider>
+                    </ReportsProvider>
+                  </HabitsProvider>
+                </ExpensesProvider>
+              </CategoriesProvider>
+            </ToastProvider>
+          </CurrencyProvider>
+        </LocaleProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );
