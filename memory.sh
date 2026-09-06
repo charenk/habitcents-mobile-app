@@ -71,3 +71,15 @@ npx eas-cli submit:list --platform ios --limit 1   # submission status; "in queu
 npm run ota:check -- <base> <head>                 # OTA vs native-build eligibility for a merged range
 # Cloud routines (workers on routine/* branches + Fable 5 orchestrator): manage at https://claude.ai/code/routines
 # Their state lives on-branch at docs/routines/PLAN.md and docs/routines/HANDOFF.md; daily board = "Routine status board" GitHub issue
+
+# --- Added 2026-09-06 (leak scan dormancy gate + build 21 lane) ---
+grep -rn SCAN_FLOW_ENABLED app components utils     # the COMPLETE set of leak-scan gates (same discipline as DEV_MENU_ENABLED)
+# EXPO_PUBLIC_SCAN_FLOW=1                            # put in a local .env to wake the whole scan flow for rework
+#   Off by default everywhere, dev included, on purpose: local Metro should show what TestFlight shows.
+#   eas.json pins "0" on internal and production so a stray shell var cannot re-open it.
+grep -rn "'/leak-scan'" app components               # entry points; the only one left is the gated re-scan button
+npm run ota:check -- <base-sha> origin/main          # OTA vs native build; ANY eas.json edit forces a native build
+# Build 21 lane (agent-permitted, ADR 0029; production stays human):
+# npx eas-cli build -p ios --profile internal --non-interactive --no-wait --auto-submit
+npx eas-cli build:list --platform ios --limit 3 --non-interactive --json   # build number, status, gitCommitHash
+npx eas-cli submit:list --platform ios --limit 3 --non-interactive 2>/dev/null   # watch the ASC submission leg

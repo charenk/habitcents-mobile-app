@@ -807,3 +807,166 @@ VISUAL NOTE: screenshot of the routine status board issue once the orchestrator 
 CASE STUDY MOMENT
 The form-vs-decision sheet vocabulary (ADR 0031) and the not-started-is-not-zero chips (ADR 0030) both came from user feedback screenshots and ended as named, reusable design rules: good material for a design-systems case study.
 
+
+---
+
+## 2026-09-06: Wrapped a half-finished feature as coming soon, and found the promise we could not keep
+
+### Session scan
+
+**Scope:** end of session
+**Built this session:** Wrapped the CSV leak scan as "coming soon" rather than shipping it rough: one build-time gate makes the whole feature dormant while every line of it stays compiled and tested, the Insights segment became "Leak finder" with a Soon badge and a teaser that recruits people to help rebuild it, and onboarding dropped from three beats to two. Then a second pass fixed the state a returning opted-in user landed on, and checking whether we could actually honour the offer turned up an entitlement gap that blocks the feature's eventual ship.
+**Pillar scores:** P1: Strong · P2: Strong · P3: Strong · P4: Strong · P5: Weak
+
+---
+
+### P1 CONCEPT DISCOVERED: an anonymous app cannot run a giveaway
+
+**TWITTER POST**
+Our app never calls identify(). Anonymous analytics, by design, on principle.
+
+Then we shipped a "join the research, you could win six months" button and I realised: we can count how many hands went up. We can never know whose.
+
+The privacy posture ate the growth mechanic.
+
+VISUAL NOTE: the teaser screen with the reward line, next to the one-line analytics event definition showing an empty payload.
+
+---
+
+**LINKEDIN POST**
+We put a research sign-up inside our app last week. Tap a button, help us rebuild a feature, you could win six months free.
+
+Then I went to build the part that contacts people, and found there was nothing to build with.
+
+Our analytics runs in anonymous device-ID mode as a deliberate privacy choice. We never call identify(). The event that fires when someone opts in carries no payload at all. That was a decision we were proud of.
+
+It also means we can count how many people raised their hand and never learn whose hand it was. No draw can be run. No winner can be told. Each device knows only about itself.
+
+So the offer changed shape. Not "you could win", but "everyone who opts in gets it", because that is the only version the product can actually deliver without a backend and without knowing who anyone is.
+
+The privacy posture you choose early quietly decides which growth mechanics are available to you later. Worth knowing that before you write the copy.
+
+VISUAL NOTE: NONE
+
+---
+
+CASE STUDY MOMENT
+A privacy decision made months earlier silently invalidated a growth mechanic, and the fix was to change the promise rather than weaken the principle.
+
+---
+
+### P2 ITERATION WITH RATIONALE: the screen that kept inviting people who had already joined
+
+**TWITTER POST**
+Shipped an opt-in. Tap "Count me in", get a confirmation.
+
+Came back to it and the invitation was still sitting there above the confirmation. "Join the research" on top of "you're on the list".
+
+The pane was asking someone to join a thing they had already joined.
+
+VISUAL NOTE: before and after of the teaser's confirmed state, invitation visible in the before.
+
+---
+
+**LINKEDIN POST**
+A small bug that was not a bug, and what it taught me about states.
+
+We built an opt-in: a button, and a confirmation once you tap it. Tested it, shipped it. Both states worked exactly as written.
+
+Then I looked at what a returning user actually reads. The invitation line ("join the research, you could win six months") was still rendered above the confirmation, because nothing said to remove it. So the screen said, in order: here is an offer to join, and also you have joined.
+
+Two states, each individually correct, composing into something slightly absurd.
+
+The fix was to treat them as one slot rather than two elements. Before opting in the pane asks. After, it answers, and the answer carries the offer. The confirmation went from "thanks, this will land in this tab first" to "you're in, your six months is saved".
+
+Most state bugs I find are not a state rendering wrong. They are two states that were never asked to sit in the same room.
+
+VISUAL NOTE: side by side of the two confirmed states.
+
+---
+
+### P3 PLATFORM PATTERN: retiring a feature without deleting it, in Expo Router
+
+**TWITTER POST**
+Shelving a feature in Expo Router: deleting the screen is the wrong move.
+
+Routes are file-based, so the deep link keeps resolving from anywhere that stored it. Keep the file, gate the default export, redirect when off.
+
+The feature sleeps. The URL still answers.
+
+VISUAL NOTE: the gated default export, ~8 lines, beside the deep link redirecting in the simulator.
+
+---
+
+**TWITTER THREAD**
+Tweet 1: We shelved a whole feature this week: a CSV parser, its pipeline, its results screens, 273 tests. Deleted none of it. Here is the shape that made that safe.
+
+Tweet 2: One build-time flag, and the rule that nothing may test the env var directly. Every gate imports the same constant, so one grep prints the complete list of places the feature can wake up. Stolen from our dev-menu gate.
+
+Tweet 3: We left __DEV__ out of the condition on purpose. The dev menu wants to exist locally. A half-finished feature wants the opposite: what a developer sees running the bundler should be what a TestFlight user sees, or you reason about a flow nobody else has.
+
+Tweet 4: The route itself keeps the whole flow compiled and its default export became a gate. Flag off, it redirects. Because file-based routing means the URL resolves whether or not anything links to it, and a route rendering half a retired flow is a crash we have already shipped once.
+
+Tweet 5: Last piece, the one people skip: the shelved feature's own tests run with the gate mocked ON. Otherwise the code you carefully preserved quietly rots behind the flag and you find out months later.
+
+Final tweet: Shelving is a design problem, not a deletion problem. Keep it compiled, keep it tested, make one grep tell you where it lives, and make waking it up a one-line change.
+
+VISUAL NOTE: tweet 2, the grep output listing every gate.
+
+---
+
+**LINKEDIN POST**
+We shelved a feature this week without deleting a line of it. The reasoning is worth writing down.
+
+The feature was a bank-statement scanner: a nine-stage pipeline, an intake flow, a results screen, a rule store, 273 tests. It works, mostly. It also has problems that need real time, and it sat on the path a brand new user walks first. Shipping it rough was the worst option. Deleting it and rebuilding later was the second worst.
+
+So it went dormant instead:
+
+One build-time flag gates it, and nothing anywhere is allowed to test the environment variable directly. Everything imports the same constant, so a single grep prints every place the feature can wake up.
+
+We deliberately left the development check out of that condition. Our dev-menu gate includes one, because the dev menu should exist locally. This is the opposite case: a developer running the app should see what a tester sees, or you spend a week reasoning about a flow no user can reach.
+
+The route keeps the whole flow compiled, and its entry point became a gate that redirects when the flag is off. In a file-based router the URL resolves whether or not anything links to it, and a screen that renders half a retired flow is a crash we have shipped before.
+
+And the part that is easy to skip: the shelved feature's own tests still run, with the gate mocked on. Preserved code that nothing exercises is not preserved, it is just code that has not failed yet.
+
+Waking it up is one line in a local env file.
+
+VISUAL NOTE: the grep output showing the complete gate list.
+
+---
+
+CASE STUDY MOMENT
+A feature was taken off every user-facing path in one change while remaining fully compiled and tested, so the eventual rework starts from working code rather than from scratch.
+
+---
+
+### P4 PRODUCT AND DESIGN JUDGMENT: the primitive we refused to widen
+
+**TWITTER POST**
+Our empty-state component is deliberately three things: art, one line, a text link.
+
+The new screen needed six. Explanation, invitation, reward, remembered confirmation.
+
+Widening the primitive would have made "one line" negotiable for every other screen. So it got its own component.
+
+VISUAL NOTE: the component's design record showing the rule and the exception logged beneath it.
+
+---
+
+**LINKEDIN POST**
+We have a rule that every empty state in our app is exactly three things: a piece of art, one line of copy, and a text link. It took a full design pass to get there, because before that we had four different treatments and two icon sizes.
+
+This week a screen needed more. It had to explain a feature that does not exist yet, invite people into research, name an offer, and remember that you had accepted so it never asks twice. Six parts, not three.
+
+The tempting move is to add props to the shared component. It is one exception, the code already nearly supports it, and nobody would notice.
+
+What you actually spend, doing that, is the rule. Once the primitive can carry six things, "one line" becomes a preference rather than a constraint, and the next screen only has to be a slightly smaller exception to justify itself. The drift we removed comes back through the component that was supposed to prevent it.
+
+So it became its own component, borrowing the shared proportions so the screens still feel like one family, with the exception written into the design record where the next person will see it.
+
+A constraint survives exactly as long as you are willing to build the awkward thing instead of relaxing it.
+
+VISUAL NOTE: the two screens side by side, showing they still read as the same family.
+
+---
