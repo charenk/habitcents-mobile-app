@@ -324,6 +324,17 @@ changes); the opt-in's device-local nature (a reinstall loses the claim)
 is unchanged and already documented as accepted; no pricing, product id,
 or legal wording was touched.
 
+## Run 9: closed out again
+
+No new commits on `origin/main` since run 8, `mergeable_state: clean` on
+PR #132, no new comments on the PR, and the current PUNCHLIST.md RESUME
+marker's only core-p3-flagged item is the leak finder promo run 8 already
+closed (its other four items belong to the zeroth-state design wave, out
+of this routine's isolation scope). Re-verified clean: `npx tsc --noEmit`
+clean, `npm test` 110 suites / 1165 tests green, exactly matching run 8's
+ending count. Marked HANDOFF.md `COMPLETE` and PR #132 ready for review
+again, per the routine's own completion instructions.
+
 ## If this routine fires again
 
 The branch and PR stay open until Charen merges or closes them (routine
