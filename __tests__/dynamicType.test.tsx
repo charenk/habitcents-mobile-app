@@ -23,6 +23,7 @@ import React from 'react';
 import { act, cleanup, render } from '@testing-library/react-native';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
+import { LocaleProvider } from '@/contexts/LocaleContext';
 import { CheckInCard } from '@/components/habit-logging/CheckInCard';
 import { KeptHero } from '@/components/habit-logging/KeptHero';
 import { strings } from '@/constants/strings';
@@ -50,7 +51,9 @@ const goal = {
 function Providers({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider>
-      <CurrencyProvider>{children}</CurrencyProvider>
+      <LocaleProvider>
+        <CurrencyProvider>{children}</CurrencyProvider>
+      </LocaleProvider>
     </ThemeProvider>
   );
 }
