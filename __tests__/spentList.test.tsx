@@ -23,6 +23,7 @@ import { SpentList } from '@/components/money/SpentList';
 import { strings } from '@/constants/strings';
 import { formatDate } from '@/utils/dates';
 import { formatMoney } from '@/utils/currency';
+import { contentColumnStyle, layout } from '@/constants/theme';
 import type { Expense, ExpenseSection } from '@/types/expense';
 
 function daysAgo(n: number): Date {
@@ -195,6 +196,21 @@ describe('SpentList: one number language', () => {
       formatMoney(800)
     );
     expect(view.getByText(expectedEyebrow)).toBeTruthy();
+  });
+});
+
+describe('SpentList: tablet content column (routine/ipad)', () => {
+  it("carries the shared 600pt cap on its SectionList's contentContainerStyle", async () => {
+    const today = sectionFor([makeExpense({ id: 't1', date: new Date() })]);
+    const view = await renderSpent([today]);
+
+    const list = view.getByTestId('spent-section-list');
+    const flat = Object.assign({}, list.props.contentContainerStyle);
+
+    expect(flat.width).toBe('100%');
+    expect(flat.maxWidth).toBe(layout.contentMaxWidth);
+    expect(flat.alignSelf).toBe('center');
+    expect(flat).toMatchObject(contentColumnStyle);
   });
 });
 
