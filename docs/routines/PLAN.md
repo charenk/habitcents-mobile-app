@@ -187,15 +187,31 @@ work, tracked elsewhere).
       Full suite run (not just touched files) confirmed 103/103 green before
       committing, tsc clean.
 
+      **`CategoryTransactionsSheet.tsx` and its ResultsScreen-tree neighbors
+      converted this run** (`CategoryList.tsx`, `TierBadge.tsx`, `KpiRow.tsx`,
+      `HabitCard.tsx`, `ProjectionSection.tsx`, `ReviewQueueSheet.tsx`,
+      `CategoryTransactionsSheet.tsx`), plus `components/CategoryRow.tsx`
+      (mounted under `app/(tabs)/categories.tsx`, not a `ResultsScreen`
+      neighbor but the same shape and picked up in the same batch). All
+      eight are ordinary leaf components (hooks only run when the parent
+      actually renders them, unlike `Sheet.tsx`'s always-mounted case), each
+      already reachable only from screens whose test files got
+      `LocaleProvider` in the `ScreenHeader.tsx`/`Sheet.tsx` runs
+      (`resultsScreenActivation`, `resultsScreenUndo`, `resultsScreenLadder`,
+      `resultsScreenPaywallPlacement`, `leakScanImportUndo`,
+      `leakScanOnboardingExit` for the `ResultsScreen` set;
+      `categoriesEmptyState`, `categoriesDeleteConfirm`, `categoryDetailScreen`
+      for `CategoryRow`), confirmed with the grep-for-import-sites check
+      before picking each one (`TierBadge`/`KpiRow` are also used from
+      `components/insights/ScanSnapshotCard.tsx`, itself already converted
+      and covered). No test file changes needed. Full suite run confirmed
+      105/105 green (up from 103, reflecting other streams' merges since
+      last run) before committing, tsc clean.
+
       Remaining suggested order: continue picking genuinely small
       single-parent leaf files (re-run the leaf check above per candidate;
       do not assume shape from a file's name or its position in the list),
-      then `CategoryTransactionsSheet.tsx` and its ResultsScreen-tree
-      neighbors as one deliberate batch (`Sheet.tsx` is already converted
-      underneath them now, so only their own `strings` usage remains, and
-      their test-file list is already known: the same `resultsScreen*` /
-      `leakScanImportUndo` / `leakScanOnboardingExit` set noted above), then
-      the remaining sections' files, then the 13 `ScreenHeader` importers'
+      then the remaining sections' files, then the 13 `ScreenHeader` importers'
       and 13 `Sheet` importers' own `strings` usage as further leaf picks
       (for these, re-run the same "does the parent screen already carry
       `LocaleProvider` for a shared-component reason" check before assuming
