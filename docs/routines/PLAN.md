@@ -229,17 +229,97 @@ work, tracked elsewhere).
       module-scope pattern (`strings.` referenced outside any function
       component or hook) before assuming any remaining file is a quick leaf.
 
+      **`EventHistory.tsx`, `HistoryCalendar.tsx` converted (a later run):**
+      both `app/habit/[id].tsx`-only leaves (habit detail screen), confirmed
+      via `habitDetailPaywallPlacement.test.tsx` (already `LocaleProvider`-
+      covered) rendering the full `HabitDetailScreen` and unconditionally
+      reaching both (one of the two always renders, gated on `isDaily`, not
+      both-conditional). No test file changes needed.
+
+      **`CheckInCard.tsx`, `LeakCard.tsx`, `KeptHero.tsx` converted (same
+      run):** found a second instance of the module-scope pattern:
+      `CheckInCard.tsx` has two module-level helper *functions* (not the
+      module-level *array* shape `SpendPulse.tsx`/`LongArc.tsx` have),
+      `chapterCopy` and `confirmationCopy`, that read the static `strings`
+      import directly rather than being called from within a component. Both
+      now take the catalog as an added parameter (`Catalog` type from
+      `utils/i18n.ts`), threaded from `useStrings()` at every call site
+      (`CheckInCardImpl` calls both directly; `ConfirmationBlock`, a real
+      child component in the same file, gets `strings` prop-drilled in like
+      its existing `theme`/`format` props, its own `confirmationCopy` call
+      passing that prop through). This shape (a plain helper *function*,
+      fixable by adding one parameter) is meaningfully smaller work than the
+      module-level *array* shape (`SpendPulse.tsx`, and now `LongArc.tsx`
+      below), which needs restructuring into the render body; check which
+      shape a flagged file actually has before estimating its cost.
+      `LeakCard.tsx` and `KeptHero.tsx` are ordinary leaves, no helper-
+      function complication. All three share three leaf-only test files
+      (`checkInCardAnnounce`, `renderedA11y`, `dynamicType`), each missing
+      `LocaleProvider`, added to all three in this commit. `KeptHero` is
+      also mounted by `PayoffScreen.tsx` (not yet converted itself), so
+      `payoffScreen.test.tsx` needed `LocaleProvider` too, found only after
+      a first full-suite run failed on it: importer coverage for a component
+      that is itself already converted is not the whole check when the
+      component you are converting is mounted somewhere else too; the
+      "found and deferred" `KeptHero` import in `PayoffScreen.tsx` from an
+      earlier run's own grep should have flagged this ahead of time. Full
+      suite 105/105, tsc clean.
+
+      **`PartialSlipSheet.tsx`, `PickOneSheet.tsx` converted (same run):**
+      both are `Sheet.tsx` importers already covered by the `Sheet.tsx`
+      run's 10 leaf-only test files (`partialSlipSheet`, `pickOneSheet`),
+      confirmed by grep before starting; no test file changes needed.
+      `PickOneSheet.tsx` has the same module-scope-*function* pattern as
+      `CheckInCard.tsx`: `cadenceLabel`, one call site, fixed the same way
+      (added `strings: Catalog` parameter). Full suite still 105/105, tsc
+      clean. This confirms the "13 Sheet importers' own strings usage" wave
+      flagged below is mostly this same easy shape, not automatically
+      SpendPulse-shaped; check each file rather than assuming either way.
+
+      **`SpentKeptChips.tsx` converted (same run):** ordinary leaf, only
+      importer is `app/(tabs)/index.tsx` (Today), already covered. Its
+      leaf-only unit test (`tabGeometry.test.tsx`) needed `LocaleProvider`
+      added. Full suite 105/105, tsc clean.
+
+      **`HabitLeakRow.tsx` converted (same run):** ordinary leaf. Importers
+      `app/(tabs)/money.tsx` (via `HabitsList.tsx`) and `insights.tsx` (via
+      the already-converted `LeaksCard.tsx`) were both already covered
+      (`moneyHabitsTab.test.tsx`, `emptyStateSurfaces.test.tsx`, both
+      checked before picking); only the leaf-only `habitLeakRow.test.tsx`
+      needed `LocaleProvider` added. Full suite 105/105, tsc clean.
+
+      **Found and deferred, not converted:** `LongArc.tsx` builds a
+      `CHAPTERS` array from `strings.habitLogging.chapterXxx` labels at
+      module scope, the same array shape as `SpendPulse.tsx` (not the
+      smaller helper-function shape `CheckInCard.tsx`/`PickOneSheet.tsx`
+      turned out to have). Its only importer is `app/habit/[id].tsx`
+      (already covered), so when it is picked up the test-file side is
+      free; the work is entirely moving the array construction into the
+      component body. Grouped with `SpendPulse.tsx` and `app/profile.tsx`
+      below for a future dedicated pick.
+
       Remaining suggested order: continue picking genuinely small
       single-parent leaf files (re-run the leaf check above per candidate;
       do not assume shape from a file's name or its position in the list;
-      watch for the module-scope pattern just above), then `SpendPulse.tsx`
-      and `app/profile.tsx` as their own picks (both need the strings read
-      moved inside the component, not a plain hook swap), then the remaining
-      sections' files, then the 13 `ScreenHeader` importers'
-      and 13 `Sheet` importers' own `strings` usage as further leaf picks
-      (for these, re-run the same "does the parent screen already carry
-      `LocaleProvider` for a shared-component reason" check before assuming
-      a fresh test-file list is needed). Note for that later pass:
+      watch for the module-scope patterns above, both the array shape and
+      the helper-function shape, and check which one applies before
+      estimating cost). Good next candidates already scoped:
+      `components/habit-logging/WeekStrip.tsx` (imported only by the now-
+      converted `CheckInCard.tsx`, so likely covered by the same three test
+      files, re-check before assuming) and
+      `components/habit-logging/useCheckInFeedback.ts` (a hook, name starts
+      with `use`, so it can call `useStrings()` directly like a component;
+      confirm its call sites and test coverage before converting). Then
+      `SpendPulse.tsx`, `LongArc.tsx`, and `app/profile.tsx` as their own
+      picks (all three need the strings read moved inside the component,
+      not a plain hook swap, and `LongArc.tsx` now confirmed same shape as
+      `SpendPulse.tsx`), then the remaining sections' files, then the 13
+      `ScreenHeader` importers' and remaining `Sheet` importers' own
+      `strings` usage as further leaf picks (for these, re-run the same
+      "does the parent screen already carry `LocaleProvider` for a shared-
+      component reason" check before assuming a fresh test-file list is
+      needed; also check for the module-scope function pattern, found twice
+      now in this importer set). Note for that later pass:
       `utils/coachMoments.ts`, `utils/recurring.ts`, and
       `contexts/ReportsContext.tsx` import `strings` but are not simple
       hook-eligible leaves (`coachMoments.ts` and `recurring.ts` are plain

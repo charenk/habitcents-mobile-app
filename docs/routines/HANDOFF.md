@@ -2,10 +2,11 @@
 
 ## Status
 
-In progress. Plan item 2: converted the `ResultsScreen`-tree batch
-(`CategoryTransactionsSheet` and 6 neighbors) plus `CategoryRow.tsx`, then a
-second small slice (`BiggestLeakCard`, `ResultsFooter`, `QuestionCard`), all
-this run. No REVIEW FEEDBACK pending from the orchestrator this run.
+In progress. Plan item 2: converted 9 more leaf files this run
+(`EventHistory.tsx`, `HistoryCalendar.tsx`, `CheckInCard.tsx`,
+`LeakCard.tsx`, `KeptHero.tsx`, `PartialSlipSheet.tsx`, `PickOneSheet.tsx`,
+`SpentKeptChips.tsx`, `HabitLeakRow.tsx`), across 4 commits. No REVIEW
+FEEDBACK pending from the orchestrator this run.
 
 ## Completed
 
@@ -17,49 +18,56 @@ this run. No REVIEW FEEDBACK pending from the orchestrator this run.
 - Plan item 2, call-site migration (earlier runs): converted 6 leaf files
   (`InfoRibbon`, `SettingsRow`, `WhereItWentCard`, `PaceCard`, `LeaksCard`,
   `ScanSnapshotCard`), then the 2 shared components `ScreenHeader.tsx` and
-  `Sheet.tsx` (prior 2 runs, with `LocaleProvider` added to 16 then 10 test
-  files respectively).
-- Plan item 2, `ResultsScreen`-tree batch (this run): converted
-  `CategoryTransactionsSheet.tsx` and its 6 neighbors (`CategoryList.tsx`,
-  `TierBadge.tsx`, `KpiRow.tsx`, `HabitCard.tsx`, `ProjectionSection.tsx`,
-  `ReviewQueueSheet.tsx`), plus `components/CategoryRow.tsx` (mounted under
-  `app/(tabs)/categories.tsx`, same shape). All 8 are ordinary leaf
-  components (their hooks only run when the parent actually renders them,
-  unlike `Sheet.tsx`'s always-mounted case), and every screen that mounts
-  them already had `LocaleProvider` from the `ScreenHeader.tsx`/`Sheet.tsx`
-  runs, confirmed file by file before picking. No test file changes needed.
-- Plan item 2, second slice (this run): converted `BiggestLeakCard.tsx`,
-  `ResultsFooter.tsx`, `QuestionCard.tsx`. Same reasoning: `BiggestLeakCard`
-  mounts from `ResultsScreen.tsx` and `DeckScreen.tsx` (both covered,
-  `deckScreen`'s two render trees re-checked); `ResultsFooter` is
-  `ResultsScreen`-only; `QuestionCard` mounts only from `IntakeScreen.tsx`,
-  which has no dedicated test coverage today (confirmed by grep), so
-  nothing to update either way. No test file changes needed.
-- Found and deferred (not converted): `SpendPulse.tsx` builds a
-  `GRANULARITY_OPTIONS` array from `strings.leakScan.pulseGranularity*` at
-  module scope, the same shape as `app/profile.tsx`'s flagged
-  `SUPPORT_MAILTO_URL` case; neither is a plain hook swap, both need the
-  `strings` read moved inside the component. Left for a dedicated future
-  pick, noted in PLAN.md.
-- `tsc --noEmit` clean, full suite run (not just touched files) both times
-  this run: 105/105 suites, 1125/1125 tests green (count includes other
-  streams' merges pulled in by this run's rebase, not new tests).
+  `Sheet.tsx`, then the `ResultsScreen`-tree batch (`CategoryTransactionsSheet`
+  and 6 neighbors, plus `CategoryRow.tsx`), then a second slice
+  (`BiggestLeakCard`, `ResultsFooter`, `QuestionCard`). 22 files total before
+  this run.
+- Plan item 2, this run (4 commits): converted `EventHistory.tsx` and
+  `HistoryCalendar.tsx` (both `habit/[id].tsx`-only, already covered by
+  `habitDetailPaywallPlacement.test.tsx`, no test changes); `CheckInCard.tsx`,
+  `LeakCard.tsx`, `KeptHero.tsx` (share 3 leaf-only test files -
+  `checkInCardAnnounce`, `renderedA11y`, `dynamicType` - all missing
+  `LocaleProvider`, added; `KeptHero` is also mounted by `PayoffScreen.tsx`,
+  so `payoffScreen.test.tsx` needed it too, caught by the full-suite run, not
+  the importer grep); `PartialSlipSheet.tsx`, `PickOneSheet.tsx` (both
+  `Sheet.tsx` importers already covered by that run's test files, no test
+  changes); `SpentKeptChips.tsx` (Today-only, leaf-only `tabGeometry.test.tsx`
+  needed `LocaleProvider`); `HabitLeakRow.tsx` (importers already covered via
+  `HabitsList`/`LeaksCard`, leaf-only `habitLeakRow.test.tsx` needed it).
+  31 files converted total now (2 shared components + 29 leaves).
+- Found a second module-scope shape this run, smaller than `SpendPulse.tsx`'s:
+  `CheckInCard.tsx`'s `chapterCopy`/`confirmationCopy` and `PickOneSheet.tsx`'s
+  `cadenceLabel` are module-level *helper functions* (not module-level
+  *arrays*) reading the static `strings` import directly. Fixed by adding a
+  `strings: Catalog` parameter and threading it from `useStrings()` at each
+  call site, not by restructuring into the render body. Full detail and the
+  distinction from the array shape in PLAN.md.
+- Found and deferred (not converted): `LongArc.tsx` has the same module-scope
+  *array* shape as `SpendPulse.tsx` (a `CHAPTERS` array built from
+  `strings.habitLogging.chapterXxx` at module scope). Grouped with
+  `SpendPulse.tsx` and `app/profile.tsx` for a future dedicated pick.
+- `tsc --noEmit` clean and full suite run (not just touched files) after
+  every one of this run's 4 commits: 105/105 suites, 1125/1125 tests green
+  throughout.
 
 ## Next
 
-- Continue picking genuinely small single-parent leaf files (re-run the
-  leaf-verification grep per candidate every time; for components whose
-  parent screen already renders `ScreenHeader` or `Sheet`, check whether
-  that parent's test files already carry `LocaleProvider` before assuming a
-  fresh test-file list is needed; watch for the module-scope
-  `strings.xxx` pattern found in `SpendPulse.tsx` before assuming any file
-  is a quick swap).
-- `SpendPulse.tsx` and `app/profile.tsx` as their own picks: both need the
-  `strings` read moved inside the component (most likely into a `useMemo`
-  alongside their existing `styles`), not a plain three-line hook swap.
-- The 13 `ScreenHeader` importers' and 13 `Sheet` importers' own `strings`
-  usage are themselves future leaf picks once the two shared components are
-  done.
+- Good next candidates already scoped: `components/habit-logging/WeekStrip.tsx`
+  (imported only by the now-converted `CheckInCard.tsx`) and
+  `components/habit-logging/useCheckInFeedback.ts` (a hook, can call
+  `useStrings()` directly; confirm call sites and test coverage first).
+- Continue picking genuinely small single-parent leaf files after those (re-run
+  the leaf-verification grep per candidate every time; check for both
+  module-scope shapes - the array shape in `SpendPulse.tsx`/`LongArc.tsx` and
+  the helper-function shape in `CheckInCard.tsx`/`PickOneSheet.tsx` - before
+  assuming a file's cost).
+- `SpendPulse.tsx`, `LongArc.tsx`, `app/profile.tsx` as their own picks: all
+  three need the strings read moved inside the component (most likely into a
+  `useMemo` alongside their existing `styles`), not a plain hook swap.
+- The 13 `ScreenHeader` importers' and remaining `Sheet` importers' own
+  `strings` usage are themselves future leaf picks once the two shared
+  components are done (2 of the 13 `Sheet` importers, `PartialSlipSheet` and
+  `PickOneSheet`, are now done as of this run).
 - `utils/coachMoments.ts`, `utils/recurring.ts` are plain functions (not
   components or hooks) that import `strings`; they need the catalog passed
   in as a parameter instead of `useStrings()`. Decide that shape when their
@@ -93,7 +101,7 @@ item 4).
 - The Language picker in Settings is still cosmetic only: selecting a
   language persists the override and nothing on screen changes yet, because
   most components still read the static English `strings` export and no
-  non-English catalog exists. 19 files (2 shared, 17 leaves) are wired
+  non-English catalog exists. 31 files (2 shared, 29 leaves) are wired
   through `useStrings()` so far; all still resolve to English either way
   until plan item 4 lands catalogs, so this is not yet observable. Expected,
   not a bug.
@@ -105,14 +113,24 @@ item 4).
   mount (like `Sheet.tsx`, and unlike most leaves), check (b) has to trace
   every importer's own mount site too, not just stop at "no direct test
   file found": the importer may be reached only through a bigger screen.
-  Also watch for false-positive matches on the component's own name inside
-  a `/** ... */` doc comment cross-referencing another file (this run:
-  `CategoryList.tsx`'s and `CategoryTransactionsSheet.tsx`'s own doc
-  comments mention `CategoryTransactionsSheet`/`ReviewQueueSheet` without
-  importing them; `AmountField.tsx`/`TextField.tsx`/
-  `habitsSeedStartSameTick.test.tsx` mention `BreakHabitSheet`/
-  `app/(tabs)/index.tsx` the same way); read the matched line, and trace
-  route-level imports, before ruling a file in or out.
+  This run added a wrinkle: even when a component is already converted
+  (`KeptHero.tsx`), a *new* leaf you are converting today may be mounted
+  from somewhere that component's own test-file list did not cover
+  (`PayoffScreen.tsx`, which `KeptHero.tsx` also renders into but which is
+  not itself converted yet) - grep every importer fresh for each file you
+  convert, do not reuse an old importer list, and always let the full-suite
+  run be the final check, not just the grep.
+- Also watch for false-positive matches on a component's own name inside a
+  `/** ... */` doc comment cross-referencing another file; read the matched
+  line, and trace route-level imports, before ruling a file in or out.
+- Two module-scope shapes now confirmed among files still importing static
+  `strings`, costed very differently: a module-level *array* built from
+  `strings.xxx` (`SpendPulse.tsx`, `LongArc.tsx`) needs restructuring into
+  the render body; a module-level *helper function* that reads `strings`
+  directly (`CheckInCard.tsx`'s `chapterCopy`/`confirmationCopy`,
+  `PickOneSheet.tsx`'s `cadenceLabel`) just needs a `strings: Catalog`
+  parameter added and threaded from the caller's `useStrings()`, a much
+  smaller fix. Check which shape a flagged file has before estimating it.
 - `app/profile.tsx` reads `strings.settings.supportEmail` at module scope
   (building `SUPPORT_MAILTO_URL` outside the component), so it is not a
   plain three-line hook swap like every leaf converted so far; note left in
@@ -121,4 +139,4 @@ item 4).
 ## REVIEW FEEDBACK
 
 None pending. The 2026-09-05 orchestrator review of runs 1-4 (approved, no
-code fixes) was addressed last run; nothing new has landed since.
+code fixes) was addressed two runs ago; nothing new has landed since.
