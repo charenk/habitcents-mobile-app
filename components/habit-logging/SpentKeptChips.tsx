@@ -41,7 +41,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { radii, shadows, typeScale, type AppTheme } from '@/constants/theme';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
 import { selectableLabel } from '@/utils/a11y';
 
 // Track padding (also the inter-segment gap): the nesting rule this file and
@@ -79,6 +79,7 @@ export function SpentKeptChips({
   keptStarted = true,
 }: SpentKeptChipsProps): React.JSX.Element {
   const theme = useTheme();
+  const strings = useStrings();
   const { format } = useCurrency();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
