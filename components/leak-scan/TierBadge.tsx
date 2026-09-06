@@ -3,7 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { radii, spacing, typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
 import type { ConfidenceTier } from '@/utils/leakScan/types';
 
 type TierBadgeProps = {
@@ -19,6 +19,7 @@ type TierBadgeProps = {
  */
 export function TierBadge({ tier }: TierBadgeProps) {
   const theme = useTheme();
+  const strings = useStrings();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   if (tier === 'solid') {
