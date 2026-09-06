@@ -18,7 +18,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useLocale } from '@/contexts/LocaleContext';
 import { typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
 import { useToast } from '@/components/ui/Toast';
 import { hapticError } from '@/utils/motion';
 import { LOCALES, type LocaleCode } from '@/utils/locale';
@@ -31,6 +31,7 @@ export type LanguageSheetProps = {
 
 export function LanguageSheet({ visible, onClose }: LanguageSheetProps): React.JSX.Element {
   const theme = useTheme();
+  const strings = useStrings();
   const { override, setOverride } = useLocale();
   const { show } = useToast();
   const styles = useMemo(() => createStyles(theme), [theme]);

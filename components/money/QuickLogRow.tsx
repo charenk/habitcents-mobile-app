@@ -15,14 +15,16 @@
  */
 import { AmountDisplay } from '@/components/ui/AmountDisplay';
 import { DockCard, DockField, DockPlusButton } from '@/components/today/DockCard';
-import { strings } from '@/constants/strings';
 import type { ExpenseCategory } from '@/types/expense';
+import { useStrings } from '@/utils/i18n';
 
 export type QuickLogRowProps = {
   onOpenSheet: (category?: ExpenseCategory) => void;
 };
 
 export function QuickLogRow({ onOpenSheet }: QuickLogRowProps): React.JSX.Element {
+  const strings = useStrings();
+
   return (
     <DockCard testID="quick-log-card">
       {/* The enclosed field is the obvious thing to tap, so it opens the

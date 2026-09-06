@@ -17,7 +17,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
 import { useToast } from '@/components/ui/Toast';
 import { hapticError } from '@/utils/motion';
 import { CURRENCIES, type CurrencyCode } from '@/utils/currency';
@@ -30,6 +30,7 @@ export type CurrencySheetProps = {
 
 export function CurrencySheet({ visible, onClose }: CurrencySheetProps): React.JSX.Element {
   const theme = useTheme();
+  const strings = useStrings();
   const { currency, setCurrency } = useCurrency();
   const { show } = useToast();
   const styles = useMemo(() => createStyles(theme), [theme]);
