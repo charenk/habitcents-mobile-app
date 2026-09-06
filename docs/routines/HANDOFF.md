@@ -135,8 +135,23 @@ item 4).
   (building `SUPPORT_MAILTO_URL` outside the component), so it is not a
   plain three-line hook swap like every leaf converted so far; note left in
   PLAN.md for whoever picks it.
-
-## REVIEW FEEDBACK
+- 2026-09-06, out-of-band CI fix (not a scheduled run, a reaction to a
+  check_run.completed failure notification on PR #134): main added 3 new
+  test files (`moneyPager.test.tsx`, `scanSnapshotFooter.test.tsx`,
+  `insightsPager.test.tsx`, all 2026-09-06) that render `ScreenHeader`
+  and/or `ScanSnapshotCard`, both already converted to `useStrings()` on
+  this branch, but their provider wrappers predate `LocaleProvider` (they
+  were written directly on main, which has none of this routine's work).
+  These only surfaced once this branch rebased onto that main commit; the
+  raw branch build was fine, only the PR's merge-preview against main was
+  red. Fixed by rebasing onto latest main, then adding `LocaleProvider` +
+  the standard `expo-localization` mock to all three files, same pattern
+  as every other test file this routine has touched. No production code
+  changed. This is a standing risk for the rest of plan item 2: any new
+  test file landing on main for an already-converted shared component
+  (`ScreenHeader`, `Sheet`) will fail the same way until this branch
+  rebases and picks it up. Re-run `tsc` + the full suite after every
+  rebase, not just after this routine's own commits, to catch it early.
 
 2026-09-06, orchestrator, runs 5-8 reviewed (ScreenHeader and Sheet
 conversions, the ResultsScreen-tree batch, and the run 8 slices through
