@@ -326,25 +326,67 @@ work, tracked elsewhere).
       or out. No test file changes needed for any of the three. Full suite
       109/109, tsc clean throughout.
 
+      **`CurrencySheet.tsx`, `LanguageSheet.tsx`, `QuickLogRow.tsx`,
+      `ExpenseRow.tsx`, `LoggedTodayList.tsx`, `HabitsList.tsx` converted
+      (run 10):** six ordinary leaves, all `strings.` usage inside the
+      component body, no module-scope shape. `CurrencySheet`/`LanguageSheet`
+      are `app/profile.tsx`-only (already covered, `profile.test.tsx`).
+      `QuickLogRow`/`LoggedTodayList` are `app/(tabs)/index.tsx`-only
+      (Today's 4 test files already covered them); `QuickLogRow`'s own
+      leaf-only `quickLogRow.test.tsx` needed `LocaleProvider` added (it had
+      none before, unlike `loggedTodayList.test.tsx` which already carried
+      it). `HabitsList` is `app/(tabs)/money.tsx`-only (`moneyHabitsTab.test.tsx`
+      already covered). `ExpenseRow` is imported only by `SpentList.tsx` and
+      `LoggedTodayList.tsx` (both covered once `SpentList`'s own test got
+      `LocaleProvider`, below), confirmed via precise `import.*ExpenseRow`
+      grep after an earlier plain-name grep produced false-positive hits
+      inside other files' doc comments (`CheckInCard.tsx`, `EmptyState.tsx`).
+
+      **`SpentList.tsx` converted (same run):** its `dayLabelFor` is a
+      third example of the module-scope *helper-function* shape
+      (`CheckInCard.tsx`'s `chapterCopy`/`confirmationCopy`,
+      `PickOneSheet.tsx`'s `cadenceLabel`), fixed the same way: added a
+      `strings: Catalog` parameter, threaded from `useStrings()` at both of
+      `dayLabelFor`'s call sites inside `renderSectionHeader`. Only
+      `app/(tabs)/money.tsx` imports `SpentList` (an `app/category/[id].tsx`
+      hit on a plain-name grep was a doc comment, not an import, confirmed
+      before ruling it in). `moneyMaterializerIntegration.test.tsx` and
+      `emptyStateSurfaces.test.tsx` (both mount it) already had
+      `LocaleProvider`; only its leaf-only `spentList.test.tsx` needed it
+      added. Full suite 109/109, tsc clean.
+
       Remaining suggested order: continue picking genuinely small
       single-parent leaf files (re-run the leaf check above per candidate;
       do not assume shape from a file's name or its position in the list;
       three module-scope shapes are now confirmed, module-level array,
       module-level helper function, and module-level plain const, so check
-      which one (if any) applies before estimating cost). ~36 files still
-      import the static `strings` catalog directly (grep
-      `from '@/constants/strings'` across `app/`, `components/`, `contexts/`,
-      `utils/`, excluding `__tests__/`), among them the 13 `ScreenHeader`
-      importers' and remaining `Sheet` importers' own `strings` usage (for
-      these, re-run the same "does the parent screen already carry
-      `LocaleProvider` for a shared-component reason" check before assuming
-      a fresh test-file list is needed). Note for that pass:
+      which one (if any) applies before estimating cost). 27 files still
+      import the static `strings` catalog directly (rerun `grep -rl
+      "from '@/constants/strings'" app components contexts utils | grep -v
+      __tests__` for the current list), among them `UpcomingList.tsx`
+      (found and deferred, run 10: its `WINDOW_LABELS` is the module-level
+      *array* shape, same fix as `SpendPulse.tsx`/`LongArc.tsx`, needs
+      moving into the component body; only importer is `app/(tabs)/money.tsx`,
+      already `LocaleProvider`-covered, but its own leaf-only
+      `upcomingList.test.tsx` will need `LocaleProvider` added), the 13
+      `ScreenHeader` importers' and remaining `Sheet` importers' own
+      `strings` usage (for these, re-run the same "does the parent screen
+      already carry `LocaleProvider` for a shared-component reason" check
+      before assuming a fresh test-file list is needed), and the leak-scan
+      screen set (`BillsScreen.tsx`, `DeckScreen.tsx`, `GracefulFailure.tsx`,
+      `IntakeScreen.tsx`, `PayoffScreen.tsx`, `PulseDayDetailSheet.tsx`,
+      `ResultsScreen.tsx`, `ScopeScreen.tsx`, `useTrackLeak.tsx`), not yet
+      individually leaf-checked as of run 10. Note for that pass:
       `utils/coachMoments.ts`, `utils/recurring.ts`, and
       `contexts/ReportsContext.tsx` import `strings` but are not simple
       hook-eligible leaves (`coachMoments.ts` and `recurring.ts` are plain
       functions, not components or hooks, so they cannot call
       `useStrings()` directly; they need the catalog passed in as a
       parameter instead, decide the shape when their turn comes).
+      `components/today/ViewQuote.tsx` and `useViewQuote.ts` are RETIRED
+      (ADR 0037, nothing renders them any more, kept only as a documented
+      revert path like `AuroraBackground.tsx`); low priority for this
+      routine since no live surface depends on them, but still on the list.
 - [ ] Convert function-valued strings (pluralized/interpolated) to ICU
       messages with proper CLDR plural rules, not the current hand-rolled
       `n === 1 ? '' : 's'` ternaries, and add the ICU formatting dependency
