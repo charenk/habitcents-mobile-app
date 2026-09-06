@@ -35,8 +35,14 @@ import { layout, typeScale, type AppTheme } from '@/constants/theme';
 import type { DetectedHabit } from '@/types/habit';
 import type { ScanSummary } from '@/types/scanSummary';
 import { strings } from '@/constants/strings';
+import { track } from '@/utils/analytics';
+import { useSegmentPager } from '@/utils/useSegmentPager';
 
 type InsightsView = 'month' | 'scan';
+
+/** Pane order, left to right. Matches the segmented control above them, and
+ *  module-level so the pager's handlers keep a stable identity across renders. */
+const INSIGHTS_VIEWS = ['month', 'scan'] as const satisfies readonly InsightsView[];
 
 /**
  * The "where it went" window. 'week' is the only TimeRange whose day count is
@@ -86,6 +92,25 @@ export default function InsightsScreen() {
   // beat before getScanSummary() resolved, on every focus.
   const [scanSummary, setScanSummary] = useState<ScanSummary | null | undefined>(undefined);
   const [view, setView] = useState<InsightsView>('month');
+  // The segments double as pager pages: tap one or swipe to it. See
+  // utils/useSegmentPager.ts for why this stays a plain paging ScrollView.
+  const { markInteracted, pagerProps, paneProps } = useSegmentPager<InsightsView>({
+    values: INSIGHTS_VIEWS,
+    value: view,
+    onSwipe: useCallback((landed: InsightsView) => {
+      setView(landed);
+      track('insights_view_switched', { to: landed, method: 'swipe' });
+    }, []),
+  });
+
+  const handleViewChange = useCallback(
+    (next: InsightsView) => {
+      markInteracted();
+      setView(next);
+      track('insights_view_switched', { to: next, method: 'tap' });
+    },
+    [markInteracted]
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -211,55 +236,73 @@ export default function InsightsScreen() {
         <SegmentedControl<InsightsView>
           options={segments}
           value={view}
-          onChange={setView}
+          onChange={handleViewChange}
           accessibilityLabel={strings.insights.scanSegmentControlLabel}
         />
       </View>
 
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {view === 'scan' ? (
-          // scanSummary undefined means getScanSummary() hasn't resolved yet
-          // (this focus's fetch is still in flight): render nothing rather
-          // than flashing the "no scan yet" empty state for a beat before the
-          // real answer (truthy or null) lands.
-          scanSummary === undefined ? null : scanSummary ? (
-            <ScanSnapshotCard summary={scanSummary} />
-          ) : (
-            <EmptyState
-              layout="fill"
-              illustration="insights-scan"
-              title={strings.insights.scanEmptyTitle}
-              cta={{ label: strings.insights.scanEmptyCta, onPress: handleScanEmptyOpen }}
-            />
-          )
-        ) : monthHasData ? (
-          <>
-            <LeaksCard
-              onLogExpense={handleEmptyLog}
-              rows={leakRows}
-              onBreak={(habit) => setPickOneHabitId(habit.id)}
-              onOpenHabit={(habitId) => router.push(`/habit/${habitId}`)}
-            />
+      {/* Both segments are pages of one pager, swipeable as well as tappable
+          (utils/useSegmentPager.ts, shared with Today and Money). They stay
+          mounted so each keeps its own scroll position; paneProps hides the
+          off-screen one from assistive tech. The pager mounts only after the
+          isLoading return above has cleared, and its first positioning is
+          silent, so a late mount cannot animate a page into view. */}
+      <ScrollView {...pagerProps} style={styles.pager} testID="insights-pager">
+        <View {...paneProps('month')} testID="insights-pane-month">
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
+            {monthHasData ? (
+              <>
+                <LeaksCard
+                  onLogExpense={handleEmptyLog}
+                  rows={leakRows}
+                  onBreak={(habit) => setPickOneHabitId(habit.id)}
+                  onOpenHabit={(habitId) => router.push(`/habit/${habitId}`)}
+                />
 
-            <WhereItWentCard
-              rows={spendingByCategory}
-              rangeLabel={strings.insights.whereItWentRange(WHERE_IT_WENT_DAYS)}
-            />
+                <WhereItWentCard
+                  rows={spendingByCategory}
+                  rangeLabel={strings.insights.whereItWentRange(WHERE_IT_WENT_DAYS)}
+                />
 
-            <PaceCard monthLabel={monthLabel} projection={projection} comparison={comparison} />
-          </>
-        ) : (
-          <EmptyState
-            layout="fill"
-            illustration="insights-month"
-            title={strings.insights.monthEmptyTitle}
-            cta={{ label: strings.insights.monthEmptyCta, onPress: handleMonthEmptyLog }}
-          />
-        )}
+                <PaceCard monthLabel={monthLabel} projection={projection} comparison={comparison} />
+              </>
+            ) : (
+              <EmptyState
+                layout="fill"
+                illustration="insights-month"
+                title={strings.insights.monthEmptyTitle}
+                cta={{ label: strings.insights.monthEmptyCta, onPress: handleMonthEmptyLog }}
+              />
+            )}
+          </ScrollView>
+        </View>
+
+        <View {...paneProps('scan')} testID="insights-pane-scan">
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
+            {/* scanSummary undefined means getScanSummary() hasn't resolved
+                yet (this focus's fetch is still in flight): render nothing
+                rather than flashing the "no scan yet" empty state for a beat
+                before the real answer (truthy or null) lands. */}
+            {scanSummary === undefined ? null : scanSummary ? (
+              <ScanSnapshotCard summary={scanSummary} />
+            ) : (
+              <EmptyState
+                layout="fill"
+                illustration="insights-scan"
+                title={strings.insights.scanEmptyTitle}
+                cta={{ label: strings.insights.scanEmptyCta, onPress: handleScanEmptyOpen }}
+              />
+            )}
+          </ScrollView>
+        </View>
       </ScrollView>
 
       <PickOneSheet
@@ -298,6 +341,9 @@ function createStyles(theme: AppTheme) {
       // chips row both use. Insights was the only one of the three that had
       // not been revisited since the shared-header migration. ADR 0039.
       marginTop: 8,
+    },
+    pager: {
+      flex: 1,
     },
     scrollView: {
       flex: 1,
