@@ -970,3 +970,180 @@ A constraint survives exactly as long as you are willing to build the awkward th
 VISUAL NOTE: the two screens side by side, showing they still read as the same family.
 
 ---
+
+---
+
+## 2026-09-06: Tab bar traded its pill for filled icons, Money and Insights learned to swipe, and four "unmerged" branches turned out to be nothing
+
+### Session scan
+
+**Scope:** end of session
+**Built this session:** Two navigation changes, merged as PR #143. The bottom tab bar's selected state stopped being a bordered pill and became a filled glyph, which meant hand-authoring filled SVG variants for the two icons lucide cannot fill. Then Today's pane swipe was extracted into a shared hook and given to Money and Insights, which fixed a latent desync bug on the way. A proposed cross-page swipe was challenged and dropped. Afterwards, audited five branches that git reported as unmerged and deleted four of them.
+**Pillar scores:** P1: Weak (the squash-merge illusion is a real concept but it is the same story as P5, logged there instead) · P2: Strong · P3: Strong · P4: Strong · P5: Strong
+**P6:** not generated (not Friday, not requested)
+
+---
+
+### P2 ITERATION WITH RATIONALE: The design doc had already written the fix, a month before anyone asked for it
+
+**TWITTER POST**
+My tab bar marked the selected tab with a soft green pill. I was asked to make it look like iOS instead: filled icon, no background. Before touching it I read the component's design record, and found a line from the last person who worked on it: "if the border reads heavy at arm's length, fill-only is a one-line change." They had predicted the complaint and written down the escape hatch. The fix turned out to be bigger than their one line, the whole surface went rather than just its border, but they had already done the thinking.
+
+VISUAL NOTE: the design record open beside the before/after tab bar, with that sentence highlighted.
+
+---
+
+**TWITTER THREAD**
+Tweet 1: The best code comment I read this week was a prediction of a bug report that hadn't happened yet.
+Tweet 2: My app's bottom tab bar marks the selected tab with a pale green pill behind the icon. My designer's note: the pill is ugly, make it a filled icon like iOS.
+Tweet 3: Before changing it I read the component's design record. Every component in this app has one: what it is for, what was decided, what was rejected, what is still open.
+Tweet 4: Under "Open" was this: "The pill's fill is 1.12:1 on white, so on its own it is faint; the border and the two weight changes carry most of the load. If the border reads heavy at arm's length, fill-only is a one-line change."
+Tweet 5: They had already spotted the weakness, already known which direction the complaint would come from, and already scoped the fix. Written weeks before anyone objected.
+Tweet 6: The record also told me what I was NOT allowed to break. The pill exists because active green and inactive grey measure 1.12:1 against each other. Colour alone cannot carry the selected state. Whatever replaced it had to survive being desaturated.
+Tweet 7: So I removed the whole surface, not just the border, and made the selected glyph filled instead of outlined. Then I screenshotted the bar and desaturated it to check the selection was still obvious with no colour at all. It was, more obvious than the pill had been.
+Final tweet: Design docs are usually written for the person who arrives with no context. The good ones are written for the person who arrives with a complaint.
+
+VISUAL NOTE: tweet 7, the desaturated tab bar screenshot, solid glyph unmistakable against three outlines.
+
+---
+
+**LINKEDIN POST**
+I was asked to change one visual detail in my app: the bottom navigation bar marked the selected tab with a pale green pill behind the icon, and it looked heavy. Make it a filled icon instead, like iOS.
+
+Before I touched it I read the component's design record. In this codebase every component has one, listing what it is for, what was decided and why, what was rejected, and what is still unresolved.
+
+Under "Open" I found a line written weeks earlier by whoever last worked on it: "if the border reads heavy at arm's length, fill-only is a one-line change."
+
+They had predicted the exact complaint, from the exact direction it came, and pre-scoped the fix.
+
+The same record also told me what I could not break. The pill was not decoration. Active green and inactive grey measure 1.12 to 1 against each other, so colour alone cannot signal which tab is selected, which matters for anyone with red-green colour blindness. The pill was there to carry the state without relying on hue.
+
+So the constraint survived even though the solution did not. I removed the whole surface rather than just its border, made the selected icon filled and the others outlined, then took a screenshot and desaturated it to prove the selection was still obvious with no colour at all. It was clearer than the pill had ever been.
+
+Documentation usually gets written for the newcomer who lacks context. The most useful documentation I have read lately was written for the person who would arrive with an objection.
+
+VISUAL NOTE: three-panel image, the old pill, the new filled glyph, and the desaturated version proving the state survives.
+
+---
+
+CASE STUDY MOMENT
+A living design record predicted its own component's redesign, scoped the fix, and preserved the accessibility constraint that would otherwise have been lost with the thing being replaced.
+
+---
+
+### P3 PLATFORM PATTERN: Half your icon set cannot be filled, and it fails silently
+
+**TWITTER POST**
+React Native tip that cost me an hour. lucide icons take a `fill` prop and forward it to every path. On a closed shape (a circle, a rect) you get exactly the filled version you wanted. On an open path, the renderer implicitly closes the shape first, so a wallet outline collapses into lumps and a trend arrow becomes two wedges. No warning, no error, just a wrong-looking icon. Two of my four tab icons had to be hand-drawn as filled variants.
+
+VISUAL NOTE: side by side, the naive fill on Wallet and TrendingUp (broken blobs) next to the hand-authored versions.
+
+---
+
+**LINKEDIN POST**
+A small platform lesson worth writing down.
+
+I wanted my app's selected navigation tab to show a filled icon instead of an outlined one. The icon library supports this: pass a fill colour and it forwards it to every path in the glyph.
+
+For two of my four icons that worked perfectly. A sun's centre is a circle and a grid is four rectangles, so filling them produced exactly the solid shapes I wanted, using the library's own geometry, which guaranteed the silhouette matched.
+
+For the other two it produced garbage. A wallet and a trending-up arrow are drawn as open paths, lines rather than enclosed regions. When you fill an open path the renderer closes it first, so the wallet collapsed into two lumps and the arrow became a pair of wedges.
+
+Nothing warned me. No error, no console message. Just an icon that looked wrong.
+
+The fix was to hand-author filled variants for those two, tracing the library's own vertices so that switching between states changes the icon's weight and never its shape. The other two kept using the library's fill, because using its real geometry is strictly safer than redrawing it.
+
+The general lesson: when a library offers one API across a set of assets, check whether the assets are actually uniform. Mine were not, and the failure mode was silent rather than loud.
+
+VISUAL NOTE: the four tab icons in both states, with the two broken naive fills shown as the rejected attempt.
+
+---
+
+CASE STUDY MOMENT
+An icon library's fill API worked on half a set and silently deformed the other half, because the underlying paths were open rather than closed.
+
+---
+
+### P4 PRODUCT AND DESIGN JUDGMENT: The feature I talked my client out of
+
+**TWITTER POST**
+My designer asked for swipe navigation: swipe past the last tab on a page and you move to the next page. It sounds obvious. I argued against it and he dropped it. The reason: a swipe would sometimes mean "next view of this page" and sometimes mean "you just left the page", with nothing on screen telling you which. And each page has a different number of views, so you can never learn where the cliff is. The bounce at the end is honest. Leaving is a surprise.
+
+VISUAL NOTE: NONE.
+
+---
+
+**TWITTER THREAD**
+Tweet 1: I spent an hour talking someone out of a feature they asked me to build. Writing down why, because saying no well is harder than building.
+Tweet 2: The ask: my app has pages, and some pages have segments you swipe between. Swipe past the last segment and you should land on the next page. Continuous swipe navigation. It sounds obvious.
+Tweet 3: Problem one. The same gesture would mean two different things depending on invisible state. Usually "next segment", occasionally "you have left this page entirely". Nothing on screen tells you which one your next swipe does.
+Tweet 4: Problem two. Every page has a different number of segments. Two, three, two, none. So you can never build muscle memory for where the edge is. One swipe too many is a navigation error rather than a bounce.
+Tweet 5: Problem three. Swiping right from near the left edge is the iOS back gesture. A right-swipe on the first segment would sit directly on top of a system habit.
+Tweet 6: Problem four, the one that decided it. Building it properly needs a gesture library this codebase deliberately does not import, after two release crashes traced to the animation layer whose cause was never found.
+Tweet 7: And who benefits? It saves one thumb-move for power users. It costs unpredictable page exits for everyone else, and screen reader users get nothing, since they navigate by the tab bar regardless.
+Final tweet: The rubber-band bounce at the end of a list already tells the truth: that is all there is. Replacing an honest bounce with a surprise is not an upgrade.
+
+VISUAL NOTE: tweet 8, a short screen recording of the swipe hitting the last segment and bouncing.
+
+---
+
+**LINKEDIN POST**
+Part of doing this work well is occasionally declining to build what you were asked to build, and being able to explain why in terms the person who asked actually cares about.
+
+The request was reasonable on its face. My app has pages, and several pages have segments you swipe between. Why not let a swipe past the last segment carry you into the next page? Continuous navigation, fewer taps.
+
+I argued against it, for four reasons.
+
+The gesture would become ambiguous. The same swipe would usually mean "show me the next segment" and occasionally mean "you have left this page", with nothing visible indicating which. Ambiguity in a gesture is not a small cost, because the user cannot check before committing.
+
+There is no way to learn the boundary. The pages have two, three, two and zero segments. Muscle memory cannot form against an edge that moves.
+
+It collides with a system gesture. Swiping right from the left edge is how iOS goes back. Users have that reflex already.
+
+And building it properly required an animation library this codebase deliberately avoids, after two release-build crashes traced to that layer whose root cause was never confirmed. Adding it back for a convenience feature, on the navigation chrome of every screen, is a bad trade.
+
+The last question settled it: who gains? Power users save one thumb movement. Everyone else risks unexpected page exits. Screen reader users gain nothing, because they navigate by the tab bar regardless.
+
+The existing behaviour, a rubber-band bounce at the end, already communicates honestly that there is nothing further. We shipped the part that was clearly good, giving the remaining pages the same in-page swipe, and dropped the rest. The reasoning went into the design record so nobody re-proposes it without the context.
+
+VISUAL NOTE: NONE.
+
+---
+
+CASE STUDY MOMENT
+Challenged a requested navigation feature on usability, platform-convention and risk grounds, shipped the valuable half, and recorded the rejection so the idea cannot return uninformed.
+
+---
+
+### P5 BUILDING WITH AI HONESTLY: Four branches that looked like lost work, and my own miscount
+
+**TWITTER POST**
+Git told me four branches had unmerged commits. All four were fine. One was byte-identical to what had already merged, because squashing gives the work a new identity and leaves the original looking permanently unmerged. Two held only screenshots. The fourth had real code: an accessibility fix taking a green from 2.78:1 to 5.13:1, never merged, genuinely good. It was still safe to delete, because the palette moved on and the shipped colour now hits 5.37:1. Its goal arrived without it.
+
+VISUAL NOTE: the three greens side by side as buttons, old, proposed, shipped, with contrast ratios.
+
+---
+
+**LINKEDIN POST**
+A cleanup task turned into a lesson about trusting the tool that reports your state.
+
+I asked git which branches held work that had never reached the main line. It named four. The instinct is to treat that as four pieces of work at risk.
+
+Checking each one properly gave four different answers, and none of them was "lost work".
+
+One was byte-identical to code already shipped. When you squash a branch on merge, the result is a new commit with a new identity, so the original branch keeps reporting that it is unmerged forever. The question git answers is about commit ancestry. The question I actually had was about content, which needs a different comparison.
+
+Two contained only screenshots, three image files and no code at all.
+
+The fourth was the interesting one. It held genuine, never-merged work: an accessibility fix taking an interactive green from 2.78:1 contrast up to 5.13:1, which is a real problem properly solved. It was still safe to delete, because the palette had since been reworked entirely and the colour that shipped clears 5.37:1. The goal arrived by another route, better than the branch that was opened for it.
+
+Two things I would carry forward. First, when a tool reports a problem, confirm you and the tool are answering the same question. Second, I reported "four branches" to my collaborator, and after deleting them the same check surfaced eight more that my original framing had simply not covered. I had presented a scoped finding as if it were complete. Saying so afterwards was uncomfortable and necessary, because a cleanup that quietly leaves most of the mess is worse than one that names what remains.
+
+VISUAL NOTE: the audit canvas, four branch cards each with its verdict, plus the greens comparison.
+
+---
+
+CASE STUDY MOMENT
+An "unmerged work" alarm resolved to zero real risk, and the initial report was itself incomplete, which had to be corrected to the person relying on it.
+
+---

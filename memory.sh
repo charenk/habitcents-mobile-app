@@ -83,3 +83,31 @@ npm run ota:check -- <base-sha> origin/main          # OTA vs native build; ANY 
 # npx eas-cli build -p ios --profile internal --non-interactive --no-wait --auto-submit
 npx eas-cli build:list --platform ios --limit 3 --non-interactive --json   # build number, status, gitCommitHash
 npx eas-cli submit:list --platform ios --limit 3 --non-interactive 2>/dev/null   # watch the ASC submission leg
+
+# --- Added 2026-09-06 (navigation wave: grayscale gate, pager verification, branch hygiene) ---
+# ADR 0037 GATE. The tab bar's selected state must survive desaturation (active sage vs
+# inactive mist is only 1.12:1), so any change to TabBarIcon reruns this before merging:
+# xcrun simctl io booted screenshot shot.png
+# sips -c 210 1179 --cropOffset 2290 0 shot.png    # crop to the tab bar (iPhone 16, 1179x2556)
+# sips --matchTo '/System/Library/ColorSync/Profiles/Generic Gray Profile.icc' shot.png
+# Then look: the selected tab must be obvious with no colour at all.
+xcrun simctl ui booted content_size accessibility-extra-extra-extra-large  # then relaunch; labels must stay whole words
+xcrun simctl ui booted content_size medium                                 # reset afterwards
+#
+# Segment pagers ARE drivable from the agent side (native ScrollView paging, unlike a JS
+# PanResponder). Keep swipe start/end >4pt from the screen edges or the OS eats the gesture:
+# simulator swipe x 340 -> 50 at mid-pane height = one page forward.
+# Verify per screen: swipe advances the control, a tap slides the pager, a vertical drag inside
+# a pane does NOT move the pager (directionalLockEnabled), each pane keeps its scroll position,
+# and a swipe past the last segment BOUNCES (cross-page swipe is rejected, see SegmentPager.md).
+#
+# BRANCH HYGIENE. A squash merge leaves its source branch looking permanently unmerged, because
+# the squash commit has a different identity. `git log main..branch` will lie; diff CONTENT instead:
+# git diff --stat origin/main <branch>              # what main has that the branch lacks, and vice versa
+# git diff --stat <squash-sha> <branch>             # EMPTY = the branch is exactly what was merged
+# List every local branch still holding commits off main (re-run after each cleanup, the list grows):
+# for b in $(git for-each-ref --format='%(refname:short)' refs/heads/); do n=$(git rev-list --count origin/main..$b); [ "$n" != "0" ] && echo "$b: $n"; done
+# Before deleting: record SHAs (unreferenced commits survive ~90 days), and check nothing is checked
+# out in a worktree, which is easy to miss when several Claude sessions run at once:
+# git worktree list
+# git push origin --delete <branch> ...             # remote too; local -D alone leaves it on GitHub
