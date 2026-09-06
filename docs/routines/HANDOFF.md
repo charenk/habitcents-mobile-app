@@ -1,5 +1,26 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 7, 2026-09-06: rebase-only re-verify)
+
+`git fetch origin main` found 12 new commits since run 6 (mostly the
+`design/enhancements-zeroth-state` and `docs/review-fix-records` merges),
+which had flipped PR #132's `mergeable_state` to `dirty`. No new REVIEW
+FEEDBACK was present in this file or on the PR (checked comments directly,
+still empty). Rebased `routine/core-p3` onto `origin/main` clean except one
+mechanical conflict both times it recurred: `design/decisions/README.md`'s
+component index, where main's incoming lines (`ViewQuote` retired per ADR
+0037, plus new `TabBar`/`ActionDock` entries) collided with this branch's
+own additions (`ShareCounterCard`, then `PickOneSheet`/`BreakHabitSheet`).
+Resolved by keeping the union of both sides' entries each time, nothing
+dropped. Ran a full `npm install` first (fresh container, and this branch's
+own commits change `package.json`), then `npx tsc --noEmit` clean and
+`npm test`: 105 suites / 1132 tests green (up from 103/1106; the extra
+count is main's own new tests pulled in by the rebase, not new code from
+this run). Force-with-lease pushed the rebased branch. No PLAN.md item was
+reopened; nothing code-shaped remains here per run 6's assessment, still
+true. PR #132 stays ready for review; the decision queue below is
+unchanged from run 6.
+
 ## COMPLETE (run 6, 2026-09-05)
 
 `git fetch origin main` showed no new commits since run 5 (branch already
