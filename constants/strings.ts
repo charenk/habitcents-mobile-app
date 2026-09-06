@@ -1212,10 +1212,18 @@ export const strings = {
     // and records interest on device: no network beyond the analytics event.
     leakFinderBody:
       'The leak finder will read a bank statement on your phone and point at the spending that leaks. Nothing uploads, ever. We are rebuilding it, and we want to build it with people who will actually use it.',
+    // The invitation, shown only before opting in: once someone is on the
+    // list, inviting them again reads as a surface that forgot them.
     leakFinderReward: 'Join the research and you could win six months of HabitCents.',
     leakFinderCta: 'Count me in',
-    leakFinderConfirmedTitle: 'You are on the list',
-    leakFinderConfirmedBody: 'Thanks. The leak finder will land in this tab first.',
+    // The receipt, and the only thing a returning user reads. It answers both
+    // questions they arrive with: did my tap register, and what do I get.
+    // Deliberately promises no contact: analytics is anonymous (D-9), so the
+    // app has no way to reach anyone. What it can do is unlock in place.
+    // Everyone who opts in gets the six months, no draw (Charen, 2026-09-06).
+    leakFinderConfirmedTitle: "You're in",
+    leakFinderConfirmedBody:
+      "Your six months is saved. The leak finder unlocks right here when it's ready.",
     scanSnapshotEyebrow: (date: string) => `First scan · ${date}`,
     // Evidence line under the eyebrow: what this snapshot covers, honestly.
     // windowLabel is omitted when the scan carried no coverage window.

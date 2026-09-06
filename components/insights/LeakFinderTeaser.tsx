@@ -25,7 +25,8 @@ import { spacing, typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 
 type LeakFinderTeaserProps = {
-  /** True once the user has opted in; the CTA is replaced by the receipt. */
+  /** True once the user has opted in: the invitation and its CTA are replaced
+   *  by the receipt, which carries the offer from then on. */
   interestRecorded: boolean;
   onRecordInterest: () => void;
 };
@@ -56,8 +57,10 @@ export function LeakFinderTeaser({ interestRecorded, onRecordInterest }: LeakFin
           size iOS offered them rather than a polished 19.5pt ceiling. */}
       <Text style={styles.body}>{strings.insights.leakFinderBody}</Text>
 
-      <Text style={styles.reward}>{strings.insights.leakFinderReward}</Text>
-
+      {/* The invitation and the receipt are the same slot, never both. Before
+          opting in the pane asks; after, it answers, and the answer carries
+          the offer so nothing on screen still invites someone who is already
+          on the list. */}
       {interestRecorded ? (
         <View style={styles.confirmed} testID="leak-finder-confirmed">
           <View style={styles.confirmedHead}>
@@ -69,11 +72,14 @@ export function LeakFinderTeaser({ interestRecorded, onRecordInterest }: LeakFin
           <Text style={styles.confirmedBody}>{strings.insights.leakFinderConfirmedBody}</Text>
         </View>
       ) : (
-        <Button
-          label={strings.insights.leakFinderCta}
-          onPress={onRecordInterest}
-          style={styles.cta}
-        />
+        <>
+          <Text style={styles.reward}>{strings.insights.leakFinderReward}</Text>
+          <Button
+            label={strings.insights.leakFinderCta}
+            onPress={onRecordInterest}
+            style={styles.cta}
+          />
+        </>
       )}
     </View>
   );

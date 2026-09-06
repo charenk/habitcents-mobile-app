@@ -296,6 +296,10 @@ describe('Insights leak finder segment', () => {
     expect(view.getByText(strings.insights.leakFinderConfirmedTitle)).toBeTruthy();
     expect(view.getByText(strings.insights.leakFinderConfirmedBody)).toBeTruthy();
     expect(view.queryByText(strings.insights.leakFinderCta)).toBeNull();
+    // The invitation goes with the CTA. Leaving it up would ask someone who
+    // just joined to join again, and it is the receipt that carries the offer
+    // from here on.
+    expect(view.queryByText(strings.insights.leakFinderReward)).toBeNull();
   });
 
   it('a stored opt-in renders confirmed on mount, so the ask is never repeated', async () => {
@@ -307,8 +311,11 @@ describe('Insights leak finder segment', () => {
       fireEvent.press(view.getByLabelText(scanSegmentLabel(false)));
     });
 
+    // What a returning user reads: that they are in, and what they are owed.
     expect(view.getByText(strings.insights.leakFinderConfirmedTitle)).toBeTruthy();
+    expect(view.getByText(strings.insights.leakFinderConfirmedBody)).toBeTruthy();
     expect(view.queryByText(strings.insights.leakFinderCta)).toBeNull();
+    expect(view.queryByText(strings.insights.leakFinderReward)).toBeNull();
     // Reading a stored opt-in is not a new one.
     expect(mockTrack).not.toHaveBeenCalledWith('leak_finder_interest_recorded', {});
   });
