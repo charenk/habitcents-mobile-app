@@ -29,5 +29,6 @@ Vocabulary (ADR 0034): **Zero** nothing ever happened here; **Quiet** history el
 ## Open
 
 ## Iterations
+- 2026-09-06 (routine/ipad): Spent's SectionList moved into its own `components/money/SpentList.tsx` on the same day the pager landed, and its `listContent` style did not carry forward the 600pt tablet cap `money.tsx`'s old inline ScrollView had (item 2b, 2026-09-04). Added `contentColumnStyle` back to `listContent`, matching Upcoming and Habits' shared `scrollContent`. Below the cap it is a pass-through, so phone rendering is unchanged.
 - 2026-09-06: the three segments became a swipeable pager on `utils/useSegmentPager.ts`; `money_view_switched` added.
 - 2026-09-05: illustrations on all three Zero states, Zero copy rewritten. ADR 0036.
