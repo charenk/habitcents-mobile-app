@@ -38,7 +38,7 @@ import { useToast } from '@/components/ui/Toast';
 import { hapticError } from '@/utils/motion';
 import { spacing, typeScale, layout } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useLocale } from '@/contexts/LocaleContext';
 import { useOnboarding } from '@/contexts/OnboardingContext';
@@ -51,11 +51,15 @@ import { isPremium } from '@/utils/purchases';
 
 const PRIVACY_POLICY_URL = 'https://habitcents.com/privacy';
 const TERMS_OF_SERVICE_URL = 'https://habitcents.com/terms';
-const SUPPORT_MAILTO_URL = `mailto:${strings.settings.supportEmail}`;
 
 export default function ProfileScreen(): React.JSX.Element {
   const theme = useTheme();
+  const strings = useStrings();
   const styles = useMemo(() => createStyles(theme), [theme]);
+  const supportMailtoUrl = useMemo(
+    () => `mailto:${strings.settings.supportEmail}`,
+    [strings]
+  );
   const router = useRouter();
   const { show } = useToast();
   const { currency } = useCurrency();
@@ -177,7 +181,7 @@ export default function ProfileScreen(): React.JSX.Element {
             label={strings.profile.supportRow}
             value={strings.settings.supportEmail}
             onPress={() => {
-              openExternal(SUPPORT_MAILTO_URL, strings.settings.mailOpenFailed);
+              openExternal(supportMailtoUrl, strings.settings.mailOpenFailed);
             }}
             accessibilityLabel={settingsRowLabel(
               strings.profile.supportRow,
