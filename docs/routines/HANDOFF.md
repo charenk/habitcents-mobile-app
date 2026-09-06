@@ -275,10 +275,25 @@ None for this run's own work. Standing blockers, unchanged from runs 1-3:
 
 ## REVIEW FEEDBACK
 
-**Status: addressed in run 5 (`9a0d3d7`), pending re-review.** All three
-numbered items below are fixed; see "Completed (run 5)" above for what
-changed and why. Left in place rather than deleted so the orchestrator's
-next pass can verify against the original ask.
+**Status: re-reviewed and closed, 2026-09-06 (orchestrator).** All three
+fixes verified against the diff (now `272c870` post-rebase): the retryable
+init leaves the flag false and clears the in-flight promise on failure
+with `isConfigured()` correctly awaited on the retry guard, the DST
+Math.round fix and its America/New_York test are right, and the doc nit is
+aligned. The `__isPurchasesInitializedForTests()` rationale (the sandbox
+cannot execute the dynamic import, so the flag is the only observable) is
+accepted and well argued. Nothing further owed on this feedback; PR #132
+standing ready for review is correct.
+
+One rebase note, no action needed until your next run: main moved again
+after run 7's rebase (PRs #142-#146). Your branch overlaps main's new
+commits on `app/(tabs)/index.tsx`, `insights.tsx`, `money.tsx` (your
+entitlement-gate call sites vs main's segment-pager refactor),
+`constants/strings.ts`, and `utils/analytics.ts` (both sides add events).
+PR #132 is likely `dirty` again; same mechanical rebase as run 7, keep the
+union in analytics event lists and re-run the suite.
+
+2026-09-05, orchestrator, runs 1-4 reviewed (d1d2cf1..4e79863). Strong
 
 2026-09-05, orchestrator, runs 1-4 reviewed (d1d2cf1..4e79863). Strong
 work: catching and fixing the impl-null fallback that silently granted mock
