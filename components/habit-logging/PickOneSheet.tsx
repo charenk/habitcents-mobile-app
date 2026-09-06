@@ -36,7 +36,8 @@ import { useCurrency } from '@/contexts/CurrencyContext';
 import { radii, typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
 import type { DetectedHabit, HabitFrequency } from '@/types/habit';
-import { strings } from '@/constants/strings';
+import type { Catalog } from '@/utils/i18n';
+import { useStrings } from '@/utils/i18n';
 
 type PickOneSheetProps = {
   visible: boolean;
@@ -64,7 +65,7 @@ type PickOneSheetProps = {
   onStartTrial?: () => void;
 };
 
-function cadenceLabel(frequency: HabitFrequency): string {
+function cadenceLabel(frequency: HabitFrequency, strings: Catalog): string {
   if (frequency === 'daily') return strings.habitLogging.pickOneCadenceDaily;
   if (frequency === 'weekly') return strings.habitLogging.pickOneCadenceWeekly;
   return strings.habitLogging.pickOneCadenceMonthly;
@@ -86,6 +87,7 @@ export function PickOneSheet({
   onStartTrial,
 }: PickOneSheetProps) {
   const theme = useTheme();
+  const strings = useStrings();
   const { format } = useCurrency();
   const { height } = useWindowDimensions();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -136,7 +138,7 @@ export function PickOneSheet({
     <>
       <Text style={styles.title} accessibilityRole="header" maxFontSizeMultiplier={1.5}>{titleCase(habit.name)}</Text>
       <Text style={styles.cadence}>
-        {strings.habitLogging.pickOneNewLeak} · {cadenceLabel(habit.frequency)}
+        {strings.habitLogging.pickOneNewLeak} · {cadenceLabel(habit.frequency, strings)}
       </Text>
 
       <Text style={styles.paragraph}>{evidence}</Text>
