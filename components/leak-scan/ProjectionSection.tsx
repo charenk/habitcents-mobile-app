@@ -5,7 +5,7 @@ import { formatDate, parseDateOnly } from '@/utils/dates';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useReminders } from '@/contexts/RemindersContext';
 import { radii, spacing, typeScale, type AppTheme } from '@/constants/theme';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
 import { TierBadge } from './TierBadge';
 import { categoryDisplayLabel } from '@/utils/leakScanBridge';
 import { remindToggleLabel } from '@/utils/a11y';
@@ -47,6 +47,7 @@ function formatNextDate(nextDateISO: string): string {
 export function ProjectionSection({ summary, onSave, saving = false }: ProjectionSectionProps) {
   const theme = useTheme();
   const { format } = useCurrency();
+  const strings = useStrings();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [remindBefore, setRemindBefore] = useState<Record<string, boolean>>({});
   const { permission, requestPermission } = useReminders();

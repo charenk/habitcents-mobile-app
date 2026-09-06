@@ -5,7 +5,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { categoryEmoji, categoryIdentityColor } from '@/constants/categoryEmoji';
 import { radii, typeScale, type AppTheme } from '@/constants/theme';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
 import { TierBadge } from './TierBadge';
 import { habitCardLabel } from '@/utils/a11y';
 import type { HabitCandidate } from '@/utils/leakScan/types';
@@ -57,6 +57,7 @@ function HabitCardImpl({
 }: HabitCardProps) {
   const theme = useTheme();
   const { format } = useCurrency();
+  const strings = useStrings();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [menuOpen, setMenuOpen] = React.useState(false);
 
