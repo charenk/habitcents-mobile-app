@@ -2,21 +2,38 @@
 
 ## Status
 
-In progress. Run 6 of the routine. Branch was already even with
-origin/main at rebase time (no new upstream commits since run 5; nothing to
-resolve). `npm install` was needed again at the start of this run (fresh
-container, `node_modules` not present, same as runs 1-5). tsc clean, full
-test suite green (100 suites, 1081 tests), unchanged from run 5 since no
-code changed this run. No new REVIEW FEEDBACK section was present at the
-start of this run (run 5's was already addressed and is recorded below).
-Checked the status board (`charenk/habitcents-mobile-app#139`) for an
-answer to the footer-cap DECISIONS NEEDED item: still open, zero comments,
-Charen has not weighed in. That is the only plan item (6) not yet checked
-off and it stays soft-blocked on that decision, exactly as run 5 left it;
-nothing else in the plan is actionable without it, so this run made no code
-changes. No simulator or device in this environment, so nothing in this
-run has been eyeballed on an actual iPad; DEVICE PASS NEEDED below is
-unchanged from run 4.
+In progress. Run 7 of the routine. Unlike runs 5-6, the rebase onto
+origin/main was NOT a no-op this time: 12 commits had landed on main since
+run 6 (zero-state art, the ActionDock/dock unification under ADR 0038, tab
+selection and toast fixes, design record catch-up), and `app/(tabs)/index.tsx`
+conflicted in four places (one import line, three `paddingBottom` sites in
+`spentScrollContent`/`listContent`/`keptEmptyContent`). Resolved per the
+exact guidance run 5 had left in `design/decisions/modules/today.md`'s Open
+section for this: kept both sides (main's ADR 0038 `spacing.xxl` replacing
+the old `screenBottomClearance` comment/value, plus this branch's
+`...contentColumnStyle`), and dropped the now-unused `layout` import while
+keeping `contentColumnStyle`. Two docs files also conflicted
+(`design/decisions/README.md`'s component index, `design/decisions/modules/
+today.md`'s Decisions list against main's newer ADR 0036-0039 entries);
+merged by union rather than picking a side, and removed the now-satisfied
+merge-guidance note from today.md's Open section since this run is that
+merge. After the rebase, re-audited (not just re-ran) for tablet
+correctness against everything main brought in: grepped the full repo for
+`useWindowDimensions` again (unchanged set of 7 real call sites, none of
+main's new/changed files added one) and checked every scroll container
+touched by the incoming commits (`app/(tabs)/index.tsx`,
+`app/(tabs)/insights.tsx`, `app/(tabs)/money.tsx`,
+`components/leak-scan/DeckScreen.tsx`, `ReviewQueueSheet.tsx`) still spreads
+`contentColumnStyle` where item 2 put it; confirmed the item 2e wrappers
+(`door3-ribbon-wrap`, `kept-hero-cap-wrap`) are both still present and
+unaffected by the new ActionDock/zero-state code around them. `npm install`
+was needed again (fresh container). tsc clean, full test suite green (102
+suites, 1107 tests, up from 100/1081 purely from main's incoming tests, none
+of this branch's own). Checked the status board
+(`charenk/habitcents-mobile-app#139`) again for the footer-cap decision:
+still open, zero comments, unanswered. Item 6 stays soft-blocked on it,
+exactly as runs 5-6 left it; no other plan item had code work available.
+DEVICE PASS NEEDED below is unchanged from run 4.
 
 ## Completed
 
@@ -69,6 +86,21 @@ unchanged from run 4.
   Re-ran tsc and the full suite to confirm the branch is still green with
   zero drift; both are unchanged from run 5. Re-verified item 7 (`app.json`
   orientation still `"portrait"`).
+- Run 7: rebased onto 12 new main commits (zero-state art, ActionDock/dock
+  unification, tab-selection and toast fixes, design record catch-up),
+  resolving a real conflict in `app/(tabs)/index.tsx` (import line plus
+  three `paddingBottom` sites) and two docs files
+  (`design/decisions/README.md`, `design/decisions/modules/today.md`)
+  exactly per the resolution guidance run 5 had left recorded in
+  today.md's Open section; that note is now removed since this run is the
+  merge it was written for. No plan item's code changed (nothing new was
+  unblocked by main's incoming work), but re-audited rather than assumed:
+  re-grepped for `useWindowDimensions` (still the same 7 real sites, none
+  new) and re-checked that every scroll container main touched still
+  carries `contentColumnStyle` where item 2 put it, and that the item 2e
+  wrappers (`door3-ribbon-wrap`, `kept-hero-cap-wrap`) survived the
+  ActionDock/zero-state rework around them. Confirmed item 6 still
+  soft-blocked: `#139` still open, zero comments. Re-verified item 7.
 
 ## Next
 
@@ -81,7 +113,13 @@ Per PLAN.md, in order:
    dedicated test case.
 2. Item 7: re-verify `app.json`'s `"orientation": "portrait"` stays
    untouched (confirmed unchanged this run; keep checking every run).
-3. With items 1-5 and 7 all satisfied, item 6 is the only plan line not
+3. Every run until the footer-cap decision lands, re-audit (not just
+   re-run) against whatever new main commits arrived: grep
+   `useWindowDimensions` fresh and check any scroll container main touched
+   still carries `contentColumnStyle`, the way this run did. A clean
+   rebase is not proof nothing regressed if main added a new scroll
+   surface this branch hasn't seen yet.
+4. With items 1-5 and 7 all satisfied, item 6 is the only plan line not
    checked off, and it is blocked on a human decision rather than on
    agent work. Do not treat the plan as fully checked or touch the
    COMPLETE state until either that decision lands and its follow-up test
@@ -91,15 +129,15 @@ Per PLAN.md, in order:
 
 None. `npm install` was needed again at the start of this run (fresh
 container, `node_modules` not present); expected, not a real blocker, same
-as runs 1-5. Item 6 is soft-blocked on Charen's footer-cap decision (see
+as runs 1-6. Item 6 is soft-blocked on Charen's footer-cap decision (see
 DECISIONS NEEDED), not on anything this routine can resolve itself; still
 open on `#139` with zero comments as of this run. Noted here for
 visibility, not logged as a runs.log `blocked` outcome: per the retry and
 failure policy, that classification is for a routine that cannot proceed
-at all, and this one confirmed the branch is still green and the plan
-state is still accurate, which is itself the bounded work this run had
-available. If the decision is still unanswered next run too, this remains
-the correct call, not a growing backlog.
+at all, and this one did real, bounded, unblocked work (the rebase conflict
+resolution and the post-rebase re-audit). If the decision is still
+unanswered next run too, this remains the correct call, not a growing
+backlog.
 
 ## DECISIONS NEEDED
 
@@ -109,7 +147,7 @@ the correct call, not a growing backlog.
   width by design. Per the run 5 review feedback, this is on the ops
   status board's DECISIONS NEEDED queue for Charen (`#139`), not something
   this routine re-raises or decides itself. Still open, unanswered, as of
-  run 6.
+  run 7.
 - No new decisions raised this run.
 
 ## DEVICE PASS NEEDED
