@@ -28,7 +28,8 @@ import { cardText, isMilestoneCard, type CoachMomentCardId } from '@/utils/coach
 import { useReducedMotion } from '@/utils/motion';
 import { motion, radii, shadows, spacing, typeScale, type AppTheme } from '@/constants/theme';
 import type { DetectedHabit, HabitChangeGoal } from '@/types/habit';
-import { strings } from '@/constants/strings';
+import type { Catalog } from '@/utils/i18n';
+import { useStrings } from '@/utils/i18n';
 
 type CheckInCardProps = {
   habit: DetectedHabit;
@@ -68,7 +69,7 @@ type PulseStyle = Animated.WithAnimatedValue<StyleProp<ViewStyle>>;
  */
 const lastAnnouncedAnswerByGoal = new Map<string, string>();
 
-function chapterCopy(chapter: ReturnType<typeof chapterForTotal>): string {
+function chapterCopy(chapter: ReturnType<typeof chapterForTotal>, strings: Catalog): string {
   switch (chapter) {
     case 'Deciding': return strings.habitLogging.chapterDeciding;
     case 'Rhythm': return strings.habitLogging.chapterRhythm;
@@ -102,6 +103,7 @@ function CheckInCardImpl({
   onOpenDetail,
 }: CheckInCardProps) {
   const theme = useTheme();
+  const strings = useStrings();
   const { format } = useCurrency();
   /**
    * Spec 09 section 2, "Check-in card": the two answer buttons stack
@@ -176,7 +178,7 @@ function CheckInCardImpl({
       tint,
       tone: (skipped ? 'sage' : 'snow') as 'sage' | 'snow',
       headline: tint && milestoneJustHit
-        ? strings.habitLogging.milestoneHeadline(goal.totalSkips, chapterCopy(chapterForTotal(milestoneJustHit)))
+        ? strings.habitLogging.milestoneHeadline(goal.totalSkips, chapterCopy(chapterForTotal(milestoneJustHit), strings))
         : undefined,
     };
   }, [
@@ -226,6 +228,7 @@ function CheckInCardImpl({
           partialAmount: todayEntry?.partialAmount,
           skipValue: goal.skipValue,
           format,
+          strings,
         }).headline
       : !isDaily && showEventConfirmation && lastEntry
         ? confirmationCopy({
@@ -240,6 +243,7 @@ function CheckInCardImpl({
             partialAmount: undefined,
             skipValue: goal.skipValue,
             format,
+            strings,
           }).headline
         : null;
 
@@ -372,6 +376,7 @@ function CheckInCardImpl({
             pulseStyle={pulseStyle}
             styles={styles}
             theme={theme}
+            strings={strings}
           />
 
           {coach && (
@@ -449,6 +454,7 @@ function CheckInCardImpl({
             pulseStyle={pulseStyle}
             styles={styles}
             theme={theme}
+            strings={strings}
           />
           {coach && (
             <CoachMomentSlot text={coach.text} tint={coach.tint} tone={coach.tone} headline={coach.headline} />
@@ -503,6 +509,7 @@ type ConfirmationBlockProps = {
   partialAmount: number | undefined;
   skipValue: number;
   format: (cents: number) => string;
+  strings: Catalog;
   pulseStyle: PulseStyle;
   styles: ReturnType<typeof createStyles>;
   theme: AppTheme;
@@ -520,6 +527,7 @@ type ConfirmationCopyArgs = {
   partialAmount: number | undefined;
   skipValue: number;
   format: (cents: number) => string;
+  strings: Catalog;
 };
 
 /**
@@ -539,6 +547,7 @@ function confirmationCopy({
   partialAmount,
   skipValue,
   format,
+  strings,
 }: ConfirmationCopyArgs): { headline: string; detail: string | null } {
   const skipped = state === 'skipped';
 
@@ -589,6 +598,7 @@ function ConfirmationBlock({
   partialAmount,
   skipValue,
   format,
+  strings,
   pulseStyle,
   styles,
   theme,
@@ -606,6 +616,7 @@ function ConfirmationBlock({
     partialAmount,
     skipValue,
     format,
+    strings,
   });
 
   return (

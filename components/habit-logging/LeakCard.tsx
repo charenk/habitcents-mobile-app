@@ -7,7 +7,7 @@ import { CoachMomentSlot } from './CoachMomentSlot';
 import { cardText, type CoachMomentCardId } from '@/utils/coachMoments';
 import { radii, shadows, spacing, typeScale, type AppTheme } from '@/constants/theme';
 import type { DetectedHabit } from '@/types/habit';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
 
 type LeakCardProps = {
   habit: DetectedHabit;
@@ -37,6 +37,7 @@ type LeakCardProps = {
  */
 function LeakCardImpl({ habit, onBreak, onDismiss, coachMomentCardId, breakAgain }: LeakCardProps) {
   const theme = useTheme();
+  const strings = useStrings();
   const { format } = useCurrency();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
