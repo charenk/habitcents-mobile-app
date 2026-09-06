@@ -16,9 +16,10 @@ import { layout, typeScale } from '@/constants/theme';
 export default function TabLayout() {
   const theme = useTheme();
   // Tab bar metrics derive from the device's real bottom inset (ADA-022):
-  // 8 top padding + 56 content (tabBarHeight 64 since ADR 0037, room for the
-  // selected pill) + home-indicator inset (min 8 on inset-less devices),
-  // instead of the old fixed height 84 / paddingBottom 28.
+  // 8 top padding + 48 content (tabBarHeight 56, back down from 64 now that the
+  // selected tab is a filled glyph rather than a pill) + home-indicator inset
+  // (min 8 on inset-less devices), instead of the old fixed height 84 /
+  // paddingBottom 28.
   const insets = useSafeAreaInsets();
   const tabBarBottomPad = Math.max(insets.bottom, 8);
   return (

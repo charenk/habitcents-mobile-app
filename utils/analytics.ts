@@ -141,6 +141,14 @@ export interface AnalyticsEventMap {
   // Today tab (redesign U5/U7, ADR 0019, DI-5/DI-7): fires on every
   // Spent/Kept switch, chip tap or pager swipe.
   today_view_switched: { to: 'spent' | 'kept'; method: 'tap' | 'swipe' };
+  // Money and Insights gained the same pager on 2026-09-06, so they report
+  // their switches the same way. Same shape as today_view_switched on
+  // purpose: structural identifiers only, no amounts and no names, and the
+  // method tells us whether the swipe affordance is actually being found.
+  // Approved by Charen 2026-09-06 (analytics contracts are human-gated,
+  // ADR 0035).
+  money_view_switched: { to: 'spent' | 'upcoming' | 'habits'; method: 'tap' | 'swipe' };
+  insights_view_switched: { to: 'month' | 'scan'; method: 'tap' | 'swipe' };
   // Coaching (P2-2, docs/design-package-phase2/04-p2-2-coach-moments.md
   // section 5). trigger/card_id are structural identifiers only; no card
   // content, amounts, merchant, or habit names ever ride in this event.

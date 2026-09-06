@@ -47,10 +47,16 @@ import { getEntitlement } from '@/utils/purchases';
 import { computeUpcoming, resolveRule, type UpcomingItem } from '@/utils/recurring';
 import { getUpcomingWindowDays, setUpcomingWindowDays } from '@/utils/storage';
 import { DEFAULT_UPCOMING_WINDOW_DAYS, type UpcomingWindowDays } from '@/utils/upcomingWindow';
+import { track } from '@/utils/analytics';
+import { useSegmentPager } from '@/utils/useSegmentPager';
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 type MoneyView = 'spent' | 'upcoming' | 'habits';
+
+/** Pane order, left to right. Matches the segmented control above them, and
+ *  module-level so the pager's handlers keep a stable identity across renders. */
+const MONEY_VIEWS = ['spent', 'upcoming', 'habits'] as const satisfies readonly MoneyView[];
 
 /**
  * Upcoming advances past a due-today occurrence (ADR 0024, U11): by the time
@@ -102,6 +108,25 @@ export default function MoneyScreen() {
   } = useHabits();
 
   const [view, setView] = useState<MoneyView>('spent');
+  // The segments double as pager pages: tap one or swipe to it. See
+  // utils/useSegmentPager.ts for why this stays a plain paging ScrollView.
+  const { markInteracted, pagerProps, paneProps } = useSegmentPager<MoneyView>({
+    values: MONEY_VIEWS,
+    value: view,
+    onSwipe: useCallback((landed: MoneyView) => {
+      setView(landed);
+      track('money_view_switched', { to: landed, method: 'swipe' });
+    }, []),
+  });
+
+  const handleViewChange = useCallback(
+    (next: MoneyView) => {
+      markInteracted();
+      setView(next);
+      track('money_view_switched', { to: next, method: 'tap' });
+    },
+    [markInteracted]
+  );
   const [editing, setEditing] = useState<Expense | null>(null);
   const [addUpcomingVisible, setAddUpcomingVisible] = useState(false);
   const [editingUpcoming, setEditingUpcoming] = useState<Expense | null>(null);
@@ -232,28 +257,37 @@ export default function MoneyScreen() {
         <SegmentedControl<MoneyView>
           options={segments}
           value={view}
-          onChange={setView}
+          onChange={handleViewChange}
           accessibilityLabel={strings.money.segmentLabel}
         />
       </View>
 
       {/*
-        UX-016: Spent renders as its own SectionList (components/money/
-        SpentList.tsx) rather than nesting inside this ScrollView, since a
-        SectionList already owns its own scrolling and virtualizes -- nesting
-        it inside another scroll container would fight that (and re-render/
-        mount every row anyway, defeating the point). Upcoming and Habits
-        (both bounded lists, ~15 items or fewer) keep the plain ScrollView.
+        The three segments are pages of one pager, so they can be swiped
+        between as well as tapped (utils/useSegmentPager.ts, shared with Today
+        and Insights). All three stay mounted, which is what lets each keep its
+        own scroll position; paneProps hides the off-screen ones from
+        assistive tech.
+
+        UX-016 still holds, now per pane: Spent renders as its own SectionList
+        (components/money/SpentList.tsx) rather than nesting inside a
+        ScrollView, since a SectionList already owns its scrolling and
+        virtualizes, and nesting it would fight that. Upcoming and Habits are
+        bounded lists (~15 items or fewer), so each takes a plain ScrollView of
+        its own. What changed is that these are now siblings in the pager
+        rather than two branches of one conditional.
       */}
-      {view === 'spent' ? (
-        <SpentList sections={sections} onEditExpense={setEditing} onLogExpense={handleEmptyLog} />
-      ) : (
-        <ScrollView
-          style={styles.scroll}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          {view === 'upcoming' && (
+      <ScrollView {...pagerProps} style={styles.pager} testID="money-pager">
+        <View {...paneProps('spent')} testID="money-pane-spent">
+          <SpentList sections={sections} onEditExpense={setEditing} onLogExpense={handleEmptyLog} />
+        </View>
+
+        <View {...paneProps('upcoming')} testID="money-pane-upcoming">
+          <ScrollView
+            style={styles.scroll}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
             <UpcomingList
               items={upcoming}
               windowDays={windowDays}
@@ -263,8 +297,15 @@ export default function MoneyScreen() {
               onEditItem={(expense) => setEditingUpcoming(expense)}
               hasAnyRecurring={hasAnyRecurring}
             />
-          )}
-          {view === 'habits' && (
+          </ScrollView>
+        </View>
+
+        <View {...paneProps('habits')} testID="money-pane-habits">
+          <ScrollView
+            style={styles.scroll}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
             <HabitsList
               rows={habitRows}
               managedMonthlyTotal={managedMonthlyTotal}
@@ -272,9 +313,9 @@ export default function MoneyScreen() {
               onOpenHabit={(habitId) => router.push(`/habit/${habitId}`)}
               onBreakHabit={handleEmptyBreak}
             />
-          )}
-        </ScrollView>
-      )}
+          </ScrollView>
+        </View>
+      </ScrollView>
 
       <ExpenseSheet
         mode="edit"
@@ -317,6 +358,9 @@ function createStyles(theme: AppTheme) {
     segments: {
       paddingHorizontal: 20,
       marginTop: 8,
+    },
+    pager: {
+      flex: 1,
     },
     scroll: {
       flex: 1,

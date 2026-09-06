@@ -362,6 +362,36 @@ describe('Today: Spent/Kept chips', () => {
     expect(mockTrack).toHaveBeenCalledWith('today_view_switched', { to: 'kept', method: 'swipe' });
   });
 
+  // A drag released with no velocity settles the page without ever producing
+  // momentum. Today wired only onMomentumScrollEnd until the pager moved into
+  // useSegmentPager, so a slow swipe left the chips showing one pane while the
+  // pager showed the other.
+  it('a drag that settles without momentum still switches to Kept, exactly once', async () => {
+    const view = await renderToday();
+    const pager = view.getByTestId('today-pager');
+
+    await act(async () => {
+      fireEvent(pager, 'scrollEndDrag', {
+        nativeEvent: { contentOffset: { x: windowWidth } },
+      });
+    });
+
+    expect(view.getByLabelText(/^Kept .*, selected/)).toBeTruthy();
+    expect(mockTrack).toHaveBeenCalledWith('today_view_switched', { to: 'kept', method: 'swipe' });
+
+    // The momentum end that a faster release would also deliver lands on the
+    // page already selected, so it drops rather than double counting.
+    await act(async () => {
+      fireEvent(pager, 'momentumScrollEnd', {
+        nativeEvent: { contentOffset: { x: windowWidth } },
+      });
+    });
+
+    expect(
+      mockTrack.mock.calls.filter(([event]) => event === 'today_view_switched')
+    ).toHaveLength(1);
+  });
+
   it('a momentum end that settles back on the current page does not re-fire analytics', async () => {
     const view = await renderToday();
     const pager = view.getByTestId('today-pager');
