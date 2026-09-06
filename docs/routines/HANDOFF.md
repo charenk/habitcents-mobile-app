@@ -1,5 +1,74 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 9, 2026-09-06: re-verify, no new work)
+
+`git fetch origin main` showed no new commits since run 8 (branch already
+even with `origin/main`, `mergeable_state: clean` confirmed via the PR API,
+no rebase needed). No new REVIEW FEEDBACK was present in this file or on
+PR #132 (checked the PR's comment list directly via the API: empty).
+Re-checked `habitcents-ops/PUNCHLIST.md`'s RESUME marker for a new
+core-p3-flagged item the way run 8 found the leak-finder promo gap: the
+current marker's one dated item (2026-09-06, the leak finder promo) is
+exactly what run 8 already closed; its other four items (build-20 device
+pass, canvas regeneration, an ipad-routine merge note, a today-kept art
+asset decision) all belong to the `design/enhancements-zeroth-state` wave,
+none are core-p3/payments-shaped, so none belong on this branch. Re-verified
+from a fresh `npm install` (node_modules absent in this container):
+`npx tsc --noEmit` clean, `npm test` 110 suites / 1165 tests green, exactly
+matching run 8's ending count (no regression, nothing new to add). PLAN.md's
+checklist is fully `[x]`/`(C)`; nothing code-shaped remains that this
+routine can reach without a website-repo checkout or a Charen-gated
+external account. Marking PR #132 ready for review per the routine's own
+completion instructions. Decision queue for Charen is unchanged from run 6,
+plus run 8's new grant-timing item; both reproduced below for one place to
+read them.
+
+**Decision queue Charen must clear:**
+
+1. App Store privacy label: review `docs/legal/app-store-privacy-labels.md`
+   in full, accept or override its one judgment call (section 3: bucketed
+   spend amounts under "Financial Info" vs "Usage Data"; recommendation
+   stands: "Usage Data"), and resolve the one open verification (section 4
+   item 3: PostHog's IP-handling default). Then transcribe into App Store
+   Connect. Not code; nothing to merge for this specifically.
+2. RevenueCat dashboard entitlement name must match
+   `EXPO_PUBLIC_REVENUECAT_ENTITLEMENT_ID` (defaults to `'premium'`).
+3. When to actually build and test the live RevenueCat client (needs a
+   real device build; still mock-mode by default, no go-live date picked).
+4. A real device pass for the share card once a native build exists:
+   confirm the captured PNG and that the OS share sheet receives a usable
+   image on both iOS and Android.
+5. The live-path entitlement-reactivity wiring (customerInfo update
+   listener repainting a mounted screen) is code-reviewable but not
+   unit-testable in this sandbox (documented under Blockers below). Worth
+   a manual check once RevenueCat activation gets a real device build.
+6. Informational, not a decision: this branch adds `react-native-purchases`
+   (RevenueCat) as a second env-gated exception to the CLAUDE.md "no
+   network calls in app source" rule, alongside PostHog. Worth a CLAUDE.md
+   wording amendment when this PR is reviewed.
+7. **From run 8.** When the leak finder promo's six-month clock starts.
+   Built to the safer default: it starts when `SCAN_FLOW_ENABLED` flips
+   true (the feature the receipt promises becomes reachable), not at the
+   opt-in tap, so a long dormancy behind the flag cannot quietly eat into
+   the offer. If the tap itself should start the clock instead, that is a
+   one-line change (`utils/purchases.ts`'s
+   `activateLeakFinderPromoIfEligible`, drop the `SCAN_FLOW_ENABLED`
+   check).
+
+Standing blockers (unchanged from runs 1-8, none block this routine's own
+work, listed so a reviewer has them in one place):
+- No website repo access, so P3-3/P3-4/P3-5 cannot be verified or advanced
+  here.
+- Live RevenueCat end-to-end verification (a real sandbox purchase) needs
+  a real device build.
+- The share card's capture-and-share path has no real-device pass.
+- The live-path reactivity wiring (customerInfo update listener) is
+  code-reviewable but not unit-testable in this sandbox: this project's
+  Jest/Babel setup cannot execute a real dynamic
+  `import('react-native-purchases')` at all, so no test here can
+  distinguish "wired correctly" from "wired but silently broken" for that
+  one listener path.
+
 ## Status (run 8, 2026-09-06: dated entitlement for the leak finder promo)
 
 New work picked up from PUNCHLIST.md's 2026-09-06 RESUME marker (not a
