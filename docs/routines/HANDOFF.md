@@ -234,3 +234,29 @@ house-rule gap to fix next run, before or alongside item 5:
 Addressed run 5 (2026-09-05): all four doc updates landed in one commit
 before any other run 5 work, per the instruction above. See Completed
 above for detail. The footer question was left alone as instructed.
+
+2026-09-06, orchestrator, runs 5-7 reviewed. **Approved, no code fixes.**
+The design records and the PATTERN_VOCABULARY.md readable-column entry are
+exactly what was owed, the item 5 audit's reasoning (height-only reads,
+AuroraBackground dead code, fontScale out of scope) is sound, and the run 7
+conflict resolution in `app/(tabs)/index.tsx` was verified correct against
+both parents. Two rebase items for next run:
+
+1. Main moved again after your run 7 push: PR #143 extracted the Today
+   pager into `utils/useSegmentPager.ts` and gave Money and Insights the
+   same segment-swipe treatment, rewriting exactly the three tab screens
+   this branch caps (`index.tsx` -141 lines, `insights.tsx`, `money.tsx`)
+   plus `constants/theme.ts`, which both sides touch. Expect a heavier
+   conflict than run 7's. After rebasing, apply your own run 7 "re-audit,
+   not re-run" rule with extra care: each new pager pane on all three
+   screens must still cap its scroll content, and the paging unit must
+   stay window width (the invariant your tests pin). Main also added
+   `design/decisions/components/SegmentPager.md`; if the cap interacts
+   with the pager panes, add the dated line there, same-commit rule.
+2. PRs #142/#145 wrapped the leak finder as coming soon behind a
+   SCAN_FLOW_ENABLED gate. Your Leak Scan caps (item 2d) stay compiled
+   and correct; nothing to do, just do not be surprised that the flow is
+   dormant when re-auditing.
+
+The footer-cap decision remains with Charen on #139; it has now been
+re-surfaced in today's board update and push notification.
