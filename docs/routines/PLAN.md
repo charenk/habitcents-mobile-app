@@ -23,6 +23,17 @@ are done and verified (tsc clean, npm test green) on this branch.
         `app/(tabs)/insights.tsx`, `app/(tabs)/categories.tsx`,
         `app/habit/[id].tsx`, `app/category/[id].tsx`, `app/profile.tsx`,
         `app/paywall.tsx`. Done 2026-09-04.
+      - Note (regression found and fixed, run 8, 2026-09-06): main's PR #143
+        (the segment-pager wave) extracted Money's Spent pane out of
+        `money.tsx` into its own `components/money/SpentList.tsx` the same
+        day, and its SectionList's `listContent` style did not carry the cap
+        forward from the old inline ScrollView this item originally capped.
+        Fixed by spreading `contentColumnStyle` into `listContent`, same as
+        Upcoming/Habits' shared `scrollContent`; see PLAN.md's run 8 line and
+        `design/decisions/modules/money.md`. Today's and Insights' panes were
+        not extracted into separate components by that same refactor, so
+        their caps were unaffected; confirmed by re-reading both files, not
+        assumed from the clean rebase.
   - [x] 2c. Onboarding screens read and handled. `app/onboarding/welcome.tsx`
         renders only `OnboardingCarousel` (no layout of its own);
         `app/onboarding/intent.tsx` is a bare `Redirect`, so neither needed a
@@ -164,13 +175,15 @@ are done and verified (tsc clean, npm test green) on this branch.
       this file already has the full provider/mock wiring to get KeptHero
       and the door3 ribbon to render): `kept-hero-cap-wrap` and
       `door3-ribbon-wrap` both carry the cap, and `kept-pane` itself does
-      not (the pager's paging unit stays window width). Kept as an ongoing
-      item, not checked off: item 5 landed 2026-09-05 with no code change
-      (see above), so nothing new needs a test from it right now. Still
-      open pending Charen's footer-cap decision (item 2d/5): if that
-      decision adds a cap to `ScopeScreen`/`BillsScreen`/paywall/
-      `PayoffScreen`, it is a real structural change and earns a dedicated
-      case here, same as items 2c/2e did.
+      not (the pager's paging unit stays window width). Extended 2026-09-06
+      (run 8) with a case in `__tests__/spentList.test.tsx` pinning the
+      restored cap on `SpentList`'s `SectionList` (`testID`
+      `spent-section-list` added for the query), covering the regression
+      found this run (see item 2b's note). Kept as an ongoing item, not
+      checked off: still open pending Charen's footer-cap decision (item
+      2d/5): if that decision adds a cap to `ScopeScreen`/`BillsScreen`/
+      paywall/`PayoffScreen`, it is a real structural change and earns a
+      dedicated case here, same as items 2c/2e/run 8 did.
 - [ ] 7. Keep portrait-only orientation. `app.json` already sets
       `"orientation": "portrait"`; nothing in this plan changes that.
       Re-verify this line stays untouched at the end of every run.

@@ -2,38 +2,44 @@
 
 ## Status
 
-In progress. Run 7 of the routine. Unlike runs 5-6, the rebase onto
-origin/main was NOT a no-op this time: 12 commits had landed on main since
-run 6 (zero-state art, the ActionDock/dock unification under ADR 0038, tab
-selection and toast fixes, design record catch-up), and `app/(tabs)/index.tsx`
-conflicted in four places (one import line, three `paddingBottom` sites in
-`spentScrollContent`/`listContent`/`keptEmptyContent`). Resolved per the
-exact guidance run 5 had left in `design/decisions/modules/today.md`'s Open
-section for this: kept both sides (main's ADR 0038 `spacing.xxl` replacing
-the old `screenBottomClearance` comment/value, plus this branch's
-`...contentColumnStyle`), and dropped the now-unused `layout` import while
-keeping `contentColumnStyle`. Two docs files also conflicted
-(`design/decisions/README.md`'s component index, `design/decisions/modules/
-today.md`'s Decisions list against main's newer ADR 0036-0039 entries);
-merged by union rather than picking a side, and removed the now-satisfied
-merge-guidance note from today.md's Open section since this run is that
-merge. After the rebase, re-audited (not just re-ran) for tablet
-correctness against everything main brought in: grepped the full repo for
-`useWindowDimensions` again (unchanged set of 7 real call sites, none of
-main's new/changed files added one) and checked every scroll container
-touched by the incoming commits (`app/(tabs)/index.tsx`,
-`app/(tabs)/insights.tsx`, `app/(tabs)/money.tsx`,
-`components/leak-scan/DeckScreen.tsx`, `ReviewQueueSheet.tsx`) still spreads
-`contentColumnStyle` where item 2 put it; confirmed the item 2e wrappers
-(`door3-ribbon-wrap`, `kept-hero-cap-wrap`) are both still present and
-unaffected by the new ActionDock/zero-state code around them. `npm install`
-was needed again (fresh container). tsc clean, full test suite green (102
-suites, 1107 tests, up from 100/1081 purely from main's incoming tests, none
-of this branch's own). Checked the status board
-(`charenk/habitcents-mobile-app#139`) again for the footer-cap decision:
-still open, zero comments, unanswered. Item 6 stays soft-blocked on it,
-exactly as runs 5-6 left it; no other plan item had code work available.
-DEVICE PASS NEEDED below is unchanged from run 4.
+In progress. Run 8 of the routine. Rebased onto 5 new main commits since
+run 7 (PR #143's segment-pager wave: Today's pager extracted into
+`utils/useSegmentPager.ts` and shared with Money and Insights; PRs
+#142/#145's leak-finder-as-coming-soon gating; the #146 navigation-wave
+merge commit). The rebase itself needed conflict resolution on two of this
+branch's own historical commits, not just the tip: run 1's original commit
+(`app/(tabs)/index.tsx` and `insights.tsx`, both a pure import-list
+conflict from main adding `useSegmentPager`/`hapticError`/etc. alongside
+this branch's own `contentColumnStyle` import on the same line) and run
+5's design-record commit (`design/decisions/README.md`'s component index
+and `today.md`'s Iterations list, both resolved by union rather than
+picking a side, matching the run 5/7 precedent). All 11 of this branch's
+commits replayed cleanly after those two. Then, per the orchestrator's
+"re-audit, not re-run" instruction: re-grepped `useWindowDimensions` (still
+7 real sites, none new) and checked every scroll surface the pager
+refactor touched, rather than trusting the clean rebase. Found one real
+regression: main's same-day extraction of Money's Spent pane into
+`components/money/SpentList.tsx` (a new file this branch had never seen)
+dropped the tablet cap that pane's content had carried since item 2b
+(2026-09-04), because the extraction rebuilt `listContent` from scratch
+without copying `contentColumnStyle` over from the old inline ScrollView
+it replaced. Fixed in one commit: the cap restored, a dated line in
+`design/decisions/modules/money.md`, and a new jest case in
+`__tests__/spentList.test.tsx` pinning it (added a `testID` to `SpentList`'s
+`SectionList` so the test can query `contentContainerStyle`, matching this
+plan's existing convention of adding a `testID` where a query needs one).
+Today's and Insights' panes were not extracted into their own components
+by that same refactor, so their existing caps (item 2b/2d/2e) were
+confirmed unaffected by direct re-reading, not assumed. Checked
+`design/decisions/components/SegmentPager.md` (new from main) for whether
+the cap interaction belonged there instead: it documents the pager
+mechanism itself, not each screen's content styling, so the fix's decision
+line went in `money.md` per the existing per-surface convention, matching
+where `today.md` already records Today's own cap decisions. Checked
+status board issue #139 again for the footer-cap decision: still open,
+zero comments, unanswered. tsc clean, full suite green (106 suites, 1130
+tests, up from 106/1129 purely from this run's one new test). PR #133
+still open (draft, base up to date with origin/main as of this push).
 
 ## Completed
 
@@ -101,24 +107,50 @@ DEVICE PASS NEEDED below is unchanged from run 4.
   wrappers (`door3-ribbon-wrap`, `kept-hero-cap-wrap`) survived the
   ActionDock/zero-state rework around them. Confirmed item 6 still
   soft-blocked: `#139` still open, zero comments. Re-verified item 7.
+- Run 8: rebased onto 5 new main commits (PR #143's segment-pager wave,
+  PRs #142/#145's leak-finder gating, the #146 navigation-wave merge).
+  Unlike runs 5-7, the conflicts landed on two of this branch's own
+  historical commits during replay, not just the tip: run 1's original
+  commit (pure import-list conflicts in `index.tsx`/`insights.tsx` from
+  main's new `useSegmentPager`/`hapticError` imports landing on the same
+  line as this branch's `contentColumnStyle` import) and run 5's
+  design-record commit (`README.md`/`today.md` index and Iterations
+  entries, resolved by union as before). Re-audited after the rebase
+  rather than trusting it was clean, per the orchestrator's instruction,
+  and found a real regression this time, not just a clean pass: main's
+  same-day extraction of Money's Spent pane into
+  `components/money/SpentList.tsx` dropped the tablet cap that pane's
+  content had carried since item 2b, because the new file's `listContent`
+  style was rebuilt without carrying `contentColumnStyle` over. Fixed,
+  documented in `design/decisions/modules/money.md` (checked
+  `SegmentPager.md` first; the fix belongs in the per-surface module file,
+  not the pager-mechanism file), and pinned with a new jest case in
+  `__tests__/spentList.test.tsx` (added a `testID` to `SpentList`'s
+  `SectionList` for the query). Today's and Insights' panes were not
+  extracted by that same refactor; confirmed by direct reading, not
+  assumed. Checked `#139` again for the footer-cap decision: still open,
+  zero comments. tsc clean, full suite green (106 suites, 1130 tests, up
+  from 106/1129 from this run's one new test).
 
 ## Next
 
 Per PLAN.md, in order:
-1. Item 6: no new tablet jest coverage was needed this run, since item 5
-   concluded with no code change and item 6 stays blocked. Revisit once
-   Charen's footer-cap decision (see DECISIONS NEEDED) lands: if it adds a
-   cap to `ScopeScreen`/`BillsScreen`/paywall/`PayoffScreen`, that is a
-   real structural change and, like items 2c/2e before it, likely earns a
-   dedicated test case.
+1. Item 6: run 8 added one case (the `SpentList` cap regression fix), but
+   item 6 stays unchecked: it is an ongoing item, and the footer-cap
+   question is still the thing actually blocking it from closing. Revisit
+   once Charen's footer-cap decision (see DECISIONS NEEDED) lands: if it
+   adds a cap to `ScopeScreen`/`BillsScreen`/paywall/`PayoffScreen`, that
+   is a real structural change and, like items 2c/2e/run 8 before it,
+   likely earns a dedicated test case.
 2. Item 7: re-verify `app.json`'s `"orientation": "portrait"` stays
    untouched (confirmed unchanged this run; keep checking every run).
 3. Every run until the footer-cap decision lands, re-audit (not just
    re-run) against whatever new main commits arrived: grep
    `useWindowDimensions` fresh and check any scroll container main touched
-   still carries `contentColumnStyle`, the way this run did. A clean
-   rebase is not proof nothing regressed if main added a new scroll
-   surface this branch hasn't seen yet.
+   still carries `contentColumnStyle`. Run 8 is the proof this matters: a
+   clean rebase was not proof nothing regressed, since main had quietly
+   dropped a cap in a file this branch had never seen before. Do not skip
+   this step just because a rebase applied with no conflicts.
 4. With items 1-5 and 7 all satisfied, item 6 is the only plan line not
    checked off, and it is blocked on a human decision rather than on
    agent work. Do not treat the plan as fully checked or touch the
@@ -129,7 +161,7 @@ Per PLAN.md, in order:
 
 None. `npm install` was needed again at the start of this run (fresh
 container, `node_modules` not present); expected, not a real blocker, same
-as runs 1-6. Item 6 is soft-blocked on Charen's footer-cap decision (see
+as every prior run. Item 6 is soft-blocked on Charen's footer-cap decision (see
 DECISIONS NEEDED), not on anything this routine can resolve itself; still
 open on `#139` with zero comments as of this run. Noted here for
 visibility, not logged as a runs.log `blocked` outcome: per the retry and
@@ -147,7 +179,7 @@ backlog.
   width by design. Per the run 5 review feedback, this is on the ops
   status board's DECISIONS NEEDED queue for Charen (`#139`), not something
   this routine re-raises or decides itself. Still open, unanswered, as of
-  run 7.
+  run 8.
 - No new decisions raised this run.
 
 ## DEVICE PASS NEEDED
@@ -260,3 +292,15 @@ both parents. Two rebase items for next run:
 
 The footer-cap decision remains with Charen on #139; it has now been
 re-surfaced in today's board update and push notification.
+
+Addressed run 8 (2026-09-06): item 1's rebase and re-audit done as
+instructed, with the conflicts landing one commit earlier than expected
+(run 1's own commit, not just the tip) since main's segment-pager wave
+touched the same import lines this branch's very first commit had
+touched. The re-audit found a real gap this time (Money's `SpentList.tsx`
+extraction dropping the cap, see Status/Completed above), fixed and
+tested in one commit. Checked `SegmentPager.md` per item 1's instruction;
+concluded the cap doesn't belong there (it documents the pager mechanism,
+not per-screen content styling) and put the decision line in `money.md`
+instead, matching where Today's own cap decisions already live in
+`today.md`. Item 2 (the leak-finder gate) needed no action, confirmed.
