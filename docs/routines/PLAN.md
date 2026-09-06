@@ -8,10 +8,16 @@ are done and verified (tsc clean, npm test green) on this branch.
       native fingerprint (ADR 0029), so a new `eas build` is required before
       any of this plan reaches a physical device or the App Store build; an
       `eas update` OTA will not carry it. Done 2026-09-04.
-- [ ] 2. Introduce one shared max-width content container (about 600pt,
+- [x] 2. Introduce one shared max-width content container (about 600pt,
       centered) and apply it to every screen's scroll content, so phone
       layouts stay pixel-unchanged (the container is a pass-through, full
-      screen width, below the cap) while iPad gets a readable column.
+      screen width, below the cap) while iPad gets a readable column. All of
+      2a-2e done; the fixed-footer bars outside scroll content (ScopeScreen,
+      BillsScreen, paywall, PayoffScreen) are a separate, already-identified
+      gap tracked under item 6/DECISIONS NEEDED, not part of this item's
+      scope. Marked complete run 9 (2026-09-06): all five sub-items were
+      already checked, this was a bookkeeping gap in the parent line, not
+      new work.
   - [x] 2a. Added `layout.contentMaxWidth` (600) and `contentColumnStyle`
         to `constants/theme.ts`. Spread into a screen's
         `contentContainerStyle`, not a wrapping component: it folds into the

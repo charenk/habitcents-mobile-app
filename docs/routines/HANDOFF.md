@@ -2,44 +2,27 @@
 
 ## Status
 
-In progress. Run 8 of the routine. Rebased onto 5 new main commits since
-run 7 (PR #143's segment-pager wave: Today's pager extracted into
-`utils/useSegmentPager.ts` and shared with Money and Insights; PRs
-#142/#145's leak-finder-as-coming-soon gating; the #146 navigation-wave
-merge commit). The rebase itself needed conflict resolution on two of this
-branch's own historical commits, not just the tip: run 1's original commit
-(`app/(tabs)/index.tsx` and `insights.tsx`, both a pure import-list
-conflict from main adding `useSegmentPager`/`hapticError`/etc. alongside
-this branch's own `contentColumnStyle` import on the same line) and run
-5's design-record commit (`design/decisions/README.md`'s component index
-and `today.md`'s Iterations list, both resolved by union rather than
-picking a side, matching the run 5/7 precedent). All 11 of this branch's
-commits replayed cleanly after those two. Then, per the orchestrator's
-"re-audit, not re-run" instruction: re-grepped `useWindowDimensions` (still
-7 real sites, none new) and checked every scroll surface the pager
-refactor touched, rather than trusting the clean rebase. Found one real
-regression: main's same-day extraction of Money's Spent pane into
-`components/money/SpentList.tsx` (a new file this branch had never seen)
-dropped the tablet cap that pane's content had carried since item 2b
-(2026-09-04), because the extraction rebuilt `listContent` from scratch
-without copying `contentColumnStyle` over from the old inline ScrollView
-it replaced. Fixed in one commit: the cap restored, a dated line in
-`design/decisions/modules/money.md`, and a new jest case in
-`__tests__/spentList.test.tsx` pinning it (added a `testID` to `SpentList`'s
-`SectionList` so the test can query `contentContainerStyle`, matching this
-plan's existing convention of adding a `testID` where a query needs one).
-Today's and Insights' panes were not extracted into their own components
-by that same refactor, so their existing caps (item 2b/2d/2e) were
-confirmed unaffected by direct re-reading, not assumed. Checked
-`design/decisions/components/SegmentPager.md` (new from main) for whether
-the cap interaction belonged there instead: it documents the pager
-mechanism itself, not each screen's content styling, so the fix's decision
-line went in `money.md` per the existing per-surface convention, matching
-where `today.md` already records Today's own cap decisions. Checked
-status board issue #139 again for the footer-cap decision: still open,
-zero comments, unanswered. tsc clean, full suite green (106 suites, 1130
-tests, up from 106/1129 purely from this run's one new test). PR #133
-still open (draft, base up to date with origin/main as of this push).
+In progress. Run 9 of the routine. `origin/main`'s tip had not moved since
+run 8's rebase: both `routine/ipad` and `origin/main` were already at
+`a51ce4a` before this run started, confirmed with
+`git merge-base --is-ancestor origin/main routine/ipad`. So no rebase was
+needed and there was no new main-side work to re-audit against; run 8's
+regression hunt (the `SpentList.tsx` cap fix) already covered everything
+currently on main. Confirmed the branch is still green from a clean
+install (`npm install` needed again, fresh container, as every run):
+`npx tsc --noEmit` clean, full suite 106 suites / 1130 tests passing, the
+same counts as run 8's push, so zero drift. Checked issue #139 for the
+footer-cap decision again: still open, still zero comments, now idle 4
+runs. Checked PR #133: still draft, base SHA matches current main's tip
+exactly (`mergeable_state: clean`), latest commit's `verify` CI check
+green. With item 6 still blocked on that decision and item 7 re-verified
+unchanged (`app.json` still `"orientation": "portrait"`,
+`"supportsTablet": true`), the one real piece of bounded work available
+this run was a plan bookkeeping fix: PLAN.md's item 2 parent checkbox was
+still unchecked even though all five of its sub-items (2a-2e) have been
+done since run 5. Marked it complete, noting the fixed-footer gap is out
+of item 2's scope (it belongs to item 6, tracked separately). No
+production code changed this run.
 
 ## Completed
 
@@ -131,28 +114,46 @@ still open (draft, base up to date with origin/main as of this push).
   assumed. Checked `#139` again for the footer-cap decision: still open,
   zero comments. tsc clean, full suite green (106 suites, 1130 tests, up
   from 106/1129 from this run's one new test).
+- Run 9: no plan work was actionable beyond bookkeeping. `origin/main` had
+  not moved since run 8 (both branches already at the same tip commit
+  before this run started), so there was nothing to rebase and no new
+  regression surface to re-audit; run 8's `SpentList` fix already covers
+  everything currently on main. Re-ran tsc and the full suite from a clean
+  install to confirm the branch is still green with zero drift from run 8
+  (106 suites / 1130 tests, matching exactly). Re-checked `#139`: still
+  open, zero comments, now idle 4 runs. Re-checked PR #133: still draft,
+  base SHA matches current main's tip exactly, latest commit's CI check
+  green. Re-verified item 7 (`app.json` orientation still `"portrait"`,
+  `supportsTablet` still `true`). Marked PLAN.md's item 2 parent checkbox
+  complete: its five sub-items (2a-2e) have all been done since run 5, and
+  the parent line had simply never been checked off; the fixed-footer gap
+  it might be confused with is item 6's scope, not item 2's, so this is a
+  pure bookkeeping fix with no behavior change.
 
 ## Next
 
 Per PLAN.md, in order:
-1. Item 6: run 8 added one case (the `SpentList` cap regression fix), but
-   item 6 stays unchecked: it is an ongoing item, and the footer-cap
-   question is still the thing actually blocking it from closing. Revisit
-   once Charen's footer-cap decision (see DECISIONS NEEDED) lands: if it
-   adds a cap to `ScopeScreen`/`BillsScreen`/paywall/`PayoffScreen`, that
-   is a real structural change and, like items 2c/2e/run 8 before it,
-   likely earns a dedicated test case.
+1. Item 6: still the only unchecked plan line, still blocked on Charen's
+   footer-cap decision (see DECISIONS NEEDED), now idle 4 runs with zero
+   comments on `#139`. Revisit once it lands: if it adds a cap to
+   `ScopeScreen`/`BillsScreen`/paywall/`PayoffScreen`, that is a real
+   structural change and, like items 2c/2e/run 8 before it, likely earns a
+   dedicated test case.
 2. Item 7: re-verify `app.json`'s `"orientation": "portrait"` stays
    untouched (confirmed unchanged this run; keep checking every run).
-3. Every run until the footer-cap decision lands, re-audit (not just
-   re-run) against whatever new main commits arrived: grep
-   `useWindowDimensions` fresh and check any scroll container main touched
-   still carries `contentColumnStyle`. Run 8 is the proof this matters: a
-   clean rebase was not proof nothing regressed, since main had quietly
-   dropped a cap in a file this branch had never seen before. Do not skip
-   this step just because a rebase applied with no conflicts.
-4. With items 1-5 and 7 all satisfied, item 6 is the only plan line not
-   checked off, and it is blocked on a human decision rather than on
+3. Every run, check first whether `origin/main` has moved at all before
+   deciding how much re-audit is owed. When it has, re-audit (not just
+   re-run) against the new commits: grep `useWindowDimensions` fresh and
+   check any scroll container main touched still carries
+   `contentColumnStyle`. Run 8 is the proof this matters: a clean rebase
+   was not proof nothing regressed, since main had quietly dropped a cap
+   in a file this branch had never seen before. Run 9 is the other half of
+   that judgment call: main had not moved at all, so re-running the same
+   audit against unchanged commits would have found nothing new and wasted
+   the run; confirming that via `git merge-base --is-ancestor` first is
+   the way to tell the two cases apart, not skipping the check outright.
+4. With items 1, 2, 3, 5 and 7 all satisfied, item 6 is the only plan line
+   not checked off, and it is blocked on a human decision rather than on
    agent work. Do not treat the plan as fully checked or touch the
    COMPLETE state until either that decision lands and its follow-up test
    work is done, or Charen says item 6 can close without it.
@@ -163,11 +164,12 @@ None. `npm install` was needed again at the start of this run (fresh
 container, `node_modules` not present); expected, not a real blocker, same
 as every prior run. Item 6 is soft-blocked on Charen's footer-cap decision (see
 DECISIONS NEEDED), not on anything this routine can resolve itself; still
-open on `#139` with zero comments as of this run. Noted here for
-visibility, not logged as a runs.log `blocked` outcome: per the retry and
-failure policy, that classification is for a routine that cannot proceed
-at all, and this one did real, bounded, unblocked work (the rebase conflict
-resolution and the post-rebase re-audit). If the decision is still
+open on `#139` with zero comments as of this run, now idle 4 runs. Noted
+here for visibility, not logged as a runs.log `blocked` outcome: per the
+retry and failure policy, that classification is for a routine that
+cannot proceed at all, and this one did real, bounded work each run
+(rebase conflict resolution and re-audit when main moved; a plan
+bookkeeping fix this run when it did not). If the decision is still
 unanswered next run too, this remains the correct call, not a growing
 backlog.
 
@@ -179,7 +181,7 @@ backlog.
   width by design. Per the run 5 review feedback, this is on the ops
   status board's DECISIONS NEEDED queue for Charen (`#139`), not something
   this routine re-raises or decides itself. Still open, unanswered, as of
-  run 8.
+  run 9 (idle 4 runs now).
 - No new decisions raised this run.
 
 ## DEVICE PASS NEEDED
