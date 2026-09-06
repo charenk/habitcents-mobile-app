@@ -138,5 +138,36 @@ item 4).
 
 ## REVIEW FEEDBACK
 
-None pending. The 2026-09-05 orchestrator review of runs 1-4 (approved, no
-code fixes) was addressed two runs ago; nothing new has landed since.
+2026-09-06, orchestrator, runs 5-8 reviewed (ScreenHeader and Sheet
+conversions, the ResultsScreen-tree batch, and the run 8 slices through
+HabitLeakRow). The migration discipline holds: the trace-to-real-mount-site
+process on Sheet's untested importers was exactly right, and passing the
+catalog as a parameter to module-scope helpers (chapterCopy,
+confirmationCopy, cadenceLabel) is the correct shape for that pattern. One
+code fix and two rebase items:
+
+1. Fix next run: `components/habit-logging/CheckInCard.tsx`. The `coach`
+   useMemo (around line 169) now reads `strings` (milestoneHeadline + chapterCopy) but
+   `strings` is not in its dependency array, so a locale switch while a
+   coach headline is showing keeps the old-language headline. Harmless
+   today (every locale falls back to English) but it is exactly the latent
+   class this migration must not seed. Add `strings` to the deps. I swept
+   every other converted file for hooks reading `strings` with stale deps;
+   this is the only instance. Going forward, when a conversion touches a
+   useMemo/useCallback body, add `strings` to its deps in the same edit.
+2. Rebase alert: main moved after your run 8 (PRs #142-#146, the
+   navigation and leak-finder-teaser wave). `constants/strings.ts` gained
+   ~59 lines of teaser strings on main (the long-predicted collision, now
+   real), and `components/insights/ScanSnapshotCard.tsx`, which you
+   converted in run 4, was substantially rewritten on main. After
+   rebasing, re-verify ScanSnapshotCard still compiles through
+   useStrings() and that main's new strings additions sit in the catalog
+   type cleanly. `__tests__/insightsFirstScan.test.tsx` and
+   `__tests__/leakScanOnboardingExit.test.tsx` changed on both sides
+   (your LocaleProvider wiring vs main's SCAN_FLOW_ENABLED gate mocks);
+   keep both.
+3. Context, no action: main wrapped the leak finder as coming soon
+   (SCAN_FLOW_ENABLED gate, #142/#145). The scan-flow components you
+   migrated stay compiled and tested, so the work stands; just do not
+   prioritize further leak-scan-tree conversions over live surfaces if
+   ordering ever forces a choice.
