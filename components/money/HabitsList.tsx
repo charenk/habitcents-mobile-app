@@ -13,7 +13,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { radii, typeScale, type AppTheme } from '@/constants/theme';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
 import { EmptyState } from '@/components/ui';
 import { HabitLeakRow, type LeakRowData } from '@/components/habit-logging/HabitLeakRow';
 import type { DetectedHabit } from '@/types/habit';
@@ -32,6 +32,7 @@ export type HabitsListProps = {
 
 export function HabitsList({ rows, managedMonthlyTotal, onBreak, onOpenHabit, onBreakHabit }: HabitsListProps) {
   const theme = useTheme();
+  const strings = useStrings();
   const { format } = useCurrency();
   const styles = useMemo(() => createStyles(theme), [theme]);
 

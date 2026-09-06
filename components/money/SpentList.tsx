@@ -36,13 +36,13 @@ import { memo, useCallback, useMemo } from 'react';
 import { SectionList, StyleSheet, Text, View } from 'react-native';
 import { ExpenseRow } from '@/components/money/ExpenseRow';
 import { EmptyState } from '@/components/ui';
-import { strings } from '@/constants/strings';
 import { radii, typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import type { Expense, ExpenseSection } from '@/types/expense';
 import { formatDate } from '@/utils/dates';
+import { useStrings, type Catalog } from '@/utils/i18n';
 
 export type SpentListProps = {
   sections: ExpenseSection[];
@@ -84,7 +84,7 @@ function isSameDay(a: Date, b: Date): boolean {
 }
 
 /** "Today · Aug 10" / "Yesterday · Aug 9" / "Aug 8", in the device locale. */
-function dayLabelFor(date: Date): string {
+function dayLabelFor(date: Date, strings: Catalog): string {
   const dateLabel = formatDate(date, { month: 'short', day: 'numeric' });
   const today = new Date();
   if (isSameDay(date, today)) {
@@ -108,6 +108,7 @@ function totalFor(section: ExpenseSection): number {
 
 export function SpentList({ sections, onEditExpense, onLogExpense }: SpentListProps): React.JSX.Element {
   const theme = useTheme();
+  const strings = useStrings();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const { format } = useCurrency();
 
@@ -162,8 +163,8 @@ export function SpentList({ sections, onEditExpense, onLogExpense }: SpentListPr
   const renderSectionHeader = ({ section }: { section: ExpenseSection }) => (
     <Text style={styles.eyebrow} accessibilityRole="header">
       {section.data.length > 0
-        ? strings.money.spentGroupHeader(dayLabelFor(section.data[0].date), format(totalFor(section)))
-        : dayLabelFor(today)}
+        ? strings.money.spentGroupHeader(dayLabelFor(section.data[0].date, strings), format(totalFor(section)))
+        : dayLabelFor(today, strings)}
     </Text>
   );
 
