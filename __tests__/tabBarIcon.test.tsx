@@ -1,12 +1,13 @@
 /**
- * TabBarIcon (ADR 0037): the selected tab's three signals.
+ * TabBarIcon: the selected tab's non-colour signal.
  *
  * Why this file exists at all: before ADR 0037 nothing in __tests__ touched the
  * tab bar, and the selected state was carried by hue alone. Active sage and
  * inactive mist measure 1.12:1 against each other, so in grayscale, or to a
- * red-green colour-blind user, there was no selection. The fix was to add two
- * signals that are not colour, and those two are exactly what a colour-blind
- * regression would silently undo. So they are pinned here, not the tint.
+ * red-green colour-blind user, there was no selection. That requirement did not
+ * change when the pill was replaced by a filled glyph (2026-09-06); only the
+ * signal did. Fill against outline is what a colour-blind regression would
+ * silently undo, so it is pinned here, not the tint.
  */
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock')
@@ -15,16 +16,16 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 import React from 'react';
 import { act, cleanup, render } from '@testing-library/react-native';
 import { ThemeProvider } from '@/contexts/ThemeContext';
-import { TabBarIcon } from '@/components/ui/TabBarIcon';
-import { lightTheme, radii } from '@/constants/theme';
+import { TabBarIcon, type TabGlyphName } from '@/components/ui/TabBarIcon';
+import { lightTheme } from '@/constants/theme';
 
 // Awaited, matching every other render helper in this suite: the theme
 // provider settles a font/async read on mount.
-async function renderIcon(focused: boolean) {
+async function renderIcon(focused: boolean, name: TabGlyphName = 'Sun') {
   const view = await render(
     <ThemeProvider>
       <TabBarIcon
-        name="Sun"
+        name={name}
         focused={focused}
         color={focused ? lightTheme.primary : lightTheme.tabIconDefault}
         size={24}
@@ -44,43 +45,10 @@ function styleOf(node: { props: Record<string, unknown> }): Record<string, unkno
   return Object.assign({}, ...parts.filter(Boolean));
 }
 
-describe('TabBarIcon: the pill', () => {
-  it('fills and borders only when the tab is focused', async () => {
-    const view = await renderIcon(true);
-    const active = styleOf(view.getByTestId('tab-icon-active'));
-
-    expect(active.backgroundColor).toBe(lightTheme.primaryLight);
-    expect(active.borderColor).toBe(lightTheme.primary);
-    expect(active.borderRadius).toBe(radii.control);
-  });
-
-  it('is transparent when the tab is not focused', async () => {
-    const view = await renderIcon(false);
-    const inactive = styleOf(view.getByTestId('tab-icon-inactive'));
-
-    expect(inactive.backgroundColor).toBeUndefined();
-    expect(inactive.borderColor).toBe('transparent');
-  });
-
-  // The unselected tab reserves the same box, so the row does not reflow when
-  // the selection moves. A pill that only existed while focused would shift
-  // every sibling icon on each tab change.
-  it('reserves the same box in both states', async () => {
-    const activeView = await renderIcon(true);
-    const active = styleOf(activeView.getByTestId('tab-icon-active'));
-    const inactiveView = await renderIcon(false);
-    const inactive = styleOf(inactiveView.getByTestId('tab-icon-inactive'));
-
-    expect(active.width).toBe(inactive.width);
-    expect(active.height).toBe(inactive.height);
-    expect(inactive.borderWidth).toBe(active.borderWidth);
-  });
-});
-
-/** lucide passes strokeWidth straight to the react-native-svg root, so it is
- *  readable off the rendered tree without reaching into lucide's internals. */
-function strokeOf(view: { toJSON: () => unknown }): number | undefined {
-  const walk = (node: unknown): number | undefined => {
+/** lucide passes `fill` straight to the react-native-svg root and to every
+ *  subpath, so the rendered value is readable without reaching into lucide. */
+function fillOf(view: { toJSON: () => unknown }): string | undefined {
+  const walk = (node: unknown): string | undefined => {
     if (!node || typeof node !== 'object') return undefined;
     if (Array.isArray(node)) {
       for (const child of node) {
@@ -90,24 +58,66 @@ function strokeOf(view: { toJSON: () => unknown }): number | undefined {
       return undefined;
     }
     const n = node as { props?: Record<string, unknown>; children?: unknown };
-    const width = n.props?.strokeWidth;
-    if (typeof width === 'number') return width;
+    const fill = n.props?.fill;
+    if (typeof fill === 'string') return fill;
     return walk(n.children);
   };
   return walk(view.toJSON());
 }
 
-describe('TabBarIcon: the stroke', () => {
-  // This is the signal that survives desaturation, so it is the one that
-  // matters most: strip the colour and the weight is all that is left.
-  it('is heavier when focused than when not', async () => {
-    const activeView = await renderIcon(true);
-    const active = strokeOf(activeView);
-    const inactiveView = await renderIcon(false);
-    const inactive = strokeOf(inactiveView);
+describe('TabBarIcon: fill marks the selection', () => {
+  // The signal that survives desaturation: strip the colour and the glyph's
+  // mass is all that is left.
+  it('fills a lucide-fillable glyph with the tint when focused', async () => {
+    const view = await renderIcon(true);
+    expect(fillOf(view)).toBe(lightTheme.primary);
+  });
 
-    expect(active).toBe(2.25);
-    expect(inactive).toBe(1.5);
-    expect(active as number).toBeGreaterThan(inactive as number);
+  it('leaves the same glyph unfilled when not focused', async () => {
+    const view = await renderIcon(false);
+    expect(fillOf(view)).toBe('none');
+  });
+
+  // Wallet and TrendingUp are open paths: a naive fill deforms them, so they
+  // carry authored filled variants. If one is dropped, the glyph silently
+  // becomes a lump rather than failing loudly, so the swap is pinned.
+  it.each<TabGlyphName>(['Wallet', 'TrendingUp'])(
+    'renders the authored filled variant for %s when focused',
+    async (name) => {
+      const focused = await renderIcon(true, name);
+      expect(focused.getByTestId(`tab-glyph-filled-${name}`)).toBeTruthy();
+
+      const unfocused = await renderIcon(false, name);
+      expect(unfocused.queryByTestId(`tab-glyph-filled-${name}`)).toBeNull();
+    }
+  );
+});
+
+describe('TabBarIcon: the box', () => {
+  // A filled glyph must not nudge its neighbours, and the row must not reflow
+  // when the selection moves.
+  it('reserves the same box in both states', async () => {
+    const activeView = await renderIcon(true);
+    const active = styleOf(activeView.getByTestId('tab-icon-active'));
+    const inactiveView = await renderIcon(false);
+    const inactive = styleOf(inactiveView.getByTestId('tab-icon-inactive'));
+
+    expect(active.width).toBe(inactive.width);
+    expect(active.height).toBe(inactive.height);
+  });
+
+  // The pill is gone: no fill, no border, nothing behind the glyph. This is the
+  // regression that would quietly reintroduce a surface in the chrome.
+  it('draws no surface behind the glyph in either state', async () => {
+    const activeView = await renderIcon(true);
+    const active = styleOf(activeView.getByTestId('tab-icon-active'));
+    const inactiveView = await renderIcon(false);
+    const inactive = styleOf(inactiveView.getByTestId('tab-icon-inactive'));
+
+    for (const box of [active, inactive]) {
+      expect(box.backgroundColor).toBeUndefined();
+      expect(box.borderWidth).toBeUndefined();
+      expect(box.borderColor).toBeUndefined();
+    }
   });
 });
