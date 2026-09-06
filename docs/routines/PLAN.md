@@ -63,7 +63,7 @@ work, tracked elsewhere).
       `components/ui/ScreenHeader.tsx`), add `LocaleProvider` to every test
       file that renders it (their local `Providers` wrapper, mirroring how
       `CurrencyProvider` rolled out) in the same commit as the conversion,
-      not after. Converted so far (8 of ~67 remaining files, plus the 2
+      not after. Converted so far (19 of ~67 remaining files, plus the 2
       shared components `ScreenHeader.tsx` and `Sheet.tsx` detailed below):
       `components/ui/InfoRibbon.tsx`, `components/settings/SettingsRow.tsx`,
       `components/insights/WhereItWentCard.tsx`,
@@ -208,10 +208,34 @@ work, tracked elsewhere).
       105/105 green (up from 103, reflecting other streams' merges since
       last run) before committing, tsc clean.
 
+      **`BiggestLeakCard.tsx`, `ResultsFooter.tsx`, `QuestionCard.tsx`
+      converted this run** (same run, second slice): three more ordinary
+      leaves. `BiggestLeakCard` is mounted from both `ResultsScreen.tsx` and
+      `DeckScreen.tsx` (both already `LocaleProvider`-covered; `deckScreen`'s
+      two render trees confirmed still both carrying it). `ResultsFooter`
+      is `ResultsScreen`-only (covered). `QuestionCard` is mounted only from
+      `IntakeScreen.tsx`, which (like `PaywallScreen`) has no dedicated test
+      coverage today, confirmed by `grep -rl "IntakeScreen\|QuestionCard"
+      __tests__` returning nothing, so no test file was at risk either way.
+      Full suite still 105/105, tsc clean.
+
+      **Found and deferred, not converted:** `SpendPulse.tsx` builds its
+      `GRANULARITY_OPTIONS` array (day/month/year labels) at module scope
+      from `strings.leakScan.pulseGranularity*`, the same shape as
+      `app/profile.tsx`'s module-level `SUPPORT_MAILTO_URL` flagged
+      previously: not a three-line hook swap, the array needs to move inside
+      the component (built with `useMemo` alongside `styles`, most likely).
+      Left for its own pick along with `profile.tsx`; watch for this same
+      module-scope pattern (`strings.` referenced outside any function
+      component or hook) before assuming any remaining file is a quick leaf.
+
       Remaining suggested order: continue picking genuinely small
       single-parent leaf files (re-run the leaf check above per candidate;
-      do not assume shape from a file's name or its position in the list),
-      then the remaining sections' files, then the 13 `ScreenHeader` importers'
+      do not assume shape from a file's name or its position in the list;
+      watch for the module-scope pattern just above), then `SpendPulse.tsx`
+      and `app/profile.tsx` as their own picks (both need the strings read
+      moved inside the component, not a plain hook swap), then the remaining
+      sections' files, then the 13 `ScreenHeader` importers'
       and 13 `Sheet` importers' own `strings` usage as further leaf picks
       (for these, re-run the same "does the parent screen already carry
       `LocaleProvider` for a shared-component reason" check before assuming
