@@ -14,7 +14,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { radii, typeScale, type AppTheme } from '@/constants/theme';
 import type { DetectedHabit, HabitStatus } from '@/types/habit';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
 
 export type LeakRowData = {
   habit: DetectedHabit;
@@ -52,6 +52,7 @@ export function leakRowAction(status: HabitStatus): LeakAction {
 
 export function HabitLeakRow({ row, onBreak, onOpenHabit, showDivider = false }: HabitLeakRowProps) {
   const theme = useTheme();
+  const strings = useStrings();
   const { format } = useCurrency();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
