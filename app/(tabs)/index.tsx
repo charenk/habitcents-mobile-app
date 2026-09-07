@@ -10,7 +10,6 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { Icon } from '@/components/ui/Icon';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Button } from '@/components/ui/Button';
@@ -29,6 +28,7 @@ import { SpentKeptChips, type SpentKeptView } from '@/components/habit-logging/S
 import { ExpenseSheet, type LogExpenseSavedInfo } from '@/components/money/ExpenseSheet';
 import { QuickLogRow } from '@/components/money/QuickLogRow';
 import { ActionDock } from '@/components/today/ActionDock';
+import { BreakHabitRow } from '@/components/today/BreakHabitRow';
 import { LoggedTodayList } from '@/components/money/LoggedTodayList';
 import { InfoRibbon } from '@/components/ui/InfoRibbon';
 import { useFirstRunRibbon } from '@/components/onboarding/useFirstRunRibbon';
@@ -727,8 +727,10 @@ export default function TodayScreen() {
   // /onboarding/welcome, is deleted; the sheet lives on Today now).
   // Toast lift (ADR 0038): the pill's default spot is now behind the dock, so
   // a "Logged." toast would cover the field that produced it. Each dock
-  // reports its measured height and the visible pane's is the one that counts,
-  // because the two docks hold different controls at different heights.
+  // reports its measured height and the visible pane's is the one that counts.
+  // The two docks are equal by construction since 2026-09-07 (both on
+  // DockCard's fixed field), but the lift stays measured rather than derived
+  // so a Dynamic Type overflow can never lift the toast short.
   //
   // FOCUS-GATED, and that gate is load-bearing. Tab screens stay mounted when
   // the user switches tabs (bottom-tabs v7 has no unmountOnBlur) and
@@ -825,29 +827,6 @@ export default function TodayScreen() {
   // the human gate; this line deliberately does not resolve it.
   const breakCaption =
     freeTierBlocked && entitlement !== 'premium' ? strings.habitLogging.freeTierNote : null;
-
-  const breakAnotherAffordance = (
-    <TouchableOpacity
-      style={styles.breakAnother}
-      onPress={handleBreakAnother}
-      accessibilityRole="button"
-      accessibilityLabel={breakCaption ? `${breakLabel}, ${breakCaption}` : breakLabel}
-      testID="break-habit-affordance"
-      activeOpacity={0.7}
-    >
-      <Icon name="Plus" size={18} color={theme.primaryDark} />
-      <View style={styles.breakAnotherText}>
-        <Text style={styles.breakAnotherLabel} maxFontSizeMultiplier={1.5}>
-          {breakLabel}
-        </Text>
-        {breakCaption ? (
-          <Text style={styles.breakAnotherCaption} maxFontSizeMultiplier={1.5}>
-            {breakCaption}
-          </Text>
-        ) : null}
-      </View>
-    </TouchableOpacity>
-  );
 
   const renderItem = ({ item, section }: { item: DetectedHabit | BreakingItem; section: HabitSection }) => {
     if (section.type === 'leaks') {
@@ -1159,7 +1138,9 @@ export default function TodayScreen() {
               check-in card. It renders in all three branches, loading
               included: the affordance is what a user with nothing yet is
               here to press. */}
-          <ActionDock testID="kept-dock" onHeightChange={setKeptDockHeight}>{breakAnotherAffordance}</ActionDock>
+          <ActionDock testID="kept-dock" onHeightChange={setKeptDockHeight}>
+            <BreakHabitRow label={breakLabel} caption={breakCaption} onPress={handleBreakAnother} />
+          </ActionDock>
         </View>
       </ScrollView>
 
@@ -1378,40 +1359,10 @@ function createStyles(theme: AppTheme) {
       alignSelf: 'stretch',
       marginTop: spacing.xxl,
     },
-    // Break-another affordance (DI-6, ADR 0019): a dashed card mirroring
-    // UpcomingList's add-upcoming row (components/money/UpcomingList.tsx
-    // `add`/`addLabel`). W3 consolidated this with the empty state's former
-    // reAuditLink text link (same destination, now redundant); this dashed
-    // card is the single re-entry point in both the empty and populated Kept
-    // views. Two lines (label + caption) rather than UpcomingList's single
-    // centered line, so it is left-aligned with the icon instead of centered.
-    breakAnother: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: spacing.stack,
-      minHeight: 56,
-      borderRadius: radii.card,
-      borderWidth: 1.5,
-      borderStyle: 'dashed',
-      borderColor: theme.cloudDashed,
-      backgroundColor: theme.white,
-      paddingHorizontal: spacing.lg,
-      paddingVertical: spacing.stack,
-    },
-    breakAnotherText: {
-      flex: 1,
-    },
-    breakAnotherLabel: {
-      fontSize: typeScale.label,
-      fontFamily: theme.fonts.uiSemibold,
-      color: theme.primaryDark,
-    },
-    breakAnotherCaption: {
-      fontSize: typeScale.caption,
-      fontFamily: theme.fonts.ui,
-      color: theme.textSecondary,
-      marginTop: spacing.hairline,
-    },
+    // The break-habit affordance's own styles moved into
+    // components/today/BreakHabitRow.tsx when it took the shared DockCard
+    // shell (2026-09-07). It is still the single re-entry point in both the
+    // empty and populated Kept views.
     progressCard: {
       alignSelf: 'stretch',
       backgroundColor: theme.surface,

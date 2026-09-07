@@ -1,13 +1,12 @@
 /**
- * QuickLogRow (components/money/QuickLogRow.tsx): the enclosed-field
- * redesign (design/quick-log-trigger). The card's $0.00 now sits in a
- * snow-filled rounded field instead of a bare number on an underline, and
- * the plus button is a rounded square that shares the field's radius and
- * stretches to its full height. Geometry pairs with SpentKeptChips (Charen's
- * consistency call, 2026-09-03): the card takes the chips track's outer
- * radius (radii.feature + 3) and derives the field radius concentrically
- * (outer minus the card's spacing.control padding). See
- * __tests__/uiPrimitives.test.tsx for the AmountDisplay underline={false}
+ * QuickLogRow (components/money/QuickLogRow.tsx): the Spent pane's dock
+ * content, built on the DockCard shell it shares with the Kept pane's
+ * BreakHabitRow since 2026-09-07. The $0.00 sits in a snow pill field of a
+ * fixed height, beside a round sage plus that stretches to that height.
+ * The geometry this file used to derive (a card at the chips track's radius
+ * and a concentric field) is gone with the shell; the shared numbers live in
+ * DockCard and are pinned as a pair in __tests__/dockGeometry.test.tsx.
+ * See __tests__/uiPrimitives.test.tsx for the AmountDisplay underline={false}
  * prop-level assertion this wiring depends on.
  */
 jest.mock('@react-native-async-storage/async-storage', () =>
@@ -20,13 +19,9 @@ import { render, fireEvent } from '@testing-library/react-native';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { QuickLogRow } from '@/components/money/QuickLogRow';
+import { DOCK_FIELD_HEIGHT } from '@/components/today/DockCard';
 import { strings } from '@/constants/strings';
-import { radii, spacing, lightTheme } from '@/constants/theme';
-
-// The concentric pair QuickLogRow derives its radii from (see its file-top
-// comment): outer = the chips track's radius, inner = outer - card padding.
-const CARD_RADIUS = radii.feature + 3;
-const FIELD_RADIUS = CARD_RADIUS - spacing.control;
+import { radii, lightTheme } from '@/constants/theme';
 
 function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -37,7 +32,7 @@ function Providers({ children }: { children: React.ReactNode }) {
 }
 
 describe('QuickLogRow', () => {
-  it('renders the field as a snow-filled rounded rect with no underline', async () => {
+  it('renders the field as a snow-filled pill at the shared dock height, with no underline', async () => {
     const view = await render(
       <Providers>
         <QuickLogRow onOpenSheet={() => {}} />
@@ -46,7 +41,10 @@ describe('QuickLogRow', () => {
     const field = view.getByTestId('quick-log-field');
     const flat = StyleSheet.flatten(field.props.style);
     expect(flat.backgroundColor).toBe(lightTheme.snow);
-    expect(flat.borderRadius).toBe(FIELD_RADIUS);
+    expect(flat.borderRadius).toBe(radii.pill);
+    // Fixed, not a minimum: the two docks are equal because their fields are
+    // the same fixed height, whatever each one holds.
+    expect(flat.height).toBe(DOCK_FIELD_HEIGHT);
     // Press feedback: the field had no pressed style at all, so the primary
     // entry to the core loop acknowledged a touch with nothing until the sheet
     // began to rise. It now takes Button.tsx's stated convention, a pressed
@@ -60,7 +58,9 @@ describe('QuickLogRow', () => {
     expect(view.queryByText('0.00')).toBeTruthy();
     // The old bare-number underline is gone: AmountDisplay is passed
     // underline={false}, so no view anywhere in the tree carries the
-    // underline's distinctive shape (a 1.5pt-tall pill-radius rule).
+    // underline's distinctive shape (a 1.5pt-tall pill-radius rule). The
+    // field is a pill too now, but at 52pt tall it cannot match this
+    // fingerprint, which needs both the radius and the 1.5pt height.
     const underlines = view.container.queryAll((node) => {
       const style = StyleSheet.flatten(node.props?.style);
       return style?.height === 1.5 && style?.borderRadius === 999;
@@ -68,7 +68,7 @@ describe('QuickLogRow', () => {
     expect(underlines).toHaveLength(0);
   });
 
-  it('renders the plus button as a rounded square matching the field radius, stretched to full height, with the sage fill', async () => {
+  it('renders the plus button as a sage circle stretched to the field height', async () => {
     const view = await render(
       <Providers>
         <QuickLogRow onOpenSheet={() => {}} />
@@ -76,8 +76,11 @@ describe('QuickLogRow', () => {
     );
     const plusButton = view.getByTestId('quick-log-plus', { includeHiddenElements: true });
     const flat = StyleSheet.flatten(plusButton.props.style);
-    expect(flat.borderRadius).toBe(FIELD_RADIUS);
+    expect(flat.borderRadius).toBe(radii.pill);
     expect(flat.alignSelf).toBe('stretch');
+    // Squares its width off the stretched height, so it stays a circle
+    // rather than pinning a width the field's height might not match.
+    expect(flat.aspectRatio).toBe(1);
     expect(flat.backgroundColor).toBe(lightTheme.primary);
     // Was a TouchableOpacity on its default activeOpacity fade, so the two
     // halves of one affordance answered a touch differently and neither used
@@ -112,5 +115,4 @@ describe('QuickLogRow', () => {
     fireEvent.press(plusButton);
     expect(onOpenSheet).toHaveBeenCalledTimes(2);
   });
-
 });
