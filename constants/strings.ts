@@ -157,6 +157,15 @@ export const strings = {
       `Free keeps 1 habit, always. Premium breaks up to 5 at once, from ${monthlyPrice} a month.`,
     gateUpgradeCta: 'See Premium',
     gateMaybeLater: 'Maybe later',
+    // Same gate, a premium user already at the real 5-habit ceiling (backlog
+    // from the gating audit, 2026-08-11): the free-tier pitch above is wrong
+    // for someone already paying, so this is a distinct honest state, not a
+    // copy tweak on the same strings. No upgrade CTA: there is nothing left to
+    // sell them.
+    ceilingNote: '5 habits on Premium',
+    ceilingTitle: "You're breaking 5 habits already",
+    ceilingBody: 'Finish or stop one to start another.',
+    ceilingDismiss: 'Got it',
     // Partial slip sheet (4.7)
     partialSheetTitle: 'How much did it cost?',
     partialSheetSubtitle: (skipValue: string) =>
@@ -358,6 +367,8 @@ export const strings = {
     // getEntitlement(), so a completed mock purchase left Profile still
     // claiming Free. This is the honest counterpart, shown once premium.
     subscriptionValuePremium: 'Premium',
+    // Share counter card row (P4-3): opens app/share-card.tsx.
+    shareRow: 'Share your kept total',
     // Start over (design/profile-restructure U9) replaces Sign out: there are
     // no accounts, so nothing is signed out of. Slate, never coral: coral
     // stays reserved for actions that destroy data, and this keeps all of it.
@@ -1263,5 +1274,18 @@ export const strings = {
     skipValueSave: 'Save',
     stopConfirmCta: 'Stop breaking it',
     stopConfirmKeepGoing: 'Keep going',
+  },
+
+  // Shareable counter card v1 (roadmap P4-3). Card copy stays in the locked
+  // vocabulary (kept, never "saved" or "streak"); "days" is a real elapsed
+  // span (utils/shareCard.ts), never a fabricated statistic.
+  shareCard: {
+    title: 'Share your kept total.',
+    headline: (amount: string, days: number) => `I kept ${amount} in ${days} day${days === 1 ? '' : 's'}.`,
+    wordmark: 'habitcents',
+    shareCta: 'Share',
+    emptyTitle: 'Nothing to share yet.',
+    emptyBody: 'Keep a habit going a little longer, then come back to share it.',
+    shareFailed: 'Could not open the share sheet.',
   },
 } as const;

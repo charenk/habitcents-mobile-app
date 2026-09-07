@@ -29,7 +29,7 @@ import { categoryEmoji, categoryIdentityColor } from '@/constants/categoryEmoji'
 import { habitLeakGlyph } from '@/constants/onboardingPresets';
 import { hasFullMonthOfData } from '@/utils/recurring';
 import { isHabitLimitReached } from '@/utils/habitLogging';
-import { getEntitlement } from '@/utils/purchases';
+import { activateLeakFinderPromoIfEligible, useEntitlement } from '@/utils/purchases';
 import { formatDate } from '@/utils/dates';
 import { getLeakFinderInterest, getScanSummary, saveLeakFinderInterest } from '@/utils/storage';
 import { track } from '@/utils/analytics';
@@ -140,6 +140,12 @@ export default function InsightsScreen() {
       await saveLeakFinderInterest();
       track('leak_finder_interest_recorded', {});
       setInterestRecorded(true);
+      // Usually a no-op (SCAN_FLOW_ENABLED is off): the app boot's own check
+      // (app/_layout.tsx) is what activates the promo for someone who opted
+      // in before the feature unlocked. This covers the other order, a fresh
+      // opt-in on a build where it is already live, so that grant does not
+      // wait for a relaunch.
+      void activateLeakFinderPromoIfEligible();
     } finally {
       interestInFlightRef.current = false;
     }
@@ -225,7 +231,8 @@ export default function InsightsScreen() {
 
   // Entitlement touchpoint (ADR 0007, BET-004): the pick-one sheet blocks Start
   // once the active-habit count reaches the entitlement ceiling.
-  const freeTierBlocked = isHabitLimitReached(getActiveHabits().length, getEntitlement());
+  const entitlement = useEntitlement();
+  const freeTierBlocked = isHabitLimitReached(getActiveHabits().length, entitlement);
   const pickOneHabit = pickOneHabitId ? getHabitById(pickOneHabitId) : null;
 
   const handleStart = useCallback(
@@ -344,6 +351,7 @@ export default function InsightsScreen() {
         monthTotal={pickOneHabit?.totalMonthlySpend ?? 0}
         occurrences={pickOneHabit?.occurrencesPerPeriod ?? 0}
         freeTierBlocked={freeTierBlocked}
+        entitlement={entitlement}
         onCancel={() => setPickOneHabitId(null)}
         onStart={handleStart}
         onStartTrial={() => {

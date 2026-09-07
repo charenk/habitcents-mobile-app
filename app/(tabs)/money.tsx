@@ -43,7 +43,7 @@ import type { DetectedHabit } from '@/types/habit';
 import type { Expense } from '@/types/expense';
 import { groupExpensesByDate } from '@/data/expensesMock';
 import { isHabitLimitReached } from '@/utils/habitLogging';
-import { getEntitlement } from '@/utils/purchases';
+import { useEntitlement } from '@/utils/purchases';
 import { computeUpcoming, resolveRule, type UpcomingItem } from '@/utils/recurring';
 import { getUpcomingWindowDays, setUpcomingWindowDays } from '@/utils/storage';
 import { DEFAULT_UPCOMING_WINDOW_DAYS, type UpcomingWindowDays } from '@/utils/upcomingWindow';
@@ -223,7 +223,8 @@ export default function MoneyScreen() {
   // Entitlement touchpoint (ADR 0007, BET-004): the pick-one sheet blocks Start
   // once the active-habit count reaches the entitlement ceiling. Same gate
   // Insights wires for the identical sheet.
-  const freeTierBlocked = isHabitLimitReached(getActiveHabits().length, getEntitlement());
+  const entitlement = useEntitlement();
+  const freeTierBlocked = isHabitLimitReached(getActiveHabits().length, entitlement);
   const pickOneHabit = pickOneHabitId ? getHabitById(pickOneHabitId) : null;
 
   const handleStart = useCallback(
@@ -335,6 +336,7 @@ export default function MoneyScreen() {
         monthTotal={pickOneHabit?.totalMonthlySpend ?? 0}
         occurrences={pickOneHabit?.occurrencesPerPeriod ?? 0}
         freeTierBlocked={freeTierBlocked}
+        entitlement={entitlement}
         onCancel={() => setPickOneHabitId(null)}
         onStart={handleStart}
         onStartTrial={() => {

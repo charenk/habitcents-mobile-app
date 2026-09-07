@@ -15,7 +15,7 @@ import {
   Inter_700Bold,
 } from '@expo-google-fonts/inter';
 import { initAnalytics, track, flushAnalytics } from '@/utils/analytics';
-import { hydrateEntitlement } from '@/utils/purchases';
+import { activateLeakFinderPromoIfEligible, hydrateEntitlement, hydratePromoGrant } from '@/utils/purchases';
 import { ThemeProvider, useIsDark } from '@/contexts/ThemeContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { CategoriesProvider } from '@/contexts/CategoriesContext';
@@ -78,9 +78,14 @@ export default function RootLayout() {
 
   // Read the stored entitlement back into memory before the first gate check.
   // Feature gates read it synchronously during render, so it has to be warm
-  // rather than awaited per call.
+  // rather than awaited per call. The promo grant is a separate, dated layer
+  // on top (utils/purchases.ts): hydrate whatever is already on file, then
+  // check whether this boot is the one where the leak finder co-build promise
+  // (decision 0009) becomes payable, now that the feature it promises may
+  // have unlocked.
   useEffect(() => {
     void hydrateEntitlement();
+    void hydratePromoGrant().then(() => activateLeakFinderPromoIfEligible());
   }, []);
 
   if (!fontsLoaded && !fontError) return null;
@@ -107,6 +112,7 @@ export default function RootLayout() {
                     <Stack.Screen name="category" />
                     <Stack.Screen name="profile" />
                     <Stack.Screen name="leak-scan" />
+                    <Stack.Screen name="share-card" />
                     <Stack.Screen name="paywall" options={{ presentation: 'modal' }} />
                   </Stack>
                 </ToastProvider>

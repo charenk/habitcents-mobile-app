@@ -19,7 +19,7 @@ import { Button } from '@/components/ui/Button';
 import { AmountField } from '@/components/ui/AmountField';
 import { useToast } from '@/components/ui/Toast';
 import { atMidnight, weekStats, isHabitLimitReached, displayChapter } from '@/utils/habitLogging';
-import { getEntitlement } from '@/utils/purchases';
+import { useEntitlement } from '@/utils/purchases';
 import type { CoachMomentCardId } from '@/utils/coachMoments';
 import { typeScale, layout, type AppTheme } from '@/constants/theme';
 import type { DetectedHabit, HabitChangeGoal } from '@/types/habit';
@@ -50,6 +50,10 @@ export default function HabitDetailScreen() {
     lastCoachMoment,
     clearLastCoachMoment,
   } = useHabits();
+  // Entitlement touchpoint (ADR 0007, BET-004): reactive so a purchase made
+  // elsewhere (or the dev menu's toggle) repaints this already-mounted gate
+  // without needing a navigation to force a re-render.
+  const entitlement = useEntitlement();
 
   // Coach Moment (P2-2, acceptance test 2): clear on blur so navigating away
   // and back to an already-answered card does not re-show the same card.
@@ -162,7 +166,8 @@ export default function HabitDetailScreen() {
         habit={habit}
         monthTotal={habit.totalMonthlySpend}
         occurrences={habit.occurrencesPerPeriod}
-        freeTierBlocked={isHabitLimitReached(getActiveHabits().length, getEntitlement())}
+        freeTierBlocked={isHabitLimitReached(getActiveHabits().length, entitlement)}
+        entitlement={entitlement}
         onCancel={() => setPickOneVisible(false)}
         onStart={handleStart}
         onStartTrial={() => {

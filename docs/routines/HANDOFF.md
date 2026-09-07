@@ -1,0 +1,457 @@
+# core-worker HANDOFF
+
+## COMPLETE (run 10, 2026-09-07: re-verify, no new work)
+
+Same conclusion as run 9, one run later. `git fetch origin main` empty
+(branch already even with `origin/main`, no rebase needed). PR #132
+confirmed via the API: `mergeable_state: clean`, `draft: false`, zero
+comments, zero reviews since run 9. `habitcents-ops/PUNCHLIST.md`'s RESUME
+marker is unchanged (still the 2026-09-05 zeroth-state wave items; none
+core-p3-shaped). Fresh `npm install`, `npx tsc --noEmit` clean. `npm test`
+hit one flaky timeout (`__tests__/door3BreakSheet.test.tsx`'s auto-open
+test, unrelated file, 5s default Jest timeout under full-suite load);
+re-ran that file alone, all 17 passed in 5.5s, confirming the flake per
+the one-allowed-rerun policy. Full suite then green: 110 suites / 1165
+tests, exactly matching run 9. PLAN.md's checklist stays fully `[x]`/`(C)`;
+nothing code-shaped remains here without a website-repo checkout or a
+Charen-gated external account. PR #132 stays ready for review. Decision
+queue for Charen is unchanged from run 9, reproduced below.
+
+## COMPLETE (run 9, 2026-09-06: re-verify, no new work)
+
+`git fetch origin main` showed no new commits since run 8 (branch already
+even with `origin/main`, `mergeable_state: clean` confirmed via the PR API,
+no rebase needed). No new REVIEW FEEDBACK was present in this file or on
+PR #132 (checked the PR's comment list directly via the API: empty).
+Re-checked `habitcents-ops/PUNCHLIST.md`'s RESUME marker for a new
+core-p3-flagged item the way run 8 found the leak-finder promo gap: the
+current marker's one dated item (2026-09-06, the leak finder promo) is
+exactly what run 8 already closed; its other four items (build-20 device
+pass, canvas regeneration, an ipad-routine merge note, a today-kept art
+asset decision) all belong to the `design/enhancements-zeroth-state` wave,
+none are core-p3/payments-shaped, so none belong on this branch. Re-verified
+from a fresh `npm install` (node_modules absent in this container):
+`npx tsc --noEmit` clean, `npm test` 110 suites / 1165 tests green, exactly
+matching run 8's ending count (no regression, nothing new to add). PLAN.md's
+checklist is fully `[x]`/`(C)`; nothing code-shaped remains that this
+routine can reach without a website-repo checkout or a Charen-gated
+external account. Marking PR #132 ready for review per the routine's own
+completion instructions. Decision queue for Charen is unchanged from run 6,
+plus run 8's new grant-timing item; both reproduced below for one place to
+read them.
+
+**Decision queue Charen must clear:**
+
+1. App Store privacy label: review `docs/legal/app-store-privacy-labels.md`
+   in full, accept or override its one judgment call (section 3: bucketed
+   spend amounts under "Financial Info" vs "Usage Data"; recommendation
+   stands: "Usage Data"), and resolve the one open verification (section 4
+   item 3: PostHog's IP-handling default). Then transcribe into App Store
+   Connect. Not code; nothing to merge for this specifically.
+2. RevenueCat dashboard entitlement name must match
+   `EXPO_PUBLIC_REVENUECAT_ENTITLEMENT_ID` (defaults to `'premium'`).
+3. When to actually build and test the live RevenueCat client (needs a
+   real device build; still mock-mode by default, no go-live date picked).
+4. A real device pass for the share card once a native build exists:
+   confirm the captured PNG and that the OS share sheet receives a usable
+   image on both iOS and Android.
+5. The live-path entitlement-reactivity wiring (customerInfo update
+   listener repainting a mounted screen) is code-reviewable but not
+   unit-testable in this sandbox (documented under Blockers below). Worth
+   a manual check once RevenueCat activation gets a real device build.
+6. Informational, not a decision: this branch adds `react-native-purchases`
+   (RevenueCat) as a second env-gated exception to the CLAUDE.md "no
+   network calls in app source" rule, alongside PostHog. Worth a CLAUDE.md
+   wording amendment when this PR is reviewed.
+7. **From run 8.** When the leak finder promo's six-month clock starts.
+   Built to the safer default: it starts when `SCAN_FLOW_ENABLED` flips
+   true (the feature the receipt promises becomes reachable), not at the
+   opt-in tap, so a long dormancy behind the flag cannot quietly eat into
+   the offer. If the tap itself should start the clock instead, that is a
+   one-line change (`utils/purchases.ts`'s
+   `activateLeakFinderPromoIfEligible`, drop the `SCAN_FLOW_ENABLED`
+   check).
+
+Standing blockers (unchanged from runs 1-8, none block this routine's own
+work, listed so a reviewer has them in one place):
+- No website repo access, so P3-3/P3-4/P3-5 cannot be verified or advanced
+  here.
+- Live RevenueCat end-to-end verification (a real sandbox purchase) needs
+  a real device build.
+- The share card's capture-and-share path has no real-device pass.
+- The live-path reactivity wiring (customerInfo update listener) is
+  code-reviewable but not unit-testable in this sandbox: this project's
+  Jest/Babel setup cannot execute a real dynamic
+  `import('react-native-purchases')` at all, so no test here can
+  distinguish "wired correctly" from "wired but silently broken" for that
+  one listener path.
+
+## Status (run 8, 2026-09-06: dated entitlement for the leak finder promo)
+
+New work picked up from PUNCHLIST.md's 2026-09-06 RESUME marker (not a
+rebase-only run like 6 and 7): `main`'s leak-finder coming-soon wrap
+(mobile PR #144, decision 0009) shipped a receipt promising everyone who
+opts in six months of premium, and flagged in its own commit message and
+`design/decisions/components/LeakFinderTeaser.md`'s Open section that
+nothing in the app could grant it. The punch list item said this belongs
+with core-p3 (payments is always a human gate). Full detail of what was
+built is in `docs/routines/PLAN.md`'s "Run 8" section; short version:
+`utils/purchases.ts` gained a timed promotional grant
+(`activateLeakFinderPromoIfEligible`, called at boot and right after a
+fresh opt-in), composing with the existing free/mock/live `Entitlement`
+rather than replacing it. `npx tsc --noEmit` clean. `npm test`: 110 suites
+/ 1165 tests green (up from 109/1154 after rebasing onto `origin/main`,
+which had moved 10 commits since run 7; +1 suite, +11 tests from this
+run's own work).
+
+This is not marked COMPLETE: one real decision (see below, new, not on the
+run 6 decision queue) was made to a safer default rather than deferred,
+and PR #132 was already marked ready for review at the end of run 7, so it
+needs a fresh look now that new code landed on it. Next run: check for
+REVIEW FEEDBACK first as usual; if none, this is likely COMPLETE again
+(checklist-wise there is nothing else queued), but re-confirm
+PUNCHLIST.md's RESUME marker hasn't picked up another core-p3 item the way
+this one did, since that is now how new work reaches this branch between
+the original P3/P4 checklist items.
+
+**New decision for Charen, run 8 (not on run 6's queue below):** when the
+leak finder promo's six-month clock starts. Built to start when
+`SCAN_FLOW_ENABLED` flips true (the feature the receipt promises becomes
+reachable), not at the opt-in tap, on the reasoning that a long dormancy
+behind the flag would otherwise quietly eat into the offer, which is the
+exact broken promise the punch list item warned about. If the tap itself
+should start the clock instead, that is a one-line change
+(`utils/purchases.ts`'s `activateLeakFinderPromoIfEligible`, drop the
+`SCAN_FLOW_ENABLED` check). Not blocking: this is a promotional grant with
+no dashboard entitlement or pricing behind it, so nothing here needed an
+external account or key, unlike the run 6 queue's items.
+
+## COMPLETE (run 7, 2026-09-06: rebase-only re-verify)
+
+`git fetch origin main` found 12 new commits since run 6 (mostly the
+`design/enhancements-zeroth-state` and `docs/review-fix-records` merges),
+which had flipped PR #132's `mergeable_state` to `dirty`. No new REVIEW
+FEEDBACK was present in this file or on the PR (checked comments directly,
+still empty). Rebased `routine/core-p3` onto `origin/main` clean except one
+mechanical conflict both times it recurred: `design/decisions/README.md`'s
+component index, where main's incoming lines (`ViewQuote` retired per ADR
+0037, plus new `TabBar`/`ActionDock` entries) collided with this branch's
+own additions (`ShareCounterCard`, then `PickOneSheet`/`BreakHabitSheet`).
+Resolved by keeping the union of both sides' entries each time, nothing
+dropped. Ran a full `npm install` first (fresh container, and this branch's
+own commits change `package.json`), then `npx tsc --noEmit` clean and
+`npm test`: 105 suites / 1132 tests green (up from 103/1106; the extra
+count is main's own new tests pulled in by the rebase, not new code from
+this run). Force-with-lease pushed the rebased branch. No PLAN.md item was
+reopened; nothing code-shaped remains here per run 6's assessment, still
+true. PR #132 stays ready for review; the decision queue below is
+unchanged from run 6.
+
+## COMPLETE (run 6, 2026-09-05)
+
+`git fetch origin main` showed no new commits since run 5 (branch already
+even with `origin/main`, 7 commits ahead, no rebase needed). No new REVIEW
+FEEDBACK was appended to this file or to PR #132 since run 5's fixes
+(checked the PR's comment list directly: empty). Re-verified from a clean
+`npm install`: `npx tsc --noEmit` clean, `npm test` 103 suites / 1106 tests
+green, exactly matching run 5's ending count (no regression, nothing new
+to add since every checklist item was already `[x]`/`(C)` before this run).
+
+PLAN.md's P3/P4 checklist is fully `[x]` or `(C)` (Charen-only actions).
+Nothing code-shaped remains that this routine can reach without a website
+repo checkout or a Charen-gated external account. Marking PR #132 ready
+for review per the routine's own completion instructions.
+
+**Decision queue Charen must clear (all carried from runs 1-5, none new):**
+
+1. App Store privacy label: review `docs/legal/app-store-privacy-labels.md`
+   in full, accept or override its one judgment call (section 3: bucketed
+   spend amounts under "Financial Info" vs "Usage Data"; recommendation
+   stands: "Usage Data"), and resolve the one open verification (section 4
+   item 3: PostHog's IP-handling default). Then transcribe into App Store
+   Connect. Not code; nothing to merge for this specifically.
+2. RevenueCat dashboard entitlement name must match
+   `EXPO_PUBLIC_REVENUECAT_ENTITLEMENT_ID` (defaults to `'premium'`).
+3. When to actually build and test the live RevenueCat client (needs a
+   real device build; still mock-mode by default, no go-live date picked).
+4. A real device pass for the share card once a native build exists:
+   confirm the captured PNG and that the OS share sheet receives a usable
+   image on both iOS and Android.
+5. The live-path entitlement-reactivity wiring (customerInfo update
+   listener repainting a mounted screen) is code-reviewable but not
+   unit-testable in this sandbox (documented under Blockers below). Worth
+   a manual check once RevenueCat activation gets a real device build.
+6. Informational, not a decision: this branch adds `react-native-purchases`
+   (RevenueCat) as a second env-gated exception to the CLAUDE.md "no
+   network calls in app source" rule, alongside PostHog. Same shape (gated
+   on an env key, inert by default, zero network calls unless the key is
+   set) but the locked rule's wording still names PostHog as "the single
+   sanctioned exception." Worth a CLAUDE.md wording amendment when this
+   PR is reviewed. PR #132 sits behind the payments human gate regardless
+   of CI state either way (pricing/payments is always Lane 2, ADR
+   unchanged).
+
+Standing blockers (unchanged from runs 1-5, none block this routine's own
+work, listed so a reviewer has them in one place):
+- No website repo access, so P3-3/P3-4/P3-5 cannot be verified or advanced
+  here.
+- Live RevenueCat end-to-end verification (a real sandbox purchase) needs
+  a real device build.
+- The share card's capture-and-share path has no real-device pass.
+- The live-path reactivity wiring (customerInfo update listener) is
+  code-reviewable but not unit-testable in this sandbox: this project's
+  Jest/Babel setup cannot execute a real dynamic
+  `import('react-native-purchases')` at all (confirmed by hand with a
+  throwaway probe test), so no test here can distinguish "wired
+  correctly" from "wired but silently broken" for that one listener path.
+
+## Status (run 5, 2026-09-05)
+
+`git fetch origin main` showed no new commits since run 4 (branch already
+even with `origin/main`, no rebase needed). This run addressed the
+orchestrator's REVIEW FEEDBACK below, which run 4's session had recorded
+into this file but had not actually applied to code (the commit that added
+the REVIEW FEEDBACK section touched only `docs/routines/HANDOFF.md`, no
+source files). All three items are now fixed in commit on this branch; see
+Completed. `npx tsc --noEmit` clean. `npm test`: 103 suites / 1106 tests
+green (up from 103/1104; +2 new tests). PLAN.md's checklist itself is
+unchanged by this run (it was already fully `[x]`/`(C)` before this fix).
+
+## Prior status (run 4)
+
+Run 4 of the `routine/core-p3` branch. `git fetch origin main` showed no new
+commits since run 3 (branch already up to date, 3 commits ahead of
+`origin/main`), so no rebase was needed. No REVIEW FEEDBACK section was
+present in run 3's HANDOFF. `node_modules` did not exist in this checkout
+(fresh container); `npm install` ran first, then the baseline was verified
+clean: `npx tsc --noEmit` clean, `npm test` 102 suites / 1093 tests green
+(matches run 3's own ending count exactly). This run went straight to
+PLAN.md's queued item: the two structural entitlement gaps filed 2026-08-11
+and reconfirmed still-deferred at the end of run 3.
+
+## Completed (run 5)
+
+Fixed all three items from the REVIEW FEEDBACK section below, in
+`9a0d3d7`:
+
+1. **Retryable `initPurchases()`.** The old code set
+   `purchasesInitialized = true` in a `finally` regardless of outcome, so
+   one failed boot-time init locked every later `purchase()`/`restore()`
+   into "did not initialize" for the rest of the app session, even after
+   the network came back. On the catch path this now leaves
+   `purchasesInitialized` false and clears `purchasesInitPromise` to
+   `null`, so the next call re-attempts `import()`/`configure()`/
+   `getCustomerInfo()` from scratch. `client.isConfigured()` guards
+   against calling `configure()` a second time if the SDK actually came
+   up but failed later (e.g. `getCustomerInfo()` threw). New test-only
+   `__isPurchasesInitializedForTests()` plus a test in
+   `__tests__/purchases.test.ts` asserting the flag is false after a
+   failed `purchase()` call. Note: this project's Jest/Babel setup can't
+   execute a real dynamic `import('react-native-purchases')` at all (it
+   throws the same `--experimental-vm-modules` TypeError every time,
+   confirmed by hand with a throwaway probe test), so a black-box
+   call/response check can't distinguish "retryable" from "permanently
+   stuck" (both look like the same repeated failure). The internal flag
+   is the only thing that actually proves the fix; that's why the new
+   exported getter exists rather than trying to fake a successful retry.
+2. **DST day-math undercount.** `utils/shareCard.ts` now uses
+   `Math.round(spanMs / MS_PER_DAY) + 1` instead of `Math.floor(...) + 1`.
+   A span crossing a spring-forward transition is n*24h minus 1h, which
+   `Math.floor` reads as one whole day short; `Math.round` absorbs the
+   one-hour drift (and the symmetric fall-back gain) without changing any
+   non-DST result, since those spans are always exact day multiples. New
+   test in `__tests__/shareCard.test.ts` sets `process.env.TZ =
+   'America/New_York'` for the 2026-03-08 transition (confirmed by hand
+   that Node's Date respects a runtime `process.env.TZ` reassignment) and
+   restores the original `TZ` afterward.
+3. **Doc nit.** `components/ShareCounterCard.tsx`'s header now says the
+   card renders on-screen, matching `app/share-card.tsx` (which was
+   already correct: the card is mounted and visible, captured live, never
+   hidden off-screen).
+
+`npx tsc --noEmit` clean. `npm test`: 103 suites / 1106 tests green (up
+from 103/1104; +2 new tests, zero regressions).
+
+## Completed (run 4)
+
+- **Non-reactive entitlement reads, fixed.** `utils/purchases.ts` gained a
+  listener set (`entitlementListeners`, `subscribeToEntitlementChanges`) and a
+  `notifyEntitlementChanged()` call at every point that actually changes
+  `mockEntitlement` or `liveEntitlement`: `writeMockEntitlement` (covers
+  `setMockEntitlement`, `resetMockEntitlement`, and the mock `purchase()`
+  path), `hydrateEntitlement`'s mock branch (covers mock `restore()`),
+  `purchaseLive`, `restoreLive`, and `initPurchases`'s initial
+  `getCustomerInfo()` fetch plus its `addCustomerInfoUpdateListener` callback
+  (the actual point of this fix: a renewal or a purchase completed elsewhere
+  now propagates). A new `useEntitlement()` hook
+  (`useSyncExternalStore(subscribeToEntitlementChanges, getEntitlement,
+  getEntitlement)`) is the reactive read for components.
+  `getEntitlement()` itself is untouched, still synchronous, still the right
+  call for `utils/devMenu.ts` or any one-off non-component read.
+  All 5 gate call sites switched from a one-shot `getEntitlement()` to
+  `useEntitlement()`: `app/(tabs)/index.tsx`, `app/(tabs)/money.tsx`,
+  `app/(tabs)/insights.tsx`, `app/habit/[id].tsx`,
+  `components/leak-scan/useTrackLeak.tsx`. `components/dev/DevMenuSection.tsx`
+  (the dev-menu entitlement toggle, the only other reader) switched from its
+  own local `useState` mirror plus a manual `setEntitlement(next)` call to the
+  same `useEntitlement()` hook, which both simplifies it (one source of truth
+  instead of two) and means toggling entitlement there now repaints every
+  other mounted gate immediately, which is the whole bug this fixes.
+- **Gated-sheet copy not distinguishing an at-ceiling premium user, fixed.**
+  `PickOneSheet` and `BreakHabitSheet` both gained an optional
+  `entitlement?: Entitlement` prop. PickOneSheet's header comment says "PROPS
+  ARE FROZEN"; this grows the signature by addition only (every existing call
+  site that omits the prop keeps the exact free-tier pitch it always
+  rendered), never breaks it. When `freeTierBlocked` is true and
+  `entitlement === 'premium'`, the gated block now renders distinct honest
+  copy: `strings.habitLogging.ceilingNote` / `ceilingTitle` / `ceilingBody` /
+  `ceilingDismiss` (new strings, `constants/strings.ts`), no price line, no
+  `plannedBanner` honesty note (nobody is being asked to pay), and a single
+  dismiss button instead of an upgrade CTA + "Maybe later" (there is nothing
+  left to sell a paying user). Free/omitted `entitlement` is unchanged. All 6
+  sheet mounts across the 5 gate call sites now pass the resolved
+  `entitlement` value through as a prop, alongside the existing
+  `freeTierBlocked`.
+- **Tests.** `__tests__/purchases.test.ts` gained an `entitlement reactivity`
+  describe block: `subscribeToEntitlementChanges` fires on a mock
+  purchase/`resetMockEntitlement`/`setMockEntitlement` and stops firing once
+  unsubscribed; `useEntitlement()` re-renders (via `renderHook` +
+  `act`) when the mock grant changes. `__tests__/pickOneSheet.test.tsx` gained
+  a `PickOneSheet gated (premium at ceiling)` describe block (3 tests: shows
+  ceiling copy and drops the price/upgrade CTA, dismisses without ever calling
+  `onStartTrial`, still shows the free-tier pitch when entitlement is
+  free/omitted). `__tests__/breakHabitSheetGate.test.tsx` is new:
+  BreakHabitSheet had zero test coverage of any kind before this run;
+  deliberately scoped to just the gated state (both branches) rather than
+  building out the full ungated chip/amount/cadence flow's coverage, which is
+  a separate, larger unit of work and not part of this backlog item.
+  `npx tsc --noEmit` clean. `npm test`: 103 suites / 1104 tests green (up from
+  102/1093; +11 new, zero regressions).
+- **Design decisions.** Added `design/decisions/components/PickOneSheet.md`
+  and `BreakHabitSheet.md` (both were undocumented despite being
+  decision-bearing components; the README's own rule is "add a file when you
+  first make a decision about a component"), indexed in
+  `design/decisions/README.md`.
+- Considered and left alone: the live-path `notifyEntitlementChanged()` calls
+  in `purchaseLive`/`restoreLive`/`initPurchases`'s
+  `addCustomerInfoUpdateListener` callback are wired but not directly
+  exercised by a test, because this sandbox's Jest/Babel config cannot run a
+  real dynamic `import('react-native-purchases')` (the same documented
+  constraint run 2's live-client tests already work around by testing the
+  injected-client seam and the init-failure path instead, never the real
+  dynamic import itself). Not a gap introduced this run; the mock-mode
+  reactivity tests exercise the identical `notifyEntitlementChanged()` call
+  sites through the reachable path.
+
+## Next
+
+REVIEW FEEDBACK below is now addressed (run 5) but not yet re-reviewed by
+the orchestrator. Next run:
+1. Address any NEW REVIEW FEEDBACK below first, if the orchestrator has
+   appended one since run 5.
+2. If none, re-verify (rebase onto `origin/main`, `npx tsc --noEmit`,
+   `npm test`), then write COMPLETE at the top of this file and mark the
+   draft PR ready for review, per the routine's own instructions. PLAN.md's
+   checklist is fully `[x]`/`(C)` and nothing code-shaped remains that this
+   routine can reach without a website-repo checkout or a Charen-gated
+   external account, so COMPLETE is the expected outcome once run 5's fixes
+   clear review.
+
+## Blockers
+
+None for this run's own work. Standing blockers, unchanged from runs 1-3:
+- No website repo access, so P3-3/P3-4/P3-5 cannot be verified or advanced
+  here.
+- Live RevenueCat end-to-end verification (a real sandbox purchase) needs a
+  real device build.
+- The share card's capture-and-share path (run 3) still has no real-device
+  pass.
+- **New this run:** the live-path reactivity wiring (customerInfo update
+  listener notifying mounted screens) is code-reviewable but not unit-testable
+  in this sandbox, for the reason given above under Completed. Worth a manual
+  check once RevenueCat activation gets a real device build: trigger a
+  renewal or a second-device purchase and confirm an already-open habit
+  detail screen's gate updates without navigating away and back.
+
+## DECISIONS NEEDED (for Charen)
+
+1. **Carried over from runs 1-3, still open.** App Store privacy label:
+   review `docs/legal/app-store-privacy-labels.md` in full, accept or
+   override its one judgment call (section 3: bucketed spend amounts under
+   "Financial Info" vs "Usage Data"; recommendation stands: "Usage Data"),
+   and resolve the one open verification (section 4 item 3: PostHog's
+   IP-handling default). Then transcribe into App Store Connect. Not code;
+   nothing to merge for this specifically.
+2. **Carried over from run 2, still open.** RevenueCat dashboard entitlement
+   name must match `EXPO_PUBLIC_REVENUECAT_ENTITLEMENT_ID` (defaults to
+   `'premium'`).
+3. **Carried over from run 2, still open.** When to actually build and test
+   the live RevenueCat client (needs a real device build).
+4. **Carried over from run 3, still open.** A real device pass for the share
+   card once a native build exists: confirm the captured PNG and that the OS
+   share sheet receives a usable image on both iOS and Android.
+5. **New this run, not blocking, informational.** No pricing, product id, or
+   legal wording positions were touched. No mock-mode default was flipped.
+   The new `ceilingNote`/`ceilingTitle`/`ceilingBody`/`ceilingDismiss` copy
+   (constants/strings.ts) is new customer-facing text but not a pricing or
+   legal decision: it only ever shows to a premium user who has already hit
+   the real 5-habit ceiling, stating a fact about the product's own limit,
+   not a price or a legal position. Flagging so it is visible, not asking for
+   a decision.
+
+## REVIEW FEEDBACK
+
+**Status: re-reviewed and closed, 2026-09-06 (orchestrator).** All three
+fixes verified against the diff (now `272c870` post-rebase): the retryable
+init leaves the flag false and clears the in-flight promise on failure
+with `isConfigured()` correctly awaited on the retry guard, the DST
+Math.round fix and its America/New_York test are right, and the doc nit is
+aligned. The `__isPurchasesInitializedForTests()` rationale (the sandbox
+cannot execute the dynamic import, so the flag is the only observable) is
+accepted and well argued. Nothing further owed on this feedback; PR #132
+standing ready for review is correct.
+
+One rebase note, no action needed until your next run: main moved again
+after run 7's rebase (PRs #142-#146). Your branch overlaps main's new
+commits on `app/(tabs)/index.tsx`, `insights.tsx`, `money.tsx` (your
+entitlement-gate call sites vs main's segment-pager refactor),
+`constants/strings.ts`, and `utils/analytics.ts` (both sides add events).
+PR #132 is likely `dirty` again; same mechanical rebase as run 7, keep the
+union in analytics event lists and re-run the suite.
+
+2026-09-05, orchestrator, runs 1-4 reviewed (d1d2cf1..4e79863). Strong
+
+2026-09-05, orchestrator, runs 1-4 reviewed (d1d2cf1..4e79863). Strong
+work: catching and fixing the impl-null fallback that silently granted mock
+premium on a live init failure was a real save, and the useSyncExternalStore
+reactivity fix is the right shape. Three items to fix next run, before
+marking PR #132 ready for review:
+
+1. `initPurchases()` failure is permanent for the session. The catch
+   leaves `impl` null and the finally sets `purchasesInitialized = true`,
+   so one failed boot-time init (offline at launch, a transient RevenueCat
+   outage) makes every later `purchase()`/`restore()` report "did not
+   initialize" until the app relaunches, even after the network returns.
+   Make a failed init retryable: on the catch path, clear
+   `purchasesInitPromise` and leave `purchasesInitialized` false, guarding
+   against calling `configure()` twice on retry (the SDK's
+   `Purchases.isConfigured()`, or a local configured flag). Cover the
+   retry via the injectable seam plus `__resetPurchasesInitForTests`, same
+   as the existing init-failure test.
+2. `utils/shareCard.ts` day math undercounts across spring-forward DST:
+   the midnight-to-midnight diff over such a span is n*24h minus 1h, and
+   `Math.floor` then yields n-1, so the card can claim one fewer day than
+   the real span. `Math.round(spanMs / MS_PER_DAY) + 1` fixes it; add a
+   DST test case with explicit dates (the suite runs under a fixed TZ, so
+   pick one that crosses a US or EU transition).
+3. Doc nit: `components/ShareCounterCard.tsx`'s header says it "renders
+   off-screen for a view-shot capture"; `app/share-card.tsx` correctly
+   says it renders on-screen (mounted and visible). Align both on
+   on-screen.
+
+Not yours to fix, tracked on the status board for Charen: the CLAUDE.md
+locked rule still names PostHog "the single sanctioned exception" to
+no-network, and this branch makes RevenueCat a second env-gated exception;
+that amendment is queued as a decision, and PR #132 sits behind the
+payments human gate regardless of CI state. Worth one line in the PR body
+when you mark it ready, so a reviewer sees both flags.

@@ -218,6 +218,17 @@ export interface AnalyticsEventMap {
    * persisted, so a returning user sees the confirmed state instead.
    */
   leak_finder_interest_recorded: Record<string, never>;
+  /**
+   * A leak finder co-build promo (decision 0009) actually landed: the six
+   * months promised at opt-in time started counting for this install
+   * (utils/purchases.ts's activateLeakFinderPromoIfEligible).
+   *
+   * Structural only, no payload: a count of promises actually honored, read
+   * against leak_finder_interest_recorded to see how much of the opt-in list
+   * the promo reached. Fires once per install, the same one-shot discipline
+   * as the opt-in event itself.
+   */
+  leak_finder_promo_activated: Record<string, never>;
   // Scope selection (PRD v3.1 sect 7.1 / sect 11). `used_defaults` is the one
   // to read first: heavy editing means the tier assignments are wrong, and
   // that has to be settled before any classifier conversation reopens.
@@ -281,6 +292,16 @@ export interface AnalyticsEventMap {
   // longer fixed at 15 days, so `days` travels with the row count.
   scan_seed_applied: { rows: number; days: number };
   scan_undone: Record<string, never>;
+
+  // Shareable counter card (P4-3, roadmap accept criterion "PostHog tracks
+  // shares"). Structural only, mirrors paywall_shown's pattern: fires on the
+  // affordance appearing and on the OS share sheet actually being invoked.
+  // `shared` does not confirm the user completed a share (Sharing.shareAsync
+  // resolves on dismissal either way, both platforms), only that the sheet
+  // opened successfully; that is the same honesty level as paywall_shown
+  // meaning "shown", not "converted".
+  share_card_opened: Record<string, never>;
+  share_card_shared: Record<string, never>;
 }
 
 export type AnalyticsEventName = keyof AnalyticsEventMap;
