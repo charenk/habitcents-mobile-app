@@ -2,10 +2,11 @@
 
 ## Status
 
-In progress. No REVIEW FEEDBACK pending at run start. Converted 4 more
-files to `useStrings()`: `AddCategoryModal.tsx`, `LeakFinderTeaser.tsx`,
-`ExpenseSheet.tsx`, `BeatMedia.tsx`. 47 files converted total now (2 shared
-+ 45 leaves).
+In progress. No REVIEW FEEDBACK pending at run start. Converted the four
+files run 11 found-and-deferred plus one newly found this run:
+`UpcomingList.tsx`, `OnboardingCarousel.tsx`, `BreakHabitSheet.tsx`,
+`AddUpcomingSheet.tsx`. 51 files converted total now (2 shared + 49
+leaves).
 
 ## Completed
 
@@ -14,55 +15,61 @@ files to `useStrings()`: `AddCategoryModal.tsx`, `LeakFinderTeaser.tsx`,
   Profile's Language row + `LanguageSheet` (cosmetic only, no catalog yet).
 - Plan item 2, typed-API slice (earlier run): `utils/i18n.ts` (`Catalog`,
   `getCatalog`, `useStrings()`). No call sites touched that run.
-- Plan item 2, call-site migration (earlier runs, runs 1-10): 43 files
-  (`ScreenHeader.tsx`, `Sheet.tsx`, the `ResultsScreen`-tree batch, and 41
-  leaves through `SpentList.tsx`). Full detail in PLAN.md.
-- Plan item 2, this run (run 11): four ordinary leaves,
-  `AddCategoryModal.tsx`, `LeakFinderTeaser.tsx`, `ExpenseSheet.tsx`,
-  `BeatMedia.tsx`, none with a module-scope complication.
-  - `AddCategoryModal`/`ExpenseSheet`: both single- or two-parent leaves
-    whose importing screens and own leaf tests already had
-    `LocaleProvider` from earlier runs; no test file changes needed.
-  - `LeakFinderTeaser`: `app/(tabs)/insights.tsx`-only, conditionally
-    mounted, no dedicated test today (confirmed via
-    `grep -rl "LeakFinderTeaser" __tests__` returning nothing), so no test
-    file was at risk.
-  - `BeatMedia`: buried inside the unconverted `OnboardingCarousel.tsx`,
-    itself rendered unconditionally from `app/onboarding/welcome.tsx`.
-    Needed `LocaleProvider` added to three test files that had none:
-    `beatMedia.test.tsx`, `onboardingCarousel.test.tsx`, and
-    `onboardingStepMachineRevive.test.tsx` (the last renders the welcome
-    screen directly and reaches `BeatMedia` transitively, found by tracing
-    the render tree and its own doc comment, not by grepping "BeatMedia"
-    or "OnboardingCarousel" in that file's text, since neither name
-    appears there). Full detail and the lesson learned (grep the parent
-    chain too, not just the component's own name) are in PLAN.md.
+- Plan item 2, call-site migration (earlier runs, runs 1-11): 47 files
+  (`ScreenHeader.tsx`, `Sheet.tsx`, the `ResultsScreen`-tree batch, and 45
+  leaves through `BeatMedia.tsx`). Full detail in PLAN.md.
+- Plan item 2, this run (run 12): four files, all module-scope shapes
+  flagged in earlier runs (three of the four were run 11's explicit
+  found-and-deferred list; the fourth was found fresh this run):
+  - `UpcomingList.tsx`: module-level array shape (`WINDOW_LABELS`/
+    `WINDOW_OPTIONS`), moved into a `useMemo`. Its child `UpcomingRow`
+    (a real function component) needed `strings: Catalog` threaded in as
+    a prop, since it calls `strings.money.multiPaymentPill` outside the
+    parent's hook scope. Leaf-only `upcomingList.test.tsx` needed
+    `LocaleProvider` added.
+  - `OnboardingCarousel.tsx`: a new fourth module-scope shape, an
+    **exported** array (`BEATS`) also used directly as a test fixture in
+    `beatMedia.test.tsx`. Converted to `buildBeats(catalog)`; the export
+    stays a static English `BEATS = buildBeats(strings)` so the fixture
+    and the prop's default type are untouched, while the actual render
+    path now resolves beats from `useStrings()` via `useMemo`. No test
+    file changes needed (all three, including the `welcome.tsx` render
+    tree one, already had `LocaleProvider` from `BeatMedia`'s run-11
+    conversion). Note: this file will keep showing up in a
+    `grep -rl "from '@/constants/strings'"` sweep because the static
+    import stays for building `BEATS`; that is expected, not a missed
+    conversion.
+  - `BreakHabitSheet.tsx`: exactly the two arrays + one helper function
+    run 11 flagged (`CADENCE_OPTIONS`/`BOUGHT_OPTIONS` into `useMemo`s,
+    `yearlyLineFor` took an added `Catalog` parameter). Only importer
+    already covered by all three of its test files; no test file changes.
+  - `AddUpcomingSheet.tsx` (found this run): two module-level arrays
+    (`NAME_CHIPS`, `MONTH_DAY_CHIPS`) became builder functions, plus a
+    third module-level function (`draftFromExpense`) that read
+    `NAME_CHIPS` directly now takes the resolved array as a parameter.
+    Only importer already covered by both of its test files; no test
+    file changes.
   - `tsc --noEmit` clean and full suite run (not just touched files) after
-    this run's commit: 109/109 suites, 1147/1147 tests green. One
-    unrelated flaky timeout in `door3BreakSheet.test.tsx` on the first
-    full-suite run (passes standalone and on a full-suite rerun; file
-    untouched this run), noted under Notes below, not treated as a real
-    failure.
+    each of the four commits: 109/109 suites, 1147/1147 tests green
+    throughout.
 
 ## Next
 
-- 23 files still import the static `strings` catalog directly outside
+- `app/(tabs)/_layout.tsx` (found this run): tab titles,
+  `strings.tabs.*`. A top-level layout component, mounted unconditionally
+  like `ScreenHeader`/`Sheet`, not yet leaf-checked; confirm whether it
+  can call `useStrings()` directly (it is a function component) before
+  assuming it needs shared-component-style test-file discovery.
+- 22 files still import the static `strings` catalog directly outside
   `__tests__/` (rerun `grep -rl "from '@/constants/strings'" app
   components contexts utils | grep -v __tests__` to get the current
-  list). Continue picking genuinely small single-parent leaf files from
-  it (re-run the leaf-verification grep per candidate every time; check
-  for all three now-confirmed module-scope shapes, array/helper-function/
-  plain-const, before assuming a file's cost; also grep the parent chain,
-  not just the candidate's own name, per the `BeatMedia` lesson above).
-- `components/money/UpcomingList.tsx`, `components/onboarding/
-  BreakHabitSheet.tsx`, `components/onboarding/OnboardingCarousel.tsx`
-  found and deferred (runs 10-11): all three have a module-scope shape.
-  `UpcomingList`'s `WINDOW_LABELS` and `OnboardingCarousel`'s `BEATS` are
-  the module-level *array* shape (move into the component body, `useMemo`
-  alongside `styles`). `BreakHabitSheet.tsx` has two module-level arrays
-  (`CADENCE_OPTIONS`-style) plus a module-level helper function
-  (`yearlyLine`), i.e. two of the three confirmed shapes in one file;
-  budget more than a quick leaf pick for it.
+  list; note `OnboardingCarousel.tsx` and `utils/i18n.ts` will always be
+  on this list by design, see above). Continue picking genuinely small
+  single-parent leaf files from it (re-run the leaf-verification grep per
+  candidate every time; check for all four now-confirmed module-scope
+  shapes -- array, helper-function, plain-const, exported-array-with-test-
+  fixture -- before assuming a file's cost; also grep the parent chain,
+  not just the candidate's own name, per the `BeatMedia` lesson).
 - The 13 `ScreenHeader` importers' and remaining `Sheet` importers' own
   `strings` usage are themselves future leaf picks once the two shared
   components are done. For these, re-run the "does the parent screen
@@ -109,79 +116,59 @@ item 4).
   same on a fresh container next time.
 - `npm run lint` (`expo lint`) still fails in this sandbox on a network call
   to Expo's compatibility API, unrelated to this change and not one of the
-  routine's required checks (tsc + jest). Same as last run.
+  routine's required checks (tsc + jest).
 - `npx expo install <pkg>` fails the same network way; use
   `npm install <pkg>@<bundled-version>` (read the version from
   `node_modules/expo/bundledNativeModules.json`) instead.
-- `__tests__/door3BreakSheet.test.tsx` timed out once on a full-suite run
-  this run (5000ms default Jest timeout), unrelated to any file this run
-  touched; passed standalone and on a full-suite rerun immediately after.
-  Treat a single full-suite failure in an untouched file as suspect and
-  rerun before concluding anything is broken; only escalate if it repeats.
 - The Language picker in Settings is still cosmetic only: selecting a
   language persists the override and nothing on screen changes yet,
   because most components still read the static English `strings` export
-  and no non-English catalog exists. 47 files (2 shared, 45 leaves) are
+  and no non-English catalog exists. 51 files (2 shared, 49 leaves) are
   wired through `useStrings()` so far; all still resolve to English
   either way until plan item 4 lands catalogs, so this is not yet
   observable. Expected, not a bug.
 - `contexts/LocaleContext.tsx`'s `detectDeviceLocale()` call is wrapped in
   try/catch with a `DEFAULT_LOCALE` fallback, so mounting `LocaleProvider`
   in a test does NOT require mocking `expo-localization`; several already-
-  green leaf tests (e.g. `habitLeakRow.test.tsx`) carry `LocaleProvider`
-  with no such mock. Mocking it explicitly (as `languageSheet.test.tsx`,
-  `profile.test.tsx`, `i18n.test.tsx` do) is only needed when a test
-  actually asserts on the detected locale value itself; a plain leaf
-  conversion does not need it.
+  green leaf tests carry `LocaleProvider` with no such mock. Mocking it
+  explicitly is only needed when a test actually asserts on the detected
+  locale value itself.
 - Useful check before picking the next file to convert: a component is
-  only a safe small leaf if (a) `grep -rn "import.*\bComponentName\b"` outside
-  `__tests__/` finds few real import sites (a plain-name grep like
+  only a safe small leaf if (a) `grep -rn "import.*\bComponentName\b"`
+  outside `__tests__/` finds few real import sites (a plain-name grep like
   `grep -rl "ComponentName"` produces false positives from doc-comment
   cross-references in unrelated files; always confirm with the `import.*`
-  form before ruling a file in or out), AND (b) every file that imports the
-  component outside `__tests__/` mounts it conditionally, or is itself
-  only reachable from a small test surface. For a component whose hooks
-  run unconditionally on mount, check (b) has to trace every importer's
-  own mount site too, not just stop at "no direct test file found": the
-  importer may be reached only through a bigger screen. New this run: if
-  the component sits inside an UNCONVERTED parent component (like
-  `BeatMedia` inside `OnboardingCarousel`), grepping the component's own
-  name across `__tests__/` can miss real render sites entirely (a test may
-  render the parent, or the screen that mounts the parent, without ever
-  naming the child); also grep the parent chain up to the screen level and
-  check each hit's doc comments for "unconditional"/"always renders"
-  language before ruling a test file out.
-- 2026-09-06, out-of-band CI fix (not a scheduled run, a reaction to a
-  check_run.completed failure notification on PR #134): main added 3 new
-  test files (`moneyPager.test.tsx`, `scanSnapshotFooter.test.tsx`,
-  `insightsFirstScan.test.tsx`, all 2026-09-06) that render `ScreenHeader`
-  and/or `ScanSnapshotCard`, both already converted to `useStrings()` on
-  this branch, but their provider wrappers predate `LocaleProvider`. Fixed
-  by rebasing onto latest main, then adding `LocaleProvider` + the
-  standard `expo-localization` mock to all three files. This is a standing
-  risk for the rest of plan item 2: any new test file landing on main for
-  an already-converted shared component (`ScreenHeader`, `Sheet`) will
-  fail the same way until this branch rebases and picks it up. Re-run
-  `tsc` + the full suite after every rebase, not just after this routine's
-  own commits, to catch it early. This run's rebase was a no-op (branch
-  was already current with `origin/main` at session start).
-- Three module-scope shapes are now confirmed among files still importing
+  form before ruling a file in or out), AND (b) every file that imports
+  the component outside `__tests__/` mounts it conditionally, or is
+  itself only reachable from a small test surface. If the component sits
+  inside an UNCONVERTED parent component, grepping the component's own
+  name across `__tests__/` can miss real render sites entirely; also grep
+  the parent chain up to the screen level and check each hit's doc
+  comments for "unconditional"/"always renders" language.
+- Four module-scope shapes are now confirmed among files still importing
   static `strings`, costed differently: a module-level *array* built from
-  `strings.xxx` (`SpendPulse.tsx`, `LongArc.tsx`, `UpcomingList.tsx`,
-  `OnboardingCarousel.tsx`'s `BEATS` found-and-deferred) and a module-level
-  *helper function* that reads `strings` directly (`CheckInCard.tsx`'s
-  `chapterCopy`/`confirmationCopy`, `PickOneSheet.tsx`'s `cadenceLabel`,
-  `SpentList.tsx`'s `dayLabelFor`, `BreakHabitSheet.tsx`'s `yearlyLine`
-  found-and-deferred) both need restructuring or a threaded parameter; the
-  third, a plain module-level `const` built from a single `strings.xxx`
-  value (`app/profile.tsx`'s `SUPPORT_MAILTO_URL`), is the cheapest of the
-  three, just a one-line `useMemo`. `BreakHabitSheet.tsx` additionally has
-  two module-level *arrays* of the first shape alongside its helper
-  function, i.e. two of the three shapes in one file. Check which shape
-  (if any) a flagged file actually has before estimating its cost.
+  `strings.xxx` (fixed by moving into a `useMemo` in the component body);
+  a module-level *helper function* that reads `strings` directly (fixed
+  by adding a `strings: Catalog` parameter, threaded from `useStrings()`
+  at every call site, including any OTHER module-level function that
+  calls it, like `AddUpcomingSheet.tsx`'s `draftFromExpense`); a plain
+  module-level `const` built from a single `strings.xxx` value (a
+  one-line `useMemo`); and, new this run, an **exported array used as a
+  test fixture elsewhere** (`OnboardingCarousel.tsx`'s `BEATS`), fixed by
+  extracting a `buildX(catalog)` function and keeping the export as
+  `buildX(strings)` with the static import, so the fixture and any
+  default-prop shape stay unchanged while the real render path calls
+  `useStrings()`. Grep the candidate's own exports (not just its
+  internals) before assuming a module-level array is purely private.
 - Whenever a conversion touches a `useMemo`/`useCallback` body that reads
-  `strings`, add `strings` to its dependency array in the same edit (the
-  run 8 review feedback caught one miss; do not repeat it).
+  `strings`, add `strings` to its dependency array in the same edit.
+- Standing rebase risk (from run 11's out-of-band CI fix): any new test
+  file landing on main for an already-converted shared component
+  (`ScreenHeader`, `Sheet`) will fail the same LocaleProvider-missing way
+  until this branch rebases and picks it up. Re-run `tsc` + the full
+  suite after every rebase, not just after this routine's own commits.
+  This run's rebase was a no-op (branch was already current with
+  `origin/main` at session start).
 
 ## REVIEW FEEDBACK
 
