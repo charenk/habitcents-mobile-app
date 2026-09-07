@@ -87,11 +87,16 @@ export function LeakFinderTeaser({ interestRecorded, onRecordInterest }: LeakFin
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
-    // EmptyState's fill geometry: 40pt top (section + stack), 24pt sides.
+    // EmptyState's fill geometry, kept in step by hand: 24pt sides, and since
+    // 2026-09-07 centred in the pane (flexGrow, never flex, so large Dynamic
+    // Type can never squash it) instead of a 40pt top pad. The month pane one
+    // swipe away centres the same way; this stack is taller than that one, so
+    // its art sits a little higher, which the record carries as Open.
     container: {
+      flexGrow: 1,
+      justifyContent: 'center',
       alignItems: 'center',
       gap: 12,
-      paddingTop: spacing.section + spacing.stack,
       paddingHorizontal: spacing.xxl,
     },
     // Fixed 96pt, never scaled: the copy below grows uncapped, and art that

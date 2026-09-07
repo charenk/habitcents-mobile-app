@@ -37,7 +37,7 @@ import { SectionList, StyleSheet, Text, View } from 'react-native';
 import { ExpenseRow } from '@/components/money/ExpenseRow';
 import { EmptyState } from '@/components/ui';
 import { strings } from '@/constants/strings';
-import { radii, typeScale } from '@/constants/theme';
+import { layout, radii, spacing, typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -202,25 +202,39 @@ export function SpentList({ sections, onEditExpense, onLogExpense }: SpentListPr
       ListFooterComponent={listFooter}
       ListEmptyComponent={listEmpty}
       style={styles.container}
-      contentContainerStyle={styles.listContent}
+      // Empty only: the content container grows to the pane so EmptyState's
+      // fill wrapper has a height to centre in, and the 24pt end padding
+      // stands in for the populated list's breathing room. A populated list
+      // keeps its natural height so short lists stay top-aligned.
+      contentContainerStyle={[styles.listContent, neverLogged ? styles.listContentEmpty : null]}
       stickySectionHeadersEnabled={false}
       showsVerticalScrollIndicator={false}
+      testID="spent-list"
     />
   );
 }
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
-    // Matches money.tsx's old outer ScrollView (style: flex:1, contentContainerStyle:
-    // paddingHorizontal 20 / paddingTop 12 / paddingBottom 24), now owned here
-    // since this list is its own scroll container instead of nesting inside one.
+    // Matches money.tsx's outer ScrollView (style: flex:1, contentContainerStyle
+    // paddingHorizontal 20 / paddingTop layout.paneContentTop / paddingBottom
+    // 24), owned here since this list is its own scroll container instead of
+    // nesting inside one. The `flex: 1` is load-bearing for the empty case:
+    // without it the list collapses to its content and there is no height to
+    // centre the zero state in.
     container: {
       flex: 1,
     },
     listContent: {
       paddingHorizontal: 20,
-      paddingTop: 12,
-      paddingBottom: 24,
+      // Was a literal 12 while money.tsx moved to 14 (ADR 0039), which put
+      // this pane's zero-state art 2pt above Upcoming's and Habits'. One
+      // token now, so the three cannot drift again.
+      paddingTop: layout.paneContentTop,
+      paddingBottom: spacing.xxl,
+    },
+    listContentEmpty: {
+      flexGrow: 1,
     },
     eyebrow: {
       fontFamily: theme.fonts.uiSemibold,

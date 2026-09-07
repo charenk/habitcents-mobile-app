@@ -385,6 +385,16 @@ export const motion = { tap: 120, sheet: 220, toast: 220, screen: 360, pulse: 28
 export const layout = {
   tabBarHeight: 56,
   /**
+   * Top padding of a tab pane's scroll content, below the segmented control.
+   *
+   * One token because it once drifted: ADR 0039 moved Money's shared
+   * ScrollView from 12 to 14 to match Insights and Categories, and Money's
+   * Spent pane, whose SectionList owns its own content padding, stayed at 12,
+   * so its zero-state art sat 2pt above its siblings' as the pager swiped.
+   * Every pane reads this now (Charen's centring call, 2026-09-07).
+   */
+  paneContentTop: 14,
+  /**
    * End-of-scroll breathing room at the bottom of a screen's content.
    *
    * NOT tab-bar clearance, despite how it reads. The tab bar does not float:
