@@ -40,11 +40,12 @@ describe('ActionDock', () => {
     expect(view.getByText('the action')).toBeTruthy();
   });
 
-  // The strip's contract: a top hairline so scrolling content clips cleanly
-  // against it, and NO bottom safe-area padding, because the tab bar below
-  // already reserves the inset and draws its own border. Doubling either was
-  // the failure mode the ADR names.
-  it('carries a top hairline and no bottom safe-area padding', async () => {
+  // The strip's contract: NO top edge (the hairline it carried until
+  // 2026-09-07 read as a seam; the opaque fill is what separates the dock
+  // from content scrolling behind it), and NO bottom safe-area padding,
+  // because the tab bar below already reserves the inset and draws its own
+  // border. Doubling the inset was the failure mode the ADR names.
+  it('carries no top edge and no bottom safe-area padding', async () => {
     const view = await renderWith(
       <ActionDock testID="dock">
         <Text>x</Text>
@@ -52,8 +53,9 @@ describe('ActionDock', () => {
     );
     const dock = styleOf(view.getByTestId('dock'));
 
-    expect(dock.borderTopWidth).toBe(1);
-    expect(dock.borderTopColor).toBe(lightTheme.border);
+    expect(dock.borderTopWidth).toBeUndefined();
+    expect(dock.borderTopColor).toBeUndefined();
+    expect(dock.backgroundColor).toBe(lightTheme.background);
     // 12pt of its own padding, not an inset-derived value.
     expect(dock.paddingBottom).toBe(12);
     expect(dock.paddingTop).toBe(12);

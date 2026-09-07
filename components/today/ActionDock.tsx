@@ -8,11 +8,12 @@
  * screen to the bottom of a long scroll, and on a populated Kept pane the
  * affordance could not be reached at all without scrolling to the end.
  *
- * This is the shared container, not the contents: it owns the position, the
- * padding and the top edge so both panes match while the pager is mid-swipe.
- * Spent fills it with QuickLogRow; Kept fills it with the break-habit
- * affordance. It also executes a principle the repo already states in
- * CLAUDE.md, "Primary actions in thumb zone (bottom 40%)".
+ * This is the shared container, not the contents: it owns the position and
+ * the padding so both panes match while the pager is mid-swipe. Spent fills
+ * it with QuickLogRow; Kept fills it with BreakHabitRow, and since 2026-09-07
+ * both are the same DockCard shell at the same height. It also executes a
+ * principle the repo already states in CLAUDE.md, "Primary actions in thumb
+ * zone (bottom 40%)".
  *
  * A FLEX SIBLING, NOT A FLOATING BAR. The pane is a column: the scroller takes
  * flex 1 and this sits after it. No position absolute, no z-index, no offset
@@ -46,8 +47,8 @@ export type ActionDockProps = {
   /**
    * Measured height, reported so the screen can lift the toast clear of it
    * (ADR 0038, see Toast's useToastLift). Measured rather than derived: the
-   * dock's height is its content's, and the quick-log card and the habit
-   * affordance are not the same size.
+   * two docks are equal by construction since DockCard, but a Dynamic Type
+   * overflow could still grow one, and a measured lift never lifts short.
    */
   onHeightChange?: (height: number) => void;
   /** Distinguishes the two panes' docks in tests. */
@@ -74,12 +75,14 @@ export function ActionDock({ children, onHeightChange, testID }: ActionDockProps
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
+    // No top edge (Charen, 2026-09-07). The 1px hairline that used to sit
+    // here read as a seam across the pane; the dock's opaque fill is what
+    // actually separates it from the content scrolling behind, and that was
+    // already true with the line present.
     dock: {
       paddingHorizontal: spacing.gutter,
       paddingTop: spacing.stack,
       paddingBottom: spacing.stack,
-      borderTopWidth: 1,
-      borderTopColor: theme.border,
       backgroundColor: theme.background,
     },
   });
