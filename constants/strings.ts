@@ -1210,8 +1210,17 @@ export const strings = {
     // Leak finder teaser (decision 0009), the pane's state while the scan is
     // dormant. Says what is being built, asks the reader to help build it,
     // and records interest on device: no network beyond the analytics event.
+    //
+    // Trimmed 2026-09-07 (Charen) from 46 words to one line: under a 96pt
+    // illustration the paragraph read as a wall, well past the app's one-hook
+    // standard. "Nothing uploads, ever" survives the cut because this pane is
+    // the only surface still carrying that promise (the scan intake screen and
+    // the onboarding beat that used to restate it are both behind
+    // SCAN_FLOW_ENABLED). The rebuilding-together clause went because the
+    // invitation below already says "Join the research", and the segment's
+    // "Soon" badge already sets the timing.
     leakFinderBody:
-      'The leak finder will read a bank statement on your phone and point at the spending that leaks. Nothing uploads, ever. We are rebuilding it, and we want to build it with people who will actually use it.',
+      'It reads a bank statement on your phone and points at what leaks. Nothing uploads, ever.',
     // The invitation, shown only before opting in: once someone is on the
     // list, inviting them again reads as a surface that forgot them.
     leakFinderReward: 'Join the research and you could win six months of HabitCents.',
