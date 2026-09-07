@@ -824,8 +824,9 @@ export const strings = {
     // first expense log / first habit break, including an honest $0.00.
     spentChipNoLogs: 'No logs yet',
     keptChipNoSkips: 'No skips yet',
-    // Kept band. The eyebrow and caption already live in habitLogging
-    // (keptSoFar, keptCaption, keptZeroCaption); nothing is duplicated here.
+    // No kept band on Today since 2026-09-07 (Charen). KeptHero's eyebrow and
+    // captions live in habitLogging (keptSoFar, keptCaption, keptZeroCaption)
+    // for its remaining caller, the leak-scan payoff screen.
     // Check-in card
     openHabitLabel: (name: string) => `${name}, view habit details`,
     skipWithValue: (skipValue: string) => `Skipped it · keeps ${skipValue}`,

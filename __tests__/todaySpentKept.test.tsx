@@ -13,8 +13,8 @@
  * DI-7 note: both panes stay mounted at all times now (the pager scrolls
  * between them rather than swapping which one exists), so a plain
  * getByText/getByLabelText presence check against pane content no longer
- * proves which view is selected, and getByLabelText(/^Kept /) started
- * matching two things at once (the chip and KeptHero's always-mounted "Kept
+ * proves which view is selected, and getByLabelText(/^Kept /) once matched
+ * two things at once (the chip and the since-removed KeptHero band's "Kept
  * so far, ..." label). Selection is verified two ways below instead: the
  * chips' own testID (spent-chip / kept-chip, added alongside the pager) plus
  * their accessibilityState, and, for the swipe path, by invoking the
@@ -324,9 +324,8 @@ describe('Today: Spent/Kept chips', () => {
     await tap(view.getByTestId('kept-chip'));
 
     // Both panes stay mounted (DI-7), so selection is proved by which chip
-    // reports selected, not by pane content existing (keptSoFar is always
-    // in the tree now). The tap also fires the existing tap analytics event
-    // unchanged.
+    // reports selected, not by pane content existing. The tap also fires the
+    // existing tap analytics event unchanged.
     expect(view.getByLabelText(/^Kept .*, selected/)).toBeTruthy();
     expect(view.getByLabelText(/^Spent .*, not selected/)).toBeTruthy();
     expect(mockTrack).toHaveBeenCalledWith('today_view_switched', { to: 'kept', method: 'tap' });

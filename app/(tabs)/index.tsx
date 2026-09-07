@@ -17,7 +17,6 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useHabits } from '@/contexts/HabitsContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
 import { useOnboarding } from '@/contexts/OnboardingContext';
-import { KeptHero } from '@/components/habit-logging/KeptHero';
 import { LeakCard } from '@/components/habit-logging/LeakCard';
 import { CheckInCard } from '@/components/habit-logging/CheckInCard';
 import { useCheckInFeedback } from '@/components/habit-logging/useCheckInFeedback';
@@ -81,8 +80,9 @@ const FIRST_RUN_RIBBON_LINES: Record<string, string> = {
  * Today (redesign U5, ADR 0019, DI-5). Two in-page views, Spent (default) and
  * Kept, controlled by the SpentKeptChips value chips: the chips ARE the tab
  * control, there is no separate SegmentedControl. Spent holds the quick-log
- * card and today's logged expenses; Kept holds the all-time KeptHero band plus
- * the same Leaks found / Breaking now content this screen always carried.
+ * card and today's logged expenses; Kept holds the Leaks found / Breaking now
+ * content this screen always carried (the all-time KeptHero band above it
+ * went on 2026-09-07).
  * Leaks live in Kept only; the quick-log category tiles are dropped (the log
  * sheet's own picker covers category choice).
  */
@@ -632,8 +632,9 @@ export default function TodayScreen() {
       .filter((x): x is BreakingItem => x !== null);
   }, [activeHabits, getGoalByHabitId]);
 
-  // Kept chip (spec 04 "Today"): kept TODAY across every goal, distinct from
-  // the all-time total the KeptHero band still shows inside the Kept view.
+  // Kept chip (spec 04 "Today"): kept TODAY across every goal. The all-time
+  // total no longer renders anywhere on Today (the KeptHero band went on
+  // 2026-09-07); habit detail carries each habit's own.
   const keptTodayCents = useMemo(() => {
     const today = new Date();
     return goals.reduce((sum, g) => sum + keptOnDay(g, today), 0);
@@ -790,8 +791,6 @@ export default function TodayScreen() {
   }, [pickOneHabitId, startBreakingHabit]);
 
   const partialGoal = partialGoalId ? goals.find((g) => g.id === partialGoalId) ?? null : null;
-
-  const totalKept = goals.reduce((sum, g) => sum + (g.kept || 0), 0);
 
   const isEmpty = sections.length === 0;
   // Pre-detection progress state (spec 05 section 5.2): once logging has
@@ -1028,18 +1027,9 @@ export default function TodayScreen() {
               <InfoRibbon line={door3RibbonLine} onDismiss={dismissDoor3Ribbon} />
             </View>
           ) : null}
-          {/* Once a leak or a breaking habit exists the pane opens straight
-              on the KeptHero band. While no kept content exists there is no
-              band at all, only the centered zero block below. The band still
-              mounts while loading, when isEmpty is not yet trustworthy. */}
-          {isLoading || !isEmpty ? (
-            // DI-6 gutter fix: the band renders full-bleed by default (see
-            // onboarding success, which supplies its own padded container
-            // instead); Today has no such wrapper, so it passes the same
-            // 20pt horizontal gutter the chips row and both list content
-            // styles use.
-            <KeptHero cents={totalKept} style={styles.keptHeroGutter} />
-          ) : null}
+          {/* No band above the list since 2026-09-07 (Charen): the Kept so far
+              total added nothing the list and the chips do not already say.
+              KeptHero stays for the leak-scan payoff screen. */}
 
           {isLoading ? (
             <View style={styles.loadingContainer}>
@@ -1221,8 +1211,8 @@ function createStyles(theme: AppTheme) {
       marginBottom: spacing.stack,
     },
     // FirstRunRibbon, door3 (U6): the Kept pane's top-level View carries no
-    // ambient horizontal padding (KeptHero gets its own via keptHeroGutter
-    // below), so this style supplies the screen's 20pt gutter directly.
+    // ambient horizontal padding (nothing else on it carries a gutter), so
+    // this style supplies the screen's 20pt gutter directly.
     ribbonWrap: {
       paddingHorizontal: spacing.gutter,
       marginBottom: spacing.stack,
@@ -1240,11 +1230,6 @@ function createStyles(theme: AppTheme) {
     },
     // Pane sizing (width and the web-only flexGrow) comes from the pager
     // hook's paneProps, so both panes and every other screen's panes agree.
-    // DI-6: shares the 20pt gutter the chips row and both list content styles
-    // use below, so the band no longer renders full-bleed on Today.
-    keptHeroGutter: {
-      marginHorizontal: spacing.gutter,
-    },
     // The scroller wrapper on every Today scroller: flex 1 so the scroller
     // keeps filling the pane, and a positioning context for ScrollFade, which
     // sits at its bottom edge where the content meets the dock.
