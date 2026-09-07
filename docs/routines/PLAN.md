@@ -441,6 +441,78 @@ work, tracked elsewhere).
       (ADR 0037, nothing renders them any more, kept only as a documented
       revert path like `AuroraBackground.tsx`); low priority for this
       routine since no live surface depends on them, but still on the list.
+
+      **`UpcomingList.tsx`, `OnboardingCarousel.tsx`, `BreakHabitSheet.tsx`,
+      `AddUpcomingSheet.tsx` converted (run 12):** all four of run 11's
+      found-and-deferred module-scope files, plus one more found this run.
+      `UpcomingList.tsx`'s `WINDOW_LABELS`/`WINDOW_OPTIONS` (module-level
+      array shape) moved into a `useMemo` inside the component; its child
+      `UpcomingRow` (a real function component, not inline JSX) reads
+      `strings.money.multiPaymentPill` outside the parent's hook scope, so
+      it now takes `strings: Catalog` as an added prop, same shape as
+      `CheckInCard.tsx`'s `ConfirmationBlock`. Only importer
+      `app/(tabs)/money.tsx` (covered); leaf-only `upcomingList.test.tsx`
+      needed `LocaleProvider` added.
+
+      `OnboardingCarousel.tsx`'s `BEATS` is a genuinely new fourth shape:
+      an **exported** module-level array, used both as the render default
+      and directly as a test fixture (`beatMedia.test.tsx` imports `BEATS`
+      itself to build a `CAPTURED` array with assets, checking only
+      `.length`, never the English text). Converted to a `buildBeats(catalog)`
+      function; `export const BEATS = buildBeats(strings)` keeps the static
+      English export unchanged for that fixture and the prop default's
+      shape, while the component itself now computes
+      `useMemo(() => buildBeats(strings), [strings])` from `useStrings()`
+      and falls back to that only when no `beats` override prop is passed.
+      Net effect: real usage is now locale-reactive, the test fixture is
+      untouched. All three of its test files (`beatMedia`,
+      `onboardingCarousel`, `onboardingStepMachineRevive`, the last via the
+      `welcome.tsx` render tree) already had `LocaleProvider` from
+      `BeatMedia`'s run-11 conversion; no test file changes needed. Any
+      future `grep -rl "from '@/constants/strings'"` sweep will still list
+      this file, because the static import stays for building `BEATS`; that
+      is expected, not a sign the conversion was missed.
+
+      `BreakHabitSheet.tsx` had exactly the two arrays plus one helper
+      function flagged in run 11: `CADENCE_OPTIONS`/`BOUGHT_OPTIONS` moved
+      into `useMemo`s, `yearlyLineFor` (the helper function, previously
+      named `yearlyLine`) took an added `strings: Catalog` parameter at its
+      one call site. Only importer `app/(tabs)/index.tsx` (Today), already
+      covered by all three of its test files
+      (`door3BreakSheet`/`todaySpentKept`/`todayQuoteRibbonPlacement`); no
+      test file changes needed.
+
+      `AddUpcomingSheet.tsx` (found this run, not on run 11's list): two
+      module-level arrays, `NAME_CHIPS` and `MONTH_DAY_CHIPS`, became
+      `buildNameChips(catalog)`/`buildMonthDayChips(catalog)` functions.
+      The wrinkle here, a variant on the helper-function shape: a *third*
+      module-level function, `draftFromExpense(expense)`, read `NAME_CHIPS`
+      directly to reverse-match a row's title back to its chip on edit-mode
+      open; it now takes the resolved `nameChips` array as a second
+      parameter, threaded from the component's `useMemo` at its one call
+      site (inside the sheet's reset `useEffect`). Only importer
+      `app/(tabs)/money.tsx`; both `addUpcomingSheet.test.tsx` (leaf-only)
+      and `moneyUpcomingTab.test.tsx` (opens it in edit mode from a tapped
+      row) already had `LocaleProvider`; no test file changes needed.
+
+      All four converted in one commit each; `tsc --noEmit` clean and the
+      full suite green (109/109, 1147/1147) after every commit.
+
+      **Found this run, not yet converted:** `app/(tabs)/_layout.tsx` (tab
+      titles, `strings.tabs.*`) is a genuinely new candidate not on any
+      prior run's list, itself a top-level layout component (mounted
+      unconditionally, wide blast radius like `ScreenHeader`/`Sheet`; check
+      whether it can call `useStrings()` directly as a function component
+      before assuming it needs the same shared-component treatment). The
+      13 `ScreenHeader` importers' and remaining `Sheet` importers' own
+      `strings` usage, and the leak-scan screen set (`BillsScreen.tsx`,
+      `DeckScreen.tsx`, `GracefulFailure.tsx`, `IntakeScreen.tsx`,
+      `PayoffScreen.tsx`, `PulseDayDetailSheet.tsx`, `ResultsScreen.tsx`,
+      `ScopeScreen.tsx`, `useTrackLeak.tsx`), remain exactly as scoped in
+      run 11 (still not individually leaf-checked). `utils/coachMoments.ts`,
+      `utils/recurring.ts`, `contexts/ReportsContext.tsx` (non-hook
+      threading shape TBD) and the retired `ViewQuote.tsx`/`useViewQuote.ts`
+      also remain, unchanged from run 11's notes.
 - [ ] Convert function-valued strings (pluralized/interpolated) to ICU
       messages with proper CLDR plural rules, not the current hand-rolled
       `n === 1 ? '' : 's'` ternaries, and add the ICU formatting dependency
