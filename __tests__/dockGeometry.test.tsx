@@ -22,6 +22,7 @@ import {
   DOCK_CAPTION_LINE_HEIGHT,
   DOCK_FIELD_HEIGHT,
   DOCK_LABEL_LINE_HEIGHT,
+  DOCK_SHELL_HEIGHT,
 } from '@/components/today/DockCard';
 import { strings } from '@/constants/strings';
 import { radii, spacing, lightTheme } from '@/constants/theme';
@@ -82,7 +83,7 @@ describe('Today docks: one shell, one height', () => {
     expect(DOCK_FIELD_HEIGHT).toBeGreaterThanOrEqual(44);
   });
 
-  it('draws both fields and both plus buttons as pills on the same fills', async () => {
+  it('draws both fields as snow pills, and both plus buttons as circles of the same size', async () => {
     const spent = await render(
       <Providers>
         <QuickLogRow onOpenSheet={() => {}} />
@@ -107,8 +108,50 @@ describe('Today docks: one shell, one height', () => {
     ]) {
       expect(plus.borderRadius).toBe(radii.pill);
       expect(plus.aspectRatio).toBe(1);
-      expect(plus.backgroundColor).toBe(lightTheme.primary);
+      expect(plus.alignSelf).toBe('stretch');
     }
+  });
+
+  // Same structure, two skins (Charen, 2026-09-07): Spent is the solid
+  // composer with the filled sage plus; Kept is the dashed "add another"
+  // shell with a plain snow plus. The height must not move between them,
+  // so the dashed tone pays for its thicker edge out of its padding.
+  it('skins the Kept dock dashed and plain without changing its height', async () => {
+    const spent = await render(
+      <Providers>
+        <QuickLogRow onOpenSheet={() => {}} />
+      </Providers>
+    );
+    const kept = await render(
+      <Providers>
+        <BreakHabitRow label={FIRST} onPress={() => {}} />
+      </Providers>
+    );
+
+    const spentCard = flat(spent.getByTestId('quick-log-card'));
+    const keptCard = flat(kept.getByTestId('break-habit-card'));
+
+    expect(spentCard.borderStyle).toBeUndefined();
+    expect(spentCard.borderWidth).toBe(1);
+    expect(spentCard.borderColor).toBe(lightTheme.border);
+    expect(spentCard.padding).toBe(spacing.control);
+
+    expect(keptCard.borderStyle).toBe('dashed');
+    expect(keptCard.borderWidth).toBe(1.5);
+    expect(keptCard.borderColor).toBe(lightTheme.cloudDashed);
+    expect(keptCard.padding).toBe(spacing.control - 0.5);
+
+    for (const card of [spentCard, keptCard]) {
+      expect(card.borderRadius).toBe(radii.pill);
+      expect(card.backgroundColor).toBe(lightTheme.white);
+      const outer = 2 * (card.borderWidth as number) + 2 * (card.padding as number) + DOCK_FIELD_HEIGHT;
+      expect(outer).toBe(DOCK_SHELL_HEIGHT);
+    }
+
+    const spentPlus = flat(spent.getByTestId('quick-log-plus', { includeHiddenElements: true }));
+    const keptPlus = flat(kept.getByTestId('break-habit-plus', { includeHiddenElements: true }));
+    expect(spentPlus.backgroundColor).toBe(lightTheme.primary);
+    expect(keptPlus.backgroundColor).toBe(lightTheme.snow);
   });
 
   it('keeps the Kept dock to one spoken control, with the caption folded into its name', async () => {

@@ -24,7 +24,7 @@ export type QuickLogRowProps = {
 
 export function QuickLogRow({ onOpenSheet }: QuickLogRowProps): React.JSX.Element {
   return (
-    <DockCard>
+    <DockCard testID="quick-log-card">
       {/* The enclosed field is the obvious thing to tap, so it opens the
           sheet too; the plus stays for anyone who reads it as the only
           control. */}
