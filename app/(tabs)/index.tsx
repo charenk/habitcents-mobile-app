@@ -30,6 +30,7 @@ import { QuickLogRow } from '@/components/money/QuickLogRow';
 import { ActionDock } from '@/components/today/ActionDock';
 import { BreakHabitRow } from '@/components/today/BreakHabitRow';
 import { HowItWorksSheet } from '@/components/today/HowItWorksSheet';
+import { ScrollFade } from '@/components/ui/ScrollFade';
 import { LoggedTodayList } from '@/components/money/LoggedTodayList';
 import { InfoRibbon } from '@/components/ui/InfoRibbon';
 import { useFirstRunRibbon } from '@/components/onboarding/useFirstRunRibbon';
@@ -912,96 +913,101 @@ export default function TodayScreen() {
       */}
       <ScrollView {...pagerProps} style={styles.pager} testID="today-pager">
         <View {...paneProps('spent')} testID="spent-pane">
-          <ScrollView
-            style={styles.spentScroll}
-            contentContainerStyle={styles.spentScrollContent}
-            showsVerticalScrollIndicator={false}
-            refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={theme.primary} />
-            }
-          >
-            {/* Spent pane, true zero state (PRD v3.1 sect 5): no expense has
-                ever been logged. The logged-today list and watch-nudge have
-                nothing to show, so they're hidden entirely rather than
-                rendering empty; the centered EmptyState hook carries the
-                first action, with the quick log in the dock below. */}
-            {!spentIsEmpty ? (
-              <View style={styles.loggedTodaySpacer}>
-                <LoggedTodayList
-                  expenses={loggedToday}
-                  onEditExpense={setEditingExpense}
-                  onViewAll={handleViewAllExpenses}
-                />
-                {/* Door 1's first-run line, the InfoRibbon pattern (ADR
-                    0033, amended by 0038): inside the list section, directly
-                    under the logged-today list it comments on, so it reads
-                    as the receipt for the log. The old "never above an
-                    input" clause retired with the dock, since the input now
-                    sits at the bottom and everything is above it. The
-                    watch-nudge follows: receipt first, next action second. */}
-                {door1RibbonPending && door1RibbonLine ? (
-                  <View style={styles.ribbonWrapInline}>
-                    <InfoRibbon line={door1RibbonLine} onDismiss={dismissDoor1Ribbon} />
-                  </View>
-                ) : null}
-                {watchNudgeVisible ? (
-                  // The watch-nudge (W2 item 3): UpcomingList's dashed-card
-                  // grammar (components/money/UpcomingList.tsx `add`), one-shot
-                  // for the door 1 first-run flow only, never a permanent Today
-                  // feature. Two tap targets in one dashed card: the label
-                  // accepts (seeds an honest discovered habit), "not now"
-                  // dismisses; both resolve the nudge permanently.
-                  <View style={styles.watchNudge}>
-                    <TouchableOpacity
-                      style={styles.watchNudgeAccept}
-                      onPress={handleAcceptWatchNudge}
-                      accessibilityRole="button"
-                      accessibilityLabel={strings.today.watchLeakNudgeLabel}
-                      activeOpacity={0.7}
-                      // UX-031: ~41pt effective (12pt vertical padding either
-                      // side of the 14pt label) without this. The accept
-                      // control anxious users reach for clears 44 now.
-                      hitSlop={{ top: 14, bottom: 14, left: 8, right: 8 }}
-                    >
-                      <Text style={styles.watchNudgeLabel} numberOfLines={1}>
-                        {strings.today.watchLeakNudgeLabel}
-                      </Text>
-                    </TouchableOpacity>
-                    <Text style={styles.watchNudgeSeparator}>·</Text>
-                    <TouchableOpacity
-                      onPress={handleDismissWatchNudge}
-                      // UX-031: 12/12 was ~41pt effective; 14/14 clears 44.
-                      hitSlop={{ top: 14, bottom: 14, left: 8, right: 12 }}
-                      accessibilityRole="button"
-                      accessibilityLabel={strings.today.watchLeakNudgeDismiss}
-                    >
-                      <Text style={styles.watchNudgeDismissText}>
-                        {strings.today.watchLeakNudgeDismiss}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                ) : null}
-              </View>
-            ) : null}
-            {/* Spent Zero: the hook centered in the scroller, which now runs
-                from the chips down to the dock (ADR 0038). The quote that
-                used to sit above it was retired in ADR 0037. */}
-            {spentIsEmpty ? (
-              <View style={styles.spentZeroWrap}>
-                {/* inline, not layout="fill": the wrap centers the hook
-                    between the chips and the dock, so fill's own top padding
-                    would push it off centre. Mark, title, CTA and nothing
-                    else. The illustration prop is layout-independent for
-                    exactly this reason (ADR 0036). */}
-                <EmptyState
-                  layout="inline"
-                  illustration="today-spent"
-                  title={strings.today.spentEmptyTitle}
-                  cta={{ label: strings.today.spentEmptyCta, onPress: handleSpentEmptyLog }}
-                />
-              </View>
-            ) : null}
-          </ScrollView>
+          {/* flex 1 wrapper: ScrollFade pins to its bottom edge, where the
+              scroller meets the dock (components/ui/ScrollFade.tsx). */}
+          <View style={styles.scroller}>
+            <ScrollView
+              style={styles.spentScroll}
+              contentContainerStyle={styles.spentScrollContent}
+              showsVerticalScrollIndicator={false}
+              refreshControl={
+                <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={theme.primary} />
+              }
+            >
+              {/* Spent pane, true zero state (PRD v3.1 sect 5): no expense has
+                  ever been logged. The logged-today list and watch-nudge have
+                  nothing to show, so they're hidden entirely rather than
+                  rendering empty; the centered EmptyState hook carries the
+                  first action, with the quick log in the dock below. */}
+              {!spentIsEmpty ? (
+                <View style={styles.loggedTodaySpacer}>
+                  <LoggedTodayList
+                    expenses={loggedToday}
+                    onEditExpense={setEditingExpense}
+                    onViewAll={handleViewAllExpenses}
+                  />
+                  {/* Door 1's first-run line, the InfoRibbon pattern (ADR
+                      0033, amended by 0038): inside the list section, directly
+                      under the logged-today list it comments on, so it reads
+                      as the receipt for the log. The old "never above an
+                      input" clause retired with the dock, since the input now
+                      sits at the bottom and everything is above it. The
+                      watch-nudge follows: receipt first, next action second. */}
+                  {door1RibbonPending && door1RibbonLine ? (
+                    <View style={styles.ribbonWrapInline}>
+                      <InfoRibbon line={door1RibbonLine} onDismiss={dismissDoor1Ribbon} />
+                    </View>
+                  ) : null}
+                  {watchNudgeVisible ? (
+                    // The watch-nudge (W2 item 3): UpcomingList's dashed-card
+                    // grammar (components/money/UpcomingList.tsx `add`), one-shot
+                    // for the door 1 first-run flow only, never a permanent Today
+                    // feature. Two tap targets in one dashed card: the label
+                    // accepts (seeds an honest discovered habit), "not now"
+                    // dismisses; both resolve the nudge permanently.
+                    <View style={styles.watchNudge}>
+                      <TouchableOpacity
+                        style={styles.watchNudgeAccept}
+                        onPress={handleAcceptWatchNudge}
+                        accessibilityRole="button"
+                        accessibilityLabel={strings.today.watchLeakNudgeLabel}
+                        activeOpacity={0.7}
+                        // UX-031: ~41pt effective (12pt vertical padding either
+                        // side of the 14pt label) without this. The accept
+                        // control anxious users reach for clears 44 now.
+                        hitSlop={{ top: 14, bottom: 14, left: 8, right: 8 }}
+                      >
+                        <Text style={styles.watchNudgeLabel} numberOfLines={1}>
+                          {strings.today.watchLeakNudgeLabel}
+                        </Text>
+                      </TouchableOpacity>
+                      <Text style={styles.watchNudgeSeparator}>·</Text>
+                      <TouchableOpacity
+                        onPress={handleDismissWatchNudge}
+                        // UX-031: 12/12 was ~41pt effective; 14/14 clears 44.
+                        hitSlop={{ top: 14, bottom: 14, left: 8, right: 12 }}
+                        accessibilityRole="button"
+                        accessibilityLabel={strings.today.watchLeakNudgeDismiss}
+                      >
+                        <Text style={styles.watchNudgeDismissText}>
+                          {strings.today.watchLeakNudgeDismiss}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  ) : null}
+                </View>
+              ) : null}
+              {/* Spent Zero: the hook centered in the scroller, which now runs
+                  from the chips down to the dock (ADR 0038). The quote that
+                  used to sit above it was retired in ADR 0037. */}
+              {spentIsEmpty ? (
+                <View style={styles.spentZeroWrap}>
+                  {/* inline, not layout="fill": the wrap centers the hook
+                      between the chips and the dock, so fill's own top padding
+                      would push it off centre. Mark, title, CTA and nothing
+                      else. The illustration prop is layout-independent for
+                      exactly this reason (ADR 0036). */}
+                  <EmptyState
+                    layout="inline"
+                    illustration="today-spent"
+                    title={strings.today.spentEmptyTitle}
+                    cta={{ label: strings.today.spentEmptyCta, onPress: handleSpentEmptyLog }}
+                  />
+                </View>
+              ) : null}
+            </ScrollView>
+            <ScrollFade />
+          </View>
           {/* The quick log moved out of the scroller and down here (ADR 0038).
               It used to be the scroller's first child, pinned under the chips,
               which put Spent's action at the top of the screen while Kept's sat
@@ -1040,94 +1046,100 @@ export default function TodayScreen() {
               <Text style={styles.loadingText}>{strings.habits.loading}</Text>
             </View>
           ) : isEmpty ? (
-            <ScrollView
-              contentContainerStyle={styles.keptEmptyContent}
-              showsVerticalScrollIndicator={false}
-              refreshControl={
-                <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={theme.primary} />
-              }
-            >
-              {/* One centered zero block for both pre-leak states: either
-                  the detection progress card (some logs, no leak yet) or the
-                  hook with its explainer (nothing logged, ADR 0039). The
-                  in-between progress state reusing this composition is a
-                  chosen default, flagged in the PR's what-to-test list. */}
-              <View style={styles.keptZeroWrap}>
-                {detectionProgress ? (
-                  <View style={styles.progressCard}>
-                  <Text style={styles.progressTitle}>{strings.habits.spottingYourLeak}</Text>
-                  <View style={styles.progressMeterTrack}>
-                    <View
-                      style={[
-                        styles.progressMeterFill,
-                        { width: `${(detectionProgress.n / detectionProgress.threshold) * 100}%` },
-                      ]}
+            <View style={styles.scroller}>
+              <ScrollView
+                contentContainerStyle={styles.keptEmptyContent}
+                showsVerticalScrollIndicator={false}
+                refreshControl={
+                  <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={theme.primary} />
+                }
+              >
+                {/* One centered zero block for both pre-leak states: either
+                    the detection progress card (some logs, no leak yet) or the
+                    hook with its explainer (nothing logged, ADR 0039). The
+                    in-between progress state reusing this composition is a
+                    chosen default, flagged in the PR's what-to-test list. */}
+                <View style={styles.keptZeroWrap}>
+                  {detectionProgress ? (
+                    <View style={styles.progressCard}>
+                    <Text style={styles.progressTitle}>{strings.habits.spottingYourLeak}</Text>
+                    <View style={styles.progressMeterTrack}>
+                      <View
+                        style={[
+                          styles.progressMeterFill,
+                          { width: `${(detectionProgress.n / detectionProgress.threshold) * 100}%` },
+                        ]}
+                      />
+                    </View>
+                    <Text style={styles.progressCount}>
+                      {strings.habits.logsAtSamePlace(detectionProgress.n, detectionProgress.threshold)}
+                      <Text style={styles.progressCountSuffix}>{strings.habits.logsAtSamePlaceSuffix}</Text>
+                    </Text>
+                    <Text style={styles.progressBody}>{strings.habits.logsAtSamePlaceBody}</Text>
+                    {/* The card says "keep logging"; the button below is how.
+                        The same in-place view switch a chip tap makes. */}
+                    <Button
+                      variant="secondary"
+                      label={strings.habitLogging.logAnExpense}
+                      onPress={() => {
+                        markInteracted();
+                        setTodayView('spent');
+                      }}
+                      style={styles.progressCta}
                     />
                   </View>
-                  <Text style={styles.progressCount}>
-                    {strings.habits.logsAtSamePlace(detectionProgress.n, detectionProgress.threshold)}
-                    <Text style={styles.progressCountSuffix}>{strings.habits.logsAtSamePlaceSuffix}</Text>
-                  </Text>
-                  <Text style={styles.progressBody}>{strings.habits.logsAtSamePlaceBody}</Text>
-                  {/* The card says "keep logging"; the button below is how.
-                      The same in-place view switch a chip tap makes. */}
-                  <Button
-                    variant="secondary"
-                    label={strings.habitLogging.logAnExpense}
-                    onPress={() => {
-                      markInteracted();
-                      setTodayView('spent');
-                    }}
-                    style={styles.progressCta}
-                  />
+                  ) : (
+                    <EmptyState
+                      // inline + explicit art, same reasoning as the Spent
+                      // zero block: the wrap centers this in the pane rather
+                      // than letting fill's own top padding place it.
+                      layout="inline"
+                      illustration="today-kept"
+                      title={strings.today.keptEmptyTitle}
+                      // Mark, hook, one quiet link, and nothing else (Charen,
+                      // 2026-09-07). True zero is the one state with no
+                      // evidence of the user's own to read, so the mechanic
+                      // has to be told somewhere; ADR 0039 told it here as
+                      // three inline steps, and this reverses that: the
+                      // telling lives in HowItWorksSheet, a tap away, and the
+                      // pane keeps the same silhouette as Spent Zero. No CTA:
+                      // the pane's action is the dock below. The adjacent Quiet
+                      // state gets no link, because by then the detection
+                      // meter shows real progress toward the real threshold.
+                      link={{
+                        label: strings.today.howItWorksTrigger,
+                        onPress: openHowItWorks,
+                      }}
+                    />
+                  )}
                 </View>
-                ) : (
-                  <EmptyState
-                    // inline + explicit art, same reasoning as the Spent
-                    // zero block: the wrap centers this in the pane rather
-                    // than letting fill's own top padding place it.
-                    layout="inline"
-                    illustration="today-kept"
-                    title={strings.today.keptEmptyTitle}
-                    // Mark, hook, one quiet link, and nothing else (Charen,
-                    // 2026-09-07). True zero is the one state with no
-                    // evidence of the user's own to read, so the mechanic
-                    // has to be told somewhere; ADR 0039 told it here as
-                    // three inline steps, and this reverses that: the
-                    // telling lives in HowItWorksSheet, a tap away, and the
-                    // pane keeps the same silhouette as Spent Zero. No CTA:
-                    // the pane's action is the dock below. The adjacent Quiet
-                    // state gets no link, because by then the detection
-                    // meter shows real progress toward the real threshold.
-                    link={{
-                      label: strings.today.howItWorksTrigger,
-                      onPress: openHowItWorks,
-                    }}
-                  />
+                {firstLogCardId && (
+                  <View style={styles.emptyCoachMoment}>
+                    <CoachMomentSlot text={cardText(firstLogCardId)} />
+                  </View>
                 )}
-              </View>
-              {firstLogCardId && (
-                <View style={styles.emptyCoachMoment}>
-                  <CoachMomentSlot text={cardText(firstLogCardId)} />
-                </View>
-              )}
-            </ScrollView>
+              </ScrollView>
+              <ScrollFade />
+            </View>
           ) : (
-            <SectionList
-              sections={sections}
-              keyExtractor={(item, index) => {
-                if ('habit' in item) return item.habit.id;
-                return 'id' in item ? item.id : `item-${index}`;
-              }}
-              renderItem={renderItem}
-              renderSectionHeader={renderSectionHeader}
-              contentContainerStyle={styles.listContent}
-              stickySectionHeadersEnabled={false}
-              showsVerticalScrollIndicator={false}
-              refreshControl={
-                <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={theme.primary} />
-              }
-            />
+            <View style={styles.scroller}>
+              <SectionList
+                sections={sections}
+                keyExtractor={(item, index) => {
+                  if ('habit' in item) return item.habit.id;
+                  return 'id' in item ? item.id : `item-${index}`;
+                }}
+                renderItem={renderItem}
+                renderSectionHeader={renderSectionHeader}
+                contentContainerStyle={styles.listContent}
+                stickySectionHeadersEnabled={false}
+                showsVerticalScrollIndicator={false}
+                refreshControl={
+                  <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={theme.primary} />
+                }
+              />
+              <ScrollFade />
+            </View>
           )}
           {/* Same dock as the Spent pane (ADR 0038), so the action does not
               move while the pager swipes. This was the SectionList's footer,
@@ -1232,6 +1244,12 @@ function createStyles(theme: AppTheme) {
     // use below, so the band no longer renders full-bleed on Today.
     keptHeroGutter: {
       marginHorizontal: spacing.gutter,
+    },
+    // The scroller wrapper on every Today scroller: flex 1 so the scroller
+    // keeps filling the pane, and a positioning context for ScrollFade, which
+    // sits at its bottom edge where the content meets the dock.
+    scroller: {
+      flex: 1,
     },
     spentScroll: {
       flex: 1,

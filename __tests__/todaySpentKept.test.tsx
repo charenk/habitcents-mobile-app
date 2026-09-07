@@ -630,6 +630,23 @@ describe('Today: the Kept zero how-it-works link (Charen, 2026-09-07, reversing 
   });
 });
 
+describe('Today: content fades into the dock (Charen, 2026-09-07)', () => {
+  // With the dock's hairline gone, a long list ended at an invisible line
+  // and the last row was sliced flat. Each pane's scroller now carries a
+  // ScrollFade at its bottom edge, and the dock still follows the scroller.
+  it('gives both panes a scroll fade ahead of the dock', async () => {
+    const view = await renderToday();
+
+    const spentPane = within(view.getByTestId('spent-pane'));
+    expect(spentPane.getByTestId('scroll-fade', { includeHiddenElements: true })).toBeTruthy();
+    expect(spentPane.getByTestId('spent-dock')).toBeTruthy();
+
+    const keptPane = within(view.getByTestId('kept-pane', { includeHiddenElements: true }));
+    expect(keptPane.getByTestId('scroll-fade', { includeHiddenElements: true })).toBeTruthy();
+    expect(keptPane.getByTestId('kept-dock', { includeHiddenElements: true })).toBeTruthy();
+  });
+});
+
 describe('Today: the action dock (ADR 0038)', () => {
   // The point of the dock is that the action does not move when the pager
   // swipes. Before this, Spent's quick log was its scroller's FIRST child and
