@@ -37,7 +37,7 @@ import { SectionList, StyleSheet, Text, View } from 'react-native';
 import { ExpenseRow } from '@/components/money/ExpenseRow';
 import { EmptyState } from '@/components/ui';
 import { strings } from '@/constants/strings';
-import { radii, typeScale } from '@/constants/theme';
+import { contentColumnStyle, radii, typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -194,6 +194,7 @@ export function SpentList({ sections, onEditExpense, onLogExpense }: SpentListPr
 
   return (
     <SectionList<Expense, ExpenseSection>
+      testID="spent-section-list"
       sections={listSections}
       keyExtractor={(item) => item.id}
       renderItem={renderItem}
@@ -221,6 +222,7 @@ function createStyles(theme: AppTheme) {
       paddingHorizontal: 20,
       paddingTop: 12,
       paddingBottom: 24,
+      ...contentColumnStyle,
     },
     eyebrow: {
       fontFamily: theme.fonts.uiSemibold,

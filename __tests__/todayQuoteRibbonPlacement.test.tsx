@@ -127,6 +127,7 @@ import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { ToastProvider } from '@/components/ui/Toast';
 import TodayScreen from '@/app/(tabs)/index';
 import { strings } from '@/constants/strings';
+import { contentColumnStyle, layout } from '@/constants/theme';
 import type { Expense } from '@/types/expense';
 import type { Category } from '@/types/category';
 import type { DetectedHabit, HabitChangeGoal } from '@/types/habit';
@@ -149,6 +150,11 @@ function Providers({ children }: { children: React.ReactNode }) {
 }
 
 type View = Awaited<ReturnType<typeof render>>;
+
+function flattenStyle(style: unknown): Record<string, unknown> {
+  const styles = Array.isArray(style) ? style.flat(Infinity) : [style];
+  return Object.assign({}, ...styles.filter((s): s is Record<string, unknown> => !!s && typeof s === 'object'));
+}
 
 function makeExpense(overrides: Partial<Expense> & { id: string }): Expense {
   const base: Expense = {
@@ -350,5 +356,53 @@ describe('Today: per-view FirstRunRibbon (door1 -> Spent, door3 -> Kept)', () =>
 
     expect(keptPane.getByText(strings.today.door3RibbonGentle)).toBeTruthy();
     expect(spentPane.queryByText(strings.today.door3RibbonGentle)).toBeNull();
+  });
+});
+
+describe('Today: Kept pane chrome tablet cap (routine/ipad item 2e)', () => {
+  // The door3 ribbon and KeptHero render directly in the Kept pane, above
+  // and outside the ScrollView/SectionList content that plan item 2b/2d
+  // already capped, so they needed their own cap. This file already has the
+  // provider wiring and fixtures to get both to render; jest cannot run RN's
+  // real flexbox layout engine, so this pins the style contract (same as
+  // __tests__/tabletLayout.test.tsx), not a measured pixel width.
+  it("caps and centers KeptHero's wrapper at the shared content column width", async () => {
+    mockHabits = [makeHabit({ id: 'h1' })];
+    const view = await renderToday();
+
+    const wrap = view.getByTestId('kept-hero-cap-wrap');
+    const flat = flattenStyle(wrap.props.style);
+
+    expect(flat.width).toBe('100%');
+    expect(flat.maxWidth).toBe(layout.contentMaxWidth);
+    expect(flat.alignSelf).toBe('center');
+  });
+
+  it('caps and centers the door3 ribbon wrapper at the shared content column width', async () => {
+    mockParams = { view: 'kept', breakEntry: '1' };
+    const view = await renderToday();
+    await tap(view.getByLabelText('Close'));
+
+    const wrap = view.getByTestId('door3-ribbon-wrap');
+    const flat = flattenStyle(wrap.props.style);
+
+    expect(flat.width).toBe('100%');
+    expect(flat.maxWidth).toBe(layout.contentMaxWidth);
+    expect(flat.alignSelf).toBe('center');
+  });
+
+  it('leaves the pane itself at window width (the pager\'s paging unit, not the readable column)', async () => {
+    mockHabits = [makeHabit({ id: 'h1' })];
+    const view = await renderToday();
+
+    const keptPane = view.getByTestId('kept-pane');
+    const flat = flattenStyle(keptPane.props.style);
+
+    // Mirrors OnboardingCarousel's beat/beatContent split (__tests__/
+    // tabletLayout.test.tsx): the pane stays window width so the pager's
+    // screenWidth-driven paging math (app/(tabs)/index.tsx) is unaffected;
+    // only the content inside it is capped via contentColumnStyle.
+    expect(flat.maxWidth).not.toBe(layout.contentMaxWidth);
+    expect(flat).not.toEqual(expect.objectContaining(contentColumnStyle));
   });
 });

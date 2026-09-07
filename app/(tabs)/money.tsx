@@ -34,7 +34,7 @@ import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { categoryEmoji, categoryIdentityColor } from '@/constants/categoryEmoji';
 import { habitLeakGlyph } from '@/constants/onboardingPresets';
 import { strings } from '@/constants/strings';
-import { layout, type AppTheme } from '@/constants/theme';
+import { contentColumnStyle, layout, type AppTheme } from '@/constants/theme';
 import { useCategories } from '@/contexts/CategoriesContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
 import { useHabits } from '@/contexts/HabitsContext';
@@ -372,6 +372,7 @@ function createStyles(theme: AppTheme) {
       // one, the opposite way round from the segments margin above. ADR 0039.
       paddingTop: 14,
       paddingBottom: layout.screenBottomClearance,
+      ...contentColumnStyle,
     },
   });
 }

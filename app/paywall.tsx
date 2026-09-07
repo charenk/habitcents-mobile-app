@@ -25,7 +25,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/ui/Icon';
 import { useToast } from '@/components/ui/Toast';
 import { useTheme } from '@/contexts/ThemeContext';
-import { radii, typeScale, spacing, type AppTheme } from '@/constants/theme';
+import { contentColumnStyle, radii, typeScale, spacing, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import { hapticSelection } from '@/utils/motion';
 import { track, isPaywallPlacement } from '@/utils/analytics';
@@ -293,6 +293,7 @@ function createStyles(theme: AppTheme) {
       // UX-018: 24 drifted from the ratified 20pt screen gutter.
       paddingHorizontal: spacing.gutter,
       paddingTop: 4,
+      ...contentColumnStyle,
     },
     // Gradient hero: white type on lavender-to-indigo. One of the two
     // decorative gradients the app allows (design/PATTERN_VOCABULARY.md "Color").

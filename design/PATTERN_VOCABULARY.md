@@ -49,6 +49,7 @@ Sources of truth this page compresses: `design/redesign-handoff/01-tokens-and-fo
 - Bottom sheets head with the serif `sheetTitle` treatment (`theme.fonts.display` at `typeScale.sheetTitle`), not an eyebrow. AddUpcomingSheet, AddCategoryModal, CurrencySheet, and ExpenseSheet all follow it; a new sheet reaching for an 11pt eyebrow head instead is a deviation, not a second pattern (UX-040).
 - One 20pt horizontal gutter per screen. Full-bleed is reserved for nothing currently; if you think you need it, that is a named deviation.
 - Vertical rhythm inside a view is a 12pt stack gap.
+- Readable column (routine/ipad, 2026-09-05): scroll content caps at `layout.contentMaxWidth` (600pt), centered, via `contentColumnStyle`. Spread it straight into a `contentContainerStyle` at the call site; below the cap it is a pass-through equal to the phone's own screen width, so phone rendering never changes. Reach for a wrapping View instead of the spread only when the target style already merges a margin onto a root that also carries a background (spreading the cap's `width: '100%'` there would size the background before the margin insets it); wrap only that one node, not the screen. Paging units (a horizontal pager's per-page View, sized to the window for its own offset math) are never capped, only the content rendered inside them.
 
 ## Motion
 

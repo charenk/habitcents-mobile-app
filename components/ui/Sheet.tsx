@@ -27,7 +27,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/contexts/ThemeContext';
-import { motion, radii, shadows } from '@/constants/theme';
+import { layout, motion, radii, shadows } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
 import { useReducedMotion } from '@/utils/motion';
 import { strings } from '@/constants/strings';
@@ -322,6 +322,14 @@ function createStyles(theme: AppTheme) {
       borderTopLeftRadius: radii.feature,
       borderTopRightRadius: radii.feature,
       alignItems: 'stretch',
+      // iPad (routine/ipad plan item 3): capped and centered so the panel
+      // reads as a sheet, not a full-bleed screen, on a wide window. width:
+      // '100%' already equals every phone's screen width, so phones are
+      // unaffected; only a window wider than contentMaxWidth sees the scrim
+      // on either side.
+      width: '100%',
+      maxWidth: layout.contentMaxWidth,
+      alignSelf: 'center',
       ...shadows.sheet,
     },
     // The one PanResponder lives here: grab handle plus the optional pinned

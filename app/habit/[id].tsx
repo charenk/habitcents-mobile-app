@@ -21,7 +21,7 @@ import { useToast } from '@/components/ui/Toast';
 import { atMidnight, weekStats, isHabitLimitReached, displayChapter } from '@/utils/habitLogging';
 import { getEntitlement } from '@/utils/purchases';
 import type { CoachMomentCardId } from '@/utils/coachMoments';
-import { typeScale, layout, type AppTheme } from '@/constants/theme';
+import { contentColumnStyle, typeScale, layout, type AppTheme } from '@/constants/theme';
 import type { DetectedHabit, HabitChangeGoal } from '@/types/habit';
 import { strings } from '@/constants/strings';
 import { hapticError, hapticWarning } from '@/utils/motion';
@@ -438,6 +438,7 @@ function createStyles(theme: AppTheme) {
       // content below it now that both share the same header component.
       paddingHorizontal: 20,
       paddingBottom: layout.screenBottomClearance,
+      ...contentColumnStyle,
     },
     emptyContainer: {
       flex: 1,

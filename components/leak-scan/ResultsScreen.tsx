@@ -8,7 +8,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { formatDate, parseDateOnly } from '@/utils/dates';
 import { useExpenses } from '@/contexts/ExpensesContext';
 import { useHabits } from '@/contexts/HabitsContext';
-import { radii, typeScale, spacing, type AppTheme } from '@/constants/theme';
+import { contentColumnStyle, radii, typeScale, spacing, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import { hapticError } from '@/utils/motion';
 import { KpiRow } from './KpiRow';
@@ -701,6 +701,7 @@ function createStyles(theme: AppTheme) {
       // Intentional end-of-scroll clearance so the last card clears the footer;
       // off the token scale on purpose (the spacing scale tops out below 40).
       paddingBottom: 40,
+      ...contentColumnStyle,
     },
     header: {
       marginBottom: 16,
@@ -776,6 +777,7 @@ function createStyles(theme: AppTheme) {
       justifyContent: 'center',
       // UX-018: 24 drifted from the ratified 20pt screen gutter.
       paddingHorizontal: spacing.gutter,
+      ...contentColumnStyle,
     },
     undoneText: {
       fontSize: typeScale.body,

@@ -398,6 +398,27 @@ export const layout = {
    * worth a look during the Lane 2 pass. UX-045.
    */
   screenBottomClearance: 100,
+  /**
+   * iPad readable-column cap (routine/ipad plan item 2). Applied to a
+   * screen's scroll content via `contentColumnStyle` below so text and
+   * cards do not stretch edge to edge on a wide window. Below this width
+   * (every current phone) it is a no-op: `width: '100%'` already equals the
+   * screen width, so phone layouts render pixel-identical.
+   */
+  contentMaxWidth: 600,
+} as const;
+
+/**
+ * Spread into a vertical ScrollView's `contentContainerStyle` to cap and
+ * center content at `layout.contentMaxWidth` on wide windows, while staying
+ * exactly full-width on phones. Deliberately not a wrapping component: it
+ * folds into the existing style object at each call site, so it adds no
+ * extra View to the tree and cannot change phone layout math.
+ */
+export const contentColumnStyle = {
+  width: '100%',
+  maxWidth: layout.contentMaxWidth,
+  alignSelf: 'center',
 } as const;
 
 export const typeScale = {
