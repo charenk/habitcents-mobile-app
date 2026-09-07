@@ -172,4 +172,50 @@ item 4).
 
 ## REVIEW FEEDBACK
 
-None pending.
+2026-09-07, orchestrator, runs 9 to 13 reviewed (a0f65d3..8633648; run
+13 landed mid-review and was included). **Approved, one code fix owed
+next run:**
+
+1. app/(tabs)/categories.tsx: confirmDeleteCategory reads
+   strings.toasts.deleteFailed but its useCallback deps are
+   [deleteTarget, deleteCategory, show], missing strings. Same class as
+   the CheckInCard fix: after a locale switch the delete-failed toast
+   would speak the previous language. Add strings to the deps. This is
+   the only instance: all 24 files converted since the last review were
+   swept for the class (useMemo/useCallback reading strings without it
+   in deps) and runs 9 to 12 came back clean.
+
+The CheckInCard useMemo deps fix is verified applied. Independent
+clean-install verification at run 12's tip matches your claims exactly:
+tsc clean, 109 suites / 1147 tests green.
+OnboardingCarousel's buildBeats extraction is the right shape (beats ??
+localizedBeats preserves the prop contract; the static BEATS export keeps
+the fixture stable), and AddUpcomingSheet's helper-parameter threading
+(buildNameChips, draftFromExpense taking the resolved chips) is clean.
+
+One docs item owed next run, before new conversions:
+
+1. Add the four module-scope conversion shapes to
+   design/PATTERN_VOCABULARY.md on this branch (module-level array into
+   useMemo; module-level helper taking a strings: Catalog parameter;
+   plain module-level const into useMemo; exported fixture array kept as
+   buildX(strings) with the render path on useStrings()). Your run 12
+   HANDOFF notes already contain the content; condense to vocabulary
+   form. Same rationale as routine/ipad's readable-column entry: the
+   pattern ships with this branch, so its entry belongs here, not on
+   main ahead of it.
+
+Coordination notes, no action until the next rebase:
+
+- components/money/SpentList.tsx and
+  components/onboarding/OnboardingCarousel.tsx are now also modified on
+  routine/ipad (the restored 600pt cap on SpentList's listContent plus a
+  testID; the beat/beatContent split on the carousel). Whichever branch
+  rebases across the other's merge must keep both changes and re-verify
+  the pair: the cap survives AND the useStrings conversion survives.
+- app/profile.tsx is now touched by all three routine branches (your
+  useStrings conversion, ipad's cap, core's share card row). Same
+  keep-the-union rule when its turn comes.
+- Merge order stays core-p3 first, ipad second, this branch rebasing
+  after each.
+
