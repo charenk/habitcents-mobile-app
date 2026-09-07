@@ -29,6 +29,7 @@ import { ExpenseSheet, type LogExpenseSavedInfo } from '@/components/money/Expen
 import { QuickLogRow } from '@/components/money/QuickLogRow';
 import { ActionDock } from '@/components/today/ActionDock';
 import { BreakHabitRow } from '@/components/today/BreakHabitRow';
+import { HowItWorksSheet } from '@/components/today/HowItWorksSheet';
 import { LoggedTodayList } from '@/components/money/LoggedTodayList';
 import { InfoRibbon } from '@/components/ui/InfoRibbon';
 import { useFirstRunRibbon } from '@/components/onboarding/useFirstRunRibbon';
@@ -242,15 +243,16 @@ export default function TodayScreen() {
   const spentIsEmpty = expenses.length === 0;
   const handleSpentEmptyLog = useEmptyStateAction('today_spent', () => openLogSheet());
 
-  // Kept pane, true zero state: same "switch to Spent" handler the empty
-  // state has always used, wrapped so a skipper's tap reports the surface.
-  const handleKeptEmptyLog = useEmptyStateAction(
-    'today_kept',
-    useCallback(() => {
-      markInteracted();
-      setTodayView('spent');
-    }, [markInteracted])
-  );
+  // Kept pane, true zero state: no CTA in the stack since 2026-09-07 (Charen).
+  // Its action is the dock's "Break your first habit"; what the stack carries
+  // instead is a quiet underlined link that opens the how-it-works sheet.
+  // The 'today_kept' surface stays in useEmptyStateAction's closed vocabulary
+  // for the events already recorded against it; nothing fires it now.
+  const [howItWorksVisible, setHowItWorksVisible] = useState(false);
+  const openHowItWorks = useCallback(() => {
+    track('how_it_works_opened', {});
+    setHowItWorksVisible(true);
+  }, []);
 
   // Eyebrow date line, locale-aware (ADA-008): "Thursday, July 24".
   // ScreenHeader uppercases it, so this stays sentence case.
@@ -1068,7 +1070,7 @@ export default function TodayScreen() {
                   </Text>
                   <Text style={styles.progressBody}>{strings.habits.logsAtSamePlaceBody}</Text>
                   {/* The card says "keep logging"; the button below is how.
-                      Same in-place view switch as the empty state's CTA. */}
+                      The same in-place view switch a chip tap makes. */}
                   <Button
                     variant="secondary"
                     label={strings.habitLogging.logAnExpense}
@@ -1087,24 +1089,19 @@ export default function TodayScreen() {
                     layout="inline"
                     illustration="today-kept"
                     title={strings.today.keptEmptyTitle}
-                    // The one explainer in the app (ADR 0039). This is true
-                    // zero: no expenses at all, so nothing on screen can show
-                    // the mechanic and it has to be told. The adjacent Quiet
-                    // state does not get one, because by then the detection
-                    // meter is showing real progress toward the threshold.
-                    stepsTitle={strings.today.keptHowItWorksTitle}
-                    steps={strings.today.keptHowItWorks}
-                    cta={{
-                      // The quick-log card now lives on the Spent view, not
-                      // the Money tab, so the CTA switches views in place
-                      // rather than navigating away (was
-                      // router.push('/(tabs)/money')). Routed through the
-                      // same tap-like interaction flag as a chip tap so the
-                      // pager animates over to match (DI-7), and through
-                      // useEmptyStateAction so a skipper's tap reports the
-                      // surface (handleKeptEmptyLog, defined above).
-                      label: strings.today.keptEmptyCta,
-                      onPress: handleKeptEmptyLog,
+                    // Mark, hook, one quiet link, and nothing else (Charen,
+                    // 2026-09-07). True zero is the one state with no
+                    // evidence of the user's own to read, so the mechanic
+                    // has to be told somewhere; ADR 0039 told it here as
+                    // three inline steps, and this reverses that: the
+                    // telling lives in HowItWorksSheet, a tap away, and the
+                    // pane keeps the same silhouette as Spent Zero. No CTA:
+                    // the pane's action is the dock below. The adjacent Quiet
+                    // state gets no link, because by then the detection
+                    // meter shows real progress toward the real threshold.
+                    link={{
+                      label: strings.today.howItWorksTrigger,
+                      onPress: openHowItWorks,
                     }}
                   />
                 )}
@@ -1191,6 +1188,8 @@ export default function TodayScreen() {
         onStart={handleBreakSheetStart}
         onStartTrial={handleBreakSheetStartTrial}
       />
+
+      <HowItWorksSheet visible={howItWorksVisible} onClose={() => setHowItWorksVisible(false)} />
     </View>
   );
 }
@@ -1350,7 +1349,8 @@ function createStyles(theme: AppTheme) {
     // the parent's alignItems: 'center' would otherwise deny it. The quote
     // above it was retired (ADR 0037).
     keptZeroWrap: {
-      // See spentZeroWrap: flexGrow, never flex, or the explainer clips.
+      // See spentZeroWrap: flexGrow, never flex, or the hook clips at large
+      // Dynamic Type.
       flexGrow: 1,
       alignSelf: 'stretch',
       justifyContent: 'center',

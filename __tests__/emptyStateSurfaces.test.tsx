@@ -19,8 +19,9 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 jest.mock('@/utils/analytics', () => ({ track: jest.fn() }));
 
 import React from 'react';
+import { StyleSheet } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { act, cleanup, fireEvent, render } from '@testing-library/react-native';
+import { act, cleanup, fireEvent, render, within } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
@@ -277,6 +278,50 @@ describe('layout="fill" renders the icon on every pane-level surface', () => {
   it('inline mode stays icon-less when the caller supplies none', async () => {
     const view = await renderWith(<EmptyState body="body" />);
     expect(view.queryByTestId('empty-state-icon', HIDDEN)).toBeNull();
+  });
+});
+
+// The link slot (Charen, 2026-09-07): a quiet underlined disclosure that
+// opens an explanation and changes nothing. It replaced the ordered `steps`
+// list ADR 0039 added for Kept true zero, so explanatory prose is out of the
+// pattern for good; both halves of that are pinned here.
+describe('the link slot', () => {
+  it('renders an underlined link under its own testID and fires it', async () => {
+    const onPress = jest.fn();
+    const view = await renderWith(
+      <EmptyState title="hook" link={{ label: 'Learn how it works', onPress }} />
+    );
+    expect(view.getByTestId('empty-state-link')).toBeTruthy();
+    const label = view.getByText('Learn how it works');
+    expect(StyleSheet.flatten(label.props.style).textDecorationLine).toBe('underline');
+    fireEvent.press(view.getByRole('button', { name: 'Learn how it works' }));
+    expect(onPress).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders under the CTA when both are present, and nothing else in between', async () => {
+    const view = await renderWith(
+      <EmptyState
+        title="hook"
+        cta={{ label: 'Do the thing', onPress: jest.fn() }}
+        link={{ label: 'Read about the thing', onPress: jest.fn() }}
+      />
+    );
+    const buttons = view.getAllByRole('button');
+    expect(buttons).toHaveLength(2);
+    // The action first, the disclosure under it.
+    expect(within(buttons[0]).getByText('Do the thing')).toBeTruthy();
+    expect(within(buttons[1]).getByText('Read about the thing')).toBeTruthy();
+    expect(view.queryByTestId('empty-state-steps')).toBeNull();
+  });
+
+  it('never renders a steps list, whatever a caller passes', async () => {
+    // The prop is gone from the type; a stale caller spreading old props
+    // must still get a stack with no explainer in it.
+    const stale = { steps: ['one', 'two'], stepsTitle: 'How' } as Record<string, unknown>;
+    const view = await renderWith(<EmptyState title="hook" {...(stale as object)} />);
+    expect(view.queryByTestId('empty-state-steps')).toBeNull();
+    expect(view.queryByText('How')).toBeNull();
+    expect(view.queryByText('one')).toBeNull();
   });
 });
 

@@ -75,6 +75,26 @@ describe('ActionDock', () => {
   });
 });
 
+describe('Button link', () => {
+  // The disclosure variant (Charen, 2026-09-07): the first underlined text in
+  // the app. Pinned because the underline IS the difference from tertiary and
+  // tertiaryBrand, and because the style keys are looked up by constructed
+  // name, so a rename fails at runtime rather than compile time.
+  it('is transparent, 44pt, with an underlined slate label at the secondary size', async () => {
+    const view = await renderWith(
+      <Button variant="link" label="Learn how skips and habits work" onPress={() => {}} />
+    );
+    const labelStyle = styleOf(view.getByText('Learn how skips and habits work'));
+
+    expect(labelStyle.color).toBe(lightTheme.slate);
+    expect(labelStyle.textDecorationLine).toBe('underline');
+    expect(labelStyle.fontFamily).toBe(lightTheme.fonts.ui);
+    const boxStyle = styleOf(view.getByRole('button'));
+    expect(boxStyle.minHeight).toBe(44);
+    expect(boxStyle.backgroundColor).toBe('transparent');
+  });
+});
+
 describe('Button tertiaryBrand', () => {
   // The empty-state CTA's variant (ADR 0038): sage text on nothing, 44pt
   // floor. Pinned because slate-vs-sage is the entire difference from

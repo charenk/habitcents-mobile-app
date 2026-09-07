@@ -4,10 +4,10 @@
  * structural treatments and two icon sizes; this is the single primitive
  * every zero state renders through.
  *
- * An optional mark, an optional title, the body, and an optional text CTA,
- * in a 12pt stack, centered. The mark is either a 96pt illustration (`illustration`,
- * ADR 0036) or a 28pt slate icon (`icon`); a state names one or the other,
- * never both.
+ * An optional mark, an optional title, the body, and one optional text action
+ * (a sage CTA, or a quiet underlined link), in a 12pt stack, centered. The
+ * mark is either a 96pt illustration (`illustration`, ADR 0036) or a 28pt
+ * slate icon (`icon`); a state names one or the other, never both.
  *
  * Two layouts, chosen with the `layout` prop:
  * - 'inline' (default): inner content only. Callers keep owning their own
@@ -24,6 +24,12 @@
  * padding would push it off centre. Gating art on the layout would have left
  * Today on a 28pt glyph while every sibling pane grew to 96pt, which is
  * exactly the two-scale drift this primitive exists to end.
+ *
+ * What is NOT here any more (Charen, 2026-09-07): the ordered `steps` list
+ * ADR 0039 added for Kept true zero. Explanatory prose does not belong in the
+ * empty-state pattern; the mechanic now lives behind a `link` that opens a
+ * sheet (components/today/HowItWorksSheet.tsx), so the pane itself stays
+ * mark, hook, one text line.
  */
 import { useMemo } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
@@ -49,17 +55,16 @@ export type EmptyStateProps = {
    *  (ADR 0036). Takes precedence over `icon`, renders at 96pt, and is hidden
    *  from assistive tech: the title and CTA carry the meaning. */
   illustration?: EmptyArtName;
-  /** An ordered explainer between the hook and the CTA (ADR 0039).
-   *
-   *  The deliberate exception to the one-hook rule, and it has exactly one
-   *  caller: Today's Kept true-zero. That state is the only place in the app
-   *  where the user has no evidence of their own to read, so the mechanic has
-   *  to be told rather than shown. Everywhere else, one line still stands.
-   *
-   *  `stepsTitle` labels the list; omit both and nothing renders. */
-  steps?: readonly string[];
-  stepsTitle?: string;
+  /** The pane's action: sage text, 44pt (ADR 0037, 0038). */
   cta?: {
+    label: string;
+    onPress: () => void;
+  };
+  /** A quiet underlined disclosure that opens an explanation and changes
+   *  nothing (Button's `link` variant). Renders under the CTA when both are
+   *  present, else where the CTA would be. One caller: Today's Kept true
+   *  zero, whose action lives in the dock below rather than in this stack. */
+  link?: {
     label: string;
     onPress: () => void;
   };
@@ -74,9 +79,8 @@ export function EmptyState({
   body,
   icon,
   illustration,
-  steps,
-  stepsTitle,
   cta,
+  link,
   layout = 'inline',
 }: EmptyStateProps) {
   const theme = useTheme();
@@ -135,35 +139,6 @@ export function EmptyState({
           hand a low-vision user 19.5pt where iOS offered them about 40pt,
           which is an accessibility regression dressed up as polish. */}
       {body ? <Text style={styles.body}>{body}</Text> : null}
-      {steps && steps.length > 0 ? (
-        <View style={styles.steps} testID="empty-state-steps">
-          {stepsTitle ? (
-            // Capped: this is a label for the list, not the content of it.
-            <Text style={styles.stepsTitle} maxFontSizeMultiplier={1.5}>
-              {stepsTitle}
-            </Text>
-          ) : null}
-          {steps.map((step, i) => (
-            // The index is the numeral AND the key: the copy never carries
-            // "1." itself so a translation cannot renumber the list, and an
-            // ordered list's identity is its position, so two identical lines
-            // in some locale cannot collide.
-            //
-            // One VoiceOver stop per step, not two: without the wrapper's
-            // composed label the numeral is announced on its own ("1.")
-            // disconnected from its sentence. Same idiom as ExpenseRow.
-            <View
-              key={i}
-              style={styles.stepRow}
-              accessible
-              accessibilityLabel={`${i + 1}. ${step}`}
-            >
-              <Text style={styles.stepNumber}>{`${i + 1}.`}</Text>
-              <Text style={styles.stepText}>{step}</Text>
-            </View>
-          ))}
-        </View>
-      ) : null}
       {cta ? (
         // Text, not a bordered pill (ADR 0037): beside a 96pt illustration and
         // a single hook line, the pill was the heaviest thing in a pane meant
@@ -174,6 +149,15 @@ export function EmptyState({
         // its quietest element. This is the surface the vocabulary means by
         // "the action that produces a kept outcome".
         <Button variant="tertiaryBrand" label={cta.label} onPress={cta.onPress} style={styles.cta} />
+      ) : null}
+      {link ? (
+        // testID on a wrapper so a test can find the slot without depending
+        // on Button's internals. The link itself is Button's `link` variant:
+        // slate, regular, underlined, the quietest thing in the stack, because
+        // it discloses rather than acts.
+        <View testID="empty-state-link">
+          <Button variant="link" label={link.label} onPress={link.onPress} style={styles.cta} />
+        </View>
       ) : null}
     </View>
   );
@@ -208,38 +192,6 @@ function createStyles(theme: AppTheme) {
       fontSize: typeScale.secondary,
       color: theme.slate,
       textAlign: 'center',
-      lineHeight: 20,
-    },
-    // Left-aligned, unlike everything else in this stack: a numbered list reads
-    // as a list only when its numerals line up, and centring them turns three
-    // steps into three unrelated sentences.
-    steps: {
-      alignSelf: 'stretch',
-      gap: spacing.xs,
-    },
-    stepsTitle: {
-      fontFamily: theme.fonts.uiSemibold,
-      fontSize: typeScale.secondary,
-      color: theme.ink,
-      marginBottom: spacing.tight,
-    },
-    stepRow: {
-      flexDirection: 'row',
-      gap: spacing.sm,
-    },
-    stepNumber: {
-      fontFamily: theme.fonts.uiSemibold,
-      fontSize: typeScale.secondary,
-      color: theme.slate,
-      lineHeight: 20,
-      // Tabular so 1. 2. 3. share one gutter and the text edges align.
-      fontVariant: ['tabular-nums'],
-    },
-    stepText: {
-      flex: 1,
-      fontFamily: theme.fonts.ui,
-      fontSize: typeScale.secondary,
-      color: theme.slate,
       lineHeight: 20,
     },
     cta: {
