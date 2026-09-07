@@ -1,5 +1,34 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 11, 2026-09-07: re-verify, no new work)
+
+Third consecutive idle run (runs 9, 10, 11 all "re-verify, no new work").
+`git merge-base --is-ancestor origin/main HEAD` confirmed the branch already
+contains `origin/main`'s tip (`a51ce4a`, the navigation-docs merge) even
+though `git fetch` showed main had moved since this container last saw it;
+no rebase needed. PR #132 confirmed via the API: `state: open`, `draft:
+false`, `mergeable_state: clean`, base sha `a51ce4a` (matches main's current
+tip exactly), zero comments, zero reviews, `updated_at` unchanged in
+substance since run 10 (only GitHub's own head-sha bookkeeping). Checked
+`habitcents-ops/PUNCHLIST.md`'s RESUME marker again: byte-identical to what
+run 10 read, still only the 2026-09-05 zeroth-state design wave (device
+pass, canvas regen, ipad merge note, today-kept art), none core-p3-shaped.
+Fresh `npm install` (node_modules absent in this container), `npx tsc
+--noEmit` clean, `npm test`: 110 suites / 1165 tests green on the first run,
+no flake this time, exactly matching runs 9 and 10. PLAN.md's checklist is
+unchanged, still fully `[x]`/`(C)`; nothing code-shaped remains that this
+routine can reach without a website-repo checkout or a Charen-gated
+external account. Decision queue for Charen is unchanged from run 9,
+reproduced below.
+
+**Worth naming plainly:** the decision queue below has now sat untouched
+across runs 6 through 11 (2026-09-05 through 2026-09-07, three re-verify
+runs with zero PR comments or reviews in that span). PR #132 is green,
+`clean`, and has been "ready for review" since run 6; nothing on this
+branch is blocked on more agent work, only on Charen's court. Sending one
+notification this run to flag that, matching how `routine/ipad` handled
+its own multi-run idle stretch.
+
 ## COMPLETE (run 10, 2026-09-07: re-verify, no new work)
 
 Same conclusion as run 9, one run later. `git fetch origin main` empty
