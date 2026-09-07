@@ -371,6 +371,20 @@ at run 6 (2026-09-05); it has had zero human engagement since. Sent one
 push notification this run naming the queue and the idle PR, since nothing
 left here is agent-shaped work.
 
+## Run 12: closed out again
+
+Same shape as runs 9-11: no new commits on `origin/main` beyond what the
+branch already contains, `mergeable_state: clean` and zero comments on
+PR #132, PUNCHLIST's RESUME marker unchanged and still zeroth-state-shaped
+(its one core-p3-flagged line, the leak finder dated entitlement, was
+already built and closed at run 8; the checkbox itself is not this
+routine's to flip). Fresh `npm install`, `npx tsc --noEmit` clean. `npm
+test` hit the same known `door3BreakSheet.test.tsx` timing flake as run
+10; isolated re-run confirmed all 17 pass. Full suite: 110 suites / 1165
+tests green, exactly matching runs 9-11. Checklist unchanged, still fully
+`[x]`/`(C)`. No new push notification this run; run 11's already covers
+the idle decision queue and nothing has changed since.
+
 ## If this routine fires again
 
 The branch and PR stay open until Charen merges or closes them (routine

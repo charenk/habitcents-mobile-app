@@ -1,5 +1,35 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 12, 2026-09-07: re-verify, no new work)
+
+Fourth consecutive idle run (runs 9-12 all "re-verify, no new work").
+`git merge-base --is-ancestor origin/main HEAD` confirmed the branch still
+contains `origin/main`'s tip (`a51ce4a`, unchanged since run 11); no rebase
+needed. PR #132 confirmed via the API: `state: open`, `draft: false`,
+`mergeable_state: clean`, base sha `a51ce4afdf88abb45c2982ab8b3e5a89f534e534`
+(matches main's current tip exactly), zero comments, unchanged in
+substance since run 11. Re-checked `habitcents-ops/PUNCHLIST.md`'s RESUME
+marker: byte-identical to what runs 9-11 read, still only the 2026-09-05
+zeroth-state design wave items (device pass, canvas regen, ipad merge
+note, today-kept art) plus the 2026-09-06 leak-finder dated-entitlement
+line, which is still shown unchecked there but was already built and
+closed on this branch at run 8 (`activateLeakFinderPromoIfEligible`); that
+checkbox is not this routine's to flip (PUNCHLIST.md lives in the ops repo
+under a different process), so left as-is. Nothing newly core-p3-shaped.
+
+Fresh `npm install` (node_modules absent in this container), `npx tsc
+--noEmit` clean. `npm test` first run hit the same known flake as run 10:
+`__tests__/door3BreakSheet.test.tsx`'s auto-open test timed out at the
+full-suite default 5s Jest timeout (109/1165, 1 failure). Re-ran that file
+alone per the one-allowed-rerun policy: all 17 passed in 5.3s. Full suite
+then green: 110 suites / 1165 tests, exactly matching runs 9-11. PLAN.md's
+checklist is unchanged, still fully `[x]`/`(C)`; nothing code-shaped
+remains that this routine can reach without a website-repo checkout or a
+Charen-gated external account. Decision queue for Charen is unchanged from
+run 9 (reproduced in run 9's section below); no new push notification this
+run since run 11 already flagged the idle queue and nothing has changed
+since.
+
 ## COMPLETE (run 11, 2026-09-07: re-verify, no new work)
 
 Third consecutive idle run (runs 9, 10, 11 all "re-verify, no new work").
