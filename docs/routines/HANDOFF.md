@@ -2,25 +2,30 @@
 
 ## Status
 
-In progress, still idle. Run 12 of the routine. Same shape as runs 9-11:
+In progress, still idle. Run 13 of the routine. Same shape as runs 9-12:
 `origin/main`'s tip has still not moved since run 8 (both `routine/ipad`
 and `origin/main` remain at `a51ce4a`, reconfirmed with
 `git merge-base --is-ancestor origin/main routine/ipad`), so no rebase was
 needed; the footer-cap decision on issue #139 is still unanswered
-(reconfirmed with `get_comments`: zero comments, zero reactions). Confirmed
-the branch is still green from a clean install (`npm install` needed again,
-fresh container, as every run): `npx tsc --noEmit` clean, full suite 106
-suites / 1130 tests passing, the same counts as runs 8-11, so zero drift
-across five straight runs. Checked PR #133: still draft, base SHA matches
-current main's tip exactly (`mergeable_state: clean`), latest `verify`
-check run green. Re-verified item 7 unchanged (`app.json` still
-`"orientation": "portrait"`, `"supportsTablet": true`). No production code
-or plan content changed this run. Per run 11's own instruction, did **not**
-send a second push notification this run (the ask has already been
-surfaced twice, once by the orchestrator's board update and once by run
-11's direct notification, and a repeat this soon would be fatigue, not
-signal); the idle count is still named explicitly below so it stays
-visible without re-pinging Charen every run.
+(reconfirmed with `get_comments`: zero comments). Confirmed the branch is
+still green from a clean install (`npm install` needed again, fresh
+container, as every run): `npx tsc --noEmit` clean. The full suite's first
+run this time showed one failure, `__tests__/door3BreakSheet.test.tsx`
+timing out at the default 5000ms under full-suite parallel load; re-ran
+that file alone (17/17 passed in about 5s) and then the full suite again
+clean, confirming a one-off scheduling flake rather than a regression:
+both re-runs match the standing baseline exactly (106 suites / 1130
+tests), same as runs 8-12, so zero real drift across six straight runs.
+Checked PR #133: still draft, base SHA matches current main's tip exactly
+(`mergeable_state: clean`), latest `verify` check run green. Re-verified
+item 7 unchanged (`app.json` still `"orientation": "portrait"`,
+`"supportsTablet": true`). No production code or plan content changed
+this run beyond this HANDOFF update. Did **not** send another push
+notification this run: only two runs have passed since run 11's direct
+notification (run 12 and this run), short of the "five-plus runs with
+zero engagement" bar run 12 itself set for reconsidering; the idle count
+stays named explicitly below so it stays visible without re-pinging
+Charen on cadence alone.
 
 ## Completed
 
@@ -164,12 +169,29 @@ visible without re-pinging Charen every run.
   update, run 11's direct notification); kept naming the idle count
   instead. This HANDOFF update is the only change this run; no production
   code or plan content changed.
+- Run 13: same shape as runs 9-12, confirmed the same way (`git merge-base
+  --is-ancestor origin/main routine/ipad`; `get_comments` on `#139`; PR
+  #133 base SHA and check runs against main's tip). `origin/main` still
+  has not moved since run 8 (six runs now with zero drift once the flake
+  below is set aside: 106 suites / 1130 tests, tsc clean, matching runs
+  8-12 exactly). One test, `__tests__/door3BreakSheet.test.tsx`, timed
+  out on the full suite's first pass this run; isolated it (17/17 passed
+  standalone) and re-ran the full suite clean, confirming a one-off
+  scheduling flake under parallel load rather than a real regression, so
+  no code change was needed and none was made. Issue #139 is still
+  unanswered, zero comments, now idle 8 runs since run 5 first surfaced it
+  on the board (2026-09-05). Item 7 re-verified unchanged. Did not send
+  another push notification this run: only two runs have passed since run
+  11's direct notification, short of the "five-plus runs with zero
+  engagement" bar run 12 itself set for reconsidering; kept naming the
+  idle count instead. This HANDOFF update is the only change this run; no
+  production code or plan content changed.
 
 ## Next
 
 Per PLAN.md, in order:
 1. Item 6: still the only unchecked plan line, still blocked on Charen's
-   footer-cap decision (see DECISIONS NEEDED), now idle 7 runs with zero
+   footer-cap decision (see DECISIONS NEEDED), now idle 8 runs with zero
    comments on `#139`. A push notification already went out (run 11); do
    not send another one on cadence alone (avoid notification fatigue on a
    one-line ask already surfaced twice, once by the orchestrator and once
@@ -206,36 +228,40 @@ Per PLAN.md, in order:
 None that stop this routine from running; the plan-progress blocker is
 real and now explicit. `npm install` was needed again at the start of
 this run (fresh container, `node_modules` not present); expected, not a
-real blocker, same as every prior run. Item 6 is soft-blocked on Charen's
-footer-cap decision (see DECISIONS NEEDED), not on anything this routine
-can resolve itself; still open on `#139` with zero comments as of this
-run, now idle 7 runs (since run 5 first surfaced it, 2026-09-05). Still
-not logged as a runs.log `blocked` outcome: per the retry and failure
-policy, that classification is for a routine that cannot proceed at all,
-and every run including this one did real, bounded verification work
-(rebase conflict resolution and re-audit when main moved in runs 1-4 and
-7-8; a plan bookkeeping fix on run 9; a clean-install tsc/test
-re-verification with zero drift on runs 9 through 12). Five straight runs
-(8 through 12) have found zero code work, and the decision is now idle
-seven runs with no engagement at all (no comment, reaction, or edit on
-`#139`). Run 11 already escalated this explicitly (HANDOFF, runs.log, and
-one push notification directly to Charen); this run kept the escalation
-visible in Status/Next without repeating the notification, per run 11's
-own instruction against pinging on cadence alone. The decision blocks
-only item 6; items 1 through 5 and 7 remain fully done, so the branch
-itself is not at risk, only its last checkbox and, downstream, marking
-the PR ready for review.
+real blocker, same as every prior run. A single-test timeout under full
+suite load this run (`door3BreakSheet.test.tsx`) was confirmed a
+scheduling flake, not a blocker: isolated pass plus a clean full re-run
+both came back green (see Status/Completed). Item 6 is soft-blocked on
+Charen's footer-cap decision (see DECISIONS NEEDED), not on anything this
+routine can resolve itself; still open on `#139` with zero comments as of
+this run, now idle 8 runs (since run 5 first surfaced it, 2026-09-05).
+Still not logged as a runs.log `blocked` outcome: per the retry and
+failure policy, that classification is for a routine that cannot proceed
+at all, and every run including this one did real, bounded verification
+work (rebase conflict resolution and re-audit when main moved in runs 1-4
+and 7-8; a plan bookkeeping fix on run 9; clean-install tsc/test
+re-verification with zero drift on runs 9 through 13, including this
+run's flake triage). Six straight runs (8 through 13) have found zero
+code work, and the decision is now idle eight runs with no engagement at
+all (no comment, reaction, or edit on `#139`). Run 11 already escalated
+this explicitly (HANDOFF, runs.log, and one push notification directly to
+Charen); this run kept the escalation visible in Status/Next without
+repeating the notification, per run 11's own instruction against pinging
+on cadence alone (only two runs have passed since that notification). The
+decision blocks only item 6; items 1 through 5 and 7 remain fully done, so
+the branch itself is not at risk, only its last checkbox and, downstream,
+marking the PR ready for review.
 
 ## DECISIONS NEEDED
 
-- **Idle 7 runs, zero engagement: whether the fixed footer/CTA bars
+- **Idle 8 runs, zero engagement: whether the fixed footer/CTA bars
   outside a capped ScrollView (`ScopeScreen`, `BillsScreen`,
   `app/paywall.tsx`, `PayoffScreen`'s Continue button) should get the same
   600pt cap on iPad, or are meant to stay full width by design.** This is
   the single thing standing between this branch and a fully checked plan.
   It was first surfaced on the ops status board (`#139`) by run 5's
-  review, 2026-09-05; as of this run (2026-09-07, run 12) it still has
-  zero comments, zero reactions, and no edit, confirmed with
+  review, 2026-09-05; as of this run (2026-09-07, run 13) it still has
+  zero comments and no edit, confirmed with
   `get_comments` rather than trusting the cached issue body. Per the run 5
   review feedback this routine does not re-raise or decide it itself, so
   the ask stays the same: a one-line comment on `#139` (or wherever Charen
