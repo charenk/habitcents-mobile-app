@@ -13,8 +13,8 @@
  * DI-7 note: both panes stay mounted at all times now (the pager scrolls
  * between them rather than swapping which one exists), so a plain
  * getByText/getByLabelText presence check against pane content no longer
- * proves which view is selected, and getByLabelText(/^Kept /) started
- * matching two things at once (the chip and KeptHero's always-mounted "Kept
+ * proves which view is selected, and getByLabelText(/^Kept /) once matched
+ * two things at once (the chip and the since-removed KeptHero band's "Kept
  * so far, ..." label). Selection is verified two ways below instead: the
  * chips' own testID (spent-chip / kept-chip, added alongside the pager) plus
  * their accessibilityState, and, for the swipe path, by invoking the
@@ -324,9 +324,8 @@ describe('Today: Spent/Kept chips', () => {
     await tap(view.getByTestId('kept-chip'));
 
     // Both panes stay mounted (DI-7), so selection is proved by which chip
-    // reports selected, not by pane content existing (keptSoFar is always
-    // in the tree now). The tap also fires the existing tap analytics event
-    // unchanged.
+    // reports selected, not by pane content existing. The tap also fires the
+    // existing tap analytics event unchanged.
     expect(view.getByLabelText(/^Kept .*, selected/)).toBeTruthy();
     expect(view.getByLabelText(/^Spent .*, not selected/)).toBeTruthy();
     expect(mockTrack).toHaveBeenCalledWith('today_view_switched', { to: 'kept', method: 'tap' });
@@ -627,6 +626,23 @@ describe('Today: the Kept zero how-it-works link (Charen, 2026-09-07, reversing 
     const spentPane = within(view.getByTestId('spent-pane'));
     expect(spentPane.queryByText(strings.today.howItWorksTrigger)).toBeNull();
     expect(spentPane.queryByTestId('empty-state-link')).toBeNull();
+  });
+});
+
+describe('Today: content fades into the dock (Charen, 2026-09-07)', () => {
+  // With the dock's hairline gone, a long list ended at an invisible line
+  // and the last row was sliced flat. Each pane's scroller now carries a
+  // ScrollFade at its bottom edge, and the dock still follows the scroller.
+  it('gives both panes a scroll fade ahead of the dock', async () => {
+    const view = await renderToday();
+
+    const spentPane = within(view.getByTestId('spent-pane'));
+    expect(spentPane.getByTestId('scroll-fade', { includeHiddenElements: true })).toBeTruthy();
+    expect(spentPane.getByTestId('spent-dock')).toBeTruthy();
+
+    const keptPane = within(view.getByTestId('kept-pane', { includeHiddenElements: true }));
+    expect(keptPane.getByTestId('scroll-fade', { includeHiddenElements: true })).toBeTruthy();
+    expect(keptPane.getByTestId('kept-dock', { includeHiddenElements: true })).toBeTruthy();
   });
 });
 

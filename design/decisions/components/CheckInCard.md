@@ -13,7 +13,7 @@ pending, skipped, slipped, partial, milestone (lavender slot), backfill offered 
 
 ## Open
 - "Skipped it · keeps $6.50" wraps to two lines at the default size beside a one-line "Bought it" (2026-09-04 walk). Candidate: shorter label or a taller row by design.
-- Cards scroll under the fixed kept band (see KeptHero).
+- Cards scroll under the fixed kept band (see KeptHero). **Moot since 2026-09-07: the band is gone from Today; the list now scrolls between the chips and the dock, and fades into the dock (ScrollFade).**
 
 ## Iterations
 - None this branch.

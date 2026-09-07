@@ -166,8 +166,8 @@ function makeExpense(overrides: Partial<Expense> & { id: string }): Expense {
 }
 
 // Mirrors door3BreakSheet.test.tsx's fixture: the minimum shape LeakCard can
-// render, used to populate the Kept pane so KeptHero mounts (FTE pass: the
-// hero only exists once a leak or breaking habit does).
+// render, used to put the Kept pane into its Live state (a leak exists, so
+// the list renders rather than the zero block).
 function makeHabit(overrides: Partial<DetectedHabit> & { id: string }): DetectedHabit {
   const base: DetectedHabit = {
     id: overrides.id,
@@ -245,14 +245,16 @@ beforeEach(async () => {
 afterEach(cleanup);
 
 describe('Today: zero-state composition (quotes retired, ADR 0037)', () => {
-  it('Kept opens straight on the KeptHero band once kept content exists', async () => {
+  // The "Kept so far" band above the list is gone (Charen, 2026-09-07): once
+  // a leak exists the pane opens straight on Leaks found. "keptSoFar" is
+  // KeptHero's own eyebrow text, so its absence is the band's absence.
+  it('Kept Live opens straight on the list, with no band and no quote', async () => {
     mockHabits = [makeHabit({ id: 'h1' })];
     const view = await renderToday();
 
     const keptPane = within(view.getByTestId('kept-pane'));
-    // "keptSoFar" is KeptHero's own eyebrow text (components/habit-logging/
-    // KeptHero.tsx).
-    expect(keptPane.getByText(strings.habitLogging.keptSoFar)).toBeTruthy();
+    expect(keptPane.getByText(strings.habitLogging.leaksFoundSection)).toBeTruthy();
+    expect(keptPane.queryByText(strings.habitLogging.keptSoFar)).toBeNull();
     expect(keptPane.queryByTestId('kept-quote')).toBeNull();
   });
 
