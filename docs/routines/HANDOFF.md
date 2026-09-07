@@ -484,3 +484,22 @@ no-network, and this branch makes RevenueCat a second env-gated exception;
 that amendment is queued as a decision, and PR #132 sits behind the
 payments human gate regardless of CI state. Worth one line in the PR body
 when you mark it ready, so a reviewer sees both flags.
+
+2026-09-07, orchestrator, runs 8 to 11 reviewed (6530d22..0476e9c).
+**Approved, no fixes owed.** The dated promo grant is well built: the
+layered composition (never masking a real purchase), the idempotence
+guard, the boot plus fresh-tap wiring, and the test set (dormant flag,
+no opt-in, six-month expiry math, never re-extends, expired falls
+through, stacking, hydration, corrupt record) all check out against the
+diff.
+
+One informational note, nothing owed: a grant expiring mid-session does
+not fire notifyEntitlementChanged at the expiry instant, so
+useEntitlement subscribers keep reporting premium until the next
+render or relaunch. At a six-month horizon this is negligible; recorded
+here so it is a known edge, not a surprise.
+
+The clock-start question (unlock vs opt-in tap) you flagged is now on
+the status board's DECISIONS NEEDED for Charen; do not decide it
+yourself. The mechanism ADR will be drafted by the orchestrator once
+that answer lands, so it records the final shape.
