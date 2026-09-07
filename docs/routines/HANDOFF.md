@@ -2,27 +2,25 @@
 
 ## Status
 
-In progress. Run 9 of the routine. `origin/main`'s tip had not moved since
-run 8's rebase: both `routine/ipad` and `origin/main` were already at
-`a51ce4a` before this run started, confirmed with
+In progress. Run 10 of the routine. `origin/main`'s tip had still not
+moved since run 8's rebase: both `routine/ipad` and `origin/main` remain
+at `a51ce4a`, reconfirmed with
 `git merge-base --is-ancestor origin/main routine/ipad`. So no rebase was
 needed and there was no new main-side work to re-audit against; run 8's
-regression hunt (the `SpentList.tsx` cap fix) already covered everything
+regression hunt (the `SpentList.tsx` cap fix) still covers everything
 currently on main. Confirmed the branch is still green from a clean
 install (`npm install` needed again, fresh container, as every run):
 `npx tsc --noEmit` clean, full suite 106 suites / 1130 tests passing, the
-same counts as run 8's push, so zero drift. Checked issue #139 for the
-footer-cap decision again: still open, still zero comments, now idle 4
-runs. Checked PR #133: still draft, base SHA matches current main's tip
-exactly (`mergeable_state: clean`), latest commit's `verify` CI check
-green. With item 6 still blocked on that decision and item 7 re-verified
-unchanged (`app.json` still `"orientation": "portrait"`,
-`"supportsTablet": true`), the one real piece of bounded work available
-this run was a plan bookkeeping fix: PLAN.md's item 2 parent checkbox was
-still unchecked even though all five of its sub-items (2a-2e) have been
-done since run 5. Marked it complete, noting the fixed-footer gap is out
-of item 2's scope (it belongs to item 6, tracked separately). No
-production code changed this run.
+same counts as runs 8 and 9, so zero drift. Checked issue #139 for the
+footer-cap decision again (`get_comments`, not just the issue body): still
+open, still zero comments, now idle 5 runs. Checked PR #133: still draft,
+base SHA matches current main's tip exactly (`mergeable_state: clean`).
+Re-verified item 7 unchanged (`app.json` still `"orientation": "portrait"`,
+`"supportsTablet": true`). Unlike run 9, there was no leftover bookkeeping
+gap to fix (run 9 already closed item 2's parent checkbox), so this run
+found no actionable work at all beyond re-verification: item 6 is the only
+open plan line and it stays blocked on Charen's decision. No production
+code or plan content changed this run.
 
 ## Completed
 
@@ -129,12 +127,24 @@ production code changed this run.
   the parent line had simply never been checked off; the fixed-footer gap
   it might be confused with is item 6's scope, not item 2's, so this is a
   pure bookkeeping fix with no behavior change.
+- Run 10: no plan work was actionable and no bookkeeping gap remained
+  (run 9 already closed the one that existed). `origin/main` had still not
+  moved since run 8, confirmed the same way as run 9
+  (`git merge-base --is-ancestor origin/main routine/ipad`), so there was
+  nothing to rebase and no new regression surface. Re-ran tsc and the full
+  suite from a clean install: still green, 106 suites / 1130 tests, zero
+  drift from runs 8 and 9. Re-checked `#139` via `get_comments` (not just
+  the cached issue body, to rule out a comment landing without updating
+  the body): still zero comments, now idle 5 runs. Re-checked PR #133:
+  still draft, base SHA matches current main's tip exactly. Re-verified
+  item 7 (`app.json` orientation still `"portrait"`, `supportsTablet`
+  still `true`). This HANDOFF update is the only change this run.
 
 ## Next
 
 Per PLAN.md, in order:
 1. Item 6: still the only unchecked plan line, still blocked on Charen's
-   footer-cap decision (see DECISIONS NEEDED), now idle 4 runs with zero
+   footer-cap decision (see DECISIONS NEEDED), now idle 5 runs with zero
    comments on `#139`. Revisit once it lands: if it adds a cap to
    `ScopeScreen`/`BillsScreen`/paywall/`PayoffScreen`, that is a real
    structural change and, like items 2c/2e/run 8 before it, likely earns a
@@ -164,14 +174,20 @@ None. `npm install` was needed again at the start of this run (fresh
 container, `node_modules` not present); expected, not a real blocker, same
 as every prior run. Item 6 is soft-blocked on Charen's footer-cap decision (see
 DECISIONS NEEDED), not on anything this routine can resolve itself; still
-open on `#139` with zero comments as of this run, now idle 4 runs. Noted
+open on `#139` with zero comments as of this run, now idle 5 runs. Noted
 here for visibility, not logged as a runs.log `blocked` outcome: per the
 retry and failure policy, that classification is for a routine that
 cannot proceed at all, and this one did real, bounded work each run
 (rebase conflict resolution and re-audit when main moved; a plan
-bookkeeping fix this run when it did not). If the decision is still
-unanswered next run too, this remains the correct call, not a growing
-backlog.
+bookkeeping fix on run 9; re-verification with zero drift this run).
+Run 10 found no code work at all, only re-verification, which is a
+thinner result than every prior run; if run 11 lands the same way (main
+still not moved, decision still unanswered, nothing left to re-verify
+that hasn't already been re-verified twice), that is the point to name
+the idle stream explicitly in the DECISIONS NEEDED note and in the
+runs.log summary rather than quietly repeating "ok" again, so it isn't
+mistaken for accumulating backlog. Five runs idle on a one-line decision
+is already worth Charen's attention regardless.
 
 ## DECISIONS NEEDED
 
@@ -181,7 +197,8 @@ backlog.
   width by design. Per the run 5 review feedback, this is on the ops
   status board's DECISIONS NEEDED queue for Charen (`#139`), not something
   this routine re-raises or decides itself. Still open, unanswered, as of
-  run 9 (idle 4 runs now).
+  run 10 (idle 5 runs now, checked via `get_comments` not just the issue
+  body).
 - No new decisions raised this run.
 
 ## DEVICE PASS NEEDED
