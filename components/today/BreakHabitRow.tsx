@@ -7,12 +7,14 @@
  * the quick log, a different shape at a different height, and Charen asked
  * for the two docks to be one structure. So it now takes DockCard, the same
  * shell as QuickLogRow: the label rides in the field where Spent shows the
- * amount, and the round sage plus on the right is the same control.
+ * amount, and the round plus on the right is the same control.
  *
- * The dashed grammar is not gone from the app, it has left the dock. Dashed
- * still means "add another" inside content (UpcomingList's add row, Today's
- * watch nudge). The dock is a composer, and a composer's primary action
- * should not read as a tentative placeholder.
+ * Same structure, its own skin (Charen, later the same day): with both docks
+ * solid and sage, this read as another add-expense composer. So it takes
+ * DockCard's dashed tone and the plain plus: the dashed edge is the app's
+ * "add another" grammar (UpcomingList's add row, Today's watch nudge), and a
+ * snow circle with a sage glyph is quieter than Spent's filled one. The
+ * shape, the field, the round button and the height are Spent's exactly.
  *
  * Label and caption are decided by the screen (state-aware since ADR 0038:
  * "Break your first habit" at zero habits, "Break another habit" after, the
@@ -38,7 +40,7 @@ export function BreakHabitRow({ label, caption, onPress }: BreakHabitRowProps) {
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   return (
-    <DockCard>
+    <DockCard tone="dashed" testID="break-habit-card">
       <DockField
         onPress={onPress}
         accessibilityLabel={caption ? `${label}, ${caption}` : label}
@@ -53,7 +55,7 @@ export function BreakHabitRow({ label, caption, onPress }: BreakHabitRowProps) {
           </Text>
         ) : null}
       </DockField>
-      <DockPlusButton onPress={onPress} testID="break-habit-plus" />
+      <DockPlusButton onPress={onPress} testID="break-habit-plus" tone="plain" />
     </DockCard>
   );
 }
