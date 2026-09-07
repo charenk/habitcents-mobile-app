@@ -20,7 +20,7 @@ import { radii, typeScale, layout, type AppTheme } from '@/constants/theme';
 import type { CategoryIcon } from '@/types/category';
 import type { Expense } from '@/types/expense';
 import { resolveExpenseCategory } from '@/utils/expenseCategory';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
 
 // UX-067: the 40pt category identity icon renders in the raw category hue on
 // its own 12% tint. Several category colors are light enough (e.g. groceries
@@ -49,6 +49,7 @@ export default function CategoryDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const theme = useTheme();
+  const strings = useStrings();
   const { format } = useCurrency();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
