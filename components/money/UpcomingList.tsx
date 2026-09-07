@@ -44,12 +44,13 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { Icon } from '@/components/ui/Icon';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { categoryIdentityColor, expenseGlyph } from '@/constants/categoryEmoji';
-import { strings } from '@/constants/strings';
 import { radii, typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import type { Expense } from '@/types/expense';
+import type { Catalog } from '@/utils/i18n';
+import { useStrings } from '@/utils/i18n';
 import { categoryDisplayLabel } from '@/utils/leakScanBridge';
 import {
   describeSchedule,
@@ -75,26 +76,6 @@ import {
 import { formatDate } from '@/utils/dates';
 import { CHROME_MAX_FONT_SCALE, useAccessibilityTextSize } from '@/utils/textScale';
 
-/** What VoiceOver hears. "2w, selected" is not a sentence. */
-const WINDOW_LABELS: Record<UpcomingWindowDays, string> = {
-  14: strings.money.upcomingWindowTwoWeeks,
-  30: strings.money.upcomingWindowOneMonth,
-  90: strings.money.upcomingWindowThreeMonths,
-};
-
-/** What the corner filter shows. Abbreviation is visual only. */
-const WINDOW_SHORT_LABELS: Record<UpcomingWindowDays, string> = {
-  14: strings.money.upcomingWindowTwoWeeksShort,
-  30: strings.money.upcomingWindowOneMonthShort,
-  90: strings.money.upcomingWindowThreeMonthsShort,
-};
-
-const WINDOW_OPTIONS = UPCOMING_WINDOW_PRESETS.map((days) => ({
-  value: days,
-  label: WINDOW_SHORT_LABELS[days],
-  labelSpoken: WINDOW_LABELS[days],
-}));
-
 /**
  * "September", or "January 2027" once the window reaches a different year.
  *
@@ -107,6 +88,7 @@ function monthLabel(monthStart: Date): string {
   const sameYear = monthStart.getFullYear() === new Date().getFullYear();
   return formatDate(monthStart, sameYear ? { month: 'long' } : { month: 'long', year: 'numeric' });
 }
+
 
 export type UpcomingListProps = {
   items: UpcomingItem[];
@@ -143,8 +125,29 @@ export function UpcomingList({
   hasAnyRecurring,
 }: UpcomingListProps): React.JSX.Element {
   const theme = useTheme();
+  const strings = useStrings();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const { format } = useCurrency();
+
+  const windowOptions = useMemo(() => {
+    // What VoiceOver hears. "2w, selected" is not a sentence.
+    const windowLabelsSpoken: Record<UpcomingWindowDays, string> = {
+      14: strings.money.upcomingWindowTwoWeeks,
+      30: strings.money.upcomingWindowOneMonth,
+      90: strings.money.upcomingWindowThreeMonths,
+    };
+    // What the corner filter shows. Abbreviation is visual only.
+    const windowLabelsShort: Record<UpcomingWindowDays, string> = {
+      14: strings.money.upcomingWindowTwoWeeksShort,
+      30: strings.money.upcomingWindowOneMonthShort,
+      90: strings.money.upcomingWindowThreeMonthsShort,
+    };
+    return UPCOMING_WINDOW_PRESETS.map((days) => ({
+      value: days,
+      label: windowLabelsShort[days],
+      labelSpoken: windowLabelsSpoken[days],
+    }));
+  }, [strings]);
 
   const windowTotal = useMemo(() => upcomingWindowTotal(items), [items]);
   const paymentsCount = useMemo(() => upcomingWindowPaymentsCount(items), [items]);
@@ -202,7 +205,7 @@ export function UpcomingList({
             {strings.money.upcomingWindowRange(shortDate(upcomingWindowEnd(windowDays)))}
           </Text>
           <SegmentedControl<UpcomingWindowDays>
-            options={WINDOW_OPTIONS}
+            options={windowOptions}
             value={windowDays}
             onChange={onWindowDaysChange}
             accessibilityLabel={strings.money.upcomingWindowSegmentLabel}
@@ -274,6 +277,7 @@ export function UpcomingList({
                   }
                   theme={theme}
                   styles={styles}
+                  strings={strings}
                 />
               ))}
             </View>
@@ -291,6 +295,7 @@ function UpcomingRow({
   onMarkPaid,
   theme,
   styles,
+  strings,
 }: {
   row: UpcomingMonthRow;
   isFirst: boolean;
@@ -298,6 +303,7 @@ function UpcomingRow({
   /** Present only on a row the user can settle; see isSettleable. */
   onMarkPaid?: () => void;
   theme: AppTheme;
+  strings: Catalog;
   // UX-056: createStyles is a ~30-entry StyleSheet.create; it used to be
   // recomputed once per row instance (this component's own useMemo, keyed
   // only on theme, still ran that memo hook fresh per row). Hoisted to the
