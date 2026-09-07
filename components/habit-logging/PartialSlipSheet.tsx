@@ -21,7 +21,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
 
 type PartialSlipSheetProps = {
   visible: boolean;
@@ -32,6 +32,7 @@ type PartialSlipSheetProps = {
 
 export function PartialSlipSheet({ visible, skipValue, onCancel, onSave }: PartialSlipSheetProps) {
   const theme = useTheme();
+  const strings = useStrings();
   const { format } = useCurrency();
   const { height } = useWindowDimensions();
   const styles = useMemo(() => createStyles(theme), [theme]);

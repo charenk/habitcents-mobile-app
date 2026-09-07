@@ -14,6 +14,7 @@ import React from 'react';
 import { render } from '@testing-library/react-native';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
+import { LocaleProvider } from '@/contexts/LocaleContext';
 import { CheckInCard } from '@/components/habit-logging/CheckInCard';
 import { LeakCard } from '@/components/habit-logging/LeakCard';
 import type { DetectedHabit, HabitChangeGoal } from '@/types/habit';
@@ -73,7 +74,9 @@ function makeGoal(overrides: Partial<HabitChangeGoal> = {}): HabitChangeGoal {
 function Providers({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider>
-      <CurrencyProvider>{children}</CurrencyProvider>
+      <LocaleProvider>
+        <CurrencyProvider>{children}</CurrencyProvider>
+      </LocaleProvider>
     </ThemeProvider>
   );
 }

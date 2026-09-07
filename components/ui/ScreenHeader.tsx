@@ -3,7 +3,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/contexts/ThemeContext';
 import { radii, typeScale, type AppTheme } from '@/constants/theme';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
 import { Icon, type IconName } from './Icon';
 
 export type ScreenHeaderAction = {
@@ -48,6 +48,7 @@ export type ScreenHeaderProps = {
 export function ScreenHeader({ title, eyebrow, actions, onBack }: ScreenHeaderProps) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  const strings = useStrings();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   return (

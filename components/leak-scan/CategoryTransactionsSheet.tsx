@@ -6,7 +6,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { formatDate, parseDateOnly } from '@/utils/dates';
 import { radii, spacing, typeScale, type AppTheme } from '@/constants/theme';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
 import { categoryDisplayLabel } from '@/utils/leakScanBridge';
 import type { ScanRow } from '@/utils/leakScan/types';
 import type { ExpenseCategory } from '@/types/expense';
@@ -59,6 +59,7 @@ export function CategoryTransactionsSheet({
 }: CategoryTransactionsSheetProps) {
   const theme = useTheme();
   const { format } = useCurrency();
+  const strings = useStrings();
   const { height } = useWindowDimensions();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [openChipFor, setOpenChipFor] = useState<string | null>(null);

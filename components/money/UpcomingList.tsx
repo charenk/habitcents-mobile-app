@@ -36,12 +36,13 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { Icon } from '@/components/ui/Icon';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { categoryEmoji, categoryIdentityColor } from '@/constants/categoryEmoji';
-import { strings } from '@/constants/strings';
 import { radii, typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import type { Expense } from '@/types/expense';
+import type { Catalog } from '@/utils/i18n';
+import { useStrings } from '@/utils/i18n';
 import { categoryDisplayLabel } from '@/utils/leakScanBridge';
 import {
   daysUntilLabel,
@@ -54,17 +55,6 @@ import {
 } from '@/utils/recurring';
 import { UPCOMING_WINDOW_PRESETS, type UpcomingWindowDays } from '@/utils/upcomingWindow';
 import { withAlpha } from '@/utils/color';
-
-const WINDOW_LABELS: Record<UpcomingWindowDays, string> = {
-  14: strings.money.upcomingWindowTwoWeeks,
-  30: strings.money.upcomingWindowOneMonth,
-  90: strings.money.upcomingWindowThreeMonths,
-};
-
-const WINDOW_OPTIONS = UPCOMING_WINDOW_PRESETS.map((days) => ({
-  value: days,
-  label: WINDOW_LABELS[days],
-}));
 
 export type UpcomingListProps = {
   items: UpcomingItem[];
@@ -94,8 +84,21 @@ export function UpcomingList({
   hasAnyRecurring,
 }: UpcomingListProps): React.JSX.Element {
   const theme = useTheme();
+  const strings = useStrings();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const { format } = useCurrency();
+
+  const windowOptions = useMemo(() => {
+    const windowLabels: Record<UpcomingWindowDays, string> = {
+      14: strings.money.upcomingWindowTwoWeeks,
+      30: strings.money.upcomingWindowOneMonth,
+      90: strings.money.upcomingWindowThreeMonths,
+    };
+    return UPCOMING_WINDOW_PRESETS.map((days) => ({
+      value: days,
+      label: windowLabels[days],
+    }));
+  }, [strings]);
 
   const windowTotal = useMemo(() => upcomingWindowTotal(items), [items]);
   const paymentsCount = useMemo(() => upcomingWindowPaymentsCount(items), [items]);
@@ -135,7 +138,7 @@ export function UpcomingList({
       <View style={styles.totalCard}>
         <View style={styles.windowSegment}>
           <SegmentedControl<UpcomingWindowDays>
-            options={WINDOW_OPTIONS}
+            options={windowOptions}
             value={windowDays}
             onChange={onWindowDaysChange}
             accessibilityLabel={strings.money.upcomingWindowSegmentLabel}
@@ -185,6 +188,7 @@ export function UpcomingList({
                 onPress={() => onEditItem(item.expense)}
                 theme={theme}
                 styles={styles}
+                strings={strings}
               />
             ))}
           </View>
@@ -200,11 +204,13 @@ function UpcomingRow({
   onPress,
   theme,
   styles,
+  strings,
 }: {
   item: UpcomingItem;
   isFirst: boolean;
   onPress: () => void;
   theme: AppTheme;
+  strings: Catalog;
   // UX-056: createStyles is a ~30-entry StyleSheet.create; it used to be
   // recomputed once per row instance (this component's own useMemo, keyed
   // only on theme, still ran that memo hook fresh per row). Hoisted to the

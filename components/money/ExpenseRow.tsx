@@ -24,7 +24,7 @@ import { Icon } from '@/components/ui/Icon';
 import { categoryEmoji, categoryIdentityColor } from '@/constants/categoryEmoji';
 import { typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import type { Expense } from '@/types/expense';
@@ -40,6 +40,7 @@ export type ExpenseRowProps = {
 
 function ExpenseRowImpl({ expense, onPress, subtitle }: ExpenseRowProps): React.JSX.Element {
   const theme = useTheme();
+  const strings = useStrings();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const { format } = useCurrency();
 

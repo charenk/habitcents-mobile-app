@@ -7,7 +7,7 @@ import { weekStrip, weekStats } from '@/utils/habitLogging';
 import { weekDotLabel } from '@/utils/a11y';
 import { spacing, typeScale, type AppTheme } from '@/constants/theme';
 import type { HabitLogEntry } from '@/types/habit';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
 import { formatDate } from '@/utils/dates';
 
 const DOT_SIZE = 26;
@@ -31,6 +31,7 @@ type WeekStripProps = {
 export function WeekStrip({ dayLogs, trackingStart, skipValue, today = new Date() }: WeekStripProps) {
   const theme = useTheme();
   const { format } = useCurrency();
+  const strings = useStrings();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   const cells = useMemo(() => weekStrip(dayLogs, today, trackingStart), [dayLogs, today, trackingStart]);

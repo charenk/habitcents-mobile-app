@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { View, Text, Image, StyleSheet, type ImageSourcePropType } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { radii, typeScale, type AppTheme } from '@/constants/theme';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
 import { useReducedMotion } from '@/utils/motion';
 
 export type BeatAsset = {
@@ -48,6 +48,7 @@ type BeatMediaProps = {
  */
 export function BeatMedia({ asset, accessibilityLabel }: BeatMediaProps) {
   const theme = useTheme();
+  const strings = useStrings();
   const reduceMotion = useReducedMotion();
   const styles = useMemo(() => createStyles(theme), [theme]);
 

@@ -52,7 +52,6 @@ import { Sheet } from '@/components/ui/Sheet';
 import { SheetHeader } from '@/components/ui/SheetHeader';
 import { TextField } from '@/components/ui/TextField';
 import { useToast } from '@/components/ui/Toast';
-import { strings } from '@/constants/strings';
 import { lightTheme, radii, typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
 import { useCategories } from '@/contexts/CategoriesContext';
@@ -70,6 +69,8 @@ import type {
 import { formatDate } from '@/utils/dates';
 import { toExpenseCategory } from '@/utils/expenseCategory';
 import { atMidnight } from '@/utils/habitLogging';
+import type { Catalog } from '@/utils/i18n';
+import { useStrings } from '@/utils/i18n';
 import { hapticError, hapticSuccess } from '@/utils/motion';
 import { nextOccurrence, resolveRule } from '@/utils/recurring';
 
@@ -96,9 +97,17 @@ const DEFAULT_EVERY_N_DAYS = 10;
 /**
  * Category identity hues. Read from the light palette because the chip tints
  * are the same in both themes (darkTheme.categoryColors aliases these), and
- * NAME_CHIPS is module scope, so it cannot reach useTheme().
+ * buildNameChips's tint table is module scope, so it cannot reach useTheme().
  */
 const TINTS = lightTheme.categoryColors;
+
+type NameChip = {
+  key: string;
+  label: string;
+  emoji: string;
+  tint: string;
+  category: ExpenseCategory;
+};
 
 /**
  * The six name chips from spec 04. Each carries the stored ExpenseCategory it
@@ -106,20 +115,16 @@ const TINTS = lightTheme.categoryColors;
  * in every list without a second lookup table. Spec hues: Rent lavender,
  * Internet and Phone cyan, Gym amber, Insurance blue, Utilities orange.
  */
-const NAME_CHIPS: ReadonlyArray<{
-  key: string;
-  label: string;
-  emoji: string;
-  tint: string;
-  category: ExpenseCategory;
-}> = [
-  { key: 'rent', label: strings.addUpcoming.nameRent, emoji: '🏠', tint: TINTS.housing, category: 'Mortgage' },
-  { key: 'internet', label: strings.addUpcoming.nameInternet, emoji: '📡', tint: TINTS.subscriptions, category: 'Utilities' },
-  { key: 'phone', label: strings.addUpcoming.namePhone, emoji: '📱', tint: TINTS.subscriptions, category: 'Software & Subscriptions' },
-  { key: 'gym', label: strings.addUpcoming.nameGym, emoji: '🏋️', tint: TINTS.entertainment, category: 'Entertainment' },
-  { key: 'insurance', label: strings.addUpcoming.nameInsurance, emoji: '🛡️', tint: TINTS.transport, category: 'Other' },
-  { key: 'utilities', label: strings.addUpcoming.nameUtilities, emoji: '💡', tint: TINTS.groceries, category: 'Utilities' },
-];
+function buildNameChips(strings: Catalog): ReadonlyArray<NameChip> {
+  return [
+    { key: 'rent', label: strings.addUpcoming.nameRent, emoji: '🏠', tint: TINTS.housing, category: 'Mortgage' },
+    { key: 'internet', label: strings.addUpcoming.nameInternet, emoji: '📡', tint: TINTS.subscriptions, category: 'Utilities' },
+    { key: 'phone', label: strings.addUpcoming.namePhone, emoji: '📱', tint: TINTS.subscriptions, category: 'Software & Subscriptions' },
+    { key: 'gym', label: strings.addUpcoming.nameGym, emoji: '🏋️', tint: TINTS.entertainment, category: 'Entertainment' },
+    { key: 'insurance', label: strings.addUpcoming.nameInsurance, emoji: '🛡️', tint: TINTS.transport, category: 'Other' },
+    { key: 'utilities', label: strings.addUpcoming.nameUtilities, emoji: '💡', tint: TINTS.groceries, category: 'Utilities' },
+  ];
+}
 
 /** Monday first, matching the week strip everywhere else in the app. */
 const WEEKDAY_ORDER: readonly Weekday[] = [1, 2, 3, 4, 5, 6, 0];
@@ -133,12 +138,16 @@ function weekdayShortLabel(weekday: Weekday): string {
   return formatDate(d, { weekday: 'short' });
 }
 
-const MONTH_DAY_CHIPS: ReadonlyArray<{ value: MonthDayOption; label: string }> = [
-  { value: '1', label: strings.addUpcoming.monthDayFirst },
-  { value: '15', label: strings.addUpcoming.monthDayFifteenth },
-  { value: '30', label: strings.addUpcoming.monthDayThirtieth },
-  { value: 'last', label: strings.addUpcoming.monthDayLast },
-];
+function buildMonthDayChips(
+  strings: Catalog
+): ReadonlyArray<{ value: MonthDayOption; label: string }> {
+  return [
+    { value: '1', label: strings.addUpcoming.monthDayFirst },
+    { value: '15', label: strings.addUpcoming.monthDayFifteenth },
+    { value: '30', label: strings.addUpcoming.monthDayThirtieth },
+    { value: 'last', label: strings.addUpcoming.monthDayLast },
+  ];
+}
 
 function startOfToday(): Date {
   const d = new Date();
@@ -284,9 +293,9 @@ type ScheduleDraftFields = ScheduleDraft & { cents: number; nameChipKey: string 
  * to a rule (computeUpcoming's own invariant), so the 'once' fallback below is
  * defensive, not a real path.
  */
-function draftFromExpense(expense: Expense): ScheduleDraftFields {
+function draftFromExpense(expense: Expense, nameChips: ReadonlyArray<NameChip>): ScheduleDraftFields {
   const rule = resolveRule(expense) ?? { type: 'once' as const };
-  const chip = NAME_CHIPS.find(
+  const chip = nameChips.find(
     (c) => c.label.toLowerCase() === (expense.title || '').trim().toLowerCase()
   );
   const rawDate = expense.date instanceof Date ? expense.date : new Date(expense.date);
@@ -327,6 +336,7 @@ export function AddUpcomingSheet({
   expense = null,
 }: AddUpcomingSheetProps): React.JSX.Element {
   const theme = useTheme();
+  const strings = useStrings();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const { height } = useWindowDimensions();
   const { show } = useToast();
@@ -335,6 +345,8 @@ export function AddUpcomingSheet({
   const { addExpense, updateExpense, deleteExpense, restoreExpense, expenses } = useExpenses();
 
   const categories = getVisibleCategories();
+  const nameChips = useMemo(() => buildNameChips(strings), [strings]);
+  const monthDayChips = useMemo(() => buildMonthDayChips(strings), [strings]);
 
   const [cents, setCents] = useState(0);
   const [nameChipKey, setNameChipKey] = useState<string | null>(null);
@@ -360,7 +372,7 @@ export function AddUpcomingSheet({
     setScheduleTouched(false);
 
     if (mode === 'edit' && expense) {
-      const draft = draftFromExpense(expense);
+      const draft = draftFromExpense(expense, nameChips);
       setCents(draft.cents);
       setNameChipKey(draft.nameChipKey);
       setName(draft.name);
@@ -388,7 +400,7 @@ export function AddUpcomingSheet({
   }, [visible, mode, expense]);
 
   const pickNameChip = (key: string) => {
-    const chip = NAME_CHIPS.find((c) => c.key === key);
+    const chip = nameChips.find((c) => c.key === key);
     if (!chip) return;
     setNameChipKey(key);
     // The chip prefills the field; the field stays editable, so "Gym" can
@@ -460,7 +472,7 @@ export function AddUpcomingSheet({
     // as a defensive guard.
     if (!canSave) return;
 
-    const chip = NAME_CHIPS.find((c) => c.key === nameChipKey);
+    const chip = nameChips.find((c) => c.key === nameChipKey);
     // Edit mode with no chip selected keeps the row's own category rather than
     // falling back to 'Other', so recategorizing was never a silent side
     // effect of, say, just fixing a typo in the name.
@@ -631,7 +643,7 @@ export function AddUpcomingSheet({
 
           <Text style={styles.eyebrow}>{strings.addUpcoming.whatIsIt}</Text>
           <View style={styles.chipRow}>
-            {NAME_CHIPS.map((chip) => (
+            {nameChips.map((chip) => (
               <Chip
                 key={chip.key}
                 label={chip.label}
@@ -746,7 +758,7 @@ export function AddUpcomingSheet({
                 <>
                   <Text style={styles.subLabel}>{strings.addUpcoming.onThe}</Text>
                   <View style={styles.chipRow}>
-                    {MONTH_DAY_CHIPS.map((option) => (
+                    {monthDayChips.map((option) => (
                       <Chip
                         key={option.value}
                         label={option.label}

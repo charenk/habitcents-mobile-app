@@ -23,6 +23,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { act, cleanup, fireEvent, render } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '@/contexts/ThemeContext';
+import { LocaleProvider } from '@/contexts/LocaleContext';
 import { OnboardingProvider } from '@/contexts/OnboardingContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { CategoriesProvider } from '@/contexts/CategoriesContext';
@@ -45,6 +46,7 @@ function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SafeAreaProvider initialMetrics={initialMetrics}>
       <ThemeProvider>
+        <LocaleProvider>
         <CurrencyProvider>
           <CategoriesProvider>
             <ExpensesProvider>
@@ -54,6 +56,7 @@ function Providers({ children }: { children: React.ReactNode }) {
             </ExpensesProvider>
           </CategoriesProvider>
         </CurrencyProvider>
+        </LocaleProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );

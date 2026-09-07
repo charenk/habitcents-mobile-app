@@ -19,6 +19,7 @@ import { StyleSheet } from 'react-native';
 import { render, fireEvent } from '@testing-library/react-native';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
+import { LocaleProvider } from '@/contexts/LocaleContext';
 import { QuickLogRow } from '@/components/money/QuickLogRow';
 import { strings } from '@/constants/strings';
 import { radii, spacing, lightTheme } from '@/constants/theme';
@@ -31,7 +32,9 @@ const FIELD_RADIUS = CARD_RADIUS - spacing.control;
 function Providers({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider>
-      <CurrencyProvider>{children}</CurrencyProvider>
+      <LocaleProvider>
+        <CurrencyProvider>{children}</CurrencyProvider>
+      </LocaleProvider>
     </ThemeProvider>
   );
 }

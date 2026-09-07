@@ -30,7 +30,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { motion, radii, shadows } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
 import { useReducedMotion } from '@/utils/motion';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
 
 export type SheetProps = {
   visible: boolean;
@@ -62,6 +62,7 @@ export function Sheet({
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const reduceMotion = useReducedMotion();
+  const strings = useStrings();
   const styles = React.useMemo(() => createStyles(theme), [theme]);
 
   // Keep the Modal mounted through the exit animation before unmounting.

@@ -12,7 +12,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { radii, typeScale, type AppTheme } from '@/constants/theme';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
 import { EmptyState } from '@/components/ui';
 
 export type PaceProjection = {
@@ -43,6 +43,7 @@ type PaceCardProps = {
 export function PaceCard({ monthLabel, projection, comparison }: PaceCardProps) {
   const theme = useTheme();
   const { format } = useCurrency();
+  const strings = useStrings();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   const title = strings.insights.paceTitle(monthLabel);

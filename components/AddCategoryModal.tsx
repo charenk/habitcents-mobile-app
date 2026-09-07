@@ -30,7 +30,7 @@ import { radii, typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
 import type { CategoryIcon } from '@/types/category';
 import { ICON_OPTIONS, COLOR_OPTIONS } from '@/types/category';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
 import { withAlpha, contrastRatio } from '@/utils/color';
 
 // "home-outline" -> "home icon" (spec 09 §2, icon-grid label).
@@ -108,6 +108,7 @@ export function AddCategoryModal({
   isEditing = false,
 }: AddCategoryModalProps) {
   const theme = useTheme();
+  const strings = useStrings();
   const { height } = useWindowDimensions();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const { show } = useToast();

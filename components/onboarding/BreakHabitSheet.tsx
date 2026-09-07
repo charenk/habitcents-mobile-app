@@ -34,16 +34,11 @@ import { radii, spacing, typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
 import { vicePresets, VICE_IDS, type ViceId } from '@/constants/onboardingPresets';
 import type { HabitFrequency } from '@/types/habit';
-import { strings } from '@/constants/strings';
+import type { Catalog } from '@/utils/i18n';
+import { useStrings } from '@/utils/i18n';
 
 const CUSTOM_CHIP_ID = 'custom' as const;
 type BreakChipId = ViceId | typeof CUSTOM_CHIP_ID;
-
-const CADENCE_OPTIONS: { value: HabitFrequency; label: string }[] = [
-  { value: 'daily', label: strings.onboarding.breakSheetCadenceMostDays },
-  { value: 'weekly', label: strings.onboarding.breakSheetCadenceWeekly },
-  { value: 'monthly', label: strings.onboarding.breakSheetCadenceMonthly },
-];
 
 const YEARLY_MULTIPLIER: Record<HabitFrequency, number> = {
   daily: 365,
@@ -56,16 +51,11 @@ function yearlyKeepCents(amountCents: number, cadence: HabitFrequency): number {
   return Math.round((amountCents * YEARLY_MULTIPLIER[cadence]) / 100) * 100;
 }
 
-function yearlyLineFor(cadence: HabitFrequency, formattedAmount: string): string {
+function yearlyLineFor(cadence: HabitFrequency, formattedAmount: string, strings: Catalog): string {
   if (cadence === 'weekly') return strings.onboarding.breakSheetYearlyLineWeekly(formattedAmount);
   if (cadence === 'monthly') return strings.onboarding.breakSheetYearlyLineMonthly(formattedAmount);
   return strings.onboarding.breakSheetYearlyLineDaily(formattedAmount);
 }
-
-const BOUGHT_OPTIONS: { value: 'no' | 'yes'; label: string }[] = [
-  { value: 'no', label: strings.onboarding.breakSheetBoughtNo },
-  { value: 'yes', label: strings.onboarding.breakSheetBoughtYes },
-];
 
 export type BreakHabitStartData = {
   /** The vice preset id, or 'custom' for a typed name. */
@@ -104,9 +94,27 @@ export function BreakHabitSheet({
   onStartTrial,
 }: BreakHabitSheetProps) {
   const theme = useTheme();
+  const strings = useStrings();
   const { currency, format } = useCurrency();
   const { height } = useWindowDimensions();
   const styles = useMemo(() => createStyles(theme), [theme]);
+
+  const cadenceOptions = useMemo(
+    () => [
+      { value: 'daily' as const, label: strings.onboarding.breakSheetCadenceMostDays },
+      { value: 'weekly' as const, label: strings.onboarding.breakSheetCadenceWeekly },
+      { value: 'monthly' as const, label: strings.onboarding.breakSheetCadenceMonthly },
+    ],
+    [strings]
+  );
+
+  const boughtOptions = useMemo(
+    () => [
+      { value: 'no' as const, label: strings.onboarding.breakSheetBoughtNo },
+      { value: 'yes' as const, label: strings.onboarding.breakSheetBoughtYes },
+    ],
+    [strings]
+  );
 
   const presets = useMemo(() => vicePresets(currency), [currency]);
   const presetCentsById = useMemo(
@@ -169,7 +177,7 @@ export function BreakHabitSheet({
       : strings.sheets.saveHintAmount;
 
   const yearlyCents = yearlyKeepCents(amountCents, cadence);
-  const yearlyLine = yearlyLineFor(cadence, format(yearlyCents));
+  const yearlyLine = yearlyLineFor(cadence, format(yearlyCents), strings);
 
   const handleStart = () => {
     if (!canStart || !selectedChip) return;
@@ -272,7 +280,7 @@ export function BreakHabitSheet({
 
           <Text style={styles.eyebrow}>{strings.onboarding.breakSheetCadenceLabel}</Text>
           <SegmentedControl
-            options={CADENCE_OPTIONS}
+            options={cadenceOptions}
             value={cadence}
             onChange={setCadence}
             accessibilityLabel={strings.onboarding.breakSheetCadenceLabel}
@@ -282,7 +290,7 @@ export function BreakHabitSheet({
 
           <Text style={styles.eyebrow}>{strings.onboarding.breakSheetBoughtTodayLabel}</Text>
           <SegmentedControl
-            options={BOUGHT_OPTIONS}
+            options={boughtOptions}
             value={boughtToday}
             onChange={setBoughtToday}
             accessibilityLabel={strings.onboarding.breakSheetBoughtTodayLabel}

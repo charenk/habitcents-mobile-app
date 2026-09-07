@@ -23,7 +23,7 @@ import { formatDate } from '@/utils/dates';
 import { radii, typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
 import type { DayState, HabitLogEntry } from '@/types/habit';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
 
 // UX-046: derived from formatDate (locale-aware), not a fixed English array.
 // A week of reference dates starting Sunday 2023-01-01 (a known Sunday), so
@@ -40,6 +40,7 @@ type HistoryCalendarProps = {
 
 export function HistoryCalendar({ dayLogs, trackingStart, today = new Date(), onSelectToday }: HistoryCalendarProps) {
   const theme = useTheme();
+  const strings = useStrings();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const todayMid = atMidnight(today);
   const trackingStartMid = atMidnight(trackingStart);

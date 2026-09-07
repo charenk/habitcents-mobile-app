@@ -13,7 +13,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { AmountDisplay } from '@/components/ui/AmountDisplay';
 import { Icon } from '@/components/ui/Icon';
 import { radii, spacing, type AppTheme } from '@/constants/theme';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
 import type { ExpenseCategory } from '@/types/expense';
 
 // Geometry pairs with SpentKeptChips (Charen's consistency call, 2026-09-03):
@@ -35,6 +35,7 @@ export function QuickLogRow({
   onOpenSheet,
 }: QuickLogRowProps): React.JSX.Element {
   const theme = useTheme();
+  const strings = useStrings();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   return (
