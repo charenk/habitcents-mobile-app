@@ -75,6 +75,16 @@ Sources of truth this page compresses: `design/redesign-handoff/01-tokens-and-fo
 - Never invent statistics; state observed evidence ("$119.05 across 4 buys"), not fabricated rates.
 - No invented totals, ever (ADR 0022): the only accumulated total the app renders is the user's own. Sample dollars appear only as per-skip example prices explicitly marked as examples ("for example: one skipped coffee keeps $6.50"). Applies to onboarding, empty states, marketing surfaces, and screenshots alike.
 
+## Localization (routine/localization, in progress)
+
+- The call-site conversion is `import { strings } from '@/constants/strings'` becoming `const strings = useStrings();` inside the component body, so the rest of the file stays unchanged. This only works when every `strings.` reference sits inside a function component or hook; four shapes of module-scope reference need their own fix instead of the plain swap:
+  - **Module-level array** built from `strings.xxx` values (option lists, chip labels): move the construction into a `useMemo` inside the component, alongside any existing `styles` memo, with `strings` in the deps.
+  - **Module-level helper function** that reads `strings` directly: add a `strings: Catalog` parameter (the `Catalog` type from `utils/i18n.ts`), threaded from `useStrings()` at every call site, including any other module-level function that calls it.
+  - **Plain module-level `const`** built from a single `strings.xxx` value: a one-line `useMemo`, same as the array case.
+  - **Exported array used as a test fixture elsewhere**: extract a `buildX(catalog)` function and keep the export as `const X = buildX(strings)` (the static import stays, on purpose, so the fixture and any default-prop shape stay unchanged), while the real render path computes `useMemo(() => buildX(strings), [strings])` from `useStrings()`.
+- Any `useMemo`/`useCallback` that reads `strings` needs `strings` in its own deps array, whether or not the conversion touches an existing dep list; after a locale switch, a stale closure over the previous catalog is a real user-visible bug (a toast or label speaking the old language), not a lint nit.
+- A component under an unconverted parent can still be reached by a `LocaleProvider`-covered test file transitively (through the parent's own render tree); grep the parent chain up to the screen level, not just the component's own name, before ruling a test file out.
+
 ## The PR self-check
 
 - [ ] No new color meanings, no sage near spend, no red slip

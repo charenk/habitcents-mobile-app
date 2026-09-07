@@ -113,7 +113,7 @@ export default function CategoriesScreen() {
       return;
     }
     setDeleteConfirmVisible(false);
-  }, [deleteTarget, deleteCategory, show]);
+  }, [deleteTarget, deleteCategory, show, strings]);
 
   const handleCategoryPress = useCallback((category: Category) => {
     router.push(`/category/${category.id}`);
