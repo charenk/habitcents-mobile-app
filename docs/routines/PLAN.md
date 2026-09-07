@@ -356,6 +356,21 @@ exactly matching run 9's ending count. PLAN.md's checklist is unchanged,
 still fully `[x]`/`(C)`; nothing code-shaped remains that this routine can
 reach without a website-repo checkout or a Charen-gated external account.
 
+## Run 11: closed out again, decision queue flagged
+
+Same shape as runs 9 and 10: no new commits on `origin/main` beyond what
+the branch already contains (`git merge-base --is-ancestor` confirmed),
+`mergeable_state: clean` and zero comments/reviews on PR #132, PUNCHLIST's
+RESUME marker unchanged and still zeroth-state-shaped, not core-p3. Fresh
+`npm install`, `npx tsc --noEmit` clean, `npm test` 110 suites / 1165 tests
+green on the first attempt (no flake this run). Checklist unchanged, still
+fully `[x]`/`(C)`.
+
+This is the third straight idle run since the decision queue first went up
+at run 6 (2026-09-05); it has had zero human engagement since. Sent one
+push notification this run naming the queue and the idle PR, since nothing
+left here is agent-shaped work.
+
 ## If this routine fires again
 
 The branch and PR stay open until Charen merges or closes them (routine
