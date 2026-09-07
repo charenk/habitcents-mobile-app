@@ -34,7 +34,7 @@ import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { categoryEmoji, categoryIdentityColor } from '@/constants/categoryEmoji';
 import { habitLeakGlyph } from '@/constants/onboardingPresets';
 import { strings } from '@/constants/strings';
-import { layout, type AppTheme } from '@/constants/theme';
+import { layout, spacing, type AppTheme } from '@/constants/theme';
 import { useCategories } from '@/contexts/CategoriesContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
 import { useHabits } from '@/contexts/HabitsContext';
@@ -285,7 +285,10 @@ export default function MoneyScreen() {
         <View {...paneProps('upcoming')} testID="money-pane-upcoming">
           <ScrollView
             style={styles.scroll}
-            contentContainerStyle={styles.scrollContent}
+            // True zero only (window-empty keeps the total card and the
+            // populated padding): the content grows to the pane so the zero
+            // state centres, matching Spent and Habits.
+            contentContainerStyle={[styles.scrollContent, !hasAnyRecurring ? styles.scrollContentEmpty : null]}
             showsVerticalScrollIndicator={false}
           >
             <UpcomingList
@@ -303,7 +306,7 @@ export default function MoneyScreen() {
         <View {...paneProps('habits')} testID="money-pane-habits">
           <ScrollView
             style={styles.scroll}
-            contentContainerStyle={styles.scrollContent}
+            contentContainerStyle={[styles.scrollContent, habitRows.length === 0 ? styles.scrollContentEmpty : null]}
             showsVerticalScrollIndicator={false}
           >
             <HabitsList
@@ -367,11 +370,19 @@ function createStyles(theme: AppTheme) {
     },
     scrollContent: {
       paddingHorizontal: 20,
-      // Was 12; Insights and Categories both use 14, so the first card landed
-      // 2pt higher here than everywhere else. Money was the outlier on this
-      // one, the opposite way round from the segments margin above. ADR 0039.
-      paddingTop: 14,
+      // Was a literal 14 (ADR 0039 moved it from 12 to match Insights and
+      // Categories) while SpentList kept 12; one token now, see
+      // layout.paneContentTop.
+      paddingTop: layout.paneContentTop,
       paddingBottom: layout.screenBottomClearance,
+    },
+    // Zero states only: grow to the pane so EmptyState's fill wrapper has a
+    // height to centre in, and trade the 100pt end clearance for 24, which
+    // would otherwise pull the centre 50pt high. Populated lists keep the
+    // clearance above.
+    scrollContentEmpty: {
+      flexGrow: 1,
+      paddingBottom: spacing.xxl,
     },
   });
 }

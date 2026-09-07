@@ -218,6 +218,19 @@ export interface AnalyticsEventMap {
    * persisted, so a returning user sees the confirmed state instead.
    */
   leak_finder_interest_recorded: Record<string, never>;
+  /**
+   * Someone opened "How skips and habits work" from Today's Kept zero state.
+   *
+   * Structural only, no payload: a count of taps on a deliberately quiet
+   * underlined link, read against Kept zero-state views. It exists to answer
+   * one question, whether a subtle disclosure gets found at all, which is the
+   * whole bet of moving the explainer off the pane (Charen, 2026-09-07,
+   * reversing ADR 0039's inline steps).
+   *
+   * Approved by Charen 2026-09-07 (analytics contracts are human-gated,
+   * ADR 0035).
+   */
+  how_it_works_opened: Record<string, never>;
   // Scope selection (PRD v3.1 sect 7.1 / sect 11). `used_defaults` is the one
   // to read first: heavy editing means the tier assignments are wrong, and
   // that has to be settled before any classifier conversation reopens.

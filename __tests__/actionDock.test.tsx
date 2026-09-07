@@ -40,11 +40,12 @@ describe('ActionDock', () => {
     expect(view.getByText('the action')).toBeTruthy();
   });
 
-  // The strip's contract: a top hairline so scrolling content clips cleanly
-  // against it, and NO bottom safe-area padding, because the tab bar below
-  // already reserves the inset and draws its own border. Doubling either was
-  // the failure mode the ADR names.
-  it('carries a top hairline and no bottom safe-area padding', async () => {
+  // The strip's contract: NO top edge (the hairline it carried until
+  // 2026-09-07 read as a seam; the opaque fill is what separates the dock
+  // from content scrolling behind it), and NO bottom safe-area padding,
+  // because the tab bar below already reserves the inset and draws its own
+  // border. Doubling the inset was the failure mode the ADR names.
+  it('carries no top edge and no bottom safe-area padding', async () => {
     const view = await renderWith(
       <ActionDock testID="dock">
         <Text>x</Text>
@@ -52,8 +53,9 @@ describe('ActionDock', () => {
     );
     const dock = styleOf(view.getByTestId('dock'));
 
-    expect(dock.borderTopWidth).toBe(1);
-    expect(dock.borderTopColor).toBe(lightTheme.border);
+    expect(dock.borderTopWidth).toBeUndefined();
+    expect(dock.borderTopColor).toBeUndefined();
+    expect(dock.backgroundColor).toBe(lightTheme.background);
     // 12pt of its own padding, not an inset-derived value.
     expect(dock.paddingBottom).toBe(12);
     expect(dock.paddingTop).toBe(12);
@@ -70,6 +72,26 @@ describe('ActionDock', () => {
       view.getByTestId('dock').props.onLayout({ nativeEvent: { layout: { height: 88 } } });
     });
     expect(onHeightChange).toHaveBeenCalledWith(88);
+  });
+});
+
+describe('Button link', () => {
+  // The disclosure variant (Charen, 2026-09-07): the first underlined text in
+  // the app. Pinned because the underline IS the difference from tertiary and
+  // tertiaryBrand, and because the style keys are looked up by constructed
+  // name, so a rename fails at runtime rather than compile time.
+  it('is transparent, 44pt, with an underlined slate label at the secondary size', async () => {
+    const view = await renderWith(
+      <Button variant="link" label="Learn how skips and habits work" onPress={() => {}} />
+    );
+    const labelStyle = styleOf(view.getByText('Learn how skips and habits work'));
+
+    expect(labelStyle.color).toBe(lightTheme.slate);
+    expect(labelStyle.textDecorationLine).toBe('underline');
+    expect(labelStyle.fontFamily).toBe(lightTheme.fonts.ui);
+    const boxStyle = styleOf(view.getByRole('button'));
+    expect(boxStyle.minHeight).toBe(44);
+    expect(boxStyle.backgroundColor).toBe('transparent');
   });
 });
 

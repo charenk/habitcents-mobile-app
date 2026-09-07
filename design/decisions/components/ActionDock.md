@@ -1,21 +1,23 @@
 # ActionDock (components/today/ActionDock.tsx)
 
 ## Direction (current)
-The one place Today's panes put their action. A full-width strip at the bottom of each pane: 20pt gutter, 12pt above and below, a 1px cloud top edge, background fill. Spent fills it with the quick-log card; Kept fills it with the break-habit affordance. It does not move, does not float, and does not hide.
+The one place Today's panes put their action. A full-width strip at the bottom of each pane: 20pt gutter, 12pt above and below, background fill, no top edge. Spent fills it with the quick-log card; Kept fills it with the break-habit affordance, and since 2026-09-07 both are the same [DockCard](DockCard.md) shell at the same height. It does not move, does not float, and does not hide.
 
 ## States
 It has none of its own. The contents change, the container does not, which is the point: the action holds its position while the pager swipes between panes.
 
 ## Decisions
+- 2026-09-07 (Charen): the 1px cloud top edge is gone. Why: it read as a seam drawn across the pane rather than as the dock's boundary; the dock's opaque background fill was already what separated it from content scrolling behind, so the line was decoration doing a job the fill does. Rejected: keeping a fainter line (hairlineSubtle), which is the same seam at lower contrast.
 - 2026-09-05: both Today panes end in this dock. Why: Spent kept the quick log as its scroller's FIRST child and Kept put its affordance LAST, so swiping moved the action from the top of the screen to the bottom of a long scroll, and a populated Kept pane hid the affordance behind every leak and check-in card. Also executes CLAUDE.md's own "primary actions in thumb zone (bottom 40%)". ADR 0038.
 - 2026-09-05: a flex sibling, not an absolutely positioned bar. Why: the pane is a column, the scroller takes flex 1 and this sits after it, so nothing can hide underneath and no offset arithmetic against the tab bar is needed. Rejected: position absolute with the Toast offset formula, which buys nothing and adds a z-index.
 - 2026-09-05: no bottom safe-area padding. Why: the tab bar below already reserves the inset and draws its own top border; adding either here doubles them.
 - 2026-09-05: **it does not hide on scroll**, though that is what was asked for. Why, specifically: there is no scroll-driven UI anywhere in this app; a smooth version needs the first `react-native-reanimated` import while an unexplained release-only launch crash is open; the toast occupies this exact band and fires on the save this dock performs; the sanctioned entrance travel is 8-12pt against a bar height near 80; and sliding surfaces were rejected twice, most recently ADR 0037. A composer stays put. Revisit needs its own ADR plus a Release-configuration boot walk.
 - 2026-09-05: geometry copied from the leak-scan footers rather than invented, so this is a re-use of existing chrome grammar.
-- 2026-09-05: it reports its measured height so the screen can lift the toast clear of it. Measured, not derived: the quick-log card and the habit affordance are different heights.
+- 2026-09-05: it reports its measured height so the screen can lift the toast clear of it. Measured, not derived: the quick-log card and the habit affordance are different heights. **AMENDED 2026-09-07:** the two are equal by construction now (both on [DockCard](DockCard.md)'s fixed field), but the lift stays measured so a Dynamic Type overflow can never lift the toast short.
 - 2026-09-05 (review): the toast lift is FOCUS-GATED on Today. Why: tab screens stay mounted and ToastProvider is global, so an unconditional lift pushed every other screen's toasts a dock height too high; the reset path is pinned by a toast test. ADR 0039 review.
 
 ## Open
+- Without the top edge, content scrolling under the dock ends at an invisible line 12pt above the pill rather than at a drawn one. Acceptable on the states walked so far; watch it on the returning-user persona where Kept scrolls a long list, at arm's length.
 - Only Today uses it. Money's Spent segment is the app's longest list and has no quick log at all; whether it earns one is a separate question.
 - The dock costs vertical space on every Today state, including ones with nothing to scroll. Worth a look at arm's length before deciding it is free.
 - iPad (routine/ipad, unmerged): that branch caps content per scroller at a 600pt column and deliberately not per pane, so this dock would render full width under the centred column, the quick-log card stretched to ~984pt on a 1024pt iPad. Same shape as the un-capped leak-scan/paywall footers already sitting in Charen's footer-cap decision on the status board; the dock belongs in that decision, not in a fix here. Only live once supportsTablet flips.

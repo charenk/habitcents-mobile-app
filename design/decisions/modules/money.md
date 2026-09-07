@@ -15,6 +15,7 @@ Vocabulary (ADR 0034): **Zero** nothing ever happened here; **Quiet** history el
 - Habits Live: managed rows plus the monthly total.
 
 ## Decisions
+- 2026-09-07 (Charen): the three Zero states centre in their panes, and their art lands on one y. Why: Charen circled all three and asked for a consistent visual centre while swiping; they were top-anchored, and Spent's sat 2pt above the others because its SectionList owned its own padding (a literal 12 while the shared ScrollView had moved to 14 in ADR 0039). Now every pane reads `layout.paneContentTop`, the scroll content grows to the pane in the empty case only, and EmptyState's fill mode does the centring and the height floor. Window-empty on Upcoming keeps the total card and the populated padding, as before. See [EmptyState](../components/EmptyState.md).
 - 2026-09-06: the three segments became pages of one pager, so a swipe moves between them. Why: Today's panes have always swiped and Money's did not, so the same control taught two different things depending on which tab you were on. This is not a new switcher (PATTERN_VOCABULARY's rule holds): SegmentedControl is unchanged and simply gained the affordance the Today scoreboard already had. See [SegmentPager](../components/SegmentPager.md).
 - 2026-09-06: all three panes stay mounted, so each keeps its own scroll position. Why: it is the behaviour Today already had, and scrolling deep into Spent, glancing at Habits and coming back to the top of Spent would be a loss. The eager render is bounded (Upcoming and Habits are ~15 rows; Spent virtualizes), so it is cheap. Revisit if any of those lists ever stops being bounded.
 - 2026-09-06: UX-016's split stands, now per pane rather than as a conditional. Spent keeps its own SectionList and Upcoming and Habits each take a plain ScrollView, because a SectionList owns its scrolling and virtualizes and must not nest inside another scroller. Verified in the simulator: the list scrolls and virtualizes inside the pager, and a vertical drag does not drag the pager sideways.
@@ -29,5 +30,6 @@ Vocabulary (ADR 0034): **Zero** nothing ever happened here; **Quiet** history el
 ## Open
 
 ## Iterations
+- 2026-09-07: Zero states centre; Spent's 2pt drift closed by the shared token.
 - 2026-09-06: the three segments became a swipeable pager on `utils/useSegmentPager.ts`; `money_view_switched` added.
 - 2026-09-05: illustrations on all three Zero states, Zero copy rewritten. ADR 0036.

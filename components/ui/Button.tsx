@@ -15,6 +15,7 @@ export type ButtonVariant =
   | 'secondary'
   | 'tertiary'
   | 'tertiaryBrand'
+  | 'link'
   | 'destructive'
   | 'destructiveFill';
 
@@ -162,6 +163,36 @@ function createStyles(theme: AppTheme) {
       color: theme.primary,
       fontFamily: theme.fonts.uiSemibold,
       fontSize: typeScale.label,
+    },
+
+    // link: a disclosure, not an action (Charen, 2026-09-07).
+    //
+    // The first underlined text in the app, introduced for one job: a quiet
+    // trigger that opens an explanation and changes nothing ("Learn how skips
+    // and habits work" on Today's Kept zero state). The underline is what
+    // tells it apart from tertiaryBrand's sage CTA sitting in the same stack:
+    // sage says "do the thing", an underline says "read about the thing".
+    // Regular weight and the 13pt secondary size keep it the quietest element
+    // on the pane; slate keeps it at 7:1 so quiet never means unreadable.
+    //
+    // The rule that comes with it: `link` discloses, never acts. A control that
+    // writes data, navigates to a workflow or spends money is one of the other
+    // variants, whatever it looks like.
+    link: {
+      backgroundColor: 'transparent',
+      minHeight: 44,
+    },
+    linkPressed: {
+      opacity: 0.6,
+    },
+    linkLabel: {
+      color: theme.slate,
+      fontFamily: theme.fonts.ui,
+      fontSize: typeScale.secondary,
+      textDecorationLine: 'underline',
+      // Android draws the rule in the text colour by default; iOS also does,
+      // but naming it keeps the two platforms from ever drifting apart.
+      textDecorationColor: theme.slate,
     },
 
     // destructive (bare)

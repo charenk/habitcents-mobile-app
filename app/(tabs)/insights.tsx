@@ -33,7 +33,7 @@ import { getEntitlement } from '@/utils/purchases';
 import { formatDate } from '@/utils/dates';
 import { getLeakFinderInterest, getScanSummary, saveLeakFinderInterest } from '@/utils/storage';
 import { track } from '@/utils/analytics';
-import { layout, typeScale, type AppTheme } from '@/constants/theme';
+import { layout, spacing, typeScale, type AppTheme } from '@/constants/theme';
 import type { DetectedHabit } from '@/types/habit';
 import type { ScanSummary } from '@/types/scanSummary';
 import { strings } from '@/constants/strings';
@@ -241,6 +241,11 @@ export default function InsightsScreen() {
     { icon: 'CircleUser' as const, label: strings.profile.headerLabel, onPress: () => router.push('/profile') },
   ];
 
+  // The scan pane shows the teaser only once both reads have landed and there
+  // is no scan on file; a pre-pause install with a snapshot renders the card
+  // and keeps the populated padding.
+  const scanShowsTeaser = scanSummary === null && interestRecorded !== undefined;
+
   if (isLoading) {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -280,7 +285,9 @@ export default function InsightsScreen() {
         <View {...paneProps('month')} testID="insights-pane-month">
           <ScrollView
             style={styles.scrollView}
-            contentContainerStyle={styles.scrollContent}
+            // Zero only: grow to the pane so the empty state centres, at the
+            // same y as the teaser one swipe away.
+            contentContainerStyle={[styles.scrollContent, !monthHasData ? styles.scrollContentEmpty : null]}
             showsVerticalScrollIndicator={false}
           >
             {monthHasData ? (
@@ -313,7 +320,7 @@ export default function InsightsScreen() {
         <View {...paneProps('scan')} testID="insights-pane-scan">
           <ScrollView
             style={styles.scrollView}
-            contentContainerStyle={styles.scrollContent}
+            contentContainerStyle={[styles.scrollContent, scanShowsTeaser ? styles.scrollContentEmpty : null]}
             showsVerticalScrollIndicator={false}
           >
             {/* Either fetch still in flight means this focus has no real
@@ -383,9 +390,15 @@ function createStyles(theme: AppTheme) {
     },
     scrollContent: {
       paddingHorizontal: 20,
-      paddingTop: 14,
+      paddingTop: layout.paneContentTop,
       paddingBottom: layout.screenBottomClearance,
       gap: 12,
+    },
+    // Zero states only: grow to the pane so the block centres, and trade the
+    // 100pt end clearance for 24 so the centre is not pulled 50pt high.
+    scrollContentEmpty: {
+      flexGrow: 1,
+      paddingBottom: spacing.xxl,
     },
     loadingContainer: {
       flex: 1,

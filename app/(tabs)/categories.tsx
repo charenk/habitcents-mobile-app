@@ -21,7 +21,7 @@ import { useExpenses } from '@/contexts/ExpensesContext';
 import { CategoryRow } from '@/components/CategoryRow';
 import { AddCategoryModal } from '@/components/AddCategoryModal';
 import { useEmptyStateAction } from '@/components/onboarding/useEmptyStateAction';
-import { layout, radii, typeScale, type AppTheme } from '@/constants/theme';
+import { layout, radii, spacing, typeScale, type AppTheme } from '@/constants/theme';
 import type { Category, CategoryIcon } from '@/types/category';
 import { strings } from '@/constants/strings';
 import { expenseBelongsToCategory } from '@/utils/expenseCategory';
@@ -159,7 +159,9 @@ export default function CategoriesScreen() {
 
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        // Zero only (unreachable while defaults ship, kept honest anyway):
+        // grow to the pane so the empty state centres like every other one.
+        contentContainerStyle={[styles.scrollContent, sections.length === 0 ? styles.scrollContentEmpty : null]}
         showsVerticalScrollIndicator={false}
       >
         {sections.length === 0 ? (
@@ -225,9 +227,13 @@ function createStyles(theme: AppTheme) {
     },
     scrollContent: {
       paddingHorizontal: 20,
-      paddingTop: 14,
+      paddingTop: layout.paneContentTop,
       paddingBottom: layout.screenBottomClearance,
       gap: 20,
+    },
+    scrollContentEmpty: {
+      flexGrow: 1,
+      paddingBottom: spacing.xxl,
     },
     section: {
       gap: 8,

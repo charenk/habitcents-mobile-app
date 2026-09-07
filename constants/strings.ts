@@ -460,7 +460,8 @@ export const strings = {
     // point of ADR 0026.
     beatMediaPending: 'Preview coming soon',
     // Rescued from the retired How-it-works sheet's third row; now the
-    // second honest-zero value row under the hero.
+    // second honest-zero value row under the hero. (The sheet itself came
+    // back on 2026-09-07 as today.howItWorks*, opened from Kept Zero.)
     outcomeKeptCounts: 'Every time you skip it, we count the money you kept.',
     // Example fragments under the hero (W1): per-skip example prices only,
     // explicitly marked "for example", never an accumulated total. Rotates
@@ -876,29 +877,48 @@ export const strings = {
     // the two surfaces no longer read as the same screen. Kept keeps its own
     // keys so they can diverge further without one edit moving both.
     keptEmptyTitle: 'Every skip lands here as money kept',
-    keptEmptyCta: 'Log an expense',
-    // Kept true-zero explainer (ADR 0039). The one surface where a user has no
-    // evidence of their own to read, so it earns three lines the one-hook rule
-    // otherwise forbids. Every claim here is checked against utils/
-    // habitDetection.ts and types/habit.ts:
+    // No keptEmptyCta since 2026-09-07 (Charen): Kept Zero's action is the
+    // dock's "Break your first habit", and a second, different action in the
+    // stack ("Log an expense") competed with it. Logging is the Spent pane's
+    // job, one swipe away and the default pane.
+    //
+    // How skips and habits work (Charen, 2026-09-07, reversing ADR 0039). The
+    // Kept true-zero pane used to carry these lines inline as a three-step
+    // explainer; Charen's call was that explanatory prose does not belong in
+    // the empty-state pattern, so the pane now shows one quiet underlined
+    // link (howItWorksTrigger) that opens a sheet (components/today/
+    // HowItWorksSheet.tsx) carrying the rows. This revives the How-it-works
+    // sheet retired earlier in the redesign (see outcomeKeptCounts above).
+    //
+    // Every claim here is checked against the code, and the guardrails from
+    // ADR 0039 still apply:
     //  - the merchant really is required; an expense logged without a place
-    //    can never be detected, because merchant is the only grouping key.
+    //    can never be detected, because merchant is the only grouping key
+    //    (utils/habitDetection.ts).
     //  - four is a COUNT of logs at one merchant inside 90 days, not an amount,
     //    and it is necessary rather than sufficient (a monthly-spend floor and
     //    a confidence floor also apply), which is why "around" and "enough to
     //    spot" carry the hedge the detection meter already uses.
     //  - a skip is the only thing that moves Kept forward; a slip is neutral.
+    //    Verified 2026-09-07: contexts/HabitsContext.tsx leaves goal.kept
+    //    unchanged on a slipped answer and adds partial-slip credit,
+    //    utils/habitLogging.ts keptOnDay only ever adds, and the one
+    //    subtraction (changeTodayAnswer) corrects a previously recorded skip.
+    //    So "never takes anything back" is true of a slip.
     // Do not let a rate, a total or "the one you buy most often" back in here:
     // no invented statistics (ADR 0022), and the ranking really is projected
     // monthly cost, not frequency (utils/habitDetection.ts sorts detected
     // habits by totalMonthlySpend).
-    keptHowItWorksTitle: 'Here is how it works',
-    keptHowItWorks: [
+    howItWorksTrigger: 'Learn how skips and habits work',
+    howItWorksTitle: 'How skips and habits work',
+    howItWorksRows: [
       'Log what you spend, and where you spent it.',
       'Around four logs at one place is enough to spot a leak.',
       "Break a leak, and every skip keeps the money you didn't spend.",
+      'A slip records what happened; it never takes anything back.',
       // No inner `as const`: the whole strings object already carries one.
     ],
+    howItWorksDone: 'Got it',
     alreadyBreakingToast: "You're already breaking this habit.",
     editExpenseLabel: (title: string, amountLabel: string) => `Edit ${title}, ${amountLabel}`,
     // The break-habit affordance (DI-6, ADR 0019), which since ADR 0038 lives

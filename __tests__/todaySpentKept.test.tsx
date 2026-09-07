@@ -573,33 +573,42 @@ describe('Today: the break-habit affordance (DI-6, states per ADR 0038)', () => 
   });
 });
 
-describe("Today: the Kept zero explainer (ADR 0039)", () => {
-  // The deliberate exception to the one-hook rule. It exists because true
-  // zero is the only state where the user has no evidence of their own to
-  // read, so the mechanic has to be told rather than shown.
-  it('renders its three steps on Kept true zero', async () => {
+describe('Today: the Kept zero how-it-works link (Charen, 2026-09-07, reversing ADR 0039)', () => {
+  // True zero is the one state where the user has no evidence of their own to
+  // read, so the mechanic has to be told somewhere. ADR 0039 told it inline
+  // as three steps; the pane now carries one quiet underlined link instead
+  // and the telling lives in a sheet, so the empty-state pattern stays mark,
+  // hook, one text line.
+  it('offers the link on Kept true zero, and the sheet lists every row', async () => {
     const view = await renderToday();
 
     await tap(view.getByTestId('kept-chip'));
 
     const keptPane = within(view.getByTestId('kept-pane'));
-    expect(keptPane.getByText(strings.today.keptHowItWorksTitle)).toBeTruthy();
-    expect(keptPane.getByTestId('empty-state-steps')).toBeTruthy();
-    for (const step of strings.today.keptHowItWorks) {
-      expect(keptPane.getByText(step)).toBeTruthy();
+    expect(keptPane.getByTestId('empty-state-link')).toBeTruthy();
+    // No steps in the pane any more, and no CTA either: the pane's action is
+    // the dock's "Break your first habit".
+    expect(keptPane.queryByTestId('empty-state-steps')).toBeNull();
+    expect(keptPane.queryByText(strings.today.spentEmptyCta)).toBeNull();
+
+    await tap(keptPane.getByText(strings.today.howItWorksTrigger));
+
+    expect(mockTrack).toHaveBeenCalledWith('how_it_works_opened', {});
+    expect(view.getByTestId('how-it-works-sheet')).toBeTruthy();
+    expect(view.getByText(strings.today.howItWorksTitle)).toBeTruthy();
+    for (const line of strings.today.howItWorksRows) {
+      expect(view.getByText(line)).toBeTruthy();
     }
-    // Each row is ONE VoiceOver stop with the numeral composed in, so the
-    // rotor reads "1. Log what..." rather than "1." and the sentence apart.
-    expect(
-      keptPane.getByLabelText(`1. ${strings.today.keptHowItWorks[0]}`)
-    ).toBeTruthy();
+    // Each row is one VoiceOver stop carrying the whole line; the glyph is
+    // decorative.
+    expect(view.getByLabelText(strings.today.howItWorksRows[0])).toBeTruthy();
+    expect(view.getByText(strings.today.howItWorksDone)).toBeTruthy();
   });
 
-  // Guards the exception from spreading. Once logs exist the pane shows a live
-  // detection meter counting toward the real threshold, which says the same
-  // thing with the user's own numbers, so the static explainer would be a
-  // second telling.
-  it('does not render once logs exist and the detection meter takes over', async () => {
+  // Once logs exist the pane shows a live detection meter counting toward the
+  // real threshold, which says the same thing with the user's own numbers, so
+  // the link would be a second telling.
+  it('does not offer the link once logs exist and the detection meter takes over', async () => {
     mockExpenses = [makeExpense({ id: 'e1' })];
 
     const view = await renderToday();
@@ -607,16 +616,17 @@ describe("Today: the Kept zero explainer (ADR 0039)", () => {
     await tap(view.getByTestId('kept-chip'));
 
     const keptPane = within(view.getByTestId('kept-pane'));
-    expect(keptPane.queryByText(strings.today.keptHowItWorksTitle)).toBeNull();
+    expect(keptPane.queryByText(strings.today.howItWorksTrigger)).toBeNull();
     expect(keptPane.getByText(strings.habits.spottingYourLeak)).toBeTruthy();
   });
 
-  // The Spent pane keeps its single hook; the exception is Kept only.
+  // The Spent pane keeps its hook and sage CTA; the link is Kept only.
   it('does not reach the Spent pane', async () => {
     const view = await renderToday();
 
     const spentPane = within(view.getByTestId('spent-pane'));
-    expect(spentPane.queryByText(strings.today.keptHowItWorksTitle)).toBeNull();
+    expect(spentPane.queryByText(strings.today.howItWorksTrigger)).toBeNull();
+    expect(spentPane.queryByTestId('empty-state-link')).toBeNull();
   });
 });
 
@@ -688,30 +698,21 @@ describe('Today: Spent pane true-zero state', () => {
   });
 });
 
-describe('Today: Kept pane true-zero CTA analytics', () => {
-  it('fires skip_activation with surface today_kept for a skipper, and always switches to Spent', async () => {
+describe('Today: Kept pane true zero carries no activation CTA (Charen, 2026-09-07)', () => {
+  // The "Log an expense" CTA that used to sit in the Kept zero stack, and
+  // fire skip_activation for a skipper, is gone: the pane's action is the
+  // dock, logging is the Spent pane's job one swipe away, and a second,
+  // different action in the stack competed with the dock. The 'today_kept'
+  // surface stays in the closed analytics vocabulary; nothing fires it now.
+  it('fires no skip_activation from the Kept pane, even for a skipper', async () => {
     mockDoorChosen = 'skip';
     const view = await renderToday();
 
     await tap(view.getByTestId('kept-chip'));
-    // Scoped to the Kept pane: both panes stay mounted (DI-7), and
-    // "Log an expense" is also QuickLogRow's (still-mounted) Spent-pane
-    // control plus the Spent pane's own true-zero CTA in this fixture.
-    const keptPane = view.getByTestId('kept-pane');
-    await tap(within(keptPane).getByRole('button', { name: strings.today.keptEmptyCta }));
+    const keptPane = within(view.getByTestId('kept-pane'));
+    expect(keptPane.queryByRole('button', { name: strings.today.spentEmptyCta })).toBeNull();
 
-    expect(mockTrack).toHaveBeenCalledWith('skip_activation', { surface: 'today_kept' });
-    expect(view.getByLabelText(/^Spent .*, selected/)).toBeTruthy();
-  });
-
-  it('stays silent for a user who did not skip onboarding', async () => {
-    mockDoorChosen = 'fresh';
-    const view = await renderToday();
-
-    await tap(view.getByTestId('kept-chip'));
-    const keptPane = view.getByTestId('kept-pane');
-    await tap(within(keptPane).getByRole('button', { name: strings.today.keptEmptyCta }));
-
+    await tap(keptPane.getByText(strings.today.howItWorksTrigger));
     expect(mockTrack).not.toHaveBeenCalledWith('skip_activation', expect.anything());
   });
 });

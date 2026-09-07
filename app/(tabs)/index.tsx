@@ -10,7 +10,6 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { Icon } from '@/components/ui/Icon';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Button } from '@/components/ui/Button';
@@ -29,6 +28,8 @@ import { SpentKeptChips, type SpentKeptView } from '@/components/habit-logging/S
 import { ExpenseSheet, type LogExpenseSavedInfo } from '@/components/money/ExpenseSheet';
 import { QuickLogRow } from '@/components/money/QuickLogRow';
 import { ActionDock } from '@/components/today/ActionDock';
+import { BreakHabitRow } from '@/components/today/BreakHabitRow';
+import { HowItWorksSheet } from '@/components/today/HowItWorksSheet';
 import { LoggedTodayList } from '@/components/money/LoggedTodayList';
 import { InfoRibbon } from '@/components/ui/InfoRibbon';
 import { useFirstRunRibbon } from '@/components/onboarding/useFirstRunRibbon';
@@ -242,15 +243,16 @@ export default function TodayScreen() {
   const spentIsEmpty = expenses.length === 0;
   const handleSpentEmptyLog = useEmptyStateAction('today_spent', () => openLogSheet());
 
-  // Kept pane, true zero state: same "switch to Spent" handler the empty
-  // state has always used, wrapped so a skipper's tap reports the surface.
-  const handleKeptEmptyLog = useEmptyStateAction(
-    'today_kept',
-    useCallback(() => {
-      markInteracted();
-      setTodayView('spent');
-    }, [markInteracted])
-  );
+  // Kept pane, true zero state: no CTA in the stack since 2026-09-07 (Charen).
+  // Its action is the dock's "Break your first habit"; what the stack carries
+  // instead is a quiet underlined link that opens the how-it-works sheet.
+  // The 'today_kept' surface stays in useEmptyStateAction's closed vocabulary
+  // for the events already recorded against it; nothing fires it now.
+  const [howItWorksVisible, setHowItWorksVisible] = useState(false);
+  const openHowItWorks = useCallback(() => {
+    track('how_it_works_opened', {});
+    setHowItWorksVisible(true);
+  }, []);
 
   // Eyebrow date line, locale-aware (ADA-008): "Thursday, July 24".
   // ScreenHeader uppercases it, so this stays sentence case.
@@ -727,8 +729,10 @@ export default function TodayScreen() {
   // /onboarding/welcome, is deleted; the sheet lives on Today now).
   // Toast lift (ADR 0038): the pill's default spot is now behind the dock, so
   // a "Logged." toast would cover the field that produced it. Each dock
-  // reports its measured height and the visible pane's is the one that counts,
-  // because the two docks hold different controls at different heights.
+  // reports its measured height and the visible pane's is the one that counts.
+  // The two docks are equal by construction since 2026-09-07 (both on
+  // DockCard's fixed field), but the lift stays measured rather than derived
+  // so a Dynamic Type overflow can never lift the toast short.
   //
   // FOCUS-GATED, and that gate is load-bearing. Tab screens stay mounted when
   // the user switches tabs (bottom-tabs v7 has no unmountOnBlur) and
@@ -825,29 +829,6 @@ export default function TodayScreen() {
   // the human gate; this line deliberately does not resolve it.
   const breakCaption =
     freeTierBlocked && entitlement !== 'premium' ? strings.habitLogging.freeTierNote : null;
-
-  const breakAnotherAffordance = (
-    <TouchableOpacity
-      style={styles.breakAnother}
-      onPress={handleBreakAnother}
-      accessibilityRole="button"
-      accessibilityLabel={breakCaption ? `${breakLabel}, ${breakCaption}` : breakLabel}
-      testID="break-habit-affordance"
-      activeOpacity={0.7}
-    >
-      <Icon name="Plus" size={18} color={theme.primaryDark} />
-      <View style={styles.breakAnotherText}>
-        <Text style={styles.breakAnotherLabel} maxFontSizeMultiplier={1.5}>
-          {breakLabel}
-        </Text>
-        {breakCaption ? (
-          <Text style={styles.breakAnotherCaption} maxFontSizeMultiplier={1.5}>
-            {breakCaption}
-          </Text>
-        ) : null}
-      </View>
-    </TouchableOpacity>
-  );
 
   const renderItem = ({ item, section }: { item: DetectedHabit | BreakingItem; section: HabitSection }) => {
     if (section.type === 'leaks') {
@@ -1089,7 +1070,7 @@ export default function TodayScreen() {
                   </Text>
                   <Text style={styles.progressBody}>{strings.habits.logsAtSamePlaceBody}</Text>
                   {/* The card says "keep logging"; the button below is how.
-                      Same in-place view switch as the empty state's CTA. */}
+                      The same in-place view switch a chip tap makes. */}
                   <Button
                     variant="secondary"
                     label={strings.habitLogging.logAnExpense}
@@ -1108,24 +1089,19 @@ export default function TodayScreen() {
                     layout="inline"
                     illustration="today-kept"
                     title={strings.today.keptEmptyTitle}
-                    // The one explainer in the app (ADR 0039). This is true
-                    // zero: no expenses at all, so nothing on screen can show
-                    // the mechanic and it has to be told. The adjacent Quiet
-                    // state does not get one, because by then the detection
-                    // meter is showing real progress toward the threshold.
-                    stepsTitle={strings.today.keptHowItWorksTitle}
-                    steps={strings.today.keptHowItWorks}
-                    cta={{
-                      // The quick-log card now lives on the Spent view, not
-                      // the Money tab, so the CTA switches views in place
-                      // rather than navigating away (was
-                      // router.push('/(tabs)/money')). Routed through the
-                      // same tap-like interaction flag as a chip tap so the
-                      // pager animates over to match (DI-7), and through
-                      // useEmptyStateAction so a skipper's tap reports the
-                      // surface (handleKeptEmptyLog, defined above).
-                      label: strings.today.keptEmptyCta,
-                      onPress: handleKeptEmptyLog,
+                    // Mark, hook, one quiet link, and nothing else (Charen,
+                    // 2026-09-07). True zero is the one state with no
+                    // evidence of the user's own to read, so the mechanic
+                    // has to be told somewhere; ADR 0039 told it here as
+                    // three inline steps, and this reverses that: the
+                    // telling lives in HowItWorksSheet, a tap away, and the
+                    // pane keeps the same silhouette as Spent Zero. No CTA:
+                    // the pane's action is the dock below. The adjacent Quiet
+                    // state gets no link, because by then the detection
+                    // meter shows real progress toward the real threshold.
+                    link={{
+                      label: strings.today.howItWorksTrigger,
+                      onPress: openHowItWorks,
                     }}
                   />
                 )}
@@ -1159,7 +1135,9 @@ export default function TodayScreen() {
               check-in card. It renders in all three branches, loading
               included: the affordance is what a user with nothing yet is
               here to press. */}
-          <ActionDock testID="kept-dock" onHeightChange={setKeptDockHeight}>{breakAnotherAffordance}</ActionDock>
+          <ActionDock testID="kept-dock" onHeightChange={setKeptDockHeight}>
+            <BreakHabitRow label={breakLabel} caption={breakCaption} onPress={handleBreakAnother} />
+          </ActionDock>
         </View>
       </ScrollView>
 
@@ -1210,6 +1188,8 @@ export default function TodayScreen() {
         onStart={handleBreakSheetStart}
         onStartTrial={handleBreakSheetStartTrial}
       />
+
+      <HowItWorksSheet visible={howItWorksVisible} onClose={() => setHowItWorksVisible(false)} />
     </View>
   );
 }
@@ -1369,7 +1349,8 @@ function createStyles(theme: AppTheme) {
     // the parent's alignItems: 'center' would otherwise deny it. The quote
     // above it was retired (ADR 0037).
     keptZeroWrap: {
-      // See spentZeroWrap: flexGrow, never flex, or the explainer clips.
+      // See spentZeroWrap: flexGrow, never flex, or the hook clips at large
+      // Dynamic Type.
       flexGrow: 1,
       alignSelf: 'stretch',
       justifyContent: 'center',
@@ -1378,40 +1359,10 @@ function createStyles(theme: AppTheme) {
       alignSelf: 'stretch',
       marginTop: spacing.xxl,
     },
-    // Break-another affordance (DI-6, ADR 0019): a dashed card mirroring
-    // UpcomingList's add-upcoming row (components/money/UpcomingList.tsx
-    // `add`/`addLabel`). W3 consolidated this with the empty state's former
-    // reAuditLink text link (same destination, now redundant); this dashed
-    // card is the single re-entry point in both the empty and populated Kept
-    // views. Two lines (label + caption) rather than UpcomingList's single
-    // centered line, so it is left-aligned with the icon instead of centered.
-    breakAnother: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: spacing.stack,
-      minHeight: 56,
-      borderRadius: radii.card,
-      borderWidth: 1.5,
-      borderStyle: 'dashed',
-      borderColor: theme.cloudDashed,
-      backgroundColor: theme.white,
-      paddingHorizontal: spacing.lg,
-      paddingVertical: spacing.stack,
-    },
-    breakAnotherText: {
-      flex: 1,
-    },
-    breakAnotherLabel: {
-      fontSize: typeScale.label,
-      fontFamily: theme.fonts.uiSemibold,
-      color: theme.primaryDark,
-    },
-    breakAnotherCaption: {
-      fontSize: typeScale.caption,
-      fontFamily: theme.fonts.ui,
-      color: theme.textSecondary,
-      marginTop: spacing.hairline,
-    },
+    // The break-habit affordance's own styles moved into
+    // components/today/BreakHabitRow.tsx when it took the shared DockCard
+    // shell (2026-09-07). It is still the single re-entry point in both the
+    // empty and populated Kept views.
     progressCard: {
       alignSelf: 'stretch',
       backgroundColor: theme.surface,
