@@ -498,21 +498,65 @@ work, tracked elsewhere).
       All four converted in one commit each; `tsc --noEmit` clean and the
       full suite green (109/109, 1147/1147) after every commit.
 
-      **Found this run, not yet converted:** `app/(tabs)/_layout.tsx` (tab
-      titles, `strings.tabs.*`) is a genuinely new candidate not on any
-      prior run's list, itself a top-level layout component (mounted
-      unconditionally, wide blast radius like `ScreenHeader`/`Sheet`; check
-      whether it can call `useStrings()` directly as a function component
-      before assuming it needs the same shared-component treatment). The
-      13 `ScreenHeader` importers' and remaining `Sheet` importers' own
-      `strings` usage, and the leak-scan screen set (`BillsScreen.tsx`,
-      `DeckScreen.tsx`, `GracefulFailure.tsx`, `IntakeScreen.tsx`,
-      `PayoffScreen.tsx`, `PulseDayDetailSheet.tsx`, `ResultsScreen.tsx`,
-      `ScopeScreen.tsx`, `useTrackLeak.tsx`), remain exactly as scoped in
-      run 11 (still not individually leaf-checked). `utils/coachMoments.ts`,
-      `utils/recurring.ts`, `contexts/ReportsContext.tsx` (non-hook
-      threading shape TBD) and the retired `ViewQuote.tsx`/`useViewQuote.ts`
-      also remain, unchanged from run 11's notes.
+      **`app/(tabs)/_layout.tsx`, `app/(tabs)/money.tsx`,
+      `app/(tabs)/categories.tsx` converted (run 13):** all three ordinary
+      leaf-shaped screens, no module-scope pattern in any of them (checked
+      per file before starting, per the standing caution).
+
+      `_layout.tsx` (found run 12, converted this run): its four
+      `strings.tabs.*` title usages sit inside `TabLayout`'s component
+      body (passed to `Tabs.Screen options`), not module scope, so this
+      was a plain `useStrings()` swap despite being a top-level layout
+      component mounted unconditionally. No test file renders the tab
+      layout directly (`grep -rl "(tabs)/_layout\|TabLayout" __tests__`
+      returns nothing), so no test file changes were at risk either way.
+
+      `money.tsx`'s six `strings.` usages (three segment labels, the
+      screen title, the profile header action label) are all inside
+      `MoneyScreen`'s body; the `segments` `useMemo` was missing `strings`
+      from its deps array (added). All four test files that render this
+      screen (`moneyUpcomingTab`, `moneyMaterializerIntegration`,
+      `moneyHabitsTab`, and `moneyPager`, the last not previously listed
+      in HANDOFF but confirmed already `LocaleProvider`-covered too) needed
+      no changes.
+
+      `categories.tsx`'s usages (including one function-valued string,
+      `strings.categories.deleteTitle(name)`, called directly in JSX, not
+      module scope) are all inside `CategoriesScreen`'s body; the
+      `sections` `useMemo` was missing `strings` from its deps (added
+      alongside the existing `categories`/`getDefaultCategories`/
+      `getCustomCategories`). Both test files that render this screen
+      (`categoriesEmptyState`, `categoriesDeleteConfirm`) already had
+      `LocaleProvider`; no test file changes needed.
+
+      All three converted in one commit each; `tsc --noEmit` clean and the
+      full suite green (109/109, 1147/1147) after every commit. One
+      pre-existing flake noted and cleared: `door3BreakSheet.test.tsx`
+      timed out once under full-suite load at session start (before any
+      code change), passed standalone and on every full-suite re-run after
+      that; not investigated further as it reproduces on main too and is
+      unrelated to this stream (see HANDOFF's Notes section).
+
+      **Not yet converted, remaining 21 files** (rerun `grep -rl "from
+      '@/constants/strings'" app components contexts utils | grep -v
+      __tests__` for the current list): `app/(tabs)/index.tsx` (Today,
+      34 `strings.` hits, largest screen in the app at ~1450 lines,
+      budget a dedicated run), `app/(tabs)/insights.tsx` (12 hits),
+      `app/category/[id].tsx` (15 hits), `app/habit/[id].tsx` (21 hits),
+      `app/paywall.tsx` (26 hits) -- none of these five leaf-checked yet
+      for module-scope shapes, do that check before picking one. The
+      leak-scan screen set (`BillsScreen.tsx`, `DeckScreen.tsx`,
+      `GracefulFailure.tsx`, `IntakeScreen.tsx`, `PayoffScreen.tsx`,
+      `PulseDayDetailSheet.tsx`, `ResultsScreen.tsx`, `ScopeScreen.tsx`,
+      `useTrackLeak.tsx`) remains exactly as scoped since run 11 (still not
+      individually leaf-checked, budget more than one run's slice per the
+      standing note). `components/onboarding/OnboardingCarousel.tsx` will
+      always appear on the grep (its static import builds the exported
+      `BEATS` fixture by design, see run 12's note; already converted for
+      real rendering). `utils/coachMoments.ts`, `utils/recurring.ts`,
+      `contexts/ReportsContext.tsx` (non-hook threading shape TBD) and the
+      retired `ViewQuote.tsx`/`useViewQuote.ts` also remain, unchanged from
+      run 11's notes.
 - [ ] Convert function-valued strings (pluralized/interpolated) to ICU
       messages with proper CLDR plural rules, not the current hand-rolled
       `n === 1 ? '' : 's'` ternaries, and add the ICU formatting dependency
