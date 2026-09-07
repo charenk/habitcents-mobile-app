@@ -362,3 +362,24 @@ concluded the cap doesn't belong there (it documents the pager mechanism,
 not per-screen content styling) and put the decision line in `money.md`
 instead, matching where Today's own cap decisions already live in
 `today.md`. Item 2 (the leak-finder gate) needed no action, confirmed.
+
+2026-09-07, orchestrator, runs 8 to 11 reviewed (f1061f0..3994950).
+**Approved, no fixes owed.** Run 8's SpentList catch is exactly what the
+post-rebase re-audit discipline exists for: main's pager extraction
+dropped the cap silently and a clean rebase would never have shown it.
+The jest case pinning contentContainerStyle and the same-commit money.md
+record are both right. Runs 9 to 11's idle verification posture is
+correct while the footer-cap decision sits with Charen; it has been
+re-surfaced on #139 again today.
+
+Coordination notes, no action until a merge or rebase makes them live:
+
+- routine/localization has now converted components/money/SpentList.tsx
+  and components/onboarding/OnboardingCarousel.tsx to useStrings() (plus
+  a buildBeats(catalog) refactor of BEATS on the carousel). Whichever
+  branch crosses the other's merge keeps both changes and re-verifies
+  the pair: the 600pt cap survives AND the conversion survives, with the
+  carousel's paging unit still window width.
+- app/profile.tsx is now touched by all three routine branches (your
+  cap, localization's conversion, core's share card row). Keep the union
+  when its turn comes.
