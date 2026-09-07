@@ -537,26 +537,55 @@ work, tracked elsewhere).
       that; not investigated further as it reproduces on main too and is
       unrelated to this stream (see HANDOFF's Notes section).
 
-      **Not yet converted, remaining 21 files** (rerun `grep -rl "from
+      **`app/(tabs)/insights.tsx`, `app/category/[id].tsx`,
+      `app/habit/[id].tsx` converted (run 14):** all three leaf-checked
+      first per the standing caution; none had a module-scope shape.
+
+      `insights.tsx`'s 12 usages are all inside `InsightsScreen`'s body;
+      the `segments` `useMemo` was missing `strings` from its deps
+      (added). Both test files that render it (`insightsFirstScan`,
+      `insightsPager`) already had `LocaleProvider`.
+
+      `category/[id].tsx`'s 15 usages are all inside
+      `CategoryDetailScreen`'s body (the module-level
+      `accessibleIdentityColor` helper does not read `strings`); none of
+      its `useMemo`/`useCallback` hooks read `strings`, so no deps
+      changes were needed. Its one test file
+      (`categoryDetailScreen.test.tsx`) already had `LocaleProvider`.
+
+      `habit/[id].tsx` has three separate function components, each
+      converted independently: `HabitDetailScreen` (the screen),
+      `HabitDetailBreaking` (a real child component defined in the same
+      file, not module scope), and the exported `EditSkipValueSheet` (a
+      standalone `Sheet.tsx` importer, already covered by that run's
+      test-file sweep). `StatBlock` and the module-level
+      `periodSkipCount` helper do not read `strings`, so neither needed
+      the `Catalog`-parameter treatment. No `useMemo`/`useCallback` in
+      the file reads `strings`. Its screen-level test
+      (`habitDetailPaywallPlacement`) and the sheet's own leaf test
+      (`editSkipValueSheet`) already had `LocaleProvider`.
+
+      All three files converted in one commit each; `tsc --noEmit` clean
+      and the full suite green (109/109, 1147/1147) after every commit.
+
+      **Not yet converted, remaining 18 files** (rerun `grep -rl "from
       '@/constants/strings'" app components contexts utils | grep -v
       __tests__` for the current list): `app/(tabs)/index.tsx` (Today,
       34 `strings.` hits, largest screen in the app at ~1450 lines,
-      budget a dedicated run), `app/(tabs)/insights.tsx` (12 hits),
-      `app/category/[id].tsx` (15 hits), `app/habit/[id].tsx` (21 hits),
-      `app/paywall.tsx` (26 hits) -- none of these five leaf-checked yet
-      for module-scope shapes, do that check before picking one. The
-      leak-scan screen set (`BillsScreen.tsx`, `DeckScreen.tsx`,
-      `GracefulFailure.tsx`, `IntakeScreen.tsx`, `PayoffScreen.tsx`,
-      `PulseDayDetailSheet.tsx`, `ResultsScreen.tsx`, `ScopeScreen.tsx`,
-      `useTrackLeak.tsx`) remains exactly as scoped since run 11 (still not
-      individually leaf-checked, budget more than one run's slice per the
-      standing note). `components/onboarding/OnboardingCarousel.tsx` will
-      always appear on the grep (its static import builds the exported
-      `BEATS` fixture by design, see run 12's note; already converted for
-      real rendering). `utils/coachMoments.ts`, `utils/recurring.ts`,
-      `contexts/ReportsContext.tsx` (non-hook threading shape TBD) and the
-      retired `ViewQuote.tsx`/`useViewQuote.ts` also remain, unchanged from
-      run 11's notes.
+      budget a dedicated run, not leaf-checked yet), `app/paywall.tsx`
+      (26 hits, not leaf-checked yet). The leak-scan screen set
+      (`BillsScreen.tsx`, `DeckScreen.tsx`, `GracefulFailure.tsx`,
+      `IntakeScreen.tsx`, `PayoffScreen.tsx`, `PulseDayDetailSheet.tsx`,
+      `ResultsScreen.tsx`, `ScopeScreen.tsx`, `useTrackLeak.tsx`) remains
+      exactly as scoped since run 11 (still not individually
+      leaf-checked, budget more than one run's slice per the standing
+      note). `components/onboarding/OnboardingCarousel.tsx` will always
+      appear on the grep (its static import builds the exported `BEATS`
+      fixture by design, see run 12's note; already converted for real
+      rendering). `utils/coachMoments.ts`, `utils/recurring.ts`,
+      `contexts/ReportsContext.tsx` (non-hook threading shape TBD) and
+      the retired `ViewQuote.tsx`/`useViewQuote.ts` also remain,
+      unchanged from run 11's notes.
 - [ ] Convert function-valued strings (pluralized/interpolated) to ICU
       messages with proper CLDR plural rules, not the current hand-rolled
       `n === 1 ? '' : 's'` ternaries, and add the ICU formatting dependency

@@ -2,10 +2,9 @@
 
 ## Status
 
-In progress. No REVIEW FEEDBACK pending at run start. Converted three
-files this run: `app/(tabs)/_layout.tsx`, `app/(tabs)/money.tsx`,
-`app/(tabs)/categories.tsx`. 54 files converted total now (2 shared + 52
-leaves/screens).
+In progress. Run 14: addressed the run 9-13 review feedback first (one
+deps fix, one docs entry), then converted three more files. 57 files
+converted total now (2 shared + 55 leaves/screens).
 
 ## Completed
 
@@ -14,46 +13,62 @@ leaves/screens).
   Profile's Language row + `LanguageSheet` (cosmetic only, no catalog yet).
 - Plan item 2, typed-API slice (earlier run): `utils/i18n.ts` (`Catalog`,
   `getCatalog`, `useStrings()`). No call sites touched that run.
-- Plan item 2, call-site migration (earlier runs, runs 1-12): 51 files
-  (`ScreenHeader.tsx`, `Sheet.tsx`, the `ResultsScreen`-tree batch, and 49
-  leaves through `AddUpcomingSheet.tsx`). Full detail in PLAN.md.
-- Plan item 2, this run (run 13): three files, all ordinary leaf-shaped
-  screens with no module-scope pattern (checked before starting, per the
-  standing caution):
-  - `app/(tabs)/_layout.tsx` (found run 12): its four `strings.tabs.*` tab
-    titles sit inside `TabLayout`'s component body (passed to
-    `Tabs.Screen options`), not module scope, so this was a plain
-    `useStrings()` swap despite being a top-level layout component mounted
-    unconditionally. No test file renders the tab layout directly
-    (confirmed via grep), so no test file changes were at risk either way.
-  - `app/(tabs)/money.tsx`: six `strings.` usages, all inside
-    `MoneyScreen`'s body. The `segments` `useMemo` was missing `strings`
-    from its deps array (added). All four test files that render this
-    screen (`moneyUpcomingTab`, `moneyMaterializerIntegration`,
-    `moneyHabitsTab`, `moneyPager`) already had `LocaleProvider`; no test
-    file changes needed.
-  - `app/(tabs)/categories.tsx`: usages inside `CategoriesScreen`'s body,
-    including one function-valued string
-    (`strings.categories.deleteTitle(name)`) called directly in JSX. The
-    `sections` `useMemo` was missing `strings` from its deps (added). Both
-    test files that render this screen (`categoriesEmptyState`,
-    `categoriesDeleteConfirm`) already had `LocaleProvider`; no test file
-    changes needed.
+- Plan item 2, call-site migration (earlier runs, runs 1-13): 54 files
+  (`ScreenHeader.tsx`, `Sheet.tsx`, the `ResultsScreen`-tree batch, and 51
+  leaves/screens through `app/(tabs)/categories.tsx`). Full detail in
+  PLAN.md.
+- Run 14, review feedback (owed from the run 9-13 orchestrator review,
+  addressed before any new conversion this run):
+  - `app/(tabs)/categories.tsx`: `confirmDeleteCategory`'s `useCallback`
+    deps were missing `strings` (it reads
+    `strings.toasts.deleteFailed`). Same class as the earlier
+    `CheckInCard` fix: after a locale switch, the delete-failed toast
+    would speak the previous language. Fixed.
+  - `design/PATTERN_VOCABULARY.md`: added a `## Localization` section
+    with the four module-scope conversion shapes (module-level array,
+    module-level helper function, plain module-level const, exported
+    fixture array), condensed from run 12/13's HANDOFF notes, plus the
+    transitive-test-coverage caution and the useMemo/useCallback-deps
+    rule. One commit.
+- Run 14, new conversions (three files, all ordinary leaf-shaped, no
+  module-scope pattern, leaf-checked before starting per the standing
+  caution):
+  - `app/(tabs)/insights.tsx`: 12 usages, all inside `InsightsScreen`'s
+    body. The `segments` `useMemo` was missing `strings` from its deps
+    (added). Both test files that render this screen
+    (`insightsFirstScan`, `insightsPager`) already had `LocaleProvider`;
+    no test file changes needed.
+  - `app/category/[id].tsx`: 15 usages, all inside
+    `CategoryDetailScreen`'s body (the module-level
+    `accessibleIdentityColor` helper does not read `strings`). None of
+    its `useMemo`/`useCallback` hooks read `strings`, so no deps changes
+    needed. Its one test file (`categoryDetailScreen.test.tsx`) already
+    had `LocaleProvider`; no test file changes needed.
+  - `app/habit/[id].tsx`: three separate function components in one
+    file, each converted independently: `HabitDetailScreen` (the
+    screen), `HabitDetailBreaking` (a real child component defined in
+    the same file, not module scope), and the exported
+    `EditSkipValueSheet` (a standalone `Sheet.tsx` importer, already
+    covered by that run's test-file sweep). `StatBlock` and the
+    module-level `periodSkipCount` helper do not read `strings`, so
+    neither needed the `Catalog`-parameter treatment. No
+    `useMemo`/`useCallback` in the file reads `strings`. Its
+    screen-level test (`habitDetailPaywallPlacement`) and the sheet's
+    own leaf test (`editSkipValueSheet`) already had `LocaleProvider`;
+    no test file changes needed.
   - All three converted in one commit each; `tsc --noEmit` clean and the
     full suite green (109/109, 1147/1147) after every commit.
 
 ## Next
 
-- 21 files still import the static `strings` catalog directly outside
+- 18 files still import the static `strings` catalog directly outside
   `__tests__/` (rerun `grep -rl "from '@/constants/strings'" app
   components contexts utils | grep -v __tests__` for the current list).
-  Five app screens not yet individually leaf-checked for module-scope
-  shapes: `app/(tabs)/index.tsx` (Today, 34 `strings.` hits, ~1450 lines,
-  the largest screen in the app, budget a dedicated run), `app/paywall.tsx`
-  (26 hits), `app/habit/[id].tsx` (21 hits), `app/category/[id].tsx`
-  (15 hits), `app/(tabs)/insights.tsx` (12 hits). Check each for module-
-  scope arrays/consts/helper-functions before estimating cost, same
-  process as every prior pick.
+  Two app screens not yet leaf-checked for module-scope shapes:
+  `app/(tabs)/index.tsx` (Today, 34 `strings.` hits, ~1450 lines, the
+  largest screen in the app, budget a dedicated run), `app/paywall.tsx`
+  (26 hits). Check each for module-scope arrays/consts/helper-functions
+  before estimating cost, same process as every prior pick.
 - The leak-scan screen set (`BillsScreen.tsx`, `DeckScreen.tsx`,
   `GracefulFailure.tsx`, `IntakeScreen.tsx`, `PayoffScreen.tsx`,
   `PulseDayDetailSheet.tsx`, `ResultsScreen.tsx`, `ScopeScreen.tsx`,
@@ -102,7 +117,7 @@ item 4).
 - The Language picker in Settings is still cosmetic only: selecting a
   language persists the override and nothing on screen changes yet,
   because most components still read the static English `strings` export
-  and no non-English catalog exists. 54 files (2 shared, 52 leaves/screens)
+  and no non-English catalog exists. 57 files (2 shared, 55 leaves/screens)
   are wired through `useStrings()` so far; all still resolve to English
   either way until plan item 4 lands catalogs, so this is not yet
   observable. Expected, not a bug.
@@ -129,93 +144,69 @@ item 4).
   as every `strings.` usage sits inside the screen's own component body:
   grep `strings\.` line numbers against the function's start/end before
   assuming it needs the shared-component treatment `ScreenHeader.tsx`/
-  `Sheet.tsx` needed. `_layout.tsx`, `money.tsx`, `categories.tsx` were all
-  this shape this run. `app/(tabs)/index.tsx` is a likely counter-example
-  given its size (34 hits across ~1450 lines) -- leaf-check it properly,
-  do not assume it is another quick win just because the pattern held
-  three times in a row.
+  `Sheet.tsx` needed. A file can hold more than one function component
+  (`app/habit/[id].tsx` has three: the screen, a real child component,
+  and an exported sheet); check each one's own body boundaries and give
+  each its own `const strings = useStrings();`, not just the top-level
+  export.
 - Four module-scope shapes are now confirmed among files still importing
-  static `strings`, costed differently: a module-level *array* built from
-  `strings.xxx` (fixed by moving into a `useMemo` in the component body);
-  a module-level *helper function* that reads `strings` directly (fixed
-  by adding a `strings: Catalog` parameter, threaded from `useStrings()`
-  at every call site, including any OTHER module-level function that
-  calls it, like `AddUpcomingSheet.tsx`'s `draftFromExpense`); a plain
-  module-level `const` built from a single `strings.xxx` value (a
-  one-line `useMemo`); and an **exported array used as a test fixture
-  elsewhere** (`OnboardingCarousel.tsx`'s `BEATS`), fixed by extracting a
+  static `strings`, costed differently, and written up in
+  `design/PATTERN_VOCABULARY.md`'s Localization section as of run 14: a
+  module-level *array* built from `strings.xxx` (fixed by moving into a
+  `useMemo` in the component body); a module-level *helper function*
+  that reads `strings` directly (fixed by adding a `strings: Catalog`
+  parameter, threaded from `useStrings()` at every call site, including
+  any OTHER module-level function that calls it, like
+  `AddUpcomingSheet.tsx`'s `draftFromExpense`); a plain module-level
+  `const` built from a single `strings.xxx` value (a one-line
+  `useMemo`); and an **exported array used as a test fixture elsewhere**
+  (`OnboardingCarousel.tsx`'s `BEATS`), fixed by extracting a
   `buildX(catalog)` function and keeping the export as `buildX(strings)`
   with the static import, so the fixture and any default-prop shape stay
   unchanged while the real render path calls `useStrings()`. Grep the
   candidate's own exports (not just its internals) before assuming a
   module-level array is purely private.
 - Whenever a conversion touches a `useMemo`/`useCallback` body that reads
-  `strings`, add `strings` to its dependency array in the same edit. Two
-  more caught this run (`money.tsx`'s `segments`, `categories.tsx`'s
-  `sections`) that were pre-existing `useMemo`s with other deps already
-  present, easy to miss when scanning only for `strings.` hits and not
-  also checking every enclosing `useMemo`/`useCallback`'s deps array.
+  `strings`, add `strings` to its dependency array in the same edit. Not
+  every file needs this (`category/[id].tsx` and `habit/[id].tsx`, run
+  14, had none), but check every enclosing `useMemo`/`useCallback` per
+  file regardless; a plain `useCallback`/inline handler with no memo at
+  all (most of `habit/[id].tsx`'s handlers) never has this problem in
+  the first place, only a memoized value that closes over `strings`
+  without listing it does.
 - Standing rebase risk (from run 11's out-of-band CI fix): any new test
   file landing on main for an already-converted shared component
   (`ScreenHeader`, `Sheet`) will fail the same LocaleProvider-missing way
   until this branch rebases and picks it up. Re-run `tsc` + the full
   suite after every rebase, not just after this routine's own commits.
-  This run's rebase was a no-op (branch was already current with
-  `origin/main` at session start, 0 commits behind).
+  Run 14's rebase was a no-op (branch was already current with
+  `origin/main` at session start).
 - Pre-existing flake, not this stream's bug: `door3BreakSheet.test.tsx`
-  timed out once under full-suite load at the very start of this run
-  (before any code change this session), then passed standalone and on
-  every full-suite re-run afterward (three full-suite runs total this
-  session, all 109/109 otherwise). If it recurs and blocks a commit,
-  re-run once before treating it as a real regression; it is unrelated to
-  the `strings`/`useStrings()` conversion work.
+  timed out once under full-suite load early in run 13 (before any code
+  change that session), then passed standalone and on every full-suite
+  re-run afterward. Did not recur in run 14 (three full-suite runs, all
+  109/109). If it recurs and blocks a commit, re-run once before treating
+  it as a real regression; it is unrelated to the `strings`/`useStrings()`
+  conversion work.
 
 ## REVIEW FEEDBACK
 
-2026-09-07, orchestrator, runs 9 to 13 reviewed (a0f65d3..8633648; run
-13 landed mid-review and was included). **Approved, one code fix owed
-next run:**
+None pending. Runs 9-13's feedback (categories.tsx deps fix, the
+PATTERN_VOCABULARY.md entry) was addressed at the start of run 14; both
+commits are on this branch (see Completed above).
 
-1. app/(tabs)/categories.tsx: confirmDeleteCategory reads
-   strings.toasts.deleteFailed but its useCallback deps are
-   [deleteTarget, deleteCategory, show], missing strings. Same class as
-   the CheckInCard fix: after a locale switch the delete-failed toast
-   would speak the previous language. Add strings to the deps. This is
-   the only instance: all 24 files converted since the last review were
-   swept for the class (useMemo/useCallback reading strings without it
-   in deps) and runs 9 to 12 came back clean.
+Coordination notes carried forward from the run 9-13 review, still no
+action needed until the next rebase:
 
-The CheckInCard useMemo deps fix is verified applied. Independent
-clean-install verification at run 12's tip matches your claims exactly:
-tsc clean, 109 suites / 1147 tests green.
-OnboardingCarousel's buildBeats extraction is the right shape (beats ??
-localizedBeats preserves the prop contract; the static BEATS export keeps
-the fixture stable), and AddUpcomingSheet's helper-parameter threading
-(buildNameChips, draftFromExpense taking the resolved chips) is clean.
-
-One docs item owed next run, before new conversions:
-
-1. Add the four module-scope conversion shapes to
-   design/PATTERN_VOCABULARY.md on this branch (module-level array into
-   useMemo; module-level helper taking a strings: Catalog parameter;
-   plain module-level const into useMemo; exported fixture array kept as
-   buildX(strings) with the render path on useStrings()). Your run 12
-   HANDOFF notes already contain the content; condense to vocabulary
-   form. Same rationale as routine/ipad's readable-column entry: the
-   pattern ships with this branch, so its entry belongs here, not on
-   main ahead of it.
-
-Coordination notes, no action until the next rebase:
-
-- components/money/SpentList.tsx and
-  components/onboarding/OnboardingCarousel.tsx are now also modified on
-  routine/ipad (the restored 600pt cap on SpentList's listContent plus a
-  testID; the beat/beatContent split on the carousel). Whichever branch
-  rebases across the other's merge must keep both changes and re-verify
-  the pair: the cap survives AND the useStrings conversion survives.
-- app/profile.tsx is now touched by all three routine branches (your
-  useStrings conversion, ipad's cap, core's share card row). Same
-  keep-the-union rule when its turn comes.
+- `components/money/SpentList.tsx` and
+  `components/onboarding/OnboardingCarousel.tsx` are also modified on
+  `routine/ipad` (the restored 600pt cap on `SpentList`'s
+  `listContent` plus a testID; the beat/beatContent split on the
+  carousel). Whichever branch rebases across the other's merge must
+  keep both changes and re-verify the pair: the cap survives AND the
+  `useStrings` conversion survives.
+- `app/profile.tsx` is touched by all three routine branches (this
+  branch's `useStrings` conversion, `ipad`'s cap, `core`'s share card
+  row). Same keep-the-union rule when its turn comes.
 - Merge order stays core-p3 first, ipad second, this branch rebasing
   after each.
-
