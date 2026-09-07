@@ -335,6 +335,27 @@ clean, `npm test` 110 suites / 1165 tests green, exactly matching run 8's
 ending count. Marked HANDOFF.md `COMPLETE` and PR #132 ready for review
 again, per the routine's own completion instructions.
 
+## Run 10: closed out again
+
+No new commits on `origin/main` since run 9 (`git fetch origin main` came
+back empty; branch already even, no rebase needed), `mergeable_state:
+clean` and `draft: false` confirmed on PR #132 via the GitHub API, no PR
+comments and no PR reviews (both checked directly: empty). Re-checked
+`habitcents-ops/PUNCHLIST.md`'s RESUME marker: still the 2026-09-05
+zeroth-state wave (device pass, canvas regeneration, an ipad-routine merge
+note, a today-kept art asset decision), none core-p3/payments-shaped, same
+conclusion as run 9. Fresh `npm install` (node_modules absent in this
+container), `npx tsc --noEmit` clean. `npm test` first run: 109/1165 with
+one failure, `__tests__/door3BreakSheet.test.tsx`'s auto-open test timing
+out at the full suite's default 5s Jest timeout; re-ran that file alone
+and all 17 tests passed in 5.5s total, confirming a suite-level timing
+flake unrelated to this branch (that file is Door 3's break sheet, not
+touched by anything on `routine/core-p3`), not a regression. Per the one
+re-run allowance for a suspected flake: 110 suites / 1165 tests green,
+exactly matching run 9's ending count. PLAN.md's checklist is unchanged,
+still fully `[x]`/`(C)`; nothing code-shaped remains that this routine can
+reach without a website-repo checkout or a Charen-gated external account.
+
 ## If this routine fires again
 
 The branch and PR stay open until Charen merges or closes them (routine

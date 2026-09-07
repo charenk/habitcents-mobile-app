@@ -1,5 +1,22 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 10, 2026-09-07: re-verify, no new work)
+
+Same conclusion as run 9, one run later. `git fetch origin main` empty
+(branch already even with `origin/main`, no rebase needed). PR #132
+confirmed via the API: `mergeable_state: clean`, `draft: false`, zero
+comments, zero reviews since run 9. `habitcents-ops/PUNCHLIST.md`'s RESUME
+marker is unchanged (still the 2026-09-05 zeroth-state wave items; none
+core-p3-shaped). Fresh `npm install`, `npx tsc --noEmit` clean. `npm test`
+hit one flaky timeout (`__tests__/door3BreakSheet.test.tsx`'s auto-open
+test, unrelated file, 5s default Jest timeout under full-suite load);
+re-ran that file alone, all 17 passed in 5.5s, confirming the flake per
+the one-allowed-rerun policy. Full suite then green: 110 suites / 1165
+tests, exactly matching run 9. PLAN.md's checklist stays fully `[x]`/`(C)`;
+nothing code-shaped remains here without a website-repo checkout or a
+Charen-gated external account. PR #132 stays ready for review. Decision
+queue for Charen is unchanged from run 9, reproduced below.
+
 ## COMPLETE (run 9, 2026-09-06: re-verify, no new work)
 
 `git fetch origin main` showed no new commits since run 8 (branch already
