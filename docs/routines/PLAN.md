@@ -355,12 +355,60 @@ work, tracked elsewhere).
       `LocaleProvider`; only its leaf-only `spentList.test.tsx` needed it
       added. Full suite 109/109, tsc clean.
 
+      **`AddCategoryModal.tsx`, `LeakFinderTeaser.tsx`, `ExpenseSheet.tsx`,
+      `BeatMedia.tsx` converted (run 11):** four ordinary leaves, all
+      `strings.` usage inside the component body, no module-scope shape
+      (confirmed per file before picking, same check as always).
+      `AddCategoryModal` is imported by `app/category/[id].tsx` and
+      `app/(tabs)/categories.tsx` (both already `LocaleProvider`-covered:
+      `categoryDetailScreen`, `categoriesDeleteConfirm`,
+      `categoriesEmptyState`); its own leaf test `addCategoryModal.test.tsx`
+      already had `LocaleProvider`, no change needed. `LeakFinderTeaser` is
+      `app/(tabs)/insights.tsx`-only, conditionally mounted behind
+      `view === 'scan'`; no test file (`grep -rl "LeakFinderTeaser"
+      __tests__` returns nothing) actually renders that branch today, same
+      as the earlier `QuestionCard`/`IntakeScreen` no-coverage cases, so no
+      test file changes were at risk either way. `ExpenseSheet` is imported
+      by `app/(tabs)/money.tsx` and `app/(tabs)/index.tsx` (both covered);
+      its own leaf test `expenseSheet.test.tsx` already had
+      `LocaleProvider`.
+
+      `BeatMedia.tsx` needed real test-file work: its only importer is
+      `components/onboarding/OnboardingCarousel.tsx` (itself NOT converted,
+      still module-scope-array-shaped, unrelated to converting the child),
+      which in turn is rendered unconditionally from
+      `app/onboarding/welcome.tsx`. Three test files actually mount that
+      tree and none had `LocaleProvider`: `beatMedia.test.tsx` (renders
+      `OnboardingCarousel` directly, found via `grep -rl "BeatMedia"
+      __tests__`, not a direct `<BeatMedia` render but the real vehicle for
+      exercising it), `onboardingCarousel.test.tsx` (same component,
+      standard `Providers` wrapper), and `onboardingStepMachineRevive.test.tsx`
+      (renders `OnboardingWelcomeScreen` itself; its own doc comment
+      confirms "the carousel is now the only onboarding destination", i.e.
+      unconditional, so it reaches `BeatMedia` too even though neither
+      `OnboardingCarousel` nor `BeatMedia` appears anywhere in that test
+      file's text — found only by tracing the welcome screen's real render
+      tree, not by grepping the component name; the other apparent
+      `welcome`-related test-name hits (`onboardingIntentRedirect`,
+      `useCompleteScanOnboarding`, `resultsScreenActivation`,
+      `auroraBackground`, `profile`, `leakScanOnboardingExit`) were all
+      route-string references (`'/onboarding/welcome'` as a navigation
+      target) or doc-comment cross-references, not renders, confirmed
+      before ruling them out). All three already had the AsyncStorage mock
+      `LocaleContext.tsx` needs, so `LocaleProvider` alone was enough.
+      Lesson for next time a component is buried inside an unconverted
+      parent: the leaf-verification grep for the component's own name can
+      miss real render sites; also grep for the parent chain (here,
+      `OnboardingCarousel` then `welcome`) and check each hit's doc comments
+      for "unconditional"/"always renders" language before ruling a test
+      file out. Full suite 109/109, tsc clean.
+
       Remaining suggested order: continue picking genuinely small
       single-parent leaf files (re-run the leaf check above per candidate;
       do not assume shape from a file's name or its position in the list;
       three module-scope shapes are now confirmed, module-level array,
       module-level helper function, and module-level plain const, so check
-      which one (if any) applies before estimating cost). 27 files still
+      which one (if any) applies before estimating cost). 23 files still
       import the static `strings` catalog directly (rerun `grep -rl
       "from '@/constants/strings'" app components contexts utils | grep -v
       __tests__` for the current list), among them `UpcomingList.tsx`
@@ -368,15 +416,21 @@ work, tracked elsewhere).
       *array* shape, same fix as `SpendPulse.tsx`/`LongArc.tsx`, needs
       moving into the component body; only importer is `app/(tabs)/money.tsx`,
       already `LocaleProvider`-covered, but its own leaf-only
-      `upcomingList.test.tsx` will need `LocaleProvider` added), the 13
-      `ScreenHeader` importers' and remaining `Sheet` importers' own
-      `strings` usage (for these, re-run the same "does the parent screen
-      already carry `LocaleProvider` for a shared-component reason" check
-      before assuming a fresh test-file list is needed), and the leak-scan
-      screen set (`BillsScreen.tsx`, `DeckScreen.tsx`, `GracefulFailure.tsx`,
-      `IntakeScreen.tsx`, `PayoffScreen.tsx`, `PulseDayDetailSheet.tsx`,
-      `ResultsScreen.tsx`, `ScopeScreen.tsx`, `useTrackLeak.tsx`), not yet
-      individually leaf-checked as of run 10. Note for that pass:
+      `upcomingList.test.tsx` will need `LocaleProvider` added),
+      `BreakHabitSheet.tsx` and `OnboardingCarousel.tsx` (found and
+      deferred, run 11: both have the module-level *array* shape at lines
+      near their top, `BreakHabitSheet.tsx` has two arrays plus a
+      module-level helper function `yearlyLine`, i.e. two of the three
+      confirmed shapes in one file; budget accordingly rather than treating
+      either as a quick leaf), the 13 `ScreenHeader` importers' and
+      remaining `Sheet` importers' own `strings` usage (for these, re-run
+      the same "does the parent screen already carry `LocaleProvider` for a
+      shared-component reason" check before assuming a fresh test-file list
+      is needed), and the leak-scan screen set (`BillsScreen.tsx`,
+      `DeckScreen.tsx`, `GracefulFailure.tsx`, `IntakeScreen.tsx`,
+      `PayoffScreen.tsx`, `PulseDayDetailSheet.tsx`, `ResultsScreen.tsx`,
+      `ScopeScreen.tsx`, `useTrackLeak.tsx`), not yet individually
+      leaf-checked as of run 11. Note for that pass:
       `utils/coachMoments.ts`, `utils/recurring.ts`, and
       `contexts/ReportsContext.tsx` import `strings` but are not simple
       hook-eligible leaves (`coachMoments.ts` and `recurring.ts` are plain
