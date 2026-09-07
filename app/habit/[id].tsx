@@ -23,13 +23,14 @@ import { getEntitlement } from '@/utils/purchases';
 import type { CoachMomentCardId } from '@/utils/coachMoments';
 import { typeScale, layout, type AppTheme } from '@/constants/theme';
 import type { DetectedHabit, HabitChangeGoal } from '@/types/habit';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
 import { hapticError, hapticWarning } from '@/utils/motion';
 
 export default function HabitDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const theme = useTheme();
+  const strings = useStrings();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const { format } = useCurrency();
 
@@ -254,6 +255,7 @@ function HabitDetailBreaking({
   onStopBreaking,
 }: HabitDetailBreakingProps) {
   const theme = useTheme();
+  const strings = useStrings();
   const { format } = useCurrency();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
@@ -370,6 +372,7 @@ export function EditSkipValueSheet({
   onSave: (value: number) => void;
 }) {
   const theme = useTheme();
+  const strings = useStrings();
   const { format } = useCurrency();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [cents, setCents] = useState(initialValue);
