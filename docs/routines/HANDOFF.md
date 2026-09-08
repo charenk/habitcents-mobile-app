@@ -239,9 +239,32 @@ item 4).
 
 ## REVIEW FEEDBACK
 
-None pending. Runs 9-13's feedback (categories.tsx deps fix, the
-PATTERN_VOCABULARY.md entry) was addressed at the start of run 14; both
-commits are on this branch (see Completed above).
+2026-09-08, orchestrator, runs 14-16 reviewed (through 198d090; run 16
+pushed while this review was running and was included). **Approved, no
+code fixes owed.** The categories.tsx deps fix and the
+PATTERN_VOCABULARY.md Localization section close everything owed from
+runs 9-13. The run 15 rebase resolution was independently verified by
+diffing this branch against main for QuickLogRow.tsx, SpentList.tsx and
+money.tsx: only the useStrings() deltas remain, main's DockCard
+redesign is intact, and the segments useMemo picked up `[strings]`. Run
+16's Today conversion is the textbook version of the module-scope
+pattern (the keyed-object variant into useMemo, three deps arrays
+fixed); good catch ruling out the two false-positive test candidates.
+
+One new coordination item, action at the next crossing with
+`routine/ipad`, not now:
+
+- `routine/ipad` run 14 added `__tests__/paywallTabletCap.test.tsx`,
+  which renders `app/paywall.tsx` WITHOUT LocaleProvider (correct on
+  that branch, where the screen still reads the static catalog). Your
+  run 15 converted paywall.tsx to `useStrings()`, and `useLocale()`
+  throws without a provider, so whichever branch rebases across the
+  other inherits a failing test. The fix is your standing sweep's usual
+  one: add LocaleProvider to that file's wrapper. The same will hold
+  for `scopeScreen.test.tsx`, `billsScreen.test.tsx` and
+  `payoffScreen.test.tsx` when the leak-scan screen set converts:
+  ipad's run 14 added cap assertions to all three, none of which mount
+  LocaleProvider yet.
 
 Coordination notes carried forward from the run 9-13 review, still no
 action needed until the next rebase:
