@@ -1,5 +1,35 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 14, 2026-09-08: re-verify, no new work)
+
+Fifth idle run since the decision queue first went up at run 6 (runs 9-14,
+minus run 13's rebase). `git fetch origin main` came back empty; `git log
+--oneline routine/core-p3..origin/main` showed zero commits, so the branch
+already contains `origin/main`'s tip (`b748ca3`, unchanged since run 13's
+rebase). PR #132 confirmed via the API: `state: open`, `draft: false`,
+`mergeable_state: clean`, `head` sha `2cec209` (matches this branch's tip),
+`base` sha `b748ca3` (matches main's current tip), zero comments, zero
+reviews, no new REVIEW FEEDBACK since run 8-11's "Approved, no fixes owed."
+Re-pulled `habitcents-ops/PUNCHLIST.md`'s RESUME marker: byte-identical to
+what runs 9-13 read, still only the 2026-09-05/06 zeroth-state design wave
+items (device pass, canvas regen, ipad merge note, today-kept art) plus the
+leak finder dated-entitlement line, which stays unchecked there but was
+already built and closed on this branch at run 8; not this routine's
+checkbox to flip. Nothing newly core-p3-shaped.
+
+Fresh `npm install` (node_modules absent in this container), `npx tsc
+--noEmit` clean. `npm test` hit the same known `door3BreakSheet.test.tsx`
+full-suite timing flake as runs 10 and 12 (unrelated file, not touched by
+anything on this branch); re-ran that file alone per the one-allowed-rerun
+policy, all 17 passed in 5.3s. Full suite then green: 113 suites / 1184
+tests, exactly matching run 13's ending count (no regression, no new code).
+PLAN.md's checklist stays fully `[x]`/`(C)`; nothing code-shaped remains
+that this routine can reach without a website-repo checkout or a
+Charen-gated external account. No new push notification this run: run 11's
+notification already flagged the idle decision queue, and nothing has
+changed in its content since (still zero PR engagement, same 7-item queue
+run 9 first compiled).
+
 ## COMPLETE (run 13, 2026-09-08: rebase across a real content conflict, no new plan work)
 
 First non-mechanical rebase this branch has hit. `git merge-base
