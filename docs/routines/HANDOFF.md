@@ -60,6 +60,19 @@ device pass is separate and additional to that one, not a substitute.
 
 ## Status
 
+Run 15. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 14's
+rebase (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`b748ca3`), so no rebase and no new regression surface. `npx tsc --noEmit`
+clean; full suite green with zero drift from run 14 (110 suites / 1152
+tests). PR #133: still open, not draft, `mergeable_state: clean`, base SHA
+matches main's tip exactly, head commit's `verify` check green, no new
+comments or reviews. Issue #139 unchanged (Charen's run-14 answer is still
+the only comment; already implemented). Re-verified item 7 (`app.json`
+orientation still `"portrait"`, `supportsTablet` still `true`). This
+HANDOFF update is the only change this run; no production code or plan
+content changed.
+
 Run 14. Two things changed since run 13, and this run addresses both.
 `origin/main` moved 6 commits (`a51ce4a` to `b748ca3`); rebased onto it (a
 heavier rebase than runs 5-8, more below) and, per the run 7/8 "re-audit,
