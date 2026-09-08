@@ -621,9 +621,9 @@ work, tracked elsewhere).
       re-run past a known pre-existing `door3BreakSheet.test.tsx`
       full-suite-load flake (see HANDOFF Notes); `tsc --noEmit` clean.
 
-      **Not yet converted, remaining 15 files** (rerun `grep -rl "from
-      '@/constants/strings'" app components contexts utils | grep -v
-      __tests__` for the current list). The leak-scan screen set
+      **Not yet converted, remaining 15 files after run 16** (rerun `grep
+      -rl "from '@/constants/strings'" app components contexts utils |
+      grep -v __tests__` for the current list). The leak-scan screen set
       (`BillsScreen.tsx`, `DeckScreen.tsx`, `GracefulFailure.tsx`,
       `IntakeScreen.tsx`, `PayoffScreen.tsx`, `PulseDayDetailSheet.tsx`,
       `ResultsScreen.tsx`, `ScopeScreen.tsx`, `useTrackLeak.tsx`) remains
@@ -637,6 +637,62 @@ work, tracked elsewhere).
       rendering). `utils/coachMoments.ts`, `utils/recurring.ts`,
       `contexts/ReportsContext.tsx` (non-hook threading shape TBD) also
       remain, unchanged from run 11's notes.
+
+      **Run 17: 7 of the 9 leak-scan screen-set files converted.**
+      `useTrackLeak.tsx` (a hook, not a component; called `useStrings()`
+      unconditionally at its top level like `useCheckInFeedback.ts` did,
+      added `strings` to both `trackLeak`'s and `startBreaking`'s
+      `useCallback` deps). `PulseDayDetailSheet.tsx` (ordinary leaf;
+      its `if (!cell) return null` early return sits AFTER the hook
+      calls, so `useStrings()` slots in next to `useTheme()`/
+      `useCurrency()` with no reordering; its own `formatCellDate`
+      module-level helper does not read `strings`, only date-parses).
+      `PayoffScreen.tsx`, `GracefulFailure.tsx`, `DeckScreen.tsx`,
+      `IntakeScreen.tsx`, `ScopeScreen.tsx`: five ordinary screen leaves,
+      no module-scope shape in any of them. Four of the five (all but
+      `PayoffScreen`, whose existing effect already depended on a
+      derived `evidence` value that itself recomputes from `strings`
+      every render) have the flow's standing "announce on mount"
+      `useEffect` pattern (`AccessibilityInfo.announceForAccessibility`)
+      with a `[]` or partial deps array reading `strings` directly;
+      added `strings` to each of those deps arrays, a variant of the
+      standing useMemo/useCallback-deps rule that applies the same way
+      to a `useEffect` closing over `strings`.
+
+      Test coverage: `deckScreen.test.tsx`, `payoffScreen.test.tsx` and
+      `scopeScreen.test.tsx` already had `LocaleProvider` (confirmed
+      before starting). `useTrackLeak`/`PulseDayDetailSheet` have no
+      leaf tests of their own; both are reached only through
+      `DeckScreen`/`ResultsScreen`, whose test suites (`deckScreen`,
+      `resultsScreenActivation`/`resultsScreenUndo`/`resultsScreenLadder`/
+      `resultsScreenPaywallPlacement`/`leakScanImportUndo`/
+      `leakScanOnboardingExit`) were already `LocaleProvider`-covered
+      from the `ScreenHeader.tsx`/`Sheet.tsx` runs. `IntakeScreen.tsx`
+      still has no dedicated leaf test (confirmed again, same as the
+      run 11 note on `PaywallScreen`); its only real render path is
+      `leakScanOnboardingExit.test.tsx` via `LeakScanRoute`, already
+      covered. `GracefulFailure`'s only near-hits
+      (`useCompleteScanOnboarding.test.tsx`) are a doc-comment
+      cross-reference and a probe component, not a real render,
+      confirmed before ruling it out; its real coverage is the same
+      `leakScanOnboardingExit` path. No test file changes were needed
+      for any of the seven files. Two commits (the hook/small-screen
+      batch, then Intake/Scope); `tsc --noEmit` clean and the full suite
+      green (112/112, 1166/1166) after each, no flake either run.
+
+      **Remaining leak-scan screen set: `ResultsScreen.tsx` (791 lines,
+      15 usages, a `memo`-wrapped `HabitCardItem` child component at
+      module scope that does not itself read `strings`, and one
+      module-level helper function `evidenceWindowLabel` that does, the
+      same helper-function shape `CheckInCard.tsx`/`PickOneSheet.tsx`/
+      `SpentList.tsx` had) and `BillsScreen.tsx` (314 lines, 15 usages,
+      a module-level helper function `cadenceLabel` reading `strings`
+      directly, same shape). Both budgeted for a dedicated run given
+      size; `ResultsScreen.tsx` in particular mounts
+      `CategoryTransactionsSheet`/`ReviewQueueSheet`/
+      `PulseDayDetailSheet` and calls `useTrackLeak`, all already
+      converted, so its own conversion is additive on top, not a new
+      blast-radius investigation.**
 - [ ] Convert function-valued strings (pluralized/interpolated) to ICU
       messages with proper CLDR plural rules, not the current hand-rolled
       `n === 1 ? '' : 's'` ternaries, and add the ICU formatting dependency
