@@ -2,11 +2,16 @@
 
 ## Status
 
-In progress. Run 16: no REVIEW FEEDBACK was pending at session start,
-branch was already current with origin/main (rebase was a no-op).
-Converted `app/(tabs)/index.tsx` (Today), the last unconverted
-top-level screen. 60 files converted total now (2 shared + 58
-leaves/screens).
+In progress. Run 17: no REVIEW FEEDBACK was pending at session start
+(runs 14-16 approved, one coordination note for the next `routine/ipad`
+crossing, not actionable yet), branch was already current with
+origin/main (rebase was a no-op). Converted 7 of the 9 leak-scan
+screen-set files: `useTrackLeak.tsx` (hook), `PulseDayDetailSheet.tsx`,
+`PayoffScreen.tsx`, `GracefulFailure.tsx`, `DeckScreen.tsx`,
+`IntakeScreen.tsx`, `ScopeScreen.tsx`. 67 files converted total now (2
+shared + 65 leaves/screens/hooks). `ResultsScreen.tsx` and
+`BillsScreen.tsx` are the only leak-scan files left, budgeted for a
+dedicated run.
 
 ## Completed
 
@@ -103,22 +108,72 @@ leaves/screens).
     No test file changes needed. One commit; `tsc --noEmit` clean, full
     suite green (112/112, 1166/1166) after one re-run past a known
     pre-existing flake (see Notes).
+- Run 17, leak-scan screen set, 7 of 9 files (leaf-checked before
+  starting per the standing caution; none had a module-scope shape):
+  - `useTrackLeak.tsx`: a hook, not a component (name starts `use`,
+    called unconditionally from `DeckScreen.tsx` and
+    `ResultsScreen.tsx`, both already `LocaleProvider`-covered). Called
+    `useStrings()` directly at its top level, same as
+    `useCheckInFeedback.ts` (run 9). Added `strings` to both
+    `trackLeak`'s and `startBreaking`'s `useCallback` deps (each reads
+    one `strings.*` toast message on an error/already-breaking path).
+  - `PulseDayDetailSheet.tsx`: ordinary leaf, mounted unconditionally
+    inside `ResultsScreen.tsx` (already covered). Its `if (!cell) return
+    null` early return sits after the hook calls, so `useStrings()`
+    slots in alongside `useTheme()`/`useCurrency()` with no reordering
+    needed. Its module-level `formatCellDate` helper only date-parses,
+    does not read `strings`.
+  - `PayoffScreen.tsx`, `GracefulFailure.tsx`, `DeckScreen.tsx`,
+    `IntakeScreen.tsx`, `ScopeScreen.tsx`: five ordinary screen leaves.
+    Four of the five carry the flow's standing "announce on mount"
+    `useEffect` (`AccessibilityInfo.announceForAccessibility`) reading
+    `strings` directly with a `[]` or partial deps array; added
+    `strings` to each (a new variant of the standing useMemo/useCallback
+    deps rule, applied to `useEffect` this time).
+    `PayoffScreen.tsx`'s own effect already depended on a derived
+    `evidence` value that recomputes from `strings` every render, so no
+    deps change was needed there.
+  - Test coverage: `deckScreen.test.tsx`, `payoffScreen.test.tsx`,
+    `scopeScreen.test.tsx` already had `LocaleProvider`.
+    `useTrackLeak`/`PulseDayDetailSheet` have no leaf tests of their
+    own; both inherit `DeckScreen`'s and `ResultsScreen`'s coverage
+    (`deckScreen`, `resultsScreenActivation`, `resultsScreenUndo`,
+    `resultsScreenLadder`, `resultsScreenPaywallPlacement`,
+    `leakScanImportUndo`, `leakScanOnboardingExit`), all already
+    `LocaleProvider`-covered from the `ScreenHeader.tsx`/`Sheet.tsx`
+    runs. `IntakeScreen.tsx` still has no dedicated leaf test (confirmed
+    again); its only real render path is `leakScanOnboardingExit.test.tsx`
+    via `LeakScanRoute`, already covered. `GracefulFailure`'s only
+    near-hit, `useCompleteScanOnboarding.test.tsx`, is a doc-comment
+    cross-reference and a stand-in probe component, not a real render
+    (confirmed before ruling it out); its real coverage is the same
+    `leakScanOnboardingExit` path. No test file changes needed for any
+    of the seven files. Two commits (hook + small-screen batch, then
+    Intake/Scope); `tsc --noEmit` clean and the full suite green
+    (112/112, 1166/1166) after each, no flake either time.
 
 ## Next
 
-- 15 files still import the static `strings` catalog directly outside
+- 9 files still import the static `strings` catalog directly outside
   `__tests__/` (rerun `grep -rl "from '@/constants/strings'" app
-  components contexts utils | grep -v __tests__` for the current list).
-  No top-level screen remains unconverted.
-- The leak-scan screen set (`BillsScreen.tsx`, `DeckScreen.tsx`,
-  `GracefulFailure.tsx`, `IntakeScreen.tsx`, `PayoffScreen.tsx`,
-  `PulseDayDetailSheet.tsx`, `ResultsScreen.tsx`, `ScopeScreen.tsx`,
-  `useTrackLeak.tsx`) has not been individually leaf-checked yet; several
-  of these are the screens themselves (unconditionally mounted, wide
-  blast radius), not ordinary leaves, so budget more than one run's
-  bounded slice for this set and check each file's actual mount
-  conditions before estimating cost. This is now the largest remaining
-  chunk of plan item 2's call-site migration.
+  components contexts utils | grep -v __tests__` for the current list:
+  `ResultsScreen.tsx`, `BillsScreen.tsx`, the two RETIRED `ViewQuote`
+  files, `OnboardingCarousel.tsx` (expected, see run 12's note),
+  `ReportsContext.tsx`, `utils/i18n.ts` itself, `recurring.ts`,
+  `coachMoments.ts`). No top-level screen remains unconverted.
+- Only two leak-scan screen-set files remain: `ResultsScreen.tsx` (791
+  lines, 15 usages, a `memo`-wrapped `HabitCardItem` child component at
+  module scope that does not itself read `strings`, plus one
+  module-level helper function `evidenceWindowLabel` that does, the
+  same helper-function shape `CheckInCard.tsx`/`PickOneSheet.tsx`/
+  `SpentList.tsx` had) and `BillsScreen.tsx` (314 lines, 15 usages, a
+  module-level helper function `cadenceLabel`, same shape). Both
+  budgeted for a dedicated run given size, but the blast-radius
+  investigation is already done: `ResultsScreen.tsx` mounts
+  `CategoryTransactionsSheet`/`ReviewQueueSheet`/`PulseDayDetailSheet`
+  and calls `useTrackLeak`, all already converted and already covered
+  by its own test suite (see above), so this is additive work on an
+  already-`LocaleProvider`-covered tree, not a new investigation.
 - `utils/coachMoments.ts`, `utils/recurring.ts` are plain functions (not
   components or hooks) that import `strings`; they need the catalog
   passed in as a parameter instead of `useStrings()`. Decide that shape
