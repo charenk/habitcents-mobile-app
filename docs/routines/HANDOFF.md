@@ -2,9 +2,11 @@
 
 ## Status
 
-In progress. Run 14: addressed the run 9-13 review feedback first (one
-deps fix, one docs entry), then converted three more files. 57 files
-converted total now (2 shared + 55 leaves/screens).
+In progress. Run 15: no REVIEW FEEDBACK was pending at session start;
+fixed a standing rebase-risk issue (two new test files needed
+LocaleProvider), then converted two more files
+(`HowItWorksSheet.tsx`, `app/paywall.tsx`). 59 files converted total
+now (2 shared + 57 leaves/screens).
 
 ## Completed
 
@@ -58,17 +60,39 @@ converted total now (2 shared + 55 leaves/screens).
     no test file changes needed.
   - All three converted in one commit each; `tsc --noEmit` clean and the
     full suite green (109/109, 1147/1147) after every commit.
+- Run 15, standing rebase-risk fix (before any new conversion this run,
+  no REVIEW FEEDBACK section was pending): `dockGeometry.test.tsx` and
+  `emptyStateGeometry.test.tsx` landed on main after the last rebase and
+  render already-converted `QuickLogRow`/`SpentList`/`LeakFinderTeaser`
+  without `LocaleProvider` in their local `Providers` wrapper (same class
+  of failure run 11's notes warned about). Added `LocaleProvider` to
+  both, one commit.
+- Run 15, new conversions (two files, both leaf-checked before starting,
+  no module-scope pattern in either):
+  - `components/today/HowItWorksSheet.tsx`: 4 usages, all inside the
+    component body. Only imported by `app/(tabs)/index.tsx` (Today),
+    mounted unconditionally behind its own `visible` prop, same
+    blast-radius shape as `Sheet.tsx`'s lesson. The four Today test
+    files (`door3BreakSheet`, `todaySpentKept`,
+    `todayQuoteRibbonPlacement`, `door1FirstRun`) already had
+    `LocaleProvider`; no test file changes needed.
+  - `app/paywall.tsx`: 26 usages, all inside `PaywallScreen`'s own body.
+    `plans` and `features` are plain consts recomputed every render
+    (not `useMemo`), so no deps array to update. No test renders
+    `PaywallScreen` itself: `habitDetailPaywallPlacement` and
+    `resultsScreenPaywallPlacement` only assert `router.back`/push
+    navigation to the `/paywall` route. No test file changes needed.
+  - Both converted in one commit each; `tsc --noEmit` clean and the full
+    suite green (112/112, 1166/1166) after every commit this run.
 
 ## Next
 
-- 18 files still import the static `strings` catalog directly outside
+- 16 files still import the static `strings` catalog directly outside
   `__tests__/` (rerun `grep -rl "from '@/constants/strings'" app
   components contexts utils | grep -v __tests__` for the current list).
-  Two app screens not yet leaf-checked for module-scope shapes:
   `app/(tabs)/index.tsx` (Today, 34 `strings.` hits, ~1450 lines, the
-  largest screen in the app, budget a dedicated run), `app/paywall.tsx`
-  (26 hits). Check each for module-scope arrays/consts/helper-functions
-  before estimating cost, same process as every prior pick.
+  largest screen in the app) is the last unconverted top-level screen;
+  not yet leaf-checked for module-scope shapes, budget a dedicated run.
 - The leak-scan screen set (`BillsScreen.tsx`, `DeckScreen.tsx`,
   `GracefulFailure.tsx`, `IntakeScreen.tsx`, `PayoffScreen.tsx`,
   `PulseDayDetailSheet.tsx`, `ResultsScreen.tsx`, `ScopeScreen.tsx`,
@@ -117,7 +141,7 @@ item 4).
 - The Language picker in Settings is still cosmetic only: selecting a
   language persists the override and nothing on screen changes yet,
   because most components still read the static English `strings` export
-  and no non-English catalog exists. 57 files (2 shared, 55 leaves/screens)
+  and no non-English catalog exists. 59 files (2 shared, 57 leaves/screens)
   are wired through `useStrings()` so far; all still resolve to English
   either way until plan item 4 lands catalogs, so this is not yet
   observable. Expected, not a bug.

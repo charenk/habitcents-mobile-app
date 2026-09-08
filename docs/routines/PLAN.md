@@ -568,13 +568,35 @@ work, tracked elsewhere).
       All three files converted in one commit each; `tsc --noEmit` clean
       and the full suite green (109/109, 1147/1147) after every commit.
 
-      **Not yet converted, remaining 18 files** (rerun `grep -rl "from
+      **Run 15: two more files converted**, both leaf-checked before
+      starting per the standing caution:
+      `components/today/HowItWorksSheet.tsx` (4 usages, all inside the
+      component body; only imported by `app/(tabs)/index.tsx`, mounted
+      unconditionally behind its own `visible` prop like `Sheet.tsx`'s
+      blast-radius lesson, so it inherits Today's screen-tree test
+      coverage; the four Today test files
+      (`door3BreakSheet`/`todaySpentKept`/`todayQuoteRibbonPlacement`/
+      `door1FirstRun`) already had `LocaleProvider`, no test file changes
+      needed) and `app/paywall.tsx` (26 usages, all inside
+      `PaywallScreen`'s own body, `plans`/`features` are plain consts
+      recomputed every render so no useMemo/useCallback deps to touch; no
+      test renders `PaywallScreen` itself, `habitDetailPaywallPlacement`/
+      `resultsScreenPaywallPlacement` only assert navigation to the
+      `/paywall` route, so no test file changes needed). Also fixed this
+      run, before either conversion, per the standing rebase-risk note
+      below: two new test files landed on main since the last rebase
+      (`dockGeometry.test.tsx`, `emptyStateGeometry.test.tsx`) rendering
+      already-converted `QuickLogRow`/`SpentList`/`LeakFinderTeaser`
+      without `LocaleProvider` in their local `Providers` wrapper; both
+      fixed in one commit. `tsc --noEmit` clean and the full suite green
+      (112/112, 1166/1166) after every commit this run.
+
+      **Not yet converted, remaining 16 files** (rerun `grep -rl "from
       '@/constants/strings'" app components contexts utils | grep -v
       __tests__` for the current list): `app/(tabs)/index.tsx` (Today,
       34 `strings.` hits, largest screen in the app at ~1450 lines,
-      budget a dedicated run, not leaf-checked yet), `app/paywall.tsx`
-      (26 hits, not leaf-checked yet). The leak-scan screen set
-      (`BillsScreen.tsx`, `DeckScreen.tsx`, `GracefulFailure.tsx`,
+      budget a dedicated run, not leaf-checked yet). The leak-scan screen
+      set (`BillsScreen.tsx`, `DeckScreen.tsx`, `GracefulFailure.tsx`,
       `IntakeScreen.tsx`, `PayoffScreen.tsx`, `PulseDayDetailSheet.tsx`,
       `ResultsScreen.tsx`, `ScopeScreen.tsx`, `useTrackLeak.tsx`) remains
       exactly as scoped since run 11 (still not individually
