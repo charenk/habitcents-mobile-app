@@ -17,6 +17,12 @@ import { ThemeProvider } from '@/contexts/ThemeContext';
 import { ScopeScreen } from '@/components/leak-scan/ScopeScreen';
 import { strings } from '@/constants/strings';
 import { defaultScope, toggleScope, type ScanScope } from '@/utils/leakScan/scope';
+import { layout } from '@/constants/theme';
+
+function flattenStyle(style: unknown): Record<string, unknown> {
+  const styles = Array.isArray(style) ? style.flat(Infinity) : [style];
+  return Object.assign({}, ...styles.filter((s): s is Record<string, unknown> => !!s && typeof s === 'object'));
+}
 
 const initialMetrics = {
   frame: { x: 0, y: 0, width: 390, height: 844 },
@@ -129,5 +135,16 @@ describe('scope screen', () => {
     });
 
     expect(props.onConfirm).toHaveBeenCalledTimes(1);
+  });
+
+  it('caps and centers the fixed footer at the shared content column width (routine/ipad, decision 1)', async () => {
+    const { view } = await renderScope();
+
+    const footer = view.getByTestId('scope-footer');
+    const flat = flattenStyle(footer.props.style);
+
+    expect(flat.width).toBe('100%');
+    expect(flat.maxWidth).toBe(layout.contentMaxWidth);
+    expect(flat.alignSelf).toBe('center');
   });
 });
