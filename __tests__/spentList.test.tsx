@@ -16,6 +16,7 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 );
 
 import React from 'react';
+import { StyleSheet } from 'react-native';
 import { cleanup, render } from '@testing-library/react-native';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
@@ -204,8 +205,8 @@ describe('SpentList: tablet content column (routine/ipad)', () => {
     const today = sectionFor([makeExpense({ id: 't1', date: new Date() })]);
     const view = await renderSpent([today]);
 
-    const list = view.getByTestId('spent-section-list');
-    const flat = Object.assign({}, list.props.contentContainerStyle);
+    const list = view.getByTestId('spent-list');
+    const flat = StyleSheet.flatten(list.props.contentContainerStyle) ?? {};
 
     expect(flat.width).toBe('100%');
     expect(flat.maxWidth).toBe(layout.contentMaxWidth);
