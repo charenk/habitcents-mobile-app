@@ -1,5 +1,53 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 13, 2026-09-08: rebase across a real content conflict, no new plan work)
+
+First non-mechanical rebase this branch has hit. `git merge-base
+--is-ancestor origin/main HEAD` showed the branch was 6 commits behind
+`origin/main`'s new tip (`b748ca3`, up from `a51ce4a`). Rebase hit three
+conflicts, not just the usual `design/decisions/README.md` index line:
+
+1. `design/decisions/README.md` component index, twice (once per branch
+   commit it replayed past) — the standard union resolution runs 7/8
+   already documented, nothing new.
+2. `design/decisions/components/LeakFinderTeaser.md`, genuine content
+   conflict. Main's `db02fb5`/`b9814f8` (2026-09-07, Charen's own edit)
+   trimmed the teaser body to one line and added two new Decisions/Open
+   entries (the drawer-vs-cut rejection, the pane-centring note, the
+   "two halves of the offer disagree" flag); this branch's run 8 commit
+   had added the dated-grant Decisions entry and rewritten the same Open
+   section to close out "the six months cannot be granted". Resolved by
+   keeping both sides' Decisions entries (newest first: the two 2026-09-07
+   ones, then run 8's), and merging Open/Iterations so main's newer
+   pane-centring and offer-mismatch items survive alongside this branch's
+   grant-timing item and the resolved "cannot be granted" bullet stays
+   removed (main's copy of that bullet was stale, written before this
+   branch's fix existed).
+3. `utils/analytics.ts`'s `AnalyticsEventMap`, genuine but mechanical:
+   main added `how_it_works_opened` (Charen-approved 2026-09-07, unrelated
+   feature) in the same spot this branch's `leak_finder_promo_activated`
+   entry landed. Both are additive, structural, payload-free events with
+   no other registry to update (confirmed via grep: only one call site
+   each, `app/(tabs)/index.tsx` and `utils/purchases.ts`). Kept both.
+
+No REVIEW FEEDBACK section was present (none added since run 12), and
+`habitcents-ops/PUNCHLIST.md`'s RESUME marker (pulled fresh, latest commit
+touching it is still `bfd1376`, the already-closed leak-finder item) is
+unchanged from runs 9-12: still only the 2026-09-05 zeroth-state design
+wave items, none core-p3-shaped. PLAN.md's checklist is unchanged, still
+fully `[x]`/`(C)`.
+
+Fresh `npm install`, `npx tsc --noEmit` clean. `npm test`: 113 suites /
+1184 tests green on the first attempt, no flake (up from 110/1165, all
+from main's own new tests carried in by the rebase, not new code here).
+Force-with-lease pushed (`d3aca7f..57516ae`); PR #132 confirmed via the
+API with `head` now matching and `base` now `b748ca3` (main's current
+tip), zero comments, zero reviews, still open/not-draft. Decision queue
+for Charen is unchanged from run 9 (reproduced in that run's section
+below); no new push notification this run, since nothing changed that run
+11's notification didn't already cover, and this run's own content is a
+mechanical rebase, not a new finding for Charen to act on.
+
 ## COMPLETE (run 12, 2026-09-07: re-verify, no new work)
 
 Fourth consecutive idle run (runs 9-12 all "re-verify, no new work").
