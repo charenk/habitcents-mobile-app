@@ -1,5 +1,35 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 15, 2026-09-08: re-verify, no new work)
+
+Sixth idle run since the decision queue first went up at run 6 (runs
+9-15, minus run 13's rebase). `git fetch origin main` plus `git log
+--oneline routine/core-p3..origin/main` showed zero new commits since run
+13's rebase, so the branch still contains `origin/main`'s tip (`b748ca3`),
+no rebase needed. PR #132 confirmed via the API: `state: open`, `draft:
+false`, `mergeable_state: clean`, head `bb3301d` (matches this branch's
+tip), base `b748ca3` (matches main's current tip), zero comments, zero
+reviews. The one new item since run 14 was the orchestrator's
+2026-09-08 REVIEW FEEDBACK entry covering runs 12-14: **"Approved, no
+fixes owed"**, nothing to act on. Re-pulled `habitcents-ops/PUNCHLIST.md`'s
+RESUME marker: byte-identical to what runs 9-14 read, still only the
+2026-09-05/06 zeroth-state design wave items (device pass, canvas regen,
+ipad merge note, today-kept art) plus the leak finder dated-entitlement
+line, which stays unchecked there but was already built and closed on
+this branch at run 8; not this routine's checkbox to flip. Nothing newly
+core-p3-shaped.
+
+Fresh `npm install`, `npx tsc --noEmit` clean. `npm test`: 113 suites /
+1184 tests green on the first attempt, no flake this run, exactly
+matching runs 13-14. PLAN.md's checklist stays fully `[x]`/`(C)`; nothing
+code-shaped remains that this routine can reach without a website-repo
+checkout or a Charen-gated external account. No new push notification
+this run: run 11's notification already flagged the idle decision queue,
+and nothing in its content has changed (still zero PR engagement, same
+7-item queue run 9 first compiled; the orchestrator's run 4 note calling
+item 5 "most urgent" doesn't change what's in the queue or add an action
+this routine can take).
+
 ## COMPLETE (run 14, 2026-09-08: re-verify, no new work)
 
 Fifth idle run since the decision queue first went up at run 6 (runs 9-14,
