@@ -4,7 +4,7 @@ import { Button, Icon } from '@/components/ui';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { useTheme } from '@/contexts/ThemeContext';
 import { radii, typeScale, type AppTheme } from '@/constants/theme';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
 import { QuestionCard } from './QuestionCard';
 import type { IntakeState } from './useLeakScanIntake';
 import type { ScanQuestion } from '@/utils/leakScan/types';
@@ -32,6 +32,7 @@ type IntakeScreenProps = {
  */
 export function IntakeScreen({ state, onChooseFiles, onAnswer, onBack }: IntakeScreenProps) {
   const theme = useTheme();
+  const strings = useStrings();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   // UX-013: the flow was silent for VoiceOver between the "Choose CSV files"
@@ -43,7 +44,7 @@ export function IntakeScreen({ state, onChooseFiles, onAnswer, onBack }: IntakeS
     if (state.stage === 'scanning') {
       AccessibilityInfo.announceForAccessibility(strings.leakScan.scanningTitle);
     }
-  }, [state.stage]);
+  }, [state.stage, strings]);
 
   if (state.stage === 'question' && state.pendingQuestion) {
     return (
