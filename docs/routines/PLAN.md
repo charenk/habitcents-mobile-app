@@ -401,6 +401,20 @@ PUNCHLIST core-p3 item, checklist below unchanged, still fully `[x]`/`(C)`.
 `npx tsc --noEmit` clean, `npm test` 113 suites / 1184 tests green (up
 from 110/1165, all from main's own commits carried in by the rebase).
 
+## Run 14: closed out again
+
+Same shape as runs 9-12: no new commits on `origin/main` beyond what the
+branch already contains, `mergeable_state: clean` and zero comments/reviews
+on PR #132, PUNCHLIST's RESUME marker unchanged and still zeroth-state-
+shaped (its one core-p3-flagged line, the leak finder dated entitlement,
+was already built and closed at run 8). Fresh `npm install`, `npx tsc
+--noEmit` clean. `npm test` hit the same known `door3BreakSheet.test.tsx`
+timing flake as runs 10 and 12; isolated re-run confirmed all 17 pass.
+Full suite: 113 suites / 1184 tests green, exactly matching run 13.
+Checklist unchanged, still fully `[x]`/`(C)`. No new push notification;
+run 11's already covers the idle decision queue and nothing has changed
+since.
+
 ## If this routine fires again
 
 The branch and PR stay open until Charen merges or closes them (routine
