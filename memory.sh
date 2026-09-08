@@ -111,3 +111,23 @@ xcrun simctl ui booted content_size medium                                 # res
 # out in a worktree, which is easy to miss when several Claude sessions run at once:
 # git worktree list
 # git push origin --delete <branch> ...             # remote too; local -D alone leaves it on GitHub
+
+# --- Added 2026-09-07 (OTA to an installed build + rescuing a stale simulator) ---
+# Ship a JS-only change to the installed internal build in ~1 min (agent-permitted, ADR 0029):
+# npx eas-cli update --channel internal --platform ios --non-interactive --message "..."
+# FIRST verify the update's runtime matches the build's, or it silently reaches nothing:
+npx eas-cli build:view <buildId>                # prints Runtime Version + Fingerprint
+# Build 21 = 65a7d3b78af2858ee10e57d3af87569e26a3dff1; the update must publish under the same.
+
+# THE STALE-SIMULATOR TRAP: a simulator whose Metro died keeps rendering its last bundle,
+# silently and forever. It never errors, so old UI looks like a change that did not land.
+lsof -nP -iTCP:8081 -sTCP:LISTEN                 # is anything actually serving? check the PORT
+lsof -nP -iTCP:8082 -sTCP:LISTEN
+# NOTE: `ps aux | grep "[e]xpo start"` also matches this harness's own shell wrapper, so a
+# nonzero count is NOT proof a server is alive. Trust the port check.
+
+# Repoint a simulator at a different Metro (no rebuild; read at launch):
+# xcrun simctl spawn <udid> defaults write com.habitcents.app RCT_jsLocation "localhost:8082"
+# xcrun simctl terminate <udid> com.habitcents.app; xcrun simctl launch <udid> com.habitcents.app
+# Sim UDIDs: iPhone 16 Pro E5BE70F9-1A29-4349-A946-2E636AF3EAD0
+#            iPhone 16     A58C5486-9233-4DC0-855A-D7524BB10F45

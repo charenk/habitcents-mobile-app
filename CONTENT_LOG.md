@@ -1147,3 +1147,134 @@ CASE STUDY MOMENT
 An "unmerged work" alarm resolved to zero real risk, and the initial report was itself incomplete, which had to be corrected to the person relying on it.
 
 ---
+
+---
+
+## 2026-09-07: Cut 46 words to 17, and lost half an hour to a simulator that was lying
+
+### Session scan
+
+**Scope:** end of session
+**Built this session:** Trimmed the Leak finder teaser body to one line on Charen's annotation, and rejected the alternative he offered (a drawer behind "Count me in") with the reasoning written into the component record. Published it to the installed TestFlight build as an OTA after checking the runtime matched. Then spent half an hour on a bug that was not a bug: a simulator showing old copy because its bundler had died.
+**Pillar scores:** P1: Weak · P2: Strong · P3: Strong · P4: Strong · P5: None
+
+---
+
+### P2 ITERATION WITH RATIONALE: the option I was offered and turned down
+
+**TWITTER POST**
+Design feedback gave me two options: shorten the text, or move it into a drawer behind the button.
+
+Took the shortening. The drawer would have made a one-tap action two taps, and added a third category to a sheet system that deliberately has two.
+
+Cheaper answer, same problem solved.
+
+VISUAL NOTE: the annotated screenshot with both options written on it, beside the shipped result.
+
+---
+
+**LINKEDIN POST**
+The best design feedback gives you options. This week I got two and deliberately took the smaller one.
+
+The screen was a coming-soon teaser with too much text under a large illustration. The note said: make this shorter, or move the detail into a drawer that opens when someone taps the button.
+
+The drawer is the more interesting build. It keeps the screen clean, gives the explanation room to breathe, and turns the opt-in into a proper moment.
+
+I turned it down for two reasons. It makes a one-tap action into two taps, on an action where the whole ask is "this is easy, just tap it". And our sheet system has exactly two families, forms that save something and decisions that confirm something. An explainer sheet is neither, so building one is not applying an existing pattern, it is adding a third category that every future screen can then point at.
+
+Cutting the copy from 46 words to 17 solved the same problem for free.
+
+I wrote the rejected option into the component's record with the reasoning, because in three months someone will look at that screen and have the drawer idea again. They should find the argument, not repeat it.
+
+VISUAL NOTE: before and after of the pane.
+
+---
+
+CASE STUDY MOMENT
+A design note offered a build and a copy edit as alternatives; choosing the copy edit avoided permanently widening a component taxonomy for one screen.
+
+---
+
+### P3 PLATFORM PATTERN: a dead dev server does not look like a dead dev server
+
+**TWITTER POST**
+"I see the old version in the simulator."
+
+The bundler that simulator was pointed at had been dead for hours. React Native doesn't error when Metro dies. It just keeps rendering the last bundle it loaded. Forever. Silently.
+
+You are reviewing a screenshot from the past.
+
+VISUAL NOTE: the two simulators side by side, same screen, different copy.
+
+---
+
+**TWITTER THREAD**
+Tweet 1: Shipped a copy change, verified it on the simulator, merged it. Then got told "I still see the old text". Both of us were right, and the reason is worth knowing if you run React Native.
+
+Tweet 2: There were two simulators. Mine was pointed at a live bundler on one port. The one being looked at was pointed at a different port, from an earlier session, whose server had been shut down hours before.
+
+Tweet 3: Here is the part that makes this expensive: a dead bundler does not produce an error, a blank screen, or a warning. The app keeps rendering the JS it already has in memory. It looks completely healthy. You are reviewing a screenshot from the past.
+
+Tweet 4: Worse, my first instinct for checking was to grep the process list for the dev server. That returned matches. It was matching my own shell command containing the search string. The process count lied too.
+
+Tweet 5: The only honest check is the port: does anything actually hold a listener on it. Not "is there a process that looks right".
+
+Final tweet: If a UI change seems not to have landed, verify the pipe before you debug the code. Half an hour on a bug that was never in the code.
+
+VISUAL NOTE: tweet 5, the port check returning nothing while the app on screen looks fine.
+
+---
+
+**LINKEDIN POST**
+A debugging story with a lesson that generalises past mobile development.
+
+I made a copy change, verified it on a simulator, merged it, and shipped it. Then I was told the old text was still showing. I had a screenshot proving it worked. So did they, proving it did not.
+
+Two simulators were running. Mine talked to a live bundler. Theirs was pointed at a different port from an earlier session, and that server had been shut down hours earlier.
+
+When a React Native bundler dies, the app does not error, blank out, or warn. It keeps rendering the JavaScript it already loaded, indefinitely. It looks perfectly healthy. You are looking at a screenshot from the past with no indication that time has passed.
+
+My first diagnostic instinct made it worse. I searched the process list for the dev server and got matches, which felt like proof it was alive. It was matching my own search command. The tool I reached for to check reality was reporting itself back to me.
+
+The reliable check was the port: is anything actually listening. Not "does a process exist that looks like the right one".
+
+The generalisable lesson: when output seems stale, verify the pipe before you debug the thing at the end of it. Stale-but-plausible is a far more expensive failure than loud-and-broken, because nothing prompts you to distrust what you are seeing. It is now written into our project memory as a named trap, because the setup that caused it (two working copies, two simulators) is our normal way of working.
+
+VISUAL NOTE: NONE
+
+---
+
+CASE STUDY MOMENT
+A "the change did not land" report turned out to be a silently stale dev server; the diagnosis is now a named trap in project memory because the multi-worktree setup that causes it is standard here.
+
+---
+
+### P4 PRODUCT AND DESIGN JUDGMENT: which sentence survives the cut
+
+**TWITTER POST**
+Cutting a paragraph to one line, the question is not "what is shortest". It is "what does this sentence carry that nothing else does".
+
+Kept: "Nothing uploads, ever." Every other surface that used to say it is now behind a feature flag.
+
+Cut the rest.
+
+VISUAL NOTE: the old paragraph with the surviving sentence highlighted.
+
+---
+
+**LINKEDIN POST**
+Cutting copy is usually framed as trimming fat. It is more useful to treat it as an audit of where each promise lives.
+
+I had a 46-word paragraph to get down to one line. Three things were in it: what the feature does, a privacy promise, and an invitation to help build it.
+
+The invitation went, because the very next line on screen already said "join the research".
+
+The timing signal went, because there is a "Soon" badge four inches above it.
+
+The privacy promise stayed, and not because it was the most persuasive. Because when I checked where else the app says "nothing uploads, ever", the answer was nowhere. The two screens that used to repeat it are both behind a feature flag now, dormant. That sentence had quietly become load-bearing on this one pane while nobody was watching.
+
+That is the real question when cutting: not which sentence is best, but which one is the only place something is said. The rest is duplication you can afford to lose.
+
+VISUAL NOTE: the before and after, with the surviving sentence marked.
+
+---
