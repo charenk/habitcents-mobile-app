@@ -138,7 +138,7 @@ export function ScopeScreen({ scope, onToggle, onConfirm, onBack }: ScopeScreenP
         </View>
       </ScrollView>
 
-      <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
+      <View testID="scope-footer" style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
         <Text style={styles.count}>
           {selectedCount === 0
             ? strings.leakScan.scopeNoneSelected
@@ -265,12 +265,18 @@ function createStyles(theme: AppTheme) {
       fontFamily: theme.fonts.ui,
       color: theme.mistText,
     },
+    // Decision 1 (issue #139, 2026-09-07, Charen): the fixed footer caps at
+    // 600pt too, matching the scroll column above it, rather than staying
+    // full width. paddingHorizontal (not margin) here, so the direct spread
+    // caps the border and background along with the content, same as
+    // Today's ribbonWrap.
     footer: {
       paddingHorizontal: spacing.gutter,
       paddingTop: 12,
       borderTopWidth: 1,
       borderTopColor: theme.border,
       backgroundColor: theme.background,
+      ...contentColumnStyle,
     },
     count: {
       fontSize: typeScale.caption,

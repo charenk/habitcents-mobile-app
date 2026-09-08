@@ -171,7 +171,7 @@ are done and verified (tsc clean, npm test green) on this branch.
       here per the 2026-09-05 review feedback: it is on the ops status
       board's DECISIONS NEEDED queue for Charen now, not a call this audit
       makes.
-- [ ] 6. Add targeted jest tests exercising tablet dimensions.
+- [x] 6. Add targeted jest tests exercising tablet dimensions.
       `__tests__/tabletLayout.test.tsx` added 2026-09-04, pinning the shared
       `contentColumnStyle`/`layout.contentMaxWidth` contract and that
       `Sheet`'s panel carries the same cap. Extended 2026-09-04 with a case
@@ -183,13 +183,41 @@ are done and verified (tsc clean, npm test green) on this branch.
       `door3-ribbon-wrap` both carry the cap, and `kept-pane` itself does
       not (the pager's paging unit stays window width). Extended 2026-09-06
       (run 8) with a case in `__tests__/spentList.test.tsx` pinning the
-      restored cap on `SpentList`'s `SectionList` (`testID`
-      `spent-section-list` added for the query), covering the regression
-      found this run (see item 2b's note). Kept as an ongoing item, not
-      checked off: still open pending Charen's footer-cap decision (item
-      2d/5): if that decision adds a cap to `ScopeScreen`/`BillsScreen`/
-      paywall/`PayoffScreen`, it is a real structural change and earns a
-      dedicated case here, same as items 2c/2e/run 8 did.
+      restored cap on `SpentList`'s `SectionList`, covering the regression
+      found this run (see item 2b's note).
+      Run 14 (2026-09-08): main's 2026-09-07 "no band above the list" change
+      (Charen) removed the Kept pane's `KeptHero` band entirely, so the
+      `kept-hero-cap-wrap` wrapper and its jest case (above) are gone too;
+      `door3-ribbon-wrap` and its case survive, since the ribbon still
+      renders. See HANDOFF.md's Completed section for the full rebase
+      re-audit. The `SpentList` `testID` also changed: main's own
+      `#148` gave the same `SectionList` a second, real `testID`
+      (`spent-list`) the same day, which collided with this branch's
+      `spent-section-list` (a TS2304 duplicate-JSX-attribute compile error,
+      only surfaced once this branch rebased onto that commit); dropped the
+      routine's redundant one and pointed `spentList.test.tsx` at
+      `spent-list` instead, fixing the test's assertion to flatten the
+      array-valued `contentContainerStyle` with `StyleSheet.flatten` (the
+      prior `Object.assign({}, array)` never actually flattened it, silently
+      passing for the wrong reason until the testID swap exposed it).
+      Decision 1 (issue #139, 2026-09-07, Charen) landed this run: fixed
+      footer/CTA bars outside the capped scroll DO cap at 600pt too, matching
+      the scroll column, rather than staying full width. Applied the same
+      direct `...contentColumnStyle` spread as item 2b/2e's `ribbonWrap`
+      (paddingHorizontal, not margin, so no wrapping View needed; the
+      border-top and background cap along with the content) to:
+      `ScopeScreen`'s `footer`, `BillsScreen`'s `footer`, and
+      `app/paywall.tsx`'s `footer`. `PayoffScreen`'s Continue `Button` is a
+      sibling of the already-capped `body`, not inside it, so its cap goes on
+      a new `continueButton` style passed via the `style` prop. Each got a
+      dedicated jest case, same as items 2c/2e/run 8: `scopeScreen.test.tsx`,
+      `billsScreen.test.tsx`, and `payoffScreen.test.tsx` (existing files,
+      full provider wiring already there); a new
+      `__tests__/paywallTabletCap.test.tsx` for `app/paywall.tsx`, since no
+      prior test rendered that screen at all (mocks `expo-router` and
+      `@/utils/analytics`, mirrors `profile.test.tsx`'s provider wiring).
+      Item 6 is fully checked now: every plan item but the standing item 7
+      re-verification is done.
 - [ ] 7. Keep portrait-only orientation. `app.json` already sets
       `"orientation": "portrait"`; nothing in this plan changes that.
       Re-verify this line stays untouched at the end of every run.

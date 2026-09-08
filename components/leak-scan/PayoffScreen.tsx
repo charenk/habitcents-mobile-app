@@ -78,7 +78,11 @@ export function PayoffScreen({ habit, onContinue }: PayoffScreenProps) {
         <Text style={styles.caption}>{strings.leakScan.payoffCaption}</Text>
       </View>
 
-      <Button label={strings.leakScan.payoffContinue} onPress={onContinue} />
+      <Button
+        label={strings.leakScan.payoffContinue}
+        onPress={onContinue}
+        style={styles.continueButton}
+      />
     </View>
   );
 }
@@ -93,6 +97,13 @@ function createStyles(theme: AppTheme) {
     body: {
       flex: 1,
       justifyContent: 'center',
+      ...contentColumnStyle,
+    },
+    // Decision 1 (issue #139, 2026-09-07): the Continue button is `body`'s
+    // sibling, not inside it, so it needs the same cap directly. `screen`'s
+    // own paddingHorizontal already insets both from the edge; this adds the
+    // 600pt cap and centering on top, matching `body`'s column.
+    continueButton: {
       ...contentColumnStyle,
     },
     title: {

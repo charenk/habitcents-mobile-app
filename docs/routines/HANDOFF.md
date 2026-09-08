@@ -1,31 +1,86 @@
 # ipad-worker handoff
 
+## COMPLETE
+
+Run 14 (2026-09-08) checked off the plan's last item and marked PR #133
+ready for review. Every plan item but the standing item 7 re-verification
+line is checked (see PLAN.md); item 7 is by design never checked, since it
+is a re-verify-every-run instruction, not a one-time task. **This branch
+has never been seen on a real iPad or the iPad simulator (none is
+available in this environment).** The device pass below is the one thing
+left before this ships; nothing about the plan being "complete" changes
+that.
+
+## DEVICE PASS NEEDED
+
+- The 600pt capped column reads as intentional on iPad, not cramped or
+  arbitrarily narrow, across Today, Money, Insights, Categories, habit
+  detail, category detail, Profile, Paywall, the onboarding carousel beats,
+  and every Leak Scan screen (intake, scope, deck, bills, graceful failure,
+  results, payoff).
+- Bottom sheets (`components/ui/Sheet.tsx` and everything built on it:
+  ExpenseSheet, AddUpcomingSheet, PickOneSheet, PartialSlipSheet,
+  BreakHabitSheet, ConfirmSheet, ReviewQueueSheet, CategoryTransactionsSheet,
+  the currency and category pickers) look right centered at the capped
+  width, including the keyboard-avoiding behavior on forms (ExpenseSheet,
+  AddUpcomingSheet) with the iPad on-screen keyboard, which is shaped
+  differently from the phone one.
+- The onboarding carousel: swiping between beats on iPad, confirming the
+  capped `beatContent` column reads well against the still full-width
+  `beat` page background, and that `BeatMedia`'s frame (capped along with
+  the rest of the beat content) is not so narrow it looks like an error
+  state.
+- The Leak Scan flow end to end on iPad: intake's file-picker stage,
+  scope's category rows, the deck's swipeable candidate cards, the bills
+  offer rows, graceful failure, and the results dashboard, all capped at
+  600pt. **New this run:** `ScopeScreen` and `BillsScreen`'s fixed footer
+  bars (confirm/skip), `app/paywall.tsx`'s footer, and `PayoffScreen`'s
+  Continue button now cap and center at 600pt too (decision 1, issue #139)
+  rather than staying full width; confirm this reads as one consistent
+  bar rather than a strange inset one, especially where the footer's own
+  border-top and background now stop at 600pt instead of spanning the
+  screen.
+- The Today Spent/Kept pager: swiping between Spent and Kept feels right on
+  iPad, in both split-view widths. **Changed this run:** the Kept pane's
+  `KeptHero` band no longer renders at all (main removed it 2026-09-07,
+  unrelated to this branch); only the door3 ribbon is capped and centered
+  above the list now. Confirm there is no leftover visual seam where the
+  capped ribbon meets the still-full-width pane background around it.
+- Split-screen / Slide Over multitasking on iPad, since `supportsTablet`
+  now being true makes iPadOS offer those; the app has never been exercised
+  in a resized window before this branch.
+- One boot on an iPad simulator or device to confirm nothing above (icon,
+  splash) regressed from turning `supportsTablet` on, before this reaches
+  TestFlight.
+
+This app also carries a standing device-pass item from Phase 2 sign-off
+(decision 0008, umbrella repo): the VoiceOver walk + Accessibility
+Inspector audit, scheduled for the Phase 4 TestFlight beta. This iPad
+device pass is separate and additional to that one, not a substitute.
+
 ## Status
 
-In progress, still idle. Run 13 of the routine. Same shape as runs 9-12:
-`origin/main`'s tip has still not moved since run 8 (both `routine/ipad`
-and `origin/main` remain at `a51ce4a`, reconfirmed with
-`git merge-base --is-ancestor origin/main routine/ipad`), so no rebase was
-needed; the footer-cap decision on issue #139 is still unanswered
-(reconfirmed with `get_comments`: zero comments). Confirmed the branch is
-still green from a clean install (`npm install` needed again, fresh
-container, as every run): `npx tsc --noEmit` clean. The full suite's first
-run this time showed one failure, `__tests__/door3BreakSheet.test.tsx`
-timing out at the default 5000ms under full-suite parallel load; re-ran
-that file alone (17/17 passed in about 5s) and then the full suite again
-clean, confirming a one-off scheduling flake rather than a regression:
-both re-runs match the standing baseline exactly (106 suites / 1130
-tests), same as runs 8-12, so zero real drift across six straight runs.
-Checked PR #133: still draft, base SHA matches current main's tip exactly
-(`mergeable_state: clean`), latest `verify` check run green. Re-verified
-item 7 unchanged (`app.json` still `"orientation": "portrait"`,
-`"supportsTablet": true`). No production code or plan content changed
-this run beyond this HANDOFF update. Did **not** send another push
-notification this run: only two runs have passed since run 11's direct
-notification (run 12 and this run), short of the "five-plus runs with
-zero engagement" bar run 12 itself set for reconsidering; the idle count
-stays named explicitly below so it stays visible without re-pinging
-Charen on cadence alone.
+Run 14. Two things changed since run 13, and this run addresses both.
+`origin/main` moved 6 commits (`a51ce4a` to `b748ca3`); rebased onto it (a
+heavier rebase than runs 5-8, more below) and, per the run 7/8 "re-audit,
+not re-run" rule, re-checked every path the incoming commits touched
+rather than trusting a clean replay. **Decision 1 (issue #139, in the
+`habitcents-mobile-app` repo, not the ops repo as earlier runs' shorthand
+implied) landed:** Charen answered on 2026-09-07
+(`#issuecomment-5575881737`, found by re-checking `get_comments`, not the
+cached issue body): fixed footer/CTA bars outside the capped scroll DO cap
+at 600pt too, matching the scroll column. That was the one thing blocking
+item 6 and, with it, the whole plan; item 6 is now fully checked (see
+PLAN.md and Completed below). `npx tsc --noEmit` clean; full suite green,
+110 suites / 1152 tests (up from 106/1130 at run 13; see Completed below
+for the breakdown between main's own intervening test growth and this
+run's own additions). Re-verified item 7 unchanged (`app.json` still
+`"orientation": "portrait"`, `"supportsTablet": true`).
+
+**The plan is now fully checked.** Marked PR #133 ready for review this
+run (it was the last step this routine owns; the device pass above is
+work for a human with hardware, not this routine). Logged `ok` in
+`docs/runs.log` in the ops repo.
 
 ## Completed
 
@@ -70,7 +125,7 @@ Charen on cadence alone.
   - `CheckInCard.tsx` reads `fontScale`, confirmed out of this plan's scope
     (Dynamic Type, not window sizing).
   Did not decide the fixed-footer cap question as part of this audit, per
-  the review feedback below (it is on the ops status board for Charen now).
+  the review feedback below (it is on the status board for Charen now).
 - Run 6: no plan work was actionable. Rebase was a no-op, no new REVIEW
   FEEDBACK was present, and item 6 (the only unchecked line besides the
   standing item 7 re-verification) stays blocked on the footer-cap
@@ -186,139 +241,130 @@ Charen on cadence alone.
   engagement" bar run 12 itself set for reconsidering; kept naming the
   idle count instead. This HANDOFF update is the only change this run; no
   production code or plan content changed.
+- Run 14: rebased onto 6 new main commits (`a51ce4a`..`b748ca3`); heaviest
+  re-audit yet, two real findings, both fixed and tested in this run's
+  commits:
+  1. **`KeptHero` left the Today Kept pane entirely.** Main's 2026-09-07
+     decision (Charen, "no band above the list") removed the whole
+     "Kept so far" band this branch's item 2e had wrapped in
+     `keptHeroCapWrap`. The rebase conflict landed exactly on that code
+     (`app/(tabs)/index.tsx`'s Kept-pane JSX and its style block); resolved
+     by taking main's side (no band renders there at all) and deleting the
+     now-dead `keptHeroCapWrap` style, its wrapping View, and the one jest
+     case in `todayQuoteRibbonPlacement.test.tsx` that asserted on it. The
+     door3 ribbon and its `ribbonWrap`/`door3-ribbon-wrap` cap are
+     untouched, since the ribbon still renders. `design/decisions/modules/
+     today.md` updated in the same commit: the run 5 decision line amended
+     to note `keptHeroCapWrap` is gone with the band, and the Open-section
+     note that used to warn about this exact merge is closed out, both per
+     the same-commit rule. `KeptHero` itself is not dead: it still renders,
+     already capped by `body`'s `contentColumnStyle`, on the Leak Scan
+     payoff screen (`components/leak-scan/PayoffScreen.tsx`), confirmed by
+     direct reading, not assumed.
+  2. **A duplicate `testID` on `SpentList`'s `SectionList`, a real
+     `tsc` error (`TS17001`), not just a style regression.** Main's
+     own PR (commit `5971e09`, the same day as run 8's fix) gave the same
+     element a second, real `testID="spent-list"` for its own
+     `emptyStateGeometry.test.tsx`, landing on top of this branch's
+     `testID="spent-section-list"` from run 8. Neither commit conflicted
+     during the rebase (they touched adjacent, not overlapping, lines), so
+     this only surfaced via `tsc --noEmit`, not the rebase itself; a clean
+     rebase is still not proof of no regression, same lesson as run 8's
+     `contentColumnStyle` drop. Fixed by dropping this branch's redundant
+     `testID` and pointing `spentList.test.tsx`'s query at `spent-list`
+     instead. While in there, also fixed a second, latent bug in that same
+     test: it asserted on `Object.assign({}, list.props.contentContainerStyle)`
+     without flattening the array-valued style first (`contentContainerStyle`
+     is `[styles.listContent, ...]`), so `Object.assign` on the raw array
+     produced numeric keys, not merged properties; the assertion happened
+     to still pass before only because it read a testID whose element
+     resolution differed enough not to expose it. Switched to
+     `StyleSheet.flatten(...)`, matching how `tabletLayout.test.tsx`'s own
+     `flattenStyle` helper already does this correctly elsewhere. Also
+     caught and fixed a matching import-list conflict in `money.tsx`
+     (dropped `spacing` from the merged import by mistake while resolving
+     the rebase, caught immediately by the same `tsc` run, not left for a
+     later run).
+  3. **Decision 1 (issue #139) landed and was implemented.** Charen's
+     comment (2026-09-07, `#issuecomment-5575881737`): fixed footer/CTA
+     bars cap at 600pt too. Applied the same `...contentColumnStyle`
+     spread item 2b/2e already established for `ribbonWrap`
+     (paddingHorizontal-based, no wrapping View needed) to `ScopeScreen`'s
+     `footer`, `BillsScreen`'s `footer`, and `app/paywall.tsx`'s `footer`;
+     `PayoffScreen`'s Continue button, a sibling of the already-capped
+     `body` rather than a child of it, got a new `continueButton` style
+     via its `style` prop instead. Each of the four got a dedicated jest
+     case, matching the items 2c/2e/run 8 precedent of a per-surface
+     structural test: extended `scopeScreen.test.tsx`, `billsScreen.test.tsx`,
+     and `payoffScreen.test.tsx` (all three already had the provider/mock
+     wiring); added `__tests__/paywallTabletCap.test.tsx` as a new,
+     minimal harness, since no prior test rendered `app/paywall.tsx` at
+     all (mocks `expo-router` and `@/utils/analytics`, mirrors
+     `profile.test.tsx`'s provider wiring, scoped to only the one thing
+     this plan item needs). No design/decisions module file exists for the
+     Leak Scan flow or the paywall (that catalog only covers
+     `today`/`drawers`/`money`/`insights`/`categories` and their listed
+     components; item 2d's original cap on these same screens did not add
+     one either), so none was added here, consistent with that precedent.
+     PLAN.md's item 6 marked checked off with the full detail above.
+  tsc clean; full suite green, 110 suites / 1152 tests. Two steps: the
+  rebase alone (before any of this run's own code changes) brought the
+  baseline from run 13's 106 suites / 1130 tests to 109 suites / 1148
+  tests, almost entirely main's own intervening test growth across its 6
+  commits, net of the one `KeptHero` case this run deleted. This run's own
+  decision-1 work then added one new suite (`paywallTabletCap.test.tsx`)
+  and four new cases (one each in `scopeScreen.test.tsx`,
+  `billsScreen.test.tsx`, `payoffScreen.test.tsx`, and the new paywall
+  file), landing at 110 suites / 1152 tests. Re-verified item 7
+  unchanged. **Marked PR #133 ready for review** (`draft: false`) and
+  wrote this file's COMPLETE section, per the routine's own completion
+  instructions, since the plan is now fully checked and run 13's own
+  stated condition for doing so ("either that decision lands and its
+  follow-up test work is done") is met.
 
 ## Next
 
-Per PLAN.md, in order:
-1. Item 6: still the only unchecked plan line, still blocked on Charen's
-   footer-cap decision (see DECISIONS NEEDED), now idle 8 runs with zero
-   comments on `#139`. A push notification already went out (run 11); do
-   not send another one on cadence alone (avoid notification fatigue on a
-   one-line ask already surfaced twice, once by the orchestrator and once
-   by run 11) but do keep naming the idle count in Status/Blockers so it
-   stays visible. If this crosses into a much longer idle stretch (for
-   example, another five-plus runs with zero engagement), that is a
-   judgment call for a future run on whether a second notification is
-   warranted, not an automatic rule. Revisit the actual test work once it
-   lands: if it adds a cap to
-   `ScopeScreen`/`BillsScreen`/paywall/`PayoffScreen`, that is a real
-   structural change and, like items 2c/2e/run 8 before it, likely earns a
-   dedicated test case.
-2. Item 7: re-verify `app.json`'s `"orientation": "portrait"` stays
-   untouched (confirmed unchanged this run; keep checking every run).
-3. Every run, check first whether `origin/main` has moved at all before
-   deciding how much re-audit is owed. When it has, re-audit (not just
-   re-run) against the new commits: grep `useWindowDimensions` fresh and
-   check any scroll container main touched still carries
-   `contentColumnStyle`. Run 8 is the proof this matters: a clean rebase
-   was not proof nothing regressed, since main had quietly dropped a cap
-   in a file this branch had never seen before. Run 9 is the other half of
-   that judgment call: main had not moved at all, so re-running the same
-   audit against unchanged commits would have found nothing new and wasted
-   the run; confirming that via `git merge-base --is-ancestor` first is
-   the way to tell the two cases apart, not skipping the check outright.
-4. With items 1, 2, 3, 5 and 7 all satisfied, item 6 is the only plan line
-   not checked off, and it is blocked on a human decision rather than on
-   agent work. Do not treat the plan as fully checked or touch the
-   COMPLETE state until either that decision lands and its follow-up test
-   work is done, or Charen says item 6 can close without it.
+The plan is fully checked; there is no more plan-driven work queued. What
+carries forward:
+
+1. Watch PR #133 for review activity now that it is out of draft (CI,
+   review comments) the way any ready PR is watched, per the routine's own
+   PR-activity rules. This is now the routine's main job on this branch
+   until it merges.
+2. Every run, still check whether `origin/main` has moved before deciding
+   how much re-audit is owed, exactly as items 1-3 below (run 8 and run 14
+   both prove a clean rebase is not proof nothing regressed: run 8 found a
+   dropped cap, run 14 found both a dropped cap AND a duplicate testID from
+   two independent same-day commits). If it has moved, re-audit: grep
+   `useWindowDimensions` fresh, check every scroll container and fixed
+   footer main touched still carries `contentColumnStyle`, and re-run tsc
+   even when the rebase itself reports zero conflicts, since run 14's
+   testID collision proves a clean rebase can still hide a real compile
+   error until tsc actually runs.
+3. Re-verify item 7 (`app.json` orientation) every run regardless of
+   whether anything else changed.
+4. If a device pass lands (see DEVICE PASS NEEDED above) and finds a real
+   visual problem, that becomes new plan work; otherwise this branch's
+   remaining path to ship is PR review, an `eas build` (native fingerprint
+   changed, `ios.supportsTablet: true`, not an OTA-eligible change), and
+   the device pass itself.
 
 ## Blockers
 
-None that stop this routine from running; the plan-progress blocker is
-real and now explicit. `npm install` was needed again at the start of
-this run (fresh container, `node_modules` not present); expected, not a
-real blocker, same as every prior run. A single-test timeout under full
-suite load this run (`door3BreakSheet.test.tsx`) was confirmed a
-scheduling flake, not a blocker: isolated pass plus a clean full re-run
-both came back green (see Status/Completed). Item 6 is soft-blocked on
-Charen's footer-cap decision (see DECISIONS NEEDED), not on anything this
-routine can resolve itself; still open on `#139` with zero comments as of
-this run, now idle 8 runs (since run 5 first surfaced it, 2026-09-05).
-Still not logged as a runs.log `blocked` outcome: per the retry and
-failure policy, that classification is for a routine that cannot proceed
-at all, and every run including this one did real, bounded verification
-work (rebase conflict resolution and re-audit when main moved in runs 1-4
-and 7-8; a plan bookkeeping fix on run 9; clean-install tsc/test
-re-verification with zero drift on runs 9 through 13, including this
-run's flake triage). Six straight runs (8 through 13) have found zero
-code work, and the decision is now idle eight runs with no engagement at
-all (no comment, reaction, or edit on `#139`). Run 11 already escalated
-this explicitly (HANDOFF, runs.log, and one push notification directly to
-Charen); this run kept the escalation visible in Status/Next without
-repeating the notification, per run 11's own instruction against pinging
-on cadence alone (only two runs have passed since that notification). The
-decision blocks only item 6; items 1 through 5 and 7 remain fully done, so
-the branch itself is not at risk, only its last checkbox and, downstream,
-marking the PR ready for review.
+None. The one real blocker this branch carried (decision 1 on `#139`) is
+resolved as of this run. The device pass is not logged as a blocker in the
+runs.log sense: it does not stop this routine from doing bounded,
+verifiable work (rebases, re-audits, PR maintenance), it is a precondition
+for shipping, already named explicitly in DEVICE PASS NEEDED above so it
+stays visible without inflating every run's Status into a repeated
+escalation now that the actual decision blocker is gone.
 
 ## DECISIONS NEEDED
 
-- **Idle 8 runs, zero engagement: whether the fixed footer/CTA bars
-  outside a capped ScrollView (`ScopeScreen`, `BillsScreen`,
-  `app/paywall.tsx`, `PayoffScreen`'s Continue button) should get the same
-  600pt cap on iPad, or are meant to stay full width by design.** This is
-  the single thing standing between this branch and a fully checked plan.
-  It was first surfaced on the ops status board (`#139`) by run 5's
-  review, 2026-09-05; as of this run (2026-09-07, run 13) it still has
-  zero comments and no edit, confirmed with
-  `get_comments` rather than trusting the cached issue body. Per the run 5
-  review feedback this routine does not re-raise or decide it itself, so
-  the ask stays the same: a one-line comment on `#139` (or wherever Charen
-  prefers to answer) either way unblocks item 6's remaining test work.
-  Everything else in the plan (items 1-5 and 7) is already done, so
-  answering this is the only remaining step before PR #133 can be marked
-  ready for review.
-- No new decisions raised this run.
-
-## DEVICE PASS NEEDED
-
-Nothing in this branch has been seen on a real iPad or the iPad simulator
-(none is available in this environment). Before this ships, a human pass
-should check, once the plan is further along (at minimum after items 2, 3
-and 4 land in full; all now do, so this list is ready for a first pass
-whenever a device is available, ahead of item 5 too if useful):
-
-- The 600pt capped column reads as intentional on iPad, not cramped or
-  arbitrarily narrow, across Today, Money, Insights, Categories, habit
-  detail, category detail, Profile, Paywall, the onboarding carousel beats,
-  and every Leak Scan screen (intake, scope, deck, bills, graceful failure,
-  results, payoff).
-- Bottom sheets (`components/ui/Sheet.tsx` and everything built on it:
-  ExpenseSheet, AddUpcomingSheet, PickOneSheet, PartialSlipSheet,
-  BreakHabitSheet, ConfirmSheet, ReviewQueueSheet, CategoryTransactionsSheet,
-  the currency and category pickers) look right centered at the capped
-  width, including the keyboard-avoiding behavior on forms (ExpenseSheet,
-  AddUpcomingSheet) with the iPad on-screen keyboard, which is shaped
-  differently from the phone one.
-- The onboarding carousel: swiping between beats on iPad, confirming the
-  capped `beatContent` column reads well against the still full-width
-  `beat` page background, and that `BeatMedia`'s frame (capped along with
-  the rest of the beat content) is not so narrow it looks like an error
-  state.
-- The Leak Scan flow end to end on iPad: intake's file-picker stage,
-  scope's category rows, the deck's swipeable candidate cards, the bills
-  offer rows, graceful failure, and the results dashboard, all capped at
-  600pt; specifically whether the un-capped footer button bars on scope and
-  bills (see DECISIONS NEEDED above) look like an intentional full-width
-  CTA or an inconsistency against the capped content above them.
-- The Today Spent/Kept pager: swiping between Spent and Kept feels right on
-  iPad, in both split-view widths, now that the Kept pane's ribbon and
-  KeptHero band (this run's item 2e) are capped and centered alongside the
-  rest of the pane's content, not just the scrolling list below them; watch
-  specifically for any visual seam where the capped ribbon/hero column
-  meets the still-full-width pane background above/around it.
-- Split-screen / Slide Over multitasking on iPad, since `supportsTablet`
-  now being true makes iPadOS offer those; the app has never been exercised
-  in a resized window before this branch.
-- One boot on an iPad simulator or device to confirm nothing above (icon,
-  splash) regressed from turning `supportsTablet` on, before this reaches
-  TestFlight.
-
-This app also carries a standing device-pass item from Phase 2 sign-off
-(decision 0008, umbrella repo): the VoiceOver walk + Accessibility
-Inspector audit, scheduled for the Phase 4 TestFlight beta. This iPad
-device pass is separate and additional to that one, not a substitute.
+None open. Decision 1 (fixed footer/CTA bars cap at 600pt too) was the
+only one this branch raised; Charen answered it 2026-09-07
+(`#issuecomment-5575881737`) and this run implemented and tested the
+answer (see Completed, run 14). No new decisions raised this run.
 
 ## REVIEW FEEDBACK
 
@@ -410,7 +456,13 @@ Coordination notes, no action until a merge or rebase makes them live:
   a buildBeats(catalog) refactor of BEATS on the carousel). Whichever
   branch crosses the other's merge keeps both changes and re-verifies
   the pair: the 600pt cap survives AND the conversion survives, with the
-  carousel's paging unit still window width.
+  carousel's paging unit still window width. Not yet crossed as of run 14
+  (this branch's SpentList.tsx still has no useStrings() conversion).
 - app/profile.tsx is now touched by all three routine branches (your
   cap, localization's conversion, core's share card row). Keep the union
   when its turn comes.
+
+No orchestrator review recorded yet for runs 12-14 as of this writing;
+run 14 marked the PR ready for review on its own authority per the
+routine's own completion instructions once the plan was fully checked, not
+pending a further review round on this branch.
