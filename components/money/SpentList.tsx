@@ -202,7 +202,6 @@ export function SpentList({ sections, onEditExpense, onLogExpense }: SpentListPr
 
   return (
     <SectionList<Expense, ExpenseSection>
-      testID="spent-section-list"
       sections={listSections}
       keyExtractor={(item) => item.id}
       renderItem={renderItem}

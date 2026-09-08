@@ -39,7 +39,7 @@ import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { categoryEmoji, categoryIdentityColor } from '@/constants/categoryEmoji';
 import { habitLeakGlyph } from '@/constants/onboardingPresets';
 import { strings } from '@/constants/strings';
-import { contentColumnStyle, layout, type AppTheme } from '@/constants/theme';
+import { contentColumnStyle, layout, spacing, type AppTheme } from '@/constants/theme';
 import { useCategories } from '@/contexts/CategoriesContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
 import { useHabits } from '@/contexts/HabitsContext';
