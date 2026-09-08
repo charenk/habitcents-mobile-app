@@ -591,23 +591,52 @@ work, tracked elsewhere).
       fixed in one commit. `tsc --noEmit` clean and the full suite green
       (112/112, 1166/1166) after every commit this run.
 
-      **Not yet converted, remaining 16 files** (rerun `grep -rl "from
+      **`app/(tabs)/index.tsx` (Today) converted (run 16):** the last
+      unconverted top-level screen, 34 `strings.` hits, ~1450 lines. One
+      module-scope shape found: `FIRST_RUN_RIBBON_LINES`, a module-level
+      `Record<string, string>` built from four `strings.today.*` values
+      (a fifth shape, a module-level *keyed object* rather than an array,
+      but fixed the identical way, moved into a `useMemo` inside
+      `TodayScreen` alongside the existing `styles` memo, both usage
+      sites updated to the local `firstRunRibbonLines` name). Everything
+      else in the file (the single `TodayScreen` function component; no
+      other function components defined in the file) reads `strings`
+      inside the component body. Three `useMemo`/`useCallback` blocks
+      were missing `strings` from their deps and got it added:
+      `handleBreakSheetStart` (reads `strings.today.alreadyBreakingToast`
+      and `strings.toasts.startHabitFailed`), the `sections` useMemo
+      (reads `strings.habitLogging.leaksFoundSection`/
+      `breakingNowSection`), and `handleDismissHabit` (reads three
+      `strings.toasts.*` values). `breakLabel`/`breakCaption` and
+      `detectionProgress` needed no deps change (plain consts recomputed
+      every render, or a useMemo that does not read `strings`,
+      respectively). All four test files that render this screen
+      (`door3BreakSheet`, `todaySpentKept`, `todayQuoteRibbonPlacement`,
+      `door1FirstRun`) already had `LocaleProvider` from an earlier run;
+      two more candidates checked and ruled out per the standing
+      caution, `habitsSeedStartSameTick.test.tsx` (comment-only mention,
+      confirmed again, same as run 11) and `dynamicType.test.tsx` (reads
+      the file as text via `fs`, does not render it). No test file
+      changes needed. Full suite green (112/112, 1166/1166) after one
+      re-run past a known pre-existing `door3BreakSheet.test.tsx`
+      full-suite-load flake (see HANDOFF Notes); `tsc --noEmit` clean.
+
+      **Not yet converted, remaining 15 files** (rerun `grep -rl "from
       '@/constants/strings'" app components contexts utils | grep -v
-      __tests__` for the current list): `app/(tabs)/index.tsx` (Today,
-      34 `strings.` hits, largest screen in the app at ~1450 lines,
-      budget a dedicated run, not leaf-checked yet). The leak-scan screen
-      set (`BillsScreen.tsx`, `DeckScreen.tsx`, `GracefulFailure.tsx`,
+      __tests__` for the current list). The leak-scan screen set
+      (`BillsScreen.tsx`, `DeckScreen.tsx`, `GracefulFailure.tsx`,
       `IntakeScreen.tsx`, `PayoffScreen.tsx`, `PulseDayDetailSheet.tsx`,
       `ResultsScreen.tsx`, `ScopeScreen.tsx`, `useTrackLeak.tsx`) remains
       exactly as scoped since run 11 (still not individually
       leaf-checked, budget more than one run's slice per the standing
-      note). `components/onboarding/OnboardingCarousel.tsx` will always
-      appear on the grep (its static import builds the exported `BEATS`
-      fixture by design, see run 12's note; already converted for real
+      note; this is now the largest remaining chunk). `components/today/
+      ViewQuote.tsx`/`useViewQuote.ts` are RETIRED (see below).
+      `components/onboarding/OnboardingCarousel.tsx` will always appear
+      on the grep (its static import builds the exported `BEATS` fixture
+      by design, see run 12's note; already converted for real
       rendering). `utils/coachMoments.ts`, `utils/recurring.ts`,
-      `contexts/ReportsContext.tsx` (non-hook threading shape TBD) and
-      the retired `ViewQuote.tsx`/`useViewQuote.ts` also remain,
-      unchanged from run 11's notes.
+      `contexts/ReportsContext.tsx` (non-hook threading shape TBD) also
+      remain, unchanged from run 11's notes.
 - [ ] Convert function-valued strings (pluralized/interpolated) to ICU
       messages with proper CLDR plural rules, not the current hand-rolled
       `n === 1 ? '' : 's'` ternaries, and add the ICU formatting dependency
