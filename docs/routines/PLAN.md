@@ -385,6 +385,22 @@ tests green, exactly matching runs 9-11. Checklist unchanged, still fully
 `[x]`/`(C)`. No new push notification this run; run 11's already covers
 the idle decision queue and nothing has changed since.
 
+## Run 13: rebased across a real content conflict, no new plan work
+
+`origin/main` had moved 6 commits since run 12 (`a51ce4a` to `b748ca3`),
+enough to flip the rebase from the usual mechanical
+`design/decisions/README.md` index conflict into two genuine content
+conflicts: `design/decisions/components/LeakFinderTeaser.md` (main's
+2026-09-07 one-line-body trim landed the same file area this branch's
+run 8 dated-grant work touched) and `utils/analytics.ts`'s
+`AnalyticsEventMap` (main's new `how_it_works_opened` event landed next to
+this branch's `leak_finder_promo_activated`). Both resolved by keeping
+both sides' content, not by picking one; full reasoning in
+`docs/routines/HANDOFF.md`'s run 13 section. No REVIEW FEEDBACK, no new
+PUNCHLIST core-p3 item, checklist below unchanged, still fully `[x]`/`(C)`.
+`npx tsc --noEmit` clean, `npm test` 113 suites / 1184 tests green (up
+from 110/1165, all from main's own commits carried in by the rebase).
+
 ## If this routine fires again
 
 The branch and PR stay open until Charen merges or closes them (routine
