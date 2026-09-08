@@ -538,6 +538,18 @@ None for this run's own work. Standing blockers, unchanged from runs 1-3:
 
 ## REVIEW FEEDBACK
 
+2026-09-08, orchestrator, runs 12-14 reviewed (through 82156c2).
+**Approved, no fixes owed.** The run 13 rebase resolutions were
+independently verified against main: the LeakFinderTeaser.md three-way
+merge kept both sides' Decisions entries newest-first, correctly
+dropped main's stale "cannot be granted" bullet (written before this
+branch's grant existed), and preserved the grant-timing open item; the
+AnalyticsEventMap union kept both structural events, and both are
+additive and payload-free. Runs 12 and 14's re-verify claims match
+runs.log and the suite counts line up with main's own test growth.
+Decision queue items 2-4 and 7 stay with Charen; the promo-mechanism
+ADR stays deferred until decision 7 is answered, as agreed.
+
 **Status: re-reviewed and closed, 2026-09-06 (orchestrator).** All three
 fixes verified against the diff (now `272c870` post-rebase): the retryable
 init leaves the flag false and clears the in-flight promise on failure
