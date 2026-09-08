@@ -428,6 +428,18 @@ flake this run), exactly matching runs 13-14. Checklist unchanged, still
 fully `[x]`/`(C)`. No new push notification; run 11's already covers the
 idle decision queue and nothing has changed since.
 
+## Run 16: closed out again
+
+Same shape as runs 9-15: no new commits on `origin/main` beyond what the
+branch already contains, `mergeable_state: clean` and zero comments/
+reviews on PR #132, PUNCHLIST's RESUME marker unchanged and still
+zeroth-state-shaped. Fresh `npm install`, `npx tsc --noEmit` clean. `npm
+test` hit the same known `door3BreakSheet.test.tsx` timing flake as runs
+10, 12, 14; isolated re-run confirmed all 17 pass. Full suite: 113 suites
+/ 1184 tests green, exactly matching runs 13-15. Checklist unchanged,
+still fully `[x]`/`(C)`. No new push notification; run 11's already
+covers the idle decision queue and nothing has changed since.
+
 ## If this routine fires again
 
 The branch and PR stay open until Charen merges or closes them (routine

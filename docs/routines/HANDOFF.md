@@ -1,5 +1,36 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 16, 2026-09-08: re-verify, no new work)
+
+Seventh idle run since the decision queue first went up at run 6 (runs
+9-16, minus run 13's rebase). `git fetch origin main` plus `git
+merge-base --is-ancestor origin/main HEAD` confirmed the branch still
+contains `origin/main`'s tip (`b748ca3`, unchanged since run 13's
+rebase), no rebase needed. PR #132 confirmed via the API: `state: open`,
+`draft: false`, `mergeable_state: clean`, head `c99392f` (matches this
+branch's tip), base `b748ca3` (matches main's current tip), zero
+comments, zero reviews. No new REVIEW FEEDBACK since run 15 (the runs
+12-14 entry was already addressed there: "Approved, no fixes owed").
+Re-pulled `habitcents-ops/PUNCHLIST.md`'s RESUME marker: byte-identical
+to what runs 9-15 read, still only the 2026-09-05/06 zeroth-state design
+wave items (device pass, canvas regen, ipad merge note, today-kept art)
+plus the leak finder dated-entitlement line, which stays unchecked there
+but was already built and closed on this branch at run 8; not this
+routine's checkbox to flip. Nothing newly core-p3-shaped.
+
+Fresh `npm install`, `npx tsc --noEmit` clean. `npm test` hit the same
+known `door3BreakSheet.test.tsx` auto-open timing flake as runs 10, 12,
+and 14 (unrelated file, not touched by anything on this branch,
+5s-default-Jest-timeout under full-suite load); re-ran that file alone
+per the one-allowed-rerun policy, all 17 passed in 5.4s. Full suite then
+green: 113 suites / 1184 tests, exactly matching runs 13-15. PLAN.md's
+checklist stays fully `[x]`/`(C)`; nothing code-shaped remains that this
+routine can reach without a website-repo checkout or a Charen-gated
+external account. No new push notification this run: run 11's
+notification already flagged the idle decision queue, and nothing in its
+content has changed (still zero PR engagement, same 7-item queue run 9
+first compiled).
+
 ## COMPLETE (run 15, 2026-09-08: re-verify, no new work)
 
 Sixth idle run since the decision queue first went up at run 6 (runs
