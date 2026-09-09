@@ -5,7 +5,10 @@
 In progress. Run 20: no REVIEW FEEDBACK was pending at session start
 (only the two `routine/ipad` coordination notes carried forward from
 runs 14-16, still not actionable), branch was already current with
-origin/main (rebase was a no-op). **Started plan item 4** (provisional
+origin/main (rebase was a no-op). The orchestrator's runs 17-19 review
+landed on origin mid-run (a race, not a start-of-run miss); rebased
+onto it before pushing and addressed its one owed fix (below) in the
+same run rather than deferring it. **Started plan item 4** (provisional
 machine translations): built the overlay/merge catalog infrastructure
 in `utils/i18n.ts` and populated a 17-key proof-of-pattern slice
 (`common` minus `keep`, `sheets`, `tabs`, `screenTitles`) in a new
@@ -267,9 +270,22 @@ entry.
   value. Added the DECISIONS NEEDED proposal table for leak/skip/kept/
   slip (below), ahead of translating the sections that contain them.
   Full design rationale, the exact key list, and the suggested next
-  slice are in PLAN.md's run 20 entry under item 4. Two commits; `tsc
-  --noEmit` clean, full suite green (113/113, 1210/1210, up from
-  112/1166), no flake.
+  slice are in PLAN.md's run 20 entry under item 4. Three commits (the
+  infra/translation slice, the languageSheet fix, and the
+  PATTERN_VOCABULARY.md fix below); `tsc --noEmit` clean, full suite
+  green (113/113, 1210/1210, up from 112/1166), no flake.
+- Run 20, review feedback (owed from the orchestrator's runs 17-19
+  review, which landed on origin mid-run and was rebased onto before
+  pushing): `design/PATTERN_VOCABULARY.md`'s Localization deps rule
+  named only `useMemo`/`useCallback`; extended to also name
+  `useEffect`, since runs 17-18 found the same stale-closure class in
+  five screens' announce-on-mount effects. The review's item-4
+  guidance (proceed with the plan's 10 languages, keep the locked
+  terms and quotes provisional via the proposal table, head every
+  catalog file with the required line, fold `daysUntilLabel` into
+  item 4's new-keys work) needed no action this run: this run's design
+  already matches it, and `daysUntilLabel` is noted as future new-keys
+  work in PLAN.md's run 19 and 20 entries.
 
 ## Next
 
