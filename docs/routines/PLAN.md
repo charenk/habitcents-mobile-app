@@ -693,6 +693,71 @@ work, tracked elsewhere).
       `PulseDayDetailSheet` and calls `useTrackLeak`, all already
       converted, so its own conversion is additive on top, not a new
       blast-radius investigation.**
+
+      **Run 18: `ResultsScreen.tsx` and `BillsScreen.tsx` converted,
+      completing the leak-scan screen set (9 of 9 files).** Both had
+      the module-level helper-function shape flagged above:
+      `evidenceWindowLabel` (`ResultsScreen.tsx`) and `cadenceLabel`
+      (`BillsScreen.tsx`) each took an added `strings: Catalog`
+      parameter, threaded from `useStrings()` at their one and two call
+      sites respectively (`cadenceLabel`'s two sites both sit inside
+      `renderRow`, itself a plain function defined in the component
+      body, not module scope, so no deps array applies to it).
+      `ResultsScreen.tsx` also needed `strings` added to three
+      `useCallback` deps arrays (`handleSaveProjection`, `handleUndo`,
+      `handleBringInDays`) and both screens needed it added to their
+      announce-on-mount `useEffect` (same variant of the standing rule
+      run 17 established). Test coverage: all six of
+      `ResultsScreen.tsx`'s test files
+      (`resultsScreenActivation`/`resultsScreenUndo`/
+      `resultsScreenLadder`/`resultsScreenPaywallPlacement`/
+      `leakScanImportUndo`/`leakScanOnboardingExit`) already had
+      `LocaleProvider` from earlier runs; `useCompleteScanOnboarding.test.tsx`
+      confirmed again as a doc-comment cross-reference and probe
+      component, not a real render (same as run 17's note on
+      `GracefulFailure`). `billsScreen.test.tsx` had no `LocaleProvider`
+      at all (it renders `BillsScreen` directly, its own dedicated leaf
+      test); added it. One commit; `tsc --noEmit` clean, full suite
+      green (112/112, 1166/1166), no flake.
+
+      68 of ~75 call-site files now converted. Confirmed via
+      `grep -rl "from '@/constants/strings'" app components contexts
+      utils | grep -v __tests__`: exactly 7 files remain, all previously
+      flagged as non-standard, none of them a screen or ordinary leaf:
+      `components/today/ViewQuote.tsx` and `useViewQuote.ts` (RETIRED,
+      ADR 0037), `components/onboarding/OnboardingCarousel.tsx`
+      (intentional, builds the exported `BEATS` test fixture, real
+      rendering already converted, see run 12), `utils/i18n.ts` itself
+      (the seam, imports `strings` to derive `Catalog` and build
+      `getCatalog`, never converts), and three genuine remaining-work
+      files: `utils/coachMoments.ts`, `utils/recurring.ts`,
+      `contexts/ReportsContext.tsx`. No top-level screen and no leak-scan
+      file remains unconverted.
+
+      **Investigated for the next run, not converted:** `utils/recurring.ts`
+      has the module-level *plain-const* shape (`SCHEDULE_SEPARATOR =
+      strings.money.scheduleSeparator`) plus two module-level helper
+      *functions* (`weekdayPlural`, `monthDayLabel`) and one exported
+      function (`describeSchedule`) that all read `strings` directly;
+      none are components or hooks, so none can call `useStrings()`
+      themselves, matching the "decide the shape when their turn comes"
+      note from run 11. `describeSchedule` (and the separately exported
+      `daysUntilLabel`, which does NOT read the catalog at all: it
+      returns hardcoded English "Today"/"Tomorrow"/"in N days" text, a
+      distinct gap from this item, worth its own note when item 2's
+      catalog conversion reaches it) has exactly one call site outside
+      `recurring.ts` and its own tests: `components/money/UpcomingList.tsx`
+      (already converted, `useStrings()` available there), so the
+      threading path is narrow, just not done yet. `utils/coachMoments.ts`
+      resolves card copy from `strings.coachMoments` in one function
+      (`resolveCoachCard` around line 234); its callers need tracing
+      before threading. `contexts/ReportsContext.tsx` has one usage
+      (`strings.reports.weekOf(...)`, a context provider, not a
+      component render, so also not directly `useStrings()`-eligible
+      without checking whether the provider itself sits under
+      `LocaleProvider` in the tree). All three budgeted for a dedicated
+      run; PLAN.md's item 2 call-site migration checkbox stays open
+      until they, plus a decision on `ViewQuote`'s retired pair, land.
 - [ ] Convert function-valued strings (pluralized/interpolated) to ICU
       messages with proper CLDR plural rules, not the current hand-rolled
       `n === 1 ? '' : 's'` ternaries, and add the ICU formatting dependency
