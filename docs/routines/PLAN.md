@@ -452,6 +452,18 @@ still fully `[x]`/`(C)`. No new push notification; run 11's already
 covers the idle decision queue (now 11 runs idle) and nothing has
 changed since.
 
+## Run 18: closed out again
+
+Same shape as runs 9-17: no new commits on `origin/main` beyond what
+the branch already contains, `mergeable_state: clean` and zero
+comments on PR #132, PUNCHLIST's RESUME marker unchanged (the
+`cc87a3c..aabe386` ops-main range touched only `docs/runs.log`) and
+still zeroth-state-shaped. Fresh `npm install`, `npx tsc --noEmit`
+clean. `npm test` 113 suites / 1184 tests green on the first attempt,
+no flake this run. Checklist unchanged, still fully `[x]`/`(C)`. No new
+push notification; run 11's already covers the idle decision queue
+(now 12 runs idle) and nothing has changed since.
+
 ## If this routine fires again
 
 The branch and PR stay open until Charen merges or closes them (routine

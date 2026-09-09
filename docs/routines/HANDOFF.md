@@ -1,5 +1,37 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 18, 2026-09-09: re-verify, no new work)
+
+Ninth idle run since the decision queue first went up at run 6 (runs
+9-18, minus run 13's rebase). `git fetch origin main routine/core-p3`
+plus `git log HEAD..origin/main --oneline` and the reverse direction
+confirmed the branch still contains `origin/main`'s tip (`b748ca3`,
+unchanged since run 13's rebase; zero commits either direction), no
+rebase needed. PR #132 confirmed via the API: `state: open`,
+`draft: false`, `mergeable_state: clean`, `merged: false`, head
+`575f871` (matches this branch's tip), base `b748ca3` (matches main's
+current tip), zero comments. No new REVIEW FEEDBACK since run 15 (the
+runs 12-14 entry stays the last one, already addressed). Re-pulled
+`habitcents-ops/PUNCHLIST.md`'s RESUME marker via a fresh `git fetch`
+on that repo (`cc87a3c..aabe386`, but that range touched only
+`docs/runs.log`, nothing in PUNCHLIST.md): RESUME marker byte-identical
+to what runs 9-17 read, still only the 2026-09-05/06 zeroth-state
+design wave items (device pass, canvas regen, ipad merge note,
+today-kept art) plus the leak finder dated-entitlement line, which
+stays unchecked there but was already built and closed on this branch
+at run 8; not this routine's checkbox to flip. Nothing newly
+core-p3-shaped.
+
+Fresh `npm install`, `npx tsc --noEmit` clean. `npm test`: 113 suites /
+1184 tests green on the first attempt, no flake this run, exactly
+matching runs 13-17 (run 16's flake was a one-off). PLAN.md's checklist
+stays fully `[x]`/`(C)`; nothing code-shaped remains that this routine
+can reach without a website-repo checkout or a Charen-gated external
+account. No new push notification this run: run 11's notification
+already flagged the idle decision queue, and nothing in its content has
+changed (still zero PR engagement, same 7-item queue run 9 first
+compiled, now 12 runs idle).
+
 ## COMPLETE (run 17, 2026-09-09: re-verify, no new work)
 
 Eighth idle run since the decision queue first went up at run 6 (runs
