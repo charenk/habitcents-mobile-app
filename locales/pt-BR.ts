@@ -1,10 +1,13 @@
 /**
  * Provisional machine translation, needs human review.
  *
- * Locale: pt-BR (Portuguese, Brazil). Plan item 4's proof-of-pattern slice:
- * `common` (except `keep`, held back deliberately, see below), `sheets`,
- * `tabs`, and `screenTitles`. Every other section is not yet translated and
- * falls back to English via mergeCatalog() in utils/i18n.ts.
+ * Locale: pt-BR (Portuguese, Brazil). Plan item 4: `common` (except `keep`,
+ * held back deliberately, see below), `sheets`, `tabs`, `screenTitles` (run
+ * 20), plus `expenses`, `categories`, `categoryDetail`, `profile` (run 21).
+ * Every other section is not yet translated and falls back to English via
+ * mergeCatalog() in utils/i18n.ts. Function-valued keys (pluralized or
+ * interpolated) are omitted throughout and inherit the English function,
+ * per plan item 2's deferred ICU work.
  *
  * `common.keep` is withheld on purpose: it is close enough to the app's
  * locked vocabulary (leak/skip/kept/slip, ops CLAUDE.md) that this routine
@@ -38,5 +41,49 @@ export const ptBR: LocaleOverlay = {
     money: 'Dinheiro.',
     insights: 'Estatísticas.',
     categories: 'Categorias.',
+  },
+  expenses: {
+    recent: 'Recentes',
+    upcoming: 'Próximas',
+    merchantPlaceholder: 'Estabelecimento (ex.: Starbucks)',
+    merchantFieldLabel: 'Estabelecimento',
+    noteFieldLabel: 'Nota',
+    amountHint: 'Toque duas vezes para inserir um valor',
+    notePlaceholder: 'Nota (opcional)',
+    saveExpense: 'Salvar despesa',
+    savedConfirmation: 'Salvo',
+    all: 'Todas',
+  },
+  categories: {
+    title: 'Categorias',
+    defaultCategories: 'Categorias padrão',
+    customCategories: 'Categorias personalizadas',
+    loading: 'Carregando.',
+    emptyTitle: 'Agrupe seus gastos do seu jeito',
+    emptySubtitle: 'Grupos facilitam ver os padrões.',
+    emptyCta: 'Adicione sua primeira categoria',
+    deleteMessage: 'Suas despesas existentes são mantidas; elas só deixarão de mostrar esta categoria.',
+    deleteConfirmCta: 'Excluir categoria',
+    deleteCancel: 'Manter categoria',
+    addCategoryLabel: 'Adicionar categoria',
+    eyebrowDefault: 'Padrão',
+    eyebrowCustom: 'Personalizada',
+  },
+  categoryDetail: {
+    notFound: 'Categoria não encontrada',
+    editCategoryLabel: 'Editar categoria',
+    thisMonth: 'este mês',
+    logsStat: 'registros',
+    averageStat: 'média',
+    sixMonthTrend: 'Tendência de 6 meses',
+    topMerchants: 'Principais estabelecimentos',
+    recentLogs: 'Registros recentes',
+    noExpensesLogged: 'Nada registrado nesta categoria ainda.',
+    trendEmpty: 'Ainda não há gastos para exibir no gráfico.',
+  },
+  profile: {
+    title: 'Perfil.',
+    headerLabel: 'Perfil',
+    supportRow: 'Suporte',
   },
 };

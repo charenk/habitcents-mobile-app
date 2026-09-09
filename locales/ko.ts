@@ -1,10 +1,13 @@
 /**
  * Provisional machine translation, needs human review.
  *
- * Locale: ko (Korean). Plan item 4's proof-of-pattern slice: `common`
- * (except `keep`, held back deliberately, see below), `sheets`, `tabs`, and
- * `screenTitles`. Every other section is not yet translated and falls back
- * to English via mergeCatalog() in utils/i18n.ts.
+ * Locale: ko (Korean). Plan item 4: `common` (except `keep`, held back
+ * deliberately, see below), `sheets`, `tabs`, `screenTitles` (run 20), plus
+ * `expenses`, `categories`, `categoryDetail`, `profile` (run 21). Every
+ * other section is not yet translated and falls back to English via
+ * mergeCatalog() in utils/i18n.ts. Function-valued keys (pluralized or
+ * interpolated) are omitted throughout and inherit the English function,
+ * per plan item 2's deferred ICU work.
  *
  * `common.keep` is withheld on purpose: it is close enough to the app's
  * locked vocabulary (leak/skip/kept/slip, ops CLAUDE.md) that this routine
@@ -38,5 +41,49 @@ export const ko: LocaleOverlay = {
     money: '자금.',
     insights: '인사이트.',
     categories: '카테고리.',
+  },
+  expenses: {
+    recent: '최근',
+    upcoming: '예정',
+    merchantPlaceholder: '가맹점 (예: 스타벅스)',
+    merchantFieldLabel: '가맹점',
+    noteFieldLabel: '메모',
+    amountHint: '두 번 탭하여 금액 입력',
+    notePlaceholder: '메모 (선택 사항)',
+    saveExpense: '지출 저장',
+    savedConfirmation: '저장됨',
+    all: '전체',
+  },
+  categories: {
+    title: '카테고리',
+    defaultCategories: '기본 카테고리',
+    customCategories: '사용자 지정 카테고리',
+    loading: '불러오는 중.',
+    emptyTitle: '내 방식대로 지출 그룹화하기',
+    emptySubtitle: '그룹으로 묶으면 패턴을 더 쉽게 볼 수 있어요.',
+    emptyCta: '첫 카테고리 추가하기',
+    deleteMessage: '기존 지출 내역은 그대로 유지됩니다. 이 카테고리로 표시되지 않을 뿐입니다.',
+    deleteConfirmCta: '카테고리 삭제',
+    deleteCancel: '카테고리 유지',
+    addCategoryLabel: '카테고리 추가',
+    eyebrowDefault: '기본',
+    eyebrowCustom: '사용자 지정',
+  },
+  categoryDetail: {
+    notFound: '카테고리를 찾을 수 없습니다',
+    editCategoryLabel: '카테고리 편집',
+    thisMonth: '이번 달',
+    logsStat: '기록',
+    averageStat: '평균',
+    sixMonthTrend: '6개월 추이',
+    topMerchants: '주요 가맹점',
+    recentLogs: '최근 기록',
+    noExpensesLogged: '이 카테고리에 아직 기록된 내용이 없어요.',
+    trendEmpty: '아직 표시할 지출이 없어요.',
+  },
+  profile: {
+    title: '프로필.',
+    headerLabel: '프로필',
+    supportRow: '지원',
   },
 };
