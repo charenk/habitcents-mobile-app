@@ -338,16 +338,14 @@ function UpcomingRow({
   // always set; the fallback exists so a corrupted row degrades to its date
   // rather than crashing the tab.
   const rule = resolveRule(expense);
-  const scheduleLine = rule
-    ? describeSchedule(rule, nextDate, expense.datePrecision === 'month' ? 'month' : 'day')
-    : shortDate(nextDate);
+  const precision = expense.datePrecision === 'month' ? ('month' as const) : ('day' as const);
+  const scheduleLine = rule ? describeSchedule(rule, nextDate, strings, precision) : shortDate(nextDate);
   // What the row DRAWS. The sentence above is what it says: the cadence is a
   // badge now and "next" is an elbow arrow, so the pieces and the sentence are
   // deliberately different (utils/recurring.ts scheduleParts, ADR 0040's
   // labelSpoken contract). A corrupted row that resolved no rule keeps its date
   // and simply carries no badge.
-  const precision = expense.datePrecision === 'month' ? ('month' as const) : ('day' as const);
-  const parts = rule ? scheduleParts(rule, nextDate, precision) : null;
+  const parts = rule ? scheduleParts(rule, nextDate, strings, precision) : null;
   // Charen, 2026-09-11: when the day is unknown the row shows NO date. The row
   // already sits under a month header that carries the month, so drawing it
   // again here would be the redundancy this pane has spent three rounds

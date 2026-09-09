@@ -11,7 +11,7 @@
  */
 
 import { formatDate } from '@/utils/dates';
-import { strings } from '@/constants/strings';
+import type { Catalog } from '@/utils/i18n';
 import type {
   DatePrecision,
   Expense,
@@ -470,18 +470,16 @@ export function daysUntilLabel(daysUntil: number): string {
   return `in ${daysUntil} days`;
 }
 
-const SCHEDULE_SEPARATOR = strings.money.scheduleSeparator;
-
 /** Sunday of a known week, so a weekday number can be named in the device locale. */
 const WEEKDAY_REFERENCE_SUNDAY = new Date(2024, 0, 7);
 
-function weekdayPlural(weekday: Weekday): string {
+function weekdayPlural(weekday: Weekday, strings: Catalog): string {
   const d = new Date(WEEKDAY_REFERENCE_SUNDAY);
   d.setDate(d.getDate() + weekday);
   return strings.money.scheduleWeekdayPlural(formatDate(d, { weekday: 'long' }));
 }
 
-function monthDayLabel(monthDay: MonthDayOption): string {
+function monthDayLabel(monthDay: MonthDayOption, strings: Catalog): string {
   if (monthDay === 'last') return strings.addUpcoming.monthDayLast;
   if (monthDay === '1') return strings.addUpcoming.monthDayFirst;
   return monthDay === '15' ? strings.addUpcoming.monthDayFifteenth : strings.addUpcoming.monthDayThirtieth;
@@ -522,7 +520,7 @@ export type ScheduleParts = {
 };
 
 /** The cadence word alone, shared by both precisions. */
-function cadenceWord(rule: RecurrenceRule): string {
+function cadenceWord(rule: RecurrenceRule, strings: Catalog): string {
   switch (rule.type) {
     case 'once':
       return strings.money.scheduleOneTime;
@@ -542,6 +540,7 @@ function cadenceWord(rule: RecurrenceRule): string {
 export function scheduleParts(
   rule: RecurrenceRule,
   nextDate: Date,
+  strings: Catalog,
   precision: DatePrecision = 'day'
 ): ScheduleParts {
   // The month is the claim and the day is not, so the qualifier goes too: it
@@ -551,7 +550,7 @@ export function scheduleParts(
   if (precision === 'month') {
     const month = formatDate(nextDate, { month: 'long' });
     return {
-      cadence: cadenceWord(rule),
+      cadence: cadenceWord(rule, strings),
       qualifier: null,
       date: month,
       dateSpoken: strings.money.scheduleInMonth(month),
@@ -568,7 +567,7 @@ export function scheduleParts(
     case 'weekly':
       return {
         cadence: strings.money.scheduleWeekly,
-        qualifier: weekdayPlural(rule.weekday),
+        qualifier: weekdayPlural(rule.weekday, strings),
         date: withWeekday,
         dateSpoken: strings.money.scheduleNext(bare),
       };
@@ -582,7 +581,7 @@ export function scheduleParts(
     case 'monthly':
       return {
         cadence: strings.money.scheduleMonthly,
-        qualifier: rule.monthDay ? monthDayLabel(rule.monthDay) : null,
+        qualifier: rule.monthDay ? monthDayLabel(rule.monthDay, strings) : null,
         date: bare,
         dateSpoken: strings.money.scheduleNext(bare),
       };
@@ -614,10 +613,11 @@ export function scheduleParts(
 export function describeSchedule(
   rule: RecurrenceRule,
   nextDate: Date,
+  strings: Catalog,
   precision: DatePrecision = 'day'
 ): string {
-  const { cadence, qualifier, dateSpoken } = scheduleParts(rule, nextDate, precision);
-  return [cadence, qualifier, dateSpoken].filter(Boolean).join(SCHEDULE_SEPARATOR);
+  const { cadence, qualifier, dateSpoken } = scheduleParts(rule, nextDate, strings, precision);
+  return [cadence, qualifier, dateSpoken].filter(Boolean).join(strings.money.scheduleSeparator);
 }
 
 /**

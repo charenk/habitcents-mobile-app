@@ -308,20 +308,6 @@ export function BreakHabitSheet({
           />
 
           {amountCents > 0 ? <Text style={styles.yearlyLine}>{yearlyLine}</Text> : null}
-        </ScrollView>
-
-        <View style={styles.footer}>
-          <Button
-            label={strings.habitLogging.startBreakingIt}
-            onPress={handleStart}
-            disabled={!canStart}
-            // Only carried while disabled, so VoiceOver never reads stale
-            // guidance on an already-enabled button (Button.tsx passes the
-            // hint straight through unconditionally).
-            accessibilityHint={canStart ? undefined : startHint}
-          />
-        </View>
-      </View>
     </Sheet>
   );
 }
