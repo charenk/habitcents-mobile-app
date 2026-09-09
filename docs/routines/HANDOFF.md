@@ -2,24 +2,22 @@
 
 ## Status
 
-In progress. Run 19: no REVIEW FEEDBACK was pending at session start
+In progress. Run 20: no REVIEW FEEDBACK was pending at session start
 (only the two `routine/ipad` coordination notes carried forward from
-runs 14-16, still not actionable until that branch's commits land on
-main), branch was already current with origin/main (rebase was a
-no-op). Converted the three genuine remaining-work files flagged since
-run 11 and budgeted for a dedicated run by run 18:
-`utils/recurring.ts`, `utils/coachMoments.ts`,
-`contexts/ReportsContext.tsx`. **Plan item 2's call-site migration
-checkbox is now checked.** Only 3 files still import the static
-catalog, all previously flagged as by-design non-standard:
-`utils/i18n.ts` (the seam), `OnboardingCarousel.tsx` (intentional
-fixture builder), and the RETIRED `ViewQuote`/`useViewQuote` pair,
-which this run made an explicit decision to leave unconverted (ADR
-0037, dead code, no observable i18n effect; see PLAN.md's run 19
-entry for the full reasoning). Plan item 2's remaining open work is
-now only the ICU/pluralization checkbox (deferred to when item 4's
-real catalogs show what it needs, per the plan's own note) and item 3
-(test migration).
+runs 14-16, still not actionable), branch was already current with
+origin/main (rebase was a no-op). **Started plan item 4** (provisional
+machine translations): built the overlay/merge catalog infrastructure
+in `utils/i18n.ts` and populated a 17-key proof-of-pattern slice
+(`common` minus `keep`, `sheets`, `tabs`, `screenTitles`) in a new
+`locales/` directory for all 10 target languages. `getCatalog()` now
+returns real, different-from-English text for the first time since
+this routine started; the Language picker in Settings is no longer
+purely cosmetic for the sections it covers. Also added the
+DECISIONS NEEDED proposal table below for leak/skip/kept/slip, ahead
+of translating the sections that actually contain them, per the
+plan's own instruction to do this as soon as item 4 has provisional
+translations to propose against. Full detail in PLAN.md's run 20
+entry.
 
 ## Completed
 
@@ -254,49 +252,63 @@ real catalogs show what it needs, per the plan's own note) and item 3
     Only 3 files now import the static catalog, all by design:
     `utils/i18n.ts` (the seam), `OnboardingCarousel.tsx` (the `BEATS`
     fixture builder), and the RETIRED `ViewQuote`/`useViewQuote` pair.
+- Run 20, plan item 4 started (provisional machine translations):
+  catalog overlay/merge infrastructure built in `utils/i18n.ts`
+  (`LocaleOverlay` type, `mergeCatalog()`, memoized `getCatalog()`) and
+  a 17-key proof-of-pattern slice (`common` minus `keep`, `sheets`,
+  `tabs`, `screenTitles`) populated for all 10 target languages in a
+  new `locales/` directory. `common.keep` deliberately withheld
+  (near-locked-vocabulary, not this routine's call) and guarded by a
+  new parameterized test file, `__tests__/localeCatalogs.test.ts`.
+  Fixed a real test-isolation bug `languageSheet.test.tsx` had been
+  carrying since run 10 (invisible until a real overlay existed to
+  leak between test cases): added `AsyncStorage.clear()` between
+  cases and updated the Cancel-button assertion to the live catalog
+  value. Added the DECISIONS NEEDED proposal table for leak/skip/kept/
+  slip (below), ahead of translating the sections that contain them.
+  Full design rationale, the exact key list, and the suggested next
+  slice are in PLAN.md's run 20 entry under item 4. Two commits; `tsc
+  --noEmit` clean, full suite green (113/113, 1210/1210, up from
+  112/1166), no flake.
 
 ## Next
 
-Plan item 2's call-site migration checkbox is now checked. Only 3 files
-import the static `strings` catalog directly outside `__tests__/`
-(rerun `grep -rl "from '@/constants/strings'" app components contexts
-utils | grep -v __tests__` to confirm), all by design, none of them
-future work for this item:
-- `utils/i18n.ts` itself imports `strings` to derive `Catalog` and
-  build `getCatalog()`; this is the seam, not something to convert.
-- `components/onboarding/OnboardingCarousel.tsx` will always appear on
-  this grep by design (run 12): its static import builds the exported
-  `BEATS` test fixture; real rendering is already converted.
-- `components/today/ViewQuote.tsx` and `useViewQuote.ts` are RETIRED
-  (ADR 0037, nothing renders them any more) and, as of run 19's
-  decision, deliberately staying unconverted: dead code with no live
-  render path has no observable i18n effect. If ADR 0037 ever
-  un-retires the quote rotation, convert both then.
+Plan item 4 is now underway (17 of ~660 keys populated across all 10
+languages: `common` minus `keep`, `sheets`, `tabs`, `screenTitles`; see
+PLAN.md's run 20 entry for the full design). Suggested next slice, per
+that entry: `expenses`, `upcoming`, `categories`/`categoryDetail`,
+`settings`, `profile`, since none touch the locked vocabulary or the
+app's quotes and are comparable in size to this run's slice. Budget
+more than one run per meaningful chunk (10 languages x a section
+adds up fast), the same lesson item 2's file-by-file conversion
+learned repeatedly. `habitLogging`, `coachMoments`, and `today`'s quote
+arrays need the DECISIONS NEEDED table below settled (or at minimum
+provisional entries adopted with a clear "pending Charen" marker)
+before translating, since those sections contain the locked vocabulary
+and (for `today`) the RETIRED, out-of-scope quote arrays.
 
 What is actually left for a future run:
 - Plan item 2's ICU/pluralization checkbox (function-valued strings
   like `n === 1 ? '' : 's'` ternaries becoming proper CLDR plural
-  rules): deliberately deferred until item 4 lands real non-English
-  catalogs and shows what the ICU formatting actually needs, per the
-  plan's own note. Not blocked, just sequenced after item 4.
+  rules): deliberately deferred until item 4's real catalogs reach a
+  function-valued key and show what the ICU formatting actually
+  needs. `LocaleOverlay`'s design (run 20) already accommodates this:
+  a function-valued key is supplied whole, with its own locale's
+  plural handling, whenever that happens; no infra change needed to
+  start, just the first real case.
 - `utils/recurring.ts`'s `daysUntilLabel` export does not read the
   catalog at all (hardcoded English "Today"/"Tomorrow"/"in N days"),
-  confirmed again this run. This is new-keys work (add translated keys
-  and thread them in), not call-site migration, so it was correctly
-  out of scope for item 2's checkbox; worth its own pick, maybe
-  alongside item 4 since it needs new catalog entries either way.
+  confirmed again in run 19. This is new-keys work (add translated keys
+  and thread them in), not call-site migration; worth its own pick,
+  maybe alongside item 4 since it needs new catalog entries either way.
 - Plan item 3 (test migration away from literal-English assertions):
-  now unblocked in the sense that a large majority of files are
-  migrated, but not yet started. Good candidate for the next dedicated
-  run, or once item 4's first non-English catalog exists (whichever
-  makes the migrated assertions more obviously worth writing).
-- Plan item 4 (provisional machine translations, 10 languages): the
-  next big chunk of net-new work. No catalog exists yet for any
-  non-English locale; `getCatalog()` in `utils/i18n.ts` resolves every
-  locale to English until this lands. Needs its own DECISIONS NEEDED
-  proposal table for leak/skip/kept/slip and the app's quotes before
-  finalizing (see that section below), but the other ~640 keys can
-  proceed without waiting on Charen's picks for those four.
+  now more clearly motivated than before run 20, since real overlays
+  exist and a literal-English assertion in a test for an
+  already-converted component can now genuinely fail once that
+  component's section gets translated (as `languageSheet.test.tsx` did
+  this run). Still not a dedicated pass; worth doing before item 4's
+  translated surface grows much further, so newly-flakable tests don't
+  pile up one at a time the way `languageSheet.test.tsx` did.
 - Plan items 5 (overflow hardening) and 6 (localized a11y labels) stay
   sequenced after item 4, as scoped.
 
@@ -306,10 +318,89 @@ None.
 
 ## DECISIONS NEEDED
 
-Nothing yet. leak/skip/kept/slip and the app's quotes stay in English
-(unconverted) until plan items 2 to 4 reach them; the proposal table for
-Charen lands here once provisional translations exist to propose (plan
-item 4).
+Proposal table for the four locked vocabulary terms (leak, skip, kept,
+slip; ops CLAUDE.md), added run 20 ahead of translating the sections
+that contain them (`habitLogging` above all). **Every entry below is a
+provisional, machine-assisted candidate. None are finalized. This
+routine will not translate `habitLogging`, `coachMoments`, or any other
+section using these terms until Charen picks (or explicitly defers)
+per language**, per the plan's standing rule.
+
+Rationale shorthand used below: "leak metaphor" = the target language
+has an established or natural money-leak idiom; "kept ≠ saved" = chose
+a retain/keep verb over a save/economize verb, since the product
+vocabulary deliberately distinguishes "kept" (money not spent, a
+side effect of skipping) from "saved" (a deliberate act), and a
+save-verb translation would blur that; "neutral, no-blame" = chose a
+lapse/slip word that reads as neutral or clinical rather than as
+failure, matching "slip records what happened, it never takes
+anything back" (constants/strings.ts's own comment on the concept).
+
+**leak** (noun, a detected spending pattern; e.g. "Leaks found")
+
+| Language | Proposed | Rationale |
+|---|---|---|
+| es | fuga | leak metaphor ("fuga de dinero" is idiomatic) |
+| fr | fuite | leak metaphor, direct |
+| de | Leck | leak metaphor, direct (also seen as "Geldleck") |
+| pt-BR | vazamento | leak metaphor ("vazamento de dinheiro" is idiomatic) |
+| it | perdita | leak/loss metaphor ("perdita di denaro") |
+| ja | 漏れ | leak metaphor ("支出の漏れ" is a real phrase) |
+| ko | 누수 | leak metaphor ("돈 누수" is idiomatic) |
+| zh-Hans | 漏洞 | leak/gap metaphor; alternative "漏财" is more finance-idiomatic, worth Charen's pick between the two |
+| hi | रिसाव | leak metaphor ("पैसों का रिसाव" is used) |
+| nl | lek | leak metaphor, direct ("geldlek" is idiomatic) |
+
+**skip** (verb/label; "Skip it", "I skipped one", "Skipped it +$X")
+
+| Language | Proposed | Rationale |
+|---|---|---|
+| es | saltar / me lo salté | direct, common verb for skipping an action |
+| fr | sauter / je l'ai sauté | direct |
+| de | überspringen / übersprungen | direct |
+| pt-BR | pular / pulei essa | direct, informal register matches the app's voice |
+| it | saltare / saltato | direct |
+| ja | スキップ(した) | loanword, widely understood in Japanese app UI |
+| ko | 건너뛰기 / 건너뛰었어요 | direct, standard UI term for "skip" |
+| zh-Hans | 跳过 | direct, standard UI term |
+| hi | छोड़ा / छोड़ें | direct, "left out / skip" |
+| nl | overslaan / overgeslagen | direct |
+
+**kept** (past participle; "Kept so far", "money you didn't spend")
+
+| Language | Proposed | Rationale |
+|---|---|---|
+| es | conservado | kept ≠ saved (not "ahorrado") |
+| fr | conservé | kept ≠ saved (not "économisé") |
+| de | behalten | kept ≠ saved (not "gespart") |
+| pt-BR | mantido | kept ≠ saved (not "economizado") |
+| it | conservato | kept ≠ saved (not "risparmiato") |
+| ja | キープ | loanword, neutral; avoids "節約" (saved/economized), kept ≠ saved |
+| ko | 지킨 | kept/protected; avoids "절약" (saved), kept ≠ saved |
+| zh-Hans | 留住 | kept/retained; avoids "省下" (saved), kept ≠ saved |
+| hi | रखा | kept/retained; avoids "बचाया" (saved), kept ≠ saved |
+| nl | behouden | kept ≠ saved (not "bespaard") |
+
+**slip** (noun; "A slip records what happened, it never takes anything back")
+
+| Language | Proposed | Rationale |
+|---|---|---|
+| es | desliz | neutral, no-blame; common word for a minor lapse |
+| fr | écart | neutral, no-blame; "deviation" reads clinical, not judgmental |
+| de | Ausrutscher | neutral, informal, no-blame |
+| pt-BR | deslize | neutral, no-blame |
+| it | scivolone | neutral, informal, no-blame |
+| ja | スリップ | loanword; already used this way in Japanese habit/recovery apps, neutral |
+| ko | 슬립 | loanword; avoids "실수" (mistake), which reads as blame |
+| zh-Hans | 失误 | closest neutral term available; reads slightly more negative than the English "slip", flagged for Charen's judgment; alternative "小差错" is softer |
+| hi | चूक | neutral, common word for a lapse without heavy judgment |
+| nl | misstap | neutral, no-blame |
+
+The app's quotes (`today.spentQuotes`/`today.keptQuotes`) are
+deliberately NOT proposed here: both arrays are RETIRED dead code (ADR
+0037; nothing renders them since `ViewQuote.tsx`'s run-19 removal from
+the live tree), so translating them has no observable effect. Revisit
+only if ADR 0037 is reversed and the quote rotation un-retires.
 
 ## Notes for the next run
 
@@ -322,13 +413,18 @@ item 4).
 - `npx expo install <pkg>` fails the same network way; use
   `npm install <pkg>@<bundled-version>` (read the version from
   `node_modules/expo/bundledNativeModules.json`) instead.
-- The Language picker in Settings is still cosmetic only: selecting a
-  language persists the override and nothing on screen changes yet,
-  because most components still read the static English `strings` export
-  and no non-English catalog exists. 59 files (2 shared, 57 leaves/screens)
-  are wired through `useStrings()` so far; all still resolve to English
-  either way until plan item 4 lands catalogs, so this is not yet
-  observable. Expected, not a bug.
+- The Language picker in Settings is no longer purely cosmetic: as of run
+  20, selecting a language changes visible text for any already-
+  `useStrings()`-converted component that reads `common` (minus `keep`),
+  `sheets`, `tabs`, or `screenTitles` (every call site is converted, per
+  item 2's run-19 close-out). Everything else still resolves to English,
+  since no other section has a translated overlay yet. When picking a
+  test-file candidate for anything touching those four sections, a test
+  asserting literal English text for them (rather than reading the live
+  catalog) can now genuinely fail for a locale with a real overlay, not
+  just theoretically; see `languageSheet.test.tsx`'s run-20 fix for the
+  pattern (also: clear `AsyncStorage` between test cases that call
+  `setOverride()`, so one case's override does not leak into the next).
 - `contexts/LocaleContext.tsx`'s `detectDeviceLocale()` call is wrapped in
   try/catch with a `DEFAULT_LOCALE` fallback, so mounting `LocaleProvider`
   in a test does NOT require mocking `expo-localization`; several already-

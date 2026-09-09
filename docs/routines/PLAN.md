@@ -863,9 +863,124 @@ work, tracked elsewhere).
 - [ ] es, fr, de, pt-BR, it, ja, ko, zh-Hans, hi, nl catalogs. Every
       catalog file headed: "Provisional machine translation, needs human
       review."
+
+      **Run 20: catalog infrastructure built, first proof-of-pattern slice
+      populated for all 10 languages.** Before this run, `getCatalog()`
+      resolved every locale to the same English `strings` object (plan
+      item 2's placeholder); this run replaced that with real per-locale
+      overlays, merged onto English.
+
+      Design: rather than requiring each locale file to satisfy the full
+      `Catalog` type (~660 keys, including pluralized function-valued
+      entries with locale-specific CLDR rules) before it can ship at all, a
+      locale file is a `LocaleOverlay` (`utils/i18n.ts`): a deep-partial of
+      `Catalog` that widens `as const`'s string-literal leaves back to
+      `string` and widens array element types the same way, but leaves
+      function signatures untouched (a function-valued key is either
+      supplied whole, with its own locale's pluralization baked in, or
+      omitted and inherits the English function). `mergeCatalog(base,
+      overlay)` recursively overlays a locale's translated keys onto
+      English, key by key; an omitted key at any depth falls back to
+      English rather than rendering blank. `getCatalog(locale)` memoizes
+      the merged result per locale in a module-level `Map` (`en` always
+      returns `strings` itself, no merge) so a component's `useStrings()`
+      value stays referentially stable across renders for a fixed locale;
+      without this, every `useMemo`/`useCallback` listing `strings` in its
+      deps (the standing rule from plan item 2) would recompute every
+      render once real overlays existed, since a fresh merge would be a
+      fresh object each call. This lets every future run extend coverage
+      section by section, language by language, independently, rather than
+      blocking on one language's full ~660-key translation landing atomically.
+
+      `locales/<code>.ts` (`pt-BR.ts` and `zh-Hans.ts` export `ptBR`/
+      `zhHans`, valid identifiers for the hyphenated locale codes; every
+      other file exports its own code as the identifier), one per target
+      language, each headed "Provisional machine translation, needs human
+      review" per this item's own requirement. This run's slice, populated
+      in all 10: `common` (7 of its 8 keys; `keep` deliberately withheld,
+      see below), `sheets` (2 keys), `tabs` (4 keys), `screenTitles` (4
+      keys, trailing period preserved literally in every locale rather than
+      swapped for a language-appropriate full stop, e.g. Japanese `。` or
+      Hindi `।`; a Charen-reviewable choice, not a rule to enforce). 17 of
+      ~660 keys now populated per language; every other section (all of
+      `habitLogging`, `coachMoments`, `leakScan`, `onboarding`, `paywall`,
+      etc.) still resolves to English via the merge fallback, same as
+      before this run.
+
+      `common.keep` withheld on purpose, not an oversight: close enough to
+      the locked vocabulary (leak/skip/kept/slip) that a guessed
+      translation risks the same drift the routine is explicitly told not
+      to cause. `__tests__/localeCatalogs.test.ts` asserts no overlay
+      supplies it, parameterized across all 10 locales, so a future run
+      cannot reintroduce it by accident while extending `common`. Proposal
+      table for the four locked terms (not `common.keep` specifically,
+      which is a different, lower-stakes word) added to HANDOFF.md's
+      DECISIONS NEEDED this run, ahead of translating the sections that
+      actually contain them, per this item's own second checkbox below.
+
+      One real test regression surfaced and fixed, not a design flaw:
+      `__tests__/languageSheet.test.tsx` asserted `strings.common.cancel`
+      (static English) would always be the sheet's own rendered Cancel
+      text, true only because no catalog previously differed from English.
+      `LanguageSheet.tsx` was `useStrings()`-converted back in run 10, so
+      once a real overlay landed, its Cancel button started rendering the
+      active locale's translation for real. The test file also had no
+      `AsyncStorage.clear()` between its own cases, so a locale override
+      set by an earlier case (`selecting a language applies the override`,
+      which picks 'de') leaked into a later one, only becoming visible now
+      that `de` has different text to leak in. Fixed both: added the clear
+      (afterEach), and the Cancel assertion now reads
+      `getCatalog('fr').common.cancel` (the file mocks the device to
+      French and no override should be active in that case), matching what
+      actually renders instead of assuming static English. This is the
+      shape plan item 3 exists for, generalized: any test still asserting
+      a literal English value for a section a later run translates will
+      need the same fix when that run lands, not just this one file.
+
+      New test file this run: `__tests__/localeCatalogs.test.ts`,
+      parameterized (`describe.each`) across all 10 locale codes, covering
+      what's specific to the overlay/merge machinery rather than any one
+      locale's translation: every overlay key path exists in the English
+      base (catches a typo'd/misnested key that would otherwise silently
+      do nothing, since `mergeCatalog` only overlays what it's given), the
+      `common.keep` guard above, and `getCatalog(locale)` resolving without
+      throwing while keeping every top-level section (so an untranslated
+      section is never dropped, only left in English). `__tests__/i18n.test.tsx`
+      updated for the new merge behavior (no longer asserts `getCatalog('fr')
+      is strings` by reference; asserts the translated slice, the
+      English-fallback slice, memoization, and that the base catalog is
+      never mutated).
+
+      Two commits (infra + all 10 locale files in one, the languageSheet
+      fix in a second); `tsc --noEmit` clean and the full suite green
+      (113/113, 1210/1210, up from 112/1166, the 1 new suite and ~44 new
+      tests all from this run) after each, no flake.
+
+      **What's left:** expand each of the 10 overlays section by section
+      (suggested order for the next dedicated run: `expenses`, `upcoming`,
+      `categories`/`categoryDetail`, `settings`, `profile` next, since
+      none of those touch the locked vocabulary or the app's quotes and
+      are comparable in size to this run's slice; `habitLogging`,
+      `coachMoments`, and `today`'s quote arrays need the DECISIONS NEEDED
+      proposal below settled, or at minimum provisional entries adopted
+      with a clear "pending Charen" marker, before translating). A
+      dedicated run doing one language's full ~660 keys end to end (rather
+      than one section across all 10) is also a reasonable alternative
+      slicing; either way, budget more than one run per meaningful chunk,
+      the same lesson item 2's file-by-file conversion learned repeatedly.
 - [ ] leak / skip / kept / slip and the app's quotes are PRODUCT VOICE:
       never finalized by this routine. Provisional entries only, proposal
       table lives in HANDOFF.md's DECISIONS NEEDED until Charen picks.
+      **Run 20: proposal table for the four locked terms added to
+      HANDOFF.md's DECISIONS NEEDED**, ahead of translating the sections
+      that contain them (`habitLogging` above all), so Charen's review can
+      run in parallel with future runs' section-by-section translation
+      work rather than gating it. The app's quotes (`today.spentQuotes`/
+      `today.keptQuotes`) are NOT proposed: both arrays are RETIRED dead
+      code (ADR 0037, nothing renders them since `ViewQuote.tsx`'s run-19
+      decision), so translating them has no observable effect; deferred
+      indefinitely, same reasoning as `ViewQuote` itself, unless ADR 0037
+      is reversed.
 
 ## 5. Overflow hardening
 
