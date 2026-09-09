@@ -53,7 +53,7 @@ work, tracked elsewhere).
       `__tests__/i18n.test.tsx` (getCatalog, useStrings throws outside
       LocaleProvider same as useLocale, resolves and re-resolves on locale
       change).
-- [ ] Call-site migration, file by file: replace
+- [x] Call-site migration, file by file: replace
       `import { strings } from '@/constants/strings'` with
       `const strings = useStrings();` inside the component (same local
       name, so the rest of the file is unchanged). This requires
@@ -758,6 +758,94 @@ work, tracked elsewhere).
       `LocaleProvider` in the tree). All three budgeted for a dedicated
       run; PLAN.md's item 2 call-site migration checkbox stays open
       until they, plus a decision on `ViewQuote`'s retired pair, land.
+
+      **Run 19: all three converted**, closing out the genuine
+      remaining-work set.
+      `utils/recurring.ts`: the module-level plain-const `SCHEDULE_SEPARATOR`
+      folded into a local `const separator = strings.money.scheduleSeparator;`
+      inside `describeSchedule` (no need to keep it module-level once it
+      reads a threaded catalog); `weekdayPlural`/`monthDayLabel` (the
+      helper-function shape) and the exported `describeSchedule` itself
+      each took an added `strings: Catalog` parameter. One call site
+      outside the file and its own tests, `components/money/UpcomingList.tsx`
+      line 233, already had `strings` in scope from its own earlier
+      conversion (run 12); updated to pass it through. The other export,
+      `daysUntilLabel`, still does not read the catalog at all (confirmed
+      again, same gap flagged run 18): left untouched, it is a new-keys
+      addition, not a call-site migration, out of this item's scope until
+      item 2 (or a dedicated pick) adds a translated "Today"/"Tomorrow"/
+      "in N days" key. `__tests__/recurrenceRule.test.ts` unit-tests
+      `describeSchedule` directly (not through a component render), so it
+      needed its own fix, distinct from every prior conversion's
+      LocaleProvider-in-test-tree pattern: imported the static `strings`
+      from `@/constants/strings` (the English catalog, appropriate for a
+      pure-function unit test with no React tree) and passed it as the
+      third argument at all 20 call sites. `__tests__/recurring.test.ts`
+      (the separate byte-identical-dates pin) does not call
+      `describeSchedule` and needed no change.
+
+      `utils/coachMoments.ts`: the module-level helper-function shape
+      again, one function, `cardText` (the plan's run-18 note called it
+      `resolveCoachCard`; the actual name in the file is `cardText`, a
+      stale name in that note, corrected here). Took an added
+      `strings: Catalog` parameter. Three call sites outside the file and
+      its own tests, all already `useStrings()`-converted with `strings`
+      in scope at the call: `components/habit-logging/CheckInCard.tsx`
+      (inside a `useMemo` that already had `strings` in its deps array
+      from an earlier run, so no deps change needed here), `components/
+      habit-logging/LeakCard.tsx` (plain render-body call), and
+      `app/(tabs)/index.tsx` (Today, plain render-body call, not inside
+      any memo). `__tests__/coachMoments.test.ts` unit-tests `cardText`
+      directly (same shape as `describeSchedule`'s test): added the
+      static `strings` import and passed it at both of its two call sites
+      (a loop each, so 34 individual calls covered by 2 edits).
+
+      `contexts/ReportsContext.tsx`: not a helper-function shape after
+      all, once traced. Its one `strings.reports.weekOf(...)` usage
+      (inside `calculateSpendingOverTime`, a `useCallback` in the
+      `ReportsProvider` function component's own body) is directly
+      `useStrings()`-eligible: `ReportsProvider` sits under
+      `LocaleProvider` in `app/_layout.tsx`'s provider tree (confirmed
+      before assuming so, per the plan's own note that this needed
+      checking), so `const strings = useStrings();` was added at the top
+      of the provider body like any other component conversion, with
+      `strings` added to `calculateSpendingOverTime`'s previously-empty
+      deps array. No new parameter threading, no other callers to update.
+      Its only test coverage is transitive, through the two screens that
+      render `ReportsProvider` (`insightsFirstScan.test.tsx`,
+      `insightsPager.test.tsx`), both already `LocaleProvider`-covered
+      from run 14; confirmed via `grep -rl "ReportsProvider"` that no
+      other test file renders it directly. No test file changes needed.
+
+      All three converted in one commit each; `tsc --noEmit` clean and
+      the full suite green (112/112, 1166/1166) after every commit, no
+      flake.
+
+      **Decision made this run on `ViewQuote`'s retired pair**, closing
+      the one item the run-18 note left open: `components/today/
+      ViewQuote.tsx` and `useViewQuote.ts` stay unconverted. Confirmed
+      again via `grep -rn "ViewQuote\|useViewQuote"` that every hit
+      outside their own two files is a doc-comment cross-reference
+      (`LongArc.tsx`, `constants/strings.ts`, `app/(tabs)/index.tsx`,
+      `utils/storage.ts`), never a real import; ADR 0037 retired both,
+      nothing renders them, kept only as a documented revert path (the
+      same status as `constants/theme.ts`'s dark theme and
+      `AuroraBackground.tsx`). Converting dead code that renders to no
+      user has no observable i18n effect and no user ever sees it in any
+      locale, so it is out of scope for a "full internationalization of
+      the app a user experiences" reading of this plan, per the
+      alternative the run-11/18 notes already offered. If ADR 0037 is
+      ever reversed and the quote rotation un-retires, convert both then
+      (a real hook + a small leaf, no unusual shape) rather than before.
+
+      This closes plan item 2's call-site migration checkbox: every
+      live-reachable screen and component now reads the catalog through
+      `useStrings()` or a threaded `Catalog` parameter. The static
+      `strings` import remains in exactly 4 files, all by design, not by
+      omission: `utils/i18n.ts` (the seam), `components/onboarding/
+      OnboardingCarousel.tsx` (builds the exported `BEATS` test fixture,
+      run 12), and the RETIRED `ViewQuote.tsx`/`useViewQuote.ts` pair
+      (this run's decision, above).
 - [ ] Convert function-valued strings (pluralized/interpolated) to ICU
       messages with proper CLDR plural rules, not the current hand-rolled
       `n === 1 ? '' : 's'` ternaries, and add the ICU formatting dependency

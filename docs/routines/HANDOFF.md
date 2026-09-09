@@ -2,19 +2,24 @@
 
 ## Status
 
-In progress. Run 18: no REVIEW FEEDBACK was pending at session start
-(runs 14-16 approved, the one `routine/ipad` coordination note not yet
-actionable since main hasn't picked up that branch's commits), branch
-was already current with origin/main (rebase was a no-op). Converted
-`ResultsScreen.tsx` and `BillsScreen.tsx`, completing the leak-scan
-screen set (9 of 9 files). 68 of ~75 call-site files converted total.
-Only 7 files still import the static catalog, all previously flagged
-as non-standard: the RETIRED `ViewQuote` pair, `OnboardingCarousel.tsx`
-(intentional fixture builder), `utils/i18n.ts` itself (the seam), and
-three genuine remaining-work files needing a non-hook threading
-decision (`utils/coachMoments.ts`, `utils/recurring.ts`,
-`contexts/ReportsContext.tsx`), investigated this run but not
-converted, budgeted for a dedicated run next.
+In progress. Run 19: no REVIEW FEEDBACK was pending at session start
+(only the two `routine/ipad` coordination notes carried forward from
+runs 14-16, still not actionable until that branch's commits land on
+main), branch was already current with origin/main (rebase was a
+no-op). Converted the three genuine remaining-work files flagged since
+run 11 and budgeted for a dedicated run by run 18:
+`utils/recurring.ts`, `utils/coachMoments.ts`,
+`contexts/ReportsContext.tsx`. **Plan item 2's call-site migration
+checkbox is now checked.** Only 3 files still import the static
+catalog, all previously flagged as by-design non-standard:
+`utils/i18n.ts` (the seam), `OnboardingCarousel.tsx` (intentional
+fixture builder), and the RETIRED `ViewQuote`/`useViewQuote` pair,
+which this run made an explicit decision to leave unconverted (ADR
+0037, dead code, no observable i18n effect; see PLAN.md's run 19
+entry for the full reasoning). Plan item 2's remaining open work is
+now only the ICU/pluralization checkbox (deferred to when item 4's
+real catalogs show what it needs, per the plan's own note) and item 3
+(test migration).
 
 ## Completed
 
@@ -186,47 +191,114 @@ converted, budgeted for a dedicated run next.
     Confirmed via the standing grep that exactly 7 files remain, all
     previously-flagged non-standard cases (see Next); no top-level
     screen and no leak-scan file remains unconverted.
+- Run 19, the three genuine remaining-work files, closing plan item 2's
+  call-site migration checkbox:
+  - `utils/recurring.ts`: `SCHEDULE_SEPARATOR` (a module-level plain
+    const) folded into a local `separator` variable inside
+    `describeSchedule` once that function itself takes `strings:
+    Catalog`; `weekdayPlural`/`monthDayLabel` (module-level helper
+    functions) got the same added-parameter treatment. One real call
+    site, `components/money/UpcomingList.tsx:233`, already had
+    `strings` in scope from its own run-12 conversion; updated to pass
+    it through. `daysUntilLabel` (the other export in this file) still
+    does not read the catalog at all, confirmed again; left alone, it
+    is new-keys work, not call-site migration, out of this item's
+    scope (same gap flagged run 18, now flagged a third time so it
+    does not get lost). `__tests__/recurrenceRule.test.ts` calls
+    `describeSchedule` directly as a pure function (not through a
+    render), a shape not seen yet in this stream: imported the static
+    English `strings` and passed it at all 20 call sites, since a
+    plain unit test has no LocaleProvider tree to add.
+    `__tests__/recurring.test.ts` (the separate byte-identical-dates
+    pin) does not call it, no change needed there.
+  - `utils/coachMoments.ts`: one module-level helper function,
+    `cardText` (PLAN.md's run-18 note called it `resolveCoachCard`,
+    a stale name now corrected), took the same added-parameter
+    treatment. Three real call sites, all already `useStrings()`-
+    converted with `strings` in scope: `CheckInCard.tsx` (inside a
+    `useMemo` whose deps already listed `strings` from an earlier
+    run), `LeakCard.tsx` and `app/(tabs)/index.tsx` (both plain
+    render-body calls). `__tests__/coachMoments.test.ts` calls
+    `cardText` directly too, same fix as `describeSchedule`'s test:
+    static `strings` import, passed at both of its two call sites.
+  - `contexts/ReportsContext.tsx`: turned out to be a plain
+    `useStrings()`-eligible component conversion, not a threading
+    problem, once traced: its one usage sits inside
+    `calculateSpendingOverTime`, a `useCallback` in the
+    `ReportsProvider` function component's own body, and
+    `ReportsProvider` sits under `LocaleProvider` in
+    `app/_layout.tsx`'s tree (confirmed before assuming so, per the
+    open question run 18 left). Added `const strings = useStrings();`
+    at the top of the provider and `strings` to that one useCallback's
+    previously-empty deps array. Its only coverage is transitive
+    through `insightsFirstScan.test.tsx`/`insightsPager.test.tsx`
+    (render `ReportsProvider` via `app/(tabs)/insights.tsx`), both
+    already `LocaleProvider`-covered from run 14; confirmed via
+    `grep -rl "ReportsProvider"` that no other test file renders it.
+    No test file changes needed.
+  - Decision made this run, closing the one open question run 18 left:
+    `components/today/ViewQuote.tsx` and `useViewQuote.ts` (RETIRED,
+    ADR 0037, nothing renders them, kept only as a documented revert
+    path) stay unconverted. Every remaining reference outside their
+    own two files is a doc-comment cross-reference
+    (`LongArc.tsx`, `constants/strings.ts`, `app/(tabs)/index.tsx`,
+    `utils/storage.ts`), confirmed via `grep -rn`, never a real
+    import. Dead code with no live render path has no observable i18n
+    effect in any locale, so this reads as out of scope for a "full
+    internationalization of the app a user experiences" plan, the
+    alternative the run-11/18 notes already offered. If ADR 0037 ever
+    un-retires the quote rotation, convert both then (a real hook plus
+    a small leaf, no unusual shape).
+  - Three commits (one per file); `tsc --noEmit` clean and the full
+    suite green (112/112, 1166/1166) after every commit, no flake.
+    Only 3 files now import the static catalog, all by design:
+    `utils/i18n.ts` (the seam), `OnboardingCarousel.tsx` (the `BEATS`
+    fixture builder), and the RETIRED `ViewQuote`/`useViewQuote` pair.
 
 ## Next
 
-- Only 7 files still import the static `strings` catalog directly
-  outside `__tests__/` (rerun `grep -rl "from '@/constants/strings'"
-  app components contexts utils | grep -v __tests__` for the current
-  list). No top-level screen and no leak-scan file remains unconverted;
-  everything left is a previously-flagged non-standard case:
-  - `components/today/ViewQuote.tsx` and `useViewQuote.ts` are RETIRED
-    (ADR 0037, nothing renders them any more, kept only as a documented
-    revert path). Low priority since no live surface depends on them,
-    but still on the remaining-files list; convert last, or note
-    explicitly if skipped as out of scope for a "full
-    internationalization of the app a user experiences" reading of the
-    plan.
-  - `components/onboarding/OnboardingCarousel.tsx` will always appear
-    on this grep by design (run 12): its static import builds the
-    exported `BEATS` test fixture; real rendering is already converted.
-  - `utils/i18n.ts` itself imports `strings` to derive `Catalog` and
-    build `getCatalog()`; this is the seam, not something to convert.
-  - `utils/coachMoments.ts`, `utils/recurring.ts`, `contexts/ReportsContext.tsx`
-    are the three genuine remaining-work files: none is a component or
-    hook, so none can call `useStrings()` directly; they need the
-    catalog threaded in as a parameter instead. Investigated this run,
-    not converted (see PLAN.md's run 18 entry for the per-file detail):
-    `recurring.ts` has a module-level plain-const AND two module-level
-    helper functions AND one exported function (`describeSchedule`)
-    all reading `strings`, with exactly one external call site
-    (`components/money/UpcomingList.tsx`, already converted); a
-    separate exported function in the same file, `daysUntilLabel`,
-    does not read the catalog at all today (hardcoded English), a
-    distinct gap worth flagging when item 2 reaches it.
-    `coachMoments.ts` resolves card copy in one function
-    (`resolveCoachCard`, ~line 234); its callers need tracing before
-    threading. `ReportsContext.tsx` has one usage
-    (`strings.reports.weekOf(...)`); check whether the provider itself
-    sits under `LocaleProvider` before assuming the same fix shape.
-    Budgeted for a dedicated run.
-- Once a meaningful slice of files is migrated, plan item 3 (test
-  migration away from literal-English assertions) can start for those
-  files.
+Plan item 2's call-site migration checkbox is now checked. Only 3 files
+import the static `strings` catalog directly outside `__tests__/`
+(rerun `grep -rl "from '@/constants/strings'" app components contexts
+utils | grep -v __tests__` to confirm), all by design, none of them
+future work for this item:
+- `utils/i18n.ts` itself imports `strings` to derive `Catalog` and
+  build `getCatalog()`; this is the seam, not something to convert.
+- `components/onboarding/OnboardingCarousel.tsx` will always appear on
+  this grep by design (run 12): its static import builds the exported
+  `BEATS` test fixture; real rendering is already converted.
+- `components/today/ViewQuote.tsx` and `useViewQuote.ts` are RETIRED
+  (ADR 0037, nothing renders them any more) and, as of run 19's
+  decision, deliberately staying unconverted: dead code with no live
+  render path has no observable i18n effect. If ADR 0037 ever
+  un-retires the quote rotation, convert both then.
+
+What is actually left for a future run:
+- Plan item 2's ICU/pluralization checkbox (function-valued strings
+  like `n === 1 ? '' : 's'` ternaries becoming proper CLDR plural
+  rules): deliberately deferred until item 4 lands real non-English
+  catalogs and shows what the ICU formatting actually needs, per the
+  plan's own note. Not blocked, just sequenced after item 4.
+- `utils/recurring.ts`'s `daysUntilLabel` export does not read the
+  catalog at all (hardcoded English "Today"/"Tomorrow"/"in N days"),
+  confirmed again this run. This is new-keys work (add translated keys
+  and thread them in), not call-site migration, so it was correctly
+  out of scope for item 2's checkbox; worth its own pick, maybe
+  alongside item 4 since it needs new catalog entries either way.
+- Plan item 3 (test migration away from literal-English assertions):
+  now unblocked in the sense that a large majority of files are
+  migrated, but not yet started. Good candidate for the next dedicated
+  run, or once item 4's first non-English catalog exists (whichever
+  makes the migrated assertions more obviously worth writing).
+- Plan item 4 (provisional machine translations, 10 languages): the
+  next big chunk of net-new work. No catalog exists yet for any
+  non-English locale; `getCatalog()` in `utils/i18n.ts` resolves every
+  locale to English until this lands. Needs its own DECISIONS NEEDED
+  proposal table for leak/skip/kept/slip and the app's quotes before
+  finalizing (see that section below), but the other ~640 keys can
+  proceed without waiting on Charen's picks for those four.
+- Plan items 5 (overflow hardening) and 6 (localized a11y labels) stay
+  sequenced after item 4, as scoped.
 
 ## Blockers
 
