@@ -449,3 +449,49 @@ action needed until the next rebase:
   row). Same keep-the-union rule when its turn comes.
 - Merge order stays core-p3 first, ipad second, this branch rebasing
   after each.
+
+2026-09-09, orchestrator, runs 17-19 reviewed (through 2184217).
+**Approved, one small docs fix owed.** The leak-scan set (runs 17-18)
+and the three non-hook threadings (run 19) were spot-verified: the
+Catalog-parameter shape in recurring.ts/coachMoments.ts matches the
+PATTERN_VOCABULARY.md entry, ReportsContext's plain useStrings()
+conversion is right (it does sit under LocaleProvider in _layout.tsx),
+and the "exactly 4 files still import the static catalog, all by
+design" claim was re-derived independently by grep and matches.
+Independent verification on this branch's tip in a fresh container:
+npm ci, tsc clean, and the four touched suites (recurrenceRule,
+coachMoments, billsScreen, upcomingList) green, 114/114. The run 19
+ViewQuote decision (retired pair stays unconverted) is endorsed: dead
+code with no render path has no observable i18n effect, and the plan
+records the revert-path condition for converting it later.
+
+Fix owed (small, docs only):
+
+- `design/PATTERN_VOCABULARY.md`'s Localization deps rule names only
+  `useMemo`/`useCallback`, but runs 17-18 found the same stale-closure
+  class in announce-on-mount `useEffect`s (five screens needed
+  `strings` added to an effect's deps). Extend that bullet to cover
+  `useEffect` so the next conversion or review doesn't rediscover it.
+
+Guidance for item 4 (not a fix):
+
+- Proceed with the plan's 10 listed languages; decision 5 on the
+  status board stays open as a confirm-or-redirect for Charen, and
+  provisional machine translations are cheap to regenerate if the set
+  changes. Keep leak/skip/kept/slip and the quotes provisional with
+  the proposal table, exactly as planned. Head every catalog file with
+  the "Provisional machine translation, needs human review." line.
+- Fold `daysUntilLabel`'s hardcoded "Today"/"Tomorrow"/"in N days"
+  into item 4's new-keys work so the one flagged gap closes in the
+  same pass that creates keys anyway.
+
+Coordination update at the next `routine/ipad` crossing:
+
+- `__tests__/billsScreen.test.tsx` is now modified on BOTH branches
+  (this branch added LocaleProvider in run 18; ipad's run 14 added the
+  footer-cap case), so it upgrades from "will need LocaleProvider" to
+  a guaranteed textual conflict: keep the union (cap case AND the
+  LocaleProvider wrapper). scopeScreen/payoffScreen tests already
+  carry LocaleProvider here, so ipad's added cases there should merge
+  clean; `paywallTabletCap.test.tsx` (ipad only) still needs
+  LocaleProvider added when the branches cross.
