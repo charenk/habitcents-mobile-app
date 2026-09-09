@@ -10,6 +10,7 @@ import {
   selectSkipMoment,
   type CoachMomentState,
 } from '@/utils/coachMoments';
+import { strings } from '@/constants/strings';
 
 describe('createInitialCoachMomentState', () => {
   it('starts with nothing shown and rotation at zero', () => {
@@ -217,7 +218,7 @@ describe('cardText', () => {
       'BR-1', 'BR-2', 'BR-3', 'BR-4',
     ];
     for (const id of ids) {
-      const text = cardText(id);
+      const text = cardText(id, strings);
       expect(typeof text).toBe('string');
       expect(text.length).toBeGreaterThan(0);
     }
@@ -231,7 +232,7 @@ describe('cardText', () => {
       'BR-1', 'BR-2', 'BR-3', 'BR-4',
     ];
     for (const id of ids) {
-      expect(cardText(id)).not.toContain('—');
+      expect(cardText(id, strings)).not.toContain('—');
     }
   });
 });
