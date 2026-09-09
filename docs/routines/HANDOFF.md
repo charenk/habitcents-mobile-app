@@ -2,16 +2,19 @@
 
 ## Status
 
-In progress. Run 17: no REVIEW FEEDBACK was pending at session start
-(runs 14-16 approved, one coordination note for the next `routine/ipad`
-crossing, not actionable yet), branch was already current with
-origin/main (rebase was a no-op). Converted 7 of the 9 leak-scan
-screen-set files: `useTrackLeak.tsx` (hook), `PulseDayDetailSheet.tsx`,
-`PayoffScreen.tsx`, `GracefulFailure.tsx`, `DeckScreen.tsx`,
-`IntakeScreen.tsx`, `ScopeScreen.tsx`. 67 files converted total now (2
-shared + 65 leaves/screens/hooks). `ResultsScreen.tsx` and
-`BillsScreen.tsx` are the only leak-scan files left, budgeted for a
-dedicated run.
+In progress. Run 18: no REVIEW FEEDBACK was pending at session start
+(runs 14-16 approved, the one `routine/ipad` coordination note not yet
+actionable since main hasn't picked up that branch's commits), branch
+was already current with origin/main (rebase was a no-op). Converted
+`ResultsScreen.tsx` and `BillsScreen.tsx`, completing the leak-scan
+screen set (9 of 9 files). 68 of ~75 call-site files converted total.
+Only 7 files still import the static catalog, all previously flagged
+as non-standard: the RETIRED `ViewQuote` pair, `OnboardingCarousel.tsx`
+(intentional fixture builder), `utils/i18n.ts` itself (the seam), and
+three genuine remaining-work files needing a non-hook threading
+decision (`utils/coachMoments.ts`, `utils/recurring.ts`,
+`contexts/ReportsContext.tsx`), investigated this run but not
+converted, budgeted for a dedicated run next.
 
 ## Completed
 
@@ -151,40 +154,76 @@ dedicated run.
     of the seven files. Two commits (hook + small-screen batch, then
     Intake/Scope); `tsc --noEmit` clean and the full suite green
     (112/112, 1166/1166) after each, no flake either time.
+- Run 18, `ResultsScreen.tsx` and `BillsScreen.tsx`, completing the
+  leak-scan screen set (9 of 9 files):
+  - `ResultsScreen.tsx`: module-level helper function
+    `evidenceWindowLabel` took an added `strings: Catalog` parameter,
+    threaded from `useStrings()` at its one call site (the
+    `evidenceWindow` `useMemo`, `strings` added to its deps). Three
+    `useCallback`s were missing `strings` from their deps and got it
+    added: `handleSaveProjection`, `handleUndo`, `handleBringInDays`
+    (each reads a `strings.toasts.*`/`strings.leakScan.*` value on an
+    error or confirmation path). The announce-on-mount `useEffect`
+    (`strings.leakScan.resultsTitle`) got `strings` added to its `[]`
+    deps, same as run 17's leak-scan screens. The `HabitCardItem`
+    memo'd child component does not itself read `strings`, so needed
+    no change. All six of its test files
+    (`resultsScreenActivation`/`resultsScreenUndo`/`resultsScreenLadder`/
+    `resultsScreenPaywallPlacement`/`leakScanImportUndo`/
+    `leakScanOnboardingExit`) already had `LocaleProvider`.
+  - `BillsScreen.tsx`: module-level helper function `cadenceLabel` took
+    the same added-parameter treatment, threaded from `useStrings()` at
+    its two call sites, both inside `renderRow` (a plain function
+    defined in the component body, not module scope, so it closes over
+    `strings` fresh every render with no deps array of its own to fix).
+    The announce-on-mount `useEffect` (`strings.leakScan.billsTitle`)
+    got `strings` added to its `[]` deps. Its own dedicated leaf test,
+    `billsScreen.test.tsx`, had no `LocaleProvider` at all (confirmed:
+    it renders `BillsScreen` directly with no other provider tree
+    reaching it); added it.
+  - One commit; `tsc --noEmit` clean, full suite green (112/112,
+    1166/1166), no flake. 68 of ~75 call-site files converted total.
+    Confirmed via the standing grep that exactly 7 files remain, all
+    previously-flagged non-standard cases (see Next); no top-level
+    screen and no leak-scan file remains unconverted.
 
 ## Next
 
-- 9 files still import the static `strings` catalog directly outside
-  `__tests__/` (rerun `grep -rl "from '@/constants/strings'" app
-  components contexts utils | grep -v __tests__` for the current list:
-  `ResultsScreen.tsx`, `BillsScreen.tsx`, the two RETIRED `ViewQuote`
-  files, `OnboardingCarousel.tsx` (expected, see run 12's note),
-  `ReportsContext.tsx`, `utils/i18n.ts` itself, `recurring.ts`,
-  `coachMoments.ts`). No top-level screen remains unconverted.
-- Only two leak-scan screen-set files remain: `ResultsScreen.tsx` (791
-  lines, 15 usages, a `memo`-wrapped `HabitCardItem` child component at
-  module scope that does not itself read `strings`, plus one
-  module-level helper function `evidenceWindowLabel` that does, the
-  same helper-function shape `CheckInCard.tsx`/`PickOneSheet.tsx`/
-  `SpentList.tsx` had) and `BillsScreen.tsx` (314 lines, 15 usages, a
-  module-level helper function `cadenceLabel`, same shape). Both
-  budgeted for a dedicated run given size, but the blast-radius
-  investigation is already done: `ResultsScreen.tsx` mounts
-  `CategoryTransactionsSheet`/`ReviewQueueSheet`/`PulseDayDetailSheet`
-  and calls `useTrackLeak`, all already converted and already covered
-  by its own test suite (see above), so this is additive work on an
-  already-`LocaleProvider`-covered tree, not a new investigation.
-- `utils/coachMoments.ts`, `utils/recurring.ts` are plain functions (not
-  components or hooks) that import `strings`; they need the catalog
-  passed in as a parameter instead of `useStrings()`. Decide that shape
-  when their turn comes. `contexts/ReportsContext.tsx` is in the same
-  boat (a context provider, not itself hook-eligible the same way).
-- `components/today/ViewQuote.tsx` and `useViewQuote.ts` are RETIRED
-  (ADR 0037, nothing renders them any more, kept only as a documented
-  revert path). Low priority since no live surface depends on them, but
-  still on the remaining-files list; convert last, or note explicitly if
-  skipped as out of scope for a "full internationalization of the app a
-  user experiences" reading of the plan.
+- Only 7 files still import the static `strings` catalog directly
+  outside `__tests__/` (rerun `grep -rl "from '@/constants/strings'"
+  app components contexts utils | grep -v __tests__` for the current
+  list). No top-level screen and no leak-scan file remains unconverted;
+  everything left is a previously-flagged non-standard case:
+  - `components/today/ViewQuote.tsx` and `useViewQuote.ts` are RETIRED
+    (ADR 0037, nothing renders them any more, kept only as a documented
+    revert path). Low priority since no live surface depends on them,
+    but still on the remaining-files list; convert last, or note
+    explicitly if skipped as out of scope for a "full
+    internationalization of the app a user experiences" reading of the
+    plan.
+  - `components/onboarding/OnboardingCarousel.tsx` will always appear
+    on this grep by design (run 12): its static import builds the
+    exported `BEATS` test fixture; real rendering is already converted.
+  - `utils/i18n.ts` itself imports `strings` to derive `Catalog` and
+    build `getCatalog()`; this is the seam, not something to convert.
+  - `utils/coachMoments.ts`, `utils/recurring.ts`, `contexts/ReportsContext.tsx`
+    are the three genuine remaining-work files: none is a component or
+    hook, so none can call `useStrings()` directly; they need the
+    catalog threaded in as a parameter instead. Investigated this run,
+    not converted (see PLAN.md's run 18 entry for the per-file detail):
+    `recurring.ts` has a module-level plain-const AND two module-level
+    helper functions AND one exported function (`describeSchedule`)
+    all reading `strings`, with exactly one external call site
+    (`components/money/UpcomingList.tsx`, already converted); a
+    separate exported function in the same file, `daysUntilLabel`,
+    does not read the catalog at all today (hardcoded English), a
+    distinct gap worth flagging when item 2 reaches it.
+    `coachMoments.ts` resolves card copy in one function
+    (`resolveCoachCard`, ~line 234); its callers need tracing before
+    threading. `ReportsContext.tsx` has one usage
+    (`strings.reports.weekOf(...)`); check whether the provider itself
+    sits under `LocaleProvider` before assuming the same fix shape.
+    Budgeted for a dedicated run.
 - Once a meaningful slice of files is migrated, plan item 3 (test
   migration away from literal-English assertions) can start for those
   files.
@@ -290,7 +329,9 @@ item 4).
   the same test file that exercises the file this run touched. If it
   fails a third time, re-run once before treating it as a real
   regression; if it then still fails, treat it as this stream's problem
-  and investigate rather than re-running again.
+  and investigate rather than re-running again. Did not recur in run 17
+  or run 18 (both clean on the first full-suite pass); still just
+  intermittent full-suite timing load, not a regression.
 
 ## REVIEW FEEDBACK
 
