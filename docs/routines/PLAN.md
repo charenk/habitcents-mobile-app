@@ -971,6 +971,77 @@ work, tracked elsewhere).
       than one section across all 10) is also a reasonable alternative
       slicing; either way, budget more than one run per meaningful chunk,
       the same lesson item 2's file-by-file conversion learned repeatedly.
+
+      **Run 21: second slice, `expenses`, `categories`, `categoryDetail`,
+      `profile` populated for all 10 languages**, per run 20's suggested
+      order. Deliberately stopped short of `settings` (the largest of the
+      five, ~28 string keys) and `upcoming` this run, per the same
+      "budget more than one run per chunk" guidance run 20 itself gave;
+      `settings` is next.
+
+      String-only keys translated: `expenses` 10 (all but the
+      interpolated `editAccessibilityLabel`), `categories` 13 (all but
+      the interpolated `deleteTitle`/`thisMonthSuffix`/
+      `openCategoryLabel`), `categoryDetail` 10 (all but the interpolated
+      `vsLastMonth`/`recentLogsCount`/`logTimestamp` and the pluralized
+      `logCount`), `profile` 3 (all of it). 36 new string keys x 10
+      languages, 53 of ~660 keys now populated per language (up from 17).
+      Every function-valued key across these four sections was omitted
+      and inherits English, same as run 20's design, whether or not it
+      actually pluralizes: `logCount`'s ternary needs real ICU work, but
+      the plain-interpolation functions (`editAccessibilityLabel`,
+      `deleteTitle`, etc.) don't strictly need CLDR plural rules to
+      translate. Kept them out anyway for one run more, so every function-
+      valued key gets the same treatment until item 2's ICU checkbox
+      actually lands and sets the pattern for both cases at once, rather
+      than this routine deciding ad hoc per key which functions are "safe
+      enough" to hand-translate now.
+
+      `upcoming` has nothing to add: both its keys
+      (`totalLabel`/`recurringCount`) are function-valued, and
+      `recurringCount` is the ternary-plural case item 2's ICU work is
+      itself waiting on, so this section stays fully English until that
+      lands. Confirmed by reading the section, not assumed from run 20's
+      note.
+
+      One naming judgment call, flagged for the record rather than
+      gated on: `categories.deleteCancel` ("Keep category", the Cancel
+      button on the delete-confirm sheet) was translated normally in
+      every language, not withheld like `common.keep`. Rationale: the
+      withholding precedent is about a bare, context-free "Keep" that
+      could plausibly land near the kept-money concept; "Keep category"
+      is a full phrase whose own object (a category, not money) already
+      disambiguates it from the locked `kept` term, so a normal verb
+      translation (French `Conserver`, German `behalten`, etc, matching
+      each language's already-established "kept ≠ saved, not an
+      economize-verb" register from the DECISIONS NEEDED table, since
+      using the same retain-verb keeps voice consistent even though this
+      key isn't the locked term itself) reads as safe. Not a Charen-
+      gating decision, just documented reasoning in case a future run or
+      review wants to reconsider it.
+
+      One transcription fix caught before committing, not shipped:
+      the first Dutch draft of `categoryDetail.trendEmpty` read "Nog geen
+      uitgaven om te grafiek weer te geven" (wrong preposition after "om
+      te"); corrected to "Nog geen uitgaven om in een grafiek weer te
+      geven" before writing the file. Also corrected `profile.title` for
+      zh-Hans from an initially-drafted colloquial "我的" ("mine") to the
+      more literal, safer-for-a-provisional-translation "个人资料"
+      ("personal information/profile"), matching every other language's
+      literal rendering rather than a locally idiomatic shortcut.
+
+      No test file changes needed: `localeCatalogs.test.ts` is
+      parameterized and schema-driven (it already covers any key an
+      overlay adds), and no other test asserts literal English text for
+      any of these four sections' keys (checked via the same
+      `languageSheet.test.tsx`-shaped risk run 20 flagged; none found).
+      One commit; `tsc --noEmit` clean and the full suite green
+      (113/113, 1210/1210, same counts as run 20 since no new test
+      file this run) after one re-run past the same pre-existing
+      `door3BreakSheet.test.tsx` full-suite-load flake noted since run
+      13 (failed once under full-suite load, passed standalone and on
+      the immediate full-suite re-run, no code change in between; this
+      run touched no Today-tree file).
 - [ ] leak / skip / kept / slip and the app's quotes are PRODUCT VOICE:
       never finalized by this routine. Provisional entries only, proposal
       table lives in HANDOFF.md's DECISIONS NEEDED until Charen picks.
