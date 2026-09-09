@@ -173,7 +173,7 @@ function CheckInCardImpl({
     const tint = isMilestoneCard(coachMoment.cardId);
     const skipped = isDaily ? todayState === 'skipped' : lastEntry?.state === 'skipped';
     return {
-      text: cardText(coachMoment.cardId),
+      text: cardText(coachMoment.cardId, strings),
       tint,
       tone: (skipped ? 'sage' : 'snow') as 'sage' | 'snow',
       headline: tint && milestoneJustHit

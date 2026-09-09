@@ -1073,7 +1073,7 @@ export default function TodayScreen() {
                 </View>
                 {firstLogCardId && (
                   <View style={styles.emptyCoachMoment}>
-                    <CoachMomentSlot text={cardText(firstLogCardId)} />
+                    <CoachMomentSlot text={cardText(firstLogCardId, strings)} />
                   </View>
                 )}
               </ScrollView>
