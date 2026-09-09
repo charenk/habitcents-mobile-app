@@ -1,10 +1,13 @@
 /**
  * Provisional machine translation, needs human review.
  *
- * Locale: fr (French). Plan item 4's proof-of-pattern slice: `common`
- * (except `keep`, held back deliberately, see below), `sheets`, `tabs`, and
- * `screenTitles`. Every other section is not yet translated and falls back
- * to English via mergeCatalog() in utils/i18n.ts.
+ * Locale: fr (French). Plan item 4: `common` (except `keep`, held back
+ * deliberately, see below), `sheets`, `tabs`, `screenTitles` (run 20), plus
+ * `expenses`, `categories`, `categoryDetail`, `profile` (run 21). Every
+ * other section is not yet translated and falls back to English via
+ * mergeCatalog() in utils/i18n.ts. Function-valued keys (pluralized or
+ * interpolated) are omitted throughout and inherit the English function,
+ * per plan item 2's deferred ICU work.
  *
  * `common.keep` is withheld on purpose: it is close enough to the app's
  * locked vocabulary (leak/skip/kept/slip, ops CLAUDE.md) that this routine
@@ -38,5 +41,50 @@ export const fr: LocaleOverlay = {
     money: 'Argent.',
     insights: 'Aperçus.',
     categories: 'Catégories.',
+  },
+  expenses: {
+    recent: 'Récent',
+    upcoming: 'À venir',
+    merchantPlaceholder: 'Commerçant (p. ex. Starbucks)',
+    merchantFieldLabel: 'Commerçant',
+    noteFieldLabel: 'Note',
+    amountHint: 'Appuyez deux fois pour saisir un montant',
+    notePlaceholder: 'Note (facultatif)',
+    saveExpense: 'Enregistrer la dépense',
+    savedConfirmation: 'Enregistré',
+    all: 'Tous',
+  },
+  categories: {
+    title: 'Catégories',
+    defaultCategories: 'Catégories par défaut',
+    customCategories: 'Catégories personnalisées',
+    loading: 'Chargement.',
+    emptyTitle: 'Regroupez vos dépenses à votre façon',
+    emptySubtitle: 'Les groupes rendent les tendances plus faciles à voir.',
+    emptyCta: 'Ajoutez votre première catégorie',
+    deleteMessage:
+      'Vos dépenses existantes sont conservées ; elles n’afficheront simplement plus cette catégorie.',
+    deleteConfirmCta: 'Supprimer la catégorie',
+    deleteCancel: 'Conserver la catégorie',
+    addCategoryLabel: 'Ajouter une catégorie',
+    eyebrowDefault: 'Par défaut',
+    eyebrowCustom: 'Personnalisée',
+  },
+  categoryDetail: {
+    notFound: 'Catégorie introuvable',
+    editCategoryLabel: 'Modifier la catégorie',
+    thisMonth: 'ce mois-ci',
+    logsStat: 'entrées',
+    averageStat: 'moyenne',
+    sixMonthTrend: 'Tendance sur 6 mois',
+    topMerchants: 'Principaux commerçants',
+    recentLogs: 'Entrées récentes',
+    noExpensesLogged: 'Rien d’enregistré dans cette catégorie pour l’instant.',
+    trendEmpty: 'Aucune dépense à représenter pour l’instant.',
+  },
+  profile: {
+    title: 'Profil.',
+    headerLabel: 'Profil',
+    supportRow: 'Assistance',
   },
 };
