@@ -101,7 +101,6 @@ const MIN_EVERY_N_DAYS = 2;
 const MAX_EVERY_N_DAYS = 90;
 const DEFAULT_EVERY_N_DAYS = 10;
 
-/**
 type NameChip = {
   key: string;
   label: string;
