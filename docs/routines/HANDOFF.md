@@ -2,25 +2,18 @@
 
 ## Status
 
-In progress. Run 20: no REVIEW FEEDBACK was pending at session start
-(only the two `routine/ipad` coordination notes carried forward from
-runs 14-16, still not actionable), branch was already current with
-origin/main (rebase was a no-op). The orchestrator's runs 17-19 review
-landed on origin mid-run (a race, not a start-of-run miss); rebased
-onto it before pushing and addressed its one owed fix (below) in the
-same run rather than deferring it. **Started plan item 4** (provisional
-machine translations): built the overlay/merge catalog infrastructure
-in `utils/i18n.ts` and populated a 17-key proof-of-pattern slice
-(`common` minus `keep`, `sheets`, `tabs`, `screenTitles`) in a new
-`locales/` directory for all 10 target languages. `getCatalog()` now
-returns real, different-from-English text for the first time since
-this routine started; the Language picker in Settings is no longer
-purely cosmetic for the sections it covers. Also added the
-DECISIONS NEEDED proposal table below for leak/skip/kept/slip, ahead
-of translating the sections that actually contain them, per the
-plan's own instruction to do this as soon as item 4 has provisional
-translations to propose against. Full detail in PLAN.md's run 20
-entry.
+In progress. Run 21: no REVIEW FEEDBACK was pending at session start
+(the runs 17-19 review's items were all closed out in run 20; the two
+`routine/ipad` coordination notes carried forward, still not
+actionable), branch was already current with origin/main (rebase was
+a no-op). **Plan item 4's second slice**: populated `expenses`,
+`categories`, `categoryDetail`, `profile` (36 string keys, all
+function-valued keys still omitted) across all 10 locale overlays, per
+run 20's suggested next-slice order, minus `settings` and `upcoming`
+(deliberately deferred, see below). 53 of ~660 keys now populated per
+language, up from 17. Full detail, including the `categories.
+deleteCancel` naming judgment call and two draft-translation fixes
+caught before committing, in PLAN.md's run 21 entry.
 
 ## Completed
 
@@ -286,19 +279,57 @@ entry.
   item 4's new-keys work) needed no action this run: this run's design
   already matches it, and `daysUntilLabel` is noted as future new-keys
   work in PLAN.md's run 19 and 20 entries.
+- Run 21, plan item 4's second slice: `expenses` (10 string keys),
+  `categories` (13), `categoryDetail` (10), `profile` (3) populated
+  across all 10 locale overlays, per run 20's suggested next-slice
+  order. Every function-valued key in these four sections stayed
+  omitted (inherits English), including the plain-interpolation ones
+  that don't strictly need ICU/CLDR plural rules
+  (`editAccessibilityLabel`, `deleteTitle`, `thisMonthSuffix`,
+  `openCategoryLabel`, `vsLastMonth`, `recentLogsCount`,
+  `logTimestamp`), kept consistent with the one genuinely pluralized
+  function in scope (`categoryDetail.logCount`) rather than
+  hand-picking which functions are "safe enough" ahead of item 2's
+  real ICU pass. `upcoming` confirmed to have nothing translatable
+  yet: both its keys are functions, and `recurringCount` is itself the
+  ternary-plural case that ICU work is waiting on. Deliberately did
+  not reach `settings` (the largest of the five suggested sections,
+  ~28 string keys) this run, per the same "budget more than one run
+  per chunk" guidance run 20 gave; it is next. One naming call worth a
+  second look, not gated on Charen: `categories.deleteCancel` ("Keep
+  category") was translated normally in every language rather than
+  withheld like `common.keep`, since the full phrase's own object
+  disambiguates it from the locked `kept` concept; reasoning and the
+  exact translations are in PLAN.md's run 21 entry. Two
+  draft-translation fixes caught before committing: a wrong Dutch
+  preposition in `categoryDetail.trendEmpty`, and an overly colloquial
+  first-draft zh-Hans `profile.title` ("我的") corrected to the more
+  literal "个人资料" to match every other language's literal
+  rendering. No test file changes needed (`localeCatalogs.test.ts` is
+  schema-driven and already covers new overlay keys; no other test
+  asserts literal English text for these sections' keys). One commit;
+  `tsc --noEmit` clean and the full suite green (113/113, 1210/1210)
+  after one re-run past the same pre-existing
+  `door3BreakSheet.test.tsx` full-suite-load flake noted since run 13
+  (passed standalone and on the immediate full-suite re-run with no
+  code change; this run touched nothing in the Today tree).
 
 ## Next
 
-Plan item 4 is now underway (17 of ~660 keys populated across all 10
-languages: `common` minus `keep`, `sheets`, `tabs`, `screenTitles`; see
-PLAN.md's run 20 entry for the full design). Suggested next slice, per
-that entry: `expenses`, `upcoming`, `categories`/`categoryDetail`,
-`settings`, `profile`, since none touch the locked vocabulary or the
-app's quotes and are comparable in size to this run's slice. Budget
-more than one run per meaningful chunk (10 languages x a section
-adds up fast), the same lesson item 2's file-by-file conversion
-learned repeatedly. `habitLogging`, `coachMoments`, and `today`'s quote
-arrays need the DECISIONS NEEDED table below settled (or at minimum
+Plan item 4 is underway (53 of ~660 keys populated across all 10
+languages: `common` minus `keep`, `sheets`, `tabs`, `screenTitles` (run
+20), plus `expenses`, `categories`, `categoryDetail`, `profile` (run
+21); see PLAN.md's run 20 and 21 entries for the full design).
+Suggested next slice: `settings` (~28 string keys, the largest of the
+originally suggested five and the one deliberately deferred this run;
+skip `versionValue` and `supportEmail`, a version number and an email
+address, neither is localizable content). `upcoming` stays fully
+English until item 2's ICU/pluralization work lands, since both its
+keys are function-valued. Budget more than one run per meaningful
+chunk (10 languages x a section adds up fast), the same lesson item
+2's file-by-file conversion learned repeatedly and run 21 stayed
+within. `habitLogging`, `coachMoments`, and `today`'s quote arrays
+still need the DECISIONS NEEDED table below settled (or at minimum
 provisional entries adopted with a clear "pending Charen" marker)
 before translating, since those sections contain the locked vocabulary
 and (for `today`) the RETIRED, out-of-scope quote arrays.
@@ -322,7 +353,7 @@ What is actually left for a future run:
   exist and a literal-English assertion in a test for an
   already-converted component can now genuinely fail once that
   component's section gets translated (as `languageSheet.test.tsx` did
-  this run). Still not a dedicated pass; worth doing before item 4's
+  in run 20). Still not a dedicated pass; worth doing before item 4's
   translated surface grows much further, so newly-flakable tests don't
   pile up one at a time the way `languageSheet.test.tsx` did.
 - Plan items 5 (overflow hardening) and 6 (localized a11y labels) stay
