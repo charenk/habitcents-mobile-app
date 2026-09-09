@@ -951,10 +951,13 @@ work, tracked elsewhere).
       English-fallback slice, memoization, and that the base catalog is
       never mutated).
 
-      Two commits (infra + all 10 locale files in one, the languageSheet
-      fix in a second); `tsc --noEmit` clean and the full suite green
-      (113/113, 1210/1210, up from 112/1166, the 1 new suite and ~44 new
-      tests all from this run) after each, no flake.
+      Three commits (infra + all 10 locale files in one, the
+      languageSheet fix in a second, the orchestrator's owed
+      PATTERN_VOCABULARY.md fix in a third after rebasing onto that
+      review, which landed on origin mid-run); `tsc --noEmit` clean
+      and the full suite green (113/113, 1210/1210, up from 112/1166,
+      the 1 new suite and ~44 new tests all from this run) after each,
+      no flake.
 
       **What's left:** expand each of the 10 overlays section by section
       (suggested order for the next dedicated run: `expenses`, `upcoming`,
