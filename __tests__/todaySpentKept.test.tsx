@@ -597,12 +597,25 @@ describe('Today: the Kept zero how-it-works link (Charen, 2026-09-07, reversing 
     expect(mockTrack).toHaveBeenCalledWith('how_it_works_opened', {});
     expect(view.getByTestId('how-it-works-sheet')).toBeTruthy();
     expect(view.getByText(strings.today.howItWorksTitle)).toBeTruthy();
-    for (const line of strings.today.howItWorksRows) {
-      expect(view.getByText(line)).toBeTruthy();
+    // Both phase headings, because the handover between them is the point of
+    // the sheet: a leak is what we found, a habit is the one you took on.
+    expect(view.getByText(strings.today.howItWorksFindTitle)).toBeTruthy();
+    expect(view.getByText(strings.today.howItWorksBreakTitle)).toBeTruthy();
+    // Every row's sentence renders, and each is one VoiceOver stop carrying
+    // the term and the sentence joined; the dot and connector are decorative.
+    for (const row of [
+      ...strings.today.howItWorksFindRows,
+      ...strings.today.howItWorksBreakRows,
+    ]) {
+      // The term is a nested Text inside the sentence, so the rendered line
+      // composes to the two joined; that is also what VoiceOver announces.
+      expect(view.getByText(`${row.term} ${row.rest}`)).toBeTruthy();
+      expect(view.getByLabelText(`${row.term} ${row.rest}`)).toBeTruthy();
     }
-    // Each row is one VoiceOver stop carrying the whole line; the glyph is
-    // decorative.
-    expect(view.getByLabelText(strings.today.howItWorksRows[0])).toBeTruthy();
+    // The long arc closes the sheet, money before the number.
+    expect(
+      view.getByText(`${strings.today.howItWorksArcTerm} ${strings.today.howItWorksArcBody}`)
+    ).toBeTruthy();
     expect(view.getByText(strings.today.howItWorksDone)).toBeTruthy();
   });
 

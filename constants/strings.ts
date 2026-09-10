@@ -912,13 +912,44 @@ export const strings = {
     // habits by totalMonthlySpend).
     howItWorksTrigger: 'Learn how skips and habits work',
     howItWorksTitle: 'How skips and habits work',
-    howItWorksRows: [
-      'Log what you spend, and where you spent it.',
-      'Around four logs at one place is enough to spot a leak.',
-      "Break a leak, and every skip keeps the money you didn't spend.",
-      'A slip records what happened; it never takes anything back.',
+    // Two phases, because the sheet's whole job is the handover in the
+    // middle: a leak is what we spotted, a habit is the one you took on. The
+    // app already draws that line (LEAKS FOUND, then BREAKING NOW); the old
+    // rows said "break a leak", the pre-commitment word for a post-commitment
+    // act, so a skip was never tied to anything.
+    howItWorksFindTitle: 'First we find it',
+    howItWorksBreakTitle: 'Then you break it',
+    // One locked word per row and the sentence that defines it, so leak,
+    // habit, skip, slip and kept are each explained once, in place.
+    //
+    // TRANSLATION: `term` and `rest` are joined in that order with a space,
+    // and only `term` is emphasized. A language that cannot lead the sentence
+    // with the term should put the WHOLE sentence in `rest` and leave `term`
+    // an empty string; the row then renders as one unemphasized line instead
+    // of forcing English word order. Do not split `rest` further.
+    howItWorksFindRows: [
+      { term: 'You log', rest: 'what you spent, and where you spent it.' },
+      { term: 'A leak', rest: 'is the same place showing up about four times over.' },
+    ],
+    howItWorksBreakRows: [
+      { term: 'Your habit', rest: 'is the one leak you pick to break.' },
+      {
+        term: 'A skip',
+        rest: "is a day you don't buy it. A slip is a day you do, and it takes nothing back.",
+      },
+      { term: 'Kept', rest: 'is every skip, counted in money.' },
       // No inner `as const`: the whole strings object already carries one.
     ],
+    // The long arc, payoff before cost. Leading with 66 on a pane where the
+    // reader has no habit reads as a threshold to cross before anything
+    // happens, and that is false: utils/habitLogging.ts keptOnDay adds money
+    // on the first skip. Naming that first answers "how long before something
+    // changes" with "it already did". The number stays because it is the
+    // app's one real anchor and matches arcSupportLine on habit detail; a
+    // vague promise would be worse than a concrete one.
+    howItWorksArcTerm: 'The long arc.',
+    howItWorksArcBody:
+      'The money is yours from the first skip. Rewiring the habit is slower, around 66 skips, and that first one counts toward it too.',
     howItWorksDone: 'Got it',
     alreadyBreakingToast: "You're already breaking this habit.",
     editExpenseLabel: (title: string, amountLabel: string) => `Edit ${title}, ${amountLabel}`,
