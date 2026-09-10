@@ -3,11 +3,12 @@
  *
  * Locale: fr (French). Plan item 4: `common` (except `keep`, held back
  * deliberately, see below), `sheets`, `tabs`, `screenTitles` (run 20), plus
- * `expenses`, `categories`, `categoryDetail`, `profile` (run 21). Every
- * other section is not yet translated and falls back to English via
- * mergeCatalog() in utils/i18n.ts. Function-valued keys (pluralized or
- * interpolated) are omitted throughout and inherit the English function,
- * per plan item 2's deferred ICU work.
+ * `expenses`, `categories`, `categoryDetail`, `profile` (run 21), plus
+ * `settings` minus `versionValue`/`supportEmail` (run 22, not localizable
+ * content). Every other section is not yet translated and falls back to
+ * English via mergeCatalog() in utils/i18n.ts. Function-valued keys
+ * (pluralized or interpolated) are omitted throughout and inherit the
+ * English function, per plan item 2's deferred ICU work.
  *
  * `common.keep` is withheld on purpose: it is close enough to the app's
  * locked vocabulary (leak/skip/kept/slip, ops CLAUDE.md) that this routine
@@ -86,5 +87,36 @@ export const fr: LocaleOverlay = {
     title: 'Profil.',
     headerLabel: 'Profil',
     supportRow: 'Assistance',
+  },
+  settings: {
+    opensInBrowserHint: 'S’ouvre dans votre navigateur.',
+    preferences: 'Préférences',
+    currency: 'Devise',
+    about: 'À propos',
+    privacyPolicy: 'Politique de confidentialité',
+    termsOfService: 'Conditions d’utilisation',
+    restorePurchases: 'Restaurer les achats',
+    version: 'Version',
+    currencySheetTitle: 'Devise.',
+    language: 'Langue',
+    languageSheetTitle: 'Langue.',
+    languageSystemDefault: 'Système par défaut',
+    restoreNoneMessage: 'Aucun achat précédent à restaurer.',
+    restoreDoneMessage: 'Vos achats ont été restaurés.',
+    groupGeneral: 'Général',
+    groupMore: 'Plus',
+    subscriptionRow: 'Abonnement',
+    subscriptionValueFree: 'Gratuit',
+    subscriptionValuePremium: 'Premium',
+    startOverRow: 'Recommencer',
+    startOverHint: 'les données restent sur cet appareil',
+    startOverConfirmTitle: 'Recommencer ?',
+    startOverConfirmBody:
+      'Vous ramène aux écrans de départ. Vos données restent sur cet appareil.',
+    startOverConfirmCta: 'Recommencer',
+    startOverConfirmCancel: 'Continuer',
+    startOverToast: 'Redémarrage en cours. Vos données restent sur cet appareil.',
+    linkOpenFailed: 'Impossible d’ouvrir le lien.',
+    mailOpenFailed: 'Impossible d’ouvrir la messagerie.',
   },
 };

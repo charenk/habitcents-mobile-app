@@ -3,11 +3,12 @@
  *
  * Locale: hi (Hindi). Plan item 4: `common` (except `keep`, held back
  * deliberately, see below), `sheets`, `tabs`, `screenTitles` (run 20), plus
- * `expenses`, `categories`, `categoryDetail`, `profile` (run 21). Every
- * other section is not yet translated and falls back to English via
- * mergeCatalog() in utils/i18n.ts. Function-valued keys (pluralized or
- * interpolated) are omitted throughout and inherit the English function,
- * per plan item 2's deferred ICU work.
+ * `expenses`, `categories`, `categoryDetail`, `profile` (run 21), plus
+ * `settings` minus `versionValue`/`supportEmail` (run 22, not localizable
+ * content). Every other section is not yet translated and falls back to
+ * English via mergeCatalog() in utils/i18n.ts. Function-valued keys
+ * (pluralized or interpolated) are omitted throughout and inherit the
+ * English function, per plan item 2's deferred ICU work.
  *
  * `common.keep` is withheld on purpose: it is close enough to the app's
  * locked vocabulary (leak/skip/kept/slip, ops CLAUDE.md) that this routine
@@ -85,5 +86,35 @@ export const hi: LocaleOverlay = {
     title: 'प्रोफ़ाइल.',
     headerLabel: 'प्रोफ़ाइल',
     supportRow: 'सहायता',
+  },
+  settings: {
+    opensInBrowserHint: 'आपके ब्राउज़र में खुलता है।',
+    preferences: 'प्राथमिकताएं',
+    currency: 'मुद्रा',
+    about: 'जानकारी',
+    privacyPolicy: 'गोपनीयता नीति',
+    termsOfService: 'सेवा की शर्तें',
+    restorePurchases: 'खरीदारी पुनर्स्थापित करें',
+    version: 'संस्करण',
+    currencySheetTitle: 'मुद्रा.',
+    language: 'भाषा',
+    languageSheetTitle: 'भाषा.',
+    languageSystemDefault: 'सिस्टम डिफ़ॉल्ट',
+    restoreNoneMessage: 'पुनर्स्थापित करने के लिए कोई पुरानी खरीदारी नहीं है।',
+    restoreDoneMessage: 'आपकी खरीदारी पुनर्स्थापित कर दी गई है।',
+    groupGeneral: 'सामान्य',
+    groupMore: 'अधिक',
+    subscriptionRow: 'सदस्यता',
+    subscriptionValueFree: 'फ़्री',
+    subscriptionValuePremium: 'प्रीमियम',
+    startOverRow: 'फिर से शुरू करें',
+    startOverHint: 'डेटा इस डिवाइस पर रहता है',
+    startOverConfirmTitle: 'फिर से शुरू करें?',
+    startOverConfirmBody: 'आपको शुरुआती स्क्रीन पर ले जाता है। आपका डेटा इस डिवाइस पर रहता है।',
+    startOverConfirmCta: 'फिर से शुरू करें',
+    startOverConfirmCancel: 'जारी रखें',
+    startOverToast: 'फिर से शुरू किया जा रहा है। आपका डेटा इस डिवाइस पर रहता है।',
+    linkOpenFailed: 'लिंक नहीं खोला जा सका।',
+    mailOpenFailed: 'मेल नहीं खोला जा सका।',
   },
 };
