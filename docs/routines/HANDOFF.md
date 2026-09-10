@@ -1,5 +1,36 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 22, 2026-09-10: re-verify, no new work)
+
+Thirteenth idle run since the decision queue first went up at run 6
+(runs 9-22, minus run 13's rebase). `git fetch origin main
+routine/core-p3` plus `git rev-list --left-right --count
+origin/main...routine/core-p3` returned `0 26`: zero commits on main's
+side, branch unchanged at tip `cf0a247`, no rebase needed. PR #132
+confirmed via the API: `state: open`, `draft: false`, `mergeable_state:
+clean`, `merged: false`, head `cf0a247bc81902c5a0844995ad6936a2ee519bfd`
+(matches this branch's tip), base
+`b748ca35e0272a13d7a2f6e1c8b0b437dbf4f49c` (matches main's current tip),
+zero comments, zero reviews, unchanged since run 21. No new REVIEW
+FEEDBACK since run 15's "Approved, no fixes owed" for runs 12-14.
+Re-pulled `habitcents-ops/PUNCHLIST.md`'s RESUME marker (ops main
+fast-forwarded `cc87a3c..8d2a09f`, but that range touched only
+`docs/runs.log`): byte-identical to what runs 9-21 read, still only the
+2026-09-05/06 zeroth-state design wave items (device pass, canvas
+regen, ipad merge note, today-kept art) plus the leak finder
+dated-entitlement line, which stays unchecked there but was already
+built and closed on this branch at run 8; not this routine's checkbox
+to flip. Nothing newly core-p3-shaped.
+
+Fresh `npm install`, `npx tsc --noEmit` clean. `npm test`: 113 suites /
+1184 tests green on the first attempt, no flake this run, exactly
+matching runs 13-21. PLAN.md's checklist stays fully `[x]`/`(C)`;
+nothing code-shaped remains that this routine can reach without a
+website-repo checkout or a Charen-gated external account. No new push
+notification this run: run 11's notification already flagged the idle
+decision queue, and nothing in its content has changed (still zero PR
+engagement, same 7-item queue run 9 first compiled, now 16 runs idle).
+
 ## COMPLETE (run 21, 2026-09-10: re-verify, no new work)
 
 Twelfth idle run since the decision queue first went up at run 6 (runs
