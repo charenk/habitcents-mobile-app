@@ -128,6 +128,7 @@ export default function MoneyScreen() {
     [markInteracted]
   );
   const [editing, setEditing] = useState<Expense | null>(null);
+  const [logVisible, setLogVisible] = useState(false);
   const [addUpcomingVisible, setAddUpcomingVisible] = useState(false);
   const [editingUpcoming, setEditingUpcoming] = useState<Expense | null>(null);
   const [pickOneHabitId, setPickOneHabitId] = useState<string | null>(null);
@@ -177,13 +178,24 @@ export default function MoneyScreen() {
 
   const upcomingSheetVisible = addUpcomingVisible || editingUpcoming !== null;
 
-  // Empty states as onboarding surfaces (PRD v3.1 sect 5). Logging and
-  // breaking both live on Today, so those two route through the general-purpose
-  // ?sheet= entry rather than mounting a second copy of either sheet here.
-  // Adding an upcoming expense is owned by this screen, so it opens in place.
+  // Empty states as onboarding surfaces (PRD v3.1 sect 5).
+  //
+  // LOGGING OPENS HERE (Charen, 2026-09-10). It used to navigate to Today with
+  // ?view=spent&sheet=log, which threw the user off the screen they were
+  // reading to reach a sheet that behaves identically anywhere: ExpenseSheet
+  // owns addExpense, the haptic, the toast and its own close, and Today's log
+  // mount adds nothing to it outside the Door 1 first run. The old comment
+  // here said logging "lives on Today", but this screen already mounts
+  // ExpenseSheet for edit, so a log mount is a prop, not a second copy. Saving
+  // in place keeps the segment, the scroll position and the list the user came
+  // for; every other surface still updates, because the write goes through
+  // ExpensesContext exactly as before.
+  //
+  // Breaking a habit still routes to Today: that is a different sheet and a
+  // different flow, and it is not covered by this change.
   const handleEmptyLog = useEmptyStateAction('money_spent', useCallback(() => {
-    router.navigate('/(tabs)?view=spent&sheet=log');
-  }, [router]));
+    setLogVisible(true);
+  }, []));
   const handleEmptyAddUpcoming = useEmptyStateAction('money_upcoming', useCallback(() => {
     setAddUpcomingVisible(true);
   }, []));
@@ -320,6 +332,11 @@ export default function MoneyScreen() {
         </View>
       </ScrollView>
 
+      <ExpenseSheet
+        mode="log"
+        visible={logVisible}
+        onClose={() => setLogVisible(false)}
+      />
       <ExpenseSheet
         mode="edit"
         visible={editing !== null}

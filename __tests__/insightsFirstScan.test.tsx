@@ -475,7 +475,7 @@ describe('Insights This month segment: true zero state', () => {
     expect(view.getByText(strings.insights.paceTitle(monthLabel))).toBeTruthy();
   });
 
-  it("the fill empty state's CTA navigates to Today's log sheet", async () => {
+  it("the fill empty state's CTA opens the log sheet here, without leaving Insights", async () => {
     mockGetScanSummary.mockResolvedValue(null);
     await saveExpenses([]);
     await saveHabits([]);
@@ -485,8 +485,11 @@ describe('Insights This month segment: true zero state', () => {
       fireEvent.press(view.getByRole('button', { name: strings.insights.monthEmptyCta }));
     });
 
-    // Same destination as insights_leaks' existing handleEmptyLog.
-    expect(mockNavigate).toHaveBeenCalledWith('/(tabs)?view=spent&sheet=log');
+    // Was a navigate to '/(tabs)?view=spent&sheet=log', which changed tab,
+    // pane and sheet in one frame for a sheet that behaves the same wherever
+    // it is mounted (Charen, 2026-09-10). Same as insights_leaks' CTA.
+    expect(mockNavigate).not.toHaveBeenCalled();
+    expect(view.getByText(strings.expenseSheet.logEyebrow)).toBeTruthy();
   });
 });
 
