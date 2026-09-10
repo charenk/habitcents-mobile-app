@@ -23,6 +23,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { AddUpcomingSheet } from '@/components/money/AddUpcomingSheet';
 import { ExpenseSheet } from '@/components/money/ExpenseSheet';
+import { BreakHabitSheet, type BreakHabitStartData } from '@/components/onboarding/BreakHabitSheet';
+import { useBreakHabitStart } from '@/utils/useBreakHabitStart';
 import { HabitsList } from '@/components/money/HabitsList';
 import { useEmptyStateAction } from '@/components/onboarding/useEmptyStateAction';
 import { SpentList } from '@/components/money/SpentList';
@@ -129,6 +131,7 @@ export default function MoneyScreen() {
   );
   const [editing, setEditing] = useState<Expense | null>(null);
   const [logVisible, setLogVisible] = useState(false);
+  const [breakVisible, setBreakVisible] = useState(false);
   const [addUpcomingVisible, setAddUpcomingVisible] = useState(false);
   const [editingUpcoming, setEditingUpcoming] = useState<Expense | null>(null);
   const [pickOneHabitId, setPickOneHabitId] = useState<string | null>(null);
@@ -178,6 +181,8 @@ export default function MoneyScreen() {
 
   const upcomingSheetVisible = addUpcomingVisible || editingUpcoming !== null;
 
+  const { start: breakStart } = useBreakHabitStart();
+
   // Empty states as onboarding surfaces (PRD v3.1 sect 5).
   //
   // LOGGING OPENS HERE (Charen, 2026-09-10). It used to navigate to Today with
@@ -191,17 +196,37 @@ export default function MoneyScreen() {
   // for; every other surface still updates, because the write goes through
   // ExpensesContext exactly as before.
   //
-  // Breaking a habit still routes to Today: that is a different sheet and a
-  // different flow, and it is not covered by this change.
+  // Breaking a habit opens here too, since 2026-09-10; see its handler below.
   const handleEmptyLog = useEmptyStateAction('money_spent', useCallback(() => {
     setLogVisible(true);
   }, []));
   const handleEmptyAddUpcoming = useEmptyStateAction('money_upcoming', useCallback(() => {
     setAddUpcomingVisible(true);
   }, []));
+  // BREAKING OPENS HERE TOO (Charen, 2026-09-10), completing the change
+  // logging started. The writes behind Start moved to utils/useBreakHabitStart
+  // so both hosts run one implementation; what stayed on Today is its door 3
+  // onboarding claim, which only Today can ever be in (door3CoachActive is set
+  // when Today opens the sheet via the onboarding beat, never here). So this
+  // host needs no onboarding logic at all, which is what made the split safe.
   const handleEmptyBreak = useEmptyStateAction('money_habits', useCallback(() => {
-    router.navigate('/(tabs)?view=kept&sheet=break');
-  }, [router]));
+    setBreakVisible(true);
+  }, []));
+
+  const handleBreakStart = useCallback(
+    async (data: BreakHabitStartData) => {
+      const ok = await breakStart(data);
+      // A failed write keeps the sheet open, so the user can retry against the
+      // toast the hook already showed rather than losing what they entered.
+      if (ok) setBreakVisible(false);
+    },
+    [breakStart]
+  );
+
+  const handleBreakStartTrial = useCallback(() => {
+    setBreakVisible(false);
+    router.push('/paywall?placement=habit_gate_money');
+  }, [router]);
 
   const closeUpcomingSheet = useCallback(() => {
     setAddUpcomingVisible(false);
@@ -336,6 +361,13 @@ export default function MoneyScreen() {
         mode="log"
         visible={logVisible}
         onClose={() => setLogVisible(false)}
+      />
+      <BreakHabitSheet
+        visible={breakVisible}
+        freeTierBlocked={freeTierBlocked}
+        onClose={() => setBreakVisible(false)}
+        onStart={handleBreakStart}
+        onStartTrial={handleBreakStartTrial}
       />
       <ExpenseSheet
         mode="edit"

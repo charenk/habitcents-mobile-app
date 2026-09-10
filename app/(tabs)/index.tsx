@@ -42,6 +42,7 @@ import { atMidnight, dayStateFor, isHabitLimitReached, keptOnDay } from '@/utils
 import { getEntitlement } from '@/utils/purchases';
 import { cardText, type CoachMomentCardId } from '@/utils/coachMoments';
 import { progressTowardDetection } from '@/utils/habitDetection';
+import { useBreakHabitStart } from '@/utils/useBreakHabitStart';
 import { formatDate } from '@/utils/dates';
 import { track } from '@/utils/analytics';
 import { hapticError } from '@/utils/motion';
@@ -371,69 +372,33 @@ export default function TodayScreen() {
   // "did you skip it today?" stays unanswered even on a bought-today yes,
   // because that daily ritual is the user's to answer, not a side effect of
   // admitting today's buy while setting the habit up.
-  const handleBreakSheetStart = useCallback(async (data: BreakHabitStartData) => {
-    // Two guards before any await (stack review finding 1):
-    // 1. A double-tap on the async Start button must not create two habits.
-    // 2. The onboarding outcome is claimed NOW, so a scrim tap or back press
-    //    while the writes are in flight runs handleBreakSheetClose as a
-    //    visual close only, instead of firing the gentle ribbon for a habit
-    //    that is actually being created.
-    if (breakStartInFlightRef.current) return;
-    breakStartInFlightRef.current = true;
-    // UX-021: everything below can reject (seedDiscoveredHabit,
-    // startBreakingHabit, addExpense are all async writes). Without
-    // try/finally, a rejection left breakStartInFlightRef stuck true, which
-    // permanently disabled the Start button for the rest of the session with
-    // no error surfaced. The ref reset now always runs, and a failure gets a
-    // toast instead of failing silently.
-    // Declared outside the try so the catch can RELEASE the claim it latched
-    // (review round 3, P2-5); a const inside the try is not in scope there.
-    const claimedOnboarding = door3CoachActive && !door3HandledRef.current;
-    try {
+  const { start: breakStart } = useBreakHabitStart();
+
+  const handleBreakSheetStart = useCallback(
+    async (data: BreakHabitStartData) => {
+      // The writes live in utils/useBreakHabitStart so Money can host the same
+      // sheet. What stays here is the door 3 onboarding claim, because its
+      // ordering is the fragile part and only Today can ever be in that state.
+      //
+      // The claim is latched BEFORE the writes (stack review finding 1): a
+      // scrim tap or back press while they are in flight must run
+      // handleBreakSheetClose as a visual close only, instead of firing the
+      // gentle ribbon for a habit that is actually being created.
+      const claimedOnboarding = door3CoachActive && !door3HandledRef.current;
       if (claimedOnboarding) door3HandledRef.current = true;
 
-      const merchantPattern = data.chipId === 'custom' ? data.name : data.chipId;
-      const category: ExpenseCategory = data.chipId === 'custom' ? 'Other' : VICE_CATEGORIES[data.chipId];
-      const categoryId = getCategoryByName(category)?.id ?? getCategoryByName('Other')?.id ?? 'Other';
-      // Monthly-equivalent for the seeded habit's totalMonthlySpend, same
-      // approx-month convention the rest of the app uses elsewhere (weekly *
-      // 52/12); the honest yearly line on the sheet itself uses the exact
-      // 365/52/12 multipliers instead, since that is what is actually shown.
-      const monthlyMultiplier = data.cadence === 'daily' ? 30 : data.cadence === 'weekly' ? 52 / 12 : 1;
+      const ok = await breakStart(data);
 
-      const habit = await seedDiscoveredHabit({
-        merchantPattern,
-        name: data.name,
-        description: '',
-        categoryId,
-        averageAmount: data.amountCents,
-        frequency: data.cadence,
-        occurrencesPerPeriod: 1,
-        totalMonthlySpend: Math.round(data.amountCents * monthlyMultiplier),
-      });
-      // seedDiscoveredHabit protects live habits: re-picking one the user is
-      // already breaking returns it unchanged. Starting it again would append
-      // an orphan goal (stack review finding 2), so say so and stop; a
-      // bought-today yes below still writes the expense, which is an honest
-      // statement regardless.
-      const alreadyBreaking = habit.status === 'changing' || habit.status === 'tracking';
-      if (alreadyBreaking) {
-        show(strings.today.alreadyBreakingToast);
-      } else {
-        await startBreakingHabit(habit.id, data.amountCents, data.valueEdited, 'onboarding');
-      }
-
-      if (data.boughtToday) {
-        await addExpense({
-          title: data.name,
-          amount: data.amountCents,
-          category,
-          categoryId,
-          merchant: data.name,
-          date: new Date(),
-          isRecurring: false,
-          reminderEnabled: false,
-        });
+      if (!ok) {
+        // Release the claim latched above (review round 3, P2-5). Without
+        // this the write failed, completeOnboarding never ran, and
+        // handleBreakSheetClose then early-returned on the still-latched ref:
+        // onboarding could never complete by any route, so the next cold
+        // start dropped the user back on the carousel with a habit already
+        // created. Un-claiming lets the close path complete it gently, which
+        // is exactly what it does for a user who dismisses without starting.
+        if (claimedOnboarding) door3HandledRef.current = false;
+        return;
       }
 
       setBreakSheetVisible(false);
@@ -444,40 +409,15 @@ export default function TodayScreen() {
         // criteria; without this it read false on the one non-scan route that
         // actually starts a habit (review round 3, P2-1). Ordered before
         // completeOnboarding for the same ref-visibility reason as
-        // useTrackLeak. alreadyBreaking still counts: a habit is running
-        // either way, which is what the property claims.
+        // useTrackLeak. An already-breaking habit still counts: a habit is
+        // running either way, which is what the property claims.
         await markHabitStarted();
         await completeOnboarding();
         await showDoor3Ribbon('door3_started');
       }
-    } catch (error) {
-      // UX-021: the guard ref resets in finally, so the button comes back;
-      // this tells the user why nothing happened instead of leaving a silent
-      // no-op behind a button that just went live again.
-      console.error('handleBreakSheetStart failed', error);
-      show(strings.toasts.startHabitFailed);
-      // Release the onboarding claim latched before the awaits (review round
-      // 3, P2-5). Without this the write failed, completeOnboarding never ran,
-      // and handleBreakSheetClose then early-returned on the still-latched
-      // ref: onboarding could never complete by any route, so the next cold
-      // start dropped the user back on the carousel with a habit already
-      // created. Un-claiming lets the close path complete it gently, which is
-      // exactly what it does for a user who dismisses without starting.
-      if (claimedOnboarding) door3HandledRef.current = false;
-    } finally {
-      breakStartInFlightRef.current = false;
-    }
-  }, [
-    seedDiscoveredHabit,
-    startBreakingHabit,
-    addExpense,
-    getCategoryByName,
-    door3CoachActive,
-    completeOnboarding,
-    markHabitStarted,
-    showDoor3Ribbon,
-    show,
-  ]);
+    },
+    [breakStart, door3CoachActive, completeOnboarding, markHabitStarted, showDoor3Ribbon]
+  );
 
   // Close without starting (scrim, swipe, or the gate's "Maybe later"): same
   // exactly-once completion as handleLogSheetClose above. Only acts when the

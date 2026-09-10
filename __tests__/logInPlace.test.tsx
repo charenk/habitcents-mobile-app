@@ -92,6 +92,22 @@ describe('logging opens in place, not on Today', () => {
     expect(view.getByText(strings.expenseSheet.logEyebrow)).toBeTruthy();
   });
 
+  it('Money > Habits: the break CTA opens the break sheet without navigating', async () => {
+    const view = await renderScreen(<MoneyScreen />);
+
+    // Habits is Money's third segment, so select it before reaching its
+    // empty-state CTA.
+    await act(async () => {
+      fireEvent.press(view.getByText(strings.money.segmentHabits));
+    });
+    await act(async () => {
+      fireEvent.press(view.getByRole('button', { name: strings.money.habitsEmptyCta }));
+    });
+
+    expect(mockNavigate).not.toHaveBeenCalled();
+    expect(view.getByText(strings.onboarding.breakSheetTitle)).toBeTruthy();
+  });
+
   it("Insights > leaks: the empty-state CTA opens the log sheet without navigating", async () => {
     const view = await renderScreen(<InsightsScreen />);
 
