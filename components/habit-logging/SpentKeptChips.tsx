@@ -39,6 +39,7 @@
 import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
+import { hapticSelection } from '@/utils/motion';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { radii, shadows, typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
@@ -107,7 +108,10 @@ export function SpentKeptChips({
       accessibilityLabel={strings.today.spentKeptTabsLabel}
     >
       <Pressable
-        onPress={() => onChange('spent')}
+        onPress={() => {
+          if (value !== 'spent') hapticSelection();
+          onChange('spent');
+        }}
         accessibilityRole="tab"
         accessibilityState={{ selected: spentSelected }}
         accessibilityLabel={selectableLabel(spentValueLabel, spentSelected)}
@@ -146,7 +150,10 @@ export function SpentKeptChips({
       </Pressable>
 
       <Pressable
-        onPress={() => onChange('kept')}
+        onPress={() => {
+          if (value !== 'kept') hapticSelection();
+          onChange('kept');
+        }}
         accessibilityRole="tab"
         accessibilityState={{ selected: keptSelected }}
         accessibilityLabel={selectableLabel(keptValueLabel, keptSelected) + pendingSuffix}

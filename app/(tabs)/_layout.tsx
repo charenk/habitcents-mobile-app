@@ -5,13 +5,24 @@ import { TabBarIcon } from '@/components/ui/TabBarIcon';
 import { useTheme } from '@/contexts/ThemeContext';
 import { strings } from '@/constants/strings';
 import { layout, typeScale } from '@/constants/theme';
+import { hapticSelection } from '@/utils/motion';
 
 /**
  * Tab bar (redesign step 02, design/redesign-handoff/02-navigation.md plus the
  * runbook decision of 2026-07-30 that keeps Categories as a fourth tab).
  *
  * Order: Today / Money / Insights / Categories. Settings is no longer a tab;
- * it opens as a bottom sheet from the gear on Today.
+ * it opens as the pushed route app/profile.tsx, reached from the CircleUser
+ * action in ScreenHeader (the old "bottom sheet from the gear on Today" was
+ * never how it shipped).
+ *
+ * A tab press fires a SELECTION haptic and nothing else (2026-09-10). The bar
+ * still has no motion, by the house rule that thumb swaps in switchers are
+ * instant; this is the touch answering, not the bar animating. Fired from
+ * screenListeners rather than per screen so all four tabs are one rule, and
+ * only when the tab actually CHANGES: re-pressing the tab you are on scrolls
+ * to top, which is not a selection. Haptics keep firing under reduced motion
+ * by design (utils/motion.ts).
  */
 export default function TabLayout() {
   const theme = useTheme();
@@ -24,6 +35,12 @@ export default function TabLayout() {
   const tabBarBottomPad = Math.max(insets.bottom, 8);
   return (
     <Tabs
+      screenListeners={({ navigation, route }) => ({
+        tabPress: () => {
+          const current = navigation.getState()?.routes[navigation.getState()?.index ?? 0];
+          if (current?.name !== route.name) hapticSelection();
+        },
+      })}
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: theme.primary,
