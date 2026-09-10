@@ -21,6 +21,7 @@ import { WhereItWentCard } from '@/components/insights/WhereItWentCard';
 import { PaceCard, type PaceComparison } from '@/components/insights/PaceCard';
 import { ScanSnapshotCard } from '@/components/insights/ScanSnapshotCard';
 import { LeakFinderTeaser } from '@/components/insights/LeakFinderTeaser';
+import { ExpenseSheet } from '@/components/money/ExpenseSheet';
 import { PickOneSheet } from '@/components/habit-logging/PickOneSheet';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
@@ -55,17 +56,26 @@ const WHERE_IT_WENT_DAYS = 7;
 export default function InsightsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const [logVisible, setLogVisible] = useState(false);
   // Empty state as an onboarding surface (PRD v3.1 sect 5). Insights' leaks
   // list is empty because nothing has been logged often enough to detect yet,
   // so the honest first action is logging, not breaking.
+  //
+  // Both CTAs open the log sheet HERE (Charen, 2026-09-10). They used to
+  // navigate to Today with ?view=spent&sheet=log, which is a tab change, a
+  // pane change and a sheet in one frame, for a sheet that behaves the same
+  // wherever it is mounted. See app/(tabs)/money.tsx for the full reasoning;
+  // this screen already mounts PickOneSheet, so an ExpenseSheet beside it is
+  // the established shape. The two surfaces stay separate in the funnel
+  // because each CTA keeps its own useEmptyStateAction name.
   const handleEmptyLog = useEmptyStateAction('insights_leaks', useCallback(() => {
-    router.navigate('/(tabs)?view=spent&sheet=log');
-  }, [router]));
+    setLogVisible(true);
+  }, []));
   // This month segment, true zero state (no data at all, not just no leaks):
   // its own surface, so the two zero states never get conflated in the funnel.
   const handleMonthEmptyLog = useEmptyStateAction('insights_month', useCallback(() => {
-    router.navigate('/(tabs)?view=spent&sheet=log');
-  }, [router]));
+    setLogVisible(true);
+  }, []));
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
@@ -344,6 +354,8 @@ export default function InsightsScreen() {
           </ScrollView>
         </View>
       </ScrollView>
+
+      <ExpenseSheet mode="log" visible={logVisible} onClose={() => setLogVisible(false)} />
 
       <PickOneSheet
         visible={!!pickOneHabit}
