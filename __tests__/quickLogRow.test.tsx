@@ -32,7 +32,7 @@ function Providers({ children }: { children: React.ReactNode }) {
 }
 
 describe('QuickLogRow', () => {
-  it('renders the field as a snow-filled pill at the shared dock height, with no underline', async () => {
+  it('renders the field as a snow-filled rounded rect at the shared dock height, with no underline', async () => {
     const view = await render(
       <Providers>
         <QuickLogRow onOpenSheet={() => {}} />
@@ -41,7 +41,9 @@ describe('QuickLogRow', () => {
     const field = view.getByTestId('quick-log-field');
     const flat = StyleSheet.flatten(field.props.style);
     expect(flat.backgroundColor).toBe(lightTheme.snow);
-    expect(flat.borderRadius).toBe(radii.pill);
+    // Concentric with the shell since 2026-09-10: radii.feature outside,
+    // radii.control inside, which is the shell's radius minus its padding.
+    expect(flat.borderRadius).toBe(radii.control);
     // Fixed, not a minimum: the two docks are equal because their fields are
     // the same fixed height, whatever each one holds.
     expect(flat.height).toBe(DOCK_FIELD_HEIGHT);

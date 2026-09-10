@@ -19,7 +19,6 @@ import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { QuickLogRow } from '@/components/money/QuickLogRow';
 import { BreakHabitRow } from '@/components/today/BreakHabitRow';
 import {
-  DOCK_CAPTION_LINE_HEIGHT,
   DOCK_FIELD_HEIGHT,
   DOCK_LABEL_LINE_HEIGHT,
   DOCK_SHELL_HEIGHT,
@@ -42,48 +41,43 @@ function flat(node: { props: Record<string, unknown> }): Record<string, unknown>
 
 const FIRST = strings.today.breakFirstHabitCta;
 const ANOTHER = strings.today.breakAnotherHabitCta;
-const CAPTION = strings.habitLogging.freeTierNote;
 
 describe('Today docks: one shell, one height', () => {
-  it('gives both fields the same fixed height, captioned or not', async () => {
+  it('gives both fields the same fixed height, whichever label Kept carries', async () => {
     const spent = await render(
       <Providers>
         <QuickLogRow onOpenSheet={() => {}} />
       </Providers>
     );
-    const keptPlain = await render(
+    const keptFirst = await render(
       <Providers>
         <BreakHabitRow label={FIRST} onPress={() => {}} />
       </Providers>
     );
-    const keptCaptioned = await render(
+    const keptAnother = await render(
       <Providers>
-        <BreakHabitRow label={ANOTHER} caption={CAPTION} onPress={() => {}} />
+        <BreakHabitRow label={ANOTHER} onPress={() => {}} />
       </Providers>
     );
 
-    const spentField = flat(spent.getByTestId('quick-log-field'));
-    const plainField = flat(keptPlain.getByTestId('break-habit-affordance'));
-    const captionedField = flat(keptCaptioned.getByTestId('break-habit-affordance'));
-
-    expect(spentField.height).toBe(DOCK_FIELD_HEIGHT);
-    expect(plainField.height).toBe(DOCK_FIELD_HEIGHT);
-    // The ceiling case adds a second line and must not grow the dock.
-    expect(captionedField.height).toBe(DOCK_FIELD_HEIGHT);
+    expect(flat(spent.getByTestId('quick-log-field')).height).toBe(DOCK_FIELD_HEIGHT);
+    expect(flat(keptFirst.getByTestId('break-habit-affordance')).height).toBe(DOCK_FIELD_HEIGHT);
+    expect(flat(keptAnother.getByTestId('break-habit-affordance')).height).toBe(DOCK_FIELD_HEIGHT);
   });
 
-  it('fits the captioned Kept field inside the fixed height at the 1.5 chrome cap', () => {
-    // Label and caption both scale up to 1.5x under Dynamic Type. If a
-    // future line height pushes this past the field, the text clips on
-    // Android and spills on iOS, so the arithmetic is pinned here rather than
-    // discovered on a device.
-    const tallest = 1.5 * (DOCK_LABEL_LINE_HEIGHT + DOCK_CAPTION_LINE_HEIGHT) + spacing.hairline;
-    expect(tallest).toBeLessThanOrEqual(DOCK_FIELD_HEIGHT);
-    // And the field clears the 44pt target floor on its own.
+  it('fits the Kept label inside the fixed height at the 1.5 chrome cap', () => {
+    // The label scales to 1.5x under Dynamic Type. If a future line height
+    // pushes it past the field, the text clips on Android and spills on iOS,
+    // so the arithmetic is pinned here rather than discovered on a device.
+    expect(1.5 * DOCK_LABEL_LINE_HEIGHT).toBeLessThanOrEqual(DOCK_FIELD_HEIGHT);
+    // Since 2026-09-10 the caption is gone, so Kept no longer sets the floor.
+    // Two things do, and both land on 44: Spent's 28pt amount at
+    // AmountDisplay's 1.3 cap, and the touch-target minimum. The field is
+    // therefore allowed to be exactly 44 and never less.
     expect(DOCK_FIELD_HEIGHT).toBeGreaterThanOrEqual(44);
   });
 
-  it('draws both fields as snow pills, and both plus buttons as circles of the same size', async () => {
+  it('draws both fields at the concentric radius, fills only Spent, and rounds both plus buttons', async () => {
     const spent = await render(
       <Providers>
         <QuickLogRow onOpenSheet={() => {}} />
@@ -95,13 +89,19 @@ describe('Today docks: one shell, one height', () => {
       </Providers>
     );
 
-    for (const field of [
-      flat(spent.getByTestId('quick-log-field')),
-      flat(kept.getByTestId('break-habit-affordance')),
-    ]) {
-      expect(field.borderRadius).toBe(radii.pill);
-      expect(field.backgroundColor).toBe(lightTheme.snow);
+    const spentField = flat(spent.getByTestId('quick-log-field'));
+    const keptField = flat(kept.getByTestId('break-habit-affordance'));
+
+    // Concentric with the shell: radii.feature minus the shell's own padding
+    // is exactly radii.control, so the curves stay parallel.
+    for (const field of [spentField, keptField]) {
+      expect(field.borderRadius).toBe(radii.control);
+      expect(radii.feature - spacing.control).toBe(radii.control);
     }
+    // Only the composer carries a resting fill; Kept is border only
+    // (Charen, 2026-09-10).
+    expect(spentField.backgroundColor).toBe(lightTheme.snow);
+    expect(keptField.backgroundColor).toBe('transparent');
     for (const plus of [
       flat(spent.getByTestId('quick-log-plus', { includeHiddenElements: true })),
       flat(kept.getByTestId('break-habit-plus', { includeHiddenElements: true })),
@@ -142,7 +142,7 @@ describe('Today docks: one shell, one height', () => {
     expect(keptCard.padding).toBe(spacing.control - 0.5);
 
     for (const card of [spentCard, keptCard]) {
-      expect(card.borderRadius).toBe(radii.pill);
+      expect(card.borderRadius).toBe(radii.feature);
       expect(card.backgroundColor).toBe(lightTheme.white);
       const outer = 2 * (card.borderWidth as number) + 2 * (card.padding as number) + DOCK_FIELD_HEIGHT;
       expect(outer).toBe(DOCK_SHELL_HEIGHT);
@@ -151,10 +151,10 @@ describe('Today docks: one shell, one height', () => {
     const spentPlus = flat(spent.getByTestId('quick-log-plus', { includeHiddenElements: true }));
     const keptPlus = flat(kept.getByTestId('break-habit-plus', { includeHiddenElements: true }));
     expect(spentPlus.backgroundColor).toBe(lightTheme.primary);
-    expect(keptPlus.backgroundColor).toBe(lightTheme.snow);
+    expect(keptPlus.backgroundColor).toBe('transparent');
   });
 
-  it('keeps the Kept dock to one spoken control, with the caption folded into its name', async () => {
+  it('keeps the Kept dock to one spoken control carrying its label', async () => {
     const plain = await render(
       <Providers>
         <BreakHabitRow label={FIRST} onPress={() => {}} />
@@ -165,13 +165,15 @@ describe('Today docks: one shell, one height', () => {
     expect(plain.getAllByLabelText(FIRST)).toHaveLength(1);
     expect(plain.queryByTestId('break-habit-plus')).toBeNull();
 
-    const captioned = await render(
+    const another = await render(
       <Providers>
-        <BreakHabitRow label={ANOTHER} caption={CAPTION} onPress={() => {}} />
+        <BreakHabitRow label={ANOTHER} onPress={() => {}} />
       </Providers>
     );
-    expect(captioned.getAllByLabelText(`${ANOTHER}, ${CAPTION}`)).toHaveLength(1);
-    expect(captioned.getByText(CAPTION)).toBeTruthy();
+    expect(another.getAllByLabelText(ANOTHER)).toHaveLength(1);
+    // Nothing under the label any more: the free-plan caption is gone and
+    // must not creep back into the spoken name.
+    expect(another.queryByText(strings.habitLogging.freeTierNote)).toBeNull();
   });
 
   it('opens from either half of the Kept dock', async () => {
