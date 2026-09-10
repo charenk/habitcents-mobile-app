@@ -858,6 +858,50 @@ work, tracked elsewhere).
       catalog-based assertions, so they do not break once non-English
       catalogs exist and do not silently stop testing anything either.
 
+      **Run 25: first sweep, scoped to the 14 sections item 4 has already
+      translated** (common, sheets, tabs, screenTitles, expenses,
+      categories, categoryDetail, profile, settings, addCategoryModal,
+      expenseSheet, habitDetail.notFound, reports.loading, toasts), per
+      the 2026-09-10 orchestrator review's priority nudge to do this
+      before the translated surface grows further. Method: grep every
+      test-assertion function (`getByText`, `queryByText`, `findByText`,
+      `getByLabelText`, `queryByLabelText`, `findByLabelText`,
+      `toHaveTextContent`, `getByRole(..., { name })`) for each section's
+      leaf-string values (function-valued keys excluded, they stay
+      English regardless of overlay status until item 2's ICU work),
+      then classify every hit: real app-screen coverage of an already-
+      converted call site (fix it), a shared/generic component's own
+      contract test passing an arbitrary example string with no
+      `useStrings()` involved (`uiPrimitives.test.tsx`, `sheetHeader.test.tsx`,
+      `EmptyState`'s tests; leave as is, forcing the catalog onto a
+      component-contract test would blur what it is testing), or fixture
+      data that happens to share a section's key name (`categories`
+      holds UI chrome like "Add category", never the category names
+      themselves, so a merchant/category/habit name in a ladder or scope
+      test is not a catalog reference; leave as is). Found and fixed 8
+      real strays, all app-screen tests: `door3BreakSheet.test.tsx` (3),
+      `todayQuoteRibbonPlacement.test.tsx` (1), `door1FirstRun.test.tsx`
+      (2) asserted a literal `'Close'` label where `Sheet.tsx` reads
+      `strings.common.close`, now `strings.common.close`; `profile.test.tsx`
+      (2) asserted literal `'Currency'`/`'Version'` accessibility-label
+      prefixes where `strings.settings.currency`/`version` are the real
+      source, now `settingsRowLabel(strings.settings.currency, 'USD')`/
+      `settingsRowLabel(strings.settings.version, '1.0.0')`, matching
+      `languageSheet.test.tsx`'s run 20/22 fix pattern. Everything else
+      already checked out clean: most call-site conversions in item 2
+      were already paired with catalog-based test updates as they
+      landed, so the remaining literal-English surface was smaller than
+      expected. One commit; `tsc --noEmit` clean, full suite green
+      (113/113, 1210/1210), no flake. Sweep method and the classification
+      rules recorded in `design/PATTERN_VOCABULARY.md`'s Localization
+      section so a future run can re-run it cheaply against each newly-
+      translated section from item 4, rather than a fresh full-suite
+      grep every time. Checkbox stays open: this covers the sections
+      translated so far, not a standing guarantee for sections item 4
+      has not reached yet (`onboarding`, `leakScan`, `today`, `money`,
+      `insights`, `addUpcoming`, `habitLogging`, `coachMoments`); re-run
+      the sweep as each of those gets a real overlay.
+
 ## 4. Provisional machine translations
 
 - [ ] es, fr, de, pt-BR, it, ja, ko, zh-Hans, hi, nl catalogs. Every

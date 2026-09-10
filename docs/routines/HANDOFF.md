@@ -2,21 +2,16 @@
 
 ## Status
 
-In progress. Run 24: no REVIEW FEEDBACK was pending at session start
-(branch was already current with origin/main; rebase was a no-op), but
-the 2026-09-10 orchestrator's review of runs 20-23 landed on origin
-partway through this run, after the translation work below was already
-committed locally. Rebased onto it before pushing and addressed both
-owed fixes in the same push (see Completed): the CJK punctuation
-stragglers, and the `DeepPartialCatalog` array type hole.
-**Plan item 4's fifth slice**: followed up on run 23's two unconfirmed
-candidates (`habitDetail`, `reports`) and found both mostly dead code;
-translated the one live key in each (`habitDetail.notFound`,
-`reports.loading`) plus a 22-key `toasts` slice across all 10 locale
-overlays. 120 of ~660 keys now populated per language, up from 96. New
-decision needed for Charen: `paywall` is pricing/legal-adjacent copy,
-set aside rather than translated (see DECISIONS NEEDED below). Full
-detail in PLAN.md's run 24 entry.
+In progress. Run 25: no REVIEW FEEDBACK was pending at session start
+(the 2026-09-10 review's two fixes were already addressed in run 24),
+and no rebase was needed (branch was already current with origin/main
+throughout this run). Picked up the same review's priority nudge that
+run 24 did not act on: do plan item 3 (test migration off literal-
+English assertions) before item 4's translated surface grows further.
+Swept every test file's literal-string assertions against the 14
+sections item 4 has translated so far and fixed 8 real strays (see
+Completed). Item 4 itself was not touched this run; its next slice is
+still whatever a future run picks per the Next section below.
 
 ## Completed
 
@@ -457,6 +452,38 @@ detail in PLAN.md's run 24 entry.
   test covers; passed clean on the immediate re-run). Full detail,
   including the exact list of reused verb roots and the paywall
   gating call, in PLAN.md's run 24 entry.
+- Run 25, plan item 3's first sweep (the review's priority nudge, not
+  acted on in run 24): swept every test file's literal-string
+  assertions against the 14 sections item 4 has translated so far
+  (common, sheets, tabs, screenTitles, expenses, categories,
+  categoryDetail, profile, settings, addCategoryModal, expenseSheet,
+  habitDetail.notFound, reports.loading, toasts). Method and
+  classification rules (real coverage vs. a generic component's own
+  contract test vs. fixture data sharing a section's key name) recorded
+  in `design/PATTERN_VOCABULARY.md`'s Localization section. Found 8
+  real strays, all in app-screen tests: `door3BreakSheet.test.tsx` (3),
+  `todayQuoteRibbonPlacement.test.tsx` (1), `door1FirstRun.test.tsx`
+  (2) asserted literal `'Close'` where `Sheet.tsx` reads
+  `strings.common.close`, fixed to `strings.common.close` (all three
+  files already imported `strings`); `profile.test.tsx` (2) asserted
+  literal `'Currency'`/`'Version'` accessibility-label prefixes where
+  `strings.settings.currency`/`version` are the real source, fixed to
+  `settingsRowLabel(strings.settings.currency, 'USD')`/
+  `settingsRowLabel(strings.settings.version, '1.0.0')` (both `strings`
+  and `settingsRowLabel` were already imported there too, for the
+  file's many other already-catalog-based assertions). Most of the
+  sweep came back clean: item 2's call-site conversions were mostly
+  already paired with catalog-based test updates as they landed, so the
+  literal-English surface left to migrate was smaller than the
+  checkbox's still-open state suggested. New item-6 finding surfaced
+  along the way, not fixed this run (out of item 3's scope, no catalog
+  key involved): `utils/a11y.ts`'s chip-label helpers
+  (`selectableChipLabel`/`presetChipLabel`/`exactPriceChipLabel`)
+  hardcode English "selected"/"not selected" directly in the template
+  string in every locale; recorded in `design/PATTERN_VOCABULARY.md`.
+  One commit; `tsc --noEmit` clean and the full suite green (113/113,
+  1210/1210) on the first run, no flake. Full detail, including the
+  exact grep method, in PLAN.md's run 25 entry.
 
 ## Next
 
@@ -503,15 +530,24 @@ What is actually left for a future run:
   and thread them in), not call-site migration; worth its own pick,
   maybe alongside item 4 since it needs new catalog entries either way.
 - Plan item 3 (test migration away from literal-English assertions):
-  now more clearly motivated than before run 20, since real overlays
-  exist and a literal-English assertion in a test for an
-  already-converted component can now genuinely fail once that
-  component's section gets translated (as `languageSheet.test.tsx` did
-  in run 20). Still not a dedicated pass; worth doing before item 4's
-  translated surface grows much further, so newly-flakable tests don't
-  pile up one at a time the way `languageSheet.test.tsx` did.
-- Plan items 5 (overflow hardening) and 6 (localized a11y labels) stay
-  sequenced after item 4, as scoped.
+  run 25 swept the 14 sections item 4 has translated so far and fixed
+  the 8 real strays it found (see Completed and PLAN.md's run 25
+  entry); the checkbox stays open because this is not a standing
+  guarantee for sections item 4 has not reached yet. Re-run the sweep
+  method recorded in `design/PATTERN_VOCABULARY.md` against each newly-
+  translated section as item 4 progresses, ideally in the same run that
+  translates it (cheaper than a separate pass once the list of
+  translated sections grows further).
+- Plan item 6 (localized a11y labels) has a concrete first target now,
+  found during run 25's sweep: `utils/a11y.ts`'s
+  `selectableChipLabel`/`presetChipLabel`/`exactPriceChipLabel` helpers
+  hardcode English "selected"/"not selected" in the template string
+  itself, with no catalog key at all, so every chip's accessibility
+  label ends in literal English regardless of the picked language.
+  Needs two new `common` keys (`selected`/`notSelected`) threaded into
+  all three helpers when item 6's turn comes.
+- Plan items 5 (overflow hardening) and 6 (localized a11y labels)
+  otherwise stay sequenced after item 4, as scoped.
 
 ## Blockers
 
