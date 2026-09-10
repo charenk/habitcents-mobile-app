@@ -17,6 +17,10 @@
  * will not guess at it. It stays English until Charen picks a translation;
  * see docs/routines/HANDOFF.md's DECISIONS NEEDED.
  *
+ * Run 24 fixed, per the 2026-09-10 orchestrator review: `deleteMessage`
+ * had a stray ASCII comma mid-sentence ("保留,只是") where the rest of its
+ * own sentence uses full-width punctuation; now a full-width "，".
+ *
  * Run 24 added: `habitDetail.notFound` (its other four keys are dead code,
  * confirmed unused anywhere in the app); `reports.loading` (dead-code
  * audited section, only this key and the function-valued `weekOf` are
@@ -78,7 +82,7 @@ export const zhHans: LocaleOverlay = {
     emptyTitle: '按你自己的方式对支出分组',
     emptySubtitle: '分组能让模式更容易被看到。',
     emptyCta: '添加你的第一个分类',
-    deleteMessage: '你现有的支出会被保留,只是不再显示这个分类。',
+    deleteMessage: '你现有的支出会被保留，只是不再显示这个分类。',
     deleteConfirmCta: '删除分类',
     deleteCancel: '保留分类',
     addCategoryLabel: '添加分类',

@@ -49,12 +49,34 @@ export type LocaleOverlay = DeepPartialCatalog<Catalog>;
 // here; only function signatures (already general, not literal, since
 // `as const` does not narrow a function's own return type the way it
 // narrows a plain string) pass through unchanged.
+//
+// Array elements use WidenLiterals, not a recursive DeepPartialCatalog,
+// because mergeCatalog() replaces an overlaid array wholesale rather than
+// merging element by element (see its own comment below): a
+// DeepPartialCatalog<U>[] element type would let an overlay legally supply
+// an object-element array missing a required field (e.g. a future
+// `TodayQuote[]` overlay omitting `text`), which tsc would accept and the
+// merge would render as `undefined` at runtime with no type error to catch
+// it (2026-09-10 orchestrator review). WidenLiterals keeps every element
+// key's own required/optional shape from the base type intact and only
+// widens literal types, so an overlay array must supply every required
+// field on every element, same as constructing one directly.
 type DeepPartialCatalog<T> = T extends (...args: never[]) => unknown
   ? T
   : T extends readonly (infer U)[]
-  ? DeepPartialCatalog<U>[]
+  ? WidenLiterals<U>[]
   : T extends object
   ? { [K in keyof T]?: DeepPartialCatalog<T[K]> }
+  : T extends string
+  ? string
+  : T;
+
+type WidenLiterals<T> = T extends (...args: never[]) => unknown
+  ? T
+  : T extends readonly (infer U)[]
+  ? WidenLiterals<U>[]
+  : T extends object
+  ? { [K in keyof T]: WidenLiterals<T[K]> }
   : T extends string
   ? string
   : T;
