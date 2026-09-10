@@ -5,10 +5,12 @@
  * deliberately, see below), `sheets`, `tabs`, `screenTitles` (run 20), plus
  * `expenses`, `categories`, `categoryDetail`, `profile` (run 21), plus
  * `settings` minus `versionValue`/`supportEmail` (run 22, not localizable
- * content). Every other section is not yet translated and falls back to
- * English via mergeCatalog() in utils/i18n.ts. Function-valued keys
- * (pluralized or interpolated) are omitted throughout and inherit the
- * English function, per plan item 2's deferred ICU work.
+ * content), plus `addCategoryModal`, `expenseSheet` minus the function-
+ * valued `amountLabel` (run 23). Every other section is not yet translated
+ * and falls back to English via mergeCatalog() in utils/i18n.ts.
+ * Function-valued keys (pluralized or interpolated) are omitted
+ * throughout and inherit the English function, per plan item 2's
+ * deferred ICU work.
  *
  * `common.keep` is withheld on purpose: it is close enough to the app's
  * locked vocabulary (leak/skip/kept/slip, ops CLAUDE.md) that this routine
@@ -117,5 +119,24 @@ export const it: LocaleOverlay = {
     startOverToast: 'Ricomincio in corso. I tuoi dati restano su questo dispositivo.',
     linkOpenFailed: 'Non è stato possibile aprire il link.',
     mailOpenFailed: 'Non è stato possibile aprire la posta.',
+  },
+  addCategoryModal: {
+    editCategory: 'Modifica categoria.',
+    newCategory: 'Nuova categoria.',
+    categoryNamePreview: 'Nome della categoria',
+    name: 'Nome',
+    namePlaceholder: 'Inserisci il nome della categoria',
+    icon: 'Icona',
+    color: 'Colore',
+  },
+  expenseSheet: {
+    logEyebrow: 'Registra spesa',
+    editEyebrow: 'Modifica spesa',
+    categoryEyebrow: 'Categoria',
+    whereEyebrow: 'Dove',
+    saveExpense: 'Salva',
+    saveChanges: 'Salva',
+    deleteExpense: 'Elimina spesa',
+    keyboardDone: 'Fine',
   },
 };

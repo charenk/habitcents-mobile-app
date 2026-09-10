@@ -5,10 +5,12 @@
  * deliberately, see below), `sheets`, `tabs`, `screenTitles` (run 20), plus
  * `expenses`, `categories`, `categoryDetail`, `profile` (run 21), plus
  * `settings` minus `versionValue`/`supportEmail` (run 22, not localizable
- * content). Every other section is not yet translated and falls back to
- * English via mergeCatalog() in utils/i18n.ts. Function-valued keys
- * (pluralized or interpolated) are omitted throughout and inherit the
- * English function, per plan item 2's deferred ICU work.
+ * content), plus `addCategoryModal`, `expenseSheet` minus the function-
+ * valued `amountLabel` (run 23). Every other section is not yet translated
+ * and falls back to English via mergeCatalog() in utils/i18n.ts.
+ * Function-valued keys (pluralized or interpolated) are omitted
+ * throughout and inherit the English function, per plan item 2's
+ * deferred ICU work.
  *
  * `common.keep` is withheld on purpose: it is close enough to the app's
  * locked vocabulary (leak/skip/kept/slip, ops CLAUDE.md) that this routine
@@ -116,5 +118,24 @@ export const nl: LocaleOverlay = {
     startOverToast: 'Opnieuw beginnen. Je gegevens blijven op dit apparaat.',
     linkOpenFailed: 'De link kon niet worden geopend.',
     mailOpenFailed: 'Mail kon niet worden geopend.',
+  },
+  addCategoryModal: {
+    editCategory: 'Categorie bewerken.',
+    newCategory: 'Nieuwe categorie.',
+    categoryNamePreview: 'Categorienaam',
+    name: 'Naam',
+    namePlaceholder: 'Categorienaam invoeren',
+    icon: 'Icoon',
+    color: 'Kleur',
+  },
+  expenseSheet: {
+    logEyebrow: 'Uitgave registreren',
+    editEyebrow: 'Uitgave bewerken',
+    categoryEyebrow: 'Categorie',
+    whereEyebrow: 'Waar',
+    saveExpense: 'Opslaan',
+    saveChanges: 'Opslaan',
+    deleteExpense: 'Uitgave verwijderen',
+    keyboardDone: 'Klaar',
   },
 };
