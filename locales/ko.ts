@@ -5,10 +5,12 @@
  * deliberately, see below), `sheets`, `tabs`, `screenTitles` (run 20), plus
  * `expenses`, `categories`, `categoryDetail`, `profile` (run 21), plus
  * `settings` minus `versionValue`/`supportEmail` (run 22, not localizable
- * content). Every other section is not yet translated and falls back to
- * English via mergeCatalog() in utils/i18n.ts. Function-valued keys
- * (pluralized or interpolated) are omitted throughout and inherit the
- * English function, per plan item 2's deferred ICU work.
+ * content), plus `addCategoryModal`, `expenseSheet` minus the function-
+ * valued `amountLabel` (run 23). Every other section is not yet translated
+ * and falls back to English via mergeCatalog() in utils/i18n.ts.
+ * Function-valued keys (pluralized or interpolated) are omitted
+ * throughout and inherit the English function, per plan item 2's
+ * deferred ICU work.
  *
  * `common.keep` is withheld on purpose: it is close enough to the app's
  * locked vocabulary (leak/skip/kept/slip, ops CLAUDE.md) that this routine
@@ -116,5 +118,24 @@ export const ko: LocaleOverlay = {
     startOverToast: '처음부터 다시 시작하는 중이에요. 데이터는 이 기기에 남아요.',
     linkOpenFailed: '링크를 열 수 없었어요.',
     mailOpenFailed: '메일을 열 수 없었어요.',
+  },
+  addCategoryModal: {
+    editCategory: '카테고리 편집.',
+    newCategory: '새 카테고리.',
+    categoryNamePreview: '카테고리 이름',
+    name: '이름',
+    namePlaceholder: '카테고리 이름 입력',
+    icon: '아이콘',
+    color: '색상',
+  },
+  expenseSheet: {
+    logEyebrow: '지출 기록',
+    editEyebrow: '지출 편집',
+    categoryEyebrow: '카테고리',
+    whereEyebrow: '어디서',
+    saveExpense: '저장',
+    saveChanges: '저장',
+    deleteExpense: '지출 삭제',
+    keyboardDone: '완료',
   },
 };

@@ -5,11 +5,12 @@
  * `keep`, held back deliberately, see below), `sheets`, `tabs`,
  * `screenTitles` (run 20), plus `expenses`, `categories`, `categoryDetail`,
  * `profile` (run 21), plus `settings` minus `versionValue`/`supportEmail`
- * (run 22, not localizable content). Every other section is not yet
- * translated and falls back to English via mergeCatalog() in
- * utils/i18n.ts. Function-valued keys (pluralized or interpolated) are
- * omitted throughout and inherit the English function, per plan item 2's
- * deferred ICU work.
+ * (run 22, not localizable content), plus `addCategoryModal`,
+ * `expenseSheet` minus the function-valued `amountLabel` (run 23). Every
+ * other section is not yet translated and falls back to English via
+ * mergeCatalog() in utils/i18n.ts. Function-valued keys (pluralized or
+ * interpolated) are omitted throughout and inherit the English function,
+ * per plan item 2's deferred ICU work.
  *
  * `common.keep` is withheld on purpose: it is close enough to the app's
  * locked vocabulary (leak/skip/kept/slip, ops CLAUDE.md) that this routine
@@ -117,5 +118,24 @@ export const zhHans: LocaleOverlay = {
     startOverToast: '正在重新开始。你的数据仍保留在此设备上。',
     linkOpenFailed: '无法打开该链接。',
     mailOpenFailed: '无法打开邮件。',
+  },
+  addCategoryModal: {
+    editCategory: '编辑分类.',
+    newCategory: '新建分类.',
+    categoryNamePreview: '分类名称',
+    name: '名称',
+    namePlaceholder: '输入分类名称',
+    icon: '图标',
+    color: '颜色',
+  },
+  expenseSheet: {
+    logEyebrow: '记录支出',
+    editEyebrow: '编辑支出',
+    categoryEyebrow: '分类',
+    whereEyebrow: '在哪里',
+    saveExpense: '保存',
+    saveChanges: '保存',
+    deleteExpense: '删除支出',
+    keyboardDone: '完成',
   },
 };

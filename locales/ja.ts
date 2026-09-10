@@ -5,10 +5,12 @@
  * deliberately, see below), `sheets`, `tabs`, `screenTitles` (run 20), plus
  * `expenses`, `categories`, `categoryDetail`, `profile` (run 21), plus
  * `settings` minus `versionValue`/`supportEmail` (run 22, not localizable
- * content). Every other section is not yet translated and falls back to
- * English via mergeCatalog() in utils/i18n.ts. Function-valued keys
- * (pluralized or interpolated) are omitted throughout and inherit the
- * English function, per plan item 2's deferred ICU work. Trailing periods
+ * content), plus `addCategoryModal`, `expenseSheet` minus the function-
+ * valued `amountLabel` (run 23). Every other section is not yet translated
+ * and falls back to English via mergeCatalog() in utils/i18n.ts.
+ * Function-valued keys (pluralized or interpolated) are omitted
+ * throughout and inherit the English function, per plan item 2's
+ * deferred ICU work. Trailing periods
  * on titles follow `screenTitles`'s existing precedent (a literal ".", not
  * "。"; run 20's note, a Charen-reviewable choice). Question marks use the
  * half-width "?" for the same reason (run 22, `settings.startOverConfirmTitle`).
@@ -119,5 +121,24 @@ export const ja: LocaleOverlay = {
     startOverToast: 'やり直しています。データはこの端末に残ります。',
     linkOpenFailed: 'リンクを開けませんでした。',
     mailOpenFailed: 'メールを開けませんでした。',
+  },
+  addCategoryModal: {
+    editCategory: 'カテゴリーを編集.',
+    newCategory: '新しいカテゴリー.',
+    categoryNamePreview: 'カテゴリー名',
+    name: '名前',
+    namePlaceholder: 'カテゴリー名を入力',
+    icon: 'アイコン',
+    color: '色',
+  },
+  expenseSheet: {
+    logEyebrow: '支出を記録',
+    editEyebrow: '支出を編集',
+    categoryEyebrow: 'カテゴリー',
+    whereEyebrow: 'どこで',
+    saveExpense: '保存',
+    saveChanges: '保存',
+    deleteExpense: '支出を削除',
+    keyboardDone: '完了',
   },
 };

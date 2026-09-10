@@ -5,10 +5,12 @@
  * held back deliberately, see below), `sheets`, `tabs`, `screenTitles` (run
  * 20), plus `expenses`, `categories`, `categoryDetail`, `profile` (run 21),
  * plus `settings` minus `versionValue`/`supportEmail` (run 22, not
- * localizable content). Every other section is not yet translated and
- * falls back to English via mergeCatalog() in utils/i18n.ts. Function-
- * valued keys (pluralized or interpolated) are omitted throughout and
- * inherit the English function, per plan item 2's deferred ICU work.
+ * localizable content), plus `addCategoryModal`, `expenseSheet` minus the
+ * function-valued `amountLabel` (run 23). Every other section is not yet
+ * translated and falls back to English via mergeCatalog() in
+ * utils/i18n.ts. Function-valued keys (pluralized or interpolated) are
+ * omitted throughout and inherit the English function, per plan item 2's
+ * deferred ICU work.
  *
  * `common.keep` is withheld on purpose: it is close enough to the app's
  * locked vocabulary (leak/skip/kept/slip, ops CLAUDE.md) that this routine
@@ -116,5 +118,24 @@ export const ptBR: LocaleOverlay = {
     startOverToast: 'Recomeçando. Seus dados permanecem neste dispositivo.',
     linkOpenFailed: 'Não foi possível abrir o link.',
     mailOpenFailed: 'Não foi possível abrir o e-mail.',
+  },
+  addCategoryModal: {
+    editCategory: 'Editar categoria.',
+    newCategory: 'Nova categoria.',
+    categoryNamePreview: 'Nome da categoria',
+    name: 'Nome',
+    namePlaceholder: 'Insira o nome da categoria',
+    icon: 'Ícone',
+    color: 'Cor',
+  },
+  expenseSheet: {
+    logEyebrow: 'Registrar despesa',
+    editEyebrow: 'Editar despesa',
+    categoryEyebrow: 'Categoria',
+    whereEyebrow: 'Onde',
+    saveExpense: 'Salvar',
+    saveChanges: 'Salvar',
+    deleteExpense: 'Excluir despesa',
+    keyboardDone: 'Concluído',
   },
 };
