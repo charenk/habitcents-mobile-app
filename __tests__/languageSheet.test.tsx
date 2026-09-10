@@ -81,7 +81,7 @@ describe('LanguageSheet', () => {
   it('lists System default plus every supported language, native name first', async () => {
     const view = await renderSheet();
 
-    expect(view.getByText(strings.settings.languageSystemDefault)).toBeTruthy();
+    expect(view.getByText(getCatalog('fr').settings.languageSystemDefault)).toBeTruthy();
     expect(view.getByText(rowLabel('fr'))).toBeTruthy();
     expect(view.getByText(rowLabel('es'))).toBeTruthy();
     expect(view.getByText(rowLabel('pt-BR'))).toBeTruthy();
@@ -92,7 +92,7 @@ describe('LanguageSheet', () => {
     const view = await renderSheet();
 
     const systemRow = view.getByLabelText(
-      selectableLabel(strings.settings.languageSystemDefault, true)
+      selectableLabel(getCatalog('fr').settings.languageSystemDefault, true)
     );
     expect(systemRow.props.accessibilityState).toMatchObject({ selected: true });
 

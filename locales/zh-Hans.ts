@@ -4,10 +4,12 @@
  * Locale: zh-Hans (Chinese, Simplified). Plan item 4: `common` (except
  * `keep`, held back deliberately, see below), `sheets`, `tabs`,
  * `screenTitles` (run 20), plus `expenses`, `categories`, `categoryDetail`,
- * `profile` (run 21). Every other section is not yet translated and falls
- * back to English via mergeCatalog() in utils/i18n.ts. Function-valued keys
- * (pluralized or interpolated) are omitted throughout and inherit the
- * English function, per plan item 2's deferred ICU work.
+ * `profile` (run 21), plus `settings` minus `versionValue`/`supportEmail`
+ * (run 22, not localizable content). Every other section is not yet
+ * translated and falls back to English via mergeCatalog() in
+ * utils/i18n.ts. Function-valued keys (pluralized or interpolated) are
+ * omitted throughout and inherit the English function, per plan item 2's
+ * deferred ICU work.
  *
  * `common.keep` is withheld on purpose: it is close enough to the app's
  * locked vocabulary (leak/skip/kept/slip, ops CLAUDE.md) that this routine
@@ -85,5 +87,35 @@ export const zhHans: LocaleOverlay = {
     title: '个人资料.',
     headerLabel: '个人资料',
     supportRow: '支持',
+  },
+  settings: {
+    opensInBrowserHint: '将在你的浏览器中打开。',
+    preferences: '偏好设置',
+    currency: '货币',
+    about: '关于',
+    privacyPolicy: '隐私政策',
+    termsOfService: '服务条款',
+    restorePurchases: '恢复购买',
+    version: '版本',
+    currencySheetTitle: '货币.',
+    language: '语言',
+    languageSheetTitle: '语言.',
+    languageSystemDefault: '系统默认',
+    restoreNoneMessage: '没有可恢复的历史购买。',
+    restoreDoneMessage: '你的购买已恢复。',
+    groupGeneral: '通用',
+    groupMore: '更多',
+    subscriptionRow: '订阅',
+    subscriptionValueFree: '免费',
+    subscriptionValuePremium: '高级版',
+    startOverRow: '重新开始',
+    startOverHint: '数据仍保留在此设备上',
+    startOverConfirmTitle: '要重新开始吗？',
+    startOverConfirmBody: '将带你回到起始界面。你的数据仍保留在此设备上。',
+    startOverConfirmCta: '重新开始',
+    startOverConfirmCancel: '继续',
+    startOverToast: '正在重新开始。你的数据仍保留在此设备上。',
+    linkOpenFailed: '无法打开该链接。',
+    mailOpenFailed: '无法打开邮件。',
   },
 };

@@ -3,11 +3,12 @@
  *
  * Locale: pt-BR (Portuguese, Brazil). Plan item 4: `common` (except `keep`,
  * held back deliberately, see below), `sheets`, `tabs`, `screenTitles` (run
- * 20), plus `expenses`, `categories`, `categoryDetail`, `profile` (run 21).
- * Every other section is not yet translated and falls back to English via
- * mergeCatalog() in utils/i18n.ts. Function-valued keys (pluralized or
- * interpolated) are omitted throughout and inherit the English function,
- * per plan item 2's deferred ICU work.
+ * 20), plus `expenses`, `categories`, `categoryDetail`, `profile` (run 21),
+ * plus `settings` minus `versionValue`/`supportEmail` (run 22, not
+ * localizable content). Every other section is not yet translated and
+ * falls back to English via mergeCatalog() in utils/i18n.ts. Function-
+ * valued keys (pluralized or interpolated) are omitted throughout and
+ * inherit the English function, per plan item 2's deferred ICU work.
  *
  * `common.keep` is withheld on purpose: it is close enough to the app's
  * locked vocabulary (leak/skip/kept/slip, ops CLAUDE.md) that this routine
@@ -85,5 +86,35 @@ export const ptBR: LocaleOverlay = {
     title: 'Perfil.',
     headerLabel: 'Perfil',
     supportRow: 'Suporte',
+  },
+  settings: {
+    opensInBrowserHint: 'Abre no seu navegador.',
+    preferences: 'Preferências',
+    currency: 'Moeda',
+    about: 'Sobre',
+    privacyPolicy: 'Política de privacidade',
+    termsOfService: 'Termos de serviço',
+    restorePurchases: 'Restaurar compras',
+    version: 'Versão',
+    currencySheetTitle: 'Moeda.',
+    language: 'Idioma',
+    languageSheetTitle: 'Idioma.',
+    languageSystemDefault: 'Padrão do sistema',
+    restoreNoneMessage: 'Nenhuma compra anterior para restaurar.',
+    restoreDoneMessage: 'Suas compras foram restauradas.',
+    groupGeneral: 'Geral',
+    groupMore: 'Mais',
+    subscriptionRow: 'Assinatura',
+    subscriptionValueFree: 'Grátis',
+    subscriptionValuePremium: 'Premium',
+    startOverRow: 'Recomeçar',
+    startOverHint: 'os dados permanecem neste dispositivo',
+    startOverConfirmTitle: 'Recomeçar?',
+    startOverConfirmBody: 'Leva você de volta às telas iniciais. Seus dados permanecem neste dispositivo.',
+    startOverConfirmCta: 'Recomeçar',
+    startOverConfirmCancel: 'Continuar',
+    startOverToast: 'Recomeçando. Seus dados permanecem neste dispositivo.',
+    linkOpenFailed: 'Não foi possível abrir o link.',
+    mailOpenFailed: 'Não foi possível abrir o e-mail.',
   },
 };
