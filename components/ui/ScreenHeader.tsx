@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/contexts/ThemeContext';
 import { radii, typeScale, type AppTheme } from '@/constants/theme';
@@ -61,15 +61,15 @@ export function ScreenHeader({ title, eyebrow, actions, onBack }: ScreenHeaderPr
     >
       <View style={styles.leftGroup}>
         {onBack ? (
-          <TouchableOpacity
+          <Pressable
             onPress={onBack}
-            style={styles.backButton}
+            style={({ pressed }) => [styles.backButton, pressed ? styles.buttonPressed : null]}
             accessibilityRole="button"
             accessibilityLabel={strings.common.back}
             hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
           >
             <Icon name="ArrowLeft" size={18} color={theme.slate} />
-          </TouchableOpacity>
+          </Pressable>
         ) : null}
 
         {title ? (
@@ -95,16 +95,16 @@ export function ScreenHeader({ title, eyebrow, actions, onBack }: ScreenHeaderPr
       {actions && actions.length > 0 ? (
         <View style={styles.actions}>
           {actions.map((action) => (
-            <TouchableOpacity
+            <Pressable
               key={action.label}
-              style={styles.actionButton}
+              style={({ pressed }) => [styles.actionButton, pressed ? styles.buttonPressed : null]}
               onPress={action.onPress}
               accessibilityRole="button"
               accessibilityLabel={action.label}
               hitSlop={4}
             >
               <Icon name={action.icon} size={18} color={theme.slate} />
-            </TouchableOpacity>
+            </Pressable>
           ))}
         </View>
       ) : null}
@@ -127,6 +127,15 @@ function createStyles(theme: AppTheme) {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 12,
+    },
+    // The house press convention, finally applied to the chrome that carries
+    // it everywhere (2026-09-10). Both controls were TouchableOpacity on its
+    // default opacity fade, so the app's most-touched buttons were the one
+    // exception to Button.tsx's stated rule, "a pressed background swap,
+    // never a scale". Snow is the same swap Button's secondary uses, and both
+    // controls are white-on-cloud like a secondary button.
+    buttonPressed: {
+      backgroundColor: theme.snow,
     },
     backButton: {
       width: 40,

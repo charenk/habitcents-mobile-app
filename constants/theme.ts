@@ -366,7 +366,19 @@ export const shadows = {
   toast: { shadowColor: '#1A1D23', shadowOffset: { width: 0, height: 8 }, shadowRadius: 24, shadowOpacity: 0.3, elevation: 12 },
 } as const;
 
-export const motion = { tap: 120, sheet: 220, toast: 220, screen: 360, pulse: 280, easing: [0.22, 1, 0.36, 1] as const } as const;
+/**
+ * The motion budget (design/PATTERN_VOCABULARY.md).
+ *
+ * `tap: 120` was removed on 2026-09-10: it had never had a single consumer.
+ * Press feedback in this app is an INSTANT background swap, by the house rule
+ * that thumb swaps and presses do not animate, so a duration token for it
+ * described a convention the app deliberately does not have and read as an
+ * invitation to add one. If a timed press state is ever wanted, it needs an
+ * ADR first, and the token comes back with it.
+ *
+ * `screen: 360` is read by LongArc's sweep, not by any navigation transition.
+ */
+export const motion = { sheet: 220, toast: 220, screen: 360, pulse: 280, easing: [0.22, 1, 0.36, 1] as const } as const;
 
 /**
  * Shared chrome metrics, so screens stop repeating the literals.

@@ -54,7 +54,8 @@ Sources of truth this page compresses: `design/redesign-handoff/01-tokens-and-fo
 
 ## Motion
 
-- Budget: tap 120ms, sheet and toast 220ms, screen 360ms, easing `cubic-bezier(0.22, 1, 0.36, 1)`.
+- Budget: sheet and toast 220ms, screen 360ms, easing `cubic-bezier(0.22, 1, 0.36, 1)`. The `tap 120ms` entry went on 2026-09-10: it had never had a consumer, because press feedback here is an instant background swap by the rule below. A timed press state needs an ADR before the token comes back.
+- **Touch answers, even where nothing moves** (2026-09-10). A tab change and either switcher fire `hapticSelection`, and only on a real change: re-pressing the segment or tab you are already on is not a selection. The bars still have no motion. Before this, 21 of the app's 27 haptics were `hapticError` and `hapticSelection` fired in exactly one place, so the product touched you almost only to say you were wrong.
 - Exactly one playful motion exists: the 280ms skip-confirm pulse. Do not add a second without an ADR.
 - Thumb swaps in switchers are instant, by design.
 - Every animation has a reduced-motion path (opacity only or nothing). Mixed animation drivers on one node crashed two release builds; one driver per node, no JS-thread sequences.

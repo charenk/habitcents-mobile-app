@@ -24,6 +24,7 @@
 import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
+import { hapticSelection } from '@/utils/motion';
 import type { AppTheme } from '@/constants/theme';
 import { radii, shadows, typeScale } from '@/constants/theme';
 import { selectableLabel } from '@/utils/a11y';
@@ -76,7 +77,14 @@ export function SegmentedControl<T extends string | number>({
         return (
           <Pressable
             key={option.value}
-            onPress={() => onChange(option.value)}
+            onPress={() => {
+              // Selection haptic, and only on a real change: re-pressing the
+              // selected segment is a no-op, so buzzing for it would be the
+              // control lying about what happened (2026-09-10). No motion
+              // here either way; thumb swaps stay instant by house rule.
+              if (!selected) hapticSelection();
+              onChange(option.value);
+            }}
             accessibilityRole="tab"
             accessibilityLabel={selectableLabel(spokenLabel, selected)}
             accessibilityState={{ selected }}

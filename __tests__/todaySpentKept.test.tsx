@@ -28,6 +28,14 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 
 jest.mock('@/utils/analytics', () => ({ track: jest.fn() }));
 
+// Selection haptic on a chip change (2026-09-10). Mocked rather than spied so
+// the guard can be asserted by call count.
+const mockHapticSelection = jest.fn();
+jest.mock('@/utils/motion', () => ({
+  ...jest.requireActual('@/utils/motion'),
+  hapticSelection: (...args: unknown[]) => mockHapticSelection(...args),
+}));
+
 const mockPush = jest.fn();
 jest.mock('expo-router', () => {
   const ReactActual = require('react');
@@ -241,6 +249,24 @@ afterEach(async () => {
 });
 
 describe('Today: Spent/Kept chips', () => {
+  it('a chip change answers the touch; re-pressing the selected chip stays silent', async () => {
+    // Before 2026-09-10 nothing in the tab bar or either switcher fired a
+    // haptic at all, and 21 of the app's 27 haptic calls were hapticError.
+    // The guard is the half worth pinning: pressing the chip you are already
+    // on changes nothing, so buzzing for it would be the control lying.
+    mockHapticSelection.mockClear();
+    const view = await renderToday();
+
+    await tap(view.getByTestId('kept-chip'));
+    expect(mockHapticSelection).toHaveBeenCalledTimes(1);
+
+    await tap(view.getByTestId('kept-chip'));
+    expect(mockHapticSelection).toHaveBeenCalledTimes(1);
+
+    await tap(view.getByTestId('spent-chip'));
+    expect(mockHapticSelection).toHaveBeenCalledTimes(2);
+  });
+
   it('renders both the spent and kept amounts', async () => {
     mockExpenses = [makeExpense({ id: 'e1', amount: 500, class: 'spend' })];
     mockGoals = [makeGoal({ id: 'g1', habitId: 'h1', skipValue: 700, dayLogs: [{ date: new Date(), state: 'skipped' }] })];
