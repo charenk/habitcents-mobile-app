@@ -1278,3 +1278,195 @@ That is the real question when cutting: not which sentence is best, but which on
 VISUAL NOTE: the before and after, with the surviving sentence marked.
 
 ---
+
+---
+
+## 2026-09-07: Two docks became one shape in two voices, the explainer moved behind a link, every zero state learned to centre, and the log stopped cutting off
+
+### Session scan
+
+**Scope:** end of session
+**Built this session:** Three PRs on Today, each from Charen's annotated screenshots. The two bottom docks became one structure at one fixed height, then got two skins when the solid version read as a duplicate composer on the device. The Kept zero state dropped its three-step explainer and its log CTA for a single underlined link that opens a how-it-works sheet. EmptyState's fill mode gained real centring and a block-height floor so illustrations stop jumping between panes. A static SVG fade now dissolves long lists into the dock, and the "Kept so far" band left Today. TestFlight build 22 went out from main.
+**Pillar scores:** P1: Strong · P2: Strong · P3: Strong · P4: Strong · P5: Strong
+**P6:** not generated (not Friday, not requested)
+
+---
+
+### P1 CONCEPT DISCOVERED: Centring a stack does not anchor the picture
+
+**TWITTER POST**
+Bug that looked like a spacing nudge and was not. Three tabs each show an illustration, a title, a link, centred in the pane. Swipe between them and the illustration jumps. Why: centring centres the whole stack, and a one-line title makes a shorter stack than a two-line one, so the picture lands higher or lower depending on the words under it. Fix was not "align the art", it was "give every block the same minimum height". Same words, same y, forever.
+
+VISUAL NOTE: three-pane strip, before (art at three heights) and after (one height), with the title line counts labelled.
+
+---
+
+**LINKEDIN POST**
+A small layout lesson that took me a morning to see properly.
+
+Three panes in my app each show a zero state: an illustration, a one-line hook, a text link, vertically centred. My designer swiped between them and the illustration visibly hopped up and down. The obvious fix is to nudge the art until it lines up.
+
+The real cause was that "centred" centres the whole stack. One pane's hook fits on one line, another wraps to two, so the stacks are different heights, so the centre point moves, so the picture moves with it. Nothing was misaligned. The maths was doing exactly what it was told.
+
+The fix was to stop centring the stack and start flooring the block: every zero state gets the same minimum height, sized for the tallest normal case, with the art pinned to the block's top. Now the stack can be a line taller or shorter and the picture never moves. Under large accessibility text the block grows past the floor, which is fine, because a floor is a minimum, never a clip.
+
+What I keep from it: when the same element lands in different places on sibling screens, ask what the layout is centring, not where the element is.
+
+VISUAL NOTE: two diagrams, "centred stack" with the art at two heights, "floored block" with the art at one.
+
+---
+
+CASE STUDY MOMENT
+Replaced per-pane centring with a shared block-height floor so the illustration stays put across a swipe, and pinned it with a geometry test.
+
+---
+
+### P2 ITERATION WITH RATIONALE: One shape, two voices
+
+**TWITTER POST**
+Morning: my designer asked for the two buttons at the bottom of a screen to be structurally identical. I made them one component, same shell, same height. Afternoon, on the phone: the second one now read as a duplicate of the first. Same designer: keep the structure, change the skin. Dashed edge instead of solid, a quiet plus instead of a filled one. The reversal was not a mistake. You cannot judge a skin until the structure underneath it is settled.
+
+VISUAL NOTE: three states of the Kept dock in a row, dashed original, solid midday, dashed-with-plain-plus final.
+
+---
+
+**TWITTER THREAD**
+Tweet 1: I shipped a design change at noon and reversed half of it by four. Both halves were right. Here is why.
+Tweet 2: The screen has two bottom docks, one swipe apart. One held an amount field and a filled green plus. The other was a dashed pill with an icon and text. Different shapes, different heights. The designer wanted them structurally the same.
+Tweet 3: So I built one shell: a pill, a fixed-height field, a round button, and put both docks on it. Same height to the point. The swipe stopped jumping. Shipped.
+Tweet 4: Then the designer used it on the phone. "Break your first habit" now looked exactly like "add an expense". Same shell, same green, same weight. Two different actions, one voice.
+Tweet 5: The fix was not to undo the morning. The structure was right; the skin was wrong. The second dock got its dashed edge back and a plain plus instead of a filled one. Same field, same button, same 74pt.
+Tweet 6: One detail: the dashed edge is 1.5pt where the solid edge is 1pt. That would have made the second dock one point taller, which is a visible jump across a swipe. So the dashed version pays the half point out of its padding, and a test pins both totals equal.
+Final tweet: Structure and skin are two decisions. You can only judge the second once the first is settled, and the only place to judge it is in your hand.
+
+VISUAL NOTE: tweet 5, the two docks side by side, solid and dashed, at identical height.
+
+---
+
+**LINKEDIN POST**
+I reversed part of my own work within four hours today, and I think the sequence was correct.
+
+Morning brief: two bottom docks on the same screen, one swipe apart, looked like they came from different apps. One was a card with an amount field and a filled green button. The other was a dashed pill with an icon and two lines of text. Different shapes, different heights. Make them structurally consistent.
+
+So I built one shell and put both docks on it: a pill container, a field at a fixed height, a round button. The heights matched to the point, and swiping between the panes no longer moved the chrome. Shipped.
+
+Then the designer picked up the phone. With both docks solid and green, "Break your first habit" read as a second copy of the add-expense composer. Same shell, same colour, same weight, two different jobs.
+
+The reversal was surgical. The structure stayed. The second dock got its dashed edge back, which is what this app uses to mean "add another", and a plain plus instead of a filled one. Same field, same button, same height. One shape, two voices.
+
+The part I would not have got right without shipping the first version: a 1.5pt dashed edge against a 1pt solid one would have made the second dock a point taller, which is exactly the jump we had just removed. So the dashed skin pays that half point out of its padding, and a test derives both totals and pins them equal.
+
+Structure and skin are separate decisions, and you cannot evaluate the second until the first is settled. The place to evaluate it is in someone's hand, not in a mockup.
+
+VISUAL NOTE: the two final docks side by side with their heights annotated.
+
+---
+
+CASE STUDY MOMENT
+Same-day reversal of a dock skin after the structural change proved right in the hand, with height parity preserved by construction.
+
+---
+
+### P3 PLATFORM PATTERN: The gradient library was the wrong one for the first screen
+
+**TWITTER POST**
+Needed a fade at the bottom of a list. The obvious library was already installed and already used elsewhere in the app. I used a different one on purpose. Reason: an unexplained launch crash from a past release, whose only native change was two modules. One of them already renders on the first screen (every tab icon). The other renders only inside things you open. A fade on the first screen must not be what adds a new module to the launch path. Same pixels, different risk.
+
+VISUAL NOTE: NONE.
+
+---
+
+**LINKEDIN POST**
+A choice between two libraries that produce identical pixels, decided by something that is not in either library's docs.
+
+I needed a small vertical fade so a long list dissolves into the bar below it instead of cutting off. The app already had a gradient library installed, already used on two screens. Reaching for it would have taken five minutes.
+
+I reached for the SVG library instead, which is more verbose and needs a workaround for gradient ids. Here is why.
+
+Months ago a release build crashed on launch and the cause was never confirmed. The only native difference between the last good build and the bad one was those two libraries being added. One of them, the SVG one, already renders on the first screen today, in every tab bar icon. The other, the gradient one, renders only inside things a user opens: a paywall, a sheet. It has never rendered in the launch path.
+
+A fade on the first screen would change that. If the crash ever came back, the first question would be "what changed about launch", and the answer would be me, for a fade.
+
+Two smaller things fell out of the SVG route. Gradient ids in that library are global across every SVG on screen, so two fades on two mounted panes need distinct ids. And the testing library cannot see gradient stops at all, because the library folds them into a native array before the host tree exists, so the contract had to be tested at the component level rather than the rendered one.
+
+The general shape: when two tools give the same output, the difference is in what they touch that you cannot see.
+
+VISUAL NOTE: NONE.
+
+---
+
+CASE STUDY MOMENT
+Chose the SVG library over the installed gradient library for a first-screen fade to keep the launch render path's native module set unchanged while an incident stays open.
+
+---
+
+### P4 PRODUCT AND DESIGN JUDGMENT: The nicer version was the wrong version
+
+**TWITTER POST**
+Two ways to build a bottom fade. Static: always on, sized so the last row stays readable when you reach the end. Dynamic: dissolves as you scroll to the end, which looks better. I recommended static, and the reason was not effort. The dynamic one would be this app's first scroll-driven UI, in a codebase that deliberately has none after two release crashes in the animation layer. A feature is not just what it does. It is what it opens the door to.
+
+VISUAL NOTE: short clip of the static fade over a long list, scrolled to the end, last row readable.
+
+---
+
+**LINKEDIN POST**
+The better-looking option lost today, and I argued for the loss.
+
+I was adding a fade at the bottom of a scrolling list so it dissolves into the bar beneath it. There are two ways. A static fade is always there, and you size it against the list's end padding so the final row is still readable when you scroll to the bottom. A dynamic fade tracks the scroll position and disappears as you reach the end. The dynamic one is nicer. Every polished app does it.
+
+I recommended the static one, and the designer took it.
+
+The reason was not the extra work. This codebase has no scroll-driven UI at all, on purpose. Two release builds crashed in the animation layer, the root cause was never found, and since then every animation follows a short list of rules and the dock component's own record says scroll-driven behaviour needs its own decision record and a release-build boot walk before it ships. The dynamic fade would have been the first exception, on the first screen, for a visual nicety.
+
+So the static fade ships now, sized so nothing readable is ever under the dark part of it, and the dynamic version is written down as the follow-up, with the conditions it has to meet.
+
+The judgment I keep coming back to: a feature is not only what it does on screen. It is also what it makes easier to do next. The first scroll-driven effect is a much bigger decision than the second one.
+
+VISUAL NOTE: NONE.
+
+---
+
+CASE STUDY MOMENT
+Shipped the static fade over the scroll-aware one to avoid introducing the app's first scroll-driven UI under an open crash incident, and recorded the dynamic version as a gated follow-up.
+
+---
+
+### P5 BUILDING WITH AI HONESTLY: The screen stopped matching my taps, and I merged one thing too early
+
+**TWITTER POST**
+Two confessions from today. My simulator taps started landing as small drags after a connection reset, so pages flipped and tabs changed without me asking, and for a while I was reasoning about a screen state I no longer had. The fix was to stop guessing, screenshot for ground truth, and switch to explicit touch paths. Second: I merged one pull request the moment it was mergeable, and the CI check had not registered yet. It passed on main afterwards. The order was still wrong, and I changed it for the next two.
+
+VISUAL NOTE: NONE.
+
+---
+
+**TWITTER THREAD**
+Tweet 1: Two things went sideways today that I would rather write down than tidy away.
+Tweet 2: First, the tooling. After one tap timed out, every tap the simulator tool sent afterwards carried a phantom drag from the previous touch. A tap on a segment moved the pager a page. A tap on a tab landed on the next tab over.
+Tweet 3: For several turns I explained the screenshots to myself instead of doubting the tool. "Money must have remembered its last pane." "That swipe must have bounced." Each story fit one screenshot and broke on the next.
+Tweet 4: What ended it was refusing to reason further and taking one screenshot for ground truth. Then explicit touch paths, down and up at the same point, which delivered cleanly every time. Later the tool lost its port entirely and the app's own deep link got me to the pane instead.
+Tweet 5: Second, process. I merged a pull request the instant GitHub called it mergeable. The CI check had not registered yet; it takes about twenty seconds after a push. The check then ran on the merge commit and passed.
+Tweet 6: Passed is not the point. The rule is merge on green, and I merged on "no red yet". For the next two pull requests I polled until a check existed, watched it, and merged only on pass.
+Final tweet: Both were the same mistake in different clothes: acting on the absence of a signal as if it were the signal.
+
+VISUAL NOTE: NONE.
+
+---
+
+**LINKEDIN POST**
+Two honest notes from a productive day, because the productive part is easy to write about and these are not.
+
+The first is about tools. Partway through a verification pass, one simulator tap timed out with a connection reset. Every tap after that quietly carried a small drag from wherever the previous touch had been. A tap meant to select a segment moved a pager. A tap on one tab landed on its neighbour. For several steps I explained each surprising screenshot with a plausible story about app state, and each story broke on the next screenshot. What actually resolved it was refusing to reason further, taking a single screenshot for ground truth, and switching to explicit touch paths that specify the down and the up. Later the tool lost its connection to the device entirely, and the app's own deep link did the navigation instead. I wrote the whole thing down so the next session does not lose the same hour.
+
+The second is about process. The rule on this project is that a pull request merges when its checks are green. I merged one the moment GitHub reported it mergeable, and the CI check had not registered yet, because it takes about twenty seconds after a push to appear. The check then ran on the merge commit and passed. That does not make the order right. For the next two pull requests I polled until a check existed, watched it to completion, and merged only on a pass.
+
+Both are the same error wearing different clothes: treating the absence of a signal as if it were the signal. No warning is not the same as all clear.
+
+VISUAL NOTE: NONE.
+
+---
+
+CASE STUDY MOMENT
+Recognised tool-input drift from contradictory screenshots, fell back to ground-truth captures and explicit touch paths, and corrected a merge-before-CI ordering on the next two pull requests.
+
+---

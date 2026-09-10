@@ -131,3 +131,26 @@ lsof -nP -iTCP:8082 -sTCP:LISTEN
 # xcrun simctl terminate <udid> com.habitcents.app; xcrun simctl launch <udid> com.habitcents.app
 # Sim UDIDs: iPhone 16 Pro E5BE70F9-1A29-4349-A946-2E636AF3EAD0
 #            iPhone 16     A58C5486-9233-4DC0-855A-D7524BB10F45
+
+# --- Added 2026-09-07 (Today dock, zero-state centring, scroll fade, band removal; build 22) ---
+# Several simulators booted at once (the iPad routine boots two): address by UDID, never `booted`.
+xcrun simctl list devices booted | grep -i booted
+UDID=A58C5486-9233-4DC0-855A-D7524BB10F45           # iPhone 16
+# xcrun simctl terminate $UDID com.habitcents.app; xcrun simctl launch $UDID com.habitcents.app
+# xcrun simctl io $UDID screenshot out.png          # never failed, even when the sim tool had lost its port
+# Reach a Today pane with no gesture (the pager reads ?view= on the index route):
+# xcrun simctl openurl $UDID "habitcents:///?view=kept"
+#
+# The simulator tool: after a "connection reset" its `tap` carries a phantom drag from the previous touch.
+# Use touch_path with explicit points: a tap is two identical points ~60ms apart; a pager swipe is
+# x 340 -> 260 -> 160 -> 60 -> 40 at mid-pane height. Pass `device: <udid>` to attach explicitly.
+#
+# MERGE ON GREEN, properly. `gh pr checks` returns nothing for the first ~20s after a push, so a
+# merge right after `pr create` goes in before CI registers. Poll until a check exists, then watch:
+# for i in $(seq 1 12); do N=$(gh pr checks <branch> 2>/dev/null | wc -l | tr -d ' '); [ "$N" -gt 0 ] && break; sleep 10; done
+# gh pr checks <branch> --watch --interval 20
+# then merge only when the conclusion column reads pass.
+#
+# TestFlight from main, agent lane (ADR 0029). Build 22 went out this way on 2026-09-07:
+# npx eas-cli build -p ios --profile internal --non-interactive --no-wait --auto-submit
+# npx eas-cli build:view <build-id>                 # "in progress" ~6 min, then the submission queue ~30 min
