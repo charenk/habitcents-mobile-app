@@ -16,6 +16,13 @@
  * locked vocabulary (leak/skip/kept/slip, ops CLAUDE.md) that this routine
  * will not guess at it. It stays English until Charen picks a translation;
  * see docs/routines/HANDOFF.md's DECISIONS NEEDED.
+ *
+ * Run 24 added: `habitDetail.notFound` (its other four keys are dead code,
+ * confirmed unused anywhere in the app); `reports.loading` (dead-code
+ * audited section, only this key and the function-valued `weekOf` are
+ * actually rendered); `toasts` minus `stoppedHistoryKept`/`leakDismissed`
+ * (locked-vocabulary gated), `yesterdayNoted` (dead code), and every
+ * function-valued key (deferred ICU work, same as every other section).
  */
 import type { LocaleOverlay } from '@/utils/i18n';
 
@@ -85,6 +92,12 @@ export const de: LocaleOverlay = {
     noExpensesLogged: 'In dieser Kategorie ist noch nichts erfasst.',
     trendEmpty: 'Noch keine Ausgaben für ein Diagramm.',
   },
+  habitDetail: {
+    notFound: 'Gewohnheit nicht gefunden',
+  },
+  reports: {
+    loading: 'Wird geladen.',
+  },
   profile: {
     title: 'Profil.',
     headerLabel: 'Profil',
@@ -139,5 +152,29 @@ export const de: LocaleOverlay = {
     saveChanges: 'Speichern',
     deleteExpense: 'Ausgabe löschen',
     keyboardDone: 'Fertig',
+  },
+  toasts: {
+    logged: 'Erfasst.',
+    saved: 'Gespeichert.',
+    deleted: 'Gelöscht.',
+    undo: 'Rückgängig',
+    restored: 'Wiederhergestellt.',
+    addedToUpcoming: 'Zu Bevorstehend hinzugefügt.',
+    trialStarted: 'Testphase gestartet. 14 Tage kostenlos.',
+    startHabitFailed: 'Das konnte nicht gestartet werden. Versuch es noch mal.',
+    logFailed: 'Das wurde nicht gespeichert. Versuch es noch mal.',
+    saveFailed: 'Das wurde nicht gespeichert. Versuch es noch mal.',
+    deleteFailed: 'Das wurde nicht gelöscht. Versuch es noch mal.',
+    restoreFailed: 'Das kam nicht zurück. Versuch es noch mal.',
+    addUpcomingFailed: 'Das wurde nicht gespeichert. Versuch es noch mal.',
+    checkInFailed: 'Das wurde nicht gespeichert. Versuch es noch mal.',
+    stopHabitFailed: 'Das wurde nicht gestoppt. Versuch es noch mal.',
+    skipValueFailed: 'Das wurde nicht gespeichert. Versuch es noch mal.',
+    dismissLeakFailed: 'Das wurde nicht gespeichert. Versuch es noch mal.',
+    categoryFailed: 'Das wurde nicht gespeichert. Versuch es noch mal.',
+    currencyFailed: 'Das wurde nicht gespeichert. Versuch es noch mal.',
+    languageFailed: 'Das wurde nicht gespeichert. Versuch es noch mal.',
+    startOverFailed: 'Der Neustart hat nicht geklappt. Versuch es noch mal.',
+    importFailed: 'Das wurde nicht gespeichert. Es wurde nichts importiert. Versuch es noch mal.',
   },
 };

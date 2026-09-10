@@ -16,6 +16,18 @@
  * locked vocabulary (leak/skip/kept/slip, ops CLAUDE.md) that this routine
  * will not guess at it. It stays English until Charen picks a translation;
  * see docs/routines/HANDOFF.md's DECISIONS NEEDED.
+ *
+ * Run 24 added: `habitDetail.notFound` (its other four keys are dead code,
+ * confirmed unused anywhere in the app); `reports.loading` (dead-code
+ * audited section, only this key and the function-valued `weekOf` are
+ * actually rendered); `toasts` minus `stoppedHistoryKept`/`leakDismissed`
+ * (locked-vocabulary gated), `yesterdayNoted` (dead code), and every
+ * function-valued key (deferred ICU work, same as every other section).
+ * The short one-word confirmation toasts (`logged`/`saved`/`deleted`/
+ * `restored`/`addedToUpcoming`/`trialStarted`) use the terse noun+됨 toast
+ * style Korean apps use for status notifications; the failure toasts use
+ * the conversational -어요/-세요 register already established in
+ * `settings.restoreDoneMessage`/`saveHintAmount`.
  */
 import type { LocaleOverlay } from '@/utils/i18n';
 
@@ -84,6 +96,12 @@ export const ko: LocaleOverlay = {
     noExpensesLogged: '이 카테고리에 아직 기록된 내용이 없어요.',
     trendEmpty: '아직 표시할 지출이 없어요.',
   },
+  habitDetail: {
+    notFound: '습관을 찾을 수 없습니다',
+  },
+  reports: {
+    loading: '불러오는 중.',
+  },
   profile: {
     title: '프로필.',
     headerLabel: '프로필',
@@ -137,5 +155,29 @@ export const ko: LocaleOverlay = {
     saveChanges: '저장',
     deleteExpense: '지출 삭제',
     keyboardDone: '완료',
+  },
+  toasts: {
+    logged: '기록됨.',
+    saved: '저장됨.',
+    deleted: '삭제됨.',
+    undo: '실행 취소',
+    restored: '복원됨.',
+    addedToUpcoming: '예정에 추가됨.',
+    trialStarted: '체험 시작됨. 14일 무료.',
+    startHabitFailed: '시작하지 못했어요. 다시 시도해 주세요.',
+    logFailed: '저장하지 못했어요. 다시 시도해 주세요.',
+    saveFailed: '저장하지 못했어요. 다시 시도해 주세요.',
+    deleteFailed: '삭제하지 못했어요. 다시 시도해 주세요.',
+    restoreFailed: '다시 돌아오지 못했어요. 다시 시도해 주세요.',
+    addUpcomingFailed: '저장하지 못했어요. 다시 시도해 주세요.',
+    checkInFailed: '저장하지 못했어요. 다시 시도해 주세요.',
+    stopHabitFailed: '중지하지 못했어요. 다시 시도해 주세요.',
+    skipValueFailed: '저장하지 못했어요. 다시 시도해 주세요.',
+    dismissLeakFailed: '저장하지 못했어요. 다시 시도해 주세요.',
+    categoryFailed: '저장하지 못했어요. 다시 시도해 주세요.',
+    currencyFailed: '저장하지 못했어요. 다시 시도해 주세요.',
+    languageFailed: '저장하지 못했어요. 다시 시도해 주세요.',
+    startOverFailed: '초기화하지 못했어요. 다시 시도해 주세요.',
+    importFailed: '저장하지 못했어요. 아무것도 가져오지 못했어요. 다시 시도해 주세요.',
   },
 };

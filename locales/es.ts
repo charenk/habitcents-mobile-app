@@ -16,6 +16,13 @@
  * locked vocabulary (leak/skip/kept/slip, ops CLAUDE.md) that this routine
  * will not guess at it. It stays English until Charen picks a translation;
  * see docs/routines/HANDOFF.md's DECISIONS NEEDED.
+ *
+ * Run 24 added: `habitDetail.notFound` (its other four keys are dead code,
+ * confirmed unused anywhere in the app); `reports.loading` (dead-code
+ * audited section, only this key and the function-valued `weekOf` are
+ * actually rendered); `toasts` minus `stoppedHistoryKept`/`leakDismissed`
+ * (locked-vocabulary gated), `yesterdayNoted` (dead code), and every
+ * function-valued key (deferred ICU work, same as every other section).
  */
 import type { LocaleOverlay } from '@/utils/i18n';
 
@@ -84,6 +91,12 @@ export const es: LocaleOverlay = {
     noExpensesLogged: 'Nada registrado en esta categoría todavía.',
     trendEmpty: 'Aún no hay gastos para graficar.',
   },
+  habitDetail: {
+    notFound: 'Hábito no encontrado',
+  },
+  reports: {
+    loading: 'Cargando.',
+  },
   profile: {
     title: 'Perfil.',
     headerLabel: 'Perfil',
@@ -138,5 +151,29 @@ export const es: LocaleOverlay = {
     saveChanges: 'Guardar',
     deleteExpense: 'Eliminar gasto',
     keyboardDone: 'Listo',
+  },
+  toasts: {
+    logged: 'Registrado.',
+    saved: 'Guardado.',
+    deleted: 'Eliminado.',
+    undo: 'Deshacer',
+    restored: 'Restaurado.',
+    addedToUpcoming: 'Añadido a Próximos.',
+    trialStarted: 'Prueba iniciada. 14 días gratis.',
+    startHabitFailed: 'Eso no se pudo iniciar. Inténtalo de nuevo.',
+    logFailed: 'Eso no se guardó. Inténtalo de nuevo.',
+    saveFailed: 'Eso no se guardó. Inténtalo de nuevo.',
+    deleteFailed: 'Eso no se eliminó. Inténtalo de nuevo.',
+    restoreFailed: 'Eso no volvió. Inténtalo de nuevo.',
+    addUpcomingFailed: 'Eso no se guardó. Inténtalo de nuevo.',
+    checkInFailed: 'Eso no se guardó. Inténtalo de nuevo.',
+    stopHabitFailed: 'Eso no se detuvo. Inténtalo de nuevo.',
+    skipValueFailed: 'Eso no se guardó. Inténtalo de nuevo.',
+    dismissLeakFailed: 'Eso no se guardó. Inténtalo de nuevo.',
+    categoryFailed: 'Eso no se guardó. Inténtalo de nuevo.',
+    currencyFailed: 'Eso no se guardó. Inténtalo de nuevo.',
+    languageFailed: 'Eso no se guardó. Inténtalo de nuevo.',
+    startOverFailed: 'Eso no se reinició. Inténtalo de nuevo.',
+    importFailed: 'Eso no se guardó. No se importó nada. Inténtalo de nuevo.',
   },
 };

@@ -1148,6 +1148,120 @@ work, tracked elsewhere).
       (including no recurrence of the intermittent
       `door3BreakSheet.test.tsx` full-suite-load flake noted since run
       13).
+
+      **Run 24: `habitDetail`/`reports` dead-code audit plus a `toasts`
+      slice, following up on run 23's two unconfirmed candidates.**
+      Checking `habitDetail` and `reports` (the two sections run 23's
+      skim flagged as no-locked-vocabulary-hits-found-but-not-yet-
+      confirmed) turned up more dead code than live strings in both:
+
+      - `habitDetail`: only `notFound` ("Habit not found") is actually
+        rendered (`app/habit/[id].tsx`'s not-found branch). Its other
+        four keys (`perDay`, `perWeek`, `perMonthUnit`, `perUnit`,
+        `suggestions`) have zero references anywhere outside
+        `constants/strings.ts` itself (confirmed via `grep -rn` for each
+        key name individually, not a plain-name grep that could hide a
+        real usage in noise); left untranslated, same treatment as
+        `editExpenseModal` (run 23) and the retired `ViewQuote` pair
+        (run 19). Translated `notFound` for all 10 languages using the
+        same noun-plus-"not found" construction `categoryDetail.notFound`
+        already established per language.
+      - `reports`: only `loading` and the function-valued `weekOf` are
+        actually rendered (`app/(tabs)/insights.tsx`'s loading state and
+        `contexts/ReportsContext.tsx`'s week-label builder, both already
+        `useStrings()`-converted). Every other key in the section
+        (`title`, `subtitle`, `total`, `noSpendingData`, `noActiveHabits`,
+        `projectedThisMonth`, `timeRangeWeek`/`Month`/`Quarter`/`Year`,
+        and the function-valued `spent`/`daysLeft`) has no render path
+        anywhere in the app (confirmed the same key-by-key way, plus
+        `find app -iname "*report*"` and `find components -iname
+        "*report*"` turning up nothing: the old Reports tab this
+        section's strings were written for is gone, superseded by the
+        Insights tab, and nothing else picked the keys back up). Left
+        untranslated; worth deleting from `constants/strings.ts` someday,
+        but that is a code-cleanup call outside this routine's mandate
+        of translating what exists. Translated `loading` for all 10
+        languages by reusing each language's already-established
+        `categories.loading`/`expenses.loading` translation (same
+        English source, "Loading.", per the reuse-over-redo approach
+        runs 21 and 23 used for shared-value keys).
+
+      With both candidates mostly dead ends, picked `toasts` as this
+      run's real slice: several of its keys are gated
+      (`stoppedHistoryKept`, `leakDismissed`, both render the locked
+      vocabulary) or dead (`yesterdayNoted`, confirmed unused the same
+      key-by-key way); the remaining 22 keys are plain generic UI toasts
+      with real, unconditionally-reachable call sites across 13 files
+      (`ExpenseSheet.tsx`, `AddUpcomingSheet.tsx`, `AddCategoryModal.tsx`,
+      `CurrencySheet.tsx`, `LanguageSheet.tsx`, `useCheckInFeedback.ts`,
+      `useTrackLeak.tsx`, `BillsScreen.tsx`, `ResultsScreen.tsx`, and one
+      usage each in `categories.tsx`, `app/(tabs)/index.tsx`,
+      `app/habit/[id].tsx`, `app/paywall.tsx`, `app/profile.tsx`); every
+      one confirmed live via `grep -rn` before translating, not assumed
+      from the key existing. Checked for the standing device-locale-mock
+      risk first (only `languageSheet.test.tsx` mocks a non-English
+      device locale of any test file in the repo, and it asserts nothing
+      under `toasts`).
+
+      `paywall` was also scanned as a candidate and set aside
+      deliberately, not for locked vocabulary (it has none) but because
+      it is pricing/trial-terms copy: ops CLAUDE.md's PR-flow human gate
+      names "pricing, payments, legal wording" as needing Charen's
+      explicit go, and a paywall's price, trial-length, and cancellation
+      disclosure text reads squarely as that, distinct from and in
+      addition to the locked-vocabulary gate this plan already tracks.
+      Flagged in HANDOFF.md rather than translated; see that file for
+      the exact reasoning. `toasts.trialStarted` ("Trial started. 14
+      days free.") was translated anyway: it is a plain confirmation
+      toast with no price or legal disclosure in it, not the paywall
+      screen itself.
+
+      Of the 22 toasts keys, 9 share one English value ("That did not
+      save. Try again.": `logFailed`, `saveFailed`, `addUpcomingFailed`,
+      `checkInFailed`, `skipValueFailed`, `dismissLeakFailed`,
+      `categoryFailed`, `currencyFailed`, `languageFailed`), so only 14
+      distinct phrases needed actual translation work per language, each
+      reused across every key sharing that exact English string (same
+      reuse-over-redo approach as `expenseSheet.saveExpense`/
+      `saveChanges`, run 23). Reused established verb roots wherever one
+      already existed in another translated section rather than
+      re-deriving them: "log" (`expenseSheet.logEyebrow`), "save"
+      (`common.save`), "delete" (`common.delete`), "restore"
+      (`settings.restoreDoneMessage`), and "start over"
+      (`settings.startOverRow`) all carried their existing per-language
+      verb into the matching toast. "Start" (habit) and "stop" (habit)
+      have no prior translated occurrence anywhere in the catalogs (both
+      only appear in gated `habitDetailV2`/`habitLogging` sections), so
+      those two were translated fresh.
+
+      Punctuation: extended the short-label-vs-full-sentence split
+      run 20 established for ja/zh-Hans/hi (a literal "." on
+      short/title-style strings, native sentence punctuation, "。" for
+      ja/zh-Hans, "।" for hi, on genuine multi-clause sentences like
+      `deleteMessage`/`restoreDoneMessage`) to this run's toasts, since
+      this is the first slice with enough natural two-clause sentences
+      to need the distinction spelled out explicitly rather than
+      inferred per key: the terse one-word confirmations (`logged`,
+      `saved`, `deleted`, `restored`, `addedToUpcoming`) got the literal
+      ".", the two-clause failure toasts and `trialStarted` got native
+      punctuation. Documented in each of those three files' own header
+      comment so a future run doesn't have to re-derive the rule from
+      examples. `ko` needed no such split (Korean toasts use the same
+      "." either way); its short confirmations instead follow the terse
+      noun+됨 toast convention Korean apps use for status notifications,
+      distinct from the conversational -어요/-세요 register
+      `settings.restoreDoneMessage`/`saveHintAmount` already established
+      for longer sentences, also documented in its header.
+
+      24 new keys x 10 languages (1 `habitDetail` + 1 `reports` + 22
+      `toasts`), 120 of ~660 keys now populated per language (up from
+      96). No test file changes needed (`localeCatalogs.test.ts` covers
+      the new overlay keys automatically). One commit; `tsc --noEmit`
+      clean, full suite green (113/113, 1210/1210) after one re-run past
+      the same pre-existing `door3BreakSheet.test.tsx` full-suite-load
+      flake noted since run 13 (timed out on the first run with no code
+      change in the Today tree that test covers, passed clean on the
+      immediate re-run, consistent with every prior recurrence).
 - [ ] leak / skip / kept / slip and the app's quotes are PRODUCT VOICE:
       never finalized by this routine. Provisional entries only, proposal
       table lives in HANDOFF.md's DECISIONS NEEDED until Charen picks.

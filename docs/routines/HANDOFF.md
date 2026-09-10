@@ -2,18 +2,16 @@
 
 ## Status
 
-In progress. Run 23: no REVIEW FEEDBACK was pending at session start,
+In progress. Run 24: no REVIEW FEEDBACK was pending at session start,
 branch was already current with origin/main (rebase was a no-op).
-**Plan item 4's fourth slice**: populated `addCategoryModal` (7 string
-keys) and `expenseSheet` minus the function-valued `amountLabel` (8
-string keys) across all 10 locale overlays, a fresh pick since all five
-of run 20's originally suggested sections were done as of run 22. 96 of
-~660 keys now populated per language, up from 81. Also found and ruled
-out `editExpenseModal` as dead code (zero real imports anywhere,
-superseded by `expenseSheet`), left untranslated same as the retired
-`ViewQuote` pair. Full detail, including the reuse-over-redo calls for
-`addCategoryModal.editCategory` and `expenseSheet.saveExpense`/
-`saveChanges`, in PLAN.md's run 23 entry.
+**Plan item 4's fifth slice**: followed up on run 23's two unconfirmed
+candidates (`habitDetail`, `reports`) and found both mostly dead code;
+translated the one live key in each (`habitDetail.notFound`,
+`reports.loading`) plus a 22-key `toasts` slice across all 10 locale
+overlays. 120 of ~660 keys now populated per language, up from 96. New
+decision needed for Charen: `paywall` is pricing/legal-adjacent copy,
+set aside rather than translated (see DECISIONS NEEDED below). Full
+detail in PLAN.md's run 24 entry.
 
 ## Completed
 
@@ -364,34 +362,89 @@ superseded by `expenseSheet`), left untranslated same as the retired
   (`localeCatalogs.test.ts` is schema-driven). One commit; `tsc
   --noEmit` clean and the full suite green (113/113, 1210/1210) on the
   first run, no flake. Full detail in PLAN.md's run 23 entry.
+- Run 24, plan item 4's fifth slice: followed up on the two candidates
+  run 23's skim left unconfirmed. `habitDetail` turned out almost
+  entirely dead code: only `notFound` ("Habit not found") has a real
+  render path (`app/habit/[id].tsx`); `perDay`, `perWeek`,
+  `perMonthUnit`, `perUnit`, and `suggestions` have zero references
+  anywhere outside `constants/strings.ts` (confirmed key by key).
+  `reports` was the same story at larger scale: only `loading` and the
+  function-valued `weekOf` are actually rendered
+  (`app/(tabs)/insights.tsx`, `contexts/ReportsContext.tsx`); every
+  other key (`title`, `subtitle`, `total`, `noSpendingData`,
+  `noActiveHabits`, `projectedThisMonth`, the four `timeRange*` keys,
+  and the function-valued `spent`/`daysLeft`) has no render path at
+  all, confirmed via `find app -iname "*report*"` and `find components
+  -iname "*report*"` turning up nothing: the old Reports tab this
+  section was written for is gone, superseded by Insights, and nothing
+  picked the strings back up. Translated the two live keys
+  (`habitDetail.notFound` fresh per language, matching
+  `categoryDetail.notFound`'s construction; `reports.loading` reused
+  from `categories.loading`/`expenses.loading`, same English source).
+  Left the ten dead keys untranslated, same treatment as
+  `editExpenseModal` (run 23) and `ViewQuote` (run 19); worth deleting
+  from `constants/strings.ts` someday as a separate code-cleanup call,
+  outside this routine's mandate.
+
+  With both flagged candidates mostly dead ends, picked `toasts` as
+  this run's real slice: 22 of its keys are plain generic UI toasts
+  with real call sites across 13 files, confirmed live one by one
+  (`stoppedHistoryKept`/`leakDismissed` stay gated on locked
+  vocabulary; `yesterdayNoted` confirmed dead the same way; every
+  function-valued key stays omitted per the standing rule). Of those
+  22, nine share one English value ("That did not save. Try again."),
+  so only 14 distinct phrases needed real translation per language,
+  reusing established verb roots from `expenseSheet.logEyebrow`,
+  `common.save`/`delete`, `settings.restoreDoneMessage`, and
+  `settings.startOverRow` wherever one already existed. Extended the
+  short-label-vs-full-sentence punctuation split ja/zh-Hans/hi already
+  carry (literal "." on short labels, native punctuation on real
+  sentences) to this slice's failure toasts, and documented the rule
+  explicitly in each of those three locale files' headers since this
+  is the first slice with enough natural sentences to need it spelled
+  out. `ko`'s short confirmations follow the terse noun+됨 toast
+  convention Korean apps use for status notifications, also documented
+  in its header. No test file changes needed
+  (`localeCatalogs.test.ts` is schema-driven and covers new overlay
+  keys automatically; only `languageSheet.test.tsx` mocks a non-English
+  device locale anywhere in the repo, and it asserts nothing under
+  `toasts`). One commit; `tsc --noEmit` clean and the full suite green
+  (113/113, 1210/1210) after one re-run past the same pre-existing
+  `door3BreakSheet.test.tsx` full-suite-load flake noted since run 13
+  (timed out on the first run, no code change in the Today tree that
+  test covers; passed clean on the immediate re-run). Full detail,
+  including the exact list of reused verb roots and the paywall
+  gating call, in PLAN.md's run 24 entry.
 
 ## Next
 
-Plan item 4 is underway (96 of ~660 keys populated across all 10
+Plan item 4 is underway (120 of ~660 keys populated across all 10
 languages: `common` minus `keep`, `sheets`, `tabs`, `screenTitles` (run
 20), plus `expenses`, `categories`, `categoryDetail`, `profile` (run
 21), plus `settings` minus `versionValue`/`supportEmail` (run 22), plus
-`addCategoryModal`, `expenseSheet` minus `amountLabel` (run 23); see
-PLAN.md's run 20-23 entries for the full design). `upcoming` stays
-fully English until item 2's ICU/pluralization work lands, since both
-its keys are function-valued. Budget more than one run per meaningful
-chunk (10 languages x a section adds up fast), the same lesson item
-2's file-by-file conversion learned repeatedly and runs 21-23 stayed
-within. `habitLogging`, `coachMoments`, `insights`, and `today`'s quote
-arrays still need the DECISIONS NEEDED table below settled (or at
-minimum provisional entries adopted with a clear "pending Charen"
-marker) before translating, since those sections contain the locked
-vocabulary (`insights` newly confirmed gated this run: `leaksTitle`,
-`skipValueSheetTitle`, and more) and (for `today`) the RETIRED,
-out-of-scope quote arrays. The next slice needs another fresh pick:
-`habitDetail` and `reports` are unconfirmed candidates from this run's
-skim (no locked-vocabulary hits found on a first pass, not yet checked
-for function-valued keys or device-locale-mocked tests the way
-`expenseSheet` was); `onboarding`, `leakScan`, `paywall`, `toasts`
-(partially gated, contains `leakDismissed`/`keptBack`/
-`stoppedHistoryKept`), `today` (largely gated), `money` (partially
-gated, contains `habitsEmptyTitle`'s "leak" and the leak-counting
-functions), and `addUpcoming`/`insights` remain otherwise unchecked.
+`addCategoryModal`, `expenseSheet` minus `amountLabel` (run 23), plus
+`habitDetail.notFound`, `reports.loading`, and 22 of `toasts`' keys
+(run 24); see PLAN.md's run 20-24 entries for the full design).
+`upcoming` stays fully English until item 2's ICU/pluralization work
+lands, since both its keys are function-valued. Budget more than one
+run per meaningful chunk (10 languages x a section adds up fast), the
+same lesson item 2's file-by-file conversion learned repeatedly and
+runs 21-24 stayed within. `habitLogging`, `coachMoments`, `insights`,
+and `today`'s quote arrays still need the DECISIONS NEEDED table below
+settled (or at minimum provisional entries adopted with a clear
+"pending Charen" marker) before translating, since those sections
+contain the locked vocabulary (`insights` confirmed gated run 23:
+`leaksTitle`, `skipValueSheetTitle`, and more) and (for `today`) the
+RETIRED, out-of-scope quote arrays. `paywall` needs a different kind of
+sign-off before this routine touches it, not locked-vocabulary related:
+see DECISIONS NEEDED below. `habitDetail` and `reports` are now fully
+resolved (each had exactly one live key, both translated this run; the
+rest is confirmed dead code, left alone). The next slice needs another
+fresh pick: `onboarding`, `leakScan`, `today` (largely gated), `money`
+(partially gated, contains `habitsEmptyTitle`'s "leak" and the
+leak-counting functions), and `addUpcoming`/`insights` remain
+unchecked. `toasts` has two keys left once `leakDismissed`/
+`stoppedHistoryKept` are settled (see DECISIONS NEEDED).
 
 What is actually left for a future run:
 - Plan item 2's ICU/pluralization checkbox (function-valued strings
@@ -423,6 +476,24 @@ What is actually left for a future run:
 None.
 
 ## DECISIONS NEEDED
+
+**New this run: `paywall` needs a go-ahead before this routine
+translates it, separate from the locked-vocabulary gate below.** It has
+no leak/skip/kept/slip content, but it is pricing and trial-terms copy:
+plan pricing (`$29.99`/`$3.99`/`$49.99`), the trial length and
+cancellation line ("Start with a 14-day free trial. Cancel anytime
+before it ends."), and the "nothing is charged yet" disclaimer. Ops
+CLAUDE.md's PR-flow rule names "pricing, payments, legal wording" as
+needing Charen's explicit go before a session acts on them; a
+provisional machine translation of a free-trial disclosure into 10
+languages reads as exactly that, not as ordinary UI copy this routine's
+existing charter already covers. Options: (a) treat it like the locked
+vocabulary below, translate once Charen either signs off on this
+routine handling it or reviews the translations before they ship
+active; (b) hold it for human/professional translation given the
+legal exposure; (c) something else Charen prefers. No action taken
+either way this run; flagging so it doesn't get translated by a future
+run without a decision here first.
 
 Proposal table for the four locked vocabulary terms (leak, skip, kept,
 slip; ops CLAUDE.md), added run 20 ahead of translating the sections
@@ -605,7 +676,44 @@ only if ADR 0037 is reversed and the quote rotation un-retires.
   regression; if it then still fails, treat it as this stream's problem
   and investigate rather than re-running again. Did not recur in run 17
   or run 18 (both clean on the first full-suite pass); still just
-  intermittent full-suite timing load, not a regression.
+  intermittent full-suite timing load, not a regression. Recurred once
+  more in run 24 (timed out on the first full-suite run, no code change
+  in the Today tree; passed clean on the immediate re-run), consistent
+  with every prior occurrence; still reads as full-suite timing load.
+- Dead code is a real possibility for any section a first pass clears of
+  locked vocabulary, not just a formality: run 24 checked run 23's two
+  flagged candidates (`habitDetail`, `reports`) key by key
+  (`grep -rn` for each key name individually, not a whole-section grep)
+  and found both were almost entirely unreferenced outside
+  `constants/strings.ts` itself, `reports` because the screen it was
+  written for (the old Reports tab CLAUDE.md still describes) no longer
+  exists, superseded by Insights. Before translating a "clean" section,
+  confirm every key actually has a render path, the same rigor already
+  applied to ruling out `editExpenseModal`/`ViewQuote`; a section being
+  small is not evidence it's all live.
+- Pricing/trial/legal copy is a second gate distinct from the locked
+  vocabulary, discovered this run: `paywall` has no leak/skip/kept/slip
+  content but is pricing and trial-terms copy (ops CLAUDE.md's PR-flow
+  human gate names "pricing, payments, legal wording" as needing
+  Charen's go). Check any newly-picked section for this before assuming
+  "no locked vocabulary" means "safe to translate"; see this run's
+  DECISIONS NEEDED entry for the reasoning and the options put to
+  Charen. A plain confirmation toast that merely mentions a trial
+  starting (no price, no legal disclosure) is not the same thing;
+  `toasts.trialStarted` was translated this run on that basis.
+- The short-label-vs-full-sentence punctuation split (literal "." on
+  short/title-style strings, native sentence punctuation on genuine
+  multi-clause sentences) already existed in ja/zh-Hans (native "。")
+  and hi (native "।") since run 20's `screenTitles` note and run 21's
+  full-sentence translations, but was never spelled out as an explicit
+  rule until run 24's `toasts` slice needed it applied consistently
+  across many new sentences at once. Now documented in each of those
+  three locale files' own header comments; read that header before
+  guessing which style a new sentence in those languages should use.
+  `ko` doesn't need the split (no native/ASCII period distinction), but
+  has its own register split worth checking: terse noun+됨 for short
+  status toasts vs. the conversational -어요/-세요 register for longer
+  sentences, also documented in its header now.
 
 ## REVIEW FEEDBACK
 

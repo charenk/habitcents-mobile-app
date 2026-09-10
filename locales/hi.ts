@@ -16,6 +16,19 @@
  * locked vocabulary (leak/skip/kept/slip, ops CLAUDE.md) that this routine
  * will not guess at it. It stays English until Charen picks a translation;
  * see docs/routines/HANDOFF.md's DECISIONS NEEDED.
+ *
+ * Run 24 added: `habitDetail.notFound` (its other four keys are dead code,
+ * confirmed unused anywhere in the app); `reports.loading` (dead-code
+ * audited section, only this key and the function-valued `weekOf` are
+ * actually rendered); `toasts` minus `stoppedHistoryKept`/`leakDismissed`
+ * (locked-vocabulary gated), `yesterdayNoted` (dead code), and every
+ * function-valued key (deferred ICU work, same as every other section).
+ * Extending this file's existing short-label-vs-full-sentence punctuation
+ * split (literal "." on short/title-style strings like `loading`, the
+ * Devanagari "।" on full sentences like `restoreDoneMessage`): the short
+ * one-word confirmation toasts (`logged`/`saved`/`deleted`/`restored`/
+ * `addedToUpcoming`) keep the literal ".", the two-clause failure toasts
+ * and `trialStarted` use "।".
  */
 import type { LocaleOverlay } from '@/utils/i18n';
 
@@ -84,6 +97,12 @@ export const hi: LocaleOverlay = {
     noExpensesLogged: 'इस श्रेणी में अभी तक कुछ भी दर्ज नहीं हुआ है।',
     trendEmpty: 'चार्ट के लिए अभी तक कोई खर्च नहीं है।',
   },
+  habitDetail: {
+    notFound: 'आदत नहीं मिली',
+  },
+  reports: {
+    loading: 'लोड हो रहा है.',
+  },
   profile: {
     title: 'प्रोफ़ाइल.',
     headerLabel: 'प्रोफ़ाइल',
@@ -137,5 +156,29 @@ export const hi: LocaleOverlay = {
     saveChanges: 'सहेजें',
     deleteExpense: 'खर्च हटाएं',
     keyboardDone: 'पूर्ण',
+  },
+  toasts: {
+    logged: 'दर्ज किया गया.',
+    saved: 'सहेजा गया.',
+    deleted: 'हटा दिया गया.',
+    undo: 'पूर्ववत करें',
+    restored: 'पुनर्स्थापित किया गया.',
+    addedToUpcoming: 'आगामी में जोड़ा गया.',
+    trialStarted: 'ट्रायल शुरू हुआ। 14 दिन मुफ़्त।',
+    startHabitFailed: 'वह शुरू नहीं हो सका। फिर से कोशिश करें।',
+    logFailed: 'वह सहेजा नहीं जा सका। फिर से कोशिश करें।',
+    saveFailed: 'वह सहेजा नहीं जा सका। फिर से कोशिश करें।',
+    deleteFailed: 'वह हटाया नहीं जा सका। फिर से कोशिश करें।',
+    restoreFailed: 'वह वापस नहीं आया। फिर से कोशिश करें।',
+    addUpcomingFailed: 'वह सहेजा नहीं जा सका। फिर से कोशिश करें।',
+    checkInFailed: 'वह सहेजा नहीं जा सका। फिर से कोशिश करें।',
+    stopHabitFailed: 'वह रुका नहीं। फिर से कोशिश करें।',
+    skipValueFailed: 'वह सहेजा नहीं जा सका। फिर से कोशिश करें।',
+    dismissLeakFailed: 'वह सहेजा नहीं जा सका। फिर से कोशिश करें।',
+    categoryFailed: 'वह सहेजा नहीं जा सका। फिर से कोशिश करें।',
+    currencyFailed: 'वह सहेजा नहीं जा सका। फिर से कोशिश करें।',
+    languageFailed: 'वह सहेजा नहीं जा सका। फिर से कोशिश करें।',
+    startOverFailed: 'वह रीसेट नहीं हो सका। फिर से कोशिश करें।',
+    importFailed: 'वह सहेजा नहीं जा सका। कुछ भी आयात नहीं हुआ। फिर से कोशिश करें।',
   },
 };

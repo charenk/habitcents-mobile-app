@@ -16,6 +16,13 @@
  * locked vocabulary (leak/skip/kept/slip, ops CLAUDE.md) that this routine
  * will not guess at it. It stays English until Charen picks a translation;
  * see docs/routines/HANDOFF.md's DECISIONS NEEDED.
+ *
+ * Run 24 added: `habitDetail.notFound` (its other four keys are dead code,
+ * confirmed unused anywhere in the app); `reports.loading` (dead-code
+ * audited section, only this key and the function-valued `weekOf` are
+ * actually rendered); `toasts` minus `stoppedHistoryKept`/`leakDismissed`
+ * (locked-vocabulary gated), `yesterdayNoted` (dead code), and every
+ * function-valued key (deferred ICU work, same as every other section).
  */
 import type { LocaleOverlay } from '@/utils/i18n';
 
@@ -85,6 +92,12 @@ export const it: LocaleOverlay = {
     noExpensesLogged: 'Ancora nulla registrato in questa categoria.',
     trendEmpty: 'Ancora nessuna spesa da mostrare nel grafico.',
   },
+  habitDetail: {
+    notFound: 'Abitudine non trovata',
+  },
+  reports: {
+    loading: 'Caricamento.',
+  },
   profile: {
     title: 'Profilo.',
     headerLabel: 'Profilo',
@@ -138,5 +151,29 @@ export const it: LocaleOverlay = {
     saveChanges: 'Salva',
     deleteExpense: 'Elimina spesa',
     keyboardDone: 'Fine',
+  },
+  toasts: {
+    logged: 'Registrato.',
+    saved: 'Salvato.',
+    deleted: 'Eliminato.',
+    undo: 'Annulla',
+    restored: 'Ripristinato.',
+    addedToUpcoming: 'Aggiunto a Prossime.',
+    trialStarted: 'Prova iniziata. 14 giorni gratis.',
+    startHabitFailed: 'Non è stato possibile avviarlo. Riprova.',
+    logFailed: 'Non è stato salvato. Riprova.',
+    saveFailed: 'Non è stato salvato. Riprova.',
+    deleteFailed: 'Non è stato eliminato. Riprova.',
+    restoreFailed: 'Non è tornato indietro. Riprova.',
+    addUpcomingFailed: 'Non è stato salvato. Riprova.',
+    checkInFailed: 'Non è stato salvato. Riprova.',
+    stopHabitFailed: 'Non si è fermato. Riprova.',
+    skipValueFailed: 'Non è stato salvato. Riprova.',
+    dismissLeakFailed: 'Non è stato salvato. Riprova.',
+    categoryFailed: 'Non è stato salvato. Riprova.',
+    currencyFailed: 'Non è stato salvato. Riprova.',
+    languageFailed: 'Non è stato salvato. Riprova.',
+    startOverFailed: 'Non è stato possibile ricominciare. Riprova.',
+    importFailed: 'Non è stato salvato. Non è stato importato nulla. Riprova.',
   },
 };

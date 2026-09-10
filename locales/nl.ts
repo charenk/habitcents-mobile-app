@@ -16,6 +16,13 @@
  * locked vocabulary (leak/skip/kept/slip, ops CLAUDE.md) that this routine
  * will not guess at it. It stays English until Charen picks a translation;
  * see docs/routines/HANDOFF.md's DECISIONS NEEDED.
+ *
+ * Run 24 added: `habitDetail.notFound` (its other four keys are dead code,
+ * confirmed unused anywhere in the app); `reports.loading` (dead-code
+ * audited section, only this key and the function-valued `weekOf` are
+ * actually rendered); `toasts` minus `stoppedHistoryKept`/`leakDismissed`
+ * (locked-vocabulary gated), `yesterdayNoted` (dead code), and every
+ * function-valued key (deferred ICU work, same as every other section).
  */
 import type { LocaleOverlay } from '@/utils/i18n';
 
@@ -84,6 +91,12 @@ export const nl: LocaleOverlay = {
     noExpensesLogged: 'Nog niets vastgelegd in deze categorie.',
     trendEmpty: 'Nog geen uitgaven om in een grafiek weer te geven.',
   },
+  habitDetail: {
+    notFound: 'Gewoonte niet gevonden',
+  },
+  reports: {
+    loading: 'Laden.',
+  },
   profile: {
     title: 'Profiel.',
     headerLabel: 'Profiel',
@@ -137,5 +150,29 @@ export const nl: LocaleOverlay = {
     saveChanges: 'Opslaan',
     deleteExpense: 'Uitgave verwijderen',
     keyboardDone: 'Klaar',
+  },
+  toasts: {
+    logged: 'Geregistreerd.',
+    saved: 'Opgeslagen.',
+    deleted: 'Verwijderd.',
+    undo: 'Ongedaan maken',
+    restored: 'Hersteld.',
+    addedToUpcoming: 'Toegevoegd aan Binnenkort.',
+    trialStarted: 'Proefperiode gestart. 14 dagen gratis.',
+    startHabitFailed: 'Dat kon niet worden gestart. Probeer het opnieuw.',
+    logFailed: 'Dat is niet opgeslagen. Probeer het opnieuw.',
+    saveFailed: 'Dat is niet opgeslagen. Probeer het opnieuw.',
+    deleteFailed: 'Dat is niet verwijderd. Probeer het opnieuw.',
+    restoreFailed: 'Dat kwam niet terug. Probeer het opnieuw.',
+    addUpcomingFailed: 'Dat is niet opgeslagen. Probeer het opnieuw.',
+    checkInFailed: 'Dat is niet opgeslagen. Probeer het opnieuw.',
+    stopHabitFailed: 'Dat is niet gestopt. Probeer het opnieuw.',
+    skipValueFailed: 'Dat is niet opgeslagen. Probeer het opnieuw.',
+    dismissLeakFailed: 'Dat is niet opgeslagen. Probeer het opnieuw.',
+    categoryFailed: 'Dat is niet opgeslagen. Probeer het opnieuw.',
+    currencyFailed: 'Dat is niet opgeslagen. Probeer het opnieuw.',
+    languageFailed: 'Dat is niet opgeslagen. Probeer het opnieuw.',
+    startOverFailed: 'Dat is niet gereset. Probeer het opnieuw.',
+    importFailed: 'Dat is niet opgeslagen. Er is niets geïmporteerd. Probeer het opnieuw.',
   },
 };
