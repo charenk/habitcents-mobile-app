@@ -1084,6 +1084,70 @@ work, tracked elsewhere).
       since run 20's original fix to actually contain a key
       `LanguageSheet` itself reads (`languageSystemDefault`), which is
       why this recurred now rather than in run 21's four sections.
+
+      **Run 23: `addCategoryModal` (7 keys) and `expenseSheet` minus the
+      function-valued `amountLabel` (8 keys) populated for all 10
+      languages**, a fresh pick since all five of run 20's originally
+      suggested sections were done. 15 string keys x 10 languages, 96 of
+      ~660 keys now populated per language (up from 81).
+
+      Picked these two specifically because both are clean: real,
+      unconditionally-reachable call sites (`AddCategoryModal.tsx`,
+      `ExpenseSheet.tsx`, both already `useStrings()`-converted), no
+      overlap with the locked vocabulary, and (checked before starting,
+      the standing risk this stream has hit twice now) no test mocking a
+      non-English device locale renders either component. While looking
+      for the next candidate, found and ruled out `editExpenseModal`
+      (constants/strings.ts, right after `addCategoryModal`): zero real
+      imports anywhere in the app (`grep -rn "editExpenseModal"` outside
+      `constants/strings.ts` itself and this stream's own docs turns up
+      nothing), so it reads as dead code superseded by `expenseSheet`
+      (their key sets overlap almost exactly:
+      `cancelAccessibilityLabel`/`title`/`saveAccessibilityLabel`/
+      `category`/etc. duplicate `expenseSheet`'s newer, shorter set).
+      Same out-of-scope treatment as the retired `ViewQuote` pair (run
+      19): dead code with no render path has no observable i18n effect,
+      so left untranslated; worth a second look only if something
+      resurrects it. Also scanned `insights` (leak/skip references
+      throughout, e.g. `leaksTitle`, `skipValueSheetTitle`, confirmed
+      gated same as `habitLogging`) and skimmed `habitDetail`/`reports`
+      (no locked-vocabulary hits found on a first pass, not yet
+      confirmed clean the way `expenseSheet` was) as candidates for a
+      future run, not translated this run.
+
+      `expenseSheet.saveExpense`/`saveChanges` both hold the same
+      English value ("Save", per the 2026-09-04 drawer-feedback decision
+      that both modes say one word): translated using each language's
+      already-established `common.save` word rather than composing a
+      fresh "save expense" phrase, since that is what the English source
+      itself now does (one bare "Save", not "Save expense"). Kept
+      `logEyebrow`/`editEyebrow`'s verb distinct from each language's
+      save verb where the two would otherwise collide (e.g. French
+      "Enregistrer" for save vs. "Consigner" for log; German "speichern"
+      for save vs. "erfassen" for log), so the sheet's two labels stay
+      visibly different words in translation the way they are in
+      English ("Log expense" vs. "Save"). `addCategoryModal.editCategory`
+      is the same English text as `categoryDetail.editCategoryLabel`
+      (run 21) modulo the trailing period this app's sheet-title
+      convention adds (matching the run 20 `screenTitles` precedent, a
+      literal "." even for ja/ko/zh-Hans/hi, not full-width punctuation),
+      so reused that section's already-established translation per
+      language rather than re-deriving it, same reuse-over-redo approach
+      run 21 used for `expenses.saveExpense` conflicts. `addCategoryModal
+      .icon`/`.color`/`.name` and `expenseSheet.categoryEyebrow`/
+      `.whereEyebrow`/`.keyboardDone` have no existing precedent
+      anywhere in the catalogs yet, translated fresh.
+
+      No test file changes needed: `localeCatalogs.test.ts` covers the
+      new overlay keys automatically, and neither
+      `__tests__/addCategoryModal.test.tsx` nor
+      `__tests__/expenseSheet.test.tsx` mocks a non-English device
+      locale (checked directly, not assumed, given the standing risk
+      class from runs 20/22). One commit; `tsc --noEmit` clean and the
+      full suite green (113/113, 1210/1210) on the first run, no flake
+      (including no recurrence of the intermittent
+      `door3BreakSheet.test.tsx` full-suite-load flake noted since run
+      13).
 - [ ] leak / skip / kept / slip and the app's quotes are PRODUCT VOICE:
       never finalized by this routine. Provisional entries only, proposal
       table lives in HANDOFF.md's DECISIONS NEEDED until Charen picks.
