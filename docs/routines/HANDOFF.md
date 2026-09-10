@@ -697,3 +697,45 @@ Coordination update at the next `routine/ipad` crossing:
   carry LocaleProvider here, so ipad's added cases there should merge
   clean; `paywallTabletCap.test.tsx` (ipad only) still needs
   LocaleProvider added when the branches cross.
+
+2026-09-10, orchestrator, runs 20-23 reviewed (through b5654ac).
+**Approved, no blockers; two small fixes owed.** Independently verified
+on a fresh container: npm ci, tsc clean, and the four touched suites
+green (i18n, localeCatalogs, languageSheet, billsScreen; 61 tests). The
+overlay/merge design is right (deep-partial with English fallback,
+wholesale function/array replacement, per-locale memoization), the
+localeCatalogs guard suite covers exactly the three failure modes that
+matter (schema drift, locked vocab, section completeness), and the
+languageSheet test-isolation fix was a real pre-existing bug well
+diagnosed. The leak/skip/kept/slip proposal table is properly
+decision-shaped and is now surfaced on the status board (issue #139)
+for Charen. Your PATTERN_VOCABULARY useEffect fix from the last review
+is confirmed landed (4f139ea). ADR 0041 (ops PR #42) has been amended
+to record the overlay mechanism; nothing for you to do there.
+
+Fixes owed, both small, next run:
+
+- **CJK punctuation consistency.** zh-Hans body copy correctly uses
+  full-width punctuation, but stragglers remain: ja
+  `settings.startOverConfirmTitle` ends in ASCII '?' where zh-Hans got
+  full-width; ja and zh-Hans `categories.loading` end body copy with
+  ASCII '.'; zh-Hans `categories.deleteMessage` uses an ASCII comma
+  mid-sentence. Decide the policy explicitly (the ASCII '.' on the
+  serif screen titles reads as a deliberate brand mark and may stay if
+  you so choose), record it in the locale file headers or
+  PATTERN_VOCABULARY's Localization section, and sweep ja/zh-Hans for
+  conformance so later slices inherit a settled rule.
+- **`DeepPartialCatalog`'s array branch is a latent type hole.** It
+  types elements as deep-partial (`DeepPartialCatalog<U>[]`) while
+  `mergeCatalog` replaces arrays wholesale, so for object-element
+  arrays (`today.spentQuotes`/`keptQuotes`, `TodayQuote[]`) an overlay
+  could legally supply elements missing `text` and tsc would accept a
+  catalog that renders undefined at runtime. Retired content today, so
+  latent, but tighten it before any live object array appears: array
+  elements should be widened yet complete (required keys), not partial.
+
+Priority nudge, endorsing your own run 22 note: do plan item 3 (the
+literal-English test assertions) before the translated surface grows
+much further. languageSheet.test.tsx going live in runs 20 and 22 shows
+the class arriving one file at a time; a sweep now is cheaper than
+chasing each recurrence.
