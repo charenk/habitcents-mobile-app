@@ -16,6 +16,13 @@
  * locked vocabulary (leak/skip/kept/slip, ops CLAUDE.md) that this routine
  * will not guess at it. It stays English until Charen picks a translation;
  * see docs/routines/HANDOFF.md's DECISIONS NEEDED.
+ *
+ * Run 24 added: `habitDetail.notFound` (its other four keys are dead code,
+ * confirmed unused anywhere in the app); `reports.loading` (dead-code
+ * audited section, only this key and the function-valued `weekOf` are
+ * actually rendered); `toasts` minus `stoppedHistoryKept`/`leakDismissed`
+ * (locked-vocabulary gated), `yesterdayNoted` (dead code), and every
+ * function-valued key (deferred ICU work, same as every other section).
  */
 import type { LocaleOverlay } from '@/utils/i18n';
 
@@ -85,6 +92,12 @@ export const fr: LocaleOverlay = {
     noExpensesLogged: 'Rien d’enregistré dans cette catégorie pour l’instant.',
     trendEmpty: 'Aucune dépense à représenter pour l’instant.',
   },
+  habitDetail: {
+    notFound: 'Habitude introuvable',
+  },
+  reports: {
+    loading: 'Chargement.',
+  },
   profile: {
     title: 'Profil.',
     headerLabel: 'Profil',
@@ -139,5 +152,29 @@ export const fr: LocaleOverlay = {
     saveChanges: 'Enregistrer',
     deleteExpense: 'Supprimer la dépense',
     keyboardDone: 'Terminé',
+  },
+  toasts: {
+    logged: 'Consigné.',
+    saved: 'Enregistré.',
+    deleted: 'Supprimé.',
+    undo: 'Annuler',
+    restored: 'Restauré.',
+    addedToUpcoming: 'Ajouté à la liste À venir.',
+    trialStarted: 'Essai commencé. 14 jours gratuits.',
+    startHabitFailed: 'Cela n’a pas pu démarrer. Réessayez.',
+    logFailed: 'Cela n’a pas été enregistré. Réessayez.',
+    saveFailed: 'Cela n’a pas été enregistré. Réessayez.',
+    deleteFailed: 'Cela n’a pas été supprimé. Réessayez.',
+    restoreFailed: 'Cela n’est pas revenu. Réessayez.',
+    addUpcomingFailed: 'Cela n’a pas été enregistré. Réessayez.',
+    checkInFailed: 'Cela n’a pas été enregistré. Réessayez.',
+    stopHabitFailed: 'Cela ne s’est pas arrêté. Réessayez.',
+    skipValueFailed: 'Cela n’a pas été enregistré. Réessayez.',
+    dismissLeakFailed: 'Cela n’a pas été enregistré. Réessayez.',
+    categoryFailed: 'Cela n’a pas été enregistré. Réessayez.',
+    currencyFailed: 'Cela n’a pas été enregistré. Réessayez.',
+    languageFailed: 'Cela n’a pas été enregistré. Réessayez.',
+    startOverFailed: 'Cela n’a pas pu recommencer. Réessayez.',
+    importFailed: 'Cela n’a pas été enregistré. Rien n’a été importé. Réessayez.',
   },
 };

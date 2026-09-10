@@ -16,6 +16,13 @@
  * locked vocabulary (leak/skip/kept/slip, ops CLAUDE.md) that this routine
  * will not guess at it. It stays English until Charen picks a translation;
  * see docs/routines/HANDOFF.md's DECISIONS NEEDED.
+ *
+ * Run 24 added: `habitDetail.notFound` (its other four keys are dead code,
+ * confirmed unused anywhere in the app); `reports.loading` (dead-code
+ * audited section, only this key and the function-valued `weekOf` are
+ * actually rendered); `toasts` minus `stoppedHistoryKept`/`leakDismissed`
+ * (locked-vocabulary gated), `yesterdayNoted` (dead code), and every
+ * function-valued key (deferred ICU work, same as every other section).
  */
 import type { LocaleOverlay } from '@/utils/i18n';
 
@@ -84,6 +91,12 @@ export const ptBR: LocaleOverlay = {
     noExpensesLogged: 'Nada registrado nesta categoria ainda.',
     trendEmpty: 'Ainda não há gastos para exibir no gráfico.',
   },
+  habitDetail: {
+    notFound: 'Hábito não encontrado',
+  },
+  reports: {
+    loading: 'Carregando.',
+  },
   profile: {
     title: 'Perfil.',
     headerLabel: 'Perfil',
@@ -137,5 +150,29 @@ export const ptBR: LocaleOverlay = {
     saveChanges: 'Salvar',
     deleteExpense: 'Excluir despesa',
     keyboardDone: 'Concluído',
+  },
+  toasts: {
+    logged: 'Registrado.',
+    saved: 'Salvo.',
+    deleted: 'Excluído.',
+    undo: 'Desfazer',
+    restored: 'Restaurado.',
+    addedToUpcoming: 'Adicionado a Próximas.',
+    trialStarted: 'Teste iniciado. 14 dias grátis.',
+    startHabitFailed: 'Isso não pôde ser iniciado. Tente novamente.',
+    logFailed: 'Isso não foi salvo. Tente novamente.',
+    saveFailed: 'Isso não foi salvo. Tente novamente.',
+    deleteFailed: 'Isso não foi excluído. Tente novamente.',
+    restoreFailed: 'Isso não voltou. Tente novamente.',
+    addUpcomingFailed: 'Isso não foi salvo. Tente novamente.',
+    checkInFailed: 'Isso não foi salvo. Tente novamente.',
+    stopHabitFailed: 'Isso não foi interrompido. Tente novamente.',
+    skipValueFailed: 'Isso não foi salvo. Tente novamente.',
+    dismissLeakFailed: 'Isso não foi salvo. Tente novamente.',
+    categoryFailed: 'Isso não foi salvo. Tente novamente.',
+    currencyFailed: 'Isso não foi salvo. Tente novamente.',
+    languageFailed: 'Isso não foi salvo. Tente novamente.',
+    startOverFailed: 'Isso não foi reiniciado. Tente novamente.',
+    importFailed: 'Isso não foi salvo. Nada foi importado. Tente novamente.',
   },
 };

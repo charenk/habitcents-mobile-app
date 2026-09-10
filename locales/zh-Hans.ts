@@ -16,6 +16,19 @@
  * locked vocabulary (leak/skip/kept/slip, ops CLAUDE.md) that this routine
  * will not guess at it. It stays English until Charen picks a translation;
  * see docs/routines/HANDOFF.md's DECISIONS NEEDED.
+ *
+ * Run 24 added: `habitDetail.notFound` (its other four keys are dead code,
+ * confirmed unused anywhere in the app); `reports.loading` (dead-code
+ * audited section, only this key and the function-valued `weekOf` are
+ * actually rendered); `toasts` minus `stoppedHistoryKept`/`leakDismissed`
+ * (locked-vocabulary gated), `yesterdayNoted` (dead code), and every
+ * function-valued key (deferred ICU work, same as every other section).
+ * Extending this file's existing short-label-vs-full-sentence punctuation
+ * split (literal "." on short/title-style strings like `loading`, native
+ * "。" on full sentences like `deleteMessage`): the short one-word
+ * confirmation toasts (`logged`/`saved`/`deleted`/`restored`/
+ * `addedToUpcoming`) keep the literal ".", the two-clause failure toasts
+ * and `trialStarted` use "。".
  */
 import type { LocaleOverlay } from '@/utils/i18n';
 
@@ -84,6 +97,12 @@ export const zhHans: LocaleOverlay = {
     noExpensesLogged: '这个分类下还没有任何记录。',
     trendEmpty: '暂时没有可显示的支出图表。',
   },
+  habitDetail: {
+    notFound: '未找到该习惯',
+  },
+  reports: {
+    loading: '加载中.',
+  },
   profile: {
     title: '个人资料.',
     headerLabel: '个人资料',
@@ -137,5 +156,29 @@ export const zhHans: LocaleOverlay = {
     saveChanges: '保存',
     deleteExpense: '删除支出',
     keyboardDone: '完成',
+  },
+  toasts: {
+    logged: '已记录.',
+    saved: '已保存.',
+    deleted: '已删除.',
+    undo: '撤销',
+    restored: '已恢复.',
+    addedToUpcoming: '已添加到即将到来.',
+    trialStarted: '试用已开始。14天免费。',
+    startHabitFailed: '未能开始。请重试。',
+    logFailed: '未能保存。请重试。',
+    saveFailed: '未能保存。请重试。',
+    deleteFailed: '未能删除。请重试。',
+    restoreFailed: '未能恢复。请重试。',
+    addUpcomingFailed: '未能保存。请重试。',
+    checkInFailed: '未能保存。请重试。',
+    stopHabitFailed: '未能停止。请重试。',
+    skipValueFailed: '未能保存。请重试。',
+    dismissLeakFailed: '未能保存。请重试。',
+    categoryFailed: '未能保存。请重试。',
+    currencyFailed: '未能保存。请重试。',
+    languageFailed: '未能保存。请重试。',
+    startOverFailed: '未能重置。请重试。',
+    importFailed: '未能保存。没有导入任何内容。请重试。',
   },
 };

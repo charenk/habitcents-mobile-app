@@ -19,6 +19,19 @@
  * locked vocabulary (leak/skip/kept/slip, ops CLAUDE.md) that this routine
  * will not guess at it. It stays English until Charen picks a translation;
  * see docs/routines/HANDOFF.md's DECISIONS NEEDED.
+ *
+ * Run 24 added: `habitDetail.notFound` (its other four keys are dead code,
+ * confirmed unused anywhere in the app); `reports.loading` (dead-code
+ * audited section, only this key and the function-valued `weekOf` are
+ * actually rendered); `toasts` minus `stoppedHistoryKept`/`leakDismissed`
+ * (locked-vocabulary gated), `yesterdayNoted` (dead code), and every
+ * function-valued key (deferred ICU work, same as every other section).
+ * Extending the short-label-vs-full-sentence punctuation split this file
+ * already carries (literal "." on short/title-style strings like
+ * `loading`, native "。" on full sentences like `deleteMessage`): the
+ * short one-word confirmation toasts (`logged`/`saved`/`deleted`/
+ * `restored`/`addedToUpcoming`) keep the literal ".", the two-clause
+ * failure toasts and `trialStarted` use "。".
  */
 import type { LocaleOverlay } from '@/utils/i18n';
 
@@ -87,6 +100,12 @@ export const ja: LocaleOverlay = {
     noExpensesLogged: 'このカテゴリーにはまだ何も記録されていません。',
     trendEmpty: 'グラフに表示する支出がまだありません。',
   },
+  habitDetail: {
+    notFound: '習慣が見つかりません',
+  },
+  reports: {
+    loading: '読み込み中.',
+  },
   profile: {
     title: 'プロフィール.',
     headerLabel: 'プロフィール',
@@ -140,5 +159,29 @@ export const ja: LocaleOverlay = {
     saveChanges: '保存',
     deleteExpense: '支出を削除',
     keyboardDone: '完了',
+  },
+  toasts: {
+    logged: '記録済み.',
+    saved: '保存済み.',
+    deleted: '削除済み.',
+    undo: '元に戻す',
+    restored: '復元済み.',
+    addedToUpcoming: '今後の予定に追加済み.',
+    trialStarted: '体験期間を開始しました。14日間無料。',
+    startHabitFailed: '開始できませんでした。もう一度お試しください。',
+    logFailed: '保存できませんでした。もう一度お試しください。',
+    saveFailed: '保存できませんでした。もう一度お試しください。',
+    deleteFailed: '削除できませんでした。もう一度お試しください。',
+    restoreFailed: '元に戻せませんでした。もう一度お試しください。',
+    addUpcomingFailed: '保存できませんでした。もう一度お試しください。',
+    checkInFailed: '保存できませんでした。もう一度お試しください。',
+    stopHabitFailed: '停止できませんでした。もう一度お試しください。',
+    skipValueFailed: '保存できませんでした。もう一度お試しください。',
+    dismissLeakFailed: '保存できませんでした。もう一度お試しください。',
+    categoryFailed: '保存できませんでした。もう一度お試しください。',
+    currencyFailed: '保存できませんでした。もう一度お試しください。',
+    languageFailed: '保存できませんでした。もう一度お試しください。',
+    startOverFailed: 'リセットできませんでした。もう一度お試しください。',
+    importFailed: '保存できませんでした。何もインポートされていません。もう一度お試しください。',
   },
 };
