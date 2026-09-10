@@ -2,20 +2,18 @@
 
 ## Status
 
-In progress. Run 22: no REVIEW FEEDBACK was pending at session start,
+In progress. Run 23: no REVIEW FEEDBACK was pending at session start,
 branch was already current with origin/main (rebase was a no-op).
-**Plan item 4's third slice**: populated `settings` minus
-`versionValue`/`supportEmail` (28 string keys, not localizable content
-even though they are plain strings) across all 10 locale overlays, the
-section run 21 deliberately deferred. 81 of ~660 keys now populated per
-language, up from 53. Also fixed a live recurrence of the
-`languageSheet.test.tsx` test-isolation class run 20 first found: two
-assertions still read the static English `languageSystemDefault`
-string while the sheet renders under the file's French-mocked device
-locale, now that this section has a real French translation. Full
-detail, including the lesson about checking a translated section's
-overlap with any test's mocked device locale, in PLAN.md's run 22
-entry.
+**Plan item 4's fourth slice**: populated `addCategoryModal` (7 string
+keys) and `expenseSheet` minus the function-valued `amountLabel` (8
+string keys) across all 10 locale overlays, a fresh pick since all five
+of run 20's originally suggested sections were done as of run 22. 96 of
+~660 keys now populated per language, up from 81. Also found and ruled
+out `editExpenseModal` as dead code (zero real imports anywhere,
+superseded by `expenseSheet`), left untranslated same as the retired
+`ViewQuote` pair. Full detail, including the reuse-over-redo calls for
+`addCategoryModal.editCategory` and `expenseSheet.saveExpense`/
+`saveChanges`, in PLAN.md's run 23 entry.
 
 ## Completed
 
@@ -337,29 +335,63 @@ entry.
   the first run, no flake. Full detail, including the lesson about
   checking a translated section against any test's mocked device
   locale (not just a general grep), in PLAN.md's run 22 entry.
+- Run 23, plan item 4's fourth slice: `addCategoryModal` (7 string
+  keys) and `expenseSheet` minus the function-valued `amountLabel` (8
+  string keys) populated across all 10 locale overlays. Both sections
+  confirmed clean before starting: real, unconditionally-reachable call
+  sites, no locked-vocabulary overlap, no test mocking a non-English
+  device locale renders either component. `editExpenseModal` (right
+  after `addCategoryModal` in `constants/strings.ts`) confirmed dead
+  code, zero real imports anywhere, superseded by `expenseSheet`'s
+  overlapping, newer key set; left untranslated, same treatment as the
+  retired `ViewQuote` pair. `insights` scanned and confirmed gated
+  (leak/skip references throughout, same class as `habitLogging`);
+  `habitDetail`/`reports` skimmed with no locked-vocabulary hits found
+  but not yet fully confirmed clean, candidates for a future run.
+  `expenseSheet.saveExpense`/`saveChanges` (both "Save" in English,
+  per the 2026-09-04 one-word drawer-feedback decision) translated
+  using each language's established `common.save` word rather than a
+  fresh "save expense" phrase, matching the English source's own
+  wording; `logEyebrow`/`editEyebrow` deliberately used a verb distinct
+  from each language's save verb where they would otherwise collide
+  (French "Consigner" vs. "Enregistrer", German "erfassen" vs.
+  "speichern"), keeping the sheet's two labels visibly different words
+  the way they are in English. `addCategoryModal.editCategory` reused
+  `categoryDetail.editCategoryLabel`'s already-established translation
+  per language (same English text modulo the trailing sheet-title
+  period), same reuse-over-redo approach run 21 used for
+  `expenses.saveExpense`. No test file changes needed
+  (`localeCatalogs.test.ts` is schema-driven). One commit; `tsc
+  --noEmit` clean and the full suite green (113/113, 1210/1210) on the
+  first run, no flake. Full detail in PLAN.md's run 23 entry.
 
 ## Next
 
-Plan item 4 is underway (81 of ~660 keys populated across all 10
+Plan item 4 is underway (96 of ~660 keys populated across all 10
 languages: `common` minus `keep`, `sheets`, `tabs`, `screenTitles` (run
 20), plus `expenses`, `categories`, `categoryDetail`, `profile` (run
-21), plus `settings` minus `versionValue`/`supportEmail` (run 22); see
-PLAN.md's run 20-22 entries for the full design). `upcoming` stays
+21), plus `settings` minus `versionValue`/`supportEmail` (run 22), plus
+`addCategoryModal`, `expenseSheet` minus `amountLabel` (run 23); see
+PLAN.md's run 20-23 entries for the full design). `upcoming` stays
 fully English until item 2's ICU/pluralization work lands, since both
 its keys are function-valued. Budget more than one run per meaningful
 chunk (10 languages x a section adds up fast), the same lesson item
-2's file-by-file conversion learned repeatedly and runs 21-22 stayed
-within. `habitLogging`, `coachMoments`, and `today`'s quote arrays
-still need the DECISIONS NEEDED table below settled (or at minimum
-provisional entries adopted with a clear "pending Charen" marker)
-before translating, since those sections contain the locked vocabulary
-and (for `today`) the RETIRED, out-of-scope quote arrays. With all five
-originally-suggested sections (`expenses`, `categories`,
-`categoryDetail`, `profile`, `settings`) now done, the next slice needs
-a fresh pick from `constants/strings.ts`: candidates outside the locked
-vocabulary include `addCategoryModal` and `editExpenseModal` (both
-small; not yet checked for function-valued keys or overlap with any
-test's mocked device locale).
+2's file-by-file conversion learned repeatedly and runs 21-23 stayed
+within. `habitLogging`, `coachMoments`, `insights`, and `today`'s quote
+arrays still need the DECISIONS NEEDED table below settled (or at
+minimum provisional entries adopted with a clear "pending Charen"
+marker) before translating, since those sections contain the locked
+vocabulary (`insights` newly confirmed gated this run: `leaksTitle`,
+`skipValueSheetTitle`, and more) and (for `today`) the RETIRED,
+out-of-scope quote arrays. The next slice needs another fresh pick:
+`habitDetail` and `reports` are unconfirmed candidates from this run's
+skim (no locked-vocabulary hits found on a first pass, not yet checked
+for function-valued keys or device-locale-mocked tests the way
+`expenseSheet` was); `onboarding`, `leakScan`, `paywall`, `toasts`
+(partially gated, contains `leakDismissed`/`keptBack`/
+`stoppedHistoryKept`), `today` (largely gated), `money` (partially
+gated, contains `habitsEmptyTitle`'s "leak" and the leak-counting
+functions), and `addUpcoming`/`insights` remain otherwise unchecked.
 
 What is actually left for a future run:
 - Plan item 2's ICU/pluralization checkbox (function-valued strings
