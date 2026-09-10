@@ -470,7 +470,7 @@ describe('Today: the break-habit affordance (DI-6, states per ADR 0038)', () => 
     expect(view.queryByText(strings.habitLogging.freeTierNote)).toBeNull();
   });
 
-  it('at the free limit, says "another" and warns which plan you are on', async () => {
+  it('at the free limit, says "another" and still says nothing about the plan', async () => {
     mockHabits = [makeHabit({ id: 'h1', frequency: 'daily', status: 'changing' })];
     mockGoals = [makeGoal({ id: 'g1', habitId: 'h1', dayLogs: [] })];
 
@@ -480,9 +480,11 @@ describe('Today: the break-habit affordance (DI-6, states per ADR 0038)', () => 
 
     expect(view.getByLabelText(/^Kept .*, selected/)).toBeTruthy();
     expect(view.getByText(strings.today.breakAnotherHabitCta)).toBeTruthy();
-    // The caption earns its place here and only here: pressing at the limit
-    // jumps to the paywall, and this line is the only forewarning of that.
-    expect(view.getByText(strings.habitLogging.freeTierNote)).toBeTruthy();
+    // No caption anywhere on the dock any more (Charen, 2026-09-10). Growth
+    // copy waits until the user actually reaches for a second habit: the gate
+    // card inside PickOneSheet and BreakHabitSheet, and the paywall this
+    // affordance routes to.
+    expect(view.queryByText(strings.habitLogging.freeTierNote)).toBeNull();
   });
 
   // W3, "the app is the onboarding" complete: the affordance used to route to

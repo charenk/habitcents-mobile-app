@@ -816,19 +816,12 @@ export default function TodayScreen() {
   const breakLabel =
     goals.length === 0 ? strings.today.breakFirstHabitCta : strings.today.breakAnotherHabitCta;
 
-  // CAPTION BY STATE (ADR 0038). This used to check entitlement alone, so a
-  // brand-new user with ZERO habits was told "1 habit on the free plan"
-  // before anything had been refused: a growth line where there was nothing
-  // to grow out of. It now shows only at the FREE ceiling, which is the one
-  // state where it is both true and about to matter: pressing there jumps to
-  // the paywall (handleBreakAnother), and this line is the forewarning.
-  //
-  // Premium at its own ceiling (5) gets no caption and still jumps to the
-  // paywall. That routing question is carried as open by three records
-  // (today.md, ADR 0034, the status board) and is a monetization call behind
-  // the human gate; this line deliberately does not resolve it.
-  const breakCaption =
-    freeTierBlocked && entitlement !== 'premium' ? strings.habitLogging.freeTierNote : null;
+  // NO CAPTION (Charen, 2026-09-10, superseding the ADR 0038 narrowing).
+  // The dock said "1 habit on the free plan" at the free ceiling as a
+  // forewarning. It is gone: growth copy belongs where a user has actually
+  // reached for a second habit, which is the gate card PickOneSheet and
+  // BreakHabitSheet render and the paywall handleBreakAnother routes to. A
+  // ceiling nobody has pressed against yet is not a thing to announce.
 
   const renderItem = ({ item, section }: { item: DetectedHabit | BreakingItem; section: HabitSection }) => {
     if (section.type === 'leaks') {
@@ -1138,7 +1131,7 @@ export default function TodayScreen() {
               included: the affordance is what a user with nothing yet is
               here to press. */}
           <ActionDock testID="kept-dock" onHeightChange={setKeptDockHeight}>
-            <BreakHabitRow label={breakLabel} caption={breakCaption} onPress={handleBreakAnother} />
+            <BreakHabitRow label={breakLabel} onPress={handleBreakAnother} />
           </ActionDock>
         </View>
       </ScrollView>

@@ -12,30 +12,34 @@
  * Same structure, its own skin (Charen, later the same day): with both docks
  * solid and sage, this read as another add-expense composer. So it takes
  * DockCard's dashed tone and the plain plus: the dashed edge is the app's
- * "add another" grammar (UpcomingList's add row, Today's watch nudge), and a
- * snow circle with a sage glyph is quieter than Spent's filled one. The
+ * "add another" grammar (UpcomingList's add row, Today's watch nudge), and an
+ * unfilled circle with a sage glyph is quieter than Spent's filled one. The
  * shape, the field, the round button and the height are Spent's exactly.
  *
- * Label and caption are decided by the screen (state-aware since ADR 0038:
- * "Break your first habit" at zero habits, "Break another habit" after, the
- * free-plan caption only at the ceiling). This component only lays them out,
- * and lays them out so that both fit inside DOCK_FIELD_HEIGHT at the 1.5 cap.
+ * The label is decided by the screen (state-aware since ADR 0038: "Break your
+ * first habit" at zero habits, "Break another habit" after). This component
+ * only lays it out, inside DOCK_FIELD_HEIGHT at the 1.5 cap.
+ *
+ * Border only, one line (Charen, 2026-09-10). The field's snow fill and the
+ * plus's snow fill are both gone, so the dashed edge is the entire button and
+ * the label and glyph sit on the pane. The free-plan caption is gone with
+ * them: growth copy now lives only where a user has actually reached for a
+ * second habit, which is the gate card inside PickOneSheet and BreakHabitSheet
+ * and the paywall this dock routes to. A ceiling the user has not touched yet
+ * says nothing.
  */
 import { useMemo } from 'react';
 import { StyleSheet, Text } from 'react-native';
-import { DockCard, DockField, DockPlusButton, DOCK_CAPTION_LINE_HEIGHT, DOCK_LABEL_LINE_HEIGHT } from './DockCard';
+import { DockCard, DockField, DockPlusButton, DOCK_LABEL_LINE_HEIGHT } from './DockCard';
 import { useTheme } from '@/contexts/ThemeContext';
-import { spacing, typeScale, type AppTheme } from '@/constants/theme';
+import { typeScale, type AppTheme } from '@/constants/theme';
 
 export type BreakHabitRowProps = {
   label: string;
-  /** Shown under the label only when the screen has something true to say
-   *  (the free-plan ceiling). Null or undefined renders one line. */
-  caption?: string | null;
   onPress: () => void;
 };
 
-export function BreakHabitRow({ label, caption, onPress }: BreakHabitRowProps) {
+export function BreakHabitRow({ label, onPress }: BreakHabitRowProps) {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
@@ -43,17 +47,13 @@ export function BreakHabitRow({ label, caption, onPress }: BreakHabitRowProps) {
     <DockCard tone="dashed" testID="break-habit-card">
       <DockField
         onPress={onPress}
-        accessibilityLabel={caption ? `${label}, ${caption}` : label}
+        accessibilityLabel={label}
         testID="break-habit-affordance"
+        tone="dashed"
       >
         <Text style={styles.label} numberOfLines={1} maxFontSizeMultiplier={1.5}>
           {label}
         </Text>
-        {caption ? (
-          <Text style={styles.caption} numberOfLines={1} maxFontSizeMultiplier={1.5}>
-            {caption}
-          </Text>
-        ) : null}
       </DockField>
       <DockPlusButton onPress={onPress} testID="break-habit-plus" tone="plain" />
     </DockCard>
@@ -69,13 +69,6 @@ function createStyles(theme: AppTheme) {
       // primary, to match the plus beside it; the old inline row used
       // primaryDark, which since ADR 0027 is the same value under another name.
       color: theme.primary,
-    },
-    caption: {
-      fontSize: typeScale.caption,
-      lineHeight: DOCK_CAPTION_LINE_HEIGHT,
-      fontFamily: theme.fonts.ui,
-      color: theme.textSecondary,
-      marginTop: spacing.hairline,
     },
   });
 }

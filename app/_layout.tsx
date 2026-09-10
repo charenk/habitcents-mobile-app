@@ -103,8 +103,8 @@ export default function RootLayout() {
                   <Stack screenOptions={{ headerShown: false }}>
                     <Stack.Screen name="(tabs)" />
                     <Stack.Screen name="onboarding" />
-                    <Stack.Screen name="habit" />
-                    <Stack.Screen name="category" />
+                    <Stack.Screen name="habit/[id]" />
+                    <Stack.Screen name="category/[id]" />
                     <Stack.Screen name="profile" />
                     <Stack.Screen name="leak-scan" />
                     <Stack.Screen name="paywall" options={{ presentation: 'modal' }} />
