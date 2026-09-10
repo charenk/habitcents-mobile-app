@@ -516,6 +516,31 @@ run, exactly matching runs 13-21. Checklist unchanged, still fully
 `[x]`/`(C)`. No new push notification; run 11's already covers the idle
 decision queue (now 16 runs idle) and nothing has changed since.
 
+## Run 24: rebase (first since run 13), closed out again
+
+`git rev-list --left-right --count origin/main...routine/core-p3` returned
+`4 28`: `origin/main` had moved 4 commits since run 13's rebase (the
+2026-09-07 Today docks / How-it-works sheet wave, PR #154 and friends),
+touching `constants/strings.ts` and several `design/decisions/` files this
+branch also edits, but none of the same entries (main's new lines are for
+`BreakHabitRow`/`DockCard`/`HowItWorksSheet`/`QuickLogRow`; this branch's
+own touches are `PickOneSheet`/`BreakHabitSheet`/`ShareCounterCard`/
+`LeakFinderTeaser`). `git rebase origin/main` completed with zero conflicts
+this time (unlike run 13's two genuine ones), force-with-lease pushed.
+PR #132 unchanged otherwise: open, not draft, zero comments, zero reviews.
+No new REVIEW FEEDBACK since run 15's "Approved, no fixes owed" for runs
+12-14. PUNCHLIST.md's RESUME marker re-pulled fresh: still only the
+2026-09-05/06 zeroth-state design wave items plus the leak finder
+dated-entitlement line already built and closed on this branch at run 8;
+nothing newly core-p3-shaped. Fresh `npm install`, `npx tsc --noEmit`
+clean, `npm test` 113 suites / 1184 tests green on the first attempt, no
+flake, exactly matching runs 13-23 (all growth since run 8 came from
+main's own commits carried in by rebases, not new code here). Checklist
+unchanged, still fully `[x]`/`(C)`. No new push notification: the decision
+queue has now sat untouched since run 6, run 11 already flagged it once,
+and nothing in its content has changed (18 runs idle on the decision
+queue itself, though this run did do real rebase work).
+
 ## If this routine fires again
 
 The branch and PR stay open until Charen merges or closes them (routine

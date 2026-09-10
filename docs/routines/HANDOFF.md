@@ -1,5 +1,47 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 24, 2026-09-10: rebase, no new work)
+
+First real rebase since run 13 (runs 14-23 all found the branch already
+even with `origin/main`). `git fetch origin main routine/core-p3` plus
+`git rev-list --left-right --count origin/main...routine/core-p3` returned
+`4 28`: `origin/main` had moved 4 commits (the 2026-09-07 Today docks /
+How-it-works sheet wave, PR #154 and its stack), touching
+`constants/strings.ts` and `design/decisions/components/{BreakHabitRow,
+DockCard,HowItWorksSheet,QuickLogRow}.md` plus `design/decisions/modules/
+today.md`. None of those overlap this branch's own edited entries
+(`PickOneSheet.md`, `BreakHabitSheet.md`, `ShareCounterCard.md`,
+`LeakFinderTeaser.md`), so `git rebase origin/main` completed with zero
+conflicts (unlike run 13's two genuine content conflicts). Force-with-lease
+pushed (`f0e89eb..d1dc86d`).
+
+PR #132 confirmed via the API: `state: open`, `draft: false`, `merged:
+false`, head now `f0e89ebed429f055c3402642adef3cfe638890a9` pre-push
+(matches this branch's prior tip), base `b748ca35e0272a13d7a2f6e1c8b0b437dbf4f49c`
+was main's tip before this run's rebase moved it to `beb49e5`, zero
+comments (`get_comments` returned `[]`), zero reviews. No new REVIEW
+FEEDBACK since run 15's "Approved, no fixes owed" for runs 12-14.
+Re-pulled `habitcents-ops/PUNCHLIST.md`'s RESUME marker: unchanged from
+runs 9-23, still only the 2026-09-05/06 zeroth-state design wave items
+(device pass, canvas regen, ipad merge note, today-kept art) plus the
+leak finder dated-entitlement line, which stays unchecked there but was
+already built and closed on this branch at run 8; not this routine's
+checkbox to flip. Nothing newly core-p3-shaped.
+
+Fresh `npm install` (node_modules removed first, container had a stale
+copy), `npx tsc --noEmit` clean. `npm test`: 113 suites / 1184 tests green
+on the first attempt, no flake this run, exactly matching runs 13-23 (the
+suite count itself hasn't moved because main's last 4 commits are a UI/copy
+wave with no new or changed tests in files this branch's suite run touches
+differently than before). PLAN.md's checklist stays fully `[x]`/`(C)`;
+nothing code-shaped remains that this routine can reach without a
+website-repo checkout or a Charen-gated external account. No push
+notification this run: run 11's notification already flagged the idle
+decision queue, and nothing in its content has changed (still zero PR
+engagement since run 6, same 7-item queue run 9 first compiled, now 18
+runs idle on the decision queue itself, notwithstanding this run's real
+rebase work).
+
 ## COMPLETE (run 23, 2026-09-10: re-verify, no new work)
 
 Fourteenth idle run since the decision queue first went up at run 6
