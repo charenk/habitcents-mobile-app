@@ -2,18 +2,20 @@
 
 ## Status
 
-In progress. Run 21: no REVIEW FEEDBACK was pending at session start
-(the runs 17-19 review's items were all closed out in run 20; the two
-`routine/ipad` coordination notes carried forward, still not
-actionable), branch was already current with origin/main (rebase was
-a no-op). **Plan item 4's second slice**: populated `expenses`,
-`categories`, `categoryDetail`, `profile` (36 string keys, all
-function-valued keys still omitted) across all 10 locale overlays, per
-run 20's suggested next-slice order, minus `settings` and `upcoming`
-(deliberately deferred, see below). 53 of ~660 keys now populated per
-language, up from 17. Full detail, including the `categories.
-deleteCancel` naming judgment call and two draft-translation fixes
-caught before committing, in PLAN.md's run 21 entry.
+In progress. Run 22: no REVIEW FEEDBACK was pending at session start,
+branch was already current with origin/main (rebase was a no-op).
+**Plan item 4's third slice**: populated `settings` minus
+`versionValue`/`supportEmail` (28 string keys, not localizable content
+even though they are plain strings) across all 10 locale overlays, the
+section run 21 deliberately deferred. 81 of ~660 keys now populated per
+language, up from 53. Also fixed a live recurrence of the
+`languageSheet.test.tsx` test-isolation class run 20 first found: two
+assertions still read the static English `languageSystemDefault`
+string while the sheet renders under the file's French-mocked device
+locale, now that this section has a real French translation. Full
+detail, including the lesson about checking a translated section's
+overlap with any test's mocked device locale, in PLAN.md's run 22
+entry.
 
 ## Completed
 
@@ -313,26 +315,51 @@ caught before committing, in PLAN.md's run 21 entry.
   `door3BreakSheet.test.tsx` full-suite-load flake noted since run 13
   (passed standalone and on the immediate full-suite re-run with no
   code change; this run touched nothing in the Today tree).
+- Run 22, plan item 4's third slice: `settings` minus
+  `versionValue`/`supportEmail` (28 string keys) populated across all
+  10 locale overlays, the section run 21 deliberately deferred as the
+  largest of the originally suggested five. The three function-valued
+  keys in this section (`currencyRowLabel`, `languageRowLabel`,
+  `versionFooter`) stay omitted, same treatment as every other
+  section. `upcoming` confirmed to still have nothing to add (both keys
+  function-valued, unchanged since run 21). Fixed a live recurrence of
+  the test-isolation class run 20 first found in
+  `languageSheet.test.tsx`: two assertions (`'lists System default...'`,
+  `'System default is selected...'`) read the static English
+  `strings.settings.languageSystemDefault` while `LanguageSheet` itself
+  renders under that file's French-mocked device locale; now that
+  `settings.languageSystemDefault` has a real French translation, both
+  switched to `getCatalog('fr').settings.languageSystemDefault`,
+  matching the file's own established pattern from its `cancel`-button
+  test. No other test file changes needed (`localeCatalogs.test.ts` is
+  schema-driven and already covers new overlay keys). One commit;
+  `tsc --noEmit` clean and the full suite green (113/113, 1210/1210) on
+  the first run, no flake. Full detail, including the lesson about
+  checking a translated section against any test's mocked device
+  locale (not just a general grep), in PLAN.md's run 22 entry.
 
 ## Next
 
-Plan item 4 is underway (53 of ~660 keys populated across all 10
+Plan item 4 is underway (81 of ~660 keys populated across all 10
 languages: `common` minus `keep`, `sheets`, `tabs`, `screenTitles` (run
 20), plus `expenses`, `categories`, `categoryDetail`, `profile` (run
-21); see PLAN.md's run 20 and 21 entries for the full design).
-Suggested next slice: `settings` (~28 string keys, the largest of the
-originally suggested five and the one deliberately deferred this run;
-skip `versionValue` and `supportEmail`, a version number and an email
-address, neither is localizable content). `upcoming` stays fully
-English until item 2's ICU/pluralization work lands, since both its
-keys are function-valued. Budget more than one run per meaningful
+21), plus `settings` minus `versionValue`/`supportEmail` (run 22); see
+PLAN.md's run 20-22 entries for the full design). `upcoming` stays
+fully English until item 2's ICU/pluralization work lands, since both
+its keys are function-valued. Budget more than one run per meaningful
 chunk (10 languages x a section adds up fast), the same lesson item
-2's file-by-file conversion learned repeatedly and run 21 stayed
+2's file-by-file conversion learned repeatedly and runs 21-22 stayed
 within. `habitLogging`, `coachMoments`, and `today`'s quote arrays
 still need the DECISIONS NEEDED table below settled (or at minimum
 provisional entries adopted with a clear "pending Charen" marker)
 before translating, since those sections contain the locked vocabulary
-and (for `today`) the RETIRED, out-of-scope quote arrays.
+and (for `today`) the RETIRED, out-of-scope quote arrays. With all five
+originally-suggested sections (`expenses`, `categories`,
+`categoryDetail`, `profile`, `settings`) now done, the next slice needs
+a fresh pick from `constants/strings.ts`: candidates outside the locked
+vocabulary include `addCategoryModal` and `editExpenseModal` (both
+small; not yet checked for function-valued keys or overlap with any
+test's mocked device locale).
 
 What is actually left for a future run:
 - Plan item 2's ICU/pluralization checkbox (function-valued strings
