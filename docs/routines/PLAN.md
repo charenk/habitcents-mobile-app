@@ -1042,6 +1042,48 @@ work, tracked elsewhere).
       13 (failed once under full-suite load, passed standalone and on
       the immediate full-suite re-run, no code change in between; this
       run touched no Today-tree file).
+
+      **Run 22: `settings` populated for all 10 languages**, the section
+      deliberately deferred in run 21 (the largest of the originally
+      suggested five, ~28 string keys). 28 string keys x 10 languages,
+      81 of ~660 keys now populated per language (up from 53). Two keys
+      excluded on purpose, per run 20's guidance: `versionValue` (a
+      version number, e.g. "1.0.0") and `supportEmail` (an email
+      address), neither is localizable content even though both are
+      plain strings, not functions. The three function-valued keys in
+      this section (`currencyRowLabel`, `languageRowLabel`,
+      `versionFooter`) stay omitted and inherit English, same treatment
+      as every other section in item 4. `upcoming` still has nothing to
+      add (confirmed again; unchanged since run 21).
+
+      This run's translated section directly overlaps the device-locale
+      test fixture: hit and fixed a live instance of the exact
+      test-isolation class run 20 first found (that run's own
+      `languageSheet.test.tsx` fix, documented above and in HANDOFF.md's
+      Notes). `settings.languageSystemDefault` now has a real French
+      translation ("Système par défaut"), and two of that file's
+      assertions (`'lists System default...'`,
+      `'System default is selected...'`) still read the static English
+      `strings.settings.languageSystemDefault` while `LanguageSheet`
+      itself renders under the file's French-mocked device locale
+      (`useStrings()`-converted since run 10). Both switched to
+      `getCatalog('fr').settings.languageSystemDefault`, matching the
+      file's own established pattern (its `cancel is the only centered
+      action` test already did this for `common.cancel`). One commit
+      (translations plus this fix, since the fix was required to keep
+      the suite green after the translation, not a separate concern);
+      `tsc --noEmit` clean and the full suite green (113/113, 1210/1210)
+      on the first run, no flake.
+
+      Lesson for future slices: any section containing a key rendered
+      by a component whose test mocks a non-English device locale
+      (`languageSheet.test.tsx`'s French mock is the only one of these
+      so far) needs its own literal-English assertions checked against
+      that mock, not just a section-wide grep for `strings.` in test
+      files generally. `settings` was the first section translated
+      since run 20's original fix to actually contain a key
+      `LanguageSheet` itself reads (`languageSystemDefault`), which is
+      why this recurred now rather than in run 21's four sections.
 - [ ] leak / skip / kept / slip and the app's quotes are PRODUCT VOICE:
       never finalized by this routine. Provisional entries only, proposal
       table lives in HANDOFF.md's DECISIONS NEEDED until Charen picks.
