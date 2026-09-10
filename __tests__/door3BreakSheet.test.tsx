@@ -476,7 +476,7 @@ describe('Door 3 break sheet: close without starting', () => {
 
     // The Sheet's scrim/backdrop dismiss (components/ui/Sheet.tsx), the same
     // path a swipe-down or tap-outside takes.
-    await tap(view.getByLabelText('Close'));
+    await tap(view.getByLabelText(strings.common.close));
 
     expect(mockSeedDiscoveredHabit).not.toHaveBeenCalled();
     expect(mockStartBreakingHabit).not.toHaveBeenCalled();
@@ -519,7 +519,7 @@ describe('Door 3 break sheet: stack review findings', () => {
     await tap(view.getByText(strings.habitLogging.startBreakingIt));
 
     // Mid-flight: the user taps the scrim.
-    await tap(view.getByLabelText('Close'));
+    await tap(view.getByLabelText(strings.common.close));
 
     // Release the write and let the handler finish.
     await act(async () => {
@@ -554,7 +554,7 @@ describe('Door 3 break sheet: stack review findings', () => {
 
     // The user gives up and dismisses: the gentle path completes onboarding
     // rather than stranding them mid-flow forever.
-    await tap(view.getByLabelText('Close'));
+    await tap(view.getByLabelText(strings.common.close));
 
     expect(mockCompleteOnboarding).toHaveBeenCalledTimes(1);
     expect(view.getByText(strings.today.door3RibbonGentle)).toBeTruthy();

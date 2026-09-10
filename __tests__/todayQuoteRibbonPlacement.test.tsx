@@ -354,7 +354,7 @@ describe('Today: per-view FirstRunRibbon (door1 -> Spent, door3 -> Kept)', () =>
 
     // Close the auto-opened BreakHabitSheet without starting, the same path
     // door3BreakSheet.test.tsx uses to reach the gentle ribbon quickly.
-    await tap(view.getByLabelText('Close'));
+    await tap(view.getByLabelText(strings.common.close));
 
     const spentPane = within(view.getByTestId('spent-pane'));
     const keptPane = within(view.getByTestId('kept-pane'));
