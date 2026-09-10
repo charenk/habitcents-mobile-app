@@ -60,6 +60,36 @@ device pass is separate and additional to that one, not a substitute.
 
 ## Status
 
+Run 25. First real rebase since run 14: `origin/main` moved one merge
+(`b748ca3`..`bdff4c8`, PR #152, "Today docks, Kept Zero link, zero-state
+centring, scroll fade, band removal; build 22"). Checked the diff before
+rebasing (`git diff --stat b748ca3..origin/main`): only `CONTENT_LOG.md`,
+`agent-memory.md`, `memory.sh`, `primer.md` changed, all docs/memory
+housekeeping, zero lines in `app/`, `components/`, `utils/`, or
+`constants/`. Per the run 8/14 "re-audit, not re-run" rule this still
+means confirming, not assuming: re-grepped `useWindowDimensions` (same 7
+real sites, none new) and re-checked that no scroll container or fixed
+footer this branch caps lost `contentColumnStyle` in that commit (moot
+here since no app file was touched, but checked directly rather than
+inferred from the file list alone). Rebase itself was conflict-free (32
+commits replayed clean). `npx tsc --noEmit` clean from a fresh `npm ci`.
+Full suite green on the first pass, no flake this time: 110 suites / 1152
+tests, zero drift from runs 14-24. PR #133: still open, not draft,
+`mergeable_state: clean` at the pre-rebase head, `verify` check green;
+`get_comments` empty, no new reviews. Issue #139 re-checked via
+`get_comments`: still the single 2026-09-07 comment, already implemented
+(run 14); zero reactions, nothing new. Checked the Routine status board (also issue #139; its comment thread is
+where decisions like the one above get posted) for any REVIEW FEEDBACK
+aimed at this branch: the 2026-09-10 board entry for ipad-worker says
+"approved, docs-only commits since the last board," no fixes owed, and
+repeats the same two carried-forward facts already known here (the device
+pass is the one remaining blocker; the guaranteed conflict is at the first
+ipad x localization crossing, not yet happened, main still at the old tip
+when the board was written). Re-verified item 7 (`app.json` orientation
+still `"portrait"`, `supportsTablet` still `true`). Pushing this rebase
+(force-with-lease, history rewritten) plus this HANDOFF update; no
+production code changed this run.
+
 Run 24. Verified per this file's own COMPLETE instruction: plan fully
 checked, nothing new to do. `origin/main` has not moved since run 14's
 rebase (`git merge-base --is-ancestor origin/main routine/ipad`, still at
