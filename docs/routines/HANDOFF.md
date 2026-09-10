@@ -2,8 +2,13 @@
 
 ## Status
 
-In progress. Run 24: no REVIEW FEEDBACK was pending at session start,
-branch was already current with origin/main (rebase was a no-op).
+In progress. Run 24: no REVIEW FEEDBACK was pending at session start
+(branch was already current with origin/main; rebase was a no-op), but
+the 2026-09-10 orchestrator's review of runs 20-23 landed on origin
+partway through this run, after the translation work below was already
+committed locally. Rebased onto it before pushing and addressed both
+owed fixes in the same push (see Completed): the CJK punctuation
+stragglers, and the `DeepPartialCatalog` array type hole.
 **Plan item 4's fifth slice**: followed up on run 23's two unconfirmed
 candidates (`habitDetail`, `reports`) and found both mostly dead code;
 translated the one live key in each (`habitDetail.notFound`,
@@ -362,6 +367,43 @@ detail in PLAN.md's run 24 entry.
   (`localeCatalogs.test.ts` is schema-driven). One commit; `tsc
   --noEmit` clean and the full suite green (113/113, 1210/1210) on the
   first run, no flake. Full detail in PLAN.md's run 23 entry.
+- Run 24, review feedback (owed from the 2026-09-10 orchestrator's
+  review of runs 20-23, which landed on origin mid-run and was rebased
+  onto before pushing; addressed alongside this run's own translation
+  work since fixing it required no reordering):
+  - CJK punctuation stragglers: `ja.ts`'s `settings.startOverConfirmTitle`
+    used a half-width "?" where `zh-Hans.ts` correctly used full-width
+    "？"; a confirm-sheet question is a full sentence, not a
+    `screenTitles`-style short label, so fixed ja to full-width "？"
+    and corrected its header comment (the old note claiming half-width
+    question marks were a deliberate title-style choice was wrong).
+    `zh-Hans.ts`'s `categories.deleteMessage` had a stray ASCII comma
+    mid-sentence ("保留,只是") next to its own full-width punctuation;
+    fixed to full-width "，". Swept both files for any other ASCII
+    punctuation inside a real sentence (rather than a short label) and
+    found none. Recorded the settled policy (short-label ASCII vs.
+    full-sentence native punctuation for ja/zh-Hans/hi; ko's terse
+    noun+됨 vs. conversational -어요/-세요 register split) as its own
+    bullet in `design/PATTERN_VOCABULARY.md`'s Localization section,
+    per the review's ask for a durable, central record rather than only
+    scattered per-file headers.
+  - `DeepPartialCatalog`'s array branch type hole (`utils/i18n.ts`): an
+    overlay array of objects (e.g. a future `TodayQuote[]` overlay for
+    the retired `today.spentQuotes`/`keptQuotes`) typed its elements as
+    deep-partial, so tsc would have accepted an element missing a
+    required field like `text`, which `mergeCatalog`'s wholesale array
+    replacement would then render as `undefined` at runtime with no
+    type error to catch it. Added `WidenLiterals<T>`, the same
+    literal-widening walk as `DeepPartialCatalog` but without the `?:`
+    on object keys, and switched the array branch to use it: an overlay
+    array element must now supply every field the base element type
+    requires, matching how the field was already required to construct
+    one directly, while still widening string-literal leaves to `string`
+    like every other overlay value. Compile-time-only fix (no current
+    overlay touches an object array; the hole was latent, not a live
+    bug), verified via `tsc --noEmit` rather than a new runtime test.
+  - One commit; `tsc --noEmit` clean and the full suite green
+    (113/113, 1210/1210) on the first run after these fixes, no flake.
 - Run 24, plan item 4's fifth slice: followed up on the two candidates
   run 23's skim left unconfirmed. `habitDetail` turned out almost
   entirely dead code: only `notFound` ("Habit not found") has a real

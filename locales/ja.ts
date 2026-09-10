@@ -12,8 +12,14 @@
  * throughout and inherit the English function, per plan item 2's
  * deferred ICU work. Trailing periods
  * on titles follow `screenTitles`'s existing precedent (a literal ".", not
- * "。"; run 20's note, a Charen-reviewable choice). Question marks use the
- * half-width "?" for the same reason (run 22, `settings.startOverConfirmTitle`).
+ * "。"; run 20's note, a Charen-reviewable choice), extended to every
+ * other short/title-style string in this file (sheet titles, tab labels,
+ * the short one-word confirmation toasts). Run 22 also used a half-width
+ * "?" on `settings.startOverConfirmTitle`, but the 2026-09-10 orchestrator
+ * review caught that as a real inconsistency (zh-Hans used full-width
+ * "？" there) rather than another title-style exception: a confirm-sheet
+ * question is a full sentence, not a short label, so it takes native "？"
+ * like every other real sentence in this file. Fixed run 24.
  *
  * `common.keep` is withheld on purpose: it is close enough to the app's
  * locked vocabulary (leak/skip/kept/slip, ops CLAUDE.md) that this routine
@@ -133,7 +139,7 @@ export const ja: LocaleOverlay = {
     subscriptionValuePremium: 'プレミアム',
     startOverRow: '最初からやり直す',
     startOverHint: 'データはこの端末に残ります',
-    startOverConfirmTitle: '最初からやり直しますか?',
+    startOverConfirmTitle: '最初からやり直しますか？',
     startOverConfirmBody: '最初の画面に戻ります。データはこの端末に残ります。',
     startOverConfirmCta: '最初からやり直す',
     startOverConfirmCancel: '続ける',
