@@ -133,7 +133,7 @@ describe('Profile', () => {
     expect(view.getByText(strings.settings.groupMore)).toBeTruthy();
 
     // Rows are found by their accessibility label, which is what VoiceOver reads.
-    expect(view.getByLabelText('Currency, USD')).toBeTruthy();
+    expect(view.getByLabelText(settingsRowLabel(strings.settings.currency, 'USD'))).toBeTruthy();
     expect(
       view.getByLabelText(
         settingsRowLabel(strings.settings.subscriptionRow, strings.settings.subscriptionValueFree)
@@ -160,7 +160,7 @@ describe('Profile', () => {
     expect(view.getByText(strings.settings.supportEmail)).toBeTruthy();
     // Version is a muted centered footer line, not a row.
     expect(view.getByText(strings.settings.versionFooter('1.0.0'))).toBeTruthy();
-    expect(view.queryByLabelText('Version, 1.0.0')).toBeNull();
+    expect(view.queryByLabelText(settingsRowLabel(strings.settings.version, '1.0.0'))).toBeNull();
   });
 
   it('the shared header back button pops the screen', async () => {

@@ -282,7 +282,7 @@ describe('Door 1 real-app first run: close without saving', () => {
 
     // The Sheet's scrim/backdrop dismiss (components/ui/Sheet.tsx), the same
     // path a swipe-down or tap-outside takes.
-    await tap(view.getByLabelText('Close'));
+    await tap(view.getByLabelText(strings.common.close));
 
     expect(mockAddExpense).not.toHaveBeenCalled();
     expect(mockSkipStep).toHaveBeenCalledTimes(1);
@@ -433,7 +433,7 @@ describe('Today: the ?sheet= entry for empty-state CTAs', () => {
     const view = await renderToday();
 
     await act(async () => {
-      fireEvent.press(view.getByLabelText('Close'));
+      fireEvent.press(view.getByLabelText(strings.common.close));
     });
 
     // Both halves of the re-arm: the one-shot ref is reset internally, and the
