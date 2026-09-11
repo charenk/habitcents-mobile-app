@@ -28,6 +28,17 @@
  * style Korean apps use for status notifications; the failure toasts use
  * the conversational -어요/-세요 register already established in
  * `settings.restoreDoneMessage`/`saveHintAmount`.
+ *
+ * Run 26 added: `addUpcoming` (all string keys; `everyNDaysValue`/
+ * `amountLabel` stay omitted, both function-valued). Real render path
+ * confirmed via `components/money/AddUpcomingSheet.tsx`, already
+ * `useStrings()`-converted. `whenNextWeek`/`startingNextWeek` share one
+ * translation, matching the English source reusing "Next week" in both
+ * places. The field-prompt questions (`whatIsIt`, `when`, `onWhichDay`)
+ * use the conversational -가요 register, same family as this file's
+ * established -어요/-세요 register; `onThe` (the connector above the
+ * day-of-month chips) has no natural standalone Korean equivalent, so it
+ * reads as the field's own name ("날짜", date) instead.
  */
 import type { LocaleOverlay } from '@/utils/i18n';
 
@@ -179,5 +190,47 @@ export const ko: LocaleOverlay = {
     languageFailed: '저장하지 못했어요. 다시 시도해 주세요.',
     startOverFailed: '초기화하지 못했어요. 다시 시도해 주세요.',
     importFailed: '저장하지 못했어요. 아무것도 가져오지 못했어요. 다시 시도해 주세요.',
+  },
+  addUpcoming: {
+    title: '예정된 지출 추가.',
+    editTitle: '예정된 지출 편집.',
+    saveChanges: '저장',
+    deleteUpcoming: '예정된 지출 삭제',
+    whatIsIt: '무엇인가요?',
+    namePlaceholder: '이름 짓기',
+    nameFieldLabel: '이름',
+    nameRent: '월세',
+    nameInternet: '인터넷',
+    namePhone: '전화',
+    nameGym: '헬스장',
+    nameInsurance: '보험',
+    nameUtilities: '공과금',
+    schedule: '일정',
+    oneTime: '한 번',
+    repeats: '반복',
+    scheduleSegmentLabel: '일정 유형',
+    when: '언제인가요?',
+    whenTomorrow: '내일',
+    whenNextWeek: '다음 주',
+    whenInTwoWeeks: '2주 후',
+    whenNextMonth: '다음 달',
+    frequencyWeekly: '매주',
+    frequencyBiweekly: '격주',
+    frequencyMonthly: '매월',
+    frequencyCustom: '사용자 지정',
+    frequencyAnnual: '매년',
+    onWhichDay: '어느 요일인가요?',
+    starting: '시작',
+    startingThisWeek: '이번 주',
+    startingNextWeek: '다음 주',
+    onThe: '날짜',
+    monthDayFirst: '1일',
+    monthDayFifteenth: '15일',
+    monthDayThirtieth: '30일',
+    monthDayLast: '마지막 날',
+    everyNDaysLabel: 'N일마다',
+    everyNDaysDecrease: '일수 줄이기',
+    everyNDaysIncrease: '일수 늘리기',
+    save: '저장',
   },
 };

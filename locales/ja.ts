@@ -38,6 +38,20 @@
  * short one-word confirmation toasts (`logged`/`saved`/`deleted`/
  * `restored`/`addedToUpcoming`) keep the literal ".", the two-clause
  * failure toasts and `trialStarted` use "。".
+ *
+ * Run 26 added: `addUpcoming` (all string keys; `everyNDaysValue`/
+ * `amountLabel` stay omitted, both function-valued). Real render path
+ * confirmed via `components/money/AddUpcomingSheet.tsx`, already
+ * `useStrings()`-converted. `whenNextWeek`/`startingNextWeek` share one
+ * translation, matching the English source reusing "Next week" in both
+ * places. `title`/`editTitle`/`deleteUpcoming` stay on the short-label
+ * "." side of this file's punctuation split. The field-prompt questions
+ * (`whatIsIt`, `when`, `onWhichDay`) are treated as real sentence
+ * questions rather than short labels, same class as
+ * `settings.startOverConfirmTitle` above, so they take native "？"; `onThe`
+ * (the connector above the day-of-month chips) has no natural standalone
+ * Japanese equivalent, so it reads as the field's own name ("日付", date)
+ * instead.
  */
 import type { LocaleOverlay } from '@/utils/i18n';
 
@@ -189,5 +203,47 @@ export const ja: LocaleOverlay = {
     languageFailed: '保存できませんでした。もう一度お試しください。',
     startOverFailed: 'リセットできませんでした。もう一度お試しください。',
     importFailed: '保存できませんでした。何もインポートされていません。もう一度お試しください。',
+  },
+  addUpcoming: {
+    title: '今後の支出を追加.',
+    editTitle: '今後の支出を編集.',
+    saveChanges: '保存',
+    deleteUpcoming: '今後の支出を削除',
+    whatIsIt: '何ですか？',
+    namePlaceholder: '名前を付ける',
+    nameFieldLabel: '名前',
+    nameRent: '家賃',
+    nameInternet: 'インターネット',
+    namePhone: '電話',
+    nameGym: 'ジム',
+    nameInsurance: '保険',
+    nameUtilities: '光熱費',
+    schedule: 'スケジュール',
+    oneTime: '1回のみ',
+    repeats: '繰り返す',
+    scheduleSegmentLabel: 'スケジュールの種類',
+    when: 'いつ？',
+    whenTomorrow: '明日',
+    whenNextWeek: '来週',
+    whenInTwoWeeks: '2週間後',
+    whenNextMonth: '来月',
+    frequencyWeekly: '毎週',
+    frequencyBiweekly: '隔週',
+    frequencyMonthly: '毎月',
+    frequencyCustom: 'カスタム',
+    frequencyAnnual: '毎年',
+    onWhichDay: '何曜日ですか？',
+    starting: '開始',
+    startingThisWeek: '今週',
+    startingNextWeek: '来週',
+    onThe: '日付',
+    monthDayFirst: '1日',
+    monthDayFifteenth: '15日',
+    monthDayThirtieth: '30日',
+    monthDayLast: '最終日',
+    everyNDaysLabel: 'N日ごと',
+    everyNDaysDecrease: '日数を減らす',
+    everyNDaysIncrease: '日数を増やす',
+    save: '保存',
   },
 };

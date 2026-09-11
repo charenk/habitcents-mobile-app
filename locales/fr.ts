@@ -23,6 +23,15 @@
  * actually rendered); `toasts` minus `stoppedHistoryKept`/`leakDismissed`
  * (locked-vocabulary gated), `yesterdayNoted` (dead code), and every
  * function-valued key (deferred ICU work, same as every other section).
+ *
+ * Run 26 added: `addUpcoming` (all string keys; `everyNDaysValue`/
+ * `amountLabel` stay omitted, both function-valued). Real render path
+ * confirmed via `components/money/AddUpcomingSheet.tsx`, already
+ * `useStrings()`-converted. `whenNextWeek`/`startingNextWeek` share one
+ * translation, matching the English source reusing "Next week" in both
+ * places. `whatIsIt` uses the typographic apostrophe (’), same as every
+ * other apostrophe in this file's existing toasts, so it stays
+ * single-quoted like every other string here.
  */
 import type { LocaleOverlay } from '@/utils/i18n';
 
@@ -176,5 +185,47 @@ export const fr: LocaleOverlay = {
     languageFailed: 'Cela n’a pas été enregistré. Réessayez.',
     startOverFailed: 'Cela n’a pas pu recommencer. Réessayez.',
     importFailed: 'Cela n’a pas été enregistré. Rien n’a été importé. Réessayez.',
+  },
+  addUpcoming: {
+    title: 'Ajouter une dépense à venir.',
+    editTitle: 'Modifier la dépense à venir.',
+    saveChanges: 'Enregistrer',
+    deleteUpcoming: 'Supprimer la dépense à venir',
+    whatIsIt: 'Qu’est-ce que c’est ?',
+    namePlaceholder: 'Nommez-le',
+    nameFieldLabel: 'Nom',
+    nameRent: 'Loyer',
+    nameInternet: 'Internet',
+    namePhone: 'Téléphone',
+    nameGym: 'Salle de sport',
+    nameInsurance: 'Assurance',
+    nameUtilities: 'Charges',
+    schedule: 'Planification',
+    oneTime: 'Une fois',
+    repeats: 'Se répète',
+    scheduleSegmentLabel: 'Type de planification',
+    when: 'Quand ?',
+    whenTomorrow: 'Demain',
+    whenNextWeek: 'La semaine prochaine',
+    whenInTwoWeeks: 'Dans deux semaines',
+    whenNextMonth: 'Le mois prochain',
+    frequencyWeekly: 'Hebdomadaire',
+    frequencyBiweekly: 'Toutes les deux semaines',
+    frequencyMonthly: 'Mensuel',
+    frequencyCustom: 'Personnalisé',
+    frequencyAnnual: 'Annuel',
+    onWhichDay: 'Quel jour ?',
+    starting: 'À partir de',
+    startingThisWeek: 'Cette semaine',
+    startingNextWeek: 'La semaine prochaine',
+    onThe: 'Le',
+    monthDayFirst: '1er',
+    monthDayFifteenth: '15',
+    monthDayThirtieth: '30',
+    monthDayLast: 'Dernier jour',
+    everyNDaysLabel: 'Tous les N jours',
+    everyNDaysDecrease: 'Moins de jours',
+    everyNDaysIncrease: 'Plus de jours',
+    save: 'Enregistrer',
   },
 };

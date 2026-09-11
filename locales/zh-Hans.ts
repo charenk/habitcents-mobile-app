@@ -33,6 +33,22 @@
  * confirmation toasts (`logged`/`saved`/`deleted`/`restored`/
  * `addedToUpcoming`) keep the literal ".", the two-clause failure toasts
  * and `trialStarted` use "。".
+ *
+ * Run 26 added: `addUpcoming` (all string keys; `everyNDaysValue`/
+ * `amountLabel` stay omitted, both function-valued). Real render path
+ * confirmed via `components/money/AddUpcomingSheet.tsx`, already
+ * `useStrings()`-converted. `whenNextWeek`/`startingNextWeek` share one
+ * translation, matching the English source reusing "Next week" in both
+ * places. `title`/`editTitle`/`deleteUpcoming` stay on the short-label "."
+ * side of this file's punctuation split. The field-prompt questions
+ * (`whatIsIt`, `when`, `onWhichDay`) are treated as real sentence
+ * questions rather than short labels, same class as
+ * `settings.startOverConfirmTitle` above, so they take native "？"; `onThe`
+ * (the connector above the day-of-month chips) has no natural standalone
+ * Chinese equivalent, so it reads as the field's own name ("日期", date)
+ * instead. `onWhichDay` (weekly/biweekly recurrence only, confirmed in
+ * `AddUpcomingSheet.tsx`) asks for a day of the WEEK, so it uses "星期几"
+ * rather than the more ambiguous "哪一天".
  */
 import type { LocaleOverlay } from '@/utils/i18n';
 
@@ -184,5 +200,47 @@ export const zhHans: LocaleOverlay = {
     languageFailed: '未能保存。请重试。',
     startOverFailed: '未能重置。请重试。',
     importFailed: '未能保存。没有导入任何内容。请重试。',
+  },
+  addUpcoming: {
+    title: '添加即将到来的支出.',
+    editTitle: '编辑即将到来的支出.',
+    saveChanges: '保存',
+    deleteUpcoming: '删除即将到来的支出',
+    whatIsIt: '这是什么？',
+    namePlaceholder: '起个名字',
+    nameFieldLabel: '名称',
+    nameRent: '房租',
+    nameInternet: '网络',
+    namePhone: '话费',
+    nameGym: '健身房',
+    nameInsurance: '保险',
+    nameUtilities: '水电费',
+    schedule: '计划',
+    oneTime: '一次性',
+    repeats: '重复',
+    scheduleSegmentLabel: '计划类型',
+    when: '什么时候？',
+    whenTomorrow: '明天',
+    whenNextWeek: '下周',
+    whenInTwoWeeks: '两周后',
+    whenNextMonth: '下个月',
+    frequencyWeekly: '每周',
+    frequencyBiweekly: '每两周',
+    frequencyMonthly: '每月',
+    frequencyCustom: '自定义',
+    frequencyAnnual: '每年',
+    onWhichDay: '星期几？',
+    starting: '开始',
+    startingThisWeek: '本周',
+    startingNextWeek: '下周',
+    onThe: '日期',
+    monthDayFirst: '1日',
+    monthDayFifteenth: '15日',
+    monthDayThirtieth: '30日',
+    monthDayLast: '最后一天',
+    everyNDaysLabel: '每N天',
+    everyNDaysDecrease: '减少天数',
+    everyNDaysIncrease: '增加天数',
+    save: '保存',
   },
 };
