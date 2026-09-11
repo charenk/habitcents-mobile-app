@@ -67,6 +67,59 @@ device pass is separate and additional to that one, not a substitute.
 
 ## Status
 
+Run 28. Addressed the review's 2026-09-11 action item first, per this
+file's own "REVIEW FEEDBACK first" instruction. Rebased onto four new main
+commits (`683ecc3`, PRs/QA #161-#164: Insights date-window and
+category-name/amount-parsing fixes, the Kept-dot/FL-1/scan-link QA pass,
+and #163's `app/paywall.tsx` rewrite making all three plans readable at
+rest without scrolling). Two real conflicts landed on this branch's own
+historical commits during replay, both in `app/paywall.tsx`:
+- Run 1's original `scrollContent` cap commit conflicted with #163 on the
+  same `paddingTop` line (main changed 8 to 4, this branch's commit had
+  added `...contentColumnStyle` next to the original 8). Resolved by
+  keeping main's `paddingTop: 8` (the newer, intentional value) and
+  keeping this branch's `...contentColumnStyle` spread; nothing from
+  either side was dropped.
+- Run 14's fixed-footer-cap commit conflicted with #163 on the same
+  region: main moved the close button out of a header row into an
+  absolutely-positioned pill anchored on the hero (Charen, "unused space,
+  lets move the banner to top") and added a `testID="paywall-footer"` to
+  the same `footer` View this branch's commit was capping. Resolved by
+  keeping both: main's repositioned close button and its `testID`, plus
+  this branch's `footer` cap (unaffected, since the `footer` style itself
+  was untouched by #163).
+Per the run 8/14 "re-audit, not re-run" rule, did not stop at a clean
+rebase report; re-checked every surface the review named:
+- `app/paywall.tsx`: both capped surfaces (`scrollContent`,
+  `footer`) still carry `...contentColumnStyle` after the merge (read the
+  full file, not just the diff); `paywallTabletCap.test.tsx` still targets
+  the same `paywall-footer` testID and still passes.
+- `app/(tabs)/index.tsx` (Kept-dot rework, #164) and `app/(tabs)/
+  insights.tsx` (Insights date-window fixes, #161): re-grepped
+  `contentColumnStyle` in both files, confirmed all four Today sites
+  (`spentScrollContent`, `ribbonWrap`, `listContent`, `keptEmptyContent`)
+  and Insights' one site are unchanged and present; neither QA pass
+  touched a scroll container or added a new one.
+- Fresh `useWindowDimensions` grep: same six files as run 26, plus
+  `utils/useSegmentPager.ts` (already known, the shared Today/Money/
+  Insights pager mechanism since PR #143; reads `screenWidth` only for
+  paging math and each pane's width, the same paging-unit-stays-window-width
+  shape as item 4/`OnboardingCarousel`, not a new gap). No new site.
+`npx tsc --noEmit` clean from a fresh `npm ci`. Full suite green on the
+first pass, no flake: 118 suites / 1233 tests (up from run 27's 114/1174,
+entirely main's own four-commit test growth, net of nothing removed on
+this branch), including `paywallTabletCap.test.tsx`, `scopeScreen.test.tsx`,
+`billsScreen.test.tsx`, and `payoffScreen.test.tsx` (the other three
+decision-1 surfaces) all green. PR #133: still open, not draft; base SHA
+will read the new main tip once this push lands (was `9376cc2`,
+pre-rebase). `get_comments` and `get_reviews` both empty. Issue #139
+re-checked via `get_comments`: still the single 2026-09-07 comment, zero
+reactions, already implemented; no new REVIEW FEEDBACK there. Re-verified
+item 7 (`app.json` orientation still `"portrait"`, `supportsTablet` still
+`true`). Pushing this rebase (force-with-lease, history rewritten) plus
+this HANDOFF update; no plan content changed, since the re-audit found the
+merge correct rather than regressed.
+
 Run 27. Verified per this file's own COMPLETE instruction: plan fully
 checked, nothing new to do. `origin/main` has not moved since run 26's
 rebase (`git merge-base routine/ipad origin/main` equals `origin/main`'s
@@ -779,3 +832,11 @@ Also noting for the device pass whenever it happens: TestFlight build
 24 went out 2026-09-11 from main 683ecc3, which does not carry this
 branch, so build 24 cannot serve as the iPad pass build. The pass
 still needs PR #133 merged first and a build after that.
+
+Addressed run 28 (2026-09-11): rebased onto 683ecc3 and re-audited the
+paywall cap against #163's rewrite, plus re-grepped `index.tsx` (Kept-dot,
+#164) and `insights.tsx` (#161) as instructed. All four decision-1 footer
+caps and both paywall scroll/footer caps survive intact; see Status above
+for the two conflicts (both mechanical, both resolved keeping both sides)
+and the full re-audit detail. No new plan work; tsc and the full suite
+(118/1233) are green.
