@@ -917,6 +917,19 @@ work, tracked elsewhere).
       first flagged; added `LocaleProvider`, same fix shape as every prior
       occurrence.
 
+      **Run 27: swept `money` (the section this same run translated for
+      item 4) via the same method.** All three test files asserting
+      against it (`moneyHabitsTab.test.tsx`, `moneyUpcomingTab.test.tsx`,
+      `moneyMaterializerIntegration.test.tsx`) already read
+      `strings.money.*` from the imported static catalog rather than a
+      literal English string, and none mocks a non-English device
+      locale, so their assertions already resolve to the live catalog
+      value; no fix needed. Confirmed via
+      `grep -rnE "getByText\('(Today|Yesterday|Spent|Upcoming|Habits|
+      Scheduled|Weekly|Monthly|Yearly|One-time)'\)|getByRole\([^,]+,\s*\{
+      \s*name:\s*'(Today|Yesterday|Spent|Upcoming|Habits|Scheduled|2
+      weeks|1 month|3 months)'" __tests__/*.tsx` returning nothing.
+
 ## 4. Provisional machine translations
 
 - [ ] es, fr, de, pt-BR, it, ja, ko, zh-Hans, hi, nl catalogs. Every
@@ -1383,6 +1396,55 @@ work, tracked elsewhere).
       work (see item 3's run 26 entry). One commit for the translation
       slice; `tsc --noEmit` clean, full suite green (115/115, 1215/1215)
       on the first run after the rebase fix, no flake.
+
+      **Run 27: `money` minus `habitsEmptyTitle`/`habitsEmptyBody` (locked-
+      vocabulary gated: "leak") populated across all 10 locale overlays.**
+      Confirmed via `grep -rn "strings\.money\." components app contexts
+      utils | grep -v __tests__`: `habitsManagedSummary`/
+      `habitsDiscoveredSummary`/`spentGroupHeader`/`spentDayLabel`/
+      `upcomingWindowEyebrow`/`upcomingPaymentsCount`/`scheduleEveryNDays`/
+      `scheduleWeekdayPlural`/`scheduleNext` stay omitted (function-valued,
+      item 2's deferred ICU work); `spentEmptyBody`/`upcomingEmptyBody`
+      confirmed dead code by the same "RETIRED FROM RENDERING" comment
+      treatment run 24 gave `habitDetail`/`reports` (no real call site in
+      `components/money/HabitsList.tsx`/`SpentList.tsx`/
+      `UpcomingList.tsx`), left untranslated. `scheduleSeparator` (a plain
+      `' · '` middle-dot with no linguistic content) also stays omitted,
+      a new small case distinct from every prior reason to omit a key:
+      not function-valued, not dead, just not language content. Reused
+      four already-translated `addUpcoming` frequency labels where the
+      English source is byte-identical (`scheduleOneTime`/`oneTime`,
+      `scheduleWeekly`/`frequencyWeekly`, `scheduleMonthly`/
+      `frequencyMonthly`, `scheduleAnnual`/`frequencyAnnual`);
+      `scheduleBiweekly` ('Every 2 weeks') needed a fresh translation
+      since its English source differs from `addUpcoming.frequencyBiweekly`
+      ('Bi-weekly'), same reuse-only-when-the-English-matches discipline
+      as `expenseSheet.saveExpense`/`saveChanges` reusing `common.save`
+      (run 23). "Add"/"expense"/"edit"/"delete" verb and noun roots reused
+      from already-translated `categories.addCategoryLabel`,
+      `expenseSheet.logEyebrow`/`editEyebrow`/`deleteExpense`, and
+      `common.delete`; "Upcoming" reused from `expenses.upcoming`.
+      `habitsEmptyCta` ('Break a habit') is a fresh translation per
+      language (no established "break"/"habit" vocabulary exists yet,
+      since `habitLogging`/`onboarding`/`today` are still gated); checked
+      each language's choice against the DECISIONS NEEDED proposal table
+      to rule out an accidental collision with a locked-term candidate,
+      and found one: hi's provisional "skip" candidate is छोड़ें, so
+      `habitsEmptyCta` uses तोड़ें (literal "break", "आदत तोड़ना" is a real
+      Hindi idiom) instead, documented in `locales/hi.ts`'s header. No
+      other language's choice collided. `onboarding`/`leakScan`/`insights`
+      confirmed still fully gated on a first skim (all contain "leak"/
+      "skip"/"kept" literally in their English source), `today` likewise;
+      none picked this run. No test file changes needed (item 3 sweep
+      done in the same run, see below): both `strings.money.*`-asserting
+      test files
+      (`moneyHabitsTab.test.tsx`/`moneyUpcomingTab.test.tsx`/
+      `moneyMaterializerIntegration.test.tsx`) already read the live
+      catalog via the imported `strings` object, not literal English
+      text, and none mocks a non-English device locale. One commit;
+      `tsc --noEmit` clean, full suite green (117/117, 1232/1232) on the
+      first run, no flake. Full reasoning, the exact key list, and the
+      vocabulary-reuse table are in this entry.
 - [ ] leak / skip / kept / slip and the app's quotes are PRODUCT VOICE:
       never finalized by this routine. Provisional entries only, proposal
       table lives in HANDOFF.md's DECISIONS NEEDED until Charen picks.
