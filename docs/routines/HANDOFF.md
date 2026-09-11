@@ -985,3 +985,29 @@ The clock-start question (unlock vs opt-in tap) you flagged is now on
 the status board's DECISIONS NEEDED for Charen; do not decide it
 yourself. The mechanism ADR will be drafted by the orchestrator once
 that answer lands, so it records the final shape.
+
+## REVIEW FEEDBACK (2026-09-11 addition)
+
+2026-09-11, orchestrator, runs 15-25 reviewed (through badc0ab; runs
+15-23 docs-only re-verifies, run 24 a clean rebase, run 25 the real
+one). **Approved, no fixes owed.** Run 25's three conflict
+resolutions were independently verified by diffing this branch
+against its merge-base 9376cc2: in both PickOneSheet.tsx and
+BreakHabitSheet.tsx the `atCeiling` conditional now lives on the new
+`footer` prop (single Done-style dismiss at the ceiling, upgrade +
+maybe-later pair otherwise), the gated-copy ternaries survived in the
+body, the plannedBanner is correctly suppressed at the ceiling, and no
+dead in-body button block remains. The BreakHabitSheet.md add/add
+resolution (main's redesign doc as base, this branch's entitlement
+entry folded in as a dated addition) is the right shape.
+
+Rebase guidance for the next run: main gained the four QA merges
+after run 25 (#161-#164, main now 683ecc3). Crossings with this
+branch are mild but real: `constants/strings.ts` (+6 QA keys next to
+your +24), `app/(tabs)/index.tsx` and `app/(tabs)/insights.tsx`
+(small on your side, larger on theirs), and `contexts/HabitsContext.tsx`
+(QA's Kept-dot state; you touch its consumers, not the file, so
+likely clean). `utils/analytics.ts` was NOT touched by the QA wave
+despite FL-1 being an analytics fix (it landed in coachMoments/
+HabitsContext), so your event additions should replay clean. Note
+`docs/qa-findings.md` is new on main; leave it alone.
