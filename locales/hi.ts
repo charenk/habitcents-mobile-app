@@ -29,6 +29,18 @@
  * one-word confirmation toasts (`logged`/`saved`/`deleted`/`restored`/
  * `addedToUpcoming`) keep the literal ".", the two-clause failure toasts
  * and `trialStarted` use "।".
+ *
+ * Run 26 added: `addUpcoming` (all string keys; `everyNDaysValue`/
+ * `amountLabel` stay omitted, both function-valued). Real render path
+ * confirmed via `components/money/AddUpcomingSheet.tsx`, already
+ * `useStrings()`-converted. `whenNextWeek`/`startingNextWeek` share one
+ * translation, matching the English source reusing "Next week" in both
+ * places. `title`/`editTitle`/`deleteUpcoming` stay on the short-label "."
+ * side of this file's punctuation split, same as `addCategoryModal`'s
+ * equivalent titles. `onThe`, the label above the day-of-month chips
+ * (1st/15th/30th/Last day), has no clean standalone Hindi preposition
+ * equivalent, so it reads as the field's own name ("तारीख", date) instead
+ * of a literal "on the" connector.
  */
 import type { LocaleOverlay } from '@/utils/i18n';
 
@@ -180,5 +192,47 @@ export const hi: LocaleOverlay = {
     languageFailed: 'वह सहेजा नहीं जा सका। फिर से कोशिश करें।',
     startOverFailed: 'वह रीसेट नहीं हो सका। फिर से कोशिश करें।',
     importFailed: 'वह सहेजा नहीं जा सका। कुछ भी आयात नहीं हुआ। फिर से कोशिश करें।',
+  },
+  addUpcoming: {
+    title: 'आगामी खर्च जोड़ें.',
+    editTitle: 'आगामी खर्च संपादित करें.',
+    saveChanges: 'सहेजें',
+    deleteUpcoming: 'आगामी खर्च हटाएं',
+    whatIsIt: 'यह क्या है?',
+    namePlaceholder: 'नाम दें',
+    nameFieldLabel: 'नाम',
+    nameRent: 'किराया',
+    nameInternet: 'इंटरनेट',
+    namePhone: 'फोन',
+    nameGym: 'जिम',
+    nameInsurance: 'बीमा',
+    nameUtilities: 'उपयोगिताएं',
+    schedule: 'शेड्यूल',
+    oneTime: 'एक बार',
+    repeats: 'दोहराता है',
+    scheduleSegmentLabel: 'शेड्यूल प्रकार',
+    when: 'कब?',
+    whenTomorrow: 'कल',
+    whenNextWeek: 'अगले सप्ताह',
+    whenInTwoWeeks: 'दो सप्ताह में',
+    whenNextMonth: 'अगले महीने',
+    frequencyWeekly: 'साप्ताहिक',
+    frequencyBiweekly: 'पाक्षिक',
+    frequencyMonthly: 'मासिक',
+    frequencyCustom: 'अनुकूलित',
+    frequencyAnnual: 'वार्षिक',
+    onWhichDay: 'किस दिन?',
+    starting: 'शुरुआत',
+    startingThisWeek: 'इस सप्ताह',
+    startingNextWeek: 'अगले सप्ताह',
+    onThe: 'तारीख',
+    monthDayFirst: '1',
+    monthDayFifteenth: '15',
+    monthDayThirtieth: '30',
+    monthDayLast: 'आखिरी दिन',
+    everyNDaysLabel: 'हर N दिन',
+    everyNDaysDecrease: 'कम दिन',
+    everyNDaysIncrease: 'अधिक दिन',
+    save: 'सहेजें',
   },
 };

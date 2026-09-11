@@ -23,6 +23,13 @@
  * actually rendered); `toasts` minus `stoppedHistoryKept`/`leakDismissed`
  * (locked-vocabulary gated), `yesterdayNoted` (dead code), and every
  * function-valued key (deferred ICU work, same as every other section).
+ *
+ * Run 26 added: `addUpcoming` (all string keys; `everyNDaysValue`/
+ * `amountLabel` stay omitted, both function-valued). Real render path
+ * confirmed via `components/money/AddUpcomingSheet.tsx`, already
+ * `useStrings()`-converted. `whenNextWeek`/`startingNextWeek` share one
+ * translation, matching the English source reusing "Next week" in both
+ * places.
  */
 import type { LocaleOverlay } from '@/utils/i18n';
 
@@ -174,5 +181,47 @@ export const ptBR: LocaleOverlay = {
     languageFailed: 'Isso não foi salvo. Tente novamente.',
     startOverFailed: 'Isso não foi reiniciado. Tente novamente.',
     importFailed: 'Isso não foi salvo. Nada foi importado. Tente novamente.',
+  },
+  addUpcoming: {
+    title: 'Adicionar despesa próxima.',
+    editTitle: 'Editar despesa próxima.',
+    saveChanges: 'Salvar',
+    deleteUpcoming: 'Excluir despesa próxima',
+    whatIsIt: 'O que é?',
+    namePlaceholder: 'Dê um nome',
+    nameFieldLabel: 'Nome',
+    nameRent: 'Aluguel',
+    nameInternet: 'Internet',
+    namePhone: 'Telefone',
+    nameGym: 'Academia',
+    nameInsurance: 'Seguro',
+    nameUtilities: 'Contas',
+    schedule: 'Programação',
+    oneTime: 'Uma vez',
+    repeats: 'Repete',
+    scheduleSegmentLabel: 'Tipo de programação',
+    when: 'Quando?',
+    whenTomorrow: 'Amanhã',
+    whenNextWeek: 'Na próxima semana',
+    whenInTwoWeeks: 'Em duas semanas',
+    whenNextMonth: 'No próximo mês',
+    frequencyWeekly: 'Semanal',
+    frequencyBiweekly: 'Quinzenal',
+    frequencyMonthly: 'Mensal',
+    frequencyCustom: 'Personalizado',
+    frequencyAnnual: 'Anual',
+    onWhichDay: 'Em qual dia?',
+    starting: 'Começando',
+    startingThisWeek: 'Nesta semana',
+    startingNextWeek: 'Na próxima semana',
+    onThe: 'No dia',
+    monthDayFirst: '1º',
+    monthDayFifteenth: '15',
+    monthDayThirtieth: '30',
+    monthDayLast: 'Último dia',
+    everyNDaysLabel: 'A cada N dias',
+    everyNDaysDecrease: 'Menos dias',
+    everyNDaysIncrease: 'Mais dias',
+    save: 'Salvar',
   },
 };

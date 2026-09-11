@@ -23,6 +23,13 @@
  * actually rendered); `toasts` minus `stoppedHistoryKept`/`leakDismissed`
  * (locked-vocabulary gated), `yesterdayNoted` (dead code), and every
  * function-valued key (deferred ICU work, same as every other section).
+ *
+ * Run 26 added: `addUpcoming` (all string keys; `everyNDaysValue`/
+ * `amountLabel` stay omitted, both function-valued). Real render path
+ * confirmed via `components/money/AddUpcomingSheet.tsx`, already
+ * `useStrings()`-converted. `whenNextWeek`/`startingNextWeek` share one
+ * translation, matching the English source reusing "Next week" in both
+ * places.
  */
 import type { LocaleOverlay } from '@/utils/i18n';
 
@@ -174,5 +181,47 @@ export const nl: LocaleOverlay = {
     languageFailed: 'Dat is niet opgeslagen. Probeer het opnieuw.',
     startOverFailed: 'Dat is niet gereset. Probeer het opnieuw.',
     importFailed: 'Dat is niet opgeslagen. Er is niets geïmporteerd. Probeer het opnieuw.',
+  },
+  addUpcoming: {
+    title: 'Aankomende uitgave toevoegen.',
+    editTitle: 'Aankomende uitgave bewerken.',
+    saveChanges: 'Opslaan',
+    deleteUpcoming: 'Aankomende uitgave verwijderen',
+    whatIsIt: 'Wat is het?',
+    namePlaceholder: 'Geef het een naam',
+    nameFieldLabel: 'Naam',
+    nameRent: 'Huur',
+    nameInternet: 'Internet',
+    namePhone: 'Telefoon',
+    nameGym: 'Sportschool',
+    nameInsurance: 'Verzekering',
+    nameUtilities: 'Nutsvoorzieningen',
+    schedule: 'Schema',
+    oneTime: 'Eenmalig',
+    repeats: 'Herhaalt',
+    scheduleSegmentLabel: 'Schematype',
+    when: 'Wanneer?',
+    whenTomorrow: 'Morgen',
+    whenNextWeek: 'Volgende week',
+    whenInTwoWeeks: 'Over twee weken',
+    whenNextMonth: 'Volgende maand',
+    frequencyWeekly: 'Wekelijks',
+    frequencyBiweekly: 'Tweewekelijks',
+    frequencyMonthly: 'Maandelijks',
+    frequencyCustom: 'Aangepast',
+    frequencyAnnual: 'Jaarlijks',
+    onWhichDay: 'Op welke dag?',
+    starting: 'Beginnend',
+    startingThisWeek: 'Deze week',
+    startingNextWeek: 'Volgende week',
+    onThe: 'Op de',
+    monthDayFirst: '1e',
+    monthDayFifteenth: '15e',
+    monthDayThirtieth: '30e',
+    monthDayLast: 'Laatste dag',
+    everyNDaysLabel: 'Elke N dagen',
+    everyNDaysDecrease: 'Minder dagen',
+    everyNDaysIncrease: 'Meer dagen',
+    save: 'Opslaan',
   },
 };

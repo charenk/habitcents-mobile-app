@@ -23,6 +23,14 @@
  * actually rendered); `toasts` minus `stoppedHistoryKept`/`leakDismissed`
  * (locked-vocabulary gated), `yesterdayNoted` (dead code), and every
  * function-valued key (deferred ICU work, same as every other section).
+ *
+ * Run 26 added: `addUpcoming` (all string keys; `everyNDaysValue`/
+ * `amountLabel` stay omitted, both function-valued). Real render path
+ * confirmed via `components/money/AddUpcomingSheet.tsx`, already
+ * `useStrings()`-converted. `whenNextWeek`/`startingNextWeek` share one
+ * translation, matching the English source reusing "Next week" in both
+ * places. `whatIsIt` uses the typographic apostrophe (’) so it stays
+ * single-quoted.
  */
 import type { LocaleOverlay } from '@/utils/i18n';
 
@@ -175,5 +183,47 @@ export const it: LocaleOverlay = {
     languageFailed: 'Non è stato salvato. Riprova.',
     startOverFailed: 'Non è stato possibile ricominciare. Riprova.',
     importFailed: 'Non è stato salvato. Non è stato importato nulla. Riprova.',
+  },
+  addUpcoming: {
+    title: 'Aggiungi prossima spesa.',
+    editTitle: 'Modifica prossima spesa.',
+    saveChanges: 'Salva',
+    deleteUpcoming: 'Elimina prossima spesa',
+    whatIsIt: 'Cos’è?',
+    namePlaceholder: 'Dagli un nome',
+    nameFieldLabel: 'Nome',
+    nameRent: 'Affitto',
+    nameInternet: 'Internet',
+    namePhone: 'Telefono',
+    nameGym: 'Palestra',
+    nameInsurance: 'Assicurazione',
+    nameUtilities: 'Utenze',
+    schedule: 'Pianificazione',
+    oneTime: 'Una tantum',
+    repeats: 'Si ripete',
+    scheduleSegmentLabel: 'Tipo di pianificazione',
+    when: 'Quando?',
+    whenTomorrow: 'Domani',
+    whenNextWeek: 'La prossima settimana',
+    whenInTwoWeeks: 'Tra due settimane',
+    whenNextMonth: 'Il prossimo mese',
+    frequencyWeekly: 'Settimanale',
+    frequencyBiweekly: 'Ogni due settimane',
+    frequencyMonthly: 'Mensile',
+    frequencyCustom: 'Personalizzato',
+    frequencyAnnual: 'Annuale',
+    onWhichDay: 'Quale giorno?',
+    starting: 'A partire da',
+    startingThisWeek: 'Questa settimana',
+    startingNextWeek: 'La prossima settimana',
+    onThe: 'Il',
+    monthDayFirst: '1°',
+    monthDayFifteenth: '15',
+    monthDayThirtieth: '30',
+    monthDayLast: 'Ultimo giorno',
+    everyNDaysLabel: 'Ogni N giorni',
+    everyNDaysDecrease: 'Meno giorni',
+    everyNDaysIncrease: 'Più giorni',
+    save: 'Salva',
   },
 };
