@@ -2,19 +2,34 @@
 
 ## Status
 
-In progress. Run 26: no REVIEW FEEDBACK was pending at session start.
-Rebased onto origin/main (74 commits behind; branch had gone stale
-since run 25 while main shipped a "log where you already are" feature
-sweeping several files this stream had already converted). Two real
-conflicts beyond mechanical import-line merges, both resolved by
-keeping main's newer code and this branch's `useStrings()` line
-together (detail in PLAN.md's run 26 entry under item 4). Full suite
-caught one real post-rebase gap (`logInPlace.test.tsx`, new on main,
-missing `LocaleProvider`), fixed before any new work per the standing
-rule to re-run tsc + the full suite after every rebase. Then did plan
-item 4's next slice (`addUpcoming`, 40 keys x 10 languages) plus item
-3's matching sweep of it (see Completed). 160 of ~660 keys now
-populated per language.
+In progress. Run 27: no REVIEW FEEDBACK was pending at session start.
+Rebased onto origin/main (77 commits behind; branch had gone stale
+since run 26 while main shipped a header/footer-as-props refactor to
+`Sheet.tsx` and several other structural changes touching files this
+stream had already converted). Real conflicts this time went beyond
+mechanical import-line merges: `Sheet.tsx` needed both main's new
+keyboard-height plumbing and this branch's `useStrings()` hook kept
+side by side; two `ResultsScreen`-tree sheets and `AddCategoryModal.tsx`
+had a dead `useWindowDimensions()`/`height` leftover from before main's
+own refactor, dropped; `PickOneSheet.tsx` needed the `cadenceLabel`
+call site's added `strings` argument carried over into main's restructured
+pinned-title layout; `BreakHabitSheet.tsx` needed main's reordered
+bought-today/cadence sections and conditional yearly line merged with
+this branch's `useMemo`-ified option arrays; `components/habit-logging/
+LeakCard.tsx` was deleted on main (superseded by inline Today code) so
+this branch's pending edits to it were dropped, twice (it recurred on a
+later commit touching `coachMoments.ts`). Full suite was clean after
+the rebase itself, but `npx tsc --noEmit` caught two spots the
+conflict resolution missed on the first pass: dangling JSX
+(`BreakHabitSheet.tsx` still had the pre-refactor `ScrollView`/`View`
+footer/`Button` block after the header/footer became `Sheet` props) and
+one `cardText()` call site in Today's leak-row renderer missing the
+threaded `Catalog` argument; both fixed in a follow-up commit before
+either tsc or the full suite were re-run clean (117/117, 1232/1232).
+Then did plan item 4's next slice (`money` minus `habitsEmptyTitle`/
+`habitsEmptyBody`, locked-vocabulary gated) plus item 3's matching
+sweep of it (see Completed). 186 of ~660 keys now populated per
+language.
 
 ## Completed
 
@@ -551,40 +566,160 @@ populated per language.
   translation slice, sweep confirmation needed no commit of its own);
   `tsc --noEmit` clean and the full suite green (115/115, 1215/1215) on
   the first run after the rebase fix, no flake.
+- Run 27, rebase (77 commits behind origin/main, the second real rebase
+  this stream has needed, after run 26's). Six real conflicts, more than
+  any prior rebase, because main landed a header/footer-as-props
+  refactor to `Sheet.tsx` (Charen, 2026-09-10, "sticky title on every
+  drawer") that touched every sheet this branch had already converted:
+  - `components/ui/Sheet.tsx`: main added `useKeyboardHeight()`/
+    `sheetMaxHeight()` plumbing right where this branch's `useStrings()`
+    line and import landed; kept both side by side.
+  - `components/leak-scan/CategoryTransactionsSheet.tsx` and
+    `ReviewQueueSheet.tsx`: both had a `const { height } =
+    useWindowDimensions();` line that main had already deleted (the new
+    `Sheet.tsx` owns max-height itself now) but this branch's pending
+    commit still added a `strings = useStrings()` line next to it;
+    dropped the dead `height` line and its now-unused import, kept only
+    `useStrings()`.
+  - `components/AddCategoryModal.tsx`: identical dead
+    `useWindowDimensions()`/`height` leftover, same fix.
+  - `components/habit-logging/PickOneSheet.tsx`: main's version had
+    already restructured the sheet's title/cadence line into a pinned
+    `SheetTitle` above the scrolling body (dropping the old in-body
+    duplicate `Text` elements), but the pre-rebase commit's
+    `cadenceLabel(habit.frequency, strings)` signature change (added a
+    `strings: Catalog` parameter) only touched the old duplicate call
+    site, not the new pinned one. Removed the now-redundant duplicate
+    block main had already made unreachable and added the `strings`
+    argument to the one real remaining call site in the pinned title.
+  - `components/onboarding/BreakHabitSheet.tsx`: main reordered the
+    bought-today/cadence sections (bought-today now first) and made the
+    yearly line conditional on `amountCents > 0`; this branch's pending
+    commit had the old order with `useMemo`-ified `cadenceOptions`/
+    `boughtOptions` arrays (replacing the old module-level
+    `CADENCE_OPTIONS`/`BOUGHT_OPTIONS` consts) and the `yearlyLineFor`
+    signature change. Merged by keeping main's new order and the
+    conditional render, substituting the array names for the `useMemo`
+    ones. First pass left dead JSX behind (see below, caught by tsc, not
+    by the merge itself): the header/footer-as-props refactor had
+    already turned this sheet's own trailing `ScrollView`/`View`
+    footer/`Button` block into unreachable JSX after a `<Sheet
+    footer={...}>` prop replaced it, but the merge left the old block's
+    closing tags and duplicate `Button` in place; deleted the whole dead
+    block once `tsc --noEmit` pointed at it (`JSX expressions must have
+    one parent element` and friends).
+  - `components/habit-logging/LeakCard.tsx`: deleted on main (its
+    behavior moved inline into `app/(tabs)/index.tsx`, confirmed via
+    `grep -rn "import.*LeakCard"` finding no real importer left anywhere,
+    only doc-comment cross-references), while this branch had two
+    pending commits still editing it (the `EventHistory`/`HistoryCalendar`/
+    `CheckInCard`/`LeakCard`/`KeptHero` batch, then the `coachMoments.ts`
+    `cardText` threading). Both times: `git rm` the file, since main's
+    deletion is authoritative and nothing imports it.
+
+  Post-rebase, `tsc --noEmit` caught two spots the conflict resolution
+  missed on the first pass, both fixed in one follow-up commit before
+  re-running tsc/the suite: the `BreakHabitSheet.tsx` dead-JSX leftover
+  described above (once fixed, one `Sheet` open tag to one `Sheet` close
+  tag, no orphaned `ScrollView`/`View`), and one `cardText(
+  detectionMoment.cardId)` call site in Today's leak-row renderer
+  (`app/(tabs)/index.tsx`) that the rebase carried forward without its
+  threaded `strings` second argument, unlike its two sibling call sites
+  in the same file and in `CheckInCard.tsx`. Full suite was already
+  green before this fix (the two gaps were compile errors, not runtime
+  ones), and stayed green after: 117/117, 1232/1232, no flake.
+- Run 27, plan item 4's seventh slice: `money` minus `habitsEmptyTitle`/
+  `habitsEmptyBody` (locked-vocabulary gated: contains "leak") populated
+  across all 10 locale overlays (26 keys). `spentEmptyBody`/
+  `upcomingEmptyBody` confirmed dead code (no real call site, same
+  "RETIRED FROM RENDERING" comment treatment as `habitDetail`/`reports`
+  in run 24) and left untranslated; every function-valued key stays
+  omitted per the standing rule. `scheduleSeparator` (a plain `' · '`
+  middle-dot with no linguistic content) also stays omitted, a new
+  reason distinct from function-valued/dead/gated. Reused four
+  `addUpcoming` frequency translations where the English source matches
+  byte-for-byte (`scheduleOneTime`/`scheduleWeekly`/`scheduleMonthly`/
+  `scheduleAnnual`); `scheduleBiweekly` ('Every 2 weeks') translated
+  fresh since `addUpcoming.frequencyBiweekly` ('Bi-weekly') has
+  different English source text. Reused "expense"/"Add"/"Edit"/"Delete"/
+  "Upcoming" vocabulary roots from already-translated `expenseSheet`/
+  `categories`/`common`/`expenses`. `habitsEmptyCta` ('Break a habit')
+  is a fresh per-language translation (no established "break" vocabulary
+  exists yet), checked against the DECISIONS NEEDED proposal table for
+  an accidental collision with a locked-term candidate; found one (hi's
+  provisional "skip" candidate छोड़ें) and used तोड़ें instead, documented
+  in `locales/hi.ts`'s header. `onboarding`, `leakScan`, `insights`
+  confirmed still fully gated on a first skim (each contains "leak"/
+  "skip"/"kept" literally in its English source), `today` likewise; none
+  picked this run. Full reasoning and the exact vocabulary-reuse table
+  are in PLAN.md's run 27 entry.
+- Run 27, plan item 3's third sweep, scoped to `money` (the section this
+  same run translated for item 4): all three test files asserting
+  against it (`moneyHabitsTab.test.tsx`, `moneyUpcomingTab.test.tsx`,
+  `moneyMaterializerIntegration.test.tsx`) already read `strings.money.*`
+  from the imported static catalog, not a literal English string, and
+  none mocks a non-English device locale, so their assertions already
+  resolve to the live catalog value. No fix needed.
+
+  All three run-27 items landed as separate commits (rebase resolution,
+  the follow-up dead-JSX/missing-argument fix, the translation slice;
+  the sweep confirmation needed no commit of its own); `tsc --noEmit`
+  clean and the full suite green (117/117, 1232/1232) after every
+  commit, no flake.
 
 ## Next
 
-Plan item 4 is underway (160 of ~660 keys populated across all 10
+Plan item 4 is underway (186 of ~660 keys populated across all 10
 languages: `common` minus `keep`, `sheets`, `tabs`, `screenTitles` (run
 20), plus `expenses`, `categories`, `categoryDetail`, `profile` (run
 21), plus `settings` minus `versionValue`/`supportEmail` (run 22), plus
 `addCategoryModal`, `expenseSheet` minus `amountLabel` (run 23), plus
 `habitDetail.notFound`, `reports.loading`, and 22 of `toasts`' keys
 (run 24), plus `addUpcoming` minus `everyNDaysValue`/`amountLabel` (run
-26); see PLAN.md's run 20-24 and run 26 entries for the full design).
-`upcoming` stays fully English until item 2's ICU/pluralization work
-lands, since both its keys are function-valued. Budget more than one
-run per meaningful chunk (10 languages x a section adds up fast), the
-same lesson item 2's file-by-file conversion learned repeatedly and
-runs 21-24 and 26 stayed within. `habitLogging`, `coachMoments`,
-`insights`, `habitDetailV2`, and `today`'s quote arrays still need the
-DECISIONS NEEDED table below settled (or at minimum provisional entries
-adopted with a clear "pending Charen" marker) before translating, since
-those sections contain the locked vocabulary (`insights` confirmed
-gated run 23: `leaksTitle`, `skipValueSheetTitle`, and more;
-`habitDetailV2` confirmed gated run 26 on a first skim: `skipValueSheetTitle`
-uses "skip"/"keeps") and (for `today`) the RETIRED, out-of-scope quote
-arrays. `paywall` needs a different kind of sign-off before this
+26), plus `money` minus `habitsEmptyTitle`/`habitsEmptyBody` (run 27);
+see PLAN.md's run 20-24, run 26 and run 27 entries for the full
+design). `upcoming` stays fully English until item 2's ICU/pluralization
+work lands, since both its keys are function-valued. Budget more than
+one run per meaningful chunk (10 languages x a section adds up fast),
+the same lesson item 2's file-by-file conversion learned repeatedly and
+runs 21-24, 26 and 27 stayed within. `habitLogging`, `coachMoments`,
+`insights`, `habitDetailV2`, `onboarding`, `leakScan`, and `today`'s
+quote arrays still need the DECISIONS NEEDED table below settled (or at
+minimum provisional entries adopted with a clear "pending Charen"
+marker) before translating, since those sections contain the locked
+vocabulary (`insights` confirmed gated run 23: `leaksTitle`,
+`skipValueSheetTitle`, and more; `habitDetailV2` confirmed gated run 26
+on a first skim: `skipValueSheetTitle` uses "skip"/"keeps";
+`onboarding` and `leakScan` confirmed gated run 27, both contain
+"leak"/"skip"/"kept" literally throughout their English source, plus an
+explicit "Locked vocabulary: leak/skip/kept/slip" comment in
+`onboarding`'s own source) and (for `today`) the RETIRED, out-of-scope
+quote arrays. `paywall` needs a different kind of sign-off before this
 routine touches it, not locked-vocabulary related: see DECISIONS NEEDED
-below. `habitDetail` and `reports` are now fully resolved (each had
-exactly one live key, both translated run 24; the rest is confirmed
-dead code, left alone). `addUpcoming` is also now fully resolved. The
-next slice needs another fresh pick: `onboarding`, `leakScan`, `today`
-(largely gated), `money` (partially gated, contains
-`habitsEmptyTitle`'s "leak" and the leak-counting functions), and
-`insights` remain unchecked. `toasts` has two keys left once
-`leakDismissed`/`stoppedHistoryKept` are settled (see DECISIONS
-NEEDED).
+below. `habitDetail`, `reports`, `addUpcoming`, and now `money` are
+fully resolved (each section's live, non-gated, non-function-valued
+keys are translated; the rest is confirmed dead code or deferred ICU
+work, left alone). The next slice needs a genuinely fresh pick: every
+remaining untranslated section (`habitLogging`, `coachMoments`,
+`insights`, `habitDetailV2`, `onboarding`, `leakScan`, `today`,
+`paywall`) is gated on either the locked-vocabulary DECISIONS NEEDED
+table or the pricing/legal sign-off, so real progress on item 4 is
+blocked until Charen answers at least one of those two open questions
+(see DECISIONS NEEDED). `toasts` has two keys left once
+`leakDismissed`/`stoppedHistoryKept` are settled (same locked-vocabulary
+gate).
+
+**New this run: item 4 is now effectively blocked on Charen for further
+progress.** Every remaining untranslated section is gated one way or
+the other (see above), so a future run picking item 4 first should
+check DECISIONS NEEDED before assuming there is a fresh, ungated
+section left to translate; there is not, as of run 27. If neither gate
+has moved, work item 2's ICU/pluralization checkbox instead (a
+concrete first case is ready: `utils/recurring.ts`'s `daysUntilLabel`,
+flagged since run 19, is hardcoded English "Today"/"Tomorrow"/"in N
+days" with no catalog key at all), or item 5/6 (overflow hardening,
+localized a11y labels), both of which do not depend on the locked
+vocabulary decision.
 
 What is actually left for a future run:
 - Plan item 2's ICU/pluralization checkbox (function-valued strings
@@ -811,6 +946,26 @@ only if ADR 0037 is reversed and the quote rotation un-retires.
   suite after every rebase, not just after this routine's own commits.
   Run 14's rebase was a no-op (branch was already current with
   `origin/main` at session start).
+- New rebase-risk variant found in run 27: main can restructure a
+  shared component's internal JSX (not just add a hook call next to
+  this branch's `useStrings()` line) between rebases. The `Sheet.tsx`
+  header/footer-as-props refactor (Charen, 2026-09-10) moved every
+  sheet's title/footer out of its own JSX body into `Sheet`'s `header`/
+  `footer` props, which conflicted with (or silently orphaned) this
+  branch's pending `useStrings()` edits in the same regions across five
+  files (`Sheet.tsx` itself, two `ResultsScreen`-tree sheets,
+  `AddCategoryModal.tsx`, `PickOneSheet.tsx`, `BreakHabitSheet.tsx`).
+  Two of those conflicts resolved silently wrong on the first pass
+  (dead JSX left behind, a call site missing its added argument) and
+  were only caught by `tsc --noEmit`, not by git's own conflict
+  markers, because the leftover code was still syntactically valid
+  JSX/TS in isolation. Lesson: after resolving a conflict inside a
+  component whose surrounding structure changed (not just an added
+  line next to an unrelated one), read the resolved function's full
+  body once before moving on, not just the lines git marked as
+  conflicting; `tsc --noEmit` catches the syntax-level misses but not a
+  silently-wrong-but-valid resolution (this run got lucky that both
+  misses happened to also be type/syntax errors).
 - Pre-existing flake, not this stream's bug: `door3BreakSheet.test.tsx`
   timed out once under full-suite load early in run 13 (before any code
   change that session), then passed standalone and on every full-suite
