@@ -48,6 +48,12 @@ const LEAK_FINDER_INTEREST_KEY = '@habitcents_leak_finder_interest';
 // rather than a derived count: goals can be stopped and restarted, and a
 // metric that can fire twice is not a first.
 const FIRST_KEPT_KEY = '@habitcents_first_kept';
+/**
+ * When the user last looked at the Kept pane, ISO. The Kept chip's dot means
+ * "a leak was detected since then" (Charen, 2026-09-11), so this is the marker
+ * it compares each leak's discoveredAt against.
+ */
+const LEAKS_SEEN_AT_KEY = '@habitcents_leaks_seen_at';
 // Recurring materializer delete-child tombstones (ADR 0024, U11). See
 // utils/materializer.ts planMaterialization's header comment for why this
 // exists instead of "plan only forward from the newest child".
@@ -206,6 +212,32 @@ export async function hasFiredFirstKept(): Promise<boolean> {
 /** Record that first_kept has been reported. */
 export async function setFirstKeptFired(): Promise<void> {
   return persist(FIRST_KEPT_KEY, 'true');
+}
+
+/**
+ * When the user last looked at the Kept pane, or null if they never have.
+ *
+ * Null means "everything currently detected counts as already seen", not "show
+ * the dot for everything": an install upgrading into this feature should not
+ * light up for leaks it found weeks ago. The caller owns that reading; this
+ * only reports what is stored. A read failure returns null for the same
+ * reason, failing quiet rather than announcing a leak that may not be new.
+ */
+export async function getLeaksSeenAt(): Promise<Date | null> {
+  try {
+    const value = await AsyncStorage.getItem(LEAKS_SEEN_AT_KEY);
+    if (!value) return null;
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  } catch (error) {
+    console.error('Error reading leaks-seen marker:', error);
+    return null;
+  }
+}
+
+/** Record that the Kept pane has been looked at, as of `when`. */
+export async function setLeaksSeenAt(when: Date = new Date()): Promise<void> {
+  return persist(LEAKS_SEEN_AT_KEY, when.toISOString());
 }
 
 /**

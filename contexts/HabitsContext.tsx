@@ -8,6 +8,8 @@ import {
   saveCoachMomentState,
   hasFiredFirstKept,
   setFirstKeptFired,
+  getLeaksSeenAt,
+  setLeaksSeenAt,
 } from '@/utils/storage';
 import { detectHabits, findExistingHabit, mergeHabits } from '@/utils/habitDetection';
 import { getScanRules } from '@/utils/scanRules';
@@ -122,6 +124,19 @@ type HabitsContextValue = {
   getGoalByHabitId: (habitId: string) => HabitChangeGoal | undefined;
   getActiveHabits: () => DetectedHabit[];
   getDiscoveredHabits: () => DetectedHabit[];
+  /**
+   * True when a leak has been detected since the user last looked at the Kept
+   * pane. Drives the Kept chip's dot (Charen, 2026-09-11: the dot belongs to
+   * new leak detection, not to an unanswered check-in, which would show almost
+   * permanently for anyone who does not check in daily).
+   *
+   * False until the marker below has loaded, and false when no marker is
+   * stored at all: an install upgrading into this should not light up for
+   * leaks found weeks ago.
+   */
+  hasNewLeak: boolean;
+  /** Record that the Kept pane has been looked at, clearing `hasNewLeak`. */
+  markLeaksSeen: () => Promise<void>;
   /** The milestone threshold newly crossed by the most recent answer, if any. */
   lastMilestone: { goalId: string; threshold: 10 | 30 | 50 | 66 } | null;
   /**
@@ -191,16 +206,23 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
   // than a stale render closure, matching the ExpensesContext commit pattern.
   const coachStateRef = useRef<CoachMomentState | null>(null);
 
+  // When the Kept pane was last looked at. undefined while loading, null when
+  // nothing is stored, which reads as "treat everything already detected as
+  // seen" rather than "show the dot for all of it".
+  const [leaksSeenAt, setLeaksSeenAtState] = useState<Date | null | undefined>(undefined);
+
   useEffect(() => {
     async function loadData() {
-      const [storedHabits, storedGoals, storedCoachState] = await Promise.all([
+      const [storedHabits, storedGoals, storedCoachState, storedSeenAt] = await Promise.all([
         getHabits(),
         getHabitGoals(),
         getCoachMomentState(),
+        getLeaksSeenAt(),
       ]);
       setHabits(storedHabits);
       setGoals(storedGoals);
       coachStateRef.current = storedCoachState;
+      setLeaksSeenAtState(storedSeenAt);
       setIsLoading(false);
     }
     loadData();
@@ -850,6 +872,39 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
     return habits.filter(h => h.status === 'discovered' && !h.dismissedAt);
   }, [habits]);
 
+  /**
+   * A leak found since the Kept pane was last looked at.
+   *
+   * Detected leaks only, not pre-detection candidates: candidates are
+   * recomputed from expenses on every render and carry no discoveredAt, so
+   * they cannot take part in a "since you last looked" comparison without
+   * inventing more state. "New leak detected" is the claim the dot makes.
+   *
+   * discoveredAt is a safe basis because mergeHabits preserves it when it
+   * refreshes an existing discovered habit with new numbers, so a leak does
+   * not re-announce itself every detection pass.
+   */
+  const hasNewLeak = useMemo(() => {
+    if (leaksSeenAt === undefined || leaksSeenAt === null) return false;
+    return habits.some(
+      h =>
+        h.status === 'discovered' &&
+        !h.dismissedAt &&
+        h.discoveredAt.getTime() > leaksSeenAt.getTime()
+    );
+  }, [habits, leaksSeenAt]);
+
+  /**
+   * Stamps the marker to now. Writes through to storage and only then to
+   * state, so a failed write leaves the dot showing rather than silently
+   * clearing something the user never actually saw.
+   */
+  const markLeaksSeen = useCallback(async (): Promise<void> => {
+    const now = new Date();
+    await setLeaksSeenAt(now);
+    setLeaksSeenAtState(now);
+  }, []);
+
   // These were inline arrows in the provider value object below (a fresh
   // function identity every render). setLastMilestone/setLastCoachMoment are
   // React state setters, which are referentially stable forever, so an empty
@@ -882,6 +937,8 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
     getGoalByHabitId,
     getActiveHabits,
     getDiscoveredHabits,
+    hasNewLeak,
+    markLeaksSeen,
     lastMilestone,
     clearLastMilestone,
     lastCoachMoment,
@@ -893,6 +950,7 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
     addScanHabit, startBreakingHabit, seedDiscoveredHabit, answerToday, answerEvent,
     changeTodayAnswer, backfillYesterday, savePartialSlip, updateSkipValue, stopBreakingHabit,
     getHabitById, getGoalByHabitId, getActiveHabits, getDiscoveredHabits,
+    hasNewLeak, markLeaksSeen,
     lastMilestone, clearLastMilestone, lastCoachMoment, clearLastCoachMoment,
     maybeShowDetectionMoment, maybeShowFirstLogMoment,
   ]);

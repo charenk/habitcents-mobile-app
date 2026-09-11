@@ -140,6 +140,8 @@ export default function TodayScreen() {
     savePartialSlip,
     getActiveHabits,
     getDiscoveredHabits,
+    hasNewLeak,
+    markLeaksSeen,
     getGoalByHabitId,
     getHabitById,
     lastMilestone,
@@ -499,6 +501,16 @@ export default function TodayScreen() {
 
   // Chips stay the source of truth for the selected state; the hook's effect
   // moves the pager to match whatever todayView becomes.
+  // The dot's job is "a leak turned up since you last looked", so looking is
+  // what clears it. Keyed on the pane actually on screen rather than on Today
+  // mounting, so a user who only ever opens Spent keeps their dot. Fires on
+  // arrival too, not just on a switch, because a deep link or a relaunch can
+  // land straight on Kept.
+  useEffect(() => {
+    if (todayView !== 'kept') return;
+    void markLeaksSeen();
+  }, [todayView, markLeaksSeen]);
+
   const handleTodayViewChange = useCallback((view: SpentKeptView) => {
     markInteracted();
     setTodayView(view);
@@ -576,16 +588,6 @@ export default function TodayScreen() {
     return goals.reduce((sum, g) => sum + keptOnDay(g, today), 0);
   }, [goals]);
 
-  // The Kept chip's pending dot (spec: "renders a quiet dot on the Kept chip"):
-  // true while any daily-cadence habit's check-in question is unanswered
-  // today, the same test sortedBreakingItems below uses to rank an unanswered
-  // card first.
-  const checkInPending = useMemo(() => {
-    const today = atMidnight(new Date());
-    return breakingItems.some(
-      ({ habit, goal }) => habit.frequency === 'daily' && dayStateFor(goal.dayLogs, today) === 'no-log'
-    );
-  }, [breakingItems]);
 
   // Stacking (spec §4.2): unanswered daily first, then weekly/monthly, then
   // answered-today cards.
@@ -895,7 +897,7 @@ export default function TodayScreen() {
           keptCents={keptTodayCents}
           value={todayView}
           onChange={handleTodayViewChange}
-          checkInPending={checkInPending}
+          newLeakPending={hasNewLeak}
           // Not-started is not zero (SpentKeptChips file header): amounts
           // only render once the activity exists, all-time, so a fresh
           // install never claims a measured $0.00.

@@ -54,6 +54,9 @@ jest.mock('expo-router', () => {
 
 let mockGoals: HabitChangeGoal[] = [];
 let mockHabits: DetectedHabit[] = [];
+/** Drives the Kept chip's dot; reset per test in beforeEach. */
+let mockHasNewLeak = false;
+const mockMarkLeaksSeen = jest.fn(async () => {});
 
 jest.mock('@/contexts/HabitsContext', () => ({
   useHabits: () => ({
@@ -78,6 +81,8 @@ jest.mock('@/contexts/HabitsContext', () => ({
     clearLastCoachMoment: jest.fn(),
     maybeShowDetectionMoment: jest.fn(async () => null),
     maybeShowFirstLogMoment: jest.fn(async () => null),
+    hasNewLeak: mockHasNewLeak,
+    markLeaksSeen: mockMarkLeaksSeen,
   }),
 }));
 
@@ -238,6 +243,8 @@ beforeEach(() => {
   mockHabits = [];
   mockExpenses = [];
   mockDoorChosen = 'fresh';
+  mockHasNewLeak = false;
+  mockMarkLeaksSeen.mockClear();
   mockPush.mockClear();
   mockTrack.mockClear();
 });
@@ -465,13 +472,47 @@ describe('Today: Spent/Kept chips', () => {
     expect(view.getByText(formatMoney(700))).toBeTruthy();
   });
 
-  it('shows the pending-dot a11y text when a daily goal is unanswered today', async () => {
-    mockHabits = [makeHabit({ id: 'h1', frequency: 'daily', status: 'changing' })];
-    mockGoals = [makeGoal({ id: 'g1', habitId: 'h1', dayLogs: [] })];
+  // The dot moved from "you have not checked in" to "a leak turned up since
+  // you last looked" (Charen, 2026-09-11): tied to the check-in it was on
+  // almost permanently for anyone who does not answer daily, and a dot that is
+  // always on says nothing.
+  it('speaks the dot when a leak has been found since the last look', async () => {
+    mockHasNewLeak = true;
 
     const view = await renderToday();
 
-    expect(view.getByLabelText(new RegExp(strings.today.checkInPendingA11y))).toBeTruthy();
+    expect(view.getByLabelText(new RegExp(strings.today.newLeakA11y))).toBeTruthy();
+  });
+
+  it('does not speak the dot when no leak is newer than the last look', async () => {
+    mockHasNewLeak = false;
+
+    const view = await renderToday();
+
+    expect(view.queryByLabelText(new RegExp(strings.today.newLeakA11y))).toBeNull();
+  });
+
+  it('leaves the dot alone for an unanswered check-in, which no longer drives it', async () => {
+    mockHabits = [makeHabit({ id: 'h1', frequency: 'daily', status: 'changing' })];
+    mockGoals = [makeGoal({ id: 'g1', habitId: 'h1', dayLogs: [] })];
+    mockHasNewLeak = false;
+
+    const view = await renderToday();
+
+    expect(view.queryByLabelText(new RegExp(strings.today.newLeakA11y))).toBeNull();
+  });
+
+  it('marks leaks seen once the Kept pane is the one on screen', async () => {
+    mockHasNewLeak = true;
+    const view = await renderToday();
+
+    // Today opens on Spent, and looking at Spent is not looking at the leaks,
+    // so a user who never crosses over keeps their dot.
+    expect(mockMarkLeaksSeen).not.toHaveBeenCalled();
+
+    await tap(view.getByTestId('kept-chip'));
+
+    expect(mockMarkLeaksSeen).toHaveBeenCalled();
   });
 });
 
