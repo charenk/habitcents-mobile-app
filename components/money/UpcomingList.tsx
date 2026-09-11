@@ -2,10 +2,12 @@
  * UpcomingList (design/redesign-handoff/04-screens.md, "Money" > Upcoming;
  * U8 redesign).
  *
- * A left-aligned "next N days" total (matching Spent's and Habits'
- * left-aligned eyebrows -- centering was the one outlier in the Money tab),
- * the window picker that decides N, a compact add affordance beside the
- * total, then the scheduled rows, each one now pressable to edit or delete.
+ * One card in three rows (2026-09-11): the window label and the compact filter
+ * that decides it, then the total, then the payments count with the add
+ * affordance beside it. Then the scheduled rows, each pressable to edit or
+ * delete. The rows are left-aligned, matching Spent's and Habits' eyebrows;
+ * centering was the one outlier in the Money tab.
+ *
  * Every number here is projected by `utils/recurring.ts`, so nothing on this
  * screen is invented:
  *
@@ -18,16 +20,22 @@
  *   occurrences while the count line counted distinct expenses).
  * - the schedule line under each row is `describeSchedule`, never hand-built
  *   text, so the row and the engine can never disagree.
- * - the amber pill is `multiPaymentMonth`: the month where three or more
- *   payments land. That is the surprise worth flagging, and amber is the
- *   token for exactly that (spec 01 §1).
+ * - a row's own number is `upcomingItemWindowTotal`, the same per-item helper
+ *   the card's total reduces over, so the column of row numbers sums to
+ *   exactly the headline above it. Where a bill lands once the two are the
+ *   same figure; where it lands more than once the caption names the unit
+ *   price the subtotal is built from.
  *
  * Amounts render unsigned. Nothing here has been spent yet, so a minus sign
  * would read as history rather than as a bill that is coming.
  *
  * The window itself (2 weeks / 1 month / 3 months) is defined once in
  * utils/upcomingWindow.ts; this component only zips those day counts with
- * their labels to build the SegmentedControl options.
+ * their labels to build the SegmentedControl options. The filter uses that
+ * component's compact quiet tone (ADR 0040): inside a white card the card is
+ * already the raised surface, so the selected segment carries the fill rather
+ * than a cloud track carrying a white thumb. It shows "2w" and says
+ * "2 weeks", via labelSpoken.
  */
 import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -44,26 +52,35 @@ import { useTheme } from '@/contexts/ThemeContext';
 import type { Expense } from '@/types/expense';
 import { categoryDisplayLabel } from '@/utils/leakScanBridge';
 import {
-  daysUntilLabel,
   describeSchedule,
-  multiPaymentMonth,
   resolveRule,
+  shortDate,
+  upcomingItemPayments,
+  upcomingItemWindowTotal,
   upcomingWindowPaymentsCount,
   upcomingWindowTotal,
   type UpcomingItem,
 } from '@/utils/recurring';
 import { UPCOMING_WINDOW_PRESETS, type UpcomingWindowDays } from '@/utils/upcomingWindow';
-import { withAlpha } from '@/utils/color';
 
+/** What VoiceOver hears. "2w, selected" is not a sentence. */
 const WINDOW_LABELS: Record<UpcomingWindowDays, string> = {
   14: strings.money.upcomingWindowTwoWeeks,
   30: strings.money.upcomingWindowOneMonth,
   90: strings.money.upcomingWindowThreeMonths,
 };
 
+/** What the corner filter shows. Abbreviation is visual only. */
+const WINDOW_SHORT_LABELS: Record<UpcomingWindowDays, string> = {
+  14: strings.money.upcomingWindowTwoWeeksShort,
+  30: strings.money.upcomingWindowOneMonthShort,
+  90: strings.money.upcomingWindowThreeMonthsShort,
+};
+
 const WINDOW_OPTIONS = UPCOMING_WINDOW_PRESETS.map((days) => ({
   value: days,
-  label: WINDOW_LABELS[days],
+  label: WINDOW_SHORT_LABELS[days],
+  labelSpoken: WINDOW_LABELS[days],
 }));
 
 export type UpcomingListProps = {
@@ -132,31 +149,48 @@ export function UpcomingList({
 
   return (
     <View>
+      {/* Three rows, and every one of them renders in every state. The card
+          holding its shape is the point, not a nicety: the filter is in row 1,
+          so a row that collapsed on an empty window would shrink the card
+          under the user's own finger and shove the list up as they tapped.
+          Rows 2 and 3 are unconditional, and window-empty falls out as an
+          honest $0.00 / 0 payments with no extra branch and no extra string:
+          upcomingWindowTotal([]) is 0, and upcomingPaymentsCount(0, 0) already
+          drops its "from N bills" clause when the two counts agree. */}
       <View style={styles.totalCard}>
-        <View style={styles.windowSegment}>
+        <View style={styles.windowRow}>
+          {/* Capped at the same 1.5 the filter beside it uses: the label and
+              the filter are a pair, and an uncapped label wrapped to three
+              lines next to a one-line control at accessibility sizes. */}
+          <Text style={styles.windowLabel} maxFontSizeMultiplier={1.5}>
+            {strings.money.upcomingWindowEyebrow(windowDays)}
+          </Text>
           <SegmentedControl<UpcomingWindowDays>
             options={WINDOW_OPTIONS}
             value={windowDays}
             onChange={onWindowDaysChange}
             accessibilityLabel={strings.money.upcomingWindowSegmentLabel}
+            size="compact"
+            tone="quiet"
           />
         </View>
-        <View style={styles.totalHeaderRow}>
-          <View style={styles.totalTextBlock} testID="upcoming-total-text">
-            <Text style={styles.totalEyebrow}>
-              {strings.money.upcomingWindowEyebrow(windowDays)}
-            </Text>
-            {items.length > 0 ? (
-              <>
-                <Text style={styles.totalAmount} accessibilityRole="header">
-                  {format(windowTotal)}
-                </Text>
-                <Text style={styles.totalCount}>
-                  {strings.money.upcomingPaymentsCount(paymentsCount, items.length)}
-                </Text>
-              </>
-            ) : null}
-          </View>
+
+        <View style={styles.totalAmountRow} testID="upcoming-total-text">
+          <Text style={styles.totalAmount} accessibilityRole="header">
+            {format(windowTotal)}
+          </Text>
+        </View>
+
+        <View style={styles.countRow}>
+          {/* No numberOfLines: at accessibility text sizes a one-line clamp
+              cropped this line to a band of half-glyphs (seen on device at
+              XXXL). It wraps instead, and the row grows, which is what the
+              44pt button beside it can afford. The 1.5 cap is the app's own
+              ceiling for chrome text, the same one SegmentedControl and the
+              tab bar use. */}
+          <Text style={styles.totalCount} maxFontSizeMultiplier={1.5}>
+            {strings.money.upcomingPaymentsCount(paymentsCount, items.length)}
+          </Text>
           {addAffordance}
         </View>
       </View>
@@ -167,28 +201,25 @@ export function UpcomingList({
             // Its own line, not upcomingEmptyBody: that copy tells the user
             // to mark an expense as repeating, which anyone reaching this
             // branch has already done (ADR 0039 review).
+            //
+            // No CTA (2026-09-11): the dashed plus sits 40pt above this line
+            // and does the same thing in the same words. One affordance.
             body={strings.money.upcomingWindowEmptyBody}
-            cta={{ label: strings.money.upcomingAddAffordance, onPress: onEmptyAdd ?? onAdd }}
           />
         </View>
       ) : (
-        <>
-          <Text style={styles.eyebrow} accessibilityRole="header">
-            {strings.money.upcomingListEyebrow}
-          </Text>
-          <View style={styles.card}>
-            {items.map((item, index) => (
-              <UpcomingRow
-                key={item.expense.id}
-                item={item}
-                isFirst={index === 0}
-                onPress={() => onEditItem(item.expense)}
-                theme={theme}
-                styles={styles}
-              />
-            ))}
-          </View>
-        </>
+        <View style={styles.card}>
+          {items.map((item, index) => (
+            <UpcomingRow
+              key={item.expense.id}
+              item={item}
+              isFirst={index === 0}
+              onPress={() => onEditItem(item.expense)}
+              theme={theme}
+              styles={styles}
+            />
+          ))}
+        </View>
       )}
     </View>
   );
@@ -213,23 +244,34 @@ function UpcomingRow({
 }) {
   const { format } = useCurrency();
 
-  const { expense, nextDate, daysUntil, occurrencesInWindow } = item;
+  const { expense, nextDate } = item;
   // Same display fallback as ExpenseRow: stored category values map to their
   // display names before rendering.
   const name = expense.title || categoryDisplayLabel(expense.category);
-  const amountLabel = format(expense.amount);
-  const cadenceLabel = daysUntilLabel(daysUntil);
+
+  // The row's big number is what this bill costs INSIDE THE WINDOW, so the
+  // column of big numbers sums to exactly the card's headline. Where a bill
+  // lands once the two are the same number, which is why the narrow windows
+  // look untouched. Where it lands more than once, the caption names the unit
+  // price the subtotal is built from, and the price the edit sheet opens on.
+  const payments = upcomingItemPayments(item);
+  const amountLabel = format(upcomingItemWindowTotal(item));
+  const unitLabel = format(expense.amount);
+  const multiplierLabel =
+    payments > 1 ? strings.money.upcomingRowMultiplier(payments, unitLabel) : null;
+  const multiplierSpoken =
+    payments > 1 ? strings.money.upcomingRowMultiplierSpoken(payments, unitLabel) : null;
 
   // computeUpcoming only emits items that resolved to a rule, so this is
   // always set; the fallback exists so a corrupted row degrades to its date
   // rather than crashing the tab.
   const rule = resolveRule(expense);
-  const scheduleLine = rule ? describeSchedule(rule, nextDate) : cadenceLabel;
+  const scheduleLine = rule ? describeSchedule(rule, nextDate) : shortDate(nextDate);
 
-  const multi = multiPaymentMonth(occurrencesInWindow);
-  const pillLabel = multi ? strings.money.multiPaymentPill(multi.count, multi.monthLabel) : null;
-
-  const spoken = [name, pillLabel, amountLabel, scheduleLine].filter(Boolean).join(', ');
+  // The bill, what the window costs, how many and what one costs, then when.
+  // A user who stops listening after two words still got the two facts that
+  // decide whether to keep listening.
+  const spoken = [name, amountLabel, multiplierSpoken, scheduleLine].filter(Boolean).join(', ');
 
   return (
     <Pressable
@@ -248,18 +290,9 @@ function UpcomingRow({
         size={36}
       />
       <View style={styles.rowText}>
-        <View style={styles.nameLine}>
-          <Text style={styles.name} numberOfLines={1}>
-            {name}
-          </Text>
-          {pillLabel ? (
-            <View style={styles.pill}>
-              <Text style={styles.pillLabel} numberOfLines={1}>
-                {pillLabel}
-              </Text>
-            </View>
-          ) : null}
-        </View>
+        <Text style={styles.name} numberOfLines={1}>
+          {name}
+        </Text>
         <Text style={styles.schedule} numberOfLines={1}>
           {scheduleLine}
         </Text>
@@ -277,9 +310,20 @@ function UpcomingRow({
         >
           {amountLabel}
         </Text>
-        <Text style={styles.cadence} numberOfLines={1}>
-          {cadenceLabel}
-        </Text>
+        {multiplierLabel ? (
+          // Carries money, so it takes the same treatment as the number above
+          // it rather than the cadence line's: it shrinks to fit instead of
+          // truncating. "in 21 days" could afford an ellipsis; "$2,100.00
+          // each" cannot.
+          <Text
+            style={styles.multiplier}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.7}
+          >
+            {multiplierLabel}
+          </Text>
+        ) : null}
       </View>
       <Icon
         name="ChevronRight"
@@ -302,24 +346,31 @@ function createStyles(theme: AppTheme) {
       paddingVertical: 18,
       paddingHorizontal: 18,
     },
-    windowSegment: {
-      marginBottom: 14,
-    },
-    totalHeaderRow: {
+    windowRow: {
       flexDirection: 'row',
-      alignItems: 'flex-end',
+      alignItems: 'center',
       justifyContent: 'space-between',
+      gap: 12,
     },
-    totalTextBlock: {
-      alignItems: 'flex-start',
+    // A label, not an eyebrow, so it loses the caps AND the 0.88 tracking:
+    // that tracking exists to open up capitals and reads loose on sentence
+    // case. The string was always sentence case (UX-060 keeps casing in the
+    // stylesheet), so this is a style change with no copy change. Named as a
+    // deviation in the PR body: the pane's other two eyebrows stay uppercase.
+    windowLabel: {
+      fontFamily: theme.fonts.uiSemibold,
+      fontSize: typeScale.caption,
+      color: theme.mistText,
       flexShrink: 1,
     },
-    totalEyebrow: {
-      fontFamily: theme.fonts.uiSemibold,
-      fontSize: typeScale.eyebrow,
-      letterSpacing: typeScale.eyebrowLetterSpacing,
-      textTransform: 'uppercase',
-      color: theme.mistText,
+    totalAmountRow: {
+      alignItems: 'flex-start',
+    },
+    countRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 12,
     },
     totalAmount: {
       fontFamily: theme.fonts.display,
@@ -329,13 +380,13 @@ function createStyles(theme: AppTheme) {
       color: theme.ink,
       fontVariant: ['tabular-nums'],
       includeFontPadding: false,
-      marginTop: 4,
+      marginTop: 6,
     },
     totalCount: {
       fontFamily: theme.fonts.ui,
       fontSize: typeScale.secondary,
       color: theme.slate,
-      marginTop: 4,
+      flexShrink: 1,
     },
     addCompact: {
       width: 44,
@@ -347,22 +398,14 @@ function createStyles(theme: AppTheme) {
       borderStyle: 'dashed',
       borderColor: theme.cloudDashed,
       backgroundColor: theme.white,
-      marginLeft: 12,
     },
     addCompactPressed: {
       backgroundColor: theme.snow,
     },
-    eyebrow: {
-      fontFamily: theme.fonts.uiSemibold,
-      fontSize: typeScale.eyebrow,
-      letterSpacing: typeScale.eyebrowLetterSpacing,
-      textTransform: 'uppercase',
-      color: theme.mistText,
-      marginTop: 16,
-      marginBottom: 6,
-      marginLeft: 4,
-    },
     card: {
+      // Was the "Scheduled" eyebrow's marginTop 16 plus its own 6; the eyebrow
+      // retired (2026-09-11) and the card takes the gap directly.
+      marginTop: 16,
       backgroundColor: theme.white,
       borderWidth: 1,
       borderColor: theme.cloud,
@@ -387,27 +430,11 @@ function createStyles(theme: AppTheme) {
     rowText: {
       flex: 1,
     },
-    nameLine: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 6,
-    },
     name: {
       fontFamily: theme.fonts.uiSemibold,
       fontSize: typeScale.body,
       color: theme.ink,
       flexShrink: 1,
-    },
-    pill: {
-      paddingHorizontal: 8,
-      paddingVertical: 2,
-      borderRadius: radii.pill,
-      backgroundColor: withAlpha(theme.amber, 0.14),
-    },
-    pillLabel: {
-      fontFamily: theme.fonts.uiBold,
-      fontSize: typeScale.eyebrow,
-      color: theme.amberInk,
     },
     schedule: {
       fontFamily: theme.fonts.ui,
@@ -418,6 +445,13 @@ function createStyles(theme: AppTheme) {
     rowAmount: {
       alignItems: 'flex-end',
       marginLeft: 8,
+      // The multiplier line is the widest thing this column ever holds, and
+      // without a cap its intrinsic width won the row and truncated the
+      // schedule line beside it ("Monthly, next Se..."). Capped, both money
+      // lines shrink to fit instead, which is the rule money text already
+      // follows (spec 09 section 1 rule 6).
+      flexShrink: 1,
+      maxWidth: '46%',
     },
     amount: {
       fontFamily: theme.fonts.uiSemibold,
@@ -425,7 +459,9 @@ function createStyles(theme: AppTheme) {
       color: theme.ink,
       fontVariant: ['tabular-nums'],
     },
-    cadence: {
+    // Inherits the retired cadence line's slot and tokens exactly, so the row
+    // keeps its shape and this introduces no new type step and no new colour.
+    multiplier: {
       fontFamily: theme.fonts.ui,
       fontSize: typeScale.caption,
       color: theme.mistText,

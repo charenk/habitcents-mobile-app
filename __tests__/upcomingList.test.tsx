@@ -104,7 +104,9 @@ async function renderList(overrides: Partial<React.ComponentProps<typeof Upcomin
 afterEach(cleanup);
 
 describe('UpcomingList summary block', () => {
-  it('left-aligns the eyebrow/total/count text block', async () => {
+  // 2026-09-11: the card became three rows, so this pins the AMOUNT's own row
+  // rather than a three-line block. The testID moved with the meaning.
+  it('left-aligns the total', async () => {
     const view = await renderList();
     const block = view.getByTestId('upcoming-total-text');
     expect(StyleSheet.flatten(block.props.style).alignItems).toBe('flex-start');
@@ -126,6 +128,20 @@ describe('UpcomingList summary block', () => {
   it('drops the "from N bills" clause when payments and bills agree', async () => {
     const view = await renderList({ items: [singleItem] });
     expect(view.getByText('1 payment')).toBeTruthy();
+  });
+
+  /**
+   * The card keeps its full shape when the window is empty, which is a layout
+   * decision with a behavioural reason: the filter lives in row 1, so a row
+   * that collapsed here would shrink the card under the finger that tapped it
+   * and shove the list up. $0.00 over "0 payments" is also just true, and the
+   * body line under the card says why.
+   */
+  it('holds its shape on an empty window, at an honest zero', async () => {
+    const view = await renderList({ items: [] });
+    expect(view.getByTestId('upcoming-total-text')).toBeTruthy();
+    expect(view.getByText('$0.00')).toBeTruthy();
+    expect(view.getByText('0 payments')).toBeTruthy();
   });
 });
 
@@ -156,6 +172,70 @@ describe('UpcomingList add affordance', () => {
     expect(view.getByLabelText(strings.money.upcomingAddAffordance)).toBeTruthy();
     expect(view.getByRole('tab', { name: /2 weeks/ })).toBeTruthy();
     expect(view.getByText(strings.money.upcomingWindowEmptyBody)).toBeTruthy();
+  });
+
+  // One affordance, not two. The window-empty body used to carry a CTA saying
+  // the same words as the dashed plus sitting 40pt above it. Asserted by
+  // count, because the surviving plus answers to the same accessible name:
+  // "there is exactly one of these" is the decision, not "there are none".
+  it('offers no second add CTA in the window-empty state', async () => {
+    const view = await renderList({ items: [] });
+    expect(
+      view.getAllByRole('button', { name: strings.money.upcomingAddAffordance })
+    ).toHaveLength(1);
+    // The plus is an icon; only the retired CTA drew those words on screen.
+    expect(view.queryByText(strings.money.upcomingAddAffordance)).toBeNull();
+  });
+});
+
+describe('UpcomingList section eyebrow', () => {
+  // Retired 2026-09-11: a heading over the only list on the pane, under a card
+  // that already says what the pane is. Pinned so it is not quietly restored.
+  it('renders no "Scheduled" heading above the rows', async () => {
+    const view = await renderList();
+    expect(view.queryByText(strings.money.upcomingListEyebrow)).toBeNull();
+  });
+});
+
+describe('UpcomingList row multiplier', () => {
+  /**
+   * S1, stated as arithmetic rather than as layout. The card used to count
+   * occurrences while the rows counted bills, so a headline of $560.00 sat
+   * above rows summing to $530.00 with nothing on screen reconciling them.
+   * A row's number is now its windowed subtotal, which is what makes the
+   * column add up to the headline.
+   */
+  it('sums the row numbers to exactly the card headline', async () => {
+    const view = await renderList();
+    // Rent 500.00 once, Gym 30.00 twice: 500.00 + 60.00 = 560.00.
+    expect(view.getByText('$560.00')).toBeTruthy();
+    expect(view.getByText('$500.00')).toBeTruthy();
+    expect(view.getByText('$60.00')).toBeTruthy();
+  });
+
+  it('names the unit price under a bill that lands more than once', async () => {
+    const view = await renderList();
+    expect(view.getByText(strings.money.upcomingRowMultiplier(2, '$30.00'))).toBeTruthy();
+    expect(view.getByText('\u00D72 \u00B7 $30.00')).toBeTruthy();
+  });
+
+  // What it says when the count is 1: nothing. At the narrow windows, where
+  // nothing repeats, the row is exactly what it was before this change.
+  it('renders no multiplier at all for a bill that lands once', async () => {
+    const view = await renderList({ items: [singleItem] });
+    expect(view.queryByText(/\u00D7/)).toBeNull();
+  });
+
+  it('speaks the multiplier between the amount and the schedule line', async () => {
+    const view = await renderList();
+    const label = view.getByLabelText(/^Gym,/).props.accessibilityLabel as string;
+    expect(label).toContain('$60.00, 2 payments of $30.00, ');
+  });
+
+  // C5: the row stated its timing twice, once relative and once absolute.
+  it('states each row timing once, not twice', async () => {
+    const view = await renderList();
+    expect(view.queryByText('in 3 days')).toBeNull();
   });
 });
 

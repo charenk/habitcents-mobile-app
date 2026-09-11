@@ -189,6 +189,58 @@ describe('AddUpcomingSheet add mode (regression)', () => {
   });
 });
 
+/**
+ * Parity with ExpenseSheet (Charen's annotations, 2026-09-11). The two sheets
+ * are the same form and used to read as two: this one put its presets above
+ * the name field, had no category control at all, wore an underline amount
+ * field where the log sheet wore an enclosed one, and kept its delete as a
+ * full-width coral row in the footer.
+ */
+describe('AddUpcomingSheet: one pattern with the log sheet', () => {
+  it('offers the category rail as a real control, seeded from the row', async () => {
+    const expense = makeExpense({ id: 'e1', category: 'Entertainment' });
+    const view = await renderEdit(expense);
+
+    expect(view.getByLabelText(/^Entertainment,.*selected/)).toBeTruthy();
+  });
+
+  // "Mortgage/Rent" on purpose: the name presets also carry a "Utilities"
+  // chip, so that label is ambiguous by accessible name across the two rails.
+  // See the Open note in design/decisions/components/AddUpcomingSheet.md.
+  it('lets the user recategorize without touching the name', async () => {
+    const expense = makeExpense({ id: 'e1', category: 'Entertainment' });
+    const view = await renderEdit(expense);
+
+    await tap(view.getByLabelText('Mortgage/Rent, not selected'));
+    await tap(view.getByRole('button', { name: strings.addUpcoming.saveChanges }));
+
+    const [, updates] = mockUpdateExpense.mock.calls[0];
+    expect(updates.category).toBe('Mortgage');
+    expect(updates.title).toBe('Gym');
+  });
+
+  // The preset is a shortcut INTO the rail now, not a hidden second opinion
+  // that only surfaced at save time.
+  it('moves the category rail when a name preset is tapped', async () => {
+    const view = await renderAdd();
+
+    await typeAmount(view, '30');
+    await tap(view.getByLabelText('Gym, not selected'));
+
+    expect(view.getByLabelText(/^Entertainment,.*selected/)).toBeTruthy();
+  });
+
+  it('puts delete in the header, not the footer', async () => {
+    const expense = makeExpense({ id: 'e1' });
+    const view = await renderEdit(expense);
+
+    const del = view.getByRole('button', { name: strings.addUpcoming.deleteUpcoming });
+    // An icon action, so it draws no label; the footer row did.
+    expect(view.queryByText(strings.addUpcoming.deleteUpcoming)).toBeNull();
+    expect(del).toBeTruthy();
+  });
+});
+
 describe('AddUpcomingSheet edit mode: prefill and untouched-schedule round trip', () => {
   it('prefills amount, name and schedule, and Save alone leaves the schedule untouched', async () => {
     const expense = makeExpense({ id: 'e1' });
@@ -210,6 +262,66 @@ describe('AddUpcomingSheet edit mode: prefill and untouched-schedule round trip'
     expect(updates.recurrenceRule).toEqual({ type: 'monthly', monthDay: '15' });
     expect(updates.amount).toBe(4500);
     expect(updates.title).toBe('Gym');
+  });
+
+  /**
+   * D1. A monthly rule stored before step 04 has no `monthDay`: it steps from
+   * its own anchor date, which is why the list correctly says "Monthly, next
+   * Sep 29". The sheet used to read `rule.monthDay ?? '1'` and light up "1st",
+   * so it stated something false about a rule every other surface described
+   * correctly, and any schedule tap would then rebuild from the wrong anchor
+   * and move the bill to the 1st.
+   */
+  it('lights no day chip for a legacy monthly rule, and says what it actually does', async () => {
+    const expense = makeExpense({
+      id: 'e1',
+      date: new Date('2026-08-29T00:00:00'),
+      recurrenceRule: { type: 'monthly' },
+    });
+    const view = await renderEdit(expense);
+
+    expect(view.getByLabelText('Monthly, selected')).toBeTruthy();
+    // The regression pin: no chip claims this rule.
+    expect(view.queryByLabelText('1st, selected')).toBeNull();
+    expect(view.getByLabelText('1st, not selected')).toBeTruthy();
+    expect(view.getByLabelText('15th, not selected')).toBeTruthy();
+    expect(view.getByLabelText('30th, not selected')).toBeTruthy();
+    expect(view.getByLabelText('Last day, not selected')).toBeTruthy();
+
+    // And it names the date it is actually on, which is what made the defect
+    // invisible: nothing on the sheet echoed the schedule it would write.
+    expect(view.getByText(/Repeats on the same day each month/)).toBeTruthy();
+  });
+
+  it('saves a legacy monthly rule back unchanged when the schedule is untouched', async () => {
+    const expense = makeExpense({
+      id: 'e1',
+      date: new Date('2026-08-29T00:00:00'),
+      recurrenceRule: { type: 'monthly' },
+    });
+    const view = await renderEdit(expense);
+
+    await tap(view.getByRole('button', { name: strings.addUpcoming.saveChanges }));
+
+    const [, updates] = mockUpdateExpense.mock.calls[0];
+    expect(updates.date).toEqual(expense.date);
+    expect(updates.recurrenceRule).toEqual({ type: 'monthly' });
+  });
+
+  it('moves a legacy monthly rule only when a day is actually picked', async () => {
+    const expense = makeExpense({
+      id: 'e1',
+      date: new Date('2026-08-29T00:00:00'),
+      recurrenceRule: { type: 'monthly' },
+    });
+    const view = await renderEdit(expense);
+
+    await tap(view.getByLabelText('15th, not selected'));
+    await tap(view.getByRole('button', { name: strings.addUpcoming.saveChanges }));
+
+    const [, updates] = mockUpdateExpense.mock.calls[0];
+    expect(updates.recurrenceRule).toEqual({ type: 'monthly', monthDay: '15' });
+    expect(updates.date?.getDate()).toBe(15);
   });
 
   it('editing the amount alone does not touch the schedule', async () => {

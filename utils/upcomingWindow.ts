@@ -12,13 +12,53 @@
  * here, so they can never disagree about what "the window" means.
  */
 
+import type { Expense } from '@/types/expense';
+import { computeUpcoming, hasUpcomingInWindow } from '@/utils/recurring';
+
 export type UpcomingWindowDays = 14 | 30 | 90;
 
 /** Ascending, so any UI zipping this with labels renders shortest-first. */
 export const UPCOMING_WINDOW_PRESETS: readonly UpcomingWindowDays[] = [14, 30, 90];
 
-/** 2 weeks: short enough that "what's coming" reads as imminent, not a quarter. */
-export const DEFAULT_UPCOMING_WINDOW_DAYS: UpcomingWindowDays = 14;
+/**
+ * The window to fall back to when NONE of the presets has anything in it.
+ *
+ * This used to be 14, on the reasoning that "what's coming" should read as
+ * imminent rather than as a quarter. Good instinct, wrong arithmetic: monthly
+ * bills land once a month, so a 14-day opening window produced the
+ * window-empty state on first open roughly half the time, and the most common
+ * bill there is was the one it hid. The imminence instinct now lives in
+ * `pickDefaultUpcomingWindow` below, which opens on the NARROWEST window that
+ * actually has something in it; this constant only decides what to show
+ * someone whose bills are all further out than 90 days, or who has none.
+ */
+export const DEFAULT_UPCOMING_WINDOW_DAYS: UpcomingWindowDays = 30;
+
+/**
+ * The window to open on for a user who has never picked one: the narrowest
+ * preset with at least one bill in it, or the default when none of them has.
+ * A stored choice always wins over this, and any tap freezes it; see
+ * app/(tabs)/money.tsx.
+ *
+ * It projects through the same pipeline the pane renders, `advancePastToday`
+ * included, so "this window has data" and "this window shows rows" cannot
+ * disagree. That is not a detail: a bill due only TODAY has already been
+ * materialized into Spent and is never shown here, so a naive
+ * `computeUpcoming(expenses, 14).length > 0` would pick 14 and then render
+ * window-empty, reproducing the exact defect this function exists to prevent.
+ *
+ * Three bounded projections over a list the screen already holds in memory,
+ * and only while no explicit choice exists.
+ */
+export function pickDefaultUpcomingWindow(
+  expenses: Expense[],
+  from: Date = new Date()
+): UpcomingWindowDays {
+  for (const days of UPCOMING_WINDOW_PRESETS) {
+    if (hasUpcomingInWindow(computeUpcoming(expenses, days, from), from)) return days;
+  }
+  return DEFAULT_UPCOMING_WINDOW_DAYS;
+}
 
 export function isUpcomingWindowDays(value: unknown): value is UpcomingWindowDays {
   return (

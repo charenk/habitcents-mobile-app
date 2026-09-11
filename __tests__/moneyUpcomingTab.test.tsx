@@ -124,6 +124,35 @@ describe('Money > Upcoming: window filter', () => {
     expect(await AsyncStorage.getItem(UPCOMING_WINDOW_KEY)).toBe('90');
   });
 
+  /**
+   * D2: a fixed 14-day default opened on the window-empty state roughly half
+   * the time, because monthly bills land once a month. With no stored choice
+   * the pane now derives its window from the data, narrowest-first.
+   */
+  it('opens on the narrowest window that has a bill in it, with no stored choice', async () => {
+    // 25 days out: past 2 weeks, inside 1 month.
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const date = new Date(today);
+    date.setDate(date.getDate() + 25);
+
+    await saveExpenses([
+      {
+        ...monthlyBill('e1', 15),
+        date,
+        recurrenceRule: { type: 'monthly' },
+      },
+    ]);
+
+    const view = await renderMoney();
+    await openUpcomingSegment(view);
+
+    expect(view.getByRole('tab', { name: /1 month, selected/ })).toBeTruthy();
+    expect(view.getByText(strings.money.upcomingWindowEyebrow(30))).toBeTruthy();
+    // The point of the derivation: the pane it opens on is not empty.
+    expect(view.queryByText(strings.money.upcomingWindowEmptyBody)).toBeNull();
+  });
+
   it('loads a previously persisted preset on mount, not the default', async () => {
     await saveExpenses([monthlyBill('e1', 15)]);
     await AsyncStorage.setItem(UPCOMING_WINDOW_KEY, '90');

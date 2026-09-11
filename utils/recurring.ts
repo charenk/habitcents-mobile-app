@@ -374,14 +374,31 @@ export function upcomingTotal(items: UpcomingItem[]): number {
 }
 
 /**
+ * What ONE item contributes to the window, as a payment count and as cents.
+ *
+ * These exist so the row and the card headline are computed from one
+ * definition rather than two that happen to agree. Before them, the reducers
+ * below owned the `Math.max(1, ...)` floor and the row rendered
+ * `expense.amount`, so a card saying "$6,643.14, 12 payments from 4 bills" sat
+ * above four rows summing to $2,214.38 with nothing on screen reconciling
+ * them. The floor is here, once: an item with no occurrences recorded still
+ * counts as the one payment `nextDate` promises.
+ */
+export function upcomingItemPayments(item: UpcomingItem): number {
+  return Math.max(1, item.occurrencesInWindow.length);
+}
+
+/** Cents this item contributes to the window total. */
+export function upcomingItemWindowTotal(item: UpcomingItem): number {
+  return item.expense.amount * upcomingItemPayments(item);
+}
+
+/**
  * Total cents actually due inside the window: every occurrence counts, so a
  * weekly item due 9 times in 60 days contributes 9 payments, not 1.
  */
 export function upcomingWindowTotal(items: UpcomingItem[]): number {
-  return items.reduce(
-    (sum, i) => sum + i.expense.amount * Math.max(1, i.occurrencesInWindow.length),
-    0
-  );
+  return items.reduce((sum, i) => sum + upcomingItemWindowTotal(i), 0);
 }
 
 /**
@@ -392,10 +409,20 @@ export function upcomingWindowTotal(items: UpcomingItem[]): number {
  * as it contributes nine occurrences to the total above.
  */
 export function upcomingWindowPaymentsCount(items: UpcomingItem[]): number {
-  return items.reduce((sum, i) => sum + Math.max(1, i.occurrencesInWindow.length), 0);
+  return items.reduce((sum, i) => sum + upcomingItemPayments(i), 0);
 }
 
-/** "in 6 days" / "Today" / "Tomorrow" label. */
+/**
+ * "in 6 days" / "Today" / "Tomorrow" label.
+ *
+ * RETIRED FROM RENDERING (2026-09-11): an Upcoming row states its timing once
+ * now, as the absolute date inside `describeSchedule`, because the relative
+ * and absolute forms were saying the same thing in two places on one row. Kept
+ * rather than deleted: `UpcomingItem.daysUntil` is still computed and still
+ * used by `advancePastToday`, so this is a live revert path, not dead code.
+ * Its 'Today' branch was already unreachable on that surface, since a
+ * due-today occurrence is materialized into Spent and advanced past here.
+ */
 export function daysUntilLabel(daysUntil: number): string {
   if (daysUntil <= 0) return 'Today';
   if (daysUntil === 1) return 'Tomorrow';
@@ -419,8 +446,12 @@ function monthDayLabel(monthDay: MonthDayOption): string {
   return monthDay === '15' ? strings.addUpcoming.monthDayFifteenth : strings.addUpcoming.monthDayThirtieth;
 }
 
-/** "Aug 1" in the device locale (ADA-008: never hardcode en-US). */
-function shortDate(date: Date): string {
+/**
+ * "Aug 1" in the device locale (ADA-008: never hardcode en-US). Exported so a
+ * row whose rule failed to resolve can degrade to the same date form the
+ * schedule line would have used, rather than inventing a second one.
+ */
+export function shortDate(date: Date): string {
   return formatDate(date, { month: 'short', day: 'numeric' });
 }
 
@@ -497,4 +528,50 @@ export function hasFullMonthOfData(expenses: Expense[]): boolean {
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   return expenses.some((e) => e.date < monthStart);
+}
+
+/**
+ * Upcoming advances past a due-today occurrence (ADR 0024, U11): by the time
+ * the Money screen renders, the materializer (contexts/ExpensesContext.tsx) has
+ * already turned any occurrence due today into a real Spent row, so showing
+ * it again here would resurrect the pre-ADR-0024 "same row in both tabs" bug.
+ *
+ * `computeUpcoming` itself stays untouched (it's pure and its own tests pin
+ * "on/after from" -- this is a display-only adjustment, not a projection
+ * change): an item whose earliest occurrence is today gets re-pointed at its
+ * next occurrence already present in `occurrencesInWindow` (nothing here
+ * re-projects anything), or dropped if today's was its only occurrence in the
+ * window. `nextDate`/`daysUntil` stay relative to real "today" throughout, so
+ * the "Tomorrow" / "in N days" pill keeps meaning what it says. Re-pointing
+ * also trims `occurrencesInWindow` down to future dates only, which is the
+ * same list #95's payments count sums over -- so "how many payments" now
+ * counts only future ones for free, without touching upcomingWindowTotal/
+ * upcomingWindowPaymentsCount themselves.
+ */
+export function advancePastToday(items: UpcomingItem[], todayMid: number): UpcomingItem[] {
+  const out: UpcomingItem[] = [];
+  for (const item of items) {
+    if (item.nextDate.getTime() > todayMid) {
+      out.push(item);
+      continue;
+    }
+    const future = item.occurrencesInWindow.filter((d) => d.getTime() > todayMid);
+    if (future.length === 0) continue; // today's due date was the only one in the window
+    const nextDate = future[0];
+    const daysUntil = Math.round((nextDate.getTime() - todayMid) / MS_PER_DAY);
+    out.push({ ...item, nextDate, daysUntil, occurrencesInWindow: future });
+  }
+  return out;
+}
+
+/**
+ * Whether this projection has anything to show once a due-today occurrence has
+ * been advanced past. The window picker's default (see
+ * utils/upcomingWindow.ts) asks exactly this question, and it must ask it
+ * through `advancePastToday` rather than `computeUpcoming` alone: a bill due
+ * only today has already been materialized into Spent and is never shown on
+ * Upcoming, so counting it would open on a window that then renders empty.
+ */
+export function hasUpcomingInWindow(items: UpcomingItem[], from: Date = new Date()): boolean {
+  return advancePastToday(items, atMidnight(from).getTime()).length > 0;
 }

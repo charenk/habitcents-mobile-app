@@ -14,6 +14,8 @@ import {
   resolveRule,
   upcomingTotal,
   upcomingWindowPaymentsCount,
+  upcomingItemPayments,
+  upcomingItemWindowTotal,
   upcomingWindowTotal,
 } from '@/utils/recurring';
 import { formatDate } from '@/utils/dates';
@@ -535,6 +537,48 @@ describe('upcomingWindowPaymentsCount (U8: agrees with upcomingWindowTotal)', ()
 
   it('is zero for an empty list', () => {
     expect(upcomingWindowPaymentsCount([])).toBe(0);
+  });
+});
+
+/**
+ * The per-item pair the card headline and the row both read from. They exist
+ * so those two can never disagree: before them the reducers owned the
+ * `Math.max(1, ...)` floor and the row rendered `expense.amount`, which is how
+ * a card total and a column of rows ended up measuring different things.
+ */
+describe('upcomingItemPayments / upcomingItemWindowTotal', () => {
+  const weekly = legacy('weekly', '2026-06-29T00:00:00', { id: 'w1', amount: 1599 });
+  const monthly = legacy('monthly', '2026-06-15T00:00:00', { id: 'm1', amount: 5000 });
+
+  it('multiplies the unit amount by the occurrences in the window', () => {
+    const items = computeUpcoming([weekly, monthly], 60, FROM);
+    const [first, second] = items;
+
+    expect(upcomingItemPayments(first) * first.expense.amount).toBe(
+      upcomingItemWindowTotal(first)
+    );
+    expect(upcomingItemPayments(second) * second.expense.amount).toBe(
+      upcomingItemWindowTotal(second)
+    );
+  });
+
+  it('floors at the one payment nextDate promises, even with no occurrences recorded', () => {
+    const items = computeUpcoming([monthly], 40, FROM);
+    const bare = { ...items[0], occurrencesInWindow: [] };
+
+    expect(upcomingItemPayments(bare)).toBe(1);
+    expect(upcomingItemWindowTotal(bare)).toBe(bare.expense.amount);
+  });
+
+  it('reduces to exactly what the two window helpers report', () => {
+    const items = computeUpcoming([weekly, monthly], 60, FROM);
+
+    expect(items.reduce((sum, i) => sum + upcomingItemWindowTotal(i), 0)).toBe(
+      upcomingWindowTotal(items)
+    );
+    expect(items.reduce((sum, i) => sum + upcomingItemPayments(i), 0)).toBe(
+      upcomingWindowPaymentsCount(items)
+    );
   });
 });
 

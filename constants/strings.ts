@@ -60,6 +60,10 @@ export const strings = {
     editAccessibilityLabel: (title: string, amountLabel: string) => `Edit ${title}, ${amountLabel}`,
   },
   upcoming: {
+    // RETIRED FROM RENDERING (2026-09-11): superseded long ago by
+    // money.upcomingWindowEyebrow, which stays sentence case so a screen
+    // reader speaks it as words and lets the stylesheet own the casing
+    // (UX-060). Zero references; kept for overlay-shape stability.
     totalLabel: (windowDays: number) => `NEXT ${windowDays} DAYS`,
     recurringCount: (count: number) =>
       `${count} recurring ${count === 1 ? 'expense' : 'expenses'}`,
@@ -1094,9 +1098,18 @@ export const strings = {
     upcomingWindowEyebrow: (days: number) => `Next ${days} days`,
     // U8: the window presets picker (2 weeks / 1 month / 3 months).
     upcomingWindowSegmentLabel: 'Upcoming window',
+    // These three are now what VoiceOver HEARS. The filter moved into the
+    // total card's corner and abbreviates on screen (the *Short keys below),
+    // so these keep their words and their ten translations rather than being
+    // repurposed into abbreviations that would orphan them.
     upcomingWindowTwoWeeks: '2 weeks',
     upcomingWindowOneMonth: '1 month',
     upcomingWindowThreeMonths: '3 months',
+    // What the compact filter SHOWS. Abbreviations are visual only; a locale
+    // that cannot abbreviate meaningfully can safely overlay the long form.
+    upcomingWindowTwoWeeksShort: '2w',
+    upcomingWindowOneMonthShort: '1m',
+    upcomingWindowThreeMonthsShort: '3m',
     // The total sums every occurrence in the window (upcomingWindowTotal), so
     // this line counts the same thing: payments, not distinct bills. When a
     // bill repeats inside the window the two numbers differ ("11 payments
@@ -1116,6 +1129,10 @@ export const strings = {
     // RETIRED FROM RENDERING (ADR 0037's one-hook pass); kept for the
     // localization migration and the tests that pin its absence.
     habitsEmptyBody: 'Keep logging and patterns surface on their own. Or pick a habit to break yourself.',
+    // RETIRED FROM RENDERING (2026-09-11): a section heading over the only
+    // list on the pane, directly under a card that already says what the pane
+    // is. Kept for the localization migration and the test that pins its
+    // absence.
     upcomingListEyebrow: 'Scheduled',
     // True zero-data state (no recurring expense exists at all), distinct
     // from the window-empty state below (a recurring expense exists, just
@@ -1129,12 +1146,40 @@ export const strings = {
     // Window-empty only: this user already HAS a recurring expense, so
     // telling them to mark one as repeating (the line above) instructed them
     // to do a thing they had already done. States the actual situation; the
-    // window picker above the card is how they widen it.
-    upcomingWindowEmptyBody: 'None of your repeating expenses land in this window.',
+    // window picker in the card's corner is how they widen it.
+    // 2026-09-11: "repeating expenses" became "bills", settling on one noun
+    // for this object (the pane was using four). VALUE CHANGE: the ten locale
+    // overlays need a re-translation of this key.
+    upcomingWindowEmptyBody: 'None of your bills land in this window.',
     // Same words as upcomingAddAffordance (the header affordance), its own key
     // so the true-zero empty state's CTA can be targeted unambiguously.
     upcomingEmptyCta: 'Add an upcoming expense',
+    // RETIRED FROM RENDERING (2026-09-11): the row now carries its own
+    // multiplier, scoped to the picked window, and the pill was scoped to a
+    // calendar month. A weekly bill at the 1 month window showed "x4" on the
+    // right and "5 payments in Sep" in the pill: both correct, neither
+    // reconcilable against the other. `multiPaymentMonth` stays exported and
+    // fully tested; only this rendering retires. Kept for overlay-shape
+    // stability and the test that pins its absence.
     multiPaymentPill: (count: number, monthLabel: string) => `${count} payments in ${monthLabel}`,
+    // What a row says when its bill lands more than once inside the window.
+    // The row's big number is the WINDOWED SUBTOTAL, so the column of big
+    // numbers sums to the card's headline; this line names the unit price the
+    // subtotal is built from, and the edit sheet opens on. Renders nothing at
+    // all when the count is 1. U+00D7, not the letter x; the middot matches
+    // scheduleSeparator.
+    //
+    // No "each" (2026-09-11, seen on device): it read well and cost the row
+    // about 30pt, which truncated the schedule line beside it into "next
+    // Se...". The multiplication sign already says this is the unit price, and
+    // a truncated date is a worse loss than an implied word. The spoken form
+    // below says it in full, where nothing is competing for width.
+    upcomingRowMultiplier: (count: number, unitAmount: string) =>
+      `\u00D7${count} \u00B7 ${unitAmount}`,
+    // VoiceOver: neither the multiplication sign nor the middot reads as a
+    // word. Same contract as badgeSpoken and labelSpoken.
+    upcomingRowMultiplierSpoken: (count: number, unitAmount: string) =>
+      `${count} payments of ${unitAmount}`,
     // Schedule line under an upcoming row, assembled in utils/recurring.ts:
     // "Monthly · 1st · next Aug 1", "Every 2 weeks · next Aug 14".
     scheduleSeparator: ' · ',
@@ -1189,6 +1234,13 @@ export const strings = {
     startingThisWeek: 'This week',
     startingNextWeek: 'Next week',
     onThe: 'On the',
+    // A monthly rule stored before step 04 has no monthDay: it steps from its
+    // own anchor date, so none of the four chips describes it. The sheet used
+    // to preselect "1st" for these, which was the sheet stating something
+    // false about a rule the list was describing correctly. No chip is
+    // selected in that state, and this line says what the rule actually does.
+    monthDayAnchorNote: (date: string) =>
+      `Repeats on the same day each month, next on ${date}. Pick a day to move it.`,
     monthDayFirst: '1st',
     monthDayFifteenth: '15th',
     monthDayThirtieth: '30th',

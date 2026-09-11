@@ -8,13 +8,12 @@ import {
   getExpenses,
   getHabitGoals,
   getScanSummary,
-  getUpcomingWindowDays,
+  getStoredUpcomingWindowDays,
   saveCoachMomentState,
   saveScanSummary,
   setUpcomingWindowDays,
 } from '@/utils/storage';
 import { dayStateFor } from '@/utils/habitLogging';
-import { DEFAULT_UPCOMING_WINDOW_DAYS } from '@/utils/upcomingWindow';
 import type { ScanSummary } from '@/types/scanSummary';
 
 const EXPENSES_KEY = '@habitcents_expenses';
@@ -275,23 +274,26 @@ describe('scan summary storage', () => {
 });
 
 describe('Upcoming window persistence (U8)', () => {
-  it('defaults to DEFAULT_UPCOMING_WINDOW_DAYS when nothing is stored', async () => {
-    expect(await getUpcomingWindowDays()).toBe(DEFAULT_UPCOMING_WINDOW_DAYS);
+  // Null, not the default. Collapsing "never picked" into "picked the default"
+  // is what made the smart opening window impossible to build without
+  // overriding a real choice (utils/upcomingWindow.pickDefaultUpcomingWindow).
+  it('returns null when the user has never picked a window', async () => {
+    expect(await getStoredUpcomingWindowDays()).toBeNull();
   });
 
   it('round-trips each valid preset', async () => {
     for (const days of [14, 30, 90] as const) {
       await setUpcomingWindowDays(days);
-      expect(await getUpcomingWindowDays()).toBe(days);
+      expect(await getStoredUpcomingWindowDays()).toBe(days);
     }
   });
 
-  it('falls back to the default on a corrupt or out-of-range stored value', async () => {
+  it('reads a corrupt or out-of-range stored value as no choice at all', async () => {
     await AsyncStorage.setItem(UPCOMING_WINDOW_KEY, '60');
-    expect(await getUpcomingWindowDays()).toBe(DEFAULT_UPCOMING_WINDOW_DAYS);
+    expect(await getStoredUpcomingWindowDays()).toBeNull();
 
     await AsyncStorage.setItem(UPCOMING_WINDOW_KEY, 'not-a-number');
-    expect(await getUpcomingWindowDays()).toBe(DEFAULT_UPCOMING_WINDOW_DAYS);
+    expect(await getStoredUpcomingWindowDays()).toBeNull();
   });
 });
 

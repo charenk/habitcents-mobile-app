@@ -46,9 +46,13 @@ import type { Expense } from '@/types/expense';
 import { groupExpensesByDate } from '@/data/expensesMock';
 import { isHabitLimitReached } from '@/utils/habitLogging';
 import { getEntitlement } from '@/utils/purchases';
-import { computeUpcoming, resolveRule, type UpcomingItem } from '@/utils/recurring';
-import { getUpcomingWindowDays, setUpcomingWindowDays } from '@/utils/storage';
-import { DEFAULT_UPCOMING_WINDOW_DAYS, type UpcomingWindowDays } from '@/utils/upcomingWindow';
+import { advancePastToday, computeUpcoming, resolveRule } from '@/utils/recurring';
+import { getStoredUpcomingWindowDays, setUpcomingWindowDays } from '@/utils/storage';
+import {
+  DEFAULT_UPCOMING_WINDOW_DAYS,
+  pickDefaultUpcomingWindow,
+  type UpcomingWindowDays,
+} from '@/utils/upcomingWindow';
 import { track } from '@/utils/analytics';
 import { useSegmentPager } from '@/utils/useSegmentPager';
 
@@ -60,47 +64,13 @@ type MoneyView = 'spent' | 'upcoming' | 'habits';
  *  module-level so the pager's handlers keep a stable identity across renders. */
 const MONEY_VIEWS = ['spent', 'upcoming', 'habits'] as const satisfies readonly MoneyView[];
 
-/**
- * Upcoming advances past a due-today occurrence (ADR 0024, U11): by the time
- * this screen renders, the materializer (contexts/ExpensesContext.tsx) has
- * already turned any occurrence due today into a real Spent row, so showing
- * it again here would resurrect the pre-ADR-0024 "same row in both tabs" bug.
- *
- * `computeUpcoming` itself stays untouched (it's pure and its own tests pin
- * "on/after from" -- this is a display-only adjustment, not a projection
- * change): an item whose earliest occurrence is today gets re-pointed at its
- * next occurrence already present in `occurrencesInWindow` (nothing here
- * re-projects anything), or dropped if today's was its only occurrence in the
- * window. `nextDate`/`daysUntil` stay relative to real "today" throughout, so
- * the "Tomorrow" / "in N days" pill keeps meaning what it says. Re-pointing
- * also trims `occurrencesInWindow` down to future dates only, which is the
- * same list #95's payments count sums over -- so "how many payments" now
- * counts only future ones for free, without touching upcomingWindowTotal/
- * upcomingWindowPaymentsCount themselves.
- */
-function advancePastToday(items: UpcomingItem[], todayMid: number): UpcomingItem[] {
-  const out: UpcomingItem[] = [];
-  for (const item of items) {
-    if (item.nextDate.getTime() > todayMid) {
-      out.push(item);
-      continue;
-    }
-    const future = item.occurrencesInWindow.filter((d) => d.getTime() > todayMid);
-    if (future.length === 0) continue; // today's due date was the only one in the window
-    const nextDate = future[0];
-    const daysUntil = Math.round((nextDate.getTime() - todayMid) / MS_PER_DAY);
-    out.push({ ...item, nextDate, daysUntil, occurrencesInWindow: future });
-  }
-  return out;
-}
-
 export default function MoneyScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
-  const { expenses } = useExpenses();
+  const { expenses, isLoading: expensesLoading } = useExpenses();
   const { categories } = useCategories();
   const {
     getDiscoveredHabits,
@@ -135,24 +105,52 @@ export default function MoneyScreen() {
   const [addUpcomingVisible, setAddUpcomingVisible] = useState(false);
   const [editingUpcoming, setEditingUpcoming] = useState<Expense | null>(null);
   const [pickOneHabitId, setPickOneHabitId] = useState<string | null>(null);
-  // The 2 weeks / 1 month / 3 months window (U8). Starts at the default and is
-  // replaced by the persisted value once storage answers, so the very first
-  // paint (before that async read resolves) already shows a real preset
-  // rather than a placeholder state.
-  const [windowDays, setWindowDays] = useState<UpcomingWindowDays>(DEFAULT_UPCOMING_WINDOW_DAYS);
+  // The 2 weeks / 1 month / 3 months window (U8), as an explicit choice and a
+  // derived default rather than one piece of state that means both.
+  //
+  // The user's own pick, from storage on mount or from a tap, always wins.
+  // While there has never been one, the window is DERIVED from the data: the
+  // narrowest preset that actually has a bill in it. A 14-day fixed default
+  // opened on the window-empty state roughly half the time, because monthly
+  // bills land once a month.
+  //
+  // Declarative rather than two setStates racing: `chosenWindow ?? autoWindow`
+  // means a real choice short-circuits the derivation, and `autoWindow` is not
+  // even computed while one exists.
+  const [chosenWindow, setChosenWindow] = useState<UpcomingWindowDays | null>(null);
+  const [windowLoaded, setWindowLoaded] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    getUpcomingWindowDays().then((days) => {
-      if (!cancelled) setWindowDays(days);
+    getStoredUpcomingWindowDays().then((days) => {
+      if (cancelled) return;
+      if (days !== null) setChosenWindow(days);
+      setWindowLoaded(true);
     });
     return () => {
       cancelled = true;
     };
   }, []);
 
+  const autoWindow = useMemo(
+    () => (chosenWindow !== null ? null : pickDefaultUpcomingWindow(expenses)),
+    [chosenWindow, expenses]
+  );
+
+  const windowDays = chosenWindow ?? autoWindow ?? DEFAULT_UPCOMING_WINDOW_DAYS;
+
+  // Both async sources have to land before the pane can paint a window, or the
+  // user watches it snap: auto first and then the stored pick a tick later, or
+  // the fallback first and then the real answer when the expenses hydrate. The
+  // pane mounts off-screen (the pager starts on Spent), so in practice nobody
+  // sees the hold.
+  const upcomingReady = windowLoaded && !expensesLoading;
+
   const handleWindowDaysChange = useCallback((days: UpcomingWindowDays) => {
-    setWindowDays(days);
+    // Re-pressing the selected segment still lands here, and that is correct:
+    // an explicit tap, even a no-op one, is the user claiming the window. From
+    // then on it is theirs and the derivation never runs again.
+    setChosenWindow(days);
     void setUpcomingWindowDays(days);
   }, []);
 
@@ -328,15 +326,17 @@ export default function MoneyScreen() {
             contentContainerStyle={[styles.scrollContent, !hasAnyRecurring ? styles.scrollContentEmpty : null]}
             showsVerticalScrollIndicator={false}
           >
-            <UpcomingList
-              items={upcoming}
-              windowDays={windowDays}
-              onWindowDaysChange={handleWindowDaysChange}
-              onAdd={() => setAddUpcomingVisible(true)}
-              onEmptyAdd={handleEmptyAddUpcoming}
-              onEditItem={(expense) => setEditingUpcoming(expense)}
-              hasAnyRecurring={hasAnyRecurring}
-            />
+            {upcomingReady ? (
+              <UpcomingList
+                items={upcoming}
+                windowDays={windowDays}
+                onWindowDaysChange={handleWindowDaysChange}
+                onAdd={() => setAddUpcomingVisible(true)}
+                onEmptyAdd={handleEmptyAddUpcoming}
+                onEditItem={(expense) => setEditingUpcoming(expense)}
+                hasAnyRecurring={hasAnyRecurring}
+              />
+            ) : null}
           </ScrollView>
         </View>
 
