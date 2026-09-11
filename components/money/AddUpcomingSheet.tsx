@@ -910,6 +910,7 @@ export function AddUpcomingSheet({
               selected={emoji === undefined}
               onPress={() => setEmoji(undefined)}
               styles={styles}
+              strings={strings}
             />
             {SPEND_GLYPHS.map((g) => (
               <GlyphCell
@@ -919,6 +920,7 @@ export function AddUpcomingSheet({
                 selected={emoji === g}
                 onPress={() => setEmoji(g)}
                 styles={styles}
+                strings={strings}
               />
             ))}
           </View>
@@ -1170,18 +1172,20 @@ function GlyphCell({
   selected,
   onPress,
   styles,
+  strings,
 }: {
   glyph: string;
   label: string;
   selected: boolean;
   onPress: () => void;
   styles: ReturnType<typeof createStyles>;
+  strings: Catalog;
 }) {
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={selectableLabel(label, selected)}
+      accessibilityLabel={selectableLabel(label, selected, strings)}
       accessibilityState={{ selected }}
       style={({ pressed }) => [
         styles.glyphCell,

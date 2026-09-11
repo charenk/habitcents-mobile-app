@@ -17,13 +17,16 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 import React from 'react';
 import { render } from '@testing-library/react-native';
 import { ThemeProvider } from '@/contexts/ThemeContext';
+import { LocaleProvider } from '@/contexts/LocaleContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 
 function Providers({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider>
-      <CurrencyProvider>{children}</CurrencyProvider>
+      <LocaleProvider>
+        <CurrencyProvider>{children}</CurrencyProvider>
+      </LocaleProvider>
     </ThemeProvider>
   );
 }

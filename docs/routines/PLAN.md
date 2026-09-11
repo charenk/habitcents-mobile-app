@@ -1503,6 +1503,71 @@ work, tracked elsewhere).
 - [ ] `utils/a11y.ts` label helpers pull from the active catalog instead of
       hardcoded English.
 
+      **Run 29: `selectableLabel`'s "selected"/"not selected" pair**, the
+      concrete first target run 25's sweep flagged (item 4 still fully
+      blocked on Charen; see HANDOFF.md DECISIONS NEEDED). Added
+      `common.selected` ("selected") and `common.notSelected` ("not
+      selected") to `constants/strings.ts`, gave `selectableLabel` a
+      `strings: Catalog` third parameter (the standard added-parameter
+      shape), and threaded it through every real call site: three already
+      `useStrings()`-converted screens/components that had `strings` in
+      scope (`CurrencySheet.tsx`, `LanguageSheet.tsx` at two call sites,
+      `SpentKeptChips.tsx` at two call sites), plus two shared leaves that
+      were not yet catalog-converted at all, `components/ui/Chip.tsx` and
+      `components/ui/SegmentedControl.tsx` (added `useStrings()` to both,
+      same as any other leaf conversion). Chip/SegmentedControl's
+      transitive render tree turned up two test files needing
+      `LocaleProvider` added to their local `Providers` wrapper:
+      `selectionHaptics.test.tsx` (renders `SegmentedControl` directly,
+      no LocaleProvider at all) and `categoryChipRow.test.tsx` (renders
+      `Chip` transitively through `CategoryChipRow`; also needed the
+      standard AsyncStorage jest mock added, since `LocaleProvider` reads
+      the persisted override through it and no other test in this file
+      had needed that mock before). Every other test file exercising these
+      two components already had `LocaleProvider` from an earlier run's
+      screen-level conversion (confirmed via the standing "grep the parent
+      chain up to the screen level" check: `ExpenseSheet.tsx`,
+      `AddUpcomingSheet.tsx`, `BreakHabitSheet.tsx`, `UpcomingList.tsx`,
+      `SpendPulse.tsx`, `app/(tabs)/insights.tsx`, `app/(tabs)/money.tsx`
+      all render one or both, all already converted). `__tests__/a11y.test.ts`
+      and the four other test files that call `selectableLabel` directly
+      to construct an expected `getByLabelText` query (`currencySheet`,
+      `languageSheet`, `insightsFirstScan`, `insightsPager`) got the third
+      argument added: the static `strings` import where the test's device
+      locale is English (a11y.test.ts, currencySheet, insightsFirstScan,
+      insightsPager), `getCatalog('fr')` where languageSheet.test.tsx's
+      whole file mocks the device to French (three call sites), matching
+      each file's own already-established pattern for reading the live
+      catalog rather than a hardcoded string.
+
+      Before starting, confirmed `presetChipLabel`/`editedChipLabel` (the
+      file's other two "selected"/"not selected" helpers, both for
+      onboarding preset chips) are dead code: `grep -rn` for each name
+      found zero real call sites anywhere outside `utils/a11y.ts` itself
+      and `__tests__/a11y.test.ts`, only the spec-doc comment reference
+      ("Onboarding chips + bands") that named them. Left both on their
+      original static-English signature rather than converting for no
+      observable benefit, the same treatment given `habitDetail`/
+      `reports`/`editExpenseModal`/`ViewQuote` (run 19, 23, 24); documented
+      in a comment on both functions plus `design/PATTERN_VOCABULARY.md`'s
+      Localization section so a future run doesn't need to re-derive this.
+
+      Checkbox stays open: the rest of `utils/a11y.ts` (roughly a dozen
+      more helpers) still hardcodes English. `weekDotLabel`/
+      `calendarCellLabel` (both read `skipped`/`slipped` directly),
+      `keptHeroLabel` ("Kept so far..."), and `arcLabel` ("of 66 skips")
+      read the locked leak/skip/kept/slip vocabulary and are gated the
+      same as `habitLogging`/`insights`/etc until the DECISIONS NEEDED
+      proposal table is settled. `remindToggleLabel` ("on"/"off"),
+      `projectionTrendLabel` ("up"/"down"), `pulseCellLabel` ("spent"/
+      "no spend"/"outside your files"), `habitCardLabel`,
+      `amountInputLabel`, `fillMerchantLabel`, `deleteCategoryLabel`,
+      `reminderTimeLabel`, and `settingsRowLabel` have no locked-vocabulary
+      blocker and are candidates for the next item-6 slice; each needs the
+      same real-call-site-vs-dead-code check `selectableLabel`'s siblings
+      got here before assuming it is worth converting. One commit; `tsc
+      --noEmit` clean, full suite green (121/121, 1291/1291).
+
 ## Explicitly out of scope
 
 - Store listing metadata and screenshots (human work).

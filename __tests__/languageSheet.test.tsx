@@ -92,11 +92,11 @@ describe('LanguageSheet', () => {
     const view = await renderSheet();
 
     const systemRow = view.getByLabelText(
-      selectableLabel(getCatalog('fr').settings.languageSystemDefault, true)
+      selectableLabel(getCatalog('fr').settings.languageSystemDefault, true, getCatalog('fr'))
     );
     expect(systemRow.props.accessibilityState).toMatchObject({ selected: true });
 
-    const frenchRow = view.getByLabelText(selectableLabel(rowLabel('fr'), false));
+    const frenchRow = view.getByLabelText(selectableLabel(rowLabel('fr'), false, getCatalog('fr')));
     expect(frenchRow.props.accessibilityState).toMatchObject({ selected: false });
   });
 
@@ -105,7 +105,7 @@ describe('LanguageSheet', () => {
     const view = await renderSheet(onClose);
 
     await act(async () => {
-      fireEvent.press(view.getByLabelText(selectableLabel(rowLabel('de'), false)));
+      fireEvent.press(view.getByLabelText(selectableLabel(rowLabel('de'), false, getCatalog('fr'))));
     });
 
     expect(onClose).toHaveBeenCalledTimes(1);

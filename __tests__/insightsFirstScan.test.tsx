@@ -197,7 +197,8 @@ function syntheticSummary(): ScanSummary {
 function scanSegmentLabel(selected: boolean): string {
   return selectableLabel(
     `${strings.insights.scanSegment}, ${strings.insights.scanSegmentBadgeSpoken}`,
-    selected
+    selected,
+    strings
   );
 }
 
@@ -228,7 +229,7 @@ describe('Insights leak finder segment', () => {
     // state unification pass): First scan is a real destination with its own
     // fill empty state, not a segment that only appears once earned.
     expect(view.getByLabelText(strings.insights.scanSegmentControlLabel)).toBeTruthy();
-    expect(view.getByLabelText(selectableLabel(strings.insights.monthSegment, true))).toBeTruthy();
+    expect(view.getByLabelText(selectableLabel(strings.insights.monthSegment, true, strings))).toBeTruthy();
     expect(view.getByLabelText(scanSegmentLabel(false))).toBeTruthy();
 
     expect(view.getByText(strings.insights.leaksTitle)).toBeTruthy();
@@ -334,7 +335,7 @@ describe('Insights leak finder segment', () => {
 
     // Segmented control present, This month selected by default.
     expect(view.getByLabelText(strings.insights.scanSegmentControlLabel)).toBeTruthy();
-    expect(view.getByLabelText(selectableLabel(strings.insights.monthSegment, true))).toBeTruthy();
+    expect(view.getByLabelText(selectableLabel(strings.insights.monthSegment, true, strings))).toBeTruthy();
     expect(view.getByLabelText(scanSegmentLabel(false))).toBeTruthy();
 
     // This month's usual cards still render by default.
