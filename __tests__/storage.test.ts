@@ -4,10 +4,12 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
+  getCoachMomentState,
   getExpenses,
   getHabitGoals,
   getScanSummary,
   getUpcomingWindowDays,
+  saveCoachMomentState,
   saveScanSummary,
   setUpcomingWindowDays,
 } from '@/utils/storage';
@@ -290,5 +292,45 @@ describe('Upcoming window persistence (U8)', () => {
 
     await AsyncStorage.setItem(UPCOMING_WINDOW_KEY, 'not-a-number');
     expect(await getUpcomingWindowDays()).toBe(DEFAULT_UPCOMING_WINDOW_DAYS);
+  });
+});
+
+describe('FL-1 once-ever flag repair (QA 2026-09-11)', () => {
+  const COACH_KEY = '@habitcents_coach_moments';
+
+  it('unspends firstLogShown on a store written before the repair', async () => {
+    // Pre-repair shape: the flag was burned by the old screen-level fire even
+    // though the card never rendered, and no marker exists.
+    await AsyncStorage.setItem(
+      COACH_KEY,
+      JSON.stringify({ firstLogShown: true, detectionShown: true, skipRotationIndex: 3 })
+    );
+
+    const state = await getCoachMomentState();
+
+    expect(state.firstLogShown).toBe(false);
+    expect(state.firstLogShownRepaired).toBe(true);
+    // Everything else survives: this unspends one flag, it is not a reset.
+    expect(state.detectionShown).toBe(true);
+    expect(state.skipRotationIndex).toBe(3);
+  });
+
+  it('does not unspend it a second time once the marker is persisted', async () => {
+    await AsyncStorage.setItem(
+      COACH_KEY,
+      JSON.stringify({ firstLogShown: false, firstLogShownRepaired: true })
+    );
+    // The user then genuinely sees FL-1 and the flag is spent for real.
+    const seen = await getCoachMomentState();
+    await saveCoachMomentState({ ...seen, firstLogShown: true });
+
+    expect((await getCoachMomentState()).firstLogShown).toBe(true);
+  });
+
+  it('leaves a fresh store alone, having nothing to unspend', async () => {
+    const state = await getCoachMomentState();
+
+    expect(state.firstLogShown).toBe(false);
+    expect(state.firstLogShownRepaired).toBe(true);
   });
 });

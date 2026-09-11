@@ -538,17 +538,6 @@ export default function TodayScreen() {
     }
   }, [expenses.length]);
 
-  // FL-1 (P2-2, spec §3 "First log"): the first expense ever saved, surfaced
-  // on the next Today visit. maybeShowFirstLogMoment() is idempotent
-  // (null once already shown), so this is safe to re-run every time the
-  // expense count changes.
-  useEffect(() => {
-    if (expenses.length === 0 || firstLogCardId) return;
-    maybeShowFirstLogMoment().then((cardId) => {
-      if (cardId) setFirstLogCardId(cardId);
-    });
-  }, [expenses.length, firstLogCardId, maybeShowFirstLogMoment]);
-
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
     await refreshHabits(expenses);
@@ -752,6 +741,25 @@ export default function TodayScreen() {
   const partialGoal = partialGoalId ? goals.find((g) => g.id === partialGoalId) ?? null : null;
 
   const isEmpty = sections.length === 0;
+
+  // FL-1 (P2-2, spec §3 "First log"): the first expense ever saved, surfaced on
+  // the next Today visit. Gated on isEmpty as well as on having an expense,
+  // because isEmpty is what decides whether the card renders at all: its only
+  // render site is the Kept pane's zero branch below.
+  //
+  // It used to fire on expenses.length alone, at screen level. That spent the
+  // once-ever flag for anyone who already had a leak or a breaking habit, so
+  // coach_moment_shown reported a card nobody saw and the card could never
+  // appear again. Onboarding Door 3 seeds a habit, so this was the ordinary
+  // first-log path, not an edge case. Same shape as DT-1 above now: fire from
+  // the condition that gates the render. maybeShowFirstLogMoment() is
+  // idempotent, so re-running as the pane fills and empties stays safe.
+  useEffect(() => {
+    if (expenses.length === 0 || !isEmpty || firstLogCardId) return;
+    maybeShowFirstLogMoment().then((cardId) => {
+      if (cardId) setFirstLogCardId(cardId);
+    });
+  }, [expenses.length, isEmpty, firstLogCardId, maybeShowFirstLogMoment]);
 
   // The break-habit affordance (DI-6, ADR 0019), which since ADR 0038 lives
   // in the Kept pane's ActionDock instead of trailing the content. It used to

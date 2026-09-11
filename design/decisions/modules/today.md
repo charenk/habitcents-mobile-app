@@ -14,6 +14,7 @@ Vocabulary (ADR 0034): **Zero** nothing ever happened here; **Quiet** history el
 - Sheets from Today: log, edit, pick one (and its gate), break habit, partial slip. See [drawers](drawers.md).
 
 ## Decisions
+- 2026-09-11 (QA loop): **FL-1 fires where it renders.** Why: the effect fired on `expenses.length > 0` alone, at screen level, and wrote the once-ever flag, while the card's only render site is the Kept pane's zero branch. Anyone who already had a leak or a breaking habit at first log spent the flag having seen nothing, and could never see the card again. Onboarding Door 3 seeds a habit, so that was the ordinary path rather than an edge case. It is now gated on `isEmpty` too, which is the same shape DT-1 and the check-in cards already use: fire from the condition that gates the render. The `coach_moment_shown` payload is unchanged (`trigger`, `card_id`, both structural); what changed is that the event now means shown rather than eligible. Charen delegated this contract call on 2026-09-11. A one-time repair unspends the flag for stores written before the fix, since nothing recorded who genuinely saw the card. QA finding 3.
 - 2026-09-11 (Charen, annotation sets 2+3): the detection meter is gone. Its
   1-of-4 fired on any first log (and 0-of-4 existed for merchantless logs),
   its full bar was reachable and permanent after a dismissal (detection's
@@ -47,7 +48,7 @@ Vocabulary (ADR 0034): **Zero** nothing ever happened here; **Quiet** history el
 - RESOLVED 2026-09-11 (bare merchant name ships): detection named a leak "<merchant> Spending" ("Blue Bottle Spending" on the card and the pick-one sheet). Candidate: the merchant name alone.
 - "Skipped it · keeps $6.50" wraps to two lines at the default text size beside a one-line "Bought it".
 - Free tier at the limit: Break another routes to the paywall rather than the gated sheet the code also carries. Decide which is intended.
-- The FL-1 coach slot on Kept Quiet is snow on the snow ground and reads as floating text.
+- The FL-1 coach slot on Kept Quiet is snow on the snow ground and reads as floating text. **Now reachable** (2026-09-11): before the firing repair above, the card almost never rendered, so this was latent. Confirmed on the simulator with one expense and no habits.
 - `app/(tabs)/_layout.tsx` comment and `design/redesign-handoff/04-screens.md` still describe a gear and Settings sheet.
 - The canvas at `design/canvas-today-states/` is behind the app as of 2026-09-05: all 22 artboards predate ADRs 0036 to 0039 (old tab bar, quotes, top-anchored quick log, bordered CTAs, trailing break affordance with its caption, no dock, no explainer), and `canvas.json`'s annotations repeat the retired rules. ADR 0034 wants it as-built; regenerating is a design-skill session of its own, queued rather than done in the review pass. The capture sets under `design/captures/` (empty-state-unification, b8-empty, today-fte, quick-log-trigger, tab-consistency) are before-shots now.
 - Merging `routine/ipad` will conflict in `app/(tabs)/index.tsx` on the three scroll paddings; the right resolution is BOTH sides (spacing.xxl AND ...contentColumnStyle) plus an import keeping contentColumnStyle and dropping layout. Take-ours silently reverts ipad's capped Today scrollers and no test catches it; take-theirs restores 100pt of dead space under the dock.

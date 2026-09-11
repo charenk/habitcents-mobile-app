@@ -467,11 +467,27 @@ export async function getCoachMomentState(): Promise<CoachMomentState> {
     const value = await AsyncStorage.getItem(COACH_MOMENTS_KEY);
     if (!value) return createInitialCoachMomentState();
     const parsed = JSON.parse(value);
-    return {
+    const state = {
       ...createInitialCoachMomentState(),
       ...parsed,
       milestonesShownByGoal: parsed.milestonesShownByGoal ?? {},
     };
+    // One-time FL-1 repair (2026-09-11). Before it, the card's event fired and
+    // its once-ever flag was written whenever any expense existed, while the
+    // card only rendered on an empty Kept pane, so an install that had a leak
+    // or a breaking habit at first log spent the flag having shown nothing.
+    // Nothing recorded whether the card was genuinely seen, so the flag is
+    // cleared once for every store written before the repair; the marker below
+    // is absent on exactly those stores and stops it happening twice. Someone
+    // who did see the card sees it once more, which is the cheaper error.
+    // Read the marker off `parsed`, not off `state`: the initial state sets it
+    // true (a fresh store has nothing to unspend) and is spread first, so a
+    // pre-repair store would inherit that true and never migrate.
+    if (parsed.firstLogShownRepaired !== true) {
+      state.firstLogShown = false;
+      state.firstLogShownRepaired = true;
+    }
+    return state;
   } catch (error) {
     console.error('Error reading coach moment state:', error);
     return createInitialCoachMomentState();
