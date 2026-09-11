@@ -20,9 +20,11 @@
  *   occurrences while the count line counted distinct expenses).
  * - the schedule line under each row is `describeSchedule`, never hand-built
  *   text, so the row and the engine can never disagree.
- * - the amber pill is `multiPaymentMonth`: the month where three or more
- *   payments land. That is the surprise worth flagging, and amber is the
- *   token for exactly that (spec 01 §1).
+ * - a row's own number is `upcomingItemWindowTotal`, the same per-item helper
+ *   the card's total reduces over, so the column of row numbers sums to
+ *   exactly the headline above it. Where a bill lands once the two are the
+ *   same figure; where it lands more than once the caption names the unit
+ *   price the subtotal is built from.
  *
  * Amounts render unsigned. Nothing here has been spent yet, so a minus sign
  * would read as history rather than as a bill that is coming.
@@ -50,16 +52,16 @@ import { useTheme } from '@/contexts/ThemeContext';
 import type { Expense } from '@/types/expense';
 import { categoryDisplayLabel } from '@/utils/leakScanBridge';
 import {
-  daysUntilLabel,
   describeSchedule,
-  multiPaymentMonth,
   resolveRule,
+  shortDate,
+  upcomingItemPayments,
+  upcomingItemWindowTotal,
   upcomingWindowPaymentsCount,
   upcomingWindowTotal,
   type UpcomingItem,
 } from '@/utils/recurring';
 import { UPCOMING_WINDOW_PRESETS, type UpcomingWindowDays } from '@/utils/upcomingWindow';
-import { withAlpha } from '@/utils/color';
 
 /** What VoiceOver hears. "2w, selected" is not a sentence. */
 const WINDOW_LABELS: Record<UpcomingWindowDays, string> = {
@@ -233,23 +235,34 @@ function UpcomingRow({
 }) {
   const { format } = useCurrency();
 
-  const { expense, nextDate, daysUntil, occurrencesInWindow } = item;
+  const { expense, nextDate } = item;
   // Same display fallback as ExpenseRow: stored category values map to their
   // display names before rendering.
   const name = expense.title || categoryDisplayLabel(expense.category);
-  const amountLabel = format(expense.amount);
-  const cadenceLabel = daysUntilLabel(daysUntil);
+
+  // The row's big number is what this bill costs INSIDE THE WINDOW, so the
+  // column of big numbers sums to exactly the card's headline. Where a bill
+  // lands once the two are the same number, which is why the narrow windows
+  // look untouched. Where it lands more than once, the caption names the unit
+  // price the subtotal is built from, and the price the edit sheet opens on.
+  const payments = upcomingItemPayments(item);
+  const amountLabel = format(upcomingItemWindowTotal(item));
+  const unitLabel = format(expense.amount);
+  const multiplierLabel =
+    payments > 1 ? strings.money.upcomingRowMultiplier(payments, unitLabel) : null;
+  const multiplierSpoken =
+    payments > 1 ? strings.money.upcomingRowMultiplierSpoken(payments, unitLabel) : null;
 
   // computeUpcoming only emits items that resolved to a rule, so this is
   // always set; the fallback exists so a corrupted row degrades to its date
   // rather than crashing the tab.
   const rule = resolveRule(expense);
-  const scheduleLine = rule ? describeSchedule(rule, nextDate) : cadenceLabel;
+  const scheduleLine = rule ? describeSchedule(rule, nextDate) : shortDate(nextDate);
 
-  const multi = multiPaymentMonth(occurrencesInWindow);
-  const pillLabel = multi ? strings.money.multiPaymentPill(multi.count, multi.monthLabel) : null;
-
-  const spoken = [name, pillLabel, amountLabel, scheduleLine].filter(Boolean).join(', ');
+  // The bill, what the window costs, how many and what one costs, then when.
+  // A user who stops listening after two words still got the two facts that
+  // decide whether to keep listening.
+  const spoken = [name, amountLabel, multiplierSpoken, scheduleLine].filter(Boolean).join(', ');
 
   return (
     <Pressable
@@ -268,18 +281,9 @@ function UpcomingRow({
         size={36}
       />
       <View style={styles.rowText}>
-        <View style={styles.nameLine}>
-          <Text style={styles.name} numberOfLines={1}>
-            {name}
-          </Text>
-          {pillLabel ? (
-            <View style={styles.pill}>
-              <Text style={styles.pillLabel} numberOfLines={1}>
-                {pillLabel}
-              </Text>
-            </View>
-          ) : null}
-        </View>
+        <Text style={styles.name} numberOfLines={1}>
+          {name}
+        </Text>
         <Text style={styles.schedule} numberOfLines={1}>
           {scheduleLine}
         </Text>
@@ -297,9 +301,20 @@ function UpcomingRow({
         >
           {amountLabel}
         </Text>
-        <Text style={styles.cadence} numberOfLines={1}>
-          {cadenceLabel}
-        </Text>
+        {multiplierLabel ? (
+          // Carries money, so it takes the same treatment as the number above
+          // it rather than the cadence line's: it shrinks to fit instead of
+          // truncating. "in 21 days" could afford an ellipsis; "$2,100.00
+          // each" cannot.
+          <Text
+            style={styles.multiplier}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.7}
+          >
+            {multiplierLabel}
+          </Text>
+        ) : null}
       </View>
       <Icon
         name="ChevronRight"
@@ -406,27 +421,11 @@ function createStyles(theme: AppTheme) {
     rowText: {
       flex: 1,
     },
-    nameLine: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 6,
-    },
     name: {
       fontFamily: theme.fonts.uiSemibold,
       fontSize: typeScale.body,
       color: theme.ink,
       flexShrink: 1,
-    },
-    pill: {
-      paddingHorizontal: 8,
-      paddingVertical: 2,
-      borderRadius: radii.pill,
-      backgroundColor: withAlpha(theme.amber, 0.14),
-    },
-    pillLabel: {
-      fontFamily: theme.fonts.uiBold,
-      fontSize: typeScale.eyebrow,
-      color: theme.amberInk,
     },
     schedule: {
       fontFamily: theme.fonts.ui,
@@ -437,6 +436,13 @@ function createStyles(theme: AppTheme) {
     rowAmount: {
       alignItems: 'flex-end',
       marginLeft: 8,
+      // The multiplier line is the widest thing this column ever holds, and
+      // without a cap its intrinsic width won the row and truncated the
+      // schedule line beside it ("Monthly, next Se..."). Capped, both money
+      // lines shrink to fit instead, which is the rule money text already
+      // follows (spec 09 section 1 rule 6).
+      flexShrink: 1,
+      maxWidth: '46%',
     },
     amount: {
       fontFamily: theme.fonts.uiSemibold,
@@ -444,7 +450,9 @@ function createStyles(theme: AppTheme) {
       color: theme.ink,
       fontVariant: ['tabular-nums'],
     },
-    cadence: {
+    // Inherits the retired cadence line's slot and tokens exactly, so the row
+    // keeps its shape and this introduces no new type step and no new colour.
+    multiplier: {
       fontFamily: theme.fonts.ui,
       fontSize: typeScale.caption,
       color: theme.mistText,

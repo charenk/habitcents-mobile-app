@@ -197,6 +197,48 @@ describe('UpcomingList section eyebrow', () => {
   });
 });
 
+describe('UpcomingList row multiplier', () => {
+  /**
+   * S1, stated as arithmetic rather than as layout. The card used to count
+   * occurrences while the rows counted bills, so a headline of $560.00 sat
+   * above rows summing to $530.00 with nothing on screen reconciling them.
+   * A row's number is now its windowed subtotal, which is what makes the
+   * column add up to the headline.
+   */
+  it('sums the row numbers to exactly the card headline', async () => {
+    const view = await renderList();
+    // Rent 500.00 once, Gym 30.00 twice: 500.00 + 60.00 = 560.00.
+    expect(view.getByText('$560.00')).toBeTruthy();
+    expect(view.getByText('$500.00')).toBeTruthy();
+    expect(view.getByText('$60.00')).toBeTruthy();
+  });
+
+  it('names the unit price under a bill that lands more than once', async () => {
+    const view = await renderList();
+    expect(view.getByText(strings.money.upcomingRowMultiplier(2, '$30.00'))).toBeTruthy();
+    expect(view.getByText('\u00D72 \u00B7 $30.00')).toBeTruthy();
+  });
+
+  // What it says when the count is 1: nothing. At the narrow windows, where
+  // nothing repeats, the row is exactly what it was before this change.
+  it('renders no multiplier at all for a bill that lands once', async () => {
+    const view = await renderList({ items: [singleItem] });
+    expect(view.queryByText(/\u00D7/)).toBeNull();
+  });
+
+  it('speaks the multiplier between the amount and the schedule line', async () => {
+    const view = await renderList();
+    const label = view.getByLabelText(/^Gym,/).props.accessibilityLabel as string;
+    expect(label).toContain('$60.00, 2 payments of $30.00, ');
+  });
+
+  // C5: the row stated its timing twice, once relative and once absolute.
+  it('states each row timing once, not twice', async () => {
+    const view = await renderList();
+    expect(view.queryByText('in 3 days')).toBeNull();
+  });
+});
+
 describe('UpcomingList rows', () => {
   it('opens edit for the row that was pressed', async () => {
     const onEditItem = jest.fn();

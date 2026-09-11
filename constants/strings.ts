@@ -1154,7 +1154,32 @@ export const strings = {
     // Same words as upcomingAddAffordance (the header affordance), its own key
     // so the true-zero empty state's CTA can be targeted unambiguously.
     upcomingEmptyCta: 'Add an upcoming expense',
+    // RETIRED FROM RENDERING (2026-09-11): the row now carries its own
+    // multiplier, scoped to the picked window, and the pill was scoped to a
+    // calendar month. A weekly bill at the 1 month window showed "x4" on the
+    // right and "5 payments in Sep" in the pill: both correct, neither
+    // reconcilable against the other. `multiPaymentMonth` stays exported and
+    // fully tested; only this rendering retires. Kept for overlay-shape
+    // stability and the test that pins its absence.
     multiPaymentPill: (count: number, monthLabel: string) => `${count} payments in ${monthLabel}`,
+    // What a row says when its bill lands more than once inside the window.
+    // The row's big number is the WINDOWED SUBTOTAL, so the column of big
+    // numbers sums to the card's headline; this line names the unit price the
+    // subtotal is built from, and the edit sheet opens on. Renders nothing at
+    // all when the count is 1. U+00D7, not the letter x; the middot matches
+    // scheduleSeparator.
+    //
+    // No "each" (2026-09-11, seen on device): it read well and cost the row
+    // about 30pt, which truncated the schedule line beside it into "next
+    // Se...". The multiplication sign already says this is the unit price, and
+    // a truncated date is a worse loss than an implied word. The spoken form
+    // below says it in full, where nothing is competing for width.
+    upcomingRowMultiplier: (count: number, unitAmount: string) =>
+      `\u00D7${count} \u00B7 ${unitAmount}`,
+    // VoiceOver: neither the multiplication sign nor the middot reads as a
+    // word. Same contract as badgeSpoken and labelSpoken.
+    upcomingRowMultiplierSpoken: (count: number, unitAmount: string) =>
+      `${count} payments of ${unitAmount}`,
     // Schedule line under an upcoming row, assembled in utils/recurring.ts:
     // "Monthly · 1st · next Aug 1", "Every 2 weeks · next Aug 14".
     scheduleSeparator: ' · ',

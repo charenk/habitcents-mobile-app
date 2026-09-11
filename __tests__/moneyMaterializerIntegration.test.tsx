@@ -38,7 +38,7 @@ import { ToastProvider } from '@/components/ui/Toast';
 import MoneyScreen from '@/app/(tabs)/money';
 import { saveExpenses } from '@/utils/storage';
 import { strings } from '@/constants/strings';
-import { daysUntilLabel } from '@/utils/recurring';
+import { shortDate } from '@/utils/recurring';
 import type { Expense } from '@/types/expense';
 
 const initialMetrics = {
@@ -130,11 +130,18 @@ describe('Money: same-day materialization (ADR 0024, U11)', () => {
 
     // Upcoming: the due-today occurrence must NOT still show there (that's
     // the pre-ADR-0024 "same row in both tabs" bug this unit fixes).
+    //
+    // 2026-09-11: the row states its timing once now, as the schedule line's
+    // absolute date, so these read that line instead of the retired relative
+    // cadence. Same fact, same intent, different node. Dates are built through
+    // the util's own locale-safe formatter, never hardcoded (ADA-008).
     await openUpcomingSegment(view);
-    expect(view.queryByText(daysUntilLabel(0))).toBeNull(); // "Today"
+    const today = new Date();
+    const inSevenDays = new Date();
+    inSevenDays.setDate(inSevenDays.getDate() + 7);
 
-    // The next occurrence (7 days from now) is what Upcoming shows instead.
-    expect(view.getByText(daysUntilLabel(7))).toBeTruthy();
+    expect(view.queryByText(new RegExp(`next ${shortDate(today)}$`))).toBeNull();
+    expect(view.getByText(new RegExp(`next ${shortDate(inSevenDays)}$`))).toBeTruthy();
   });
 
   it('a bill with nothing due yet (first occurrence still ahead) shows the true-zero Spent empty state', async () => {
