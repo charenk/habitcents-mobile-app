@@ -312,3 +312,23 @@ describe('toChildInput import inheritance (queue2 review P2)', () => {
     expect(toChildInput(plan[0]).importId).toBe('import-42');
   });
 });
+
+/**
+ * The glyph has to ride along to the children. Without it a materialized
+ * occurrence of a bill the user gave 📦 renders the category glyph directly
+ * beneath its parent's, in the same Spent list. Same class of bug as the
+ * importId one this file already guards.
+ */
+describe('toChildInput carries the parent identity a row renders from', () => {
+  it("copies the parent's own glyph onto the child", () => {
+    const parent = monthly('2026-09-01T00:00:00', { id: 'p1', emoji: '\u{1F4E6}' });
+
+    const input = toChildInput({ parent, date: new Date('2026-10-01T00:00:00') });
+    expect(input.emoji).toBe('\u{1F4E6}');
+  });
+
+  it('leaves the child without one when the parent has none', () => {
+    const parent = monthly('2026-09-01T00:00:00', { id: 'p2' });
+    expect(toChildInput({ parent, date: new Date('2026-10-01T00:00:00') }).emoji).toBeUndefined();
+  });
+});

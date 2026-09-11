@@ -53,6 +53,34 @@ const COLOR: Record<string, string> = {
 };
 
 /** Emoji for a category name; falls back to the generic card glyph. */
+/**
+ * The glyphs the bill sheet offers. Visual identifiers rather than user-facing
+ * copy, so they live here beside the table they fall back to: a future
+ * collision between the two is then visible in one file.
+ *
+ * Chosen for recurring bills specifically, which is what the sheet that shows
+ * them is for. Twenty-three, so the grid is four rows of six with the reset
+ * cell first.
+ */
+export const SPEND_GLYPHS: readonly string[] = [
+  '🏠', '🚗', '⚡', '💧', '📶', '📱',
+  '📺', '🎬', '🎵', '🎮', '🏋️', '💊',
+  '🐾', '🎓', '✈️', '🚌', '☕', '🛒',
+  '🛍️', '💳', '🛡️', '🏦', '🎁',
+];
+
+/**
+ * The glyph a row draws for one expense: the bill's own, or its category's.
+ *
+ * `?.trim() ||` rather than `??` on purpose: an empty or whitespace-only
+ * string from hand-edited storage falls back rather than rendering a blank
+ * tile. Same shape as `habitLeakGlyph`, which exists for the same complaint
+ * one level up ("Coffee or tea out" inheriting a pizza).
+ */
+export function expenseGlyph(expense: { emoji?: string; category: string }): string {
+  return expense.emoji?.trim() || categoryEmoji(expense.category);
+}
+
 export function categoryEmoji(name: string): string {
   return EMOJI[name] ?? EMOJI.Other;
 }

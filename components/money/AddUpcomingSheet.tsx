@@ -44,6 +44,13 @@ import {
 } from 'react-native';
 import { CategoryChipRow } from '@/components/money/CategoryChipRow';
 import { MonthDayPicker } from '@/components/money/MonthDayPicker';
+import { EmojiTile } from '@/components/ui/EmojiTile';
+import { selectableLabel } from '@/utils/a11y';
+import {
+  SPEND_GLYPHS,
+  categoryEmoji,
+  categoryIdentityColor,
+} from '@/constants/categoryEmoji';
 import { AmountField } from '@/components/ui/AmountField';
 import { Chip } from '@/components/ui/Chip';
 import { Icon } from '@/components/ui/Icon';
@@ -406,6 +413,9 @@ export function AddUpcomingSheet({
   const [weekday, setWeekday] = useState<Weekday>(new Date().getDay() as Weekday);
   const [biweekStart, setBiweekStart] = useState<BiweekStart>('this');
   const [monthDay, setMonthDay] = useState<MonthDayOption | null>('1');
+  // Undefined means "no override", which is what makes the reset cell possible
+  // and what every row stored before this existed already is.
+  const [emoji, setEmoji] = useState<string | undefined>(undefined);
   const [annualMonth, setAnnualMonth] = useState(() => new Date().getMonth());
   const [annualDay, setAnnualDay] = useState(() => new Date().getDate());
   const [everyNDays, setEveryNDays] = useState(DEFAULT_EVERY_N_DAYS);
@@ -428,6 +438,7 @@ export function AddUpcomingSheet({
       setNameChipKey(draft.nameChipKey);
       setName(draft.name);
       setCategory(expense.category);
+      setEmoji(expense.emoji);
       setScheduleType(draft.scheduleType);
       setOnceWhen(draft.onceWhen);
       setFrequency(draft.frequency);
@@ -444,6 +455,7 @@ export function AddUpcomingSheet({
     setNameChipKey(null);
     setName('');
     setCategory('Other');
+    setEmoji(undefined);
     setScheduleType('repeats');
     setOnceWhen('tomorrow');
     setFrequency('monthly');
@@ -619,6 +631,10 @@ export function AddUpcomingSheet({
           amount: cents,
           category,
           categoryId: match?.id,
+          // Explicitly, even when cleared. updateExpense spread-merges, so an
+          // OMITTED key silently preserves the old glyph and "use the category
+          // icon" would quietly do nothing.
+          emoji,
           date: safeDate,
           isRecurring: rule.type !== 'once',
           recurrence: legacyRecurrence(rule),
@@ -641,6 +657,7 @@ export function AddUpcomingSheet({
         amount: cents,
         category,
         categoryId: match?.id,
+        emoji,
         // The write invariant: the stored date IS the first scheduled occurrence.
         date,
         isRecurring: rule.type !== 'once',
@@ -753,6 +770,16 @@ export function AddUpcomingSheet({
               presets used to sit above the field and were the sheet's ONLY
               way to set a category, which it never showed. */}
           <Text style={styles.eyebrow}>{strings.addUpcoming.whatIsIt}</Text>
+          {/* Previews the actual row: tile beside name, the same shape
+              UpcomingRow draws. Inline rather than a centred block, because
+              this sheet cannot afford 100pt of decoration. */}
+          <View style={styles.nameRow}>
+            <EmojiTile
+              emoji={emoji ?? categoryEmoji(category)}
+              color={categoryIdentityColor(category)}
+              size={40}
+            />
+            <View style={styles.nameField}>
           <TextField
             value={name}
             onChangeText={setName}
@@ -761,6 +788,8 @@ export function AddUpcomingSheet({
             autoCapitalize="words"
             returnKeyType="done"
           />
+            </View>
+          </View>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -796,6 +825,30 @@ export function AddUpcomingSheet({
             onChange={setCategory}
             scrollToSelected={mode === 'edit' && visible}
           />
+
+          <Text style={styles.eyebrow}>{strings.addUpcoming.icon}</Text>
+          <View style={styles.glyphGrid}>
+            {/* Cell one clears the override and shows what the fallback
+                currently is, so it updates live as the category rail moves and
+                a chosen glyph can always be undone. */}
+            <GlyphCell
+              glyph={categoryEmoji(category)}
+              label={strings.addUpcoming.iconDefault}
+              selected={emoji === undefined}
+              onPress={() => setEmoji(undefined)}
+              styles={styles}
+            />
+            {SPEND_GLYPHS.map((g) => (
+              <GlyphCell
+                key={g}
+                glyph={g}
+                label={strings.addUpcoming.iconLabel(strings.addUpcoming.iconNames[g] ?? g)}
+                selected={emoji === g}
+                onPress={() => setEmoji(g)}
+                styles={styles}
+              />
+            ))}
+          </View>
 
           <Text style={styles.eyebrow}>{strings.addUpcoming.schedule}</Text>
           <SegmentedControl<ScheduleType>
@@ -986,6 +1039,46 @@ function StepperButton({
   );
 }
 
+/**
+ * One cell of the glyph grid. Its own Pressable rather than a `Chip`, because a
+ * chip is a labelled control and this is a 48pt square whose entire content is
+ * the glyph; the geometry is AddCategoryModal's icon grid, which is the app's
+ * existing "pick one of these marks" pattern.
+ */
+function GlyphCell({
+  glyph,
+  label,
+  selected,
+  onPress,
+  styles,
+}: {
+  glyph: string;
+  label: string;
+  selected: boolean;
+  onPress: () => void;
+  styles: ReturnType<typeof createStyles>;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={selectableLabel(label, selected)}
+      accessibilityState={{ selected }}
+      style={({ pressed }) => [
+        styles.glyphCell,
+        selected ? styles.glyphCellSelected : null,
+        pressed && !selected ? styles.glyphCellPressed : null,
+      ]}
+    >
+      {/* Not scaled, like EmojiTile's own glyph: the cell is a fixed square
+          and a growing emoji would overflow it. */}
+      <Text style={styles.glyphText} allowFontScaling={false}>
+        {glyph}
+      </Text>
+    </Pressable>
+  );
+}
+
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     content: {
@@ -1020,6 +1113,41 @@ function createStyles(theme: AppTheme) {
       flexDirection: 'row',
       flexWrap: 'wrap',
       gap: 6,
+    },
+    nameRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+    },
+    nameField: {
+      flex: 1,
+    },
+    // Six columns: 6 x 48 plus five 6pt gaps is 318, inside the sheet's ~353pt.
+    glyphGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 6,
+    },
+    glyphCell: {
+      width: 48,
+      height: 48,
+      borderRadius: radii.control,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: theme.snow,
+      borderWidth: 2,
+      borderColor: 'transparent',
+    },
+    glyphCellSelected: {
+      borderColor: theme.primary,
+      backgroundColor: theme.primaryLight,
+    },
+    glyphCellPressed: {
+      opacity: 0.6,
+    },
+    glyphText: {
+      fontSize: 22,
+      includeFontPadding: false,
     },
     chipScroll: {
       marginTop: 10,

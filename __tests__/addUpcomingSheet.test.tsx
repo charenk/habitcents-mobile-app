@@ -230,6 +230,45 @@ describe('AddUpcomingSheet: one pattern with the log sheet', () => {
     expect(view.getByLabelText(/^Entertainment,.*selected/)).toBeTruthy();
   });
 
+  /**
+   * The glyph override. The edit-branch assertion is the load-bearing one:
+   * updateExpense spread-merges, so an OMITTED key silently preserves the old
+   * glyph and "use the category icon" would quietly do nothing.
+   */
+  it('writes the chosen glyph', async () => {
+    const view = await renderAdd();
+    await typeAmount(view, '16.99');
+    await tap(view.getByLabelText(/^Card icon, /));
+    await tap(view.getByRole('button', { name: strings.addUpcoming.save }));
+
+    expect(mockAddExpense.mock.calls[0][0].emoji).toBe('\u{1F4B3}');
+  });
+
+  it('clears the glyph back to the category, explicitly', async () => {
+    const expense = makeExpense({ id: 'e1', emoji: '\u{1F4E6}' });
+    const view = await renderEdit(expense);
+
+    await tap(view.getByLabelText(new RegExp(`^${strings.addUpcoming.iconDefault},`)));
+    await tap(view.getByRole('button', { name: strings.addUpcoming.saveChanges }));
+
+    const [, updates] = mockUpdateExpense.mock.calls[0];
+    // Present and undefined, not absent: absent would preserve the old glyph.
+    expect('emoji' in updates).toBe(true);
+    expect(updates.emoji).toBeUndefined();
+  });
+
+  it('keeps a chosen glyph when only the category changes', async () => {
+    const expense = makeExpense({ id: 'e1', emoji: '\u{1F4E6}', category: 'Entertainment' });
+    const view = await renderEdit(expense);
+
+    await tap(view.getByLabelText('Mortgage/Rent, not selected'));
+    await tap(view.getByRole('button', { name: strings.addUpcoming.saveChanges }));
+
+    const [, updates] = mockUpdateExpense.mock.calls[0];
+    expect(updates.category).toBe('Mortgage');
+    expect(updates.emoji).toBe('\u{1F4E6}');
+  });
+
   it('puts delete in the header, not the footer', async () => {
     const expense = makeExpense({ id: 'e1' });
     const view = await renderEdit(expense);

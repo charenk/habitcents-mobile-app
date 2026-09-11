@@ -30,7 +30,7 @@ import { memo, useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { EmojiTile } from '@/components/ui/EmojiTile';
 import { Icon } from '@/components/ui/Icon';
-import { categoryEmoji, categoryIdentityColor } from '@/constants/categoryEmoji';
+import { categoryIdentityColor, expenseGlyph } from '@/constants/categoryEmoji';
 import { typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
@@ -85,7 +85,7 @@ function ExpenseRowImpl({ expense, onPress, subtitle }: ExpenseRowProps): React.
   const body = (
     <>
       <EmojiTile
-        emoji={categoryEmoji(expense.category)}
+        emoji={expenseGlyph(expense)}
         color={categoryIdentityColor(expense.category)}
         size={36}
       />
