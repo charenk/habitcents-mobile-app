@@ -133,23 +133,21 @@ export default function PaywallScreen() {
   const features = [strings.paywall.feature1, strings.paywall.feature2, strings.paywall.feature3];
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top + 8 }]}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.closeButton}
-          onPress={handleClose}
-          accessibilityRole="button"
-          accessibilityLabel={strings.paywall.closeLabel}
-          // UX-053: was hitSlop 2 (40pt + 2 = exactly 44); the house
-          // ScreenHeader pill (components/ui/ScreenHeader.tsx) uses hitSlop
-          // 4, matched here.
-          hitSlop={4}
-        >
-          <Icon name="X" size={18} color={theme.slate} />
-        </TouchableOpacity>
-      </View>
-
+    // No top safe-area padding: this route is registered with
+    // presentation: 'modal' (app/_layout.tsx), so the sheet already starts
+    // below the status bar, and useSafeAreaInsets still reports the window's
+    // inset. Adding it put roughly 60pt of empty space above the hero on top
+    // of the header row that has now gone (Charen, 2026-09-11: "unused space,
+    // lets move the banner to top"). The bottom inset below is still real: the
+    // sheet does reach the home indicator.
+    <View style={styles.container}>
       <ScrollView
+        // QA 2026-09-11: without flex, the scroller is unbounded and runs
+        // underneath the footer below, which cut the Monthly plan row in half
+        // so "per month" could not be read without scrolling. Every other
+        // scroller in the app that sits above fixed chrome sets this; this one
+        // had contentContainerStyle only.
+        style={styles.scrollView}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 24 }]}
         showsVerticalScrollIndicator={false}
       >
@@ -234,6 +232,24 @@ export default function PaywallScreen() {
         </View>
       </ScrollView>
 
+      {/* Sits on the hero's top-right corner (Charen, 2026-09-11), which
+          reclaims the ~44pt header row that existed only to right-align it.
+          Anchored to the container rather than placed inside the hero, so it
+          does not scroll out of reach on a small screen; it is a white pill
+          either way, legible on the lavender and on the page behind it. */}
+      <TouchableOpacity
+        style={styles.closeButton}
+        onPress={handleClose}
+        accessibilityRole="button"
+        accessibilityLabel={strings.paywall.closeLabel}
+        // UX-053: was hitSlop 2 (40pt + 2 = exactly 44); the house
+        // ScreenHeader pill (components/ui/ScreenHeader.tsx) uses hitSlop
+        // 4, matched here.
+        hitSlop={4}
+      >
+        <Icon name="X" size={18} color={theme.slate} />
+      </TouchableOpacity>
+
       <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
         <Text style={styles.trialLine}>{strings.paywall.trialLine}</Text>
         <TouchableOpacity
@@ -271,15 +287,23 @@ function createStyles(theme: AppTheme) {
       flex: 1,
       backgroundColor: theme.background,
     },
-    header: {
-      flexDirection: 'row',
-      justifyContent: 'flex-end',
-      paddingHorizontal: 12,
-      paddingBottom: 4,
+    // Bounds the scroller to the space between the top of the screen and the
+    // footer. Without it the footer overlapped the last plan row.
+    scrollView: {
+      flex: 1,
     },
     // House header-chrome pill (matches ScreenHeader's actionButton /
     // backButton: components/ui/ScreenHeader.tsx), not a hand-rolled control.
+    // Absolute since 2026-09-11 so it can sit on the hero without a header row
+    // reserving 44pt of empty space above it; `top` is set inline from the
+    // safe-area inset.
     closeButton: {
+      position: 'absolute',
+      // Lines up with the hero's top edge: scrollContent's 8pt of padding plus
+      // 12 sits the pill just inside the banner's rounded corner.
+      top: 20,
+      right: spacing.gutter,
+      zIndex: 1,
       width: 40,
       height: 40,
       borderRadius: radii.pill,
@@ -292,7 +316,7 @@ function createStyles(theme: AppTheme) {
     scrollContent: {
       // UX-018: 24 drifted from the ratified 20pt screen gutter.
       paddingHorizontal: spacing.gutter,
-      paddingTop: 4,
+      paddingTop: 8,
     },
     // Gradient hero: white type on lavender-to-indigo. One of the two
     // decorative gradients the app allows (design/PATTERN_VOCABULARY.md "Color").
