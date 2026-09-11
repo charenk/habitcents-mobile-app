@@ -108,3 +108,60 @@ export function monthGroupTotal(group: UpcomingMonthGroup): number {
 export function monthGroupPayments(group: UpcomingMonthGroup): number {
   return group.rows.reduce((sum, row) => sum + row.occurrences.length, 0);
 }
+
+/**
+ * Drop the months an unknown-day bill has already been paid for.
+ *
+ * The materializer refuses to write a real spend on a day the user never
+ * asserted (ADR 0042), so a month-precision bill has no automatic path into
+ * Spent. The row offers the user one instead: "I paid this" writes a child
+ * dated today. This is the other half of that, and it mirrors the
+ * materializer's own idempotency rule, scoped to a month rather than a day:
+ * an occurrence whose month already holds a child for this parent is not
+ * upcoming any more.
+ *
+ * Day-precision bills are untouched. Their occurrences leave Upcoming through
+ * `advancePastToday`, which is ADR 0024's mechanism and stays the only one.
+ */
+export function dropPaidMonths(items: UpcomingItem[], expenses: Expense[]): UpcomingItem[] {
+  const paid = new Set<string>();
+  for (const e of expenses) {
+    if (!e.parentId) continue;
+    paid.add(`${e.parentId}:${e.date.getFullYear()}-${e.date.getMonth()}`);
+  }
+  if (paid.size === 0) return items;
+
+  const out: UpcomingItem[] = [];
+  for (const item of items) {
+    if (item.expense.datePrecision !== 'month') {
+      out.push(item);
+      continue;
+    }
+
+    const occurrences = occurrencesOf(item).filter(
+      (d) => !paid.has(`${item.expense.id}:${d.getFullYear()}-${d.getMonth()}`)
+    );
+    // Every month settled: the bill has nothing upcoming inside this window.
+    if (occurrences.length === 0) continue;
+    out.push({ ...item, nextDate: occurrences[0], occurrencesInWindow: occurrences });
+  }
+  return out;
+}
+
+/**
+ * Whether this row is one the user can settle by hand: a bill whose day is
+ * unknown, in the month we are actually in.
+ *
+ * Only the current month. A future month has not happened, so "I paid it" is
+ * not something a person says about it, and allowing it would mean asking a
+ * second question (which day, in a month that has not started) to avoid
+ * inventing one. The date written is today, because that is the day the user
+ * is asserting the money moved.
+ */
+export function isSettleable(row: UpcomingMonthRow, monthStart: Date, today: Date = new Date()): boolean {
+  if (row.expense.datePrecision !== 'month') return false;
+  return (
+    monthStart.getFullYear() === today.getFullYear() &&
+    monthStart.getMonth() === today.getMonth()
+  );
+}

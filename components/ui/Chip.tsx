@@ -56,6 +56,13 @@ export type ChipProps = {
    * should keep sizing to its label.
    */
   width?: number;
+  /**
+   * What VoiceOver hears in place of the visible label. Same contract as
+   * SegmentedControl's `labelSpoken`. It exists because one sheet can hold two
+   * rails carrying the same word: "Utilities" is both a name preset and a
+   * category on the add-bill sheet, and by ear the two chips were identical.
+   */
+  labelSpoken?: string;
 };
 
 export function Chip({
@@ -68,6 +75,7 @@ export function Chip({
   tone = 'solid',
   pill = false,
   width,
+  labelSpoken,
 }: ChipProps): React.JSX.Element {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -84,7 +92,7 @@ export function Chip({
       onPress={onPress}
       disabled={disabled}
       accessibilityRole="button"
-      accessibilityLabel={selectableLabel(label, selected)}
+      accessibilityLabel={selectableLabel(labelSpoken ?? label, selected)}
       accessibilityState={{ selected, disabled }}
       hitSlop={{ top: 4, bottom: 4, left: 2, right: 2 }}
       style={({ pressed }) => [

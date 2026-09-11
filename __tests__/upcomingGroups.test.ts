@@ -9,7 +9,9 @@
  * work exists to remove.
  */
 import {
+  dropPaidMonths,
   groupUpcomingByMonth,
+  isSettleable,
   monthGroupPayments,
   monthGroupTotal,
   monthRowTotal,
@@ -225,5 +227,85 @@ describe('upcomingWindowEnd agrees with the projection horizon', () => {
     const start = new Date(from);
     start.setHours(0, 0, 0, 0);
     expect(end.getTime() - start.getTime()).toBe(30 * 24 * 60 * 60 * 1000);
+  });
+});
+
+/**
+ * The other half of ADR 0042's materializer guard. The materializer will not
+ * write a real spend on a day nobody asserted, so an unknown-day bill has no
+ * automatic path into Spent and the ledger would never record paying it. The
+ * user gets the path instead, and this is what takes the settled month back out
+ * of Upcoming, mirroring the materializer's own idempotency rule at month
+ * rather than day resolution.
+ */
+describe('dropPaidMonths', () => {
+  const unknownDay = makeExpense({ id: 'water', amount: 4200, datePrecision: 'month' });
+  const items = [item(unknownDay, [d('2026-09-30'), d('2026-10-31')])];
+
+  function child(parentId: string, date: Date): Expense {
+    return makeExpense({ id: `c-${date.getTime()}`, parentId, date, source: 'recurring' });
+  }
+
+  it('takes out a month the user has already settled', () => {
+    const [survivor] = dropPaidMonths(items, [unknownDay, child('water', d('2026-09-11'))]);
+
+    expect(survivor.occurrencesInWindow).toEqual([d('2026-10-31')]);
+    // nextDate moves with it, so the row does not keep pointing at a paid month.
+    expect(survivor.nextDate).toEqual(d('2026-10-31'));
+  });
+
+  it('drops the bill entirely when every month in the window is settled', () => {
+    const paid = [child('water', d('2026-09-11')), child('water', d('2026-10-04'))];
+    expect(dropPaidMonths(items, [unknownDay, ...paid])).toEqual([]);
+  });
+
+  it('matches on the month, not the day, which is the whole point', () => {
+    // Paid on the 11th for a bill anchored on the 30th: same month, settled.
+    const [survivor] = dropPaidMonths(items, [unknownDay, child('water', d('2026-09-01'))]);
+    expect(survivor.occurrencesInWindow).toEqual([d('2026-10-31')]);
+  });
+
+  it('ignores a child belonging to some other bill', () => {
+    const [survivor] = dropPaidMonths(items, [unknownDay, child('rent', d('2026-09-11'))]);
+    expect(survivor.occurrencesInWindow).toHaveLength(2);
+  });
+
+  /**
+   * Day-precision bills leave Upcoming through advancePastToday, which is
+   * ADR 0024's mechanism and stays the only one. Touching them here would be a
+   * second, competing rule.
+   */
+  it('leaves day-precision bills completely alone', () => {
+    const exact = makeExpense({ id: 'rent' });
+    const exactItems = [item(exact, [d('2026-09-29'), d('2026-10-29')])];
+    const paid = [child('rent', d('2026-09-29'))];
+
+    expect(dropPaidMonths(exactItems, [exact, ...paid])).toEqual(exactItems);
+  });
+});
+
+describe('isSettleable', () => {
+  const sep = new Date(2026, 8, 1);
+  const oct = new Date(2026, 9, 1);
+  const today = new Date(2026, 8, 11);
+
+  const unknownRow = { expense: makeExpense({ id: 'water', datePrecision: 'month' }), occurrences: [d('2026-09-30')] };
+  const exactRow = { expense: makeExpense({ id: 'rent' }), occurrences: [d('2026-09-29')] };
+
+  it('offers it on an unknown-day bill in the month we are in', () => {
+    expect(isSettleable(unknownRow, sep, today)).toBe(true);
+  });
+
+  /**
+   * A future month has not happened, so "I paid it" is not something a person
+   * says about it. Allowing it would mean asking which day, in a month that has
+   * not started, to avoid inventing one.
+   */
+  it('does not offer it on a future month', () => {
+    expect(isSettleable(unknownRow, oct, today)).toBe(false);
+  });
+
+  it('never offers it on a bill whose day is known', () => {
+    expect(isSettleable(exactRow, sep, today)).toBe(false);
   });
 });

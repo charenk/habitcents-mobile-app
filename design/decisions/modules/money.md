@@ -34,6 +34,8 @@ Vocabulary (ADR 0034): **Zero** nothing ever happened here; **Quiet** history el
 - Upcoming keeps two distinct empty states (true-zero and window-empty). Why: hiding the window picker when a window is merely empty would strand the user away from data they have.
 - 2026-09-05: window-empty gets its own line, "None of your repeating expenses land in this window." (`upcomingWindowEmptyBody`). Why: it had inherited the true-zero body, which told a user who already has a repeating expense to go mark one as repeating. The old key stays, retired, for the localization migration. ADR 0039 review.
 
+- 2026-09-11: **Upcoming now has one user-driven write path into Spent, and it is the only one.** `handleMarkPaid` writes a child with `source: 'recurring'` and the parent's `parentId`, dated today, which is the same shape `materializer.toChildInput` produces, so Spent cannot tell the two apart and nothing downstream (habit detection, Insights, category totals) needs to learn a third kind of row. ADR 0024's one-occurrence-one-tab invariant holds because `dropPaidMonths` removes the settled month from Upcoming in the same render, keyed on `(parentId, month)`: the same idempotency rule the materializer uses at day resolution, at the resolution this bill actually has. A second tap cannot double-write, because the row it would need is already gone.
+
 ## Open
 
 ## Iterations

@@ -29,6 +29,9 @@ import { HabitsList } from '@/components/money/HabitsList';
 import { useEmptyStateAction } from '@/components/onboarding/useEmptyStateAction';
 import { SpentList } from '@/components/money/SpentList';
 import { UpcomingList } from '@/components/money/UpcomingList';
+import { useToast } from '@/components/ui/Toast';
+import { dropPaidMonths } from '@/utils/upcomingGroups';
+import { hapticError, hapticSuccess } from '@/utils/motion';
 import { PickOneSheet } from '@/components/habit-logging/PickOneSheet';
 import type { LeakRowData } from '@/components/habit-logging/HabitLeakRow';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
@@ -56,7 +59,6 @@ import {
 import { track } from '@/utils/analytics';
 import { useSegmentPager } from '@/utils/useSegmentPager';
 
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 type MoneyView = 'spent' | 'upcoming' | 'habits';
 
@@ -70,7 +72,8 @@ export default function MoneyScreen() {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
-  const { expenses, isLoading: expensesLoading } = useExpenses();
+  const { expenses, isLoading: expensesLoading, addExpense } = useExpenses();
+  const { show } = useToast();
   const { categories } = useCategories();
   const {
     getDiscoveredHabits,
@@ -167,7 +170,10 @@ export default function MoneyScreen() {
   const upcoming = useMemo(() => {
     const todayMid = new Date();
     todayMid.setHours(0, 0, 0, 0);
-    return advancePastToday(computeUpcoming(expenses, windowDays), todayMid.getTime());
+    return dropPaidMonths(
+      advancePastToday(computeUpcoming(expenses, windowDays), todayMid.getTime()),
+      expenses
+    );
   }, [expenses, windowDays]);
 
   // True zero-data for Upcoming (PRD v3.1 sect 5): whether ANY expense
@@ -225,6 +231,44 @@ export default function MoneyScreen() {
     setBreakVisible(false);
     router.push('/paywall?placement=habit_gate_money');
   }, [router]);
+
+  /**
+   * The user asserting they paid an unknown-day bill. Writes exactly the row
+   * the materializer would have written if it had known the day, dated TODAY,
+   * because that is the day the user is telling us the money moved. ADR 0042
+   * stops the materializer from guessing; this is the path that does not have
+   * to (`utils/upcomingGroups.ts dropPaidMonths` then takes the month out of
+   * Upcoming, mirroring the materializer's own idempotency rule).
+   */
+  const handleMarkPaid = useCallback(
+    (bill: Expense) => {
+      void addExpense({
+        title: bill.title,
+        amount: bill.amount,
+        category: bill.category,
+        categoryId: bill.categoryId,
+        merchant: bill.merchant,
+        emoji: bill.emoji,
+        date: new Date(),
+        isRecurring: false,
+        reminderEnabled: false,
+        source: 'recurring',
+        parentId: bill.id,
+        importId: bill.importId,
+      }).then(
+        () => {
+          hapticSuccess();
+          show(strings.money.upcomingMarkedPaid);
+        },
+        (error: unknown) => {
+          console.error('Error marking bill paid:', error);
+          hapticError();
+          show(strings.toasts.addUpcomingFailed);
+        }
+      );
+    },
+    [addExpense, show]
+  );
 
   const closeUpcomingSheet = useCallback(() => {
     setAddUpcomingVisible(false);
@@ -334,6 +378,7 @@ export default function MoneyScreen() {
                 onAdd={() => setAddUpcomingVisible(true)}
                 onEmptyAdd={handleEmptyAddUpcoming}
                 onEditItem={(expense) => setEditingUpcoming(expense)}
+                onMarkPaid={handleMarkPaid}
                 hasAnyRecurring={hasAnyRecurring}
               />
             ) : null}
