@@ -101,6 +101,13 @@ export type Expense = {
   // reference that needs to resolve.
   parentId?: string;
   iconVariant: 'yellow' | 'green';
+  // A glyph the user chose for THIS bill, overriding the category's. Absent
+  // means "use the category's", which is what every row stored before this
+  // existed does, so there is no migration. A typed name like "Amazon Prime"
+  // has no category that describes it, and inheriting the category glyph made
+  // every subscription look identical. Same override-with-fallback shape as
+  // `habitLeakGlyph`, resolved by `expenseGlyph` in constants/categoryEmoji.ts.
+  emoji?: string;
 };
 
 export type ExpenseSection = {
@@ -132,4 +139,6 @@ export type AddExpenseInput = {
   // Set by the materializer on a child it writes (ADR 0024, U11); see
   // Expense.parentId.
   parentId?: string;
+  // The user's own glyph for this bill; see Expense.emoji.
+  emoji?: string;
 };

@@ -43,7 +43,7 @@ import { EmojiTile } from '@/components/ui/EmojiTile';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Icon } from '@/components/ui/Icon';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
-import { categoryEmoji, categoryIdentityColor } from '@/constants/categoryEmoji';
+import { categoryIdentityColor, expenseGlyph } from '@/constants/categoryEmoji';
 import { strings } from '@/constants/strings';
 import { radii, typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
@@ -393,7 +393,7 @@ function UpcomingRow({
       ]}
     >
       <EmojiTile
-        emoji={categoryEmoji(expense.category)}
+        emoji={expenseGlyph(expense)}
         color={categoryIdentityColor(expense.category)}
         size={36}
       />

@@ -65,6 +65,9 @@ function createExpense(input: AddExpenseInput): Expense {
     category: input.category,
     categoryId: input.categoryId,
     merchant: input.merchant,
+    // Hand-listed like every other field here: there is no spread in this
+    // chain, so a new field that is not copied simply never persists.
+    emoji: input.emoji,
     date: input.date,
     time: formatTime(input.date),
     isRecurring: input.isRecurring,

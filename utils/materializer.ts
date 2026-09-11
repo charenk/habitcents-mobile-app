@@ -137,6 +137,10 @@ export function toChildInput(plan: MaterializedChildPlan): AddExpenseInput {
     category: parent.category,
     categoryId: parent.categoryId,
     merchant: parent.merchant,
+    // Without this a materialized child renders the category glyph directly
+    // beneath its parent's chosen one, in the same Spent list. Same class of
+    // bug as the importId note below.
+    emoji: parent.emoji,
     date,
     isRecurring: false,
     reminderEnabled: false,

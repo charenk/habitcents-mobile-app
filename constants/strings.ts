@@ -1229,6 +1229,47 @@ export const strings = {
     // 'Delete expense' exactly, now that the two are one form.
     deleteUpcoming: 'Delete bill',
     whatIsIt: 'What is it?',
+    // The glyph picker (2026-09-11). A typed name like "Amazon Prime" has no
+    // category that describes it, so every subscription looked identical.
+    icon: 'Icon',
+    // Cell one of the grid: clears the override. Selected whenever the bill has
+    // no glyph of its own, so the fallback is always visible and a chosen
+    // glyph can always be undone.
+    iconDefault: 'Use the category icon',
+    // Every glyph cell speaks "<name> icon", never the bare name. Three rails
+    // on this sheet can carry the same word: "Gym" is a name preset AND a
+    // glyph, "Utilities" is a preset AND a category. Without the suffix the
+    // cells are indistinguishable from the chips by accessible name, which
+    // broke two tests before it would ever have confused a user.
+    iconLabel: (name: string) => `${name} icon`,
+    // Spoken name for each glyph, keyed by the glyph itself. A 24-cell grid a
+    // VoiceOver user has to walk needs words. Keyed rather than positional so
+    // reordering the grid can never silently rename a cell.
+    iconNames: {
+      '\u{1F3E0}': 'House',
+      '\u{1F697}': 'Car',
+      '\u26A1': 'Electricity',
+      '\u{1F4A7}': 'Water',
+      '\u{1F4F6}': 'Internet',
+      '\u{1F4F1}': 'Phone',
+      '\u{1F4FA}': 'TV',
+      '\u{1F3AC}': 'Film',
+      '\u{1F3B5}': 'Music',
+      '\u{1F3AE}': 'Games',
+      '\u{1F3CB}\uFE0F': 'Gym',
+      '\u{1F48A}': 'Health',
+      '\u{1F43E}': 'Pets',
+      '\u{1F393}': 'Study',
+      '\u2708\uFE0F': 'Travel',
+      '\u{1F68C}': 'Transport',
+      '\u2615': 'Coffee',
+      '\u{1F6D2}': 'Groceries',
+      '\u{1F6CD}\uFE0F': 'Shopping',
+      '\u{1F4B3}': 'Card',
+      '\u{1F6E1}\uFE0F': 'Insurance',
+      '\u{1F3E6}': 'Bank',
+      '\u{1F381}': 'Gift',
+    } as Record<string, string>,
     namePlaceholder: 'Name it',
     nameFieldLabel: 'Name',
     nameRent: 'Rent',
