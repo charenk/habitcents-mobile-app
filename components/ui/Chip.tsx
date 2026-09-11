@@ -48,6 +48,14 @@ export type ChipProps = {
   tone?: ChipTone;
   /** Pill shape (radius 999, 44pt min height, 1.5px border, 12.5pt label) for the drawer's category tags. Default false keeps the original card-radius chip. */
   pill?: boolean;
+  /**
+   * Fixed width, for a grid of chips that has to line up in columns rather
+   * than flow by label width. MonthDayPicker's day grid is the only host: "1"
+   * and "10" are different widths, so a wrapping row of them reads as ragged
+   * text rather than as a calendar you can count columns in. Everything else
+   * should keep sizing to its label.
+   */
+  width?: number;
 };
 
 export function Chip({
@@ -59,6 +67,7 @@ export function Chip({
   disabled = false,
   tone = 'solid',
   pill = false,
+  width,
 }: ChipProps): React.JSX.Element {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -84,6 +93,7 @@ export function Chip({
         selected ? selectedStyle : styles.chipUnselected,
         tintedBorder,
         disabled ? styles.chipDisabled : null,
+        width !== undefined ? { width, paddingHorizontal: 0, alignItems: 'center' } : null,
         pressed && !disabled ? styles.chipPressed : null,
       ]}
     >

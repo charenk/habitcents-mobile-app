@@ -349,6 +349,78 @@ describe('AddUpcomingSheet edit mode: prefill and untouched-schedule round trip'
     expect(updates.category).toBe('Entertainment');
   });
 
+  /**
+   * The yearly anchor (2026-09-11). Before this, Yearly always wrote "same date
+   * as today, one year out" and the sheet offered no way to say otherwise, so a
+   * bill renewing on 14 March was unexpressible.
+   *
+   * The rule stays payload-free: `advance()` has always stepped annual by whole
+   * years off `expense.date`, so the anchor lives on the date and the only
+   * thing that changed is that the user can now set it.
+   */
+  it('writes the chosen month and day as the yearly anchor', async () => {
+    const view = await renderAdd();
+    await typeAmount(view, '480');
+
+    await tap(view.getByLabelText('Yearly, not selected'));
+    await tap(view.getByLabelText(/^Mar, /));
+    await tap(view.getByLabelText(/^14, /));
+    await tap(view.getByRole('button', { name: strings.addUpcoming.save }));
+
+    const saved = mockAddExpense.mock.calls[0][0];
+    expect(saved.recurrenceRule).toEqual({ type: 'annual' });
+    expect(saved.date.getMonth()).toBe(2);
+    expect(saved.date.getDate()).toBe(14);
+    // Strictly in the future: a date equal to today would be materialized into
+    // Spent and would render as a spend that never happened.
+    expect(saved.date.getTime()).toBeGreaterThan(Date.now());
+  });
+
+  it('echoes the anchor it is about to write', async () => {
+    const view = await renderAdd();
+    await tap(view.getByLabelText('Yearly, not selected'));
+    await tap(view.getByLabelText(/^Mar, /));
+    await tap(view.getByLabelText(/^14, /));
+
+    expect(view.getByText(strings.addUpcoming.monthDayEcho('March', 14))).toBeTruthy();
+  });
+
+  // February has no 30th. The cell is disabled rather than hidden, so the grid
+  // never reflows under a finger already moving toward it.
+  it('disables the days a month does not have', async () => {
+    const view = await renderAdd();
+    await tap(view.getByLabelText('Yearly, not selected'));
+    await tap(view.getByLabelText(/^Feb, /));
+
+    const thirty = view.getByLabelText(/^30, /);
+    expect(thirty.props.accessibilityState.disabled).toBe(true);
+  });
+
+  /**
+   * The `scheduleTouched` trap, on the path it would be easiest to regress:
+   * touching ANY schedule control rebuilds the rule from the draft, so the
+   * draft has to carry this bill's own anchor rather than today's.
+   */
+  it('keeps a yearly bill on its own anchor when the schedule is rebuilt', async () => {
+    const expense = makeExpense({
+      id: 'e1',
+      date: new Date('2027-03-14T00:00:00'),
+      recurrence: 'annual',
+      recurrenceRule: { type: 'annual' },
+    });
+    const view = await renderEdit(expense);
+
+    // Round-trip the frequency, which is enough to mark the schedule touched.
+    await tap(view.getByLabelText('Monthly, not selected'));
+    await tap(view.getByLabelText('Yearly, not selected'));
+    await tap(view.getByRole('button', { name: strings.addUpcoming.saveChanges }));
+
+    const [, updates] = mockUpdateExpense.mock.calls[0];
+    expect(updates.recurrenceRule).toEqual({ type: 'annual' });
+    expect(updates.date?.getMonth()).toBe(2);
+    expect(updates.date?.getDate()).toBe(14);
+  });
+
   it('round-trips an annual rule through the (previously missing) Yearly chip', async () => {
     const expense = makeExpense({
       id: 'e1',
