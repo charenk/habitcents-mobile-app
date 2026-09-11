@@ -10,6 +10,7 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 
 import {
   parseAmount,
+  looksLikeAmount,
   parseDateParts,
   resolveDate,
   stripBom,
@@ -124,6 +125,37 @@ describe('amount parsing', () => {
 
   it('rejects a comma shape that is neither a grouping nor a decimal', () => {
     expect(parseAmount('1,23,45')).toBeNull();
+  });
+
+  it('rejects scientific notation instead of silently losing the exponent', () => {
+    // The character strip deletes the e before Number() runs, so these used to
+    // come back as 1500, 1500 and 153 cents with isFinite none the wiser.
+    expect(parseAmount('1e5')).toBeNull();
+    expect(parseAmount('1E5')).toBeNull();
+    expect(parseAmount('1.5e300')).toBeNull();
+    expect(parseAmount('2.5E-3')).toBeNull();
+    expect(looksLikeAmount('1e5')).toBe(false);
+  });
+
+  it('does not let a currency code containing e look like an exponent', () => {
+    expect(parseAmount('100 SEK')).toEqual({ cents: 10000, cellSign: 1 });
+    expect(parseAmount('1.50 EUR')).toEqual({ cents: 150, cellSign: 1 });
+  });
+
+  it('rounds a third decimal by its digits, not by a float product', () => {
+    // 0.145 * 100 is 14.499999999999998, so Math.round gave 14 cents for an
+    // amount whose written form says 15.
+    expect(parseAmount('0.145')).toEqual({ cents: 15, cellSign: 1 });
+    expect(parseAmount('0.144')).toEqual({ cents: 14, cellSign: 1 });
+    expect(parseAmount('1.005')).toEqual({ cents: 101, cellSign: 1 });
+    expect(parseAmount('2.675')).toEqual({ cents: 268, cellSign: 1 });
+  });
+
+  it('keeps ordinary two-decimal and whole amounts exact', () => {
+    expect(parseAmount('0.29')).toEqual({ cents: 29, cellSign: 1 });
+    expect(parseAmount('19.99')).toEqual({ cents: 1999, cellSign: 1 });
+    expect(parseAmount('0.1')).toEqual({ cents: 10, cellSign: 1 });
+    expect(parseAmount('.50')).toEqual({ cents: 50, cellSign: 1 });
   });
 });
 

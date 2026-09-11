@@ -155,6 +155,14 @@ export type AmountResult = {
  * - Dots only: two or more well-formed groups (1.234.567) are thousands
  *   separators; a single dot is the decimal point.
  *
+ * Rejected outright: scientific notation (1e5). The character strip would
+ * otherwise delete the exponent marker before Number() ever saw it, turning
+ * 1e5 into $15 silently.
+ *
+ * Cents come from the digits of the normalized string, not from
+ * Math.round(value * 100), because that product lands on the wrong side of the
+ * halfway point for amounts like 0.145. See decimalStringToCents.
+ *
  * Two residual ambiguities a single cell cannot settle, both resolved the way
  * the app's default (dot-decimal, US exports) points:
  * - `1.234` is read as 123 cents, not as EU one thousand two hundred thirty
@@ -197,6 +205,14 @@ export function parseAmount(raw: string): AmountResult | null {
   }
   // Leading plus (explicit positive).
   s = s.replace(/^\+/, '');
+
+  // Scientific notation is not an amount, and this has to be decided BEFORE the
+  // strip below: that strip deletes the exponent marker along with the currency
+  // symbols, so 1e5 would arrive as "15" and parse as $15 with Number.isFinite
+  // never seeing anything wrong. No bank export writes exponents, so a cell
+  // shaped this way is corrupt rather than very large, and saying so lets
+  // looksLikeAmount answer honestly instead of scoring a junk column.
+  if (/\d\s*[eE]\s*[+-]?\d/.test(s)) return null;
 
   // Strip currency symbols and any remaining non-numeric-separator chars.
   s = s.replace(/[^\d.,]/g, '');
@@ -251,8 +267,38 @@ export function parseAmount(raw: string): AmountResult | null {
 
   const value = Number(normalized);
   if (!Number.isFinite(value)) return null;
-  const cents = Math.round(value * 100);
+  const cents = decimalStringToCents(normalized);
+  if (cents === null) return null;
   return { cents, cellSign };
+}
+
+/**
+ * Integer cents from a normalized decimal string: digits, with at most one dot
+ * as the decimal point and no sign.
+ *
+ * Done on the string rather than Math.round(value * 100) because that product
+ * is not always on the side of the halfway point the decimal is: 0.145 * 100 is
+ * 14.499999999999998, so Math.round gives 14 cents for an amount whose written
+ * form says 15. Reading the digits directly has no float step to be wrong about.
+ *
+ * Rounds half away from zero on the third fractional digit, matching how a
+ * written amount reads. Returns null for a shape with more than one dot, which
+ * the caller's isFinite guard also rejects.
+ */
+function decimalStringToCents(normalized: string): number | null {
+  const parts = normalized.match(/^(\d*)(?:\.(\d*))?$/);
+  if (!parts) return null;
+  const whole = parts[1] ?? '';
+  const frac = parts[2] ?? '';
+  if (!whole && !frac) return null;
+
+  const wholeCents = whole ? Number(whole) * 100 : 0;
+  if (!Number.isFinite(wholeCents)) return null;
+
+  // First two fractional digits are the cents; the third decides the rounding.
+  const centDigits = Number((frac + '00').slice(0, 2));
+  const roundUp = frac.length > 2 && frac.charCodeAt(2) - 48 >= 5;
+  return wholeCents + centDigits + (roundUp ? 1 : 0);
 }
 
 /** Convenience: does this cell parse as any amount at all? */
