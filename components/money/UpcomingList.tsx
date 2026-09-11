@@ -318,13 +318,23 @@ function UpcomingRow({
   // always set; the fallback exists so a corrupted row degrades to its date
   // rather than crashing the tab.
   const rule = resolveRule(expense);
-  const scheduleLine = rule ? describeSchedule(rule, nextDate) : shortDate(nextDate);
+  const scheduleLine = rule
+    ? describeSchedule(rule, nextDate, expense.datePrecision === 'month' ? 'month' : 'day')
+    : shortDate(nextDate);
   // What the row DRAWS. The sentence above is what it says: the cadence is a
   // badge now and "next" is an elbow arrow, so the pieces and the sentence are
   // deliberately different (utils/recurring.ts scheduleParts, ADR 0040's
   // labelSpoken contract). A corrupted row that resolved no rule keeps its date
   // and simply carries no badge.
-  const parts = rule ? scheduleParts(rule, nextDate) : null;
+  const precision = expense.datePrecision === 'month' ? ('month' as const) : ('day' as const);
+  const parts = rule ? scheduleParts(rule, nextDate, precision) : null;
+  // Charen, 2026-09-11: when the day is unknown the row shows NO date. The row
+  // already sits under a month header that carries the month, so drawing it
+  // again here would be the redundancy this pane has spent three rounds
+  // removing. The arrow goes with it: an elbow pointing at nothing is worse
+  // than no elbow. VoiceOver still hears "sometime in September", so nothing is
+  // lost, only un-repeated. See the Open note in the component record.
+  const showsDate = precision === 'day';
 
   // The bill, what the window costs, how many and what one costs, then when.
   // A user who stops listening after two words still got the two facts that
@@ -405,6 +415,7 @@ function UpcomingRow({
             the visible order matches the spoken one: the two things a user
             came to read first, then the two that qualify them. */}
         {stacked ? amountBlock : null}
+        {showsDate ? (
         <View style={styles.dateRow}>
           <Icon
             name="CornerDownRight"
@@ -421,6 +432,7 @@ function UpcomingRow({
             {parts ? parts.date : scheduleLine}
           </Text>
         </View>
+        ) : null}
       </View>
       {stacked ? null : amountBlock}
       <Icon

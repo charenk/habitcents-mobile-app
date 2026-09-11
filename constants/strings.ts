@@ -1323,6 +1323,9 @@ export const strings = {
     monthDayFifteenth: '15th',
     monthDayThirtieth: '30th',
     monthDayLast: 'Last day',
+    // The fifth answer on the month-day row, and the one beside the yearly day
+    // grid: the user knows the cadence but not which day it lands on.
+    monthDayUnknown: "I don't know",
     everyNDaysLabel: 'Every N days',
     everyNDaysValue: (n: number) => `Every ${n} days`,
     everyNDaysDecrease: 'Fewer days',

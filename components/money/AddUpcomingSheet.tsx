@@ -221,6 +221,10 @@ type ScheduleDraft = {
   // monthly branch it never needs buildSchedule's `anchorDate`.
   annualMonth: number;
   annualDay: number;
+  // "I know the cadence, not the day." Anchors on the month's last day so the
+  // bill stays live for the whole month it belongs to, and buckets into exactly
+  // that month and no other.
+  dayUnknown: boolean;
   everyNDays: number;
 };
 
@@ -308,17 +312,15 @@ function buildSchedule(
     // The rule stays payload-free. `advance()` steps annual by whole years off
     // `expense.date`, so the anchor has always lived on the date; the sheet
     // simply never let anyone set it.
-    const target = Math.min(
-      draft.annualDay,
-      daysInMonth(today.getFullYear(), draft.annualMonth)
-    );
+    const wanted = draft.dayUnknown ? 31 : draft.annualDay;
+    const target = Math.min(wanted, daysInMonth(today.getFullYear(), draft.annualMonth));
     let date = new Date(today.getFullYear(), draft.annualMonth, target);
     if (date.getTime() <= today.getTime()) {
       const nextYear = today.getFullYear() + 1;
       date = new Date(
         nextYear,
         draft.annualMonth,
-        Math.min(draft.annualDay, daysInMonth(nextYear, draft.annualMonth))
+        Math.min(wanted, daysInMonth(nextYear, draft.annualMonth))
       );
     }
     return { rule: { type: 'annual' }, date };
@@ -360,6 +362,7 @@ function draftFromExpense(expense: Expense): ScheduleDraftFields {
     // instead of today.
     annualMonth: rawDate.getMonth(),
     annualDay: rawDate.getDate(),
+    dayUnknown: expense.datePrecision === 'month',
     everyNDays: DEFAULT_EVERY_N_DAYS,
   };
 
@@ -415,6 +418,9 @@ export function AddUpcomingSheet({
   const [monthDay, setMonthDay] = useState<MonthDayOption | null>('1');
   // Undefined means "no override", which is what makes the reset cell possible
   // and what every row stored before this existed already is.
+  // "I know the cadence, not the day." Distinct from monthDay === null, which
+  // means "a legacy rule no chip describes": this one is a thing the user said.
+  const [dayUnknown, setDayUnknown] = useState(false);
   const [emoji, setEmoji] = useState<string | undefined>(undefined);
   const [annualMonth, setAnnualMonth] = useState(() => new Date().getMonth());
   const [annualDay, setAnnualDay] = useState(() => new Date().getDate());
@@ -439,6 +445,7 @@ export function AddUpcomingSheet({
       setName(draft.name);
       setCategory(expense.category);
       setEmoji(expense.emoji);
+      setDayUnknown(expense.datePrecision === 'month');
       setScheduleType(draft.scheduleType);
       setOnceWhen(draft.onceWhen);
       setFrequency(draft.frequency);
@@ -456,6 +463,7 @@ export function AddUpcomingSheet({
     setName('');
     setCategory('Other');
     setEmoji(undefined);
+    setDayUnknown(false);
     setScheduleType('repeats');
     setOnceWhen('tomorrow');
     setFrequency('monthly');
@@ -518,8 +526,9 @@ export function AddUpcomingSheet({
   }, [expense]);
 
   const handleMonthDayChange = (v: MonthDayOption) => {
-    if (v !== monthDay) setScheduleTouched(true);
+    if (v !== monthDay || dayUnknown) setScheduleTouched(true);
     setMonthDay(v);
+    setDayUnknown(false);
   };
   const handleAnnualMonthChange = (v: number) => {
     if (v !== annualMonth) setScheduleTouched(true);
@@ -528,6 +537,14 @@ export function AddUpcomingSheet({
   const handleAnnualDayChange = (v: number) => {
     if (v !== annualDay) setScheduleTouched(true);
     setAnnualDay(v);
+  };
+  const handleDayUnknownChange = (next: boolean) => {
+    if (next !== dayUnknown) setScheduleTouched(true);
+    setDayUnknown(next);
+    // A month-precision monthly rule anchors on the last day: legacy monthly
+    // steps the same day-of-month, so a Jan 31 anchor rolls to Mar 3 and would
+    // file a February payment under March. 'last' clamps correctly.
+    if (next) setMonthDay('last');
   };
   const handleEveryNDaysChange = (v: number) => {
     if (v !== everyNDays) setScheduleTouched(true);
@@ -587,6 +604,7 @@ export function AddUpcomingSheet({
               monthDay,
               annualMonth,
               annualDay,
+              dayUnknown,
               everyNDays,
             },
             startOfToday(),
@@ -635,6 +653,9 @@ export function AddUpcomingSheet({
           // OMITTED key silently preserves the old glyph and "use the category
           // icon" would quietly do nothing.
           emoji,
+          // Explicit on both branches: updateExpense spread-merges, so an
+          // omitted key would preserve a precision the user just cleared.
+          datePrecision: dayUnknown ? 'month' : undefined,
           date: safeDate,
           isRecurring: rule.type !== 'once',
           recurrence: legacyRecurrence(rule),
@@ -658,6 +679,7 @@ export function AddUpcomingSheet({
         category,
         categoryId: match?.id,
         emoji,
+        datePrecision: dayUnknown ? 'month' : undefined,
         // The write invariant: the stored date IS the first scheduled occurrence.
         date,
         isRecurring: rule.type !== 'once',
@@ -948,10 +970,18 @@ export function AddUpcomingSheet({
                       <Chip
                         key={option.value}
                         label={option.label}
-                        selected={monthDay === option.value}
+                        selected={!dayUnknown && monthDay === option.value}
                         onPress={() => handleMonthDayChange(option.value)}
                       />
                     ))}
+                    {/* The honest fifth answer. A monthly bill lands once a
+                        month whichever day it falls on, so the projection and
+                        every total stay exactly true without the day. */}
+                    <Chip
+                      label={strings.addUpcoming.monthDayUnknown}
+                      selected={dayUnknown}
+                      onPress={() => handleDayUnknownChange(true)}
+                    />
                   </View>
                   {monthDay === null ? (
                     // No chip describes an anchor-stepping rule, so rather
@@ -967,12 +997,27 @@ export function AddUpcomingSheet({
               ) : null}
 
               {frequency === 'annual' ? (
-                <MonthDayPicker
-                  month={annualMonth}
-                  day={annualDay}
-                  onChangeMonth={handleAnnualMonthChange}
-                  onChangeDay={handleAnnualDayChange}
-                />
+                <>
+                  <MonthDayPicker
+                    month={annualMonth}
+                    day={annualDay}
+                    onChangeMonth={handleAnnualMonthChange}
+                    onChangeDay={(d) => {
+                      handleAnnualDayChange(d);
+                      handleDayUnknownChange(false);
+                    }}
+                    dayUnknown={dayUnknown}
+                  />
+                  {/* One payment a year whichever day it falls on, so the same
+                      reasoning that allows this for monthly allows it here. */}
+                  <View style={styles.chipRow}>
+                    <Chip
+                      label={strings.addUpcoming.monthDayUnknown}
+                      selected={dayUnknown}
+                      onPress={() => handleDayUnknownChange(!dayUnknown)}
+                    />
+                  </View>
+                </>
               ) : null}
 
               {frequency === 'custom' ? (
