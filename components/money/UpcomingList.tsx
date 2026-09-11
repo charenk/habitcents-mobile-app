@@ -361,6 +361,23 @@ function UpcomingRow({
           {multiplierLabel}
         </Text>
       ) : null}
+      {/* The cadence sits under the amount (Charen, 2026-09-11, after seeing it
+          on the left): the left column keeps two lines, the two columns balance,
+          and the pill stops being the widest thing on a row's bottom edge. No
+          alignSelf, so it inherits the column's own alignment: right-aligned
+          beside the amount normally, left-aligned when the row stacks at
+          accessibility sizes. */}
+      {parts ? (
+        <View style={styles.cadenceBadge}>
+          <Text
+            style={styles.cadenceLabel}
+            numberOfLines={1}
+            maxFontSizeMultiplier={CHROME_MAX_FONT_SCALE}
+          >
+            {parts.cadence}
+          </Text>
+        </View>
+      ) : null}
     </View>
   );
 
@@ -404,17 +421,6 @@ function UpcomingRow({
             {parts ? parts.date : scheduleLine}
           </Text>
         </View>
-        {parts ? (
-          <View style={styles.cadenceBadge}>
-            <Text
-              style={styles.cadenceLabel}
-              numberOfLines={1}
-              maxFontSizeMultiplier={CHROME_MAX_FONT_SCALE}
-            >
-              {parts.cadence}
-            </Text>
-          </View>
-        ) : null}
       </View>
       {stacked ? null : amountBlock}
       <Icon
@@ -564,21 +570,28 @@ function createStyles(theme: AppTheme) {
     // 4.06:1 on a cloud fill (UXUI_AUDIT.md:562) and nothing here tests
     // contrast. Cadence is a fact, not a judgment, so the fill is neutral and
     // the meaning is in the word (SegmentedControl's own rule).
+    // Sized BY its padding rather than by a minHeight the label is then
+    // centred inside. The label's own box is what gets padded, so the pill is
+    // symmetric by construction; centring a loose text box in a taller pill
+    // left the word riding high, because Inter's line box carries a descender
+    // ("Monthly" has a y) that the visible ink does not fill (Charen spotted
+    // it on device, 2026-09-11). Padding still grows with Dynamic Type, which
+    // is what the house minHeight rule is actually protecting against.
     cadenceBadge: {
-      alignSelf: 'flex-start',
-      minHeight: 18,
-      paddingVertical: 1,
+      paddingVertical: 3,
       paddingHorizontal: 8,
       borderRadius: radii.pill,
       backgroundColor: theme.cloud,
-      alignItems: 'center',
-      justifyContent: 'center',
       marginTop: 6,
     },
     cadenceLabel: {
       fontFamily: theme.fonts.uiBold,
       fontSize: typeScale.eyebrow,
+      // Tight, so the box hugs the glyphs instead of the font's full metrics.
+      lineHeight: 13,
       color: theme.slate,
+      includeFontPadding: false,
+      textAlign: 'center',
     },
     schedule: {
       fontFamily: theme.fonts.ui,
