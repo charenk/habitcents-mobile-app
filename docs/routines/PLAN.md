@@ -852,6 +852,39 @@ work, tracked elsewhere).
       this needs (`i18n-js` or alternative) at that point, once actual
       catalog usage (item 4) shows what it needs.
 
+      **Run 28: `utils/recurring.ts`'s `daysUntilLabel` threaded through the
+      catalog**, the concrete first case flagged since run 19 and picked
+      per run 27's "Next" note (item 4 fully blocked on Charen this run,
+      see HANDOFF.md). It was hardcoded English "Today" / "Tomorrow" /
+      "in N days" with no catalog key at all. Added `money.daysUntilToday`
+      (string), `money.daysUntilTomorrow` (string), and
+      `money.daysUntilInDays` (function-valued, `(days: number) =>
+      \`in ${days} days\``) to `constants/strings.ts`, and gave
+      `daysUntilLabel` a `strings: Catalog` parameter, the same
+      added-parameter shape `weekdayPlural`/`monthDayLabel` already use in
+      the same file (not a real ICU plural rule yet: `daysUntilInDays`
+      still reads the same for every count, same as the English source
+      always did; this is call-site threading, not the CLDR work the
+      checkbox above is actually waiting on). Confirmed one real call site,
+      `components/money/UpcomingList.tsx:227`, `strings` already in scope
+      from that component's own item-2 conversion; updated to pass it
+      through. One test calls the function directly,
+      `moneyMaterializerIntegration.test.tsx` (two call sites, lines
+      137/140): same fix as `describeSchedule`'s and `cardText`'s direct-call
+      tests (run 19) -- imported the static English `strings` and passed it,
+      since a plain function call has no `LocaleProvider` tree to add. New
+      keys stay untranslated in every locale overlay for now (English
+      fallback): `daysUntilToday`/`daysUntilTomorrow` are brand new keys
+      from this run's item-2 work, not item-4 translation work, so they get
+      the same treatment new keys always get before item 4 reaches their
+      section (see run 24's `habitDetail.notFound`/`reports.loading` for
+      the same order-of-operations). `localeCatalogs.test.ts` needed no
+      change (schema-driven, does not require completeness). Checkbox stays
+      open: the real CLDR/ICU plural-rule work and the `i18n-js` dependency
+      decision are still ahead, this only closes the one concrete case item
+      4's blocked "Next" list pointed at. One commit; `tsc --noEmit` clean,
+      full suite green (121/121, 1291/1291).
+
 ## 3. Test migration
 
 - [ ] Migrate tests asserting literal English string values to key-based or
