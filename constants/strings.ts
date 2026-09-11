@@ -1209,6 +1209,9 @@ export const strings = {
     scheduleEveryNDays: (n: number) => `Every ${n} days`,
     scheduleWeekdayPlural: (weekday: string) => `${weekday}s`,
     scheduleNext: (date: string) => `next ${date}`,
+    // Spoken when the user knows the month but not the day. The row draws the
+    // month alone; this is what makes it a sentence for a screen reader.
+    scheduleInMonth: (month: string) => `sometime in ${month}`,
   },
 
   // Add-upcoming sheet (spec 04 "Add-upcoming sheet"; U8 added edit mode,

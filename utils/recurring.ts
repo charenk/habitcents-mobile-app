@@ -12,9 +12,39 @@
 
 import { formatDate } from '@/utils/dates';
 import { strings } from '@/constants/strings';
-import type { Expense, MonthDayOption, RecurrenceRule, Weekday } from '@/types/expense';
+import type {
+  DatePrecision,
+  Expense,
+  MonthDayOption,
+  RecurrenceRule,
+  Weekday,
+} from '@/types/expense';
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+/**
+ * How precisely this bill's date is known. Anything malformed reads as 'day',
+ * so a hand-edited or half-written row degrades to today's behaviour rather
+ * than to a state no UI can explain.
+ */
+function precisionOf(expense: Expense): DatePrecision {
+  return expense.datePrecision === 'month' ? 'month' : 'day';
+}
+
+/**
+ * Whether the window admits this occurrence.
+ *
+ * A month-precision occurrence claims a MONTH, not a day, so the window admits
+ * it as soon as it reaches that month at all. "Is a December bill before
+ * December 10" is a question the stored data cannot answer, and the app must
+ * not invent an answer to it. Under-showing would be the worse error here: the
+ * pane's contract is that you are not surprised, and the group header already
+ * scopes the claim to the month.
+ */
+function admits(date: Date, horizonTime: number, precision: DatePrecision): boolean {
+  if (precision !== 'month') return date.getTime() <= horizonTime;
+  return new Date(date.getFullYear(), date.getMonth(), 1).getTime() <= horizonTime;
+}
 
 /** Custom cadence bounds, enforced on write (the sheet) and on read (here). */
 const MIN_EVERY_N_DAYS = 2;
@@ -274,9 +304,10 @@ export function occurrencesWithin(expense: Expense, from: Date, withinDays: numb
   const first = nextOccurrence(expense, fromMid);
   if (!first) return [];
 
+  const precision = precisionOf(expense);
   const out: Date[] = [];
   let cursor = first;
-  for (let i = 0; i < MAX_OCCURRENCES && cursor.getTime() <= horizon; i++) {
+  for (let i = 0; i < MAX_OCCURRENCES && admits(cursor, horizon, precision); i++) {
     out.push(cursor);
     if (rule.type === 'once') break;
     cursor = advance(cursor, rule);
@@ -305,6 +336,12 @@ export function occurrencesWithin(expense: Expense, from: Date, withinDays: numb
 export function occurrencesToMaterialize(expense: Expense, today: Date = new Date()): Date[] {
   const rule = resolveRule(expense);
   if (!rule || rule.type === 'once') return [];
+  // A bill whose day is unknown has no due day, so materializing it would write
+  // a real spend into Money > Spent on a day the user never asserted. The
+  // consequence is permanent and deliberate: such a bill rolls forward in
+  // Upcoming and never graduates into the ledger, because the app does not know
+  // that it happened. ADR 0042.
+  if (precisionOf(expense) !== 'day') return [];
 
   const parentTime = atMidnight(expense.date).getTime();
   const todayTime = atMidnight(today).getTime();
@@ -480,7 +517,42 @@ export type ScheduleParts = {
   dateSpoken: string;
 };
 
-export function scheduleParts(rule: RecurrenceRule, nextDate: Date): ScheduleParts {
+/** The cadence word alone, shared by both precisions. */
+function cadenceWord(rule: RecurrenceRule): string {
+  switch (rule.type) {
+    case 'once':
+      return strings.money.scheduleOneTime;
+    case 'weekly':
+      return strings.money.scheduleWeekly;
+    case 'biweekly':
+      return strings.money.scheduleBiweekly;
+    case 'monthly':
+      return strings.money.scheduleMonthly;
+    case 'annual':
+      return strings.money.scheduleAnnual;
+    case 'custom':
+      return strings.money.scheduleEveryNDays(clampEveryNDays(rule.everyNDays));
+  }
+}
+
+export function scheduleParts(
+  rule: RecurrenceRule,
+  nextDate: Date,
+  precision: DatePrecision = 'day'
+): ScheduleParts {
+  // The month is the claim and the day is not, so the qualifier goes too: it
+  // would otherwise speak the storage anchor ("Monthly, Last day") for a bill
+  // whose day the user explicitly said they do not know. That branch is the
+  // only thing standing between the anchor and a spoken claim.
+  if (precision === 'month') {
+    const month = formatDate(nextDate, { month: 'long' });
+    return {
+      cadence: cadenceWord(rule),
+      qualifier: null,
+      date: month,
+      dateSpoken: strings.money.scheduleInMonth(month),
+    };
+  }
   const bare = shortDate(nextDate);
   const withWeekday = formatDate(nextDate, { weekday: 'short', month: 'short', day: 'numeric' });
 
@@ -535,8 +607,12 @@ export function scheduleParts(rule: RecurrenceRule, nextDate: Date): SchedulePar
  * Still the whole sentence, and still what the row SPEAKS. A round-trip test
  * pins it against `scheduleParts` so the two can never drift.
  */
-export function describeSchedule(rule: RecurrenceRule, nextDate: Date): string {
-  const { cadence, qualifier, dateSpoken } = scheduleParts(rule, nextDate);
+export function describeSchedule(
+  rule: RecurrenceRule,
+  nextDate: Date,
+  precision: DatePrecision = 'day'
+): string {
+  const { cadence, qualifier, dateSpoken } = scheduleParts(rule, nextDate, precision);
   return [cadence, qualifier, dateSpoken].filter(Boolean).join(SCHEDULE_SEPARATOR);
 }
 
@@ -603,6 +679,15 @@ export function hasFullMonthOfData(expenses: Expense[]): boolean {
 export function advancePastToday(items: UpcomingItem[], todayMid: number): UpcomingItem[] {
   const out: UpcomingItem[] = [];
   for (const item of items) {
+    // Never advance a bill whose day is unknown. This function exists because
+    // the materializer already wrote today's occurrence into Spent, and for an
+    // unknown-day bill the materializer deliberately wrote nothing, so there is
+    // nothing to advance past. Without this the bill vanishes from its own
+    // month on the 30th. ADR 0042.
+    if (precisionOf(item.expense) !== 'day') {
+      out.push(item);
+      continue;
+    }
     if (item.nextDate.getTime() > todayMid) {
       out.push(item);
       continue;
