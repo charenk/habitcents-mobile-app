@@ -67,6 +67,25 @@ device pass is separate and additional to that one, not a substitute.
 
 ## Status
 
+Run 27. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 26's
+rebase (`git merge-base routine/ipad origin/main` equals `origin/main`'s
+own tip, `9376cc2`), so no rebase and no new regression surface this run.
+`npx tsc --noEmit` clean from a fresh `npm ci`. Full suite: 113/114 suites
+green on the first pass; `__tests__/door3BreakSheet.test.tsx` timed out
+(same shape as runs 13/17/23/24's flake), isolated and re-ran standalone
+(19/19 passed), confirming a scheduling flake under parallel load, not a
+real regression, no code change needed. 114 suites / 1174 tests overall,
+zero drift from run 26. PR #133: still open, not draft, `mergeable_state:
+clean`, base SHA matches main's tip exactly (`9376cc2`), head commit
+(`86d92b1`) unchanged, its `verify` check green, `get_comments` and
+`get_reviews` both empty, no new activity. Issue #139 re-checked via
+`get_comments`: still the single 2026-09-07 comment, zero reactions,
+already implemented; no new REVIEW FEEDBACK found there or in this file.
+Re-verified item 7 (`app.json` orientation still `"portrait"`,
+`supportsTablet` still `true`). This HANDOFF update is the only change
+this run; no production code or plan content changed.
+
 Run 26. Heaviest rebase since run 14: `origin/main` moved 16 commits
 (`bdff4c8`..`9376cc2`), a real UI wave, not docs-only like run 25, including
 "sheets: one platform pattern" (`f18ff38`), which rewrote `components/ui/
