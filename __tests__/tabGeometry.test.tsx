@@ -64,6 +64,67 @@ describe('SegmentedControl geometry (text scale)', () => {
     expect(segmentRadius).toBe(radii.card);
     expect(trackRadius).toBe(segmentRadius + TRACK_PADDING);
   });
+
+  /**
+   * The quiet tone (ADR 0040) draws no track, so the nesting rule above is
+   * inapplicable rather than violated. That claim is the whole defence of the
+   * tone against PATTERN_VOCABULARY.md:26, so it is pinned here beside the
+   * rule it sidesteps: if a future edit gives the quiet track a fill or a
+   * radius, it becomes a second switcher shape and this fails.
+   */
+  it('draws no track at all in the compact quiet tone', async () => {
+    const view = await render(
+      <Providers>
+        <SegmentedControl
+          options={[
+            { value: 'a', label: 'Alpha' },
+            { value: 'b', label: 'Beta' },
+          ]}
+          value="a"
+          onChange={() => {}}
+          accessibilityLabel="Test filter"
+          size="compact"
+          tone="quiet"
+        />
+      </Providers>
+    );
+
+    const segment = view.getByRole('tab', { name: /^Alpha/ });
+    const track = StyleSheet.flatten(segment.parent?.props.style);
+    const segmentStyle = StyleSheet.flatten(segment.props.style);
+
+    expect(track.backgroundColor).toBe('transparent');
+    expect(track.borderRadius).toBe(0);
+    expect(track.padding).toBe(0);
+    expect(segmentStyle.borderRadius).toBe(radii.control);
+    expect(segmentStyle.minHeight).toBe(28);
+    // The horizontal half of the 44pt target; the vertical half is hitSlop.
+    expect(segmentStyle.minWidth).toBe(44);
+  });
+
+  it('lifts the compact segment to a 44pt target with hitSlop', async () => {
+    const view = await render(
+      <Providers>
+        <SegmentedControl
+          options={[{ value: 'a', label: 'Alpha' }]}
+          value="a"
+          onChange={() => {}}
+          size="compact"
+          tone="quiet"
+        />
+      </Providers>
+    );
+
+    const segment = view.getByRole('tab', { name: /^Alpha/ });
+    const { minHeight } = StyleSheet.flatten(segment.props.style);
+    const { top, bottom } = segment.props.hitSlop;
+
+    expect(minHeight + top + bottom).toBe(44);
+    // No horizontal slop: the inter-segment gap is 3, so any would overlap
+    // the neighbour's hit region.
+    expect(segment.props.hitSlop.left).toBeUndefined();
+    expect(segment.props.hitSlop.right).toBeUndefined();
+  });
 });
 
 describe('SpentKeptChips geometry (value scale)', () => {
