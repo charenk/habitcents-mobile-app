@@ -15,6 +15,9 @@
 import type { Expense } from '@/types/expense';
 import { computeUpcoming, hasUpcomingInWindow } from '@/utils/recurring';
 
+/** Same constant the projection engine measures its horizon with. */
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
 export type UpcomingWindowDays = 14 | 30 | 90;
 
 /** Ascending, so any UI zipping this with labels renders shortest-first. */
@@ -58,6 +61,20 @@ export function pickDefaultUpcomingWindow(
     if (hasUpcomingInWindow(computeUpcoming(expenses, days, from), from)) return days;
   }
   return DEFAULT_UPCOMING_WINDOW_DAYS;
+}
+
+/**
+ * The last day the window admits, as a Date.
+ *
+ * It must use the same millisecond arithmetic `computeUpcoming` does, never
+ * `setDate(d.getDate() + days)`: across a DST boundary those differ by an hour,
+ * and a label built the second way can name a date the engine excludes. Pinned
+ * against the engine in __tests__/upcomingGroups.test.ts, DST included.
+ */
+export function upcomingWindowEnd(days: UpcomingWindowDays, from: Date = new Date()): Date {
+  const start = new Date(from);
+  start.setHours(0, 0, 0, 0);
+  return new Date(start.getTime() + days * MS_PER_DAY);
 }
 
 export function isUpcomingWindowDays(value: unknown): value is UpcomingWindowDays {

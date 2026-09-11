@@ -21,6 +21,7 @@ Per segment: selected / unselected / pressed-unselected. With or without a badge
 - UX-030: `hitSlop` of 3pt top and bottom lifts the 38pt segment to the 44pt target floor without changing the visual, using the headroom the track's own padding leaves.
 
 ## Open
+- Its internal badge geometry is now duplicated by Upcoming's cadence badge (2026-09-11). Two hosts, one shape; a third makes `ui/Badge` worth extracting, and both sites should move together when it is.
 - Only two of the four size/tone pairs are drawn: default+track and compact+quiet. A compact tracked control and a full-size trackless one have no host and no design; treat the two props as one choice until they do.
 - The badge slot is default-size-only in practice. Its width math was already fragile at 38pt (see below) and has never been drawn inside a 28pt segment; a compact badged segment needs a layout, not just a render.
 - Two badged segments in one control has never been drawn. The width math only works because exactly one segment carries a pill; if a second ever wants one, the layout needs re-thinking rather than another prop.

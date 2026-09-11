@@ -131,17 +131,19 @@ describe('Money: same-day materialization (ADR 0024, U11)', () => {
     // Upcoming: the due-today occurrence must NOT still show there (that's
     // the pre-ADR-0024 "same row in both tabs" bug this unit fixes).
     //
-    // 2026-09-11: the row states its timing once now, as the schedule line's
-    // absolute date, so these read that line instead of the retired relative
-    // cadence. Same fact, same intent, different node. Dates are built through
-    // the util's own locale-safe formatter, never hardcoded (ADA-008).
+    // 2026-09-11: the row states its timing once, and later the same day it
+    // stopped DRAWING the sentence at all (the cadence became a badge, "next"
+    // became an elbow arrow). The sentence still exists where it always
+    // mattered most, in the row's spoken label, so these read that. Same fact,
+    // same intent, the node that still holds it. Dates go through the util's
+    // own locale-safe formatter, never hardcoded (ADA-008).
     await openUpcomingSegment(view);
     const today = new Date();
     const inSevenDays = new Date();
     inSevenDays.setDate(inSevenDays.getDate() + 7);
 
-    expect(view.queryByText(new RegExp(`next ${shortDate(today)}$`))).toBeNull();
-    expect(view.getByText(new RegExp(`next ${shortDate(inSevenDays)}$`))).toBeTruthy();
+    expect(view.queryByLabelText(new RegExp(`next ${shortDate(today)}$`))).toBeNull();
+    expect(view.getByLabelText(new RegExp(`next ${shortDate(inSevenDays)}$`))).toBeTruthy();
   });
 
   it('a bill with nothing due yet (first occurrence still ahead) shows the true-zero Spent empty state', async () => {

@@ -12,6 +12,7 @@ import {
   nextOccurrence,
   occurrencesWithin,
   resolveRule,
+  scheduleParts,
   upcomingTotal,
   upcomingWindowPaymentsCount,
   upcomingItemPayments,
@@ -701,5 +702,103 @@ describe('describeSchedule', () => {
     const e = legacy('weekly', '2026-06-29T00:00:00'); // Mondays
     const next = nextOccurrence(e, FROM)!;
     expect(describeSchedule(resolveRule(e)!, next)).toBe('Weekly · Mondays · next Jul 6');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// scheduleParts
+// ---------------------------------------------------------------------------
+
+/**
+ * The Upcoming row stopped drawing describeSchedule's sentence (2026-09-11):
+ * the cadence moved into a badge and "next" became an elbow arrow. These pin
+ * the pieces the row draws, and the round-trip below is the thing that keeps
+ * the pieces and the sentence from drifting apart in a later edit.
+ */
+describe('scheduleParts', () => {
+  const aug1 = new Date('2026-08-01T00:00:00');
+  const aug3 = new Date('2026-08-03T00:00:00');
+  const aug7 = new Date('2026-08-07T00:00:00'); // Friday
+  const aug12 = new Date('2026-08-12T00:00:00');
+  const aug14 = new Date('2026-08-14T00:00:00');
+  const jul15 = new Date('2026-07-15T00:00:00');
+
+  const CASES: ReadonlyArray<[string, RecurrenceRule, Date]> = [
+    ['monthly with a day', { type: 'monthly', monthDay: '1' }, aug1],
+    ['monthly without a day', { type: 'monthly' }, jul15],
+    ['weekly', { type: 'weekly', weekday: 5 }, aug7],
+    ['biweekly', { type: 'biweekly', weekday: 5, biweekAnchor: '2026-08-14' }, aug14],
+    ['custom', { type: 'custom', everyNDays: 9 }, aug3],
+    ['custom, corrupt cadence', { type: 'custom', everyNDays: 900 }, aug3],
+    ['annual', { type: 'annual' }, jul15],
+    ['once', { type: 'once' }, aug12],
+  ];
+
+  it('splits the cadence, the qualifier and the date', () => {
+    expect(scheduleParts({ type: 'monthly', monthDay: '1' }, aug1)).toEqual({
+      cadence: 'Monthly',
+      qualifier: '1st',
+      date: 'Aug 1',
+      dateSpoken: 'next Aug 1',
+    });
+    expect(scheduleParts({ type: 'monthly' }, jul15)).toEqual({
+      cadence: 'Monthly',
+      qualifier: null,
+      date: 'Jul 15',
+      dateSpoken: 'next Jul 15',
+    });
+    expect(scheduleParts({ type: 'annual' }, jul15).cadence).toBe('Yearly');
+    expect(scheduleParts({ type: 'custom', everyNDays: 9 }, aug3).cadence).toBe('Every 9 days');
+  });
+
+  // A one-time bill happens once, so its date is not a "next".
+  it('does not call a one-time date the next one', () => {
+    const parts = scheduleParts({ type: 'once' }, aug12);
+    expect(parts).toEqual({
+      cadence: 'One-time',
+      qualifier: null,
+      date: 'Aug 12',
+      dateSpoken: 'Aug 12',
+    });
+  });
+
+  /**
+   * Weekly and biweekly carry their weekday in the sentence's qualifier. The
+   * row drops the qualifier when the cadence becomes a badge, so the weekday
+   * moves onto the date instead of being lost.
+   */
+  it('names the weekday on the date for weekly and biweekly rules only', () => {
+    expect(scheduleParts({ type: 'weekly', weekday: 5 }, aug7).date).toBe(
+      formatDate(aug7, { weekday: 'short', month: 'short', day: 'numeric' })
+    );
+    expect(
+      scheduleParts({ type: 'biweekly', weekday: 5, biweekAnchor: '2026-08-14' }, aug14).date
+    ).toBe(formatDate(aug14, { weekday: 'short', month: 'short', day: 'numeric' }));
+
+    // Everything else keeps the bare date.
+    expect(scheduleParts({ type: 'monthly', monthDay: '1' }, aug1).date).toBe('Aug 1');
+    expect(scheduleParts({ type: 'annual' }, jul15).date).toBe('Jul 15');
+  });
+
+  it('builds every date through the locale-aware helper (ADA-008)', () => {
+    for (const [name, rule, date] of CASES) {
+      const parts = scheduleParts(rule, date);
+      expect(parts.dateSpoken).toContain(formatDate(date, { month: 'short', day: 'numeric' }));
+      expect(name).toBeTruthy();
+    }
+  });
+
+  /**
+   * THE round-trip. describeSchedule is now a join over these parts, and its
+   * ten literal assertions above pass unedited because of it. This asserts the
+   * relationship directly, so a later edit to either side fails here rather
+   * than silently changing what VoiceOver hears.
+   */
+  it('joins back into exactly what describeSchedule returns', () => {
+    for (const [name, rule, date] of CASES) {
+      const { cadence, qualifier, dateSpoken } = scheduleParts(rule, date);
+      const rejoined = [cadence, qualifier, dateSpoken].filter(Boolean).join(' · ');
+      expect([name, rejoined]).toEqual([name, describeSchedule(rule, date)]);
+    }
   });
 });
