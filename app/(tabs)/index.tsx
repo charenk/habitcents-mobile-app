@@ -847,7 +847,7 @@ export default function TodayScreen() {
               onDismiss: () => handleDismissHabit(habit),
               coachText:
                 detectionMoment?.habitId === habit.id
-                  ? cardText(detectionMoment.cardId)
+                  ? cardText(detectionMoment.cardId, strings)
                   : undefined,
             }}
           />
