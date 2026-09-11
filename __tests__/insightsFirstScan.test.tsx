@@ -39,6 +39,8 @@ jest.mock('expo-router', () => {
   const react = require('react');
   return {
     useRouter: () => ({ push: mockPush, navigate: mockNavigate }),
+    // Insights reads ?view= so /leak-scan can land on the Leak finder segment.
+    useLocalSearchParams: () => ({}),
     // No navigator in a unit test, so this stands in for the real
     // useFocusEffect: run the effect once on mount, which is enough to cover
     // both "on mount" and "on focus" for this screen's re-read of the summary.

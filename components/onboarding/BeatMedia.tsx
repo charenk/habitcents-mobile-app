@@ -87,6 +87,14 @@ function createStyles(theme: AppTheme) {
       // Portrait phone capture, the shape a recording of the real app makes.
       aspectRatio: 9 / 16,
       maxHeight: 380,
+      // maxHeight wins over width on a phone: 9/16 of the full content width is
+      // taller than 380, so yoga shrinks the box below 100% to keep the ratio.
+      // The beat container sets justifyContent (main axis) but no alignItems,
+      // so without this the narrowed frame sits against the left gutter while
+      // every other element in the beat still spans full width. Centred here
+      // rather than with alignItems on the beat, because headline and hook rely
+      // on the container's default stretch to stay full-width and left-aligned.
+      alignSelf: 'center',
       borderRadius: radii.feature,
       backgroundColor: theme.snow,
       borderWidth: 1,

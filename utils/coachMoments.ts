@@ -79,6 +79,16 @@ export type CoachMomentState = {
   runBreakShown: boolean;
   /** Milestone thresholds already shown, keyed by goalId, so each fires once per habit. */
   milestonesShownByGoal: Record<string, MilestoneThreshold[]>;
+  /**
+   * One-time marker for the 2026-09-11 FL-1 repair. Until then the card's
+   * event fired whenever any expense existed, while the card itself only
+   * rendered on an empty Kept pane, so most installs burned firstLogShown
+   * without ever seeing it. Nothing recorded whether a given user actually
+   * saw the card, so the repair clears the flag once for everyone and this
+   * marker stops it clearing a second time. Absent on stores written before
+   * the repair, which is exactly the signal it needs.
+   */
+  firstLogShownRepaired?: boolean;
 };
 
 export function createInitialCoachMomentState(): CoachMomentState {
@@ -90,6 +100,8 @@ export function createInitialCoachMomentState(): CoachMomentState {
     brokenStreakRotationIndex: 0,
     runBreakShown: false,
     milestonesShownByGoal: {},
+    // A fresh store never needs the repair: it has nothing to unspend.
+    firstLogShownRepaired: true,
   };
 }
 

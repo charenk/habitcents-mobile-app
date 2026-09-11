@@ -90,7 +90,9 @@ describe('/leak-scan route while the flow is dormant', () => {
     const element = LeakScanRoute();
 
     expect(element.type).toBe(Redirect);
-    expect(element.props.href).toBe('/(tabs)/insights');
+    // ?view=scan, not a bare redirect: the Leak finder segment is the one
+    // carrying the coming soon teaser, and it is what this route promises.
+    expect(element.props.href).toBe('/(tabs)/insights?view=scan');
     expect(intake).not.toHaveBeenCalled();
   });
 

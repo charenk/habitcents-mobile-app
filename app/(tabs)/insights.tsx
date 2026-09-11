@@ -9,7 +9,7 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter, useFocusEffect } from 'expo-router';
+import { useRouter, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useReports, WEEK_WINDOW_DAYS } from '@/contexts/ReportsContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
@@ -96,7 +96,18 @@ export default function InsightsScreen() {
   // "Count me in" CTA flashed for a beat on every focus for a user who had
   // already tapped it.
   const [interestRecorded, setInterestRecorded] = useState<boolean | undefined>(undefined);
-  const [view, setView] = useState<InsightsView>('month');
+  // Deep link entry: /leak-scan redirects here with ?view=scan while the scan
+  // flow is dormant, so a caller following a stored scan link lands on the Leak
+  // finder segment that carries the coming soon teaser rather than on This
+  // month, which answers a different question. Read once, as the initial value:
+  // the pager's first positioning is silent by design (see the 2026-09-06 note
+  // in design/decisions/modules/insights.md), so seeding state is right and a
+  // post-mount jump would not be. Anything missing or malformed is ignored and
+  // the This month default stands, matching Today's ?view= handling.
+  const params = useLocalSearchParams<{ view?: string }>();
+  const [view, setView] = useState<InsightsView>(() =>
+    params.view === 'scan' || params.view === 'month' ? params.view : 'month'
+  );
   // The segments double as pager pages: tap one or swipe to it. See
   // utils/useSegmentPager.ts for why this stays a plain paging ScrollView.
   const { markInteracted, pagerProps, paneProps } = useSegmentPager<InsightsView>({

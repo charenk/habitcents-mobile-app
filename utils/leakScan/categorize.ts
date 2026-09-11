@@ -13,6 +13,7 @@
 import type { ExpenseCategory, ExpenseClass } from '@/types/expense';
 import type { ConfidenceTier } from './types';
 import type { ScanRules } from '@/utils/scanRules';
+import { lookupOwn } from '@/utils/ownLookup';
 
 export type CategoryResult = {
   category: ExpenseCategory;
@@ -167,7 +168,7 @@ export function categorize(
 
   // 1. Personal rule hit -> solid, always spend class (a user-corrected merchant is a
   //    real spend category by definition).
-  const ruleCategory = rules.merchantCategory[merchantStem] ?? rules.merchantCategory[key];
+  const ruleCategory = lookupOwn(rules.merchantCategory, merchantStem, key);
   if (ruleCategory) {
     return { category: ruleCategory, tier: 'solid', rowClass: 'spend' };
   }
@@ -185,7 +186,7 @@ export function categorize(
   }
 
   // 3. Known chain -> solid.
-  const chain = KNOWN_CHAINS[key];
+  const chain = lookupOwn(KNOWN_CHAINS, key);
   if (chain) {
     return { category: chain, tier: 'solid', rowClass: 'spend' };
   }
@@ -204,7 +205,7 @@ export function categorize(
 /** Resolve the display name for a merchant stem, applying rename rules (spec 6). */
 export function displayName(merchantStem: string, rules: ScanRules): string {
   const key = stemKey(merchantStem);
-  const rename = rules.merchantRename[merchantStem] ?? rules.merchantRename[key];
+  const rename = lookupOwn(rules.merchantRename, merchantStem, key);
   if (rename) return rename;
   // Title-case the stem for display.
   return merchantStem

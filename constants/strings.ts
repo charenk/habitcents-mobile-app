@@ -822,6 +822,12 @@ export const strings = {
     keptChipLabel: 'Kept today',
     spentKeptTabsLabel: 'Today view',
     checkInPendingA11y: 'check-in waiting',
+    // The Kept chip's dot means "a leak was detected since you last looked"
+    // (Charen, 2026-09-11). checkInPendingA11y above is its predecessor and is
+    // now unused; left in place rather than deleted because the localization
+    // routine owns this file and removing a translated key can trip its
+    // section-completeness guard. Safe to reap on that side.
+    newLeakA11y: 'new leak found',
     // First-run chip placeholders (Charen, 2026-09-03): before the activity
     // exists, $0.00 would read as a measured verdict ("you kept nothing")
     // when the truth is not-started, so the amount slot carries these words

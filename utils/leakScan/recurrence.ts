@@ -22,6 +22,7 @@ import type {
   ScanRow,
 } from './types';
 import type { ScanRules } from '@/utils/scanRules';
+import { lookupOwn } from '@/utils/ownLookup';
 
 const DAY = 24 * 60 * 60 * 1000;
 const MAX_HABITS = 10;
@@ -261,7 +262,7 @@ export function detectHabitCandidates(
 
   const candidates: HabitCandidate[] = [];
   for (const g of groups) {
-    if (rules.suppressedHabits[g.stem]) continue;
+    if (lookupOwn(rules.suppressedHabits, g.stem)) continue;
     const occ = g.rows.length;
     const amounts = g.rows.map((r) => Math.abs(r.amountCents));
     const med = median(amounts);

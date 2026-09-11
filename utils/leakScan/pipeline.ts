@@ -9,6 +9,7 @@
  */
 
 import { emptyScanRules, type ScanRules } from '@/utils/scanRules';
+import { lookupOwn } from '@/utils/ownLookup';
 import { DEFAULT_CURRENCY, type CurrencyCode } from '@/utils/currency';
 import { confidenceScore, belowFloor } from './confidence';
 import { detectHeader, headerFingerprint } from './header';
@@ -91,7 +92,7 @@ export function runScan(files: ScanFileInput[], options: RunScanOptions = {}): S
     const fp = headerFingerprint(header.headers);
 
     // Stage 3: columns (+ DD/MM question).
-    const ruleDateOrder = rules.dateOrder[fp];
+    const ruleDateOrder = lookupOwn(rules.dateOrder, fp);
     const roles = inferColumns(header.headers, header.dataRows, ruleDateOrder);
     if (roles.dateOrderAmbiguous) {
       questions.push({
@@ -104,7 +105,7 @@ export function runScan(files: ScanFileInput[], options: RunScanOptions = {}): S
     const order = roles.dateOrder ?? 'MDY';
 
     // Stage 4: sign convention.
-    const ruleSign = rules.signConvention[fp];
+    const ruleSign = lookupOwn(rules.signConvention, fp);
     const sign = detectSign(header.dataRows, roles, order, ruleSign);
     if (sign.needsConfirmation) {
       questions.push({
@@ -116,7 +117,7 @@ export function runScan(files: ScanFileInput[], options: RunScanOptions = {}): S
     }
 
     // Stage 7 (row assembly + categorization).
-    const account = rules.accountLabel[fp] ?? accountLabelFromFile(file.fileName, index);
+    const account = lookupOwn(rules.accountLabel, fp) ?? accountLabelFromFile(file.fileName, index);
     const { rows, skipped } = buildRows(
       file.fileName,
       account,

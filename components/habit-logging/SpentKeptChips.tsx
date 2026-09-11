@@ -60,8 +60,12 @@ export type SpentKeptChipsProps = {
   keptCents: number;
   value: SpentKeptView;
   onChange: (v: SpentKeptView) => void;
-  /** True while today's check-in question is unanswered; renders a quiet dot on the Kept chip. */
-  checkInPending?: boolean;
+  /** True while a leak has been detected since the user last looked at the
+   *  Kept pane; renders a quiet dot on the Kept chip. Was the unanswered
+   *  check-in until 2026-09-11: tied to the check-in it showed almost
+   *  permanently for anyone who does not answer daily, which is most people,
+   *  and a dot that is always on says nothing. */
+  newLeakPending?: boolean;
   /** True once any expense has ever been logged; false renders "No logs yet"
    *  in the Spent amount slot (file header, not-started is not zero). */
   spentStarted?: boolean;
@@ -75,7 +79,7 @@ export function SpentKeptChips({
   keptCents,
   value,
   onChange,
-  checkInPending = false,
+  newLeakPending = false,
   spentStarted = true,
   keptStarted = true,
 }: SpentKeptChipsProps): React.JSX.Element {
@@ -88,9 +92,10 @@ export function SpentKeptChips({
   const formattedSpent = format(spentCents);
   const formattedKept = format(keptCents);
 
-  // The pending dot's meaning is carried into the a11y label, not a separate
-  // element: VoiceOver never sees the dot, just the extra clause.
-  const pendingSuffix = checkInPending ? `, ${strings.today.checkInPendingA11y}` : '';
+  // The dot's meaning is carried into the a11y label, not a separate element:
+  // VoiceOver never sees the dot, just the extra clause. Status conveyed by
+  // colour is always also in the label (PATTERN_VOCABULARY, Accessibility).
+  const pendingSuffix = newLeakPending ? `, ${strings.today.newLeakA11y}` : '';
 
   // Not-started labels read as a clause ("Spent today, no logs yet"), not a
   // value, so VoiceOver never announces a number that was not measured.
@@ -167,7 +172,7 @@ export function SpentKeptChips({
           >
             {strings.today.keptChipLabel}
           </Text>
-          {checkInPending ? <View style={styles.pendingDot} /> : null}
+          {newLeakPending ? <View style={styles.pendingDot} /> : null}
         </View>
         {keptStarted ? (
           <Text

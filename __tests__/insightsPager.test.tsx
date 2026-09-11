@@ -22,10 +22,14 @@ jest.mock('@/utils/analytics', () => ({ track: jest.fn() }));
 
 const mockPush = jest.fn();
 const mockNavigate = jest.fn();
+/** Route params for the screen under test; reset per test in beforeEach. */
+let mockParams: Record<string, string | undefined> = {};
+
 jest.mock('expo-router', () => {
   const react = require('react');
   return {
     useRouter: () => ({ push: mockPush, navigate: mockNavigate }),
+    useLocalSearchParams: () => mockParams,
     useFocusEffect: (callback: () => void | (() => void)) => {
       react.useEffect(() => {
         return callback();
@@ -131,6 +135,7 @@ function isSelected(view: View, segment: 'month' | 'scan', selected: boolean): b
 beforeEach(() => {
   mockTrack.mockClear();
   mockGetScanSummary.mockResolvedValue(null);
+  mockParams = {};
 });
 
 afterEach(cleanup);
@@ -142,6 +147,38 @@ describe('Insights: the segment pager', () => {
     expect(view.getByTestId('insights-pager')).toBeTruthy();
     expect(isSelected(view, 'month', true)).toBe(true);
     expect(isSelected(view, 'scan', false)).toBe(true);
+  });
+
+  it('opens on Leak finder when the route asks for it', async () => {
+    // /leak-scan redirects here with ?view=scan while the flow is dormant.
+    mockParams = { view: 'scan' };
+    const view = await renderInsights();
+
+    expect(isSelected(view, 'scan', true)).toBe(true);
+    expect(isSelected(view, 'month', false)).toBe(true);
+    // Seeded as the initial value, so the pager's first positioning stays
+    // silent: arriving on a segment is not a view switch the user made.
+    expect(mockTrack).not.toHaveBeenCalledWith(
+      'insights_view_switched',
+      expect.anything()
+    );
+  });
+
+  it('ignores an unknown view param and keeps This month', async () => {
+    // Matches Today's handling: anything not a known value is silently ignored
+    // rather than treated as an error, so a stale or hand-typed link still
+    // lands somewhere sensible.
+    mockParams = { view: 'leak-finder' };
+    const view = await renderInsights();
+
+    expect(isSelected(view, 'month', true)).toBe(true);
+  });
+
+  it('ignores a view param that differs only by case', async () => {
+    mockParams = { view: 'Scan' };
+    const view = await renderInsights();
+
+    expect(isSelected(view, 'month', true)).toBe(true);
   });
 
   it('selects First scan when a swipe settles on the second page', async () => {

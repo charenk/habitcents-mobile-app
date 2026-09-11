@@ -21,6 +21,8 @@ const mockPush = jest.fn();
 const mockNavigate = jest.fn();
 jest.mock('expo-router', () => ({
   useRouter: () => ({ push: mockPush, navigate: mockNavigate }),
+  // Insights reads ?view= so /leak-scan can land on the Leak finder segment.
+  useLocalSearchParams: () => ({}),
   useFocusEffect: () => {},
 }));
 

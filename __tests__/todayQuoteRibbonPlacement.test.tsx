@@ -68,6 +68,11 @@ jest.mock('@/contexts/HabitsContext', () => ({
     clearLastCoachMoment: jest.fn(),
     maybeShowDetectionMoment: jest.fn(async () => null),
     maybeShowFirstLogMoment: jest.fn(async () => null),
+    // The Kept chip's dot, and the write that clears it when the Kept pane
+    // is looked at. Neither is exercised here; present so the screen's
+    // effect has something to call.
+    hasNewLeak: false,
+    markLeaksSeen: jest.fn(async () => {}),
   }),
 }));
 

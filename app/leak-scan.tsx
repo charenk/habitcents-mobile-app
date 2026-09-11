@@ -31,7 +31,10 @@ import { useOnboarding } from '@/contexts/OnboardingContext';
  */
 export default function LeakScanRoute() {
   if (!SCAN_FLOW_ENABLED) {
-    return <Redirect href="/(tabs)/insights" />;
+    // ?view=scan, so the caller lands on the Leak finder segment this file's
+    // header promises. A bare redirect landed on This month, which answers a
+    // different question than the link that was followed.
+    return <Redirect href="/(tabs)/insights?view=scan" />;
   }
   return <LeakScanFlow />;
 }
