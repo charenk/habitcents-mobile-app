@@ -189,6 +189,58 @@ describe('AddUpcomingSheet add mode (regression)', () => {
   });
 });
 
+/**
+ * Parity with ExpenseSheet (Charen's annotations, 2026-09-11). The two sheets
+ * are the same form and used to read as two: this one put its presets above
+ * the name field, had no category control at all, wore an underline amount
+ * field where the log sheet wore an enclosed one, and kept its delete as a
+ * full-width coral row in the footer.
+ */
+describe('AddUpcomingSheet: one pattern with the log sheet', () => {
+  it('offers the category rail as a real control, seeded from the row', async () => {
+    const expense = makeExpense({ id: 'e1', category: 'Entertainment' });
+    const view = await renderEdit(expense);
+
+    expect(view.getByLabelText(/^Entertainment,.*selected/)).toBeTruthy();
+  });
+
+  // "Mortgage/Rent" on purpose: the name presets also carry a "Utilities"
+  // chip, so that label is ambiguous by accessible name across the two rails.
+  // See the Open note in design/decisions/components/AddUpcomingSheet.md.
+  it('lets the user recategorize without touching the name', async () => {
+    const expense = makeExpense({ id: 'e1', category: 'Entertainment' });
+    const view = await renderEdit(expense);
+
+    await tap(view.getByLabelText('Mortgage/Rent, not selected'));
+    await tap(view.getByRole('button', { name: strings.addUpcoming.saveChanges }));
+
+    const [, updates] = mockUpdateExpense.mock.calls[0];
+    expect(updates.category).toBe('Mortgage');
+    expect(updates.title).toBe('Gym');
+  });
+
+  // The preset is a shortcut INTO the rail now, not a hidden second opinion
+  // that only surfaced at save time.
+  it('moves the category rail when a name preset is tapped', async () => {
+    const view = await renderAdd();
+
+    await typeAmount(view, '30');
+    await tap(view.getByLabelText('Gym, not selected'));
+
+    expect(view.getByLabelText(/^Entertainment,.*selected/)).toBeTruthy();
+  });
+
+  it('puts delete in the header, not the footer', async () => {
+    const expense = makeExpense({ id: 'e1' });
+    const view = await renderEdit(expense);
+
+    const del = view.getByRole('button', { name: strings.addUpcoming.deleteUpcoming });
+    // An icon action, so it draws no label; the footer row did.
+    expect(view.queryByText(strings.addUpcoming.deleteUpcoming)).toBeNull();
+    expect(del).toBeTruthy();
+  });
+});
+
 describe('AddUpcomingSheet edit mode: prefill and untouched-schedule round trip', () => {
   it('prefills amount, name and schedule, and Save alone leaves the schedule untouched', async () => {
     const expense = makeExpense({ id: 'e1' });

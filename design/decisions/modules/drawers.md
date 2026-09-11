@@ -9,6 +9,7 @@ One sheet primitive, two families, one structural pattern (Charen, 2026-09-10): 
 - Keyboard up: the panel shrinks to the strip above the keyboard, handle and title stay visible, the footer sits flush on the keyboard (iOS Done bar on the expense sheet rides the footer slot).
 
 ## Decisions
+- 2026-09-11 (Charen): **the two expense forms are one form.** AddUpcoming took the log sheet's anatomy: enclosed amount at the same density, identity section as a text field with presets under it, a real category rail, delete as the header's one icon action. Closes the open item ADR 0033 left behind ("the bottom text row, kept for AddUpcoming until it gets the same pass"), so destructive text rows at the bottom are now retired for BOTH form sheets. See [AddUpcomingSheet](../components/AddUpcomingSheet.md).
 - 2026-09-11: **a form sheet never shows a control state its stored data does not support.** AddUpcoming preselected a day-of-month chip for legacy monthly rules that had never chosen one, so the sheet contradicted the list. No chip is selected in that state now, and a caption names the date the rule actually lands on. See [AddUpcomingSheet](../components/AddUpcomingSheet.md).
 - 2026-09-10: a drawer never exceeds 80% of the window, keyboard included. Why: with the keyboard up the old KeyboardAvoidingView pushed tall sheets off the top with the handle invisible (Charen's device screenshot); the per-sheet 0.82/0.86 caps measured full window height and never bounded that case. One rule in utils/sheetLayout.ts replaces all of them; the keyboard lift is plain layout, never a second driver on the panel transform. Rejected: keyboard-controller/native modules (OTA boundary, ADR 0029), reanimated useAnimatedKeyboard (banned inside this Modal).
 - 2026-09-10: Sheet owns the body scroll (`scrollable={false}` for FlatList bodies) and a pinned `footer` slot that owns the bottom inset, zeroed under the keyboard. Why: eight sheets hand-rolled the same body/scroll/footer; five had no cap or scroll at all (HowItWorksSheet overflowed at XXXL). Retires ExpenseSheet's negative-margin Done-bar hack.
@@ -22,10 +23,10 @@ One sheet primitive, two families, one structural pattern (Charen, 2026-09-10): 
 
 ## Open
 - Drag-to-dismiss is unverified from the agent side: the simulator tooling never reaches a JS PanResponder. Needs a hand on a device, with and without Reduce Motion - now including the keyboard clamp's resize feel (the height change is an instant jump behind the keyboard's own animation; judge on device whether it needs a LayoutAnimation pass).
-- AddUpcomingSheet still has its delete as a bottom text row (now in the pinned footer); move it to the header icon for consistency.
 - Body drag when the ScrollView is at the top.
 
 ## Iterations
+- 2026-09-11: AddUpcomingSheet reaches parity with ExpenseSheet; the last footer delete row is gone.
 - 2026-09-10: 80% keyboard-aware clamp, Sheet-owned scroll, pinned footer slot, SheetTitle; all 15 sheet usages migrated off local caps and hand-rolled footers.
 - 2026-09-04 d739f59: header drag zone, one-word Save, header delete icon, pill merchant chips.
 - 2026-09-04 (build 18): SheetHeader convergence across five sheets.

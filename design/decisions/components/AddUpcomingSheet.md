@@ -1,7 +1,7 @@
 # AddUpcomingSheet (components/money/AddUpcomingSheet.tsx)
 
 ## Direction (current)
-The bill form. Amount first, then what it is, then when: the same order as the log sheet, so the two never feel like different apps. A form sheet by the drawers rule, so `SheetHeader` with a serif title and a one-word Save disabled until an amount exists.
+The bill form, and the same form as the log sheet. Amount in the enclosed field, then "What is it?" as a text field with name presets under it, then the category rail, then the schedule. The first three beats are the log sheet's Where and Category, in the same order with the same chip shapes; the schedule is the one section only a bill needs. A form sheet by the drawers rule, so `SheetHeader` with a serif title, a one-word Save disabled until an amount exists, and delete as the header's one icon action.
 
 Whatever it shows about a schedule has to be true of the rule it will write. That sounds obvious and was not: the sheet spent a release preselecting a day chip for rules that had never chosen one.
 
@@ -12,15 +12,18 @@ Whatever it shows about a schedule has to be true of the rule it will write. Tha
 - Monthly with no stored anchor: **no day chip selected**, plus one line naming the date the rule actually lands on. Reach: any expense written before step 04, or a Leak Scan import; Persona returning user's Rent row is one.
 
 ## Decisions
+- 2026-09-11 (Charen): **the sheet mirrors the log sheet's anatomy.** Why: they are the same form and read as two apps. The name field sat BELOW its presets while the log sheet moved to field-first in August; the amount wore the underline variant while the log sheet and the break sheet both wore enclosed; and delete was a full-width coral row in the pinned footer, the last form sheet still doing it, with `drawers.md` carrying the move as open work since 2026-09-04. All three are now the log sheet's. The delete tests passed unedited, because they query by role and accessible name and `SheetHeader`'s icon action satisfies both.
+- 2026-09-11 (Charen): **the category is a field, not a side effect.** Why: `NAME_CHIPS` was a name-preset row that silently carried the sheet's ONLY category assignment, resolved at save time and never shown. Six presets covered four categories, the app's other six were unreachable, and add mode with no preset filed everything under "Other" without saying so. There is a real `CategoryChipRow` now, seeded from the row in edit mode; a preset moves it visibly and the user can move it back. The per-chip `tint` table went with it: three of its six hues disagreed with `categoryIdentityColor`, so a chip's border was saying one thing about where the bill would file while the row it created said another.
 - 2026-09-11: **a legacy monthly rule lights no day chip, and the sheet says what the rule does instead.** Why: `draftFromExpense` read `rule.monthDay ?? '1'`, so a rule stored before step 04 (no `monthDay`, steps from its own anchor date) opened with "1st" lit up while the list correctly said "Monthly, next Sep 29". The sheet was stating something false about a rule every other surface described accurately, and one tap on any schedule control would then rebuild from the wrong anchor and silently move the bill. The `scheduleTouched` guard meant an untouched Save was always safe, which is exactly why nobody caught it: the lie never wrote itself to disk. Rejected: a real "same day each month (29th)" chip state, which needs a locale-safe ordinal for an arbitrary day (ADA-008 forbids hardcoding "29th"), needs a sentinel in `MonthDayOption` or a storage change, and has no meaning in add mode, where anchoring at today would write a bill dated today that Spent would then render as a spend the user never made. `describeSchedule` needed no change at all: it has always omitted the anchor phrase when there is no `monthDay`. Only the sheet was lying.
 - 2026-09-11: **the note names the NEXT occurrence, not the stored date.** Caught on device: `expense.date` is the rule's anchor and is usually in the past, so the first version read "next on Aug 29" beside a row correctly saying "next Sep 29". It projects through `nextOccurrence`, the same helper the list uses, so the two cannot disagree.
 - 2026-09-11: **round-tripping monthly to weekly and back keeps the original anchor.** `buildSchedule` takes the row's own date and steps its day-of-month forward, rather than re-anchoring on today, so "the 29th" survives a frequency change the user did not mean to make.
 
 ## Open
 - The sheet says "upcoming expense" in the delete label and in its own title while the pane it belongs to has settled on "bill". Those move together with the pane's other two, not piecemeal.
-- The amount field is the underline variant while the log sheet and the break sheet are both enclosed.
-- Delete is a bottom text row; `drawers.md` has it filed as owed the header-icon pass.
-- `NAME_CHIPS` is a name-preset row that silently carries the sheet's only category assignment, with hardcoded tints that disagree with `categoryIdentityColor` in three of six entries.
+- Two rails on one sheet can carry the same word: "Utilities" is both a name preset and a category, so the two chips are indistinguishable by accessible name. Harmless on screen, where the eyebrow above each rail disambiguates, but a VoiceOver user hears the same phrase twice with no context. Found while writing the parity tests, which have to reach for a category no preset shares.
+- The sheet is four sections tall now. With the software keyboard up it clamps to 80% and scrolls, which is the platform rule working, but it has not been felt in hand.
+- The amount still renders `2100.00` in the field where the row renders `2,100.00`.
 
 ## Iterations
+- 2026-09-11: parity pass. Delete to the header icon, enclosed amount at the log sheet's density, field-first "What is it?" with soft pill presets, a real category rail.
 - 2026-09-11: the legacy monthly anchor stops being misrepresented, and the sheet echoes the date it will write.

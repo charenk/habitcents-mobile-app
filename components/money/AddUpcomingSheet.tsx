@@ -37,12 +37,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
+import { CategoryChipRow } from '@/components/money/CategoryChipRow';
 import { AmountField } from '@/components/ui/AmountField';
-import { Button } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
 import { Icon } from '@/components/ui/Icon';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
@@ -51,7 +52,7 @@ import { SheetHeader } from '@/components/ui/SheetHeader';
 import { TextField } from '@/components/ui/TextField';
 import { useToast } from '@/components/ui/Toast';
 import { strings } from '@/constants/strings';
-import { lightTheme, radii, typeScale } from '@/constants/theme';
+import { radii, typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
 import { useCategories } from '@/contexts/CategoriesContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -92,31 +93,30 @@ const MAX_EVERY_N_DAYS = 90;
 const DEFAULT_EVERY_N_DAYS = 10;
 
 /**
- * Category identity hues. Read from the light palette because the chip tints
- * are the same in both themes (darkTheme.categoryColors aliases these), and
- * NAME_CHIPS is module scope, so it cannot reach useTheme().
- */
-const TINTS = lightTheme.categoryColors;
-
-/**
- * The six name chips from spec 04. Each carries the stored ExpenseCategory it
- * files under, plus its own glyph and tint, so the row it creates looks right
- * in every list without a second lookup table. Spec hues: Rent lavender,
- * Internet and Phone cyan, Gym amber, Insurance blue, Utilities orange.
+ * The six name presets from spec 04: a name, a glyph, and the category the
+ * name usually files under. Tapping one fills the name field and MOVES THE
+ * CATEGORY RAIL, visibly, where the user can then change it.
+ *
+ * 2026-09-11: each entry used to carry its own hardcoded `tint` for the chip
+ * border, quoting "spec hues: Rent lavender, Internet and Phone cyan, Gym
+ * amber, Insurance blue, Utilities orange". Those hues disagreed with
+ * `categoryIdentityColor` for three of the six, so a chip's border colour was
+ * saying one thing about where the bill would file while the row it created
+ * said another. The presets now share the log sheet's soft pill shape, with no
+ * per-chip hue at all, and the category is a field the user can see.
  */
 const NAME_CHIPS: ReadonlyArray<{
   key: string;
   label: string;
   emoji: string;
-  tint: string;
   category: ExpenseCategory;
 }> = [
-  { key: 'rent', label: strings.addUpcoming.nameRent, emoji: '🏠', tint: TINTS.housing, category: 'Mortgage' },
-  { key: 'internet', label: strings.addUpcoming.nameInternet, emoji: '📡', tint: TINTS.subscriptions, category: 'Utilities' },
-  { key: 'phone', label: strings.addUpcoming.namePhone, emoji: '📱', tint: TINTS.subscriptions, category: 'Software & Subscriptions' },
-  { key: 'gym', label: strings.addUpcoming.nameGym, emoji: '🏋️', tint: TINTS.entertainment, category: 'Entertainment' },
-  { key: 'insurance', label: strings.addUpcoming.nameInsurance, emoji: '🛡️', tint: TINTS.transport, category: 'Other' },
-  { key: 'utilities', label: strings.addUpcoming.nameUtilities, emoji: '💡', tint: TINTS.groceries, category: 'Utilities' },
+  { key: 'rent', label: strings.addUpcoming.nameRent, emoji: '🏠', category: 'Mortgage' },
+  { key: 'internet', label: strings.addUpcoming.nameInternet, emoji: '📡', category: 'Utilities' },
+  { key: 'phone', label: strings.addUpcoming.namePhone, emoji: '📱', category: 'Software & Subscriptions' },
+  { key: 'gym', label: strings.addUpcoming.nameGym, emoji: '🏋️', category: 'Entertainment' },
+  { key: 'insurance', label: strings.addUpcoming.nameInsurance, emoji: '🛡️', category: 'Other' },
+  { key: 'utilities', label: strings.addUpcoming.nameUtilities, emoji: '💡', category: 'Utilities' },
 ];
 
 /** Monday first, matching the week strip everywhere else in the app. */
@@ -366,6 +366,11 @@ export function AddUpcomingSheet({
   const [cents, setCents] = useState(0);
   const [nameChipKey, setNameChipKey] = useState<string | null>(null);
   const [name, setName] = useState('');
+  // The category is a field on this sheet now, not a silent side effect of a
+  // name preset. Add mode starts on 'Other', which is what the old chip-less
+  // path wrote without ever showing it; picking a preset moves it, and the
+  // user can move it back.
+  const [category, setCategory] = useState<ExpenseCategory>('Other');
   const [scheduleType, setScheduleType] = useState<ScheduleType>('repeats');
   const [onceWhen, setOnceWhen] = useState<OnceWhen>('tomorrow');
   const [frequency, setFrequency] = useState<Frequency>('monthly');
@@ -391,6 +396,7 @@ export function AddUpcomingSheet({
       setCents(draft.cents);
       setNameChipKey(draft.nameChipKey);
       setName(draft.name);
+      setCategory(expense.category);
       setScheduleType(draft.scheduleType);
       setOnceWhen(draft.onceWhen);
       setFrequency(draft.frequency);
@@ -404,6 +410,7 @@ export function AddUpcomingSheet({
     setCents(0);
     setNameChipKey(null);
     setName('');
+    setCategory('Other');
     setScheduleType('repeats');
     setOnceWhen('tomorrow');
     setFrequency('monthly');
@@ -411,7 +418,6 @@ export function AddUpcomingSheet({
     setBiweekStart('this');
     setMonthDay('1');
     setEveryNDays(DEFAULT_EVERY_N_DAYS);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible, mode, expense]);
 
   const pickNameChip = (key: string) => {
@@ -421,6 +427,10 @@ export function AddUpcomingSheet({
     // The chip prefills the field; the field stays editable, so "Gym" can
     // become "Gym membership" without losing the category the chip picked.
     setName(chip.label);
+    // And it moves the category rail, visibly, instead of writing one at save
+    // time that the sheet never showed. The rail is the source of truth from
+    // here on: a preset is a shortcut into it, not a hidden second opinion.
+    setCategory(chip.category);
   };
 
   // Wrap every schedule setter so CHANGING any of these controls flips
@@ -498,11 +508,11 @@ export function AddUpcomingSheet({
     if (!canSave) return;
 
     const chip = NAME_CHIPS.find((c) => c.key === nameChipKey);
-    // Edit mode with no chip selected keeps the row's own category rather than
-    // falling back to 'Other', so recategorizing was never a silent side
-    // effect of, say, just fixing a typo in the name.
-    const fallbackCategory: ExpenseCategory = mode === 'edit' && expense ? expense.category : 'Other';
-    const category: ExpenseCategory = chip?.category ?? fallbackCategory;
+    // The category rail is the source of truth (2026-09-11). It is seeded from
+    // the row in edit mode and moved by a preset tap, so "keep the row's own
+    // category unless a chip says otherwise" is now just "write what the rail
+    // shows". Recategorizing is still never a side effect of fixing a typo; it
+    // is a thing the user can see and do on purpose.
     const match = categories.find((c) => toExpenseCategory(c.name) === category);
     const title = name.trim() || chip?.label || match?.name || category;
 
@@ -639,22 +649,16 @@ export function AddUpcomingSheet({
       onClose={onClose}
       accessibilityLabel={title}
       contentContainerStyle={styles.content}
-      // Save moved into the pinned header (ADR 0031); the destructive action
-      // rides Sheet's pinned footer slot in edit mode. Add mode passes no
-      // footer at all, so its padding never leaves a dead gap.
-      footer={
-        mode === 'edit' ? (
-          <Button
-            label={strings.addUpcoming.deleteUpcoming}
-            onPress={handleDelete}
-            variant="destructive"
-            style={styles.delete}
-          />
-        ) : undefined
-      }
       // Pinned header-save (ADR 0031) inside Sheet's drag zone, so the title
       // row drags the sheet too; hint only while disabled, so VoiceOver
       // never reads stale guidance on an enabled button (ADR 0028).
+      //
+      // Delete is the header's one icon action, 12pt left of Save and never
+      // flush against it (ADR 0033). It was a full-width coral text row in the
+      // pinned footer, which made the destructive action the loudest thing on
+      // the sheet and left this the last form sheet still doing it; drawers.md
+      // has had the move filed as open work since 2026-09-04. No confirm
+      // sheet: the delete is instant with Undo on the toast, unchanged.
       header={
         <SheetHeader
           title={title}
@@ -662,38 +666,80 @@ export function AddUpcomingSheet({
           onSave={handleSave}
           saveDisabled={!canSave || saving}
           saveHint={canSave ? undefined : strings.sheets.saveHintAmount}
+          secondaryAction={
+            mode === 'edit'
+              ? {
+                  icon: 'Trash2',
+                  accessibilityLabel: strings.addUpcoming.deleteUpcoming,
+                  onPress: handleDelete,
+                  tone: 'destructive',
+                }
+              : undefined
+          }
         />
       }
     >
+          {/* Enclosed at ExpenseSheet's density (Charen, 2026-09-11): the
+              underline field read as a different component from the rest of
+              the app's money inputs. Third consumer after ExpenseSheet and
+              BreakHabitSheet, which makes enclosed the house shape. */}
           <AmountField
             valueCents={cents}
             onChangeCents={setCents}
             autoFocus={mode === 'add' && visible}
-            size={48}
+            size={40}
+            variant="enclosed"
             accessibilityLabel={strings.addUpcoming.amountLabel(format(cents))}
           />
 
+          {/* Field first, presets under it, then the category rail: the same
+              three beats as the log sheet's Where and Category, in the same
+              order (ExpenseSheet moved to field-first on 2026-08-16). The
+              presets used to sit above the field and were the sheet's ONLY
+              way to set a category, which it never showed. */}
           <Text style={styles.eyebrow}>{strings.addUpcoming.whatIsIt}</Text>
-          <View style={styles.chipRow}>
+          <TextField
+            value={name}
+            onChangeText={setName}
+            placeholder={strings.addUpcoming.namePlaceholder}
+            accessibilityLabel={strings.addUpcoming.nameFieldLabel}
+            autoCapitalize="words"
+            returnKeyType="done"
+          />
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={styles.presetRow}
+            style={styles.chipScroll}
+          >
             {NAME_CHIPS.map((chip) => (
               <Chip
                 key={chip.key}
                 label={chip.label}
                 emoji={chip.emoji}
-                tint={chip.tint}
+                // tone and shape match the log sheet's two rails: one chip
+                // shape per sheet (Chip.md, ADR 0033). The hardcoded per-chip
+                // tints went with them; they disagreed with
+                // categoryIdentityColor in three of six entries, so the border
+                // hue was lying about where the bill would file.
+                tone="soft"
+                pill
                 selected={nameChipKey === chip.key}
                 onPress={() => pickNameChip(chip.key)}
               />
             ))}
-          </View>
-          <TextField
-            value={name}
-            onChangeText={setName}
-            placeholder={strings.addUpcoming.namePlaceholder}
-            style={styles.nameField}
-            accessibilityLabel={strings.addUpcoming.nameFieldLabel}
-            autoCapitalize="words"
-            returnKeyType="done"
+          </ScrollView>
+
+          {/* Borrows the log sheet's key rather than duplicating the word in
+              this namespace: it is the same eyebrow over the same rail, and
+              two keys for one word is two translations to keep in sync. */}
+          <Text style={styles.eyebrow}>{strings.expenseSheet.categoryEyebrow}</Text>
+          <CategoryChipRow
+            categories={categories}
+            value={category}
+            onChange={setCategory}
+            scrollToSelected={mode === 'edit' && visible}
           />
 
           <Text style={styles.eyebrow}>{strings.addUpcoming.schedule}</Text>
@@ -911,14 +957,21 @@ function createStyles(theme: AppTheme) {
       flexWrap: 'wrap',
       gap: 6,
     },
+    chipScroll: {
+      marginTop: 10,
+    },
+    // One line, not a wrapping grid, and gap 8 to match CategoryChipRow's
+    // content gap directly below it. Same shape as the log sheet's merchant
+    // rail, which is the row this one is now a sibling of.
+    presetRow: {
+      flexDirection: 'row',
+      gap: 8,
+    },
     chipRowTop: {
       flexDirection: 'row',
       flexWrap: 'wrap',
       gap: 6,
       marginTop: 12,
-    },
-    nameField: {
-      marginTop: 10,
     },
     stepper: {
       flexDirection: 'row',
@@ -949,9 +1002,6 @@ function createStyles(theme: AppTheme) {
       fontVariant: ['tabular-nums'],
       minWidth: 110,
       textAlign: 'center',
-    },
-    delete: {
-      marginTop: 0,
     },
   });
 }

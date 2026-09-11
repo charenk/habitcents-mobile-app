@@ -12,10 +12,17 @@
  * redesign, Charen 2026-08-16) instead wraps the field in TextField's own
  * bordered-fill grammar: theme.snow fill, a 1.5px border that stays cloud at
  * rest and turns theme.primary on focus (the width never changes between
- * states), radius radii.control. Only ExpenseSheet opts into 'enclosed';
- * every other consumer (AddUpcomingSheet, BreakHabitSheet, PartialSlipSheet,
- * PickOneSheet, the skip-value sheet in app/habit/[id].tsx) takes the
- * default and renders byte-identically to before this variant existed.
+ * states), radius radii.control.
+ *
+ * 'enclosed' is now the shape the app's three EXPENSE-ENTRY sheets share, at
+ * size 40: ExpenseSheet (2026-08-16), BreakHabitSheet (2026-09-10, "the
+ * underline field read as a different component from the rest of the app's
+ * money inputs"), AddUpcomingSheet (2026-09-11). The remaining 'underline'
+ * consumers are the habit-side value inputs (PartialSlipSheet, PickOneSheet,
+ * the skip-value sheet in app/habit/[id].tsx), which take the default at size
+ * 48 and render byte-identically to before this variant existed. The default
+ * stays 'underline' so those are untouched, but a fourth expense-entry sheet
+ * should reach for 'enclosed'.
  *
  * State ownership: the field keeps its own raw typed string internally
  * (typing "12." can't round-trip through toFixed(2) without losing the dot
