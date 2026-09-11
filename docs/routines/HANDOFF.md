@@ -3,7 +3,10 @@
 ## Status
 
 In progress. Run 28: no REVIEW FEEDBACK was pending at session start
-(last review, 2026-09-10 runs 20-23, was fully addressed by run 24).
+(last review, 2026-09-10 runs 20-23, was fully addressed by run 24). A
+new review (2026-09-11, runs 24-27) landed on origin mid-run and was
+cherry-picked onto this branch before pushing, per the same pattern
+runs 20/24/26 used; addressed below, right after the rebase section.
 Rebased onto origin/main (80 commits behind). One real conflict, the
 same mechanical import-line class runs 15/26 already saw: both
 `app/(tabs)/categories.tsx` and `app/category/[id].tsx` had this
@@ -29,6 +32,12 @@ already use). Not the full ICU/CLDR plural-rule work the checkbox is
 ultimately waiting on, just the one concrete gap flagged since run 19;
 see PLAN.md's run 28 entry for the full detail and why the checkbox
 stays open.
+
+The runs 24-27 review (approved, no code fixes owed) landed on origin
+mid-run; its one docs item owed (the `onThe` no-standalone-connector-word
+rule, only recorded in four locale file headers) is now a durable
+bullet in `design/PATTERN_VOCABULARY.md`'s Localization section. See
+Completed for detail.
 
 ## Completed
 
@@ -700,6 +709,16 @@ stays open.
   concatenation, same as the English source always was), so the
   checkbox stays open; full reasoning in PLAN.md's run 28 entry. One
   commit; `tsc --noEmit` clean, full suite green (121/121, 1291/1291).
+- Run 28, review feedback (2026-09-11 orchestrator, runs 24-27,
+  landed on origin mid-run and was cherry-picked onto this branch
+  before pushing): **Approved, no code fixes owed.** One small docs
+  item owed: the run 26 `onThe` judgment call (a connector word with
+  no natural standalone equivalent becomes the field's own name,
+  e.g. ja/ko/zh-Hans/hi reading "date" instead of a literal "on the")
+  was only recorded in four locale file headers. Added it as a
+  reusable bullet in `design/PATTERN_VOCABULARY.md`'s Localization
+  section. One commit; `tsc --noEmit` clean, full suite green
+  (121/121, 1291/1291).
 
 ## Next
 
