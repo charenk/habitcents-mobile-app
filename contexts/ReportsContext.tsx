@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState, useCallback, use
 import { getDashboardConfig, saveDashboardConfig } from '@/utils/storage';
 import { strings } from '@/constants/strings';
 import { formatDate } from '@/utils/dates';
+import { expenseBelongsToCategory } from '@/utils/expenseCategory';
 import type {
   DashboardConfig,
   ReportWidget,
@@ -92,6 +93,25 @@ export function getDateRangeForTimeRange(
 /**
  * Spending grouped by category over a TimeRange. Pure, so it can be exercised
  * without mounting the provider; the context method below delegates to it.
+ *
+ * Each row is resolved to a real Category through `expenseBelongsToCategory`
+ * before it is grouped, the same helper Categories and category detail use. A
+ * name match alone missed the two defaults whose display name is not their
+ * stored value ('Subscriptions' stores 'Software & Subscriptions', 'Home'
+ * stores 'Mortgage'), so Insights rendered the stored value and named one
+ * category two different things on two screens. Grouping on the resolved id
+ * also merges rows one category matches by two different rungs (its current
+ * stored value and its retired display name) into a single row. The stored
+ * value survives only as the fallback for an orphan row whose category no
+ * longer exists.
+ *
+ * An explicit categoryId is tried across the whole list BEFORE the helper's
+ * name rungs. Every custom category writes 'Other' as the row's stored value
+ * (`toExpenseCategory` falls back to it for any name it does not know) and the
+ * default 'Other' sits ahead of every custom category in the list, so a plain
+ * find-first over the helper would bank all custom-category spend under Other.
+ * The id is a foreign key and the shared stored value is a coincidence, so the
+ * key wins.
  */
 export function computeSpendingByCategory(
   expenses: Expense[],
@@ -105,21 +125,32 @@ export function computeSpendingByCategory(
   const totalSpent = filtered.reduce((sum, e) => sum + e.amount, 0);
   if (totalSpent === 0) return [];
 
-  // Group by category
-  const byCategory = new Map<string, number>();
+  // Group by resolved category, falling back to the stored value for an orphan.
+  const byCategory = new Map<string, { name: string; color: string; amount: number }>();
   for (const expense of filtered) {
-    const key = expense.category;
-    byCategory.set(key, (byCategory.get(key) || 0) + expense.amount);
+    const match =
+      (expense.categoryId ? categories.find(c => c.id === expense.categoryId) : undefined) ??
+      categories.find(c => expenseBelongsToCategory(expense, c));
+    const key = match?.id ?? expense.category;
+    const existing = byCategory.get(key);
+    if (existing) {
+      existing.amount += expense.amount;
+    } else {
+      byCategory.set(key, {
+        name: match?.name ?? expense.category,
+        color: match?.color ?? '#9E9E9E',
+        amount: expense.amount,
+      });
+    }
   }
 
   // Build result
   const result: SpendingByCategory[] = [];
-  for (const [categoryName, amount] of byCategory) {
-    const category = categories.find(c => c.name === categoryName);
+  for (const [categoryId, { name, color, amount }] of byCategory) {
     result.push({
-      categoryId: category?.id || categoryName,
-      categoryName,
-      categoryColor: category?.color || '#9E9E9E',
+      categoryId,
+      categoryName: name,
+      categoryColor: color,
       amount,
       percentage: Math.round((amount / totalSpent) * 100),
     });
