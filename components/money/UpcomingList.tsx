@@ -54,14 +54,25 @@ import { categoryDisplayLabel } from '@/utils/leakScanBridge';
 import {
   describeSchedule,
   resolveRule,
+  scheduleParts,
   shortDate,
-  upcomingItemPayments,
-  upcomingItemWindowTotal,
   upcomingWindowPaymentsCount,
   upcomingWindowTotal,
   type UpcomingItem,
 } from '@/utils/recurring';
-import { UPCOMING_WINDOW_PRESETS, type UpcomingWindowDays } from '@/utils/upcomingWindow';
+import {
+  UPCOMING_WINDOW_PRESETS,
+  upcomingWindowEnd,
+  type UpcomingWindowDays,
+} from '@/utils/upcomingWindow';
+import {
+  groupUpcomingByMonth,
+  monthGroupTotal,
+  monthRowTotal,
+  type UpcomingMonthRow,
+} from '@/utils/upcomingGroups';
+import { formatDate } from '@/utils/dates';
+import { CHROME_MAX_FONT_SCALE, useAccessibilityTextSize } from '@/utils/textScale';
 
 /** What VoiceOver hears. "2w, selected" is not a sentence. */
 const WINDOW_LABELS: Record<UpcomingWindowDays, string> = {
@@ -82,6 +93,19 @@ const WINDOW_OPTIONS = UPCOMING_WINDOW_PRESETS.map((days) => ({
   label: WINDOW_SHORT_LABELS[days],
   labelSpoken: WINDOW_LABELS[days],
 }));
+
+/**
+ * "September", or "January 2027" once the window reaches a different year.
+ *
+ * The year is not decoration: a three-month window opened in November reaches
+ * January, and a bare "JANUARY" on a forward-looking pane reads as ten months
+ * ago. Never a catalog string; the month comes from the locale-aware formatter
+ * (ADA-008), the same way SpentList derives its day label.
+ */
+function monthLabel(monthStart: Date): string {
+  const sameYear = monthStart.getFullYear() === new Date().getFullYear();
+  return formatDate(monthStart, sameYear ? { month: 'long' } : { month: 'long', year: 'numeric' });
+}
 
 export type UpcomingListProps = {
   items: UpcomingItem[];
@@ -116,6 +140,7 @@ export function UpcomingList({
 
   const windowTotal = useMemo(() => upcomingWindowTotal(items), [items]);
   const paymentsCount = useMemo(() => upcomingWindowPaymentsCount(items), [items]);
+  const groups = useMemo(() => groupUpcomingByMonth(items), [items]);
 
   const addAffordance = (
     <Pressable
@@ -159,11 +184,14 @@ export function UpcomingList({
           drops its "from N bills" clause when the two counts agree. */}
       <View style={styles.totalCard}>
         <View style={styles.windowRow}>
-          {/* Capped at the same 1.5 the filter beside it uses: the label and
-              the filter are a pair, and an uncapped label wrapped to three
-              lines next to a one-line control at accessibility sizes. */}
-          <Text style={styles.windowLabel} maxFontSizeMultiplier={1.5}>
-            {strings.money.upcomingWindowEyebrow(windowDays)}
+          {/* The SPAN, not the duration: the duration is already in the filter
+              beside it, so a label repeating it said nothing the control did
+              not, and the end date is the one fact the pane could not
+              otherwise give (ADR 0041). Capped at the same 1.5 the filter
+              uses, since the label and the filter are a pair and an uncapped
+              label wrapped to three lines next to a one-line control. */}
+          <Text style={styles.windowLabel} maxFontSizeMultiplier={CHROME_MAX_FONT_SCALE}>
+            {strings.money.upcomingWindowRange(shortDate(upcomingWindowEnd(windowDays)))}
           </Text>
           <SegmentedControl<UpcomingWindowDays>
             options={WINDOW_OPTIONS}
@@ -208,31 +236,51 @@ export function UpcomingList({
           />
         </View>
       ) : (
-        <View style={styles.card}>
-          {items.map((item, index) => (
-            <UpcomingRow
-              key={item.expense.id}
-              item={item}
-              isFirst={index === 0}
-              onPress={() => onEditItem(item.expense)}
-              theme={theme}
-              styles={styles}
-            />
-          ))}
-        </View>
+        /* Grouped by the calendar month each payment lands in, the way Spent
+           groups by day. Each header carries its own subtotal, which is what
+           makes "what is left to pay this month" readable at every window
+           rather than only at one (ADR 0041). Plain Views inside the pane's
+           existing ScrollView: a SectionList owns its scrolling and must not
+           nest inside the pager (money.md, 2026-09-06). */
+        groups.map((group) => (
+          <View key={group.key}>
+            <Text
+              style={styles.groupHeader}
+              accessibilityRole="header"
+              maxFontSizeMultiplier={CHROME_MAX_FONT_SCALE}
+            >
+              {strings.money.upcomingGroupHeader(
+                monthLabel(group.monthStart),
+                format(monthGroupTotal(group))
+              )}
+            </Text>
+            <View style={styles.card}>
+              {group.rows.map((row, index) => (
+                <UpcomingRow
+                  key={`${row.expense.id}-${group.key}`}
+                  row={row}
+                  isFirst={index === 0}
+                  onPress={() => onEditItem(row.expense)}
+                  theme={theme}
+                  styles={styles}
+                />
+              ))}
+            </View>
+          </View>
+        ))
       )}
     </View>
   );
 }
 
 function UpcomingRow({
-  item,
+  row,
   isFirst,
   onPress,
   theme,
   styles,
 }: {
-  item: UpcomingItem;
+  row: UpcomingMonthRow;
   isFirst: boolean;
   onPress: () => void;
   theme: AppTheme;
@@ -244,7 +292,11 @@ function UpcomingRow({
 }) {
   const { format } = useCurrency();
 
-  const { expense, nextDate } = item;
+  // Scoped to the month this row sits under, never the whole window: a row
+  // showing a three-month number beneath an "October" header is the same
+  // unreconcilable pair the card and the list were fixed for.
+  const { expense } = row;
+  const nextDate = row.occurrences[0];
   // Same display fallback as ExpenseRow: stored category values map to their
   // display names before rendering.
   const name = expense.title || categoryDisplayLabel(expense.category);
@@ -254,8 +306,8 @@ function UpcomingRow({
   // lands once the two are the same number, which is why the narrow windows
   // look untouched. Where it lands more than once, the caption names the unit
   // price the subtotal is built from, and the price the edit sheet opens on.
-  const payments = upcomingItemPayments(item);
-  const amountLabel = format(upcomingItemWindowTotal(item));
+  const payments = row.occurrences.length;
+  const amountLabel = format(monthRowTotal(row));
   const unitLabel = format(expense.amount);
   const multiplierLabel =
     payments > 1 ? strings.money.upcomingRowMultiplier(payments, unitLabel) : null;
@@ -267,11 +319,67 @@ function UpcomingRow({
   // rather than crashing the tab.
   const rule = resolveRule(expense);
   const scheduleLine = rule ? describeSchedule(rule, nextDate) : shortDate(nextDate);
+  // What the row DRAWS. The sentence above is what it says: the cadence is a
+  // badge now and "next" is an elbow arrow, so the pieces and the sentence are
+  // deliberately different (utils/recurring.ts scheduleParts, ADR 0040's
+  // labelSpoken contract). A corrupted row that resolved no rule keeps its date
+  // and simply carries no badge.
+  const parts = rule ? scheduleParts(rule, nextDate) : null;
 
   // The bill, what the window costs, how many and what one costs, then when.
   // A user who stops listening after two words still got the two facts that
   // decide whether to keep listening.
   const spoken = [name, amountLabel, multiplierSpoken, scheduleLine].filter(Boolean).join(', ');
+
+  // Dynamic Type: at accessibility sizes the amount moves under the name
+  // rather than competing with it for a 393pt row. The name and the amount are
+  // both content, so neither may be capped; the schedule line is metadata and
+  // does cap. Same rule as ExpenseRow; see utils/textScale.ts.
+  const stacked = useAccessibilityTextSize();
+
+  const amountBlock = (
+    <View style={[styles.rowAmount, stacked ? styles.rowAmountStacked : null]}>
+      {/* Spec 09 section 1 rule 6: money numbers scale, they never truncate.
+          Side by side the amount shrinks to fit rather than turning into an
+          ellipsis that hides what the bill costs; stacked it has the whole row
+          and needs neither. */}
+      <Text
+        style={styles.amount}
+        numberOfLines={1}
+        adjustsFontSizeToFit={!stacked}
+        minimumFontScale={0.7}
+      >
+        {amountLabel}
+      </Text>
+      {multiplierLabel ? (
+        <Text
+          style={styles.multiplier}
+          numberOfLines={1}
+          adjustsFontSizeToFit={!stacked}
+          minimumFontScale={0.7}
+        >
+          {multiplierLabel}
+        </Text>
+      ) : null}
+      {/* The cadence sits under the amount (Charen, 2026-09-11, after seeing it
+          on the left): the left column keeps two lines, the two columns balance,
+          and the pill stops being the widest thing on a row's bottom edge. No
+          alignSelf, so it inherits the column's own alignment: right-aligned
+          beside the amount normally, left-aligned when the row stacks at
+          accessibility sizes. */}
+      {parts ? (
+        <View style={styles.cadenceBadge}>
+          <Text
+            style={styles.cadenceLabel}
+            numberOfLines={1}
+            maxFontSizeMultiplier={CHROME_MAX_FONT_SCALE}
+          >
+            {parts.cadence}
+          </Text>
+        </View>
+      ) : null}
+    </View>
+  );
 
   return (
     <Pressable
@@ -290,41 +398,31 @@ function UpcomingRow({
         size={36}
       />
       <View style={styles.rowText}>
-        <Text style={styles.name} numberOfLines={1}>
+        <Text style={styles.name} numberOfLines={stacked ? 2 : 1}>
           {name}
         </Text>
-        <Text style={styles.schedule} numberOfLines={1}>
-          {scheduleLine}
-        </Text>
-      </View>
-      <View style={styles.rowAmount}>
-        {/* Spec 09 section 1 rule 6: money numbers scale, they never
-            truncate. numberOfLines={1} keeps the row's shape, so the amount
-            shrinks to fit rather than turning into an ellipsis that hides
-            what the bill costs. */}
-        <Text
-          style={styles.amount}
-          numberOfLines={1}
-          adjustsFontSizeToFit
-          minimumFontScale={0.7}
-        >
-          {amountLabel}
-        </Text>
-        {multiplierLabel ? (
-          // Carries money, so it takes the same treatment as the number above
-          // it rather than the cadence line's: it shrinks to fit instead of
-          // truncating. "in 21 days" could afford an ellipsis; "$2,100.00
-          // each" cannot.
+        {/* At accessibility sizes the amount moves directly under the name, so
+            the visible order matches the spoken one: the two things a user
+            came to read first, then the two that qualify them. */}
+        {stacked ? amountBlock : null}
+        <View style={styles.dateRow}>
+          <Icon
+            name="CornerDownRight"
+            size={14}
+            color={theme.mistText}
+            importantForAccessibility="no-hide-descendants"
+            accessibilityElementsHidden
+          />
           <Text
-            style={styles.multiplier}
-            numberOfLines={1}
-            adjustsFontSizeToFit
-            minimumFontScale={0.7}
+            style={styles.schedule}
+            numberOfLines={stacked ? 2 : 1}
+            maxFontSizeMultiplier={CHROME_MAX_FONT_SCALE}
           >
-            {multiplierLabel}
+            {parts ? parts.date : scheduleLine}
           </Text>
-        ) : null}
+        </View>
       </View>
+      {stacked ? null : amountBlock}
       <Icon
         name="ChevronRight"
         size={16}
@@ -402,10 +500,25 @@ function createStyles(theme: AppTheme) {
     addCompactPressed: {
       backgroundColor: theme.snow,
     },
-    card: {
-      // Was the "Scheduled" eyebrow's marginTop 16 plus its own 6; the eyebrow
-      // retired (2026-09-11) and the card takes the gap directly.
+    // The pane's eyebrow treatment, copied from SpentList's day header, which
+    // is the app's existing "header with a date and a number over rows"
+    // pattern. Uppercase lives here and the string stays sentence case
+    // (UX-060). Tabular figures because it holds a number sitting directly
+    // above other numbers. Named as a deviation in the PR body: the card's
+    // window label lost its uppercase yesterday, but that is a label on a
+    // control and this is a header over rows.
+    groupHeader: {
+      fontFamily: theme.fonts.uiSemibold,
+      fontSize: typeScale.eyebrow,
+      letterSpacing: typeScale.eyebrowLetterSpacing,
+      textTransform: 'uppercase',
+      color: theme.mistText,
+      fontVariant: ['tabular-nums'],
       marginTop: 16,
+      marginBottom: 6,
+      marginLeft: 4,
+    },
+    card: {
       backgroundColor: theme.white,
       borderWidth: 1,
       borderColor: theme.cloud,
@@ -415,7 +528,12 @@ function createStyles(theme: AppTheme) {
     row: {
       minHeight: 44,
       flexDirection: 'row',
-      alignItems: 'center',
+      // Top-aligned unconditionally (2026-09-11): the left column is three
+      // lines now, and the amount belongs beside the NAME rather than floating
+      // at the vertical centre of the block. This is what the old
+      // accessibility-only `rowStacked` branch already argued for, promoted to
+      // the base value, so that branch collapsed.
+      alignItems: 'flex-start',
       gap: 12,
       paddingVertical: 10,
       borderTopWidth: 1,
@@ -436,22 +554,70 @@ function createStyles(theme: AppTheme) {
       color: theme.ink,
       flexShrink: 1,
     },
+    dateRow: {
+      flexDirection: 'row',
+      // Centred, not top-aligned: the icon is a fixed 14 and does not scale,
+      // while the date beside it grows to the 1.5 chrome cap, so it has to sit
+      // against whatever height that text takes.
+      alignItems: 'center',
+      gap: 4,
+      marginTop: 2,
+    },
+    // Geometry borrowed from SegmentedControl's internal badge, the smallest
+    // sanctioned one, because this sits inside a row rather than on a card.
+    // minHeight and never height: an 11pt label grows with Dynamic Type and a
+    // fixed box clips it. slate on cloud, deliberately: mistText measures
+    // 4.06:1 on a cloud fill (UXUI_AUDIT.md:562) and nothing here tests
+    // contrast. Cadence is a fact, not a judgment, so the fill is neutral and
+    // the meaning is in the word (SegmentedControl's own rule).
+    // Sized BY its padding rather than by a minHeight the label is then
+    // centred inside. The label's own box is what gets padded, so the pill is
+    // symmetric by construction; centring a loose text box in a taller pill
+    // left the word riding high, because Inter's line box carries a descender
+    // ("Monthly" has a y) that the visible ink does not fill (Charen spotted
+    // it on device, 2026-09-11). Padding still grows with Dynamic Type, which
+    // is what the house minHeight rule is actually protecting against.
+    cadenceBadge: {
+      paddingVertical: 3,
+      paddingHorizontal: 8,
+      borderRadius: radii.pill,
+      backgroundColor: theme.cloud,
+      marginTop: 6,
+    },
+    cadenceLabel: {
+      fontFamily: theme.fonts.uiBold,
+      fontSize: typeScale.eyebrow,
+      // Tight, so the box hugs the glyphs instead of the font's full metrics.
+      lineHeight: 13,
+      color: theme.slate,
+      includeFontPadding: false,
+      textAlign: 'center',
+    },
     schedule: {
       fontFamily: theme.fonts.ui,
       fontSize: typeScale.caption,
       color: theme.mistText,
-      marginTop: 2,
+      flexShrink: 1,
     },
     rowAmount: {
       alignItems: 'flex-end',
       marginLeft: 8,
-      // The multiplier line is the widest thing this column ever holds, and
-      // without a cap its intrinsic width won the row and truncated the
-      // schedule line beside it ("Monthly, next Se..."). Capped, both money
-      // lines shrink to fit instead, which is the rule money text already
-      // follows (spec 09 section 1 rule 6).
+      // The cap outlived its original reason: the left column's longest line
+      // is a bare date now, not "Monthly, next Sep 29", so there is nothing
+      // there left to truncate. It stays because the multiplier caption can
+      // still win the row and steal width from the NAME on line 1, which is
+      // the same defect one line up. Capped, both money lines shrink to fit,
+      // which is the rule money text already follows (spec 09 section 1 rule 6).
       flexShrink: 1,
       maxWidth: '46%',
+    },
+    rowAmountStacked: {
+      // Back under the name, on the same left edge, and no width cap: the
+      // whole row is its own now.
+      alignItems: 'flex-start',
+      marginLeft: 0,
+      marginTop: 4,
+      maxWidth: undefined,
     },
     amount: {
       fontFamily: theme.fonts.uiSemibold,

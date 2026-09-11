@@ -1095,7 +1095,20 @@ export const strings = {
     // localization migration and the tests that pin its absence.
     spentEmptyBody: 'Log one and it lands here, newest first.',
     // Upcoming
+    // RETIRED FROM RENDERING (2026-09-11): the card states the window's SPAN
+    // now, not its duration. The duration is already in the filter sitting
+    // beside it ("2w / 1m / 3m"), so a label repeating it said nothing the
+    // control did not; the end date is the one fact the pane could not
+    // otherwise give. Kept for overlay-shape stability and the test that pins
+    // its absence. See upcomingWindowRange below.
     upcomingWindowEyebrow: (days: number) => `Next ${days} days`,
+    // "Today to Oct 11". The house range word is "to" (pickOneRangeHint); no
+    // catalog string uses a spaced hyphen as a separator and dashes are banned.
+    upcomingWindowRange: (end: string) => `Today to ${end}`,
+    // A month section header over the rows, same shape as spentGroupHeader's
+    // day header: "September · $2,214.38". The month name is never a catalog
+    // string, it comes from the locale-aware formatter (ADA-008).
+    upcomingGroupHeader: (month: string, total: string) => `${month} \u00B7 ${total}`,
     // U8: the window presets picker (2 weeks / 1 month / 3 months).
     upcomingWindowSegmentLabel: 'Upcoming window',
     // These three are now what VoiceOver HEARS. The filter moved into the
@@ -1120,7 +1133,11 @@ export const strings = {
       if (payments === bills) return paymentLabel;
       return `${paymentLabel} from ${bills} bill${bills === 1 ? '' : 's'}`;
     },
-    upcomingAddAffordance: 'Add an upcoming expense',
+    // 2026-09-11 VALUE CHANGE (needs re-translation): "upcoming expense"
+    // became "bill", finishing the noun pass the pane started. The pane was
+    // using four words for one object; this and the three keys under
+    // `addUpcoming` were the half that had to move together with the sheet.
+    upcomingAddAffordance: 'Add a bill',
     // Empty-state first actions (PRD v3.1 sect 5). Every empty state a skipper
     // can reach has to offer something to DO, not just explain itself.
     spentEmptyCta: 'Log an expense',
@@ -1153,7 +1170,8 @@ export const strings = {
     upcomingWindowEmptyBody: 'None of your bills land in this window.',
     // Same words as upcomingAddAffordance (the header affordance), its own key
     // so the true-zero empty state's CTA can be targeted unambiguously.
-    upcomingEmptyCta: 'Add an upcoming expense',
+    // 2026-09-11 VALUE CHANGE (needs re-translation), see above.
+    upcomingEmptyCta: 'Add a bill',
     // RETIRED FROM RENDERING (2026-09-11): the row now carries its own
     // multiplier, scoped to the picked window, and the pill was scoped to a
     // calendar month. A weekly bill at the 1 month window showed "x4" on the
@@ -1196,11 +1214,20 @@ export const strings = {
   // Add-upcoming sheet (spec 04 "Add-upcoming sheet"; U8 added edit mode,
   // mirroring ExpenseSheet's log/edit split).
   addUpcoming: {
-    title: 'Add upcoming.',
-    editTitle: 'Edit upcoming.',
+    // 2026-09-11 VALUE CHANGE (needs re-translation). Two things moved:
+    // "upcoming" became "bill" (the pane's settled noun), and the trailing
+    // period went. The period is the DECISION-sheet convention ('Currency.',
+    // 'Break a habit.', 'Profile.'), rendered by ui/SheetTitle; this is a form
+    // sheet on ui/SheetHeader, where its only sibling reads 'Log expense' and
+    // 'Edit expense'. AddUpcoming was the one form sheet carrying the other
+    // family's punctuation.
+    title: 'Add bill',
+    editTitle: 'Edit bill',
     // One word on every form-sheet header (see expenseSheet.saveExpense).
     saveChanges: 'Save',
-    deleteUpcoming: 'Delete upcoming expense',
+    // 2026-09-11 VALUE CHANGE (needs re-translation): matches the log sheet's
+    // 'Delete expense' exactly, now that the two are one form.
+    deleteUpcoming: 'Delete bill',
     whatIsIt: 'What is it?',
     namePlaceholder: 'Name it',
     nameFieldLabel: 'Name',

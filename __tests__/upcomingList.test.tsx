@@ -25,7 +25,8 @@ import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { UpcomingList } from '@/components/money/UpcomingList';
 import { strings } from '@/constants/strings';
 import type { Expense } from '@/types/expense';
-import type { UpcomingItem } from '@/utils/recurring';
+import { shortDate, type UpcomingItem } from '@/utils/recurring';
+import { upcomingWindowEnd } from '@/utils/upcomingWindow';
 
 function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -112,9 +113,22 @@ describe('UpcomingList summary block', () => {
     expect(StyleSheet.flatten(block.props.style).alignItems).toBe('flex-start');
   });
 
-  it('shows the window eyebrow for the selected preset', async () => {
+  /**
+   * The card states the window's SPAN now, not its duration: the duration is
+   * already in the filter beside it. Built through `upcomingWindowEnd` rather
+   * than a literal date, so this proves the label and the projection engine
+   * agree rather than pinning today's calendar.
+   */
+  it('shows the window span for the selected preset', async () => {
     const view = await renderList({ windowDays: 30 });
-    expect(view.getByText(strings.money.upcomingWindowEyebrow(30))).toBeTruthy();
+    const expected = strings.money.upcomingWindowRange(shortDate(upcomingWindowEnd(30)));
+    expect(view.getByText(expected)).toBeTruthy();
+  });
+
+  // Retirement pinned, matching the upcomingListEyebrow precedent.
+  it('no longer states the window as a duration', async () => {
+    const view = await renderList({ windowDays: 30 });
+    expect(view.queryByText(strings.money.upcomingWindowEyebrow(30))).toBeNull();
   });
 
   it('total sums every occurrence, and the count line agrees (payments, not bills)', async () => {
@@ -188,6 +202,75 @@ describe('UpcomingList add affordance', () => {
   });
 });
 
+describe('UpcomingList month grouping', () => {
+  const sep = (day: number) => new Date(`2026-09-${String(day).padStart(2, '0')}T00:00:00`);
+  const oct = (day: number) => new Date(`2026-10-${String(day).padStart(2, '0')}T00:00:00`);
+
+  /** Rent at $500.00 landing in September, October and November. */
+  const acrossMonths: UpcomingItem = {
+    expense: makeExpense({ id: 'rent', amount: 50000 }),
+    nextDate: sep(29),
+    daysUntil: 18,
+    occurrencesInWindow: [sep(29), oct(29), new Date('2026-11-29T00:00:00')],
+  };
+
+  it('renders one header per month, in order, each with its own subtotal', async () => {
+    const view = await renderList({ items: [acrossMonths] });
+    const headers = view.getAllByRole('header');
+    const texts = headers.map((h) => h.props.children as string);
+
+    // The card's total is also a header, so filter to the section ones.
+    const sections = texts.filter((t) => typeof t === 'string' && t.includes('\u00B7'));
+    expect(sections).toHaveLength(3);
+    // Each header carries that month's cost, not the window's.
+    for (const section of sections) expect(section).toContain('$500.00');
+  });
+
+  /**
+   * The scope rule. A bill landing in three months is three rows, each showing
+   * that month's cost. A single row showing $1,500.00 under a September header
+   * would be the unreconcilable pair this whole redesign removed.
+   */
+  it('splits a bill into one row per month, each scoped to that month', async () => {
+    const view = await renderList({ items: [acrossMonths] });
+    const rows = view.getAllByLabelText(/^Rent,/);
+
+    expect(rows).toHaveLength(3);
+    // Every row speaks its own month's cost, never the window's $1,500.00.
+    for (const row of rows) {
+      expect(row.props.accessibilityLabel as string).toContain('$500.00');
+      expect(row.props.accessibilityLabel as string).not.toContain('$1,500.00');
+    }
+  });
+
+  it('keeps a bill that lands twice in one month on one row, with its multiplier', async () => {
+    const twiceInSeptember: UpcomingItem = {
+      expense: makeExpense({ id: 'gym', title: 'Gym', amount: 3000 }),
+      nextDate: sep(4),
+      daysUntil: 3,
+      occurrencesInWindow: [sep(4), sep(18)],
+    };
+    const view = await renderList({ items: [twiceInSeptember] });
+
+    expect(view.getAllByLabelText(/^Gym,/)).toHaveLength(1);
+    expect(view.getByText(strings.money.upcomingRowMultiplier(2, '$30.00'))).toBeTruthy();
+    // The reconciliation, with one month and one bill in it: the card's total
+    // and the row are both $60.00, and the header composes the same figure
+    // into its own string.
+    expect(view.getAllByText('$60.00')).toHaveLength(2);
+    expect(view.getByText(/\u00B7 \$60\.00$/)).toBeTruthy();
+  });
+
+  it('renders no header at all when the window is empty', async () => {
+    const view = await renderList({ items: [] });
+    const headers = view.getAllByRole('header');
+    const sections = headers
+      .map((h) => h.props.children)
+      .filter((t) => typeof t === 'string' && (t as string).includes('\u00B7'));
+    expect(sections).toHaveLength(0);
+  });
+});
+
 describe('UpcomingList section eyebrow', () => {
   // Retired 2026-09-11: a heading over the only list on the pane, under a card
   // that already says what the pane is. Pinned so it is not quietly restored.
@@ -236,6 +319,40 @@ describe('UpcomingList row multiplier', () => {
   it('states each row timing once, not twice', async () => {
     const view = await renderList();
     expect(view.queryByText('in 3 days')).toBeNull();
+  });
+});
+
+describe('UpcomingList row anatomy', () => {
+  /**
+   * 2026-09-11: the row stopped drawing describeSchedule's sentence. The
+   * cadence became a badge and "next" became an elbow arrow, so the row draws
+   * `scheduleParts` and SPEAKS `describeSchedule`. These pin both halves,
+   * because losing the spoken half is the silent failure.
+   */
+  it('draws the cadence as a badge, not as words in a line', async () => {
+    const view = await renderList();
+    expect(view.getAllByText('Weekly').length).toBeGreaterThan(0);
+  });
+
+  it('draws the date without the word "next"', async () => {
+    const view = await renderList();
+    expect(view.queryByText(/next /)).toBeNull();
+    expect(view.queryByText(/Weekly \u00B7 /)).toBeNull();
+  });
+
+  it('still speaks the whole sentence, weekday included', async () => {
+    const view = await renderList();
+    const label = view.getByLabelText(/^Gym,/).props.accessibilityLabel as string;
+    // The badge shows "Weekly"; the qualifier the badge drops survives here.
+    expect(label).toContain('Weekly');
+    expect(label).toContain('Saturdays');
+    expect(label).toContain('next ');
+  });
+
+  it('names the weekday on the date, since the badge cannot hold it', async () => {
+    const view = await renderList();
+    // "Sat, Aug 15" rather than a bare "Aug 15" for a weekly rule.
+    expect(view.getAllByText(/^Sat, /).length).toBeGreaterThan(0);
   });
 });
 

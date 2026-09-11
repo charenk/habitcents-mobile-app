@@ -18,6 +18,7 @@ import {
   ChevronRight,
   Circle,
   CircleCheck,
+  CornerDownRight,
   CircleDot,
   CircleUser,
   Coffee,
@@ -72,6 +73,11 @@ const GLYPHS = {
   Circle,
   ArrowLeft,
   ChevronRight,
+  // Upcoming's row (2026-09-11): an elbow under the bill's name, pointing at
+  // the date it next lands on. It replaced the word "next", and it is not
+  // ChevronRight (already the trailing edit affordance on that same row) or
+  // Repeat (already means "recurring" on ExpenseRow, one segment away).
+  CornerDownRight,
   ChevronLeft,
   X,
   Plus,

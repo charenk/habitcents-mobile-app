@@ -16,6 +16,15 @@
  * cycle glyph in the trailing area, next to the amount. Shape, not color
  * alone (a Repeat icon, not a tint), and the row's accessible label spells it
  * out too, so the meaning survives VoiceOver.
+ *
+ * DYNAMIC TYPE (2026-09-11): at the five iOS accessibility sizes this row
+ * STACKS instead of competing. The name and the amount are both content, so
+ * neither may be capped (see utils/textScale.ts), and at AX3 they each want
+ * ~43pt type in a 393pt row: the name was starving to "S.." while the amount
+ * sat at its 0.7 floor. ADR 0039 had already given the amount `flexShrink` and
+ * `adjustsFontSizeToFit`, which is the right answer up to XXXL and simply runs
+ * out of room past it. Stacked, both get the full width and nothing truncates.
+ * The subtitle is metadata, so it caps.
  */
 import { memo, useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -30,6 +39,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import type { Expense } from '@/types/expense';
 import { categoryDisplayLabel } from '@/utils/leakScanBridge';
 import { isRecurringLedgerRow } from '@/utils/recurring';
+import { CHROME_MAX_FONT_SCALE, useAccessibilityTextSize } from '@/utils/textScale';
 
 export type ExpenseRowProps = {
   expense: Expense;
@@ -42,6 +52,7 @@ function ExpenseRowImpl({ expense, onPress, subtitle }: ExpenseRowProps): React.
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const { format } = useCurrency();
+  const stacked = useAccessibilityTextSize();
 
   const amountLabel = format(expense.amount);
   const secondary = subtitle ?? expense.time;
@@ -57,6 +68,20 @@ function ExpenseRowImpl({ expense, onPress, subtitle }: ExpenseRowProps): React.
     ? `${baseLabel}, ${strings.money.recurringRowSuffix}`
     : baseLabel;
 
+  const amountText = (
+    /* Money scales, never truncates (spec 09 section 1 rule 6): side by side
+       the amount shrinks to stay readable rather than ellipsizing the number.
+       Stacked it has the whole row, so it neither shrinks nor truncates. */
+    <Text
+      style={[styles.amount, stacked ? styles.amountStacked : null]}
+      numberOfLines={1}
+      adjustsFontSizeToFit={!stacked}
+      minimumFontScale={0.7}
+    >
+      {amountLabel}
+    </Text>
+  );
+
   const body = (
     <>
       <EmojiTile
@@ -65,37 +90,38 @@ function ExpenseRowImpl({ expense, onPress, subtitle }: ExpenseRowProps): React.
         size={36}
       />
       <View style={styles.text}>
-        <Text style={styles.name} numberOfLines={1}>
+        {/* Two lines when stacked: a long merchant gets to finish its word
+            rather than ellipsizing, and the row is already growing anyway. */}
+        <Text style={styles.name} numberOfLines={stacked ? 2 : 1}>
           {name}
         </Text>
         {secondary ? (
-          <Text style={styles.subtitle} numberOfLines={1}>
+          <Text
+            style={styles.subtitle}
+            numberOfLines={1}
+            maxFontSizeMultiplier={CHROME_MAX_FONT_SCALE}
+          >
             {secondary}
           </Text>
         ) : null}
+        {stacked ? amountText : null}
       </View>
       {/* Decorative: the row's own accessibilityLabel above already spells
           out "recurring" in words, so this glyph doesn't need its own
           accessible node -- the parent's `accessible` + accessibilityLabel
           already collapses everything below it into one VoiceOver stop. */}
       {recurring ? <Icon name="Repeat" size={14} color={theme.slate} /> : null}
-      {/* Money scales, never truncates (spec 09 section 1 rule 6): the row
-          keeps its single line, but the amount shrinks to stay readable
-          instead of ellipsizing the number itself. */}
-      <Text
-        style={styles.amount}
-        numberOfLines={1}
-        adjustsFontSizeToFit
-        minimumFontScale={0.7}
-      >
-        {amountLabel}
-      </Text>
+      {stacked ? null : amountText}
     </>
   );
 
+  // Stacked rows align to the top so the tile sits beside the NAME rather than
+  // floating at the centre of a three-line block.
+  const rowStyle = [styles.row, stacked ? styles.rowStacked : null];
+
   if (!onPress) {
     return (
-      <View style={styles.row} accessible accessibilityLabel={accessibilityLabel}>
+      <View style={rowStyle} accessible accessibilityLabel={accessibilityLabel}>
         {body}
       </View>
     );
@@ -106,7 +132,7 @@ function ExpenseRowImpl({ expense, onPress, subtitle }: ExpenseRowProps): React.
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
-      style={({ pressed }) => [styles.row, pressed ? styles.rowPressed : null]}
+      style={({ pressed }) => [...rowStyle, pressed ? styles.rowPressed : null]}
     >
       {body}
     </Pressable>
@@ -131,6 +157,9 @@ function createStyles(theme: AppTheme) {
       alignItems: 'center',
       gap: 12,
       paddingVertical: 8,
+    },
+    rowStacked: {
+      alignItems: 'flex-start',
     },
     rowPressed: {
       opacity: 0.6,
@@ -161,6 +190,13 @@ function createStyles(theme: AppTheme) {
       color: theme.ink,
       fontVariant: ['tabular-nums'],
       marginLeft: 8,
+    },
+    amountStacked: {
+      // Back under the name, so it reads as part of the same block and takes
+      // the left edge the name and subtitle already sit on.
+      marginLeft: 0,
+      marginTop: 4,
+      alignSelf: 'flex-start',
     },
   });
 }

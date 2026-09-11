@@ -29,6 +29,15 @@
  * parent's LAST child. It positions itself at the bottom, takes the full
  * width, never intercepts touches, and is invisible to assistive tech.
  * Over an empty or short pane it is background over background.
+ *
+ * `edge="top"` flips it for the other end of the same problem (C9,
+ * 2026-09-11): a sheet body scrolling under a PINNED HEADER sliced its
+ * content on the header's hairline, and a 40pt serif amount cut mid-glyph
+ * reads as a rendering fault rather than as content scrolling away. Same
+ * primitive, same reasoning, mirrored: the gradient runs from opaque at the
+ * header down to transparent. Grown rather than duplicated, which is also why
+ * the fill has to be passed by the host: a sheet's surface is white, not the
+ * page background this defaults to.
  */
 import { useId } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -42,9 +51,16 @@ export type ScrollFadeProps = {
   /** Defaults to the page background, which is also the dock's fill. */
   color?: string;
   height?: number;
+  /** Which end dissolves. 'bottom' (default) for a scroller ending in a dock
+   *  or a footer; 'top' for one starting under a pinned header. */
+  edge?: 'bottom' | 'top';
 };
 
-export function ScrollFade({ color, height = SCROLL_FADE_HEIGHT }: ScrollFadeProps) {
+export function ScrollFade({
+  color,
+  height = SCROLL_FADE_HEIGHT,
+  edge = 'bottom',
+}: ScrollFadeProps) {
   const theme = useTheme();
   const fill = color ?? theme.background;
   // Gradient ids are global across every Svg on screen in react-native-svg,
@@ -54,7 +70,7 @@ export function ScrollFade({ color, height = SCROLL_FADE_HEIGHT }: ScrollFadePro
 
   return (
     <View
-      style={[styles.wrap, { height }]}
+      style={[styles.wrap, edge === 'top' ? styles.wrapTop : styles.wrapBottom, { height }]}
       pointerEvents="none"
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
@@ -63,8 +79,11 @@ export function ScrollFade({ color, height = SCROLL_FADE_HEIGHT }: ScrollFadePro
       <Svg width="100%" height={height} preserveAspectRatio="none">
         <Defs>
           <LinearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0" stopColor={fill} stopOpacity="0" />
-            <Stop offset="1" stopColor={fill} stopOpacity="1" />
+            {/* Opaque at the edge the content disappears into, transparent at
+                the other end: bottom-anchored fades run clear-to-solid down,
+                top-anchored ones run solid-to-clear. */}
+            <Stop offset="0" stopColor={fill} stopOpacity={edge === 'top' ? '1' : '0'} />
+            <Stop offset="1" stopColor={fill} stopOpacity={edge === 'top' ? '0' : '1'} />
           </LinearGradient>
         </Defs>
         <Rect x="0" y="0" width="100%" height={height} fill={`url(#${gradientId})`} />
@@ -78,6 +97,11 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     right: 0,
+  },
+  wrapBottom: {
     bottom: 0,
+  },
+  wrapTop: {
+    top: 0,
   },
 });

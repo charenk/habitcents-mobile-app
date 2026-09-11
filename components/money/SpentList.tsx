@@ -37,6 +37,7 @@ import { SectionList, StyleSheet, Text, View } from 'react-native';
 import { ExpenseRow } from '@/components/money/ExpenseRow';
 import { EmptyState } from '@/components/ui';
 import { strings } from '@/constants/strings';
+import { CHROME_MAX_FONT_SCALE } from '@/utils/textScale';
 import { layout, radii, spacing, typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -160,7 +161,14 @@ export function SpentList({ sections, onEditExpense, onLogExpense }: SpentListPr
   };
 
   const renderSectionHeader = ({ section }: { section: ExpenseSection }) => (
-    <Text style={styles.eyebrow} accessibilityRole="header">
+    /* Chrome, so it caps: the day and its total are a heading over the rows,
+       not the rows themselves. Uncapped it wrapped to two lines at
+       accessibility sizes and pushed the list off the screen. */
+    <Text
+      style={styles.eyebrow}
+      accessibilityRole="header"
+      maxFontSizeMultiplier={CHROME_MAX_FONT_SCALE}
+    >
       {section.data.length > 0
         ? strings.money.spentGroupHeader(dayLabelFor(section.data[0].date), format(totalFor(section)))
         : dayLabelFor(today)}

@@ -46,6 +46,14 @@ import { useReducedMotion } from '@/utils/motion';
 import { useKeyboardHeight } from '@/utils/keyboard';
 import { sheetMaxHeight } from '@/utils/sheetLayout';
 import { strings } from '@/constants/strings';
+import { ScrollFade } from '@/components/ui/ScrollFade';
+
+/**
+ * Shorter than the Today panes' 36: that fade covers a 24pt end padding, this
+ * one only has to carry a glyph's height across the header's hairline, and a
+ * tall fade over a form would wash out the first field.
+ */
+const SHEET_TOP_FADE_HEIGHT = 20;
 
 export type SheetProps = {
   visible: boolean;
@@ -311,6 +319,22 @@ export function Sheet({
     <View style={styles.body}>{children}</View>
   );
 
+  // A pinned header slices whatever scrolls under it on its own hairline. On a
+  // 40pt serif amount that reads as a rendering fault rather than as content
+  // scrolling away (C9, seen on the edit-bill sheet). Same fade the Today
+  // panes use against the dock, mirrored: opaque at the header, clear below.
+  // Only with a header, only when the body actually scrolls, and only over the
+  // sheet's own white, never the page background the fade defaults to.
+  const bodyWithFade =
+    header && scrollable ? (
+      <View style={styles.bodyWrap}>
+        {body}
+        <ScrollFade edge="top" color={theme.white} height={SHEET_TOP_FADE_HEIGHT} />
+      </View>
+    ) : (
+      body
+    );
+
   return (
     <Modal
       transparent
@@ -375,7 +399,7 @@ export function Sheet({
               </View>
               {header}
             </View>
-            {body}
+            {bodyWithFade}
             {footer ? (
               <View
                 style={[styles.footer, { paddingBottom: footerPaddingBottom }]}
@@ -428,6 +452,11 @@ function createStyles(theme: AppTheme) {
     },
     // Content-sized until the panel clamp binds, then it shrinks and scrolls.
     // flexGrow stays 0 so a short sheet never stretches to the cap.
+    bodyWrap: {
+      // The ScrollView keeps its own flex; this only gives the fade something
+      // to anchor to without changing the panel's layout.
+      flexShrink: 1,
+    },
     body: {
       flexGrow: 0,
       flexShrink: 1,

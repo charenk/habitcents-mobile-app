@@ -1,4 +1,5 @@
 import {
+  formatAmountAtRest,
   formatMoney,
   scaleThresholdCents,
   currencyMeta,
@@ -72,5 +73,35 @@ describe('metadata helpers', () => {
 
   it('DEFAULT_CURRENCY is a valid code', () => {
     expect(isCurrencyCode(DEFAULT_CURRENCY)).toBe(true);
+  });
+});
+
+/**
+ * C9: the amount FIELD used to keep its editable string on screen even at
+ * rest, so a bill read "$2100.00" in the sheet and "$2,100.00" in the row it
+ * came from. This is the at-rest half. The editable half stays ungrouped on
+ * purpose, because the keystroke sanitizer treats a comma as the decimal key.
+ */
+describe('formatAmountAtRest', () => {
+  it('groups thousands, without the currency symbol', () => {
+    expect(formatAmountAtRest(210000, 'USD')).toBe('2,100.00');
+    expect(formatAmountAtRest(123456789, 'USD')).toBe('1,234,567.89');
+  });
+
+  it('agrees with formatMoney on everything but the symbol', () => {
+    expect(formatMoney(210000, 'USD')).toBe(`$${formatAmountAtRest(210000, 'USD')}`);
+  });
+
+  it("uses the currency's own decimal count, so JPY shows none", () => {
+    expect(formatAmountAtRest(210000, 'JPY')).toBe('2,100');
+  });
+
+  it('returns empty for zero, so the field shows its placeholder', () => {
+    expect(formatAmountAtRest(0, 'USD')).toBe('');
+    expect(formatAmountAtRest(Number.NaN, 'USD')).toBe('');
+  });
+
+  it('leaves a sub-thousand amount exactly as the editable form had it', () => {
+    expect(formatAmountAtRest(1200, 'USD')).toBe('12.00');
   });
 });

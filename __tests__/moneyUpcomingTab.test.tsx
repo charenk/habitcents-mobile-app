@@ -32,6 +32,14 @@ import { ToastProvider } from '@/components/ui/Toast';
 import MoneyScreen from '@/app/(tabs)/money';
 import { saveExpenses } from '@/utils/storage';
 import { strings } from '@/constants/strings';
+import { shortDate } from '@/utils/recurring';
+import { upcomingWindowEnd } from '@/utils/upcomingWindow';
+
+/** What the card's label should read for a given window, built the way the
+ *  component builds it, so the assertion proves agreement rather than a date. */
+function windowLabel(days: 14 | 30 | 90): string {
+  return strings.money.upcomingWindowRange(shortDate(upcomingWindowEnd(days)));
+}
 import type { Expense } from '@/types/expense';
 
 const UPCOMING_WINDOW_KEY = '@habitcents_upcoming_window';
@@ -148,7 +156,7 @@ describe('Money > Upcoming: window filter', () => {
     await openUpcomingSegment(view);
 
     expect(view.getByRole('tab', { name: /1 month, selected/ })).toBeTruthy();
-    expect(view.getByText(strings.money.upcomingWindowEyebrow(30))).toBeTruthy();
+    expect(view.getByText(windowLabel(30))).toBeTruthy();
     // The point of the derivation: the pane it opens on is not empty.
     expect(view.queryByText(strings.money.upcomingWindowEmptyBody)).toBeNull();
   });
@@ -161,7 +169,7 @@ describe('Money > Upcoming: window filter', () => {
     await openUpcomingSegment(view);
 
     expect(view.getByRole('tab', { name: /3 months, selected/ })).toBeTruthy();
-    expect(view.getByText(strings.money.upcomingWindowEyebrow(90))).toBeTruthy();
+    expect(view.getByText(windowLabel(90))).toBeTruthy();
   });
 });
 
@@ -173,7 +181,10 @@ describe('Money > Upcoming: edit flow', () => {
     await openUpcomingSegment(view);
 
     await tap(view.getByRole('tab', { name: /3 months/ })); // wide enough window to guarantee the row shows
-    await tap(view.getByLabelText(/^Rent,/));
+    // 2026-09-11: the list groups by calendar month and a monthly bill lands in
+    // each of them, so a 3-month window renders Rent three times, one row per
+    // month. Any of them opens the same expense; take the first.
+    await tap(view.getAllByLabelText(/^Rent,/)[0]);
 
     expect(view.getByText(strings.addUpcoming.editTitle)).toBeTruthy();
     expect(

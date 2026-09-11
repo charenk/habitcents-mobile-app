@@ -14,6 +14,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { radii, typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
+import { CHROME_MAX_FONT_SCALE } from '@/utils/textScale';
 import { EmptyState } from '@/components/ui';
 import { HabitLeakRow, type LeakRowData } from '@/components/habit-logging/HabitLeakRow';
 import type { DetectedHabit } from '@/types/habit';
@@ -65,7 +66,12 @@ export function HabitsList({ rows, managedMonthlyTotal, onBreak, onOpenHabit, on
 
   return (
     <View>
-      <Text style={styles.eyebrow}>{summary}</Text>
+      {/* Chrome, so it caps: a summary line over the rows, not the rows
+          themselves. Uncapped it ran to four lines at accessibility sizes and
+          pushed the first habit off the screen. See utils/textScale.ts. */}
+      <Text style={styles.eyebrow} maxFontSizeMultiplier={CHROME_MAX_FONT_SCALE}>
+        {summary}
+      </Text>
       <View style={styles.card}>
         {rows.map((row, index) => (
           <HabitLeakRow
