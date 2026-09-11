@@ -159,7 +159,10 @@ export function UpcomingList({
           drops its "from N bills" clause when the two counts agree. */}
       <View style={styles.totalCard}>
         <View style={styles.windowRow}>
-          <Text style={styles.windowLabel}>
+          {/* Capped at the same 1.5 the filter beside it uses: the label and
+              the filter are a pair, and an uncapped label wrapped to three
+              lines next to a one-line control at accessibility sizes. */}
+          <Text style={styles.windowLabel} maxFontSizeMultiplier={1.5}>
             {strings.money.upcomingWindowEyebrow(windowDays)}
           </Text>
           <SegmentedControl<UpcomingWindowDays>
@@ -179,7 +182,13 @@ export function UpcomingList({
         </View>
 
         <View style={styles.countRow}>
-          <Text style={styles.totalCount} numberOfLines={1}>
+          {/* No numberOfLines: at accessibility text sizes a one-line clamp
+              cropped this line to a band of half-glyphs (seen on device at
+              XXXL). It wraps instead, and the row grows, which is what the
+              44pt button beside it can afford. The 1.5 cap is the app's own
+              ceiling for chrome text, the same one SegmentedControl and the
+              tab bar use. */}
+          <Text style={styles.totalCount} maxFontSizeMultiplier={1.5}>
             {strings.money.upcomingPaymentsCount(paymentsCount, items.length)}
           </Text>
           {addAffordance}

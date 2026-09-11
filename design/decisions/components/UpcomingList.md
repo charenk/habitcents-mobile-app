@@ -25,9 +25,12 @@ Vocabulary (ADR 0034). This component owns two of Upcoming's three; the pane's t
 - 2026-09-11: **the "Scheduled" eyebrow is retired.** A section heading over the only list on the pane, directly under a card that already says what the pane is. The key stays in the catalog with a dated comment; only usage retires.
 - 2026-09-11: **the object is a "bill".** The pane was using four nouns for one thing (bills, repeating expenses, upcoming expense, Scheduled). "Bill" is the shortest, the most concrete, was already in the count line, and is the word a user says out loud. `upcomingWindowEmptyBody` is the one value change; the sheet's three "upcoming expense" labels move together in the drawer round.
 
+## Decisions (continued)
+- 2026-09-11: **the card's two chrome lines cap at 1.5x text scale; the amount does not.** Seen at XXXL on device: the count line carried `numberOfLines={1}` and cropped to a band of half-glyphs, and the window label wrapped to three lines beside a one-line filter. The count line wraps now and the row grows, which is what the 44pt button beside it can afford. 1.5 is the app's existing ceiling for chrome text (`SegmentedControl`, the tab bar). The total itself stays uncapped: it is the content, not the chrome, and a user at AX sizes wants it big.
+
 ## Open
 - At the 90-day window the total renders a quarter's bills in the same 36pt serif slot that means "this month" everywhere else in the app. The label above it makes it honest; the typography still makes it feel monthly.
-- Dynamic Type at XXXL is the likeliest place the corner filter breaks: three chips growing from 28pt beside a label that also grows. Not yet checked in hand.
+- Checked at XXXL on device 2026-09-11: the corner filter holds, one line, no wrap, no collision, which was the risk this design carried. The card gets very tall because the serif total wraps, but nothing clips or overlaps. Separately and NOT from this work: Money > Spent is badly broken at that scale (merchant names truncate to "S.."), which is app-wide and older than this pass.
 
 ## Iterations
 - 2026-09-11: rows carry their windowed subtotal; the amber pill and the relative cadence retire. Per-item helpers added to `utils/recurring.ts`.
