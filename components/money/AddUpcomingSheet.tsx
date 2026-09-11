@@ -43,6 +43,7 @@ import {
   View,
 } from 'react-native';
 import { CategoryChipRow } from '@/components/money/CategoryChipRow';
+import { MonthDayPicker } from '@/components/money/MonthDayPicker';
 import { AmountField } from '@/components/ui/AmountField';
 import { Chip } from '@/components/ui/Chip';
 import { Icon } from '@/components/ui/Icon';
@@ -207,6 +208,12 @@ type ScheduleDraft = {
   // none of the four chips describes it". Only edit mode can produce it; add
   // mode always starts on '1'.
   monthDay: MonthDayOption | null;
+  // The yearly anchor, 0..11 and 1..31. Carried on the draft rather than read
+  // off `expense.date` at save time, which is what makes the annual branch
+  // immune to the `scheduleTouched` trap: seeding IS the fix, so unlike the
+  // monthly branch it never needs buildSchedule's `anchorDate`.
+  annualMonth: number;
+  annualDay: number;
   everyNDays: number;
 };
 
@@ -285,11 +292,28 @@ function buildSchedule(
   }
 
   if (draft.frequency === 'annual') {
-    // Same month/day as today, one year out -- matches `advance()`'s own
-    // annual step in utils/recurring.ts exactly, so the first stored
-    // occurrence is what that function would compute as "the next one" too.
-    const date = new Date(today);
-    date.setFullYear(date.getFullYear() + 1);
+    // The next time the chosen month and day comes around. STRICTLY after
+    // today, never on it: a date equal to today would be materialized into
+    // Spent (ADR 0024) and would also fall inside money.tsx's
+    // `date <= endOfToday` Spent filter, rendering a spend the user never
+    // made. Monthly's `<=` is right for monthly and wrong here.
+    //
+    // The rule stays payload-free. `advance()` steps annual by whole years off
+    // `expense.date`, so the anchor has always lived on the date; the sheet
+    // simply never let anyone set it.
+    const target = Math.min(
+      draft.annualDay,
+      daysInMonth(today.getFullYear(), draft.annualMonth)
+    );
+    let date = new Date(today.getFullYear(), draft.annualMonth, target);
+    if (date.getTime() <= today.getTime()) {
+      const nextYear = today.getFullYear() + 1;
+      date = new Date(
+        nextYear,
+        draft.annualMonth,
+        Math.min(draft.annualDay, daysInMonth(nextYear, draft.annualMonth))
+      );
+    }
     return { rule: { type: 'annual' }, date };
   }
 
@@ -324,6 +348,11 @@ function draftFromExpense(expense: Expense): ScheduleDraftFields {
     weekday: rawDate.getDay() as Weekday,
     biweekStart: 'this',
     monthDay: '1',
+    // Seeded from the row itself, in `base` rather than in the annual case, so
+    // switching TO yearly in edit mode starts from this bill's own anchor
+    // instead of today.
+    annualMonth: rawDate.getMonth(),
+    annualDay: rawDate.getDate(),
     everyNDays: DEFAULT_EVERY_N_DAYS,
   };
 
@@ -377,6 +406,8 @@ export function AddUpcomingSheet({
   const [weekday, setWeekday] = useState<Weekday>(new Date().getDay() as Weekday);
   const [biweekStart, setBiweekStart] = useState<BiweekStart>('this');
   const [monthDay, setMonthDay] = useState<MonthDayOption | null>('1');
+  const [annualMonth, setAnnualMonth] = useState(() => new Date().getMonth());
+  const [annualDay, setAnnualDay] = useState(() => new Date().getDate());
   const [everyNDays, setEveryNDays] = useState(DEFAULT_EVERY_N_DAYS);
   // Edit mode only: whether the user has touched a schedule control since the
   // sheet opened. Editing amount or name alone must not silently reschedule
@@ -403,6 +434,8 @@ export function AddUpcomingSheet({
       setWeekday(draft.weekday);
       setBiweekStart(draft.biweekStart);
       setMonthDay(draft.monthDay);
+      setAnnualMonth(draft.annualMonth);
+      setAnnualDay(draft.annualDay);
       setEveryNDays(draft.everyNDays);
       return;
     }
@@ -417,6 +450,10 @@ export function AddUpcomingSheet({
     setWeekday(new Date().getDay() as Weekday);
     setBiweekStart('this');
     setMonthDay('1');
+    // Today's month and day, so an untouched Yearly save still writes
+    // today + 1 year, byte-identical to what this sheet has always written.
+    setAnnualMonth(new Date().getMonth());
+    setAnnualDay(new Date().getDate());
     setEveryNDays(DEFAULT_EVERY_N_DAYS);
   }, [visible, mode, expense]);
 
@@ -472,6 +509,14 @@ export function AddUpcomingSheet({
     if (v !== monthDay) setScheduleTouched(true);
     setMonthDay(v);
   };
+  const handleAnnualMonthChange = (v: number) => {
+    if (v !== annualMonth) setScheduleTouched(true);
+    setAnnualMonth(v);
+  };
+  const handleAnnualDayChange = (v: number) => {
+    if (v !== annualDay) setScheduleTouched(true);
+    setAnnualDay(v);
+  };
   const handleEveryNDaysChange = (v: number) => {
     if (v !== everyNDays) setScheduleTouched(true);
     setEveryNDays(v);
@@ -521,7 +566,17 @@ export function AddUpcomingSheet({
       mode === 'edit' && expense && !scheduleTouched && original
         ? { rule: original, date: expense.date }
         : buildSchedule(
-            { scheduleType, onceWhen, frequency, weekday, biweekStart, monthDay, everyNDays },
+            {
+              scheduleType,
+              onceWhen,
+              frequency,
+              weekday,
+              biweekStart,
+              monthDay,
+              annualMonth,
+              annualDay,
+              everyNDays,
+            },
             startOfToday(),
             mode === 'edit' && expense ? expense.date : undefined
           );
@@ -856,6 +911,15 @@ export function AddUpcomingSheet({
                     </Text>
                   ) : null}
                 </>
+              ) : null}
+
+              {frequency === 'annual' ? (
+                <MonthDayPicker
+                  month={annualMonth}
+                  day={annualDay}
+                  onChangeMonth={handleAnnualMonthChange}
+                  onChangeDay={handleAnnualDayChange}
+                />
               ) : null}
 
               {frequency === 'custom' ? (

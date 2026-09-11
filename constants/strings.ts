@@ -1257,6 +1257,13 @@ export const strings = {
     // exposes it too now, so an edit round-trips without losing the cadence.
     frequencyAnnual: 'Yearly',
     onWhichDay: 'On which day?',
+    // MonthDayPicker (2026-09-11): the yearly anchor and the one-time "pick a
+    // date". The twelve month NAMES are never catalogued; they come from the
+    // locale-aware formatter (ADA-008), the same way the weekday chips do.
+    onWhichMonth: 'On which month?',
+    // The sheet echoing the date it is about to write, so the anchor is never
+    // invisible the way the legacy monthly one was.
+    monthDayEcho: (month: string, day: number) => `${month} ${day}`,
     starting: 'Starting',
     startingThisWeek: 'This week',
     startingNextWeek: 'Next week',
