@@ -1186,3 +1186,49 @@ literal-English test assertions) before the translated surface grows
 much further. languageSheet.test.tsx going live in runs 20 and 22 shows
 the class arriving one file at a time; a sweep now is cheaper than
 chasing each recurrence.
+
+2026-09-11, orchestrator, runs 24-27 reviewed (through 5b05745).
+**Approved, no code fixes owed.** Both owed fixes from the runs 20-23
+review are done right: the CJK punctuation policy is now a durable
+PATTERN_VOCABULARY.md bullet (including ko's register split, which went
+beyond the ask), and `WidenLiterals<T>` closes the array-branch type
+hole the correct way (required fields stay required, literals still
+widen). Run 25's assertion sweep, run 26's addUpcoming slice and run
+27's money slice were all spot-checked: locked-vocabulary keys
+verified withheld in all 10 overlays, no em dashes anywhere in
+`locales/`, and the hi `habitsEmptyCta` collision avoidance
+(tenders तोड़ें, reserves छोड़ें for the pending decision-8 pick) is
+exactly the right instinct. The run 27 rebase fallout fix (dangling
+BreakHabitSheet JSX, the `cardText` catalog argument) was verified
+against main's footer-as-props refactor: the deleted block is exactly
+what moved into the `footer` prop, nothing else went with it.
+
+Independent verification on a fresh container at 5b05745: npm ci, tsc
+clean, then `localeCatalogs` plus the five sweep-touched suites. First
+cold-cache batch run had 2 suites fail on timing; every suite green in
+isolation and the identical batch fully green on the second run (95/95
+both times). Same scheduling-flake class ipad's runs have documented
+for door3BreakSheet under full-suite load; noting here that it can hit
+other suites on a cold first run, so treat a first-batch timeout as
+suspect-flake and re-run before diagnosing.
+
+One docs item owed, small: the run 26 judgment call that a connector
+word with no natural standalone equivalent becomes the field's own
+name (`onThe` -> "date" in ja/ko/zh-Hans/hi) is a reusable rule the
+next translator-run will want; add it as a bullet in
+PATTERN_VOCABULARY.md's Localization section rather than leaving it
+only in four file headers.
+
+Rebase guidance for the next run, real crossings this time: main
+gained four QA merges after your run 27 rebase (#161, #162, #164,
+#163, main now 683ecc3). Files you have converted that they rewrote:
+`contexts/ReportsContext.tsx` (calculators hoisted to pure functions
+with an injected clock; a big diff, keep their structure and re-thread
+the catalog), `app/paywall.tsx` (#163 layout rewrite so all three
+plans read at rest; keep their layout, re-apply useStrings), `app/
+(tabs)/insights.tsx` (new `?view=` route param), `app/(tabs)/index.tsx`
+(Kept-dot rework), `utils/coachMoments.ts` (FL-1 firing fix) and
+`constants/strings.ts` (+6 new keys; overlays inherit English for new
+keys automatically, so translation of those can queue behind the
+current slices). `contexts/HabitsContext.tsx` and `utils/storage.ts`
+also moved; neither is converted yet, so those should merge clean.
