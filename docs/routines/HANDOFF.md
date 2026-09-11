@@ -2,34 +2,33 @@
 
 ## Status
 
-In progress. Run 27: no REVIEW FEEDBACK was pending at session start.
-Rebased onto origin/main (77 commits behind; branch had gone stale
-since run 26 while main shipped a header/footer-as-props refactor to
-`Sheet.tsx` and several other structural changes touching files this
-stream had already converted). Real conflicts this time went beyond
-mechanical import-line merges: `Sheet.tsx` needed both main's new
-keyboard-height plumbing and this branch's `useStrings()` hook kept
-side by side; two `ResultsScreen`-tree sheets and `AddCategoryModal.tsx`
-had a dead `useWindowDimensions()`/`height` leftover from before main's
-own refactor, dropped; `PickOneSheet.tsx` needed the `cadenceLabel`
-call site's added `strings` argument carried over into main's restructured
-pinned-title layout; `BreakHabitSheet.tsx` needed main's reordered
-bought-today/cadence sections and conditional yearly line merged with
-this branch's `useMemo`-ified option arrays; `components/habit-logging/
-LeakCard.tsx` was deleted on main (superseded by inline Today code) so
-this branch's pending edits to it were dropped, twice (it recurred on a
-later commit touching `coachMoments.ts`). Full suite was clean after
-the rebase itself, but `npx tsc --noEmit` caught two spots the
-conflict resolution missed on the first pass: dangling JSX
-(`BreakHabitSheet.tsx` still had the pre-refactor `ScrollView`/`View`
-footer/`Button` block after the header/footer became `Sheet` props) and
-one `cardText()` call site in Today's leak-row renderer missing the
-threaded `Catalog` argument; both fixed in a follow-up commit before
-either tsc or the full suite were re-run clean (117/117, 1232/1232).
-Then did plan item 4's next slice (`money` minus `habitsEmptyTitle`/
-`habitsEmptyBody`, locked-vocabulary gated) plus item 3's matching
-sweep of it (see Completed). 186 of ~660 keys now populated per
-language.
+In progress. Run 28: no REVIEW FEEDBACK was pending at session start
+(last review, 2026-09-10 runs 20-23, was fully addressed by run 24).
+Rebased onto origin/main (80 commits behind). One real conflict, the
+same mechanical import-line class runs 15/26 already saw: both
+`app/(tabs)/categories.tsx` and `app/category/[id].tsx` had this
+branch's stale `strings`-import/`expenseBelongsToCategory` pairing
+collide with main's own rename of that helper to
+`resolveExpenseCategory`; resolved both by keeping main's
+`resolveExpenseCategory` import plus this branch's `useStrings()` line,
+dropping the dead `expenseBelongsToCategory` import each file's body no
+longer referenced. `npm install` needed first (fresh container, no
+`node_modules`, same as every prior run); `tsc --noEmit` clean and the
+full suite green (121/121, 1291/1291) right after the rebase, no
+follow-up fix needed this time.
+
+Per run 27's "Next" note, item 4 (provisional translations) is still
+blocked on Charen (DECISIONS NEEDED: the locked-vocabulary proposal
+table and the `paywall` pricing/legal go-ahead, both unanswered as of
+this run), so picked item 2's ICU/pluralization checkbox instead, the
+concrete first case run 27 named: `utils/recurring.ts`'s
+`daysUntilLabel` threaded through the catalog (new
+`money.daysUntilToday`/`daysUntilTomorrow`/`daysUntilInDays` keys, the
+same added-`Catalog`-parameter shape `weekdayPlural`/`monthDayLabel`
+already use). Not the full ICU/CLDR plural-rule work the checkbox is
+ultimately waiting on, just the one concrete gap flagged since run 19;
+see PLAN.md's run 28 entry for the full detail and why the checkbox
+stays open.
 
 ## Completed
 
@@ -666,6 +665,41 @@ language.
   the sweep confirmation needed no commit of its own); `tsc --noEmit`
   clean and the full suite green (117/117, 1232/1232) after every
   commit, no flake.
+- Run 28, rebase (80 commits behind origin/main): one real conflict,
+  mechanical import-line class (same as runs 15/26/27): both
+  `app/(tabs)/categories.tsx` and `app/category/[id].tsx` had this
+  branch's stale `strings`/`expenseBelongsToCategory` import pairing
+  collide with main's rename of that helper to `resolveExpenseCategory`;
+  resolved both by keeping main's `resolveExpenseCategory` import
+  alongside this branch's `useStrings()` line, dropping the now-dead
+  `expenseBelongsToCategory` import (confirmed via grep that neither
+  file's body referenced it anymore, only `resolveExpenseCategory`).
+  `npm install` needed first (fresh container). `tsc --noEmit` clean and
+  the full suite green (121/121, 1291/1291) right after the rebase, no
+  follow-up fix needed.
+- Run 28, plan item 2's `daysUntilLabel` case (item 4 blocked on Charen,
+  see DECISIONS NEEDED; picked run 27's named fallback instead):
+  `utils/recurring.ts`'s `daysUntilLabel` was hardcoded English
+  "Today"/"Tomorrow"/"in N days" with no catalog key at all, flagged
+  since run 19. Added `money.daysUntilToday`/`daysUntilTomorrow`
+  (strings) and `money.daysUntilInDays` (function-valued) to
+  `constants/strings.ts`, gave `daysUntilLabel` a `strings: Catalog`
+  parameter (same added-parameter shape as `weekdayPlural`/
+  `monthDayLabel` in the same file). One real call site,
+  `UpcomingList.tsx:227`, already had `strings` in scope; updated to
+  pass it through. One test calls the function directly,
+  `moneyMaterializerIntegration.test.tsx` (two call sites): same fix as
+  `describeSchedule`'s/`cardText`'s direct-call tests (run 19), imported
+  the static English `strings` and passed it. New keys stay untranslated
+  in every overlay for now (English fallback), same order-of-operations
+  as run 24's `habitDetail.notFound`/`reports.loading` (new keys land
+  before item 4's translation pass reaches their section).
+  `localeCatalogs.test.ts` needed no change (schema-driven, no
+  completeness requirement). Not the full ICU/CLDR plural-rule work the
+  checkbox is ultimately waiting on (`daysUntilInDays` is still plain
+  concatenation, same as the English source always was), so the
+  checkbox stays open; full reasoning in PLAN.md's run 28 entry. One
+  commit; `tsc --noEmit` clean, full suite green (121/121, 1291/1291).
 
 ## Next
 
@@ -709,32 +743,33 @@ blocked until Charen answers at least one of those two open questions
 `leakDismissed`/`stoppedHistoryKept` are settled (same locked-vocabulary
 gate).
 
-**New this run: item 4 is now effectively blocked on Charen for further
-progress.** Every remaining untranslated section is gated one way or
-the other (see above), so a future run picking item 4 first should
-check DECISIONS NEEDED before assuming there is a fresh, ungated
-section left to translate; there is not, as of run 27. If neither gate
-has moved, work item 2's ICU/pluralization checkbox instead (a
-concrete first case is ready: `utils/recurring.ts`'s `daysUntilLabel`,
-flagged since run 19, is hardcoded English "Today"/"Tomorrow"/"in N
-days" with no catalog key at all), or item 5/6 (overflow hardening,
-localized a11y labels), both of which do not depend on the locked
-vocabulary decision.
+**Still true as of run 28: item 4 is blocked on Charen for further
+progress** (DECISIONS NEEDED unanswered: the locked-vocabulary proposal
+table and the `paywall` pricing/legal go-ahead). A future run picking
+item 4 first should check DECISIONS NEEDED before assuming there is a
+fresh, ungated section left to translate; there is not, as of run 28.
+Run 28 worked the named fallback (item 2's `daysUntilLabel` case, now
+done, see Completed); if neither DECISIONS NEEDED gate has moved by the
+next run, item 5/6 (overflow hardening, localized a11y labels) are the
+remaining fallbacks that do not depend on the locked vocabulary
+decision. Item 6 already has a concrete first target queued (see below).
 
 What is actually left for a future run:
-- Plan item 2's ICU/pluralization checkbox (function-valued strings
-  like `n === 1 ? '' : 's'` ternaries becoming proper CLDR plural
-  rules): deliberately deferred until item 4's real catalogs reach a
-  function-valued key and show what the ICU formatting actually
-  needs. `LocaleOverlay`'s design (run 20) already accommodates this:
-  a function-valued key is supplied whole, with its own locale's
-  plural handling, whenever that happens; no infra change needed to
-  start, just the first real case.
-- `utils/recurring.ts`'s `daysUntilLabel` export does not read the
-  catalog at all (hardcoded English "Today"/"Tomorrow"/"in N days"),
-  confirmed again in run 19. This is new-keys work (add translated keys
-  and thread them in), not call-site migration; worth its own pick,
-  maybe alongside item 4 since it needs new catalog entries either way.
+- Plan item 2's broader ICU/pluralization checkbox (function-valued
+  strings like `n === 1 ? '' : 's'` ternaries becoming proper CLDR
+  plural rules, plus the `i18n-js`-or-alternative dependency decision):
+  still deliberately deferred until item 4's real catalogs reach a
+  function-valued key in a language whose plural rules actually differ
+  from English's two-way split (the languages translated so far --
+  ja/ko/zh-Hans in particular -- have no grammatical plural at all, so
+  nothing translated yet has forced the question). Run 28 closed the
+  one concrete gap that had no catalog key at all
+  (`daysUntilLabel`); every other function-valued key already threads
+  through `strings.*` calls, they are just not yet exercised by a
+  language needing real CLDR plural categories. `LocaleOverlay`'s
+  design (run 20) already accommodates this when it comes: a
+  function-valued key is supplied whole, with its own locale's plural
+  handling; no infra change needed to start, just the first real case.
 - Plan item 3 (test migration away from literal-English assertions):
   run 25 swept the 14 sections item 4 has translated so far and fixed
   the 8 real strays it found (see Completed and PLAN.md's run 25
