@@ -1095,7 +1095,20 @@ export const strings = {
     // localization migration and the tests that pin its absence.
     spentEmptyBody: 'Log one and it lands here, newest first.',
     // Upcoming
+    // RETIRED FROM RENDERING (2026-09-11): the card states the window's SPAN
+    // now, not its duration. The duration is already in the filter sitting
+    // beside it ("2w / 1m / 3m"), so a label repeating it said nothing the
+    // control did not; the end date is the one fact the pane could not
+    // otherwise give. Kept for overlay-shape stability and the test that pins
+    // its absence. See upcomingWindowRange below.
     upcomingWindowEyebrow: (days: number) => `Next ${days} days`,
+    // "Today to Oct 11". The house range word is "to" (pickOneRangeHint); no
+    // catalog string uses a spaced hyphen as a separator and dashes are banned.
+    upcomingWindowRange: (end: string) => `Today to ${end}`,
+    // A month section header over the rows, same shape as spentGroupHeader's
+    // day header: "September · $2,214.38". The month name is never a catalog
+    // string, it comes from the locale-aware formatter (ADA-008).
+    upcomingGroupHeader: (month: string, total: string) => `${month} \u00B7 ${total}`,
     // U8: the window presets picker (2 weeks / 1 month / 3 months).
     upcomingWindowSegmentLabel: 'Upcoming window',
     // These three are now what VoiceOver HEARS. The filter moved into the

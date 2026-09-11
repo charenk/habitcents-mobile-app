@@ -56,13 +56,22 @@ import {
   resolveRule,
   scheduleParts,
   shortDate,
-  upcomingItemPayments,
-  upcomingItemWindowTotal,
   upcomingWindowPaymentsCount,
   upcomingWindowTotal,
   type UpcomingItem,
 } from '@/utils/recurring';
-import { UPCOMING_WINDOW_PRESETS, type UpcomingWindowDays } from '@/utils/upcomingWindow';
+import {
+  UPCOMING_WINDOW_PRESETS,
+  upcomingWindowEnd,
+  type UpcomingWindowDays,
+} from '@/utils/upcomingWindow';
+import {
+  groupUpcomingByMonth,
+  monthGroupTotal,
+  monthRowTotal,
+  type UpcomingMonthRow,
+} from '@/utils/upcomingGroups';
+import { formatDate } from '@/utils/dates';
 import { CHROME_MAX_FONT_SCALE, useAccessibilityTextSize } from '@/utils/textScale';
 
 /** What VoiceOver hears. "2w, selected" is not a sentence. */
@@ -84,6 +93,19 @@ const WINDOW_OPTIONS = UPCOMING_WINDOW_PRESETS.map((days) => ({
   label: WINDOW_SHORT_LABELS[days],
   labelSpoken: WINDOW_LABELS[days],
 }));
+
+/**
+ * "September", or "January 2027" once the window reaches a different year.
+ *
+ * The year is not decoration: a three-month window opened in November reaches
+ * January, and a bare "JANUARY" on a forward-looking pane reads as ten months
+ * ago. Never a catalog string; the month comes from the locale-aware formatter
+ * (ADA-008), the same way SpentList derives its day label.
+ */
+function monthLabel(monthStart: Date): string {
+  const sameYear = monthStart.getFullYear() === new Date().getFullYear();
+  return formatDate(monthStart, sameYear ? { month: 'long' } : { month: 'long', year: 'numeric' });
+}
 
 export type UpcomingListProps = {
   items: UpcomingItem[];
@@ -118,6 +140,7 @@ export function UpcomingList({
 
   const windowTotal = useMemo(() => upcomingWindowTotal(items), [items]);
   const paymentsCount = useMemo(() => upcomingWindowPaymentsCount(items), [items]);
+  const groups = useMemo(() => groupUpcomingByMonth(items), [items]);
 
   const addAffordance = (
     <Pressable
@@ -161,11 +184,14 @@ export function UpcomingList({
           drops its "from N bills" clause when the two counts agree. */}
       <View style={styles.totalCard}>
         <View style={styles.windowRow}>
-          {/* Capped at the same 1.5 the filter beside it uses: the label and
-              the filter are a pair, and an uncapped label wrapped to three
-              lines next to a one-line control at accessibility sizes. */}
-          <Text style={styles.windowLabel} maxFontSizeMultiplier={1.5}>
-            {strings.money.upcomingWindowEyebrow(windowDays)}
+          {/* The SPAN, not the duration: the duration is already in the filter
+              beside it, so a label repeating it said nothing the control did
+              not, and the end date is the one fact the pane could not
+              otherwise give (ADR 0041). Capped at the same 1.5 the filter
+              uses, since the label and the filter are a pair and an uncapped
+              label wrapped to three lines next to a one-line control. */}
+          <Text style={styles.windowLabel} maxFontSizeMultiplier={CHROME_MAX_FONT_SCALE}>
+            {strings.money.upcomingWindowRange(shortDate(upcomingWindowEnd(windowDays)))}
           </Text>
           <SegmentedControl<UpcomingWindowDays>
             options={WINDOW_OPTIONS}
@@ -210,31 +236,51 @@ export function UpcomingList({
           />
         </View>
       ) : (
-        <View style={styles.card}>
-          {items.map((item, index) => (
-            <UpcomingRow
-              key={item.expense.id}
-              item={item}
-              isFirst={index === 0}
-              onPress={() => onEditItem(item.expense)}
-              theme={theme}
-              styles={styles}
-            />
-          ))}
-        </View>
+        /* Grouped by the calendar month each payment lands in, the way Spent
+           groups by day. Each header carries its own subtotal, which is what
+           makes "what is left to pay this month" readable at every window
+           rather than only at one (ADR 0041). Plain Views inside the pane's
+           existing ScrollView: a SectionList owns its scrolling and must not
+           nest inside the pager (money.md, 2026-09-06). */
+        groups.map((group) => (
+          <View key={group.key}>
+            <Text
+              style={styles.groupHeader}
+              accessibilityRole="header"
+              maxFontSizeMultiplier={CHROME_MAX_FONT_SCALE}
+            >
+              {strings.money.upcomingGroupHeader(
+                monthLabel(group.monthStart),
+                format(monthGroupTotal(group))
+              )}
+            </Text>
+            <View style={styles.card}>
+              {group.rows.map((row, index) => (
+                <UpcomingRow
+                  key={`${row.expense.id}-${group.key}`}
+                  row={row}
+                  isFirst={index === 0}
+                  onPress={() => onEditItem(row.expense)}
+                  theme={theme}
+                  styles={styles}
+                />
+              ))}
+            </View>
+          </View>
+        ))
       )}
     </View>
   );
 }
 
 function UpcomingRow({
-  item,
+  row,
   isFirst,
   onPress,
   theme,
   styles,
 }: {
-  item: UpcomingItem;
+  row: UpcomingMonthRow;
   isFirst: boolean;
   onPress: () => void;
   theme: AppTheme;
@@ -246,7 +292,11 @@ function UpcomingRow({
 }) {
   const { format } = useCurrency();
 
-  const { expense, nextDate } = item;
+  // Scoped to the month this row sits under, never the whole window: a row
+  // showing a three-month number beneath an "October" header is the same
+  // unreconcilable pair the card and the list were fixed for.
+  const { expense } = row;
+  const nextDate = row.occurrences[0];
   // Same display fallback as ExpenseRow: stored category values map to their
   // display names before rendering.
   const name = expense.title || categoryDisplayLabel(expense.category);
@@ -256,8 +306,8 @@ function UpcomingRow({
   // lands once the two are the same number, which is why the narrow windows
   // look untouched. Where it lands more than once, the caption names the unit
   // price the subtotal is built from, and the price the edit sheet opens on.
-  const payments = upcomingItemPayments(item);
-  const amountLabel = format(upcomingItemWindowTotal(item));
+  const payments = row.occurrences.length;
+  const amountLabel = format(monthRowTotal(row));
   const unitLabel = format(expense.amount);
   const multiplierLabel =
     payments > 1 ? strings.money.upcomingRowMultiplier(payments, unitLabel) : null;
@@ -444,10 +494,25 @@ function createStyles(theme: AppTheme) {
     addCompactPressed: {
       backgroundColor: theme.snow,
     },
-    card: {
-      // Was the "Scheduled" eyebrow's marginTop 16 plus its own 6; the eyebrow
-      // retired (2026-09-11) and the card takes the gap directly.
+    // The pane's eyebrow treatment, copied from SpentList's day header, which
+    // is the app's existing "header with a date and a number over rows"
+    // pattern. Uppercase lives here and the string stays sentence case
+    // (UX-060). Tabular figures because it holds a number sitting directly
+    // above other numbers. Named as a deviation in the PR body: the card's
+    // window label lost its uppercase yesterday, but that is a label on a
+    // control and this is a header over rows.
+    groupHeader: {
+      fontFamily: theme.fonts.uiSemibold,
+      fontSize: typeScale.eyebrow,
+      letterSpacing: typeScale.eyebrowLetterSpacing,
+      textTransform: 'uppercase',
+      color: theme.mistText,
+      fontVariant: ['tabular-nums'],
       marginTop: 16,
+      marginBottom: 6,
+      marginLeft: 4,
+    },
+    card: {
       backgroundColor: theme.white,
       borderWidth: 1,
       borderColor: theme.cloud,
