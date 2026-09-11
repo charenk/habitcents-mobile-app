@@ -104,7 +104,9 @@ async function renderList(overrides: Partial<React.ComponentProps<typeof Upcomin
 afterEach(cleanup);
 
 describe('UpcomingList summary block', () => {
-  it('left-aligns the eyebrow/total/count text block', async () => {
+  // 2026-09-11: the card became three rows, so this pins the AMOUNT's own row
+  // rather than a three-line block. The testID moved with the meaning.
+  it('left-aligns the total', async () => {
     const view = await renderList();
     const block = view.getByTestId('upcoming-total-text');
     expect(StyleSheet.flatten(block.props.style).alignItems).toBe('flex-start');
@@ -126,6 +128,20 @@ describe('UpcomingList summary block', () => {
   it('drops the "from N bills" clause when payments and bills agree', async () => {
     const view = await renderList({ items: [singleItem] });
     expect(view.getByText('1 payment')).toBeTruthy();
+  });
+
+  /**
+   * The card keeps its full shape when the window is empty, which is a layout
+   * decision with a behavioural reason: the filter lives in row 1, so a row
+   * that collapsed here would shrink the card under the finger that tapped it
+   * and shove the list up. $0.00 over "0 payments" is also just true, and the
+   * body line under the card says why.
+   */
+  it('holds its shape on an empty window, at an honest zero', async () => {
+    const view = await renderList({ items: [] });
+    expect(view.getByTestId('upcoming-total-text')).toBeTruthy();
+    expect(view.getByText('$0.00')).toBeTruthy();
+    expect(view.getByText('0 payments')).toBeTruthy();
   });
 });
 
@@ -156,6 +172,28 @@ describe('UpcomingList add affordance', () => {
     expect(view.getByLabelText(strings.money.upcomingAddAffordance)).toBeTruthy();
     expect(view.getByRole('tab', { name: /2 weeks/ })).toBeTruthy();
     expect(view.getByText(strings.money.upcomingWindowEmptyBody)).toBeTruthy();
+  });
+
+  // One affordance, not two. The window-empty body used to carry a CTA saying
+  // the same words as the dashed plus sitting 40pt above it. Asserted by
+  // count, because the surviving plus answers to the same accessible name:
+  // "there is exactly one of these" is the decision, not "there are none".
+  it('offers no second add CTA in the window-empty state', async () => {
+    const view = await renderList({ items: [] });
+    expect(
+      view.getAllByRole('button', { name: strings.money.upcomingAddAffordance })
+    ).toHaveLength(1);
+    // The plus is an icon; only the retired CTA drew those words on screen.
+    expect(view.queryByText(strings.money.upcomingAddAffordance)).toBeNull();
+  });
+});
+
+describe('UpcomingList section eyebrow', () => {
+  // Retired 2026-09-11: a heading over the only list on the pane, under a card
+  // that already says what the pane is. Pinned so it is not quietly restored.
+  it('renders no "Scheduled" heading above the rows', async () => {
+    const view = await renderList();
+    expect(view.queryByText(strings.money.upcomingListEyebrow)).toBeNull();
   });
 });
 

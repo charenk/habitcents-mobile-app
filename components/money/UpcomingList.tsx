@@ -2,10 +2,12 @@
  * UpcomingList (design/redesign-handoff/04-screens.md, "Money" > Upcoming;
  * U8 redesign).
  *
- * A left-aligned "next N days" total (matching Spent's and Habits'
- * left-aligned eyebrows -- centering was the one outlier in the Money tab),
- * the window picker that decides N, a compact add affordance beside the
- * total, then the scheduled rows, each one now pressable to edit or delete.
+ * One card in three rows (2026-09-11): the window label and the compact filter
+ * that decides it, then the total, then the payments count with the add
+ * affordance beside it. Then the scheduled rows, each pressable to edit or
+ * delete. The rows are left-aligned, matching Spent's and Habits' eyebrows;
+ * centering was the one outlier in the Money tab.
+ *
  * Every number here is projected by `utils/recurring.ts`, so nothing on this
  * screen is invented:
  *
@@ -27,7 +29,11 @@
  *
  * The window itself (2 weeks / 1 month / 3 months) is defined once in
  * utils/upcomingWindow.ts; this component only zips those day counts with
- * their labels to build the SegmentedControl options.
+ * their labels to build the SegmentedControl options. The filter uses that
+ * component's compact quiet tone (ADR 0040): inside a white card the card is
+ * already the raised surface, so the selected segment carries the fill rather
+ * than a cloud track carrying a white thumb. It shows "2w" and says
+ * "2 weeks", via labelSpoken.
  */
 import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -55,15 +61,24 @@ import {
 import { UPCOMING_WINDOW_PRESETS, type UpcomingWindowDays } from '@/utils/upcomingWindow';
 import { withAlpha } from '@/utils/color';
 
+/** What VoiceOver hears. "2w, selected" is not a sentence. */
 const WINDOW_LABELS: Record<UpcomingWindowDays, string> = {
   14: strings.money.upcomingWindowTwoWeeks,
   30: strings.money.upcomingWindowOneMonth,
   90: strings.money.upcomingWindowThreeMonths,
 };
 
+/** What the corner filter shows. Abbreviation is visual only. */
+const WINDOW_SHORT_LABELS: Record<UpcomingWindowDays, string> = {
+  14: strings.money.upcomingWindowTwoWeeksShort,
+  30: strings.money.upcomingWindowOneMonthShort,
+  90: strings.money.upcomingWindowThreeMonthsShort,
+};
+
 const WINDOW_OPTIONS = UPCOMING_WINDOW_PRESETS.map((days) => ({
   value: days,
-  label: WINDOW_LABELS[days],
+  label: WINDOW_SHORT_LABELS[days],
+  labelSpoken: WINDOW_LABELS[days],
 }));
 
 export type UpcomingListProps = {
@@ -132,31 +147,39 @@ export function UpcomingList({
 
   return (
     <View>
+      {/* Three rows, and every one of them renders in every state. The card
+          holding its shape is the point, not a nicety: the filter is in row 1,
+          so a row that collapsed on an empty window would shrink the card
+          under the user's own finger and shove the list up as they tapped.
+          Rows 2 and 3 are unconditional, and window-empty falls out as an
+          honest $0.00 / 0 payments with no extra branch and no extra string:
+          upcomingWindowTotal([]) is 0, and upcomingPaymentsCount(0, 0) already
+          drops its "from N bills" clause when the two counts agree. */}
       <View style={styles.totalCard}>
-        <View style={styles.windowSegment}>
+        <View style={styles.windowRow}>
+          <Text style={styles.windowLabel}>
+            {strings.money.upcomingWindowEyebrow(windowDays)}
+          </Text>
           <SegmentedControl<UpcomingWindowDays>
             options={WINDOW_OPTIONS}
             value={windowDays}
             onChange={onWindowDaysChange}
             accessibilityLabel={strings.money.upcomingWindowSegmentLabel}
+            size="compact"
+            tone="quiet"
           />
         </View>
-        <View style={styles.totalHeaderRow}>
-          <View style={styles.totalTextBlock} testID="upcoming-total-text">
-            <Text style={styles.totalEyebrow}>
-              {strings.money.upcomingWindowEyebrow(windowDays)}
-            </Text>
-            {items.length > 0 ? (
-              <>
-                <Text style={styles.totalAmount} accessibilityRole="header">
-                  {format(windowTotal)}
-                </Text>
-                <Text style={styles.totalCount}>
-                  {strings.money.upcomingPaymentsCount(paymentsCount, items.length)}
-                </Text>
-              </>
-            ) : null}
-          </View>
+
+        <View style={styles.totalAmountRow} testID="upcoming-total-text">
+          <Text style={styles.totalAmount} accessibilityRole="header">
+            {format(windowTotal)}
+          </Text>
+        </View>
+
+        <View style={styles.countRow}>
+          <Text style={styles.totalCount} numberOfLines={1}>
+            {strings.money.upcomingPaymentsCount(paymentsCount, items.length)}
+          </Text>
           {addAffordance}
         </View>
       </View>
@@ -167,28 +190,25 @@ export function UpcomingList({
             // Its own line, not upcomingEmptyBody: that copy tells the user
             // to mark an expense as repeating, which anyone reaching this
             // branch has already done (ADR 0039 review).
+            //
+            // No CTA (2026-09-11): the dashed plus sits 40pt above this line
+            // and does the same thing in the same words. One affordance.
             body={strings.money.upcomingWindowEmptyBody}
-            cta={{ label: strings.money.upcomingAddAffordance, onPress: onEmptyAdd ?? onAdd }}
           />
         </View>
       ) : (
-        <>
-          <Text style={styles.eyebrow} accessibilityRole="header">
-            {strings.money.upcomingListEyebrow}
-          </Text>
-          <View style={styles.card}>
-            {items.map((item, index) => (
-              <UpcomingRow
-                key={item.expense.id}
-                item={item}
-                isFirst={index === 0}
-                onPress={() => onEditItem(item.expense)}
-                theme={theme}
-                styles={styles}
-              />
-            ))}
-          </View>
-        </>
+        <View style={styles.card}>
+          {items.map((item, index) => (
+            <UpcomingRow
+              key={item.expense.id}
+              item={item}
+              isFirst={index === 0}
+              onPress={() => onEditItem(item.expense)}
+              theme={theme}
+              styles={styles}
+            />
+          ))}
+        </View>
       )}
     </View>
   );
@@ -302,24 +322,31 @@ function createStyles(theme: AppTheme) {
       paddingVertical: 18,
       paddingHorizontal: 18,
     },
-    windowSegment: {
-      marginBottom: 14,
-    },
-    totalHeaderRow: {
+    windowRow: {
       flexDirection: 'row',
-      alignItems: 'flex-end',
+      alignItems: 'center',
       justifyContent: 'space-between',
+      gap: 12,
     },
-    totalTextBlock: {
-      alignItems: 'flex-start',
+    // A label, not an eyebrow, so it loses the caps AND the 0.88 tracking:
+    // that tracking exists to open up capitals and reads loose on sentence
+    // case. The string was always sentence case (UX-060 keeps casing in the
+    // stylesheet), so this is a style change with no copy change. Named as a
+    // deviation in the PR body: the pane's other two eyebrows stay uppercase.
+    windowLabel: {
+      fontFamily: theme.fonts.uiSemibold,
+      fontSize: typeScale.caption,
+      color: theme.mistText,
       flexShrink: 1,
     },
-    totalEyebrow: {
-      fontFamily: theme.fonts.uiSemibold,
-      fontSize: typeScale.eyebrow,
-      letterSpacing: typeScale.eyebrowLetterSpacing,
-      textTransform: 'uppercase',
-      color: theme.mistText,
+    totalAmountRow: {
+      alignItems: 'flex-start',
+    },
+    countRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 12,
     },
     totalAmount: {
       fontFamily: theme.fonts.display,
@@ -329,13 +356,13 @@ function createStyles(theme: AppTheme) {
       color: theme.ink,
       fontVariant: ['tabular-nums'],
       includeFontPadding: false,
-      marginTop: 4,
+      marginTop: 6,
     },
     totalCount: {
       fontFamily: theme.fonts.ui,
       fontSize: typeScale.secondary,
       color: theme.slate,
-      marginTop: 4,
+      flexShrink: 1,
     },
     addCompact: {
       width: 44,
@@ -347,22 +374,14 @@ function createStyles(theme: AppTheme) {
       borderStyle: 'dashed',
       borderColor: theme.cloudDashed,
       backgroundColor: theme.white,
-      marginLeft: 12,
     },
     addCompactPressed: {
       backgroundColor: theme.snow,
     },
-    eyebrow: {
-      fontFamily: theme.fonts.uiSemibold,
-      fontSize: typeScale.eyebrow,
-      letterSpacing: typeScale.eyebrowLetterSpacing,
-      textTransform: 'uppercase',
-      color: theme.mistText,
-      marginTop: 16,
-      marginBottom: 6,
-      marginLeft: 4,
-    },
     card: {
+      // Was the "Scheduled" eyebrow's marginTop 16 plus its own 6; the eyebrow
+      // retired (2026-09-11) and the card takes the gap directly.
+      marginTop: 16,
       backgroundColor: theme.white,
       borderWidth: 1,
       borderColor: theme.cloud,
