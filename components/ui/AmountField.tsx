@@ -39,7 +39,7 @@ import { StyleSheet, Text, TextInput, View } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { radii } from '@/constants/theme';
-import { currencyMeta } from '@/utils/currency';
+import { currencyMeta, formatAmountAtRest } from '@/utils/currency';
 import { centsToKeypadValue, keypadValueToCents } from '@/utils/keypad';
 import { sanitizeAmountInput } from '@/utils/amountInput';
 
@@ -76,6 +76,16 @@ export function AmountField({
   const meta = currencyMeta(currency);
   const inputRef = useRef<TextInput>(null);
 
+  // `text` is always the EDITABLE form ("2100.00"): plain digits and at most
+  // one '.', which is what the sanitizer and keypadValueToCents expect. What
+  // the field SHOWS is the editable form only while a caret is in it; at rest
+  // it shows the grouped form ("2,100.00"), so a bill no longer reads
+  // "$2100.00" in the sheet and "$2,100.00" in the row it came from (C9).
+  //
+  // Never group while focused: the keystroke sanitizer treats a comma as the
+  // decimal key, so a grouped string reaching it would turn "2,100.00" plus a
+  // keypress into 2.10. Swapping on focus keeps every separator out of the
+  // typing path entirely.
   const [text, setText] = useState(() => centsToKeypadValue(valueCents));
   const [focused, setFocused] = useState(false);
   // Tracks the cents value THIS field last reported, so the resync effect
@@ -174,7 +184,7 @@ export function AmountField({
         </Text>
         <TextInput
           ref={inputRef}
-          value={text}
+          value={focused ? text : formatAmountAtRest(keypadValueToCents(text), currency)}
           onChangeText={handleChangeText}
           onFocus={() => setFocused(true)}
           onBlur={handleBlur}

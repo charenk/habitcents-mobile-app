@@ -77,6 +77,38 @@ export function formatMoney(
 }
 
 /**
+ * The AT-REST text for an amount INPUT: the same grouping and decimal count
+ * `formatMoney` would use, without the currency symbol, because the field
+ * draws the symbol itself beside the digits.
+ *
+ * Why this exists (C9): the field kept its editable string ("2100.00") on
+ * screen even when nobody was typing, so a bill read "$2100.00" in the sheet
+ * and "$2,100.00" in the row it came from. The editable form is correct while
+ * a caret is in the field (grouping separators fight typing, and the keystroke
+ * sanitizer treats a comma as the decimal key) and wrong the rest of the time.
+ * It also picks up the currency's real decimal count, so a JPY amount stops
+ * showing two decimals it does not have.
+ *
+ * Returns '' for zero, matching `centsToKeypadValue`, so the field shows its
+ * placeholder rather than a formatted nothing.
+ */
+export function formatAmountAtRest(cents: number, code: CurrencyCode = DEFAULT_CURRENCY): string {
+  if (!Number.isFinite(cents) || cents === 0) return '';
+  const meta = currencyMeta(code);
+  const major = cents / 100;
+
+  try {
+    return new Intl.NumberFormat(meta.locale, {
+      minimumFractionDigits: meta.decimals,
+      maximumFractionDigits: meta.decimals,
+    }).format(major);
+  } catch {
+    // Same fallback shape as formatMoney: no Intl data for this locale.
+    return major.toFixed(meta.decimals);
+  }
+}
+
+/**
  * Scale a USD-denominated cents threshold into the given currency's magnitude,
  * so detection heuristics stay meaningful (e.g. a $20 floor is ~JPY 3000).
  */

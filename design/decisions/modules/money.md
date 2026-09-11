@@ -33,7 +33,6 @@ Vocabulary (ADR 0034): **Zero** nothing ever happened here; **Quiet** history el
 - 2026-09-05: window-empty gets its own line, "None of your repeating expenses land in this window." (`upcomingWindowEmptyBody`). Why: it had inherited the true-zero body, which told a user who already has a repeating expense to go mark one as repeating. The old key stays, retired, for the localization migration. ADR 0039 review.
 
 ## Open
-- The sheet still says "upcoming expense" in three places (the add affordance's words, the true-zero CTA, the delete label) plus its own title. Those move together with the drawer round, not piecemeal.
 
 ## Iterations
 - 2026-09-11: Upcoming's three-row total card, corner filter, honest window-empty. ADR 0040.
