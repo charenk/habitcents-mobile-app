@@ -9,7 +9,7 @@ The card never changes shape. Every row renders in every state, so the window-em
 Vocabulary (ADR 0034). This component owns two of Upcoming's three; the pane's true **Zero** is handled by an early return to `EmptyState`.
 
 - Zero: no recurring expense exists at all, so the card is dropped entirely for the 96pt calendar and "Know what's coming before it lands". Reach: Persona new user.
-- Window-empty: something recurs, just not inside the picked window. Card at `$0.00` / `0 payments`, one body line beneath it, no CTA. Reach: Persona returning user, then tap 2w.
+- Window-empty: something recurs, just not inside the picked window. Card at `$0.00` / `0 payments`, one body line beneath it, no CTA. Reach: Persona returning user, then tap 2w. Harder to reach by accident now: the pane opens on the narrowest window that has data (see [money](../modules/money.md)), so this state is mostly something a user chooses their way into.
 - Live: the card at its total, then the rows. Reach: Persona returning user.
 - Per row: default / pressed. A row whose bill lands more than once in the window also carries its multiplier.
 

@@ -529,3 +529,49 @@ export function hasFullMonthOfData(expenses: Expense[]): boolean {
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   return expenses.some((e) => e.date < monthStart);
 }
+
+/**
+ * Upcoming advances past a due-today occurrence (ADR 0024, U11): by the time
+ * the Money screen renders, the materializer (contexts/ExpensesContext.tsx) has
+ * already turned any occurrence due today into a real Spent row, so showing
+ * it again here would resurrect the pre-ADR-0024 "same row in both tabs" bug.
+ *
+ * `computeUpcoming` itself stays untouched (it's pure and its own tests pin
+ * "on/after from" -- this is a display-only adjustment, not a projection
+ * change): an item whose earliest occurrence is today gets re-pointed at its
+ * next occurrence already present in `occurrencesInWindow` (nothing here
+ * re-projects anything), or dropped if today's was its only occurrence in the
+ * window. `nextDate`/`daysUntil` stay relative to real "today" throughout, so
+ * the "Tomorrow" / "in N days" pill keeps meaning what it says. Re-pointing
+ * also trims `occurrencesInWindow` down to future dates only, which is the
+ * same list #95's payments count sums over -- so "how many payments" now
+ * counts only future ones for free, without touching upcomingWindowTotal/
+ * upcomingWindowPaymentsCount themselves.
+ */
+export function advancePastToday(items: UpcomingItem[], todayMid: number): UpcomingItem[] {
+  const out: UpcomingItem[] = [];
+  for (const item of items) {
+    if (item.nextDate.getTime() > todayMid) {
+      out.push(item);
+      continue;
+    }
+    const future = item.occurrencesInWindow.filter((d) => d.getTime() > todayMid);
+    if (future.length === 0) continue; // today's due date was the only one in the window
+    const nextDate = future[0];
+    const daysUntil = Math.round((nextDate.getTime() - todayMid) / MS_PER_DAY);
+    out.push({ ...item, nextDate, daysUntil, occurrencesInWindow: future });
+  }
+  return out;
+}
+
+/**
+ * Whether this projection has anything to show once a due-today occurrence has
+ * been advanced past. The window picker's default (see
+ * utils/upcomingWindow.ts) asks exactly this question, and it must ask it
+ * through `advancePastToday` rather than `computeUpcoming` alone: a bill due
+ * only today has already been materialized into Spent and is never shown on
+ * Upcoming, so counting it would open on a window that then renders empty.
+ */
+export function hasUpcomingInWindow(items: UpcomingItem[], from: Date = new Date()): boolean {
+  return advancePastToday(items, atMidnight(from).getTime()).length > 0;
+}

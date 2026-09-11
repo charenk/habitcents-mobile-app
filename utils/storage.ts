@@ -9,7 +9,6 @@ import type { ScanSummary } from '@/types/scanSummary';
 import { type CurrencyCode, DEFAULT_CURRENCY, isCurrencyCode } from '@/utils/currency';
 import { type CoachMomentState, createInitialCoachMomentState } from '@/utils/coachMoments';
 import {
-  DEFAULT_UPCOMING_WINDOW_DAYS,
   isUpcomingWindowDays,
   type UpcomingWindowDays,
 } from '@/utils/upcomingWindow';
@@ -290,20 +289,24 @@ export async function setCurrency(code: CurrencyCode): Promise<void> {
 }
 
 /**
- * Get the persisted Upcoming window selection (U8: the 2 weeks / 1 month / 3
- * months picker on Money > Upcoming). Defaults to
- * DEFAULT_UPCOMING_WINDOW_DAYS when nothing is stored or the stored value is
- * not one of the valid presets (utils/upcomingWindow.ts), so a corrupt or
- * stale value degrades to the default rather than a nonsense window.
+ * The user's OWN Upcoming window choice (U8: the 2 weeks / 1 month / 3 months
+ * picker on Money > Upcoming), or null if they have never made one.
+ *
+ * The null is load-bearing. This used to return DEFAULT_UPCOMING_WINDOW_DAYS
+ * for an absent key, which collapsed "never picked" into "picked the default"
+ * and made it impossible for the screen to choose a smarter opening window
+ * without overriding a real choice. A corrupt or out-of-range stored value
+ * also reads as null, so it degrades to whatever the screen would have picked
+ * rather than to a nonsense window.
  */
-export async function getUpcomingWindowDays(): Promise<UpcomingWindowDays> {
+export async function getStoredUpcomingWindowDays(): Promise<UpcomingWindowDays | null> {
   try {
     const value = await AsyncStorage.getItem(UPCOMING_WINDOW_KEY);
     const parsed = value === null ? NaN : Number(value);
-    return isUpcomingWindowDays(parsed) ? parsed : DEFAULT_UPCOMING_WINDOW_DAYS;
+    return isUpcomingWindowDays(parsed) ? parsed : null;
   } catch (error) {
     console.error('Error reading upcoming window:', error);
-    return DEFAULT_UPCOMING_WINDOW_DAYS;
+    return null;
   }
 }
 
