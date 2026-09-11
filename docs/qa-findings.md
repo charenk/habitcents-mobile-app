@@ -10,6 +10,11 @@ Categories: `functional`, `logical`, `ux`, `technical`, `telemetry`, `security`.
 
 ## Open
 
+- [ ] (2026-09-10) [medium] [logical] Categories and category detail double-count an expense that has a custom categoryId and a stored value of "Other"
+  - Repro: 1. Have a custom category, e.g. `{ id: 'cat-x', name: 'Streaming' }`. 2. Log an expense against it, which stores `categoryId: 'cat-x'` with `category: 'Other'`. 3. Open `habitcents://categories` and read both the Streaming and the Other monthly totals.
+  - Expected / Actual: Expected the expense to count once, under Streaming. Actual it counts under both. `expenseBelongsToCategory` is an OR ladder (`categoryId === category.id || category === category.name || ...`), and both screens call it inside a per-category `.filter()`, so the row satisfies the id rung for Streaming and the name rung for the default Other and lands in both buckets. Insights no longer has this defect: PR #161 made the rollup resolve each expense to exactly one category before grouping, so Insights and Categories now disagree on the same numbers.
+  - Evidence: `utils/expenseCategory.ts:64-72`; `app/(tabs)/categories.tsx:134-136`; `app/category/[id].tsx:65`. Found by the developer agent while implementing PR #161, not separately reproduced on device.
+
 - [ ] (2026-09-10) [medium] [telemetry] `coach_moment_shown` FL-1 fires and burns the once-ever flag while the card is never rendered
   - Repro: 1. Wipe storage, apply the returning-user persona (or any state where a leak or breaking habit exists and `firstLogShown` is false). 2. Cold-launch. 3. Read the Metro log, then open `habitcents://?view=kept`.
   - Expected / Actual: Expected the event to fire only when the FL-1 card is actually shown. Actual the effect fires on `expenses.length > 0` alone, at screen level, and writes `firstLogShown: true` to disk; the card only renders inside the Kept pane's `isEmpty` branch, and the Kept pane had a Leaks section, so nothing was shown. The flag is then spent and the card can never appear. Real-user path: onboarding Door 3 seeds a habit, which makes `sections` non-empty on the very first log.
