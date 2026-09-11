@@ -49,6 +49,9 @@ export const strings = {
     upcoming: 'Upcoming',
     merchantPlaceholder: 'Merchant (e.g. Starbucks)',
     merchantFieldLabel: 'Merchant',
+    // Spoken form of a category chip, so a rail that shares a word with
+    // another rail on the same sheet is still distinguishable by ear.
+    categorySpoken: (name: string) => `${name} category`,
     noteFieldLabel: 'Note',
     amountHint: 'Double tap to enter an amount',
     notePlaceholder: 'Note (optional)',
@@ -417,6 +420,9 @@ export const strings = {
     merchant: 'Merchant',
     merchantPlaceholder: 'Merchant (e.g. Starbucks)',
     merchantFieldLabel: 'Merchant',
+    // Spoken form of a category chip, so a rail that shares a word with
+    // another rail on the same sheet is still distinguishable by ear.
+    categorySpoken: (name: string) => `${name} category`,
     noteFieldLabel: 'Note',
     amountHint: 'Double tap to enter an amount',
     note: 'Note',
@@ -1138,6 +1144,11 @@ export const strings = {
     // using four words for one object; this and the three keys under
     // `addUpcoming` were the half that had to move together with the sheet.
     upcomingAddAffordance: 'Add a bill',
+    // The row action for a bill whose day is unknown. The materializer will
+    // never write one of those into Spent, because it would be asserting a day
+    // nobody gave, so the user gets the path instead (ADR 0042).
+    upcomingMarkPaid: (name: string) => `Mark ${name} as paid`,
+    upcomingMarkedPaid: 'Added to Spent.',
     // Empty-state first actions (PRD v3.1 sect 5). Every empty state a skipper
     // can reach has to offer something to DO, not just explain itself.
     spentEmptyCta: 'Log an expense',

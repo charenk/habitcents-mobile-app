@@ -90,6 +90,7 @@ describe('every reachable empty state offers a first action', () => {
         onAdd={jest.fn()}
         onEmptyAdd={onEmptyAdd}
         onEditItem={jest.fn()}
+        onMarkPaid={jest.fn()}
         hasAnyRecurring={false}
       />
     );
@@ -254,6 +255,7 @@ describe('layout="fill" renders the icon on every pane-level surface', () => {
         onWindowDaysChange={jest.fn()}
         onAdd={jest.fn()}
         onEditItem={jest.fn()}
+        onMarkPaid={jest.fn()}
         hasAnyRecurring={false}
       />
     );
@@ -401,6 +403,7 @@ describe('UpcomingList: true zero-data vs window-empty are two different empties
         onWindowDaysChange={jest.fn()}
         onAdd={jest.fn()}
         onEditItem={jest.fn()}
+        onMarkPaid={jest.fn()}
         hasAnyRecurring={false}
       />
     );
@@ -418,6 +421,7 @@ describe('UpcomingList: true zero-data vs window-empty are two different empties
         onWindowDaysChange={jest.fn()}
         onAdd={jest.fn()}
         onEditItem={jest.fn()}
+        onMarkPaid={jest.fn()}
         hasAnyRecurring={true}
       />
     );

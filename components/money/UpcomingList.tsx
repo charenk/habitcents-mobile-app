@@ -67,6 +67,7 @@ import {
 } from '@/utils/upcomingWindow';
 import {
   groupUpcomingByMonth,
+  isSettleable,
   monthGroupTotal,
   monthRowTotal,
   type UpcomingMonthRow,
@@ -119,6 +120,12 @@ export type UpcomingListProps = {
   onEmptyAdd?: () => void;
   /** Opens the add-upcoming sheet in edit mode for this row's expense. */
   onEditItem: (expense: Expense) => void;
+  /**
+   * Settles one occurrence of an unknown-day bill: the user asserting they paid
+   * it. The only path such a bill has into Spent, since the materializer will
+   * not write a day nobody gave (ADR 0042).
+   */
+  onMarkPaid: (expense: Expense) => void;
   /** True zero-data: whether ANY expense resolves to a recurrence rule at
    *  all, independent of the current window. Distinct from `items.length`,
    *  which can be empty just because the current window is narrow. */
@@ -132,6 +139,7 @@ export function UpcomingList({
   onAdd,
   onEmptyAdd,
   onEditItem,
+  onMarkPaid,
   hasAnyRecurring,
 }: UpcomingListProps): React.JSX.Element {
   const theme = useTheme();
@@ -261,6 +269,9 @@ export function UpcomingList({
                   row={row}
                   isFirst={index === 0}
                   onPress={() => onEditItem(row.expense)}
+                  onMarkPaid={
+                    isSettleable(row, group.monthStart) ? () => onMarkPaid(row.expense) : undefined
+                  }
                   theme={theme}
                   styles={styles}
                 />
@@ -277,12 +288,15 @@ function UpcomingRow({
   row,
   isFirst,
   onPress,
+  onMarkPaid,
   theme,
   styles,
 }: {
   row: UpcomingMonthRow;
   isFirst: boolean;
   onPress: () => void;
+  /** Present only on a row the user can settle; see isSettleable. */
+  onMarkPaid?: () => void;
   theme: AppTheme;
   // UX-056: createStyles is a ~30-entry StyleSheet.create; it used to be
   // recomputed once per row instance (this component's own useMemo, keyed
@@ -435,6 +449,21 @@ function UpcomingRow({
         ) : null}
       </View>
       {stacked ? null : amountBlock}
+      {/* Its own stop for VoiceOver, unlike the chevron: this one DOES
+          something the row press does not, so it has to be reachable and
+          named. Only on a bill whose day is unknown, which is the only kind
+          the materializer cannot settle on its own. */}
+      {onMarkPaid ? (
+        <Pressable
+          onPress={onMarkPaid}
+          accessibilityRole="button"
+          accessibilityLabel={strings.money.upcomingMarkPaid(name)}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          style={({ pressed }) => [styles.markPaid, pressed ? styles.markPaidPressed : null]}
+        >
+          <Icon name="Check" size={16} color={theme.slate} />
+        </Pressable>
+      ) : null}
       <Icon
         name="ChevronRight"
         size={16}
@@ -550,6 +579,19 @@ function createStyles(theme: AppTheme) {
       paddingVertical: 10,
       borderTopWidth: 1,
       borderTopColor: theme.hairlineSubtle,
+    },
+    markPaid: {
+      width: 28,
+      height: 28,
+      borderRadius: radii.control,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: 1,
+      borderColor: theme.cloud,
+      marginRight: 4,
+    },
+    markPaidPressed: {
+      backgroundColor: theme.snow,
     },
     rowFirst: {
       borderTopWidth: 0,

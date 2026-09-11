@@ -90,6 +90,7 @@ async function renderList(overrides: Partial<React.ComponentProps<typeof Upcomin
         onWindowDaysChange={noop}
         onAdd={noop}
         onEditItem={noop}
+        onMarkPaid={noop}
         // Every fixture here has at least one recurring expense somewhere
         // (the window-empty case below is "no items in THIS window", not
         // "nothing recurs at all"); override to false to hit the true-zero
@@ -357,6 +358,12 @@ describe('UpcomingList row anatomy', () => {
 });
 
 describe('UpcomingList month precision', () => {
+  /** The last day of the month we are actually in, so the row is settleable. */
+  function endOfThisMonth(): Date {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  }
+
   const unknownDay: UpcomingItem = {
     expense: makeExpense({
       id: 'water',
@@ -392,6 +399,28 @@ describe('UpcomingList month precision', () => {
     expect(label).toContain('sometime in September');
     expect(label).not.toContain('Last day');
     expect(label).not.toContain('next ');
+  });
+
+  /**
+   * The escape hatch. The materializer will never write this bill into Spent,
+   * so without an affordance the money simply never reaches the ledger.
+   */
+  it('offers "mark as paid" on an unknown-day bill in the current month', async () => {
+    const onMarkPaid = jest.fn();
+    const thisMonth: UpcomingItem = {
+      ...unknownDay,
+      nextDate: endOfThisMonth(),
+      occurrencesInWindow: [endOfThisMonth()],
+    };
+    const view = await renderList({ items: [thisMonth], onMarkPaid });
+
+    await fireEvent.press(view.getByLabelText(strings.money.upcomingMarkPaid('Water')));
+    expect(onMarkPaid).toHaveBeenCalledWith(thisMonth.expense);
+  });
+
+  it('offers nothing of the kind on a bill whose day is known', async () => {
+    const view = await renderList();
+    expect(view.queryByLabelText(/Mark .* as paid/)).toBeNull();
   });
 
   it('still groups and still counts', async () => {
