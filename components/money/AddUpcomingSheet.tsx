@@ -69,7 +69,7 @@ import { formatDate } from '@/utils/dates';
 import { toExpenseCategory } from '@/utils/expenseCategory';
 import { atMidnight } from '@/utils/habitLogging';
 import { hapticError, hapticSuccess } from '@/utils/motion';
-import { nextOccurrence, resolveRule } from '@/utils/recurring';
+import { nextOccurrence, resolveRule, shortDate } from '@/utils/recurring';
 
 export type AddUpcomingSheetMode = 'add' | 'edit';
 
@@ -203,7 +203,10 @@ type ScheduleDraft = {
   frequency: Frequency;
   weekday: Weekday;
   biweekStart: BiweekStart;
-  monthDay: MonthDayOption;
+  // Null means "a legacy monthly rule that steps from its own anchor date, so
+  // none of the four chips describes it". Only edit mode can produce it; add
+  // mode always starts on '1'.
+  monthDay: MonthDayOption | null;
   everyNDays: number;
 };
 
@@ -211,7 +214,11 @@ type ScheduleDraft = {
  * The rule to store and the date of its first occurrence. Exported shape is
  * the whole write contract: `date` becomes `expense.date`.
  */
-function buildSchedule(draft: ScheduleDraft, today: Date): { rule: RecurrenceRule; date: Date } {
+function buildSchedule(
+  draft: ScheduleDraft,
+  today: Date,
+  anchorDate?: Date
+): { rule: RecurrenceRule; date: Date } {
   if (draft.scheduleType === 'once') {
     const date =
       draft.onceWhen === 'tomorrow'
@@ -244,6 +251,24 @@ function buildSchedule(draft: ScheduleDraft, today: Date): { rule: RecurrenceRul
   }
 
   if (draft.frequency === 'monthly') {
+    // No chip selected: keep the rule anchor-stepping rather than silently
+    // moving the bill to the 1st. Reachable when the user round-trips monthly
+    // to weekly and back without ever picking a day. Steps the ORIGINAL
+    // anchor's day-of-month to its next occurrence after today, so "the 29th"
+    // survives the round trip instead of re-anchoring on today.
+    if (draft.monthDay === null) {
+      const anchorDay = (anchorDate ?? today).getDate();
+      const date = new Date(today);
+      const thisMonthTarget = Math.min(anchorDay, daysInMonth(today.getFullYear(), today.getMonth()));
+      if (today.getDate() <= thisMonthTarget) {
+        date.setDate(thisMonthTarget);
+      } else {
+        date.setDate(1);
+        date.setMonth(date.getMonth() + 1);
+        date.setDate(Math.min(anchorDay, daysInMonth(date.getFullYear(), date.getMonth())));
+      }
+      return { rule: { type: 'monthly' }, date };
+    }
     const target = resolveMonthDay(today.getFullYear(), today.getMonth(), draft.monthDay);
     let date: Date;
     if (today.getDate() <= target) {
@@ -308,7 +333,12 @@ function draftFromExpense(expense: Expense): ScheduleDraftFields {
     case 'biweekly':
       return { ...base, frequency: 'biweekly', weekday: rule.weekday };
     case 'monthly':
-      return { ...base, frequency: 'monthly', monthDay: rule.monthDay ?? '1' };
+      // THE FIX (2026-09-11): this used to be `rule.monthDay ?? '1'`, so a
+      // legacy monthly rule with no stored anchor opened with "1st" lit up
+      // while the list correctly said "Monthly, next Sep 29". The sheet was
+      // stating something false, and any schedule tap rebuilt the rule from
+      // the wrong anchor and moved the bill.
+      return { ...base, frequency: 'monthly', monthDay: rule.monthDay ?? null };
     case 'annual':
       return { ...base, frequency: 'annual' };
     case 'custom':
@@ -341,7 +371,7 @@ export function AddUpcomingSheet({
   const [frequency, setFrequency] = useState<Frequency>('monthly');
   const [weekday, setWeekday] = useState<Weekday>(new Date().getDay() as Weekday);
   const [biweekStart, setBiweekStart] = useState<BiweekStart>('this');
-  const [monthDay, setMonthDay] = useState<MonthDayOption>('1');
+  const [monthDay, setMonthDay] = useState<MonthDayOption | null>('1');
   const [everyNDays, setEveryNDays] = useState(DEFAULT_EVERY_N_DAYS);
   // Edit mode only: whether the user has touched a schedule control since the
   // sheet opened. Editing amount or name alone must not silently reschedule
@@ -418,6 +448,16 @@ export function AddUpcomingSheet({
     if (v !== biweekStart) setScheduleTouched(true);
     setBiweekStart(v);
   };
+  // The date the anchor note names. It must be the NEXT occurrence, not
+  // `expense.date`: the stored date is the rule's anchor and is usually in the
+  // past, so echoing it would say "next on Aug 29" beside a row correctly
+  // reading "next Sep 29" (seen on device). Same helper the list projects with.
+  const anchorNextDate = useMemo(() => {
+    if (!expense) return '';
+    const next = nextOccurrence(expense, startOfToday());
+    return shortDate(next ?? expense.date);
+  }, [expense]);
+
   const handleMonthDayChange = (v: MonthDayOption) => {
     if (v !== monthDay) setScheduleTouched(true);
     setMonthDay(v);
@@ -472,7 +512,8 @@ export function AddUpcomingSheet({
         ? { rule: original, date: expense.date }
         : buildSchedule(
             { scheduleType, onceWhen, frequency, weekday, biweekStart, monthDay, everyNDays },
-            startOfToday()
+            startOfToday(),
+            mode === 'edit' && expense ? expense.date : undefined
           );
 
     // INVARIANT (queue2 review P1): a parent's date must never land on a
@@ -758,6 +799,16 @@ export function AddUpcomingSheet({
                       />
                     ))}
                   </View>
+                  {monthDay === null ? (
+                    // No chip describes an anchor-stepping rule, so rather
+                    // than lighting one up falsely the sheet says what the
+                    // rule does and what picking a chip would cost. Also the
+                    // first place either sheet echoes the date it is about to
+                    // write, which is what made this defect invisible.
+                    <Text style={styles.anchorNote}>
+                      {strings.addUpcoming.monthDayAnchorNote(anchorNextDate)}
+                    </Text>
+                  ) : null}
                 </>
               ) : null}
 
@@ -840,6 +891,13 @@ function createStyles(theme: AppTheme) {
       color: theme.mistText,
       marginTop: 18,
       marginBottom: 8,
+    },
+    anchorNote: {
+      fontFamily: theme.fonts.ui,
+      fontSize: typeScale.caption,
+      color: theme.mistText,
+      marginTop: 8,
+      lineHeight: 17,
     },
     subLabel: {
       fontFamily: theme.fonts.ui,

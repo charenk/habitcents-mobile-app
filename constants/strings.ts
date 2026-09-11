@@ -1234,6 +1234,13 @@ export const strings = {
     startingThisWeek: 'This week',
     startingNextWeek: 'Next week',
     onThe: 'On the',
+    // A monthly rule stored before step 04 has no monthDay: it steps from its
+    // own anchor date, so none of the four chips describes it. The sheet used
+    // to preselect "1st" for these, which was the sheet stating something
+    // false about a rule the list was describing correctly. No chip is
+    // selected in that state, and this line says what the rule actually does.
+    monthDayAnchorNote: (date: string) =>
+      `Repeats on the same day each month, next on ${date}. Pick a day to move it.`,
     monthDayFirst: '1st',
     monthDayFifteenth: '15th',
     monthDayThirtieth: '30th',

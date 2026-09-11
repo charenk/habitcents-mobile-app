@@ -212,6 +212,66 @@ describe('AddUpcomingSheet edit mode: prefill and untouched-schedule round trip'
     expect(updates.title).toBe('Gym');
   });
 
+  /**
+   * D1. A monthly rule stored before step 04 has no `monthDay`: it steps from
+   * its own anchor date, which is why the list correctly says "Monthly, next
+   * Sep 29". The sheet used to read `rule.monthDay ?? '1'` and light up "1st",
+   * so it stated something false about a rule every other surface described
+   * correctly, and any schedule tap would then rebuild from the wrong anchor
+   * and move the bill to the 1st.
+   */
+  it('lights no day chip for a legacy monthly rule, and says what it actually does', async () => {
+    const expense = makeExpense({
+      id: 'e1',
+      date: new Date('2026-08-29T00:00:00'),
+      recurrenceRule: { type: 'monthly' },
+    });
+    const view = await renderEdit(expense);
+
+    expect(view.getByLabelText('Monthly, selected')).toBeTruthy();
+    // The regression pin: no chip claims this rule.
+    expect(view.queryByLabelText('1st, selected')).toBeNull();
+    expect(view.getByLabelText('1st, not selected')).toBeTruthy();
+    expect(view.getByLabelText('15th, not selected')).toBeTruthy();
+    expect(view.getByLabelText('30th, not selected')).toBeTruthy();
+    expect(view.getByLabelText('Last day, not selected')).toBeTruthy();
+
+    // And it names the date it is actually on, which is what made the defect
+    // invisible: nothing on the sheet echoed the schedule it would write.
+    expect(view.getByText(/Repeats on the same day each month/)).toBeTruthy();
+  });
+
+  it('saves a legacy monthly rule back unchanged when the schedule is untouched', async () => {
+    const expense = makeExpense({
+      id: 'e1',
+      date: new Date('2026-08-29T00:00:00'),
+      recurrenceRule: { type: 'monthly' },
+    });
+    const view = await renderEdit(expense);
+
+    await tap(view.getByRole('button', { name: strings.addUpcoming.saveChanges }));
+
+    const [, updates] = mockUpdateExpense.mock.calls[0];
+    expect(updates.date).toEqual(expense.date);
+    expect(updates.recurrenceRule).toEqual({ type: 'monthly' });
+  });
+
+  it('moves a legacy monthly rule only when a day is actually picked', async () => {
+    const expense = makeExpense({
+      id: 'e1',
+      date: new Date('2026-08-29T00:00:00'),
+      recurrenceRule: { type: 'monthly' },
+    });
+    const view = await renderEdit(expense);
+
+    await tap(view.getByLabelText('15th, not selected'));
+    await tap(view.getByRole('button', { name: strings.addUpcoming.saveChanges }));
+
+    const [, updates] = mockUpdateExpense.mock.calls[0];
+    expect(updates.recurrenceRule).toEqual({ type: 'monthly', monthDay: '15' });
+    expect(updates.date?.getDate()).toBe(15);
+  });
+
   it('editing the amount alone does not touch the schedule', async () => {
     const expense = makeExpense({ id: 'e1', amount: 1200 }); // "12.00"
     const view = await renderEdit(expense);
