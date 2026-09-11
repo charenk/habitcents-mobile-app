@@ -356,6 +356,51 @@ describe('UpcomingList row anatomy', () => {
   });
 });
 
+describe('UpcomingList month precision', () => {
+  const unknownDay: UpcomingItem = {
+    expense: makeExpense({
+      id: 'water',
+      title: 'Water',
+      amount: 4200,
+      datePrecision: 'month',
+      recurrenceRule: { type: 'monthly', monthDay: 'last' },
+      recurrence: 'monthly',
+    }),
+    nextDate: new Date('2026-09-30T00:00:00'),
+    daysUntil: 19,
+    occurrencesInWindow: [new Date('2026-09-30T00:00:00')],
+  };
+
+  // Charen, 2026-09-11: no date and no arrow. The row sits under a month header
+  // that already carries the month.
+  it('draws no date at all when the day is unknown', async () => {
+    const view = await renderList({ items: [unknownDay] });
+
+    expect(view.queryByText(/^Sep /)).toBeNull();
+    expect(view.queryByText('September')).toBeNull();
+    expect(view.getByText('Water')).toBeTruthy();
+  });
+
+  /**
+   * The anchor must not leak. "Last day" is storage, not something the user
+   * said, and this is the assertion standing between the two.
+   */
+  it('speaks the month and never the stored anchor', async () => {
+    const view = await renderList({ items: [unknownDay] });
+    const label = view.getByLabelText(/^Water,/).props.accessibilityLabel as string;
+
+    expect(label).toContain('sometime in September');
+    expect(label).not.toContain('Last day');
+    expect(label).not.toContain('next ');
+  });
+
+  it('still groups and still counts', async () => {
+    const view = await renderList({ items: [unknownDay] });
+    // Its money is real, so it reaches the card and its own month header.
+    expect(view.getAllByText('$42.00').length).toBeGreaterThanOrEqual(2);
+  });
+});
+
 describe('UpcomingList rows', () => {
   it('opens edit for the row that was pressed', async () => {
     const onEditItem = jest.fn();

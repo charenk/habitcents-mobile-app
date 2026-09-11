@@ -269,6 +269,61 @@ describe('AddUpcomingSheet: one pattern with the log sheet', () => {
     expect(updates.emoji).toBe('\u{1F4E6}');
   });
 
+  /**
+   * "I don't know the day" (ADR 0042). The sheet used to force a day, so
+   * someone who did not know one picked arbitrarily and the list then rendered
+   * that guess as a confident date.
+   */
+  it('writes month precision when the monthly day is unknown', async () => {
+    const view = await renderAdd();
+    await typeAmount(view, '42');
+    await tap(view.getByLabelText(new RegExp(`^${strings.addUpcoming.monthDayUnknown},`)));
+    await tap(view.getByRole('button', { name: strings.addUpcoming.save }));
+
+    const saved = mockAddExpense.mock.calls[0][0];
+    expect(saved.datePrecision).toBe('month');
+    // 'last', not the payload-free form: legacy monthly steps the same
+    // day-of-month, so a Jan 31 anchor would roll to Mar 3 and file a February
+    // payment under March.
+    expect(saved.recurrenceRule).toEqual({ type: 'monthly', monthDay: 'last' });
+  });
+
+  it('clears month precision when a day is picked after all', async () => {
+    const expense = makeExpense({
+      id: 'e1',
+      datePrecision: 'month',
+      recurrenceRule: { type: 'monthly', monthDay: 'last' },
+    });
+    const view = await renderEdit(expense);
+
+    await tap(view.getByLabelText('15th, not selected'));
+    await tap(view.getByRole('button', { name: strings.addUpcoming.saveChanges }));
+
+    const [, updates] = mockUpdateExpense.mock.calls[0];
+    expect('datePrecision' in updates).toBe(true);
+    expect(updates.datePrecision).toBeUndefined();
+    expect(updates.recurrenceRule).toEqual({ type: 'monthly', monthDay: '15' });
+  });
+
+  // One payment a year whichever day it falls on, so the same reasoning that
+  // allows this for monthly allows it here.
+  it('lets a yearly bill know its month but not its day', async () => {
+    const view = await renderAdd();
+    await typeAmount(view, '480');
+    await tap(view.getByLabelText('Yearly, not selected'));
+    await tap(view.getByLabelText(/^Mar, /));
+    await tap(view.getByLabelText(new RegExp(`^${strings.addUpcoming.monthDayUnknown},`)));
+    await tap(view.getByRole('button', { name: strings.addUpcoming.save }));
+
+    const saved = mockAddExpense.mock.calls[0][0];
+    expect(saved.datePrecision).toBe('month');
+    expect(saved.recurrenceRule).toEqual({ type: 'annual' });
+    expect(saved.date.getMonth()).toBe(2);
+    // Anchored on the month's last day, so the bill stays live for the whole
+    // month it belongs to rather than expiring on the 2nd.
+    expect(saved.date.getDate()).toBe(31);
+  });
+
   it('puts delete in the header, not the footer', async () => {
     const expense = makeExpense({ id: 'e1' });
     const view = await renderEdit(expense);
