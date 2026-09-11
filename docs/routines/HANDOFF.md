@@ -22,9 +22,16 @@ that.
   ExpenseSheet, AddUpcomingSheet, PickOneSheet, PartialSlipSheet,
   BreakHabitSheet, ConfirmSheet, ReviewQueueSheet, CategoryTransactionsSheet,
   the currency and category pickers) look right centered at the capped
-  width, including the keyboard-avoiding behavior on forms (ExpenseSheet,
+  width, including the keyboard-clamp behavior on forms (ExpenseSheet,
   AddUpcomingSheet) with the iPad on-screen keyboard, which is shaped
-  differently from the phone one.
+  differently from the phone one. **Changed run 26 (main, not this
+  branch):** the sheet's old `avoidKeyboard`/KeyboardAvoidingView lift was
+  replaced by a height clamp (`utils/sheetLayout.ts` `sheetMaxHeight`,
+  `utils/keyboard.ts` `useKeyboardHeight`) that shrinks the panel to the
+  visible strip above the keyboard instead of lifting it; the 600pt width
+  cap this branch owns is unaffected (confirmed run 26, see Status), but the
+  clamp's own feel on the iPad keyboard, which is taller and shaped
+  differently from the phone one, is new territory for the device pass.
 - The onboarding carousel: swiping between beats on iPad, confirming the
   capped `beatContent` column reads well against the still full-width
   `beat` page background, and that `BeatMedia`'s frame (capped along with
@@ -59,6 +66,60 @@ Inspector audit, scheduled for the Phase 4 TestFlight beta. This iPad
 device pass is separate and additional to that one, not a substitute.
 
 ## Status
+
+Run 26. Heaviest rebase since run 14: `origin/main` moved 16 commits
+(`bdff4c8`..`9376cc2`), a real UI wave, not docs-only like run 25, including
+"sheets: one platform pattern" (`f18ff38`), which rewrote `components/ui/
+Sheet.tsx` around a new 80%-of-window keyboard-aware height clamp
+(`utils/sheetLayout.ts`, `utils/keyboard.ts`) and a pinned `footer` slot, plus
+a Today rewrite (log-in-place, `LeakCard` renamed to `LeakRow`,
+`CheckInCard` reworked). One real conflict, in `app/(tabs)/index.tsx`'s
+import list (main added `shadows`, this branch's run 1 commit added
+`contentColumnStyle`; kept both) and one docs-only conflict in
+`design/decisions/components/Sheet.md` (both sides appended dated decision
+lines; kept both, ordered by date, no content lost). 33 commits replayed.
+Re-audited rather than trusting the clean replay, per the run 8/14 rule,
+with extra care given `Sheet.tsx` itself changed shape this time:
+- `Sheet.tsx`'s `panel` style still carries `maxWidth: layout.contentMaxWidth`
+  and `alignSelf: 'center'` (item 3), and the new `footer` slot renders as a
+  child inside that same `panel` node, so it inherits the cap for free; no
+  new footer-outside-the-cap gap was introduced.
+- The new `utils/sheetLayout.ts` (`sheetMaxHeight`) and `utils/keyboard.ts`
+  only read window height and keyboard height, never width, same
+  orientation-and-cap-independent shape as item 5's existing height-only
+  sites; no change needed.
+- Re-grepped `useWindowDimensions`: the main-side rewrite moved the old
+  per-sheet `height`-only reads (ExpenseSheet, AddUpcomingSheet,
+  PartialSlipSheet, BreakHabitSheet, CategoryTransactionsSheet,
+  ReviewQueueSheet, PickOneSheet, AddCategoryModal) out of those components
+  entirely, into the new shared `Sheet.tsx` clamp; confirmed each of those
+  8 files no longer reads `useWindowDimensions` at all now (checked
+  directly, not inferred), so item 5's site list shrank rather than grew.
+  The two remaining known sites (`CheckInCard.tsx`, `OnboardingCarousel.tsx`)
+  and the one dead one (`AuroraBackground.tsx`) are unchanged; confirmed
+  `CheckInCard.tsx` still reads `fontScale` only despite its own rewrite,
+  still out of this plan's scope.
+- Today's new `ribbonWrapInline` (the door-1 `InfoRibbon`'s new placement,
+  inline inside the logged-today block per main's log-in-place rework) sits
+  inside the already-capped `spentScrollContent` ScrollView, so it inherits
+  the cap from its parent content container and needs none of its own; the
+  door3 ribbon's own wrapper (`ribbonWrap`/`door3-ribbon-wrap`), which sits
+  outside the scroll content in the Kept pane and therefore does carry its
+  own `contentColumnStyle` spread, is untouched and still there.
+- The four fixed-footer caps from decision 1 (`ScopeScreen`, `BillsScreen`,
+  `app/paywall.tsx`, `PayoffScreen`'s `continueButton`) are all untouched;
+  none of those four files were part of this wave's diff.
+`npx tsc --noEmit` clean from a fresh `npm ci`. Full suite green on the
+first pass, no flake: 114 suites / 1174 tests (up from run 25's 110/1152,
+entirely main's own intervening test growth across its 16 commits net of
+nothing removed on this branch). PR #133: still open, not draft,
+`verify` check green at the pre-rebase head, `get_comments` and
+`get_reviews` both empty, no new activity. Issue #139 re-checked via
+`get_comments`: still the single 2026-09-07 comment, already implemented;
+zero reactions, nothing new. Re-verified item 7 (`app.json` orientation
+still `"portrait"`, `supportsTablet` still `true`). Pushed the rebase
+(force-with-lease, history rewritten) plus this HANDOFF update; no plan
+content changed, since the audit above found nothing to fix this time.
 
 Run 25. First real rebase since run 14: `origin/main` moved one merge
 (`b748ca3`..`bdff4c8`, PR #152, "Today docks, Kept Zero link, zero-state
