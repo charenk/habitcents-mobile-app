@@ -67,6 +67,22 @@ device pass is separate and additional to that one, not a substitute.
 
 ## Status
 
+Run 29. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 28's
+rebase (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`683ecc3`), so no rebase and no new regression surface this run. `npx tsc
+--noEmit` clean from a fresh `npm ci`. Full suite green on the first pass,
+no flake: 118 suites / 1233 tests, zero drift from run 28. PR #133: still
+open, not draft, `mergeable_state: clean`, base SHA matches main's tip
+exactly (`683ecc3`), head commit (`2d43522`) unchanged, its `verify` check
+now confirmed green (it was still `in_progress` when run 28 checked
+moments after pushing), `get_comments` and `get_reviews` both empty, no
+new activity. Issue #139 re-checked via `get_comments`: still the single
+2026-09-07 comment, zero reactions, already implemented; no new REVIEW
+FEEDBACK there or in this file. Re-verified item 7 (`app.json` orientation
+still `"portrait"`, `supportsTablet` still `true`). This HANDOFF update is
+the only change this run; no production code or plan content changed.
+
 Run 28. Addressed the review's 2026-09-11 action item first, per this
 file's own "REVIEW FEEDBACK first" instruction. Rebased onto four new main
 commits (`683ecc3`, PRs/QA #161-#164: Insights date-window and
