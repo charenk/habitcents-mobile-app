@@ -127,7 +127,6 @@ function CheckInCardImpl({
   const answered = isDaily ? todayState !== 'no-log' : false;
   const wk = isDaily ? weekStats(goal.dayLogs, today, goal.trackingStart, goal.skipValue) : null;
   const canBackfill = isDaily && canBackfillYesterday(goal.dayLogs, today, goal.trackingStart, goal.backfillUsed);
-  const yesterdayState = isDaily ? dayStateFor(goal.dayLogs, new Date(today.getTime() - 86400000)) : 'no-log';
 
   // Weekly/monthly: last answer this period, purely for the confirmation slot;
   // the period chip and question always show (multiple skips/period allowed).
@@ -378,30 +377,34 @@ function CheckInCardImpl({
             <CoachMomentSlot text={coach.text} tint={coach.tint} tone={coach.tone} headline={coach.headline} />
           )}
 
-          <View style={styles.linksRow}>
-            <Pressable
-              onPress={onChangeAnswer}
-              accessibilityRole="button"
-              // UX-031: was 12/12, ~41pt effective on the 14pt semibold
-              // label. 14/14 clears the 44pt minimum on the controls anxious
-              // users reach for most (change answer, spent less than usual).
-              hitSlop={{ top: 14, bottom: 14, left: 8, right: 8 }}
-              style={({ pressed }) => (pressed ? styles.pressedRow : null)}
-            >
-              <Text style={styles.linkText}>{strings.habitLogging.changeAnswer}</Text>
-            </Pressable>
-            {todayState === 'slipped' && todayEntry?.partialAmount == null && (
-              <Pressable
-                onPress={onOpenPartial}
-                accessibilityRole="button"
-                // UX-031: same 44pt correction as "change answer" above.
-                hitSlop={{ top: 14, bottom: 14, left: 8, right: 8 }}
-                style={({ pressed }) => (pressed ? styles.pressedRow : null)}
-              >
-                <Text style={styles.linkText}>{strings.habitLogging.spentLessThanUsual}</Text>
-              </Pressable>
-            )}
-          </View>
+          {(todayState === 'skipped' ||
+            (todayState === 'slipped' && todayEntry?.partialAmount == null)) && (
+            <View style={styles.linksRow}>
+              {todayState === 'skipped' ? (
+                <Pressable
+                  onPress={onChangeAnswer}
+                  accessibilityRole="button"
+                  // UX-031: was 12/12, ~41pt effective on the 14pt semibold
+                  // label. 14/14 clears the 44pt minimum on the controls
+                  // anxious users reach for most.
+                  hitSlop={{ top: 14, bottom: 14, left: 8, right: 8 }}
+                  style={({ pressed }) => (pressed ? styles.pressedRow : null)}
+                >
+                  <Text style={styles.linkText}>{strings.habitLogging.changeAnswer}</Text>
+                </Pressable>
+              ) : (
+                <Pressable
+                  onPress={onOpenPartial}
+                  accessibilityRole="button"
+                  // UX-031: same 44pt correction as "change answer" above.
+                  hitSlop={{ top: 14, bottom: 14, left: 8, right: 8 }}
+                  style={({ pressed }) => (pressed ? styles.pressedRow : null)}
+                >
+                  <Text style={styles.linkText}>{strings.habitLogging.spentLessThanUsual}</Text>
+                </Pressable>
+              )}
+            </View>
+          )}
 
           {canBackfill && (
             <View style={styles.backfillBlock}>
@@ -421,13 +424,6 @@ function CheckInCardImpl({
                 />
               </View>
             </View>
-          )}
-          {!canBackfill && goal.backfillUsed && yesterdayState !== 'no-log' && (
-            <Text style={styles.backfillDone}>
-              {yesterdayState === 'skipped'
-                ? strings.habitLogging.backfillYesterdaySkipped(skipValueLabel)
-                : strings.habitLogging.backfillYesterdaySlipped}
-            </Text>
           )}
         </View>
       )}
@@ -549,11 +545,6 @@ function confirmationCopy({
     headline = firstEver
       ? strings.habitLogging.skipConfirmationFirstEver(skipValueLabel)
       : strings.today.keptAdded(skipValueLabel);
-    if (!firstEver) {
-      detail = isDaily
-        ? strings.today.daysThisWeek(weekSkips, weekAnswered)
-        : strings.habitLogging.periodChip(weekSkips);
-    }
   } else if (partialAmount != null) {
     headline = strings.habitLogging.partialConfirmation(
       format(partialAmount),
@@ -562,11 +553,10 @@ function confirmationCopy({
     );
   } else if (keptIsZero) {
     headline = strings.habitLogging.slipConfirmationZero;
-  } else if (isDaily) {
-    headline = strings.today.slipLogged;
-    detail = strings.today.slipKeptStays(weekSkips, weekAnswered);
   } else {
-    headline = strings.habitLogging.slipConfirmationWeekly(keptTotal);
+    // Daily and weekly share the one short line; the amount lives in the
+    // summary/chip above, not here (plain counts, 2026-09-10).
+    headline = strings.today.slipLogged;
   }
 
   return { headline, detail };
@@ -787,13 +777,6 @@ function createStyles(theme: AppTheme) {
       fontFamily: theme.fonts.ui,
       fontSize: typeScale.secondary,
       color: theme.slate,
-    },
-    backfillDone: {
-      fontFamily: theme.fonts.ui,
-      fontSize: typeScale.secondary,
-      color: theme.slate,
-      marginTop: 12,
-      fontVariant: ['tabular-nums'],
     },
   });
 }

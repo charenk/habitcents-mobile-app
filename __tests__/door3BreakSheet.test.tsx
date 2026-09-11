@@ -40,6 +40,7 @@ const mockStartBreakingHabit = jest.fn(async () => ({}));
 
 jest.mock('@/contexts/HabitsContext', () => ({
   useHabits: () => ({
+    habits: mockHabits,
     goals: [],
     isLoading: false,
     refreshHabits: jest.fn(async () => {}),

@@ -342,6 +342,89 @@ export function progressTowardDetection(expenses: Expense[]): { n: number; thres
   return { n: Math.min(maxGroupSize, MIN_OCCURRENCES), threshold: MIN_OCCURRENCES };
 }
 
+/** One pre-detection leak candidate for Today's Kept pane (2026-09-10). */
+export type LeakCandidate = {
+  /** Normalized merchant key (lowercase, trimmed). */
+  merchant: string;
+  /** Display name: the title-cased merchant, same casing detection uses. */
+  name: string;
+  /**
+   * Last 7 days as evidence, oldest first, index 6 = today: true when at
+   * least one log at this merchant landed on that day. Rhythm, not the
+   * threshold - the detection window stays 90 days.
+   */
+  days7: boolean[];
+  observedTotal: number;
+  count: number;
+};
+
+/**
+ * Merchants forming a leak but not yet detected (Charen, annotation set 3,
+ * 2026-09-10). The numeric "n of 4" meter died with this: a merchant earns a
+ * candidate row at its SECOND log in the window (one log is noise), the row
+ * carries real evidence, and it graduates in place once detectHabits
+ * promotes the merchant. Merchants already represented by ANY habit -
+ * discovered, tracking, changing, or dismissed - never appear: a dismissed
+ * leak must not resurface as a candidate, or "Not this one" would be undone.
+ * Detection math itself is untouched.
+ */
+/**
+ * The last 7 days at one merchant, oldest first, index 6 = today: true when
+ * at least one log landed that day. Shared by candidate rows and detected
+ * rows so both strips speak the same evidence.
+ */
+export function merchantDays7(
+  expenses: Expense[],
+  merchantPattern: string | undefined,
+  today: Date = new Date()
+): boolean[] {
+  const key = normalizeMerchant(merchantPattern);
+  const days7 = new Array<boolean>(7).fill(false);
+  if (!key) return days7;
+  const dayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  for (const expense of expenses) {
+    if (normalizeMerchant(expense.merchant) !== key) continue;
+    const expenseDay = new Date(
+      expense.date.getFullYear(),
+      expense.date.getMonth(),
+      expense.date.getDate()
+    );
+    const daysAgo = Math.round((dayStart.getTime() - expenseDay.getTime()) / MS_PER_DAY);
+    if (daysAgo >= 0 && daysAgo <= 6) days7[6 - daysAgo] = true;
+  }
+  return days7;
+}
+
+export function leakCandidates(
+  expenses: Expense[],
+  habits: DetectedHabit[],
+  today: Date = new Date()
+): LeakCandidate[] {
+  const covered = new Set(
+    habits.map(h => normalizeMerchant(h.merchantPattern ?? '')).filter(Boolean)
+  );
+
+  const candidates: LeakCandidate[] = [];
+  for (const [merchant, groupExpenses] of groupByMerchant(filterRecentExpenses(expenses))) {
+    if (groupExpenses.length < 2 || covered.has(merchant)) continue;
+
+    let observedTotal = 0;
+    for (const expense of groupExpenses) observedTotal += expense.amount;
+
+    candidates.push({
+      merchant,
+      name: createHabitName(merchant),
+      days7: merchantDays7(groupExpenses, merchant, today),
+      observedTotal,
+      count: groupExpenses.length,
+    });
+  }
+
+  // Biggest observed money first; the pane shows at most three so the
+  // candidates stay a nudge, not a ledger.
+  return candidates.sort((a, b) => b.observedTotal - a.observedTotal).slice(0, 3);
+}
+
 /**
  * Main habit detection function.
  *
@@ -446,7 +529,11 @@ export function detectHabits(
 
     habits.push({
       id: generateId(),
-      name: `${habitName} Spending`,
+      // The bare merchant name. The old " Spending" suffix read as if the
+      // card celebrated spending (Charen, annotation set 2, 2026-09-10;
+      // standing open item in today.md and LeakCard.md), and Door 3 habits
+      // never carried it, so detection-born leaks now match them.
+      name: habitName,
       description,
       categoryId,
       merchantPattern: merchant,

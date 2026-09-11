@@ -57,6 +57,7 @@ let mockHabits: DetectedHabit[] = [];
 
 jest.mock('@/contexts/HabitsContext', () => ({
   useHabits: () => ({
+    habits: mockHabits,
     goals: mockGoals,
     isLoading: false,
     refreshHabits: jest.fn(async () => {}),
@@ -645,19 +646,70 @@ describe('Today: the Kept zero how-it-works link (Charen, 2026-09-07, reversing 
     expect(view.getByText(strings.today.howItWorksDone)).toBeTruthy();
   });
 
-  // Once logs exist the pane shows a live detection meter counting toward the
-  // real threshold, which says the same thing with the user's own numbers, so
-  // the link would be a second telling.
-  it('does not offer the link once logs exist and the detection meter takes over', async () => {
-    mockExpenses = [makeExpense({ id: 'e1' })];
+  // The detection meter died 2026-09-11 (Charen, annotation set 3): its
+  // "1 of 4" fired on any first log and its full bar could lie forever after
+  // a dismissal. One log at a merchant is noise now - the Zero hook and its
+  // link stay - and a merchant earns a candidate row at its second log.
+  it('keeps the Zero hook and link while no merchant has two logs', async () => {
+    mockExpenses = [makeExpense({ id: 'e1', merchant: 'Tims' })];
 
     const view = await renderToday();
 
     await tap(view.getByTestId('kept-chip'));
 
     const keptPane = within(view.getByTestId('kept-pane'));
+    expect(keptPane.getByText(strings.today.howItWorksTrigger)).toBeTruthy();
+    expect(keptPane.queryByText(strings.habits.spottingYourLeak)).toBeNull();
+    expect(keptPane.queryByText(strings.habitLogging.leaksSection)).toBeNull();
+  });
+
+  it('a second log at the same merchant forms a candidate row, never a meter', async () => {
+    mockExpenses = [
+      makeExpense({ id: 'e1', merchant: 'Tims', amount: 200 }),
+      makeExpense({ id: 'e2', merchant: 'Tims', amount: 1100 }),
+    ];
+
+    const view = await renderToday();
+
+    await tap(view.getByTestId('kept-chip'));
+
+    const keptPane = within(view.getByTestId('kept-pane'));
+    expect(keptPane.getByText(strings.habitLogging.leaksSection)).toBeTruthy();
+    expect(keptPane.getByText('Tims')).toBeTruthy();
+    expect(
+      keptPane.getByText(strings.insights.leakSummaryObserved('$13.00', 2))
+    ).toBeTruthy();
+    // No action on a candidate: Break it belongs to a detected leak.
+    expect(keptPane.queryByText(strings.habitLogging.breakIt)).toBeNull();
+    // The meter and its untracked CTA are gone for good.
+    expect(keptPane.queryByText(strings.habits.spottingYourLeak)).toBeNull();
+    expect(keptPane.queryByText(strings.habitLogging.logAnExpense)).toBeNull();
+    // The zero hook yields once real evidence renders.
     expect(keptPane.queryByText(strings.today.howItWorksTrigger)).toBeNull();
-    expect(keptPane.getByText(strings.habits.spottingYourLeak)).toBeTruthy();
+  });
+
+  it('a dismissed merchant never resurfaces as a candidate', async () => {
+    mockExpenses = [
+      makeExpense({ id: 'e1', merchant: 'Tims', amount: 200 }),
+      makeExpense({ id: 'e2', merchant: 'Tims', amount: 1100 }),
+    ];
+    mockHabits = [
+      makeHabit({
+        id: 'h-dismissed',
+        name: 'Tims',
+        merchantPattern: 'tims',
+        status: 'discovered',
+        dismissedAt: new Date(),
+      }),
+    ];
+
+    const view = await renderToday();
+
+    await tap(view.getByTestId('kept-chip'));
+
+    const keptPane = within(view.getByTestId('kept-pane'));
+    expect(keptPane.queryByText(strings.habitLogging.leaksSection)).toBeNull();
+    expect(keptPane.getByText(strings.today.howItWorksTrigger)).toBeTruthy();
   });
 
   // The Spent pane keeps its hook and sage CTA; the link is Kept only.

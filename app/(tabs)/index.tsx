@@ -17,7 +17,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useHabits } from '@/contexts/HabitsContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
 import { useOnboarding } from '@/contexts/OnboardingContext';
-import { LeakCard } from '@/components/habit-logging/LeakCard';
+import { LeakRow } from '@/components/habit-logging/LeakRow';
 import { CheckInCard } from '@/components/habit-logging/CheckInCard';
 import { useCheckInFeedback } from '@/components/habit-logging/useCheckInFeedback';
 import { PickOneSheet } from '@/components/habit-logging/PickOneSheet';
@@ -36,28 +36,33 @@ import { useFirstRunRibbon } from '@/components/onboarding/useFirstRunRibbon';
 import { useEmptyStateAction } from '@/components/onboarding/useEmptyStateAction';
 import { BreakHabitSheet, type BreakHabitStartData } from '@/components/onboarding/BreakHabitSheet';
 import { useCategories } from '@/contexts/CategoriesContext';
-import { VICE_CATEGORIES } from '@/constants/onboardingPresets';
+import { VICE_CATEGORIES, habitLeakGlyph } from '@/constants/onboardingPresets';
+import { categoryEmoji, categoryIdentityColor } from '@/constants/categoryEmoji';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import type { Expense, ExpenseCategory } from '@/types/expense';
 import { atMidnight, dayStateFor, isHabitLimitReached, keptOnDay } from '@/utils/habitLogging';
 import { getEntitlement } from '@/utils/purchases';
 import { cardText, type CoachMomentCardId } from '@/utils/coachMoments';
-import { progressTowardDetection } from '@/utils/habitDetection';
+import { leakCandidates, merchantDays7, type LeakCandidate } from '@/utils/habitDetection';
 import { useBreakHabitStart } from '@/utils/useBreakHabitStart';
 import { formatDate } from '@/utils/dates';
 import { track } from '@/utils/analytics';
 import { hapticError } from '@/utils/motion';
 import { useSegmentPager } from '@/utils/useSegmentPager';
-import { radii, spacing, typeScale, type AppTheme } from '@/constants/theme';
+import { radii, shadows, spacing, typeScale, type AppTheme } from '@/constants/theme';
 import type { DetectedHabit, HabitChangeGoal } from '@/types/habit';
 import { strings } from '@/constants/strings';
 import { useToast, useToastLift } from '@/components/ui/Toast';
 
 type BreakingItem = { habit: DetectedHabit; goal: HabitChangeGoal };
 
+/** The pre-detection candidates, stacked in one shared card (one list item). */
+type CandidatesBlock = { id: 'leak-candidates'; candidates: LeakCandidate[] };
+
 type HabitSection = {
   title: string;
   type: 'leaks' | 'breaking';
-  data: (DetectedHabit | BreakingItem)[];
+  data: (DetectedHabit | BreakingItem | CandidatesBlock)[];
 };
 
 // Door 1 real-app first run (W2, "the app is the onboarding"). The FirstRunRibbon
@@ -111,14 +116,16 @@ export default function TodayScreen() {
     }, []),
   });
   const { show } = useToast();
+  const { format } = useCurrency();
   const answerFeedback = useCheckInFeedback();
   // DT-1 (P2-2): resolved once, attached to whichever leak is first in the
-  // list at that moment, so the card only ever renders on one LeakCard.
+  // list at that moment, so the note only ever renders on one leak row.
   const [detectionMoment, setDetectionMoment] = useState<{ habitId: string; cardId: CoachMomentCardId } | null>(null);
   // FL-1 (P2-2): resolved once, shown on the empty state (see below).
   const [firstLogCardId, setFirstLogCardId] = useState<CoachMomentCardId | null>(null);
 
   const {
+    habits,
     goals,
     isLoading,
     refreshHabits,
@@ -144,7 +151,7 @@ export default function TodayScreen() {
   } = useHabits();
 
   const { expenses, addExpense } = useExpenses();
-  const { getCategoryByName } = useCategories();
+  const { getCategoryByName, getVisibleCategories } = useCategories();
   const {
     isLoading: onboardingLoading,
     isOnboardingComplete,
@@ -606,14 +613,26 @@ export default function TodayScreen() {
     return [...breakingItems].sort((a, b) => rank(a) - rank(b));
   }, [breakingItems]);
 
+  // Merchants forming a leak (2+ logs in the window, not yet a habit). The
+  // numeric "n of 4" meter died here (Charen, annotation set 3, 2026-09-10):
+  // its full-bar state was reachable and permanent after a dismissal, its
+  // 1-of-4 state fired on any first log, and its CTA was an untracked pane
+  // switch. Candidates carry real evidence instead and graduate in place.
+  const candidates = useMemo(() => leakCandidates(expenses, habits), [expenses, habits]);
+
   const sections: HabitSection[] = useMemo(() => {
     const result: HabitSection[] = [];
 
-    if (discoveredHabits.length > 0) {
+    if (discoveredHabits.length > 0 || candidates.length > 0) {
       result.push({
-        title: strings.habitLogging.leaksFoundSection,
+        title: strings.habitLogging.leaksSection,
         type: 'leaks',
-        data: discoveredHabits,
+        data: [
+          ...discoveredHabits,
+          ...(candidates.length > 0
+            ? [{ id: 'leak-candidates', candidates } satisfies CandidatesBlock]
+            : []),
+        ],
       });
     }
 
@@ -626,7 +645,7 @@ export default function TodayScreen() {
     }
 
     return result;
-  }, [discoveredHabits, sortedBreakingItems]);
+  }, [discoveredHabits, candidates, sortedBreakingItems]);
 
   const handleDismissHabit = useCallback(async (habit: DetectedHabit) => {
     try {
@@ -733,14 +752,6 @@ export default function TodayScreen() {
   const partialGoal = partialGoalId ? goals.find((g) => g.id === partialGoalId) ?? null : null;
 
   const isEmpty = sections.length === 0;
-  // Pre-detection progress state (spec 05 section 5.2): once logging has
-  // started but no leak has been detected yet, the empty state shows real
-  // progress toward the same threshold detectHabits() uses, never a fake
-  // habit card.
-  const detectionProgress = useMemo(
-    () => (isEmpty && expenses.length > 0 ? progressTowardDetection(expenses) : null),
-    [isEmpty, expenses]
-  );
 
   // The break-habit affordance (DI-6, ADR 0019), which since ADR 0038 lives
   // in the Kept pane's ActionDock instead of trailing the content. It used to
@@ -763,19 +774,70 @@ export default function TodayScreen() {
   // BreakHabitSheet render and the paywall handleBreakAnother routes to. A
   // ceiling nobody has pressed against yet is not a thing to announce.
 
-  const renderItem = ({ item, section }: { item: DetectedHabit | BreakingItem; section: HabitSection }) => {
+  const renderItem = ({ item, section }: { item: DetectedHabit | BreakingItem | CandidatesBlock; section: HabitSection }) => {
     if (section.type === 'leaks') {
+      if ('candidates' in item) {
+        // The forming leaks share one card; each row is a nudge, no action.
+        return (
+          <View style={styles.candidatesCard}>
+            {item.candidates.map((candidate, i) => (
+              <View key={candidate.merchant} style={i > 0 ? styles.candidateSeparator : undefined}>
+                <LeakRow
+                  emoji={categoryEmoji('Other')}
+                  tint={categoryIdentityColor('Other')}
+                  name={candidate.name}
+                  days7={candidate.days7}
+                  candidateEvidence={strings.insights.leakSummaryObserved(
+                    format(candidate.observedTotal),
+                    candidate.count
+                  )}
+                />
+              </View>
+            ))}
+          </View>
+        );
+      }
       const habit = item as DetectedHabit;
+      const categoryName =
+        getVisibleCategories().find((c) => c.id === habit.categoryId)?.name ?? habit.categoryId;
       return (
-        <LeakCard
-          habit={habit}
-          // A stopped habit keeps its goal, so an existing goal on a leak means
-          // the user broke this one before and is being offered it again.
-          breakAgain={!!getGoalByHabitId(habit.id)}
-          onBreak={() => setPickOneHabitId(habit.id)}
-          onDismiss={() => handleDismissHabit(habit)}
-          coachMomentCardId={detectionMoment?.habitId === habit.id ? detectionMoment.cardId : null}
-        />
+        <View style={styles.leakCard}>
+          <LeakRow
+            emoji={habitLeakGlyph(habit, categoryEmoji(categoryName))}
+            tint={categoryIdentityColor(categoryName)}
+            name={habit.name}
+            days7={merchantDays7(expenses, habit.merchantPattern)}
+            detected={{
+              // A monthly rate is only claimed once detection has watched the
+              // leak long enough to have one (MIN_SPAN_DAYS_FOR_RATE).
+              evidence: habit.hasReliableRate
+                ? strings.habitLogging.leakEvidenceReliable(
+                    habit.name,
+                    format(habit.totalMonthlySpend),
+                    habit.observedCount
+                  )
+                : strings.habitLogging.leakEvidenceObserved(
+                    habit.name,
+                    format(habit.observedTotal),
+                    habit.observedCount
+                  ),
+              evidenceHint: habit.hasReliableRate
+                ? undefined
+                : strings.habitLogging.leakEvidenceKeepLogging,
+              // A stopped habit keeps its goal, so an existing goal on a leak
+              // means the user broke this one before and is offered it again.
+              breakLabel: getGoalByHabitId(habit.id)
+                ? strings.today.breakItAgain
+                : strings.habitLogging.breakIt,
+              onBreak: () => setPickOneHabitId(habit.id),
+              onDismiss: () => handleDismissHabit(habit),
+              coachText:
+                detectionMoment?.habitId === habit.id
+                  ? cardText(detectionMoment.cardId)
+                  : undefined,
+            }}
+          />
+        </View>
       );
     }
 
@@ -977,64 +1039,23 @@ export default function TodayScreen() {
                   <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={theme.primary} />
                 }
               >
-                {/* One centered zero block for both pre-leak states: either
-                    the detection progress card (some logs, no leak yet) or the
-                    hook with its explainer (nothing logged, ADR 0039). The
-                    in-between progress state reusing this composition is a
-                    chosen default, flagged in the PR's what-to-test list. */}
+                {/* One zero block (Charen, annotation set 3, 2026-09-10):
+                    the detection meter is gone. A merchant with one log shows
+                    nothing (it was noise), a merchant with two shows a
+                    candidate row in the list branch, so this branch only
+                    renders when there is nothing evidence-worthy at all - and
+                    then the Zero hook plus the how-it-works link is the
+                    honest thing to show. */}
                 <View style={styles.keptZeroWrap}>
-                  {detectionProgress ? (
-                    <View style={styles.progressCard}>
-                    <Text style={styles.progressTitle}>{strings.habits.spottingYourLeak}</Text>
-                    <View style={styles.progressMeterTrack}>
-                      <View
-                        style={[
-                          styles.progressMeterFill,
-                          { width: `${(detectionProgress.n / detectionProgress.threshold) * 100}%` },
-                        ]}
-                      />
-                    </View>
-                    <Text style={styles.progressCount}>
-                      {strings.habits.logsAtSamePlace(detectionProgress.n, detectionProgress.threshold)}
-                      <Text style={styles.progressCountSuffix}>{strings.habits.logsAtSamePlaceSuffix}</Text>
-                    </Text>
-                    <Text style={styles.progressBody}>{strings.habits.logsAtSamePlaceBody}</Text>
-                    {/* The card says "keep logging"; the button below is how.
-                        The same in-place view switch a chip tap makes. */}
-                    <Button
-                      variant="secondary"
-                      label={strings.habitLogging.logAnExpense}
-                      onPress={() => {
-                        markInteracted();
-                        setTodayView('spent');
-                      }}
-                      style={styles.progressCta}
-                    />
-                  </View>
-                  ) : (
-                    <EmptyState
-                      // inline + explicit art, same reasoning as the Spent
-                      // zero block: the wrap centers this in the pane rather
-                      // than letting fill's own top padding place it.
-                      layout="inline"
-                      illustration="today-kept"
-                      title={strings.today.keptEmptyTitle}
-                      // Mark, hook, one quiet link, and nothing else (Charen,
-                      // 2026-09-07). True zero is the one state with no
-                      // evidence of the user's own to read, so the mechanic
-                      // has to be told somewhere; ADR 0039 told it here as
-                      // three inline steps, and this reverses that: the
-                      // telling lives in HowItWorksSheet, a tap away, and the
-                      // pane keeps the same silhouette as Spent Zero. No CTA:
-                      // the pane's action is the dock below. The adjacent Quiet
-                      // state gets no link, because by then the detection
-                      // meter shows real progress toward the real threshold.
-                      link={{
-                        label: strings.today.howItWorksTrigger,
-                        onPress: openHowItWorks,
-                      }}
-                    />
-                  )}
+                  <EmptyState
+                    layout="inline"
+                    illustration="today-kept"
+                    title={strings.today.keptEmptyTitle}
+                    link={{
+                      label: strings.today.howItWorksTrigger,
+                      onPress: openHowItWorks,
+                    }}
+                  />
                 </View>
                 {firstLogCardId && (
                   <View style={styles.emptyCoachMoment}>
@@ -1299,55 +1320,29 @@ function createStyles(theme: AppTheme) {
     // components/today/BreakHabitRow.tsx when it took the shared DockCard
     // shell (2026-09-07). It is still the single re-entry point in both the
     // empty and populated Kept views.
-    progressCard: {
-      alignSelf: 'stretch',
-      backgroundColor: theme.surface,
+    // The detected leak's own card, same chrome the old LeakCard drew.
+    leakCard: {
+      backgroundColor: theme.white,
       borderRadius: radii.feature,
-      borderWidth: 1,
-      borderColor: theme.border,
-      // Was 20, putting content 2pt right of the check-in and leak cards.
       padding: spacing.xl,
-      alignItems: 'flex-start',
+      borderWidth: 1,
+      borderColor: theme.cloud,
+      ...shadows.card,
     },
-    progressTitle: {
-      fontSize: typeScale.lead,
-      fontFamily: theme.fonts.uiSemibold,
-      color: theme.text,
+    // Forming leaks stack in one shared card; the rows carry their own
+    // vertical padding, so the shell trims its ends to match.
+    candidatesCard: {
+      backgroundColor: theme.white,
+      borderRadius: radii.feature,
+      paddingHorizontal: spacing.xl,
+      paddingVertical: spacing.xs,
+      borderWidth: 1,
+      borderColor: theme.cloud,
+      ...shadows.card,
     },
-    progressMeterTrack: {
-      alignSelf: 'stretch',
-      height: 6,
-      borderRadius: radii.micro,
-      backgroundColor: theme.border,
-      marginTop: spacing.md,
-      overflow: 'hidden',
-    },
-    progressMeterFill: {
-      height: 6,
-      borderRadius: radii.micro,
-      backgroundColor: theme.primary,
-    },
-    progressCount: {
-      fontSize: typeScale.body,
-      fontFamily: theme.fonts.uiBold,
-      color: theme.text,
-      marginTop: spacing.stack,
-    },
-    progressCountSuffix: {
-      fontSize: typeScale.body,
-      fontFamily: theme.fonts.ui,
-      color: theme.textSecondary,
-    },
-    progressBody: {
-      fontSize: typeScale.label,
-      fontFamily: theme.fonts.ui,
-      color: theme.textSecondary,
-      marginTop: spacing.xs,
-      lineHeight: 20,
-    },
-    progressCta: {
-      alignSelf: 'stretch',
-      marginTop: spacing.stack,
+    candidateSeparator: {
+      borderTopWidth: 1,
+      borderTopColor: theme.hairlineSubtle,
     },
   });
 }

@@ -24,9 +24,12 @@ type WeekStripProps = {
  * (design/redesign-handoff/04-screens.md, "Today" 3). Same component renders
  * identically on Today and the habit detail screen (principle 6).
  *
- * Four dot states, and none of them is red: a skip is sage with a white check,
- * a slip is a flat cloud fill, today-unanswered is a sage ring, and anything
- * not yet reachable is a cloud ring. Every number comes from weekStats.
+ * Four dot states, and none of them is red: a skip is sage with a white
+ * dollar mark (green $ = money kept; the one dot language locked with Charen
+ * 2026-09-10 - green stays positive-only, so spending evidence elsewhere
+ * wears the neutral $), a slip is a flat cloud fill, today-unanswered is a
+ * sage ring, and anything not yet reachable is a cloud ring. Every number
+ * comes from weekStats.
  */
 export function WeekStrip({ dayLogs, trackingStart, skipValue, today = new Date() }: WeekStripProps) {
   const theme = useTheme();
@@ -68,7 +71,7 @@ export function WeekStrip({ dayLogs, trackingStart, skipValue, today = new Date(
               >
                 {/* ADR 0027 (2026-08-16, Option A): white on the retuned sage
                     is 5.37:1, clear of the 3:1 icon floor. UX-001. */}
-                {cell.state === 'skipped' && <Icon name="Check" size={14} color={theme.white} />}
+                {cell.state === 'skipped' && <Icon name="DollarSign" size={13} color={theme.white} />}
               </View>
               <Text style={styles.dayLabel}>{weekdayLetter}</Text>
             </View>
@@ -78,7 +81,7 @@ export function WeekStrip({ dayLogs, trackingStart, skipValue, today = new Date(
       {stats.answered > 0 && (
         <Text style={styles.summary}>
           <Text style={styles.summaryBold}>
-            {strings.today.weekSummarySkipped(stats.skips, stats.answered)}
+            {strings.today.weekSummaryCount(stats.skips)}
           </Text>
           {stats.weekKept > 0
             ? strings.today.weekSummaryTail(format(stats.weekKept))

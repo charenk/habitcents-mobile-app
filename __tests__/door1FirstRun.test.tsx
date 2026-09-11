@@ -44,6 +44,7 @@ const mockSeedDiscoveredHabit = jest.fn(async (input: Record<string, unknown>) =
 
 jest.mock('@/contexts/HabitsContext', () => ({
   useHabits: () => ({
+    habits: mockHabits,
     goals: [],
     isLoading: false,
     refreshHabits: jest.fn(async () => {}),

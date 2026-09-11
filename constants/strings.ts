@@ -83,7 +83,11 @@ export const strings = {
     keptSoFar: 'Kept so far',
     keptCaption: "money you didn't spend",
     // Leaks found section + leak card (4.10, unchanged from v1)
+    // Retired from rendering 2026-09-11 (one Leaks section carries detected
+    // and forming rows); key kept for overlay-shape stability.
     leaksFoundSection: 'Leaks found',
+    leaksSection: 'Leaks',
+    leakStripLabel: (n: number) => `${n} of the last 7 days with a buy`,
     breakingNowSection: 'Breaking now',
     breakIt: 'Break it',
     notThisOne: 'Not this one',
@@ -108,7 +112,7 @@ export const strings = {
     boughtItButton: 'I bought it',
     firstRunLine: 'Your first skip starts the counter.',
     weekSummaryBold: (n: number, m: number) => `${n} of ${m} days`,
-    weekSummarySuffix: (weekKept: string | null) => ` skipped this week${weekKept ? ` · ${weekKept} kept` : ''}`,
+    weekSummarySuffix: (weekKept: string | null) => ` this week${weekKept ? ` · ${weekKept} kept` : ''}`,
     periodChip: (n: number) => `${n} skip${n === 1 ? '' : 's'} this week`,
     changeAnswer: 'Change answer',
     spentLessThanUsual: 'Spent less than usual?',
@@ -162,8 +166,10 @@ export const strings = {
     partialSheetSubtitle: (skipValue: string) =>
       `You usually spend about ${skipValue}. Anything under that counts as kept.`,
     partialAmountLabel: 'Amount spent',
+    // Signature kept (overlay-shape stability); only the difference renders
+    // since 2026-09-11 - the partial sheet already showed the comparison.
     partialConfirmation: (amount: string, skipValue: string, difference: string) =>
-      `Logged. You spent ${amount} instead of ${skipValue}, so ${difference} counts as kept.`,
+      `Logged. ${difference} counts as kept.`,
     partialConfirmationFreshStart: 'Logged. Fresh start tomorrow.',
     // Long arc (4.6)
     longArcTitle: 'The long arc',
@@ -829,17 +835,20 @@ export const strings = {
     // for its remaining caller, the leak-scan payoff screen.
     // Check-in card
     openHabitLabel: (name: string) => `${name}, view habit details`,
-    skipWithValue: (skipValue: string) => `Skipped it · keeps ${skipValue}`,
-    skipOneWithValue: (skipValue: string) => `I skipped one · keeps ${skipValue}`,
+    skipWithValue: (skipValue: string) => `Skipped · +${skipValue}`,
+    skipOneWithValue: (skipValue: string) => `Skipped one · +${skipValue}`,
     boughtIt: 'Bought it',
     skippedIt: 'Skipped it',
     keptAdded: (skipValue: string) => `+${skipValue} kept.`,
     daysThisWeek: (n: number, m: number) => `That's ${n} of ${m} days this week.`,
-    slipLogged: 'Logged.',
+    slipLogged: 'Logged. Your kept stays yours.',
     slipKeptStays: (n: number, m: number) =>
       `Still ${n} of ${m} days this week. Your kept stays yours.`,
+    // Retired from rendering 2026-09-11 (plain counts, ADR 0004 wording
+    // amendment); key kept so the localization overlays' shape is stable.
     weekSummarySkipped: (n: number, m: number) => `${n} of ${m} days`,
-    weekSummaryTail: (weekKept: string) => ` skipped this week · ${weekKept} kept`,
+    weekSummaryCount: (n: number) => `${n} skip${n === 1 ? '' : 's'}`,
+    weekSummaryTail: (weekKept: string) => ` this week · ${weekKept} kept`,
     // Weekly-cadence habit (second habit shape, spec 04 "Today" 3.7)
     weeklyPill: 'weekly',
     monthlyPill: 'monthly',

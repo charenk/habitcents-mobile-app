@@ -15,7 +15,7 @@ import { render } from '@testing-library/react-native';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { CheckInCard } from '@/components/habit-logging/CheckInCard';
-import { LeakCard } from '@/components/habit-logging/LeakCard';
+import { LeakRow } from '@/components/habit-logging/LeakRow';
 import type { DetectedHabit, HabitChangeGoal } from '@/types/habit';
 
 function makeHabit(overrides: Partial<DetectedHabit> = {}): DetectedHabit {
@@ -115,14 +115,26 @@ describe('rendered accessibility tree (ADA-024)', () => {
     expect(view.getByRole('button', { name: /bought it/i })).toBeTruthy();
   });
 
-  it('leak card exposes Break it and dismiss as buttons and names the habit', async () => {
+  it('detected leak row exposes Break it and dismiss as buttons and names the habit', async () => {
+    const habit = makeHabit();
     const view = await render(
       <Providers>
-        <LeakCard habit={makeHabit()} onBreak={noop} onDismiss={noop} />
+        <LeakRow
+          emoji={'\u2615'}
+          tint="#8898AA"
+          name={habit.name}
+          days7={[false, false, true, false, true, false, false]}
+          detected={{
+            evidence: `${habit.name} costs you about $60.00 a month.`,
+            breakLabel: 'Break it',
+            onBreak: noop,
+            onDismiss: noop,
+          }}
+        />
       </Providers>
     );
     expect(await view.findByRole('button', { name: /break it/i })).toBeTruthy();
-    expect(view.getAllByText(/coffee runs/i).length).toBeGreaterThan(0);
+    expect(view.getAllByLabelText(/coffee runs/i).length).toBeGreaterThan(0);
   });
 
   it('no rendered Text opts out of Dynamic Type via allowFontScaling false', async () => {
