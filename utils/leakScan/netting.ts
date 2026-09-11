@@ -13,6 +13,7 @@
 
 import type { RefundPair, ScanRow, TransferPair } from './types';
 import type { ScanRules } from '@/utils/scanRules';
+import { lookupOwn } from '@/utils/ownLookup';
 
 const DAY = 24 * 60 * 60 * 1000;
 const TRANSFER_WINDOW = 3 * DAY;
@@ -70,9 +71,9 @@ export function netTransactions(input: ScanRow[], rules: ScanRules): NettingOutp
     const sig = pairSignature(out, match);
 
     // Personal rule override.
-    if (rules.pairInternal[sig] === false) continue;
+    if (lookupOwn(rules.pairInternal, sig) === false) continue;
 
-    if (candidates.length > 1 && rules.pairInternal[sig] === undefined) {
+    if (candidates.length > 1 && lookupOwn(rules.pairInternal, sig) === undefined) {
       // Ambiguous: flag both, do not auto-net.
       out.needsReview = true;
       match.needsReview = true;
@@ -109,9 +110,9 @@ export function netTransactions(input: ScanRow[], rules: ScanRules): NettingOutp
     );
     const refund = candidates[0];
     const sig = pairSignature(charge, refund);
-    if (rules.pairInternal[sig] === false) continue;
+    if (lookupOwn(rules.pairInternal, sig) === false) continue;
 
-    if (candidates.length > 1 && rules.pairInternal[sig] === undefined) {
+    if (candidates.length > 1 && lookupOwn(rules.pairInternal, sig) === undefined) {
       charge.needsReview = true;
       refund.needsReview = true;
       continue;

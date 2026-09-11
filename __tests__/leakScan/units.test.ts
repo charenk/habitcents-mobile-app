@@ -23,6 +23,7 @@ import {
   inferColumns,
   normalizeMerchant,
   categorize,
+  displayName,
   classifyRow,
   dedupeRows,
   isTruncated,
@@ -235,6 +236,28 @@ describe('merchant normalization & categorization', () => {
     const r = categorize('WALMART SUPERCENTER', 'walmart', -6000, rules);
     expect(r.category).toBe('Food');
     expect(r.tier).toBe('solid');
+  });
+
+  it('does not read a merchant stem off the object prototype', () => {
+    // A rule map is a plain object, so an unset key that happens to name a
+    // prototype member used to resolve to the inherited value: 'constructor'
+    // returned the Object constructor, which is truthy, so a FUNCTION was
+    // handed back as the category and the display name. Merchant stems come
+    // from bank-statement text, so these are reachable names.
+    const rules = emptyScanRules();
+    for (const stem of ['constructor', 'toString', 'valueOf', 'hasOwnProperty']) {
+      const r = categorize(stem.toUpperCase() + ' SUPPLY CO', stem, -2500, rules);
+      expect(typeof r.category).toBe('string');
+      expect(r.category).toBe('Other');
+      expect(r.tier).toBe('needs-review');
+      expect(typeof displayName(stem, rules)).toBe('string');
+    }
+  });
+
+  it('still honours a real rule stored under a prototype-shaped name', () => {
+    // The guard must not make such a key unusable, only stop the inherited one.
+    const rules = setMerchantCategory(emptyScanRules(), 'constructor', 'Food');
+    expect(categorize('CONSTRUCTOR SUPPLY CO', 'constructor', -2500, rules).category).toBe('Food');
   });
 });
 

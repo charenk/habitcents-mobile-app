@@ -11,6 +11,7 @@ import { type CurrencyCode, DEFAULT_CURRENCY, formatMoney, scaleThresholdCents }
 // trims, so "Starbucks Downtown Toronto" and the scan's "starbucks" stem would
 // otherwise never meet. categorize.ts imports only types, so there is no cycle.
 import { normalizeMerchant as scanMerchantStem } from '@/utils/leakScan/categorize';
+import { lookupOwn } from '@/utils/ownLookup';
 
 type MerchantGroup = {
   merchant: string;
@@ -466,7 +467,7 @@ export function detectHabits(
     }
 
     // Never re-propose what the user already dismissed in the scan.
-    if (suppressedStems[scanMerchantStem(merchant)]) {
+    if (lookupOwn(suppressedStems, scanMerchantStem(merchant))) {
       continue;
     }
 
