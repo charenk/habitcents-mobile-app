@@ -154,3 +154,24 @@ UDID=A58C5486-9233-4DC0-855A-D7524BB10F45           # iPhone 16
 # TestFlight from main, agent lane (ADR 0029). Build 22 went out this way on 2026-09-07:
 # npx eas-cli build -p ios --profile internal --non-interactive --no-wait --auto-submit
 # npx eas-cli build:view <build-id>                 # "in progress" ~6 min, then the submission queue ~30 min
+
+# --- 2026-09-10: simulator + Metro hygiene for parallel-session work ---
+
+# Which bundler port is a simulator's app pinned to (the parallel-session tug-of-war):
+# xcrun simctl spawn <UDID> defaults read com.habitcents.app
+# Point it at this worktree's Metro (then cold-start the app):
+# xcrun simctl spawn <UDID> defaults write com.habitcents.app RCT_jsLocation "localhost:8081"
+# If it still dials the wrong port, clean reinstall wins:
+# xcrun simctl uninstall <UDID> com.habitcents.app && xcrun simctl install <UDID> <path-to-Debug-iphonesimulator/HabitCents.app>
+
+# Metro transform cache poisoned by mid-edit saves (stale syntax error for code that parses):
+# npx expo start --port 8081 --clear
+# Launch the app only AFTER "Waiting on http://localhost:8081" prints, else it gives up silently.
+
+# Claim a dedicated simulator instead of sharing one with another session:
+# xcrun simctl boot <UDID> && xcrun simctl install <UDID> <app>  # then pass device: on EVERY sim-tool call
+
+# Who is listening on the two Metro lanes:
+# lsof -i :8081 -sTCP:LISTEN; lsof -i :8082 -sTCP:LISTEN
+# What the app process is actually connected to (bundle source ground truth):
+# lsof -p <app-pid> -a -i TCP
