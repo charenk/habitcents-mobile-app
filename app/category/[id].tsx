@@ -19,7 +19,7 @@ import { withAlpha, compositeOver, mixHex, contrastRatio } from '@/utils/color';
 import { radii, typeScale, layout, type AppTheme } from '@/constants/theme';
 import type { CategoryIcon } from '@/types/category';
 import type { Expense } from '@/types/expense';
-import { expenseBelongsToCategory } from '@/utils/expenseCategory';
+import { resolveExpenseCategory } from '@/utils/expenseCategory';
 import { strings } from '@/constants/strings';
 
 // UX-067: the 40pt category identity icon renders in the raw category hue on
@@ -53,17 +53,27 @@ export default function CategoryDetailScreen() {
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
 
-  const { getCategoryById, updateCategory } = useCategories();
+  const { categories, getCategoryById, updateCategory } = useCategories();
   const { expenses } = useExpenses();
 
   const category = getCategoryById(id || '');
 
-  // Get expenses for this category. expenseBelongsToCategory handles the
-  // display-vs-stored name split (Home rows are stored as 'Mortgage').
+  /**
+   * The expenses that belong to this category and no other.
+   *
+   * Was expenses.filter(expenseBelongsToCategory). That helper is an OR
+   * ladder, so a custom-category expense (stored value 'Other', plus its own
+   * categoryId) satisfied both its own category and the default 'Other', and
+   * this screen counted it under each. It fans out further here than on the
+   * list: everything below derives from this array, so the total, the log
+   * count, the average, top merchants and every bar of the six-month trend
+   * were all inflated. Resolving to one category first is the same shape the
+   * Insights rollup and the Categories list use.
+   */
   const categoryExpenses = useMemo(() => {
     if (!category) return [];
-    return expenses.filter(e => expenseBelongsToCategory(e, category));
-  }, [expenses, category]);
+    return expenses.filter(e => resolveExpenseCategory(e, categories)?.id === category.id);
+  }, [expenses, categories, category]);
 
   // Calculate stats
   const stats = useMemo(() => {

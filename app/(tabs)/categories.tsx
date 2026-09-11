@@ -24,7 +24,7 @@ import { useEmptyStateAction } from '@/components/onboarding/useEmptyStateAction
 import { layout, radii, spacing, typeScale, type AppTheme } from '@/constants/theme';
 import type { Category, CategoryIcon } from '@/types/category';
 import { strings } from '@/constants/strings';
-import { expenseBelongsToCategory } from '@/utils/expenseCategory';
+import { resolveExpenseCategory } from '@/utils/expenseCategory';
 import { hapticError, hapticWarning } from '@/utils/motion';
 import { useToast } from '@/components/ui/Toast';
 
@@ -122,20 +122,37 @@ export default function CategoriesScreen() {
     setIsModalVisible(false);
   }, []);
 
-  const getCategorySpend = useCallback((category: Category): number => {
-    // UX-007: CategoryRow renders this through strings.categories.thisMonthSuffix
-    // ("this month"), so the total has to actually be scoped to the current
-    // calendar month, not all-time. Same month-window pattern as
-    // app/category/[id].tsx's thisMonthStart/thisMonthExpenses.
+  /**
+   * This month's spend per category id, resolved once.
+   *
+   * Was a per-category expenses.filter(expenseBelongsToCategory). That helper
+   * is an OR ladder, so a custom-category expense (stored value 'Other', plus
+   * its own categoryId) matched its own category AND the default 'Other', and
+   * the same dollars were counted in both rows. Resolving each expense to one
+   * category and then bucketing is the same shape the Insights rollup uses, so
+   * the two screens cannot disagree.
+   *
+   * UX-007: CategoryRow renders this through strings.categories.thisMonthSuffix
+   * ("this month"), so the total is scoped to the current calendar month, not
+   * all-time. Same month-window pattern as app/category/[id].tsx.
+   */
+  const spendByCategoryId = useMemo(() => {
     const now = new Date();
     const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    // expenseBelongsToCategory handles the display-vs-stored name split
-    // (Home rows are stored as 'Mortgage').
-    const categoryExpenses = expenses.filter(
-      e => expenseBelongsToCategory(e, category) && e.date >= thisMonthStart
-    );
-    return categoryExpenses.reduce((sum, e) => sum + e.amount, 0);
-  }, [expenses]);
+    const totals = new Map<string, number>();
+    for (const expense of expenses) {
+      if (expense.date < thisMonthStart) continue;
+      const match = resolveExpenseCategory(expense, categories);
+      if (!match) continue;
+      totals.set(match.id, (totals.get(match.id) ?? 0) + expense.amount);
+    }
+    return totals;
+  }, [expenses, categories]);
+
+  const getCategorySpend = useCallback(
+    (category: Category): number => spendByCategoryId.get(category.id) ?? 0,
+    [spendByCategoryId]
+  );
 
   const headerActions = [
     { icon: 'Plus' as const, label: strings.categories.addCategoryLabel, onPress: () => setIsModalVisible(true) },

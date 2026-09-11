@@ -59,6 +59,11 @@ export function toExpenseCategory(name: string): ExpenseCategory {
  * custom category someone names "Home" or "Mortgage/Rent" from claiming the
  * default's rows. Fixes a latent miss where "Mortgage/Rent" detail screens
  * matched nothing stored as 'Mortgage'.
+ *
+ * MEMBERSHIP ONLY. This is an OR ladder, so one expense can satisfy several
+ * categories at once, and calling it inside a per-category filter double
+ * counts. To put each expense in exactly one bucket use
+ * resolveExpenseCategory below.
  */
 export function expenseBelongsToCategory(
   expense: { category: string; categoryId?: string },
@@ -68,6 +73,33 @@ export function expenseBelongsToCategory(
     expense.categoryId === category.id ||
     expense.category === category.name ||
     (category.isDefault && DISPLAY_TO_STORED[category.name] === expense.category)
+  );
+}
+
+/**
+ * The one category an expense belongs to, or undefined when none matches.
+ *
+ * Use this, not `expenseBelongsToCategory`, whenever a list of expenses is
+ * PARTITIONED across categories. That helper is an OR ladder, so a row can
+ * satisfy more than one category at once and a per-category `.filter()` counts
+ * it in every bucket it matches. That is exactly what happened on Categories
+ * and category detail: every custom category stores 'Other' as the row's
+ * stored value, so a custom-category expense matched its own category by id
+ * AND the default 'Other' by name, and its dollars landed in both.
+ *
+ * An explicit categoryId is tried across the whole list BEFORE the name rungs.
+ * `toExpenseCategory` falls back to 'Other' for any name it does not know, and
+ * the default 'Other' sits ahead of every custom category in the list, so a
+ * plain find-first over the ladder would bank all custom-category spend under
+ * Other. The id is a foreign key; the shared stored value is a coincidence.
+ */
+export function resolveExpenseCategory<C extends Pick<Category, 'id' | 'name' | 'isDefault'>>(
+  expense: { category: string; categoryId?: string },
+  categories: C[]
+): C | undefined {
+  return (
+    (expense.categoryId ? categories.find(c => c.id === expense.categoryId) : undefined) ??
+    categories.find(c => expenseBelongsToCategory(expense, c))
   );
 }
 
