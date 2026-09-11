@@ -15,6 +15,7 @@ import { useCurrency } from '@/contexts/CurrencyContext';
 import { radii, typeScale, type AppTheme } from '@/constants/theme';
 import type { DetectedHabit, HabitStatus } from '@/types/habit';
 import { strings } from '@/constants/strings';
+import { CHROME_MAX_FONT_SCALE, useAccessibilityTextSize } from '@/utils/textScale';
 
 export type LeakRowData = {
   habit: DetectedHabit;
@@ -63,19 +64,15 @@ export function HabitLeakRow({ row, onBreak, onOpenHabit, showDivider = false }:
     ? strings.insights.leakSummary(format(habit.totalMonthlySpend), habit.observedCount)
     : strings.insights.leakSummaryObserved(format(habit.observedTotal), habit.observedCount);
 
-  return (
-    <View style={[styles.row, showDivider ? styles.rowDivider : null]}>
-      <EmojiTile emoji={emoji} size={36} color={tint} />
+  // Dynamic Type: at accessibility sizes the action stacks under the text
+  // instead of squeezing it. The name and the button label are both things the
+  // user has to read to act, so neither may be capped (utils/textScale.ts);
+  // side by side at AX3 the name was starving to "F..". The summary is
+  // metadata and caps.
+  const stacked = useAccessibilityTextSize();
 
-      <View style={styles.rowText}>
-        <Text style={styles.rowName} numberOfLines={1}>
-          {habit.name}
-        </Text>
-        <Text style={styles.rowSummary} numberOfLines={1}>
-          {summary}
-        </Text>
-      </View>
-
+  const actions = (
+    <>
       {action === 'break' && (
         <Pressable
           onPress={() => onBreak(habit)}
@@ -101,6 +98,34 @@ export function HabitLeakRow({ row, onBreak, onOpenHabit, showDivider = false }:
       )}
 
       {action === 'watch' && <Text style={styles.watchLabel}>{strings.insights.leakActionWatch}</Text>}
+    </>
+  );
+
+  return (
+    <View
+      style={[
+        styles.row,
+        stacked ? styles.rowStacked : null,
+        showDivider ? styles.rowDivider : null,
+      ]}
+    >
+      <EmojiTile emoji={emoji} size={36} color={tint} />
+
+      <View style={styles.rowText}>
+        <Text style={styles.rowName} numberOfLines={stacked ? 2 : 1}>
+          {habit.name}
+        </Text>
+        <Text
+          style={styles.rowSummary}
+          numberOfLines={stacked ? 2 : 1}
+          maxFontSizeMultiplier={CHROME_MAX_FONT_SCALE}
+        >
+          {summary}
+        </Text>
+        {stacked ? <View style={styles.actionsStacked}>{actions}</View> : null}
+      </View>
+
+      {stacked ? null : actions}
     </View>
   );
 }
@@ -112,6 +137,13 @@ function createStyles(theme: AppTheme) {
       alignItems: 'center',
       gap: 12,
       paddingVertical: 12,
+    },
+    rowStacked: {
+      alignItems: 'flex-start',
+    },
+    actionsStacked: {
+      marginTop: 8,
+      alignSelf: 'flex-start',
     },
     rowDivider: {
       borderBottomWidth: 1,

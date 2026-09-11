@@ -50,7 +50,12 @@ export function EmojiTile({ emoji, size = 36, color, accessibilityLabel }: Emoji
       accessibilityLabel={accessibilityLabel}
       importantForAccessibility={decorative ? 'no' : 'yes'}
     >
-      <Text style={styles.emoji} importantForAccessibility="no">
+      {/* The tile is a fixed-size identity chip, not text: its box does not
+          grow with Dynamic Type, so a glyph that did would overflow it. At AX3
+          an 18pt emoji rendered near 42pt inside a 36pt tile and clipped to a
+          sliver (seen on device 2026-09-11). Scaling off, deliberately, and
+          the only such case in the app: everything a user READS still scales. */}
+      <Text style={styles.emoji} allowFontScaling={false} importantForAccessibility="no">
         {emoji}
       </Text>
     </View>

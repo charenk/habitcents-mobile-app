@@ -14,6 +14,7 @@ import { categoryEmoji, categoryIdentityColor } from '@/constants/categoryEmoji'
 import { radii, spacing, typeScale, type AppTheme } from '@/constants/theme';
 import type { SpendingByCategory } from '@/types/report';
 import { strings } from '@/constants/strings';
+import { useAccessibilityTextSize } from '@/utils/textScale';
 
 type WhereItWentCardProps = {
   /** Rows straight from ReportsContext.calculateSpendingByCategory. */
@@ -23,6 +24,7 @@ type WhereItWentCardProps = {
 };
 
 export function WhereItWentCard({ rows, rangeLabel }: WhereItWentCardProps) {
+  const stacked = useAccessibilityTextSize();
   const theme = useTheme();
   const { format } = useCurrency();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -68,8 +70,12 @@ export function WhereItWentCard({ rows, rangeLabel }: WhereItWentCardProps) {
                 color={categoryIdentityColor(row.categoryName)}
               />
               <View style={styles.rowBody}>
-                <View style={styles.rowLabels}>
-                  <Text style={styles.rowName} numberOfLines={1}>
+                {/* Dynamic Type: the category and its amount are both content
+                    and both want the row at accessibility sizes, so the pair
+                    stacks rather than starving the name to "F..." beside the
+                    number (seen on device 2026-09-11). See utils/textScale.ts. */}
+                <View style={[styles.rowLabels, stacked ? styles.rowLabelsStacked : null]}>
+                  <Text style={styles.rowName} numberOfLines={stacked ? 2 : 1}>
                     {row.categoryName}
                   </Text>
                   <Text style={styles.rowAmount}>{amount}</Text>
@@ -123,6 +129,11 @@ function createStyles(theme: AppTheme) {
     },
     rowBody: {
       flex: 1,
+    },
+    rowLabelsStacked: {
+      flexDirection: 'column',
+      alignItems: 'flex-start',
+      gap: 2,
     },
     rowLabels: {
       flexDirection: 'row',

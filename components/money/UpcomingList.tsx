@@ -62,6 +62,7 @@ import {
   type UpcomingItem,
 } from '@/utils/recurring';
 import { UPCOMING_WINDOW_PRESETS, type UpcomingWindowDays } from '@/utils/upcomingWindow';
+import { CHROME_MAX_FONT_SCALE, useAccessibilityTextSize } from '@/utils/textScale';
 
 /** What VoiceOver hears. "2w, selected" is not a sentence. */
 const WINDOW_LABELS: Record<UpcomingWindowDays, string> = {
@@ -273,6 +274,39 @@ function UpcomingRow({
   // decide whether to keep listening.
   const spoken = [name, amountLabel, multiplierSpoken, scheduleLine].filter(Boolean).join(', ');
 
+  // Dynamic Type: at accessibility sizes the amount moves under the name
+  // rather than competing with it for a 393pt row. The name and the amount are
+  // both content, so neither may be capped; the schedule line is metadata and
+  // does cap. Same rule as ExpenseRow; see utils/textScale.ts.
+  const stacked = useAccessibilityTextSize();
+
+  const amountBlock = (
+    <View style={[styles.rowAmount, stacked ? styles.rowAmountStacked : null]}>
+      {/* Spec 09 section 1 rule 6: money numbers scale, they never truncate.
+          Side by side the amount shrinks to fit rather than turning into an
+          ellipsis that hides what the bill costs; stacked it has the whole row
+          and needs neither. */}
+      <Text
+        style={styles.amount}
+        numberOfLines={1}
+        adjustsFontSizeToFit={!stacked}
+        minimumFontScale={0.7}
+      >
+        {amountLabel}
+      </Text>
+      {multiplierLabel ? (
+        <Text
+          style={styles.multiplier}
+          numberOfLines={1}
+          adjustsFontSizeToFit={!stacked}
+          minimumFontScale={0.7}
+        >
+          {multiplierLabel}
+        </Text>
+      ) : null}
+    </View>
+  );
+
   return (
     <Pressable
       onPress={onPress}
@@ -280,6 +314,9 @@ function UpcomingRow({
       accessibilityLabel={spoken}
       style={({ pressed }) => [
         styles.row,
+        // Stacked rows align to the top so the tile sits beside the NAME
+        // rather than floating at the centre of a three-line block.
+        stacked ? styles.rowStacked : null,
         isFirst ? styles.rowFirst : null,
         pressed ? styles.rowPressed : null,
       ]}
@@ -290,41 +327,19 @@ function UpcomingRow({
         size={36}
       />
       <View style={styles.rowText}>
-        <Text style={styles.name} numberOfLines={1}>
+        <Text style={styles.name} numberOfLines={stacked ? 2 : 1}>
           {name}
         </Text>
-        <Text style={styles.schedule} numberOfLines={1}>
+        <Text
+          style={styles.schedule}
+          numberOfLines={stacked ? 2 : 1}
+          maxFontSizeMultiplier={CHROME_MAX_FONT_SCALE}
+        >
           {scheduleLine}
         </Text>
+        {stacked ? amountBlock : null}
       </View>
-      <View style={styles.rowAmount}>
-        {/* Spec 09 section 1 rule 6: money numbers scale, they never
-            truncate. numberOfLines={1} keeps the row's shape, so the amount
-            shrinks to fit rather than turning into an ellipsis that hides
-            what the bill costs. */}
-        <Text
-          style={styles.amount}
-          numberOfLines={1}
-          adjustsFontSizeToFit
-          minimumFontScale={0.7}
-        >
-          {amountLabel}
-        </Text>
-        {multiplierLabel ? (
-          // Carries money, so it takes the same treatment as the number above
-          // it rather than the cadence line's: it shrinks to fit instead of
-          // truncating. "in 21 days" could afford an ellipsis; "$2,100.00
-          // each" cannot.
-          <Text
-            style={styles.multiplier}
-            numberOfLines={1}
-            adjustsFontSizeToFit
-            minimumFontScale={0.7}
-          >
-            {multiplierLabel}
-          </Text>
-        ) : null}
-      </View>
+      {stacked ? null : amountBlock}
       <Icon
         name="ChevronRight"
         size={16}
@@ -421,6 +436,9 @@ function createStyles(theme: AppTheme) {
       borderTopWidth: 1,
       borderTopColor: theme.hairlineSubtle,
     },
+    rowStacked: {
+      alignItems: 'flex-start',
+    },
     rowFirst: {
       borderTopWidth: 0,
     },
@@ -452,6 +470,14 @@ function createStyles(theme: AppTheme) {
       // follows (spec 09 section 1 rule 6).
       flexShrink: 1,
       maxWidth: '46%',
+    },
+    rowAmountStacked: {
+      // Back under the name, on the same left edge, and no width cap: the
+      // whole row is its own now.
+      alignItems: 'flex-start',
+      marginLeft: 0,
+      marginTop: 4,
+      maxWidth: undefined,
     },
     amount: {
       fontFamily: theme.fonts.uiSemibold,
