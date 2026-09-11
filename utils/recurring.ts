@@ -456,36 +456,88 @@ export function shortDate(date: Date): string {
 }
 
 /**
- * The human schedule line under an upcoming row: "Monthly · 1st · next Aug 1",
- * "Weekly · Fridays · next Aug 7", "Every 2 weeks · next Aug 14",
- * "Every 9 days · next Aug 3", "One-time · Aug 12", "Yearly · next Jul 15".
+ * The schedule facts a row needs, as separate fields rather than one sentence.
+ *
+ * `describeSchedule` below is a join over this, and stays byte-identical to
+ * what it always returned. The split exists because the Upcoming row stopped
+ * DRAWING that sentence (2026-09-11): the cadence moved into a badge and the
+ * word "next" became an elbow arrow, so the row needs the pieces while
+ * VoiceOver still needs the sentence. Visual decomposition only, which is the
+ * same contract `labelSpoken` and `badgeSpoken` established on
+ * SegmentedControl (ADR 0040).
+ *
+ * `date` is bare ("Sep 29") for the row; `dateSpoken` keeps the "next" that
+ * makes it a sentence. For weekly and biweekly rules `date` also names the
+ * weekday ("Fri, Sep 12"), because the qualifier those rules carry
+ * ("Fridays") lives in the sentence and would otherwise be lost when the
+ * cadence moves into a badge. A badge holding "Weekly · Fridays" would be a
+ * sentence in a pill, so the weekday goes on the date instead.
  */
-export function describeSchedule(rule: RecurrenceRule, nextDate: Date): string {
-  const parts: string[] = [];
+export type ScheduleParts = {
+  cadence: string;
+  qualifier: string | null;
+  date: string;
+  dateSpoken: string;
+};
+
+export function scheduleParts(rule: RecurrenceRule, nextDate: Date): ScheduleParts {
+  const bare = shortDate(nextDate);
+  const withWeekday = formatDate(nextDate, { weekday: 'short', month: 'short', day: 'numeric' });
 
   switch (rule.type) {
     case 'once':
-      return [strings.money.scheduleOneTime, shortDate(nextDate)].join(SCHEDULE_SEPARATOR);
+      // The only rule whose date is not a "next": a one-time bill happens once,
+      // so the sentence reads "One-time · Aug 12", never "next Aug 12".
+      return { cadence: strings.money.scheduleOneTime, qualifier: null, date: bare, dateSpoken: bare };
     case 'weekly':
-      parts.push(strings.money.scheduleWeekly, weekdayPlural(rule.weekday));
-      break;
+      return {
+        cadence: strings.money.scheduleWeekly,
+        qualifier: weekdayPlural(rule.weekday),
+        date: withWeekday,
+        dateSpoken: strings.money.scheduleNext(bare),
+      };
     case 'biweekly':
-      parts.push(strings.money.scheduleBiweekly);
-      break;
+      return {
+        cadence: strings.money.scheduleBiweekly,
+        qualifier: null,
+        date: withWeekday,
+        dateSpoken: strings.money.scheduleNext(bare),
+      };
     case 'monthly':
-      parts.push(strings.money.scheduleMonthly);
-      if (rule.monthDay) parts.push(monthDayLabel(rule.monthDay));
-      break;
+      return {
+        cadence: strings.money.scheduleMonthly,
+        qualifier: rule.monthDay ? monthDayLabel(rule.monthDay) : null,
+        date: bare,
+        dateSpoken: strings.money.scheduleNext(bare),
+      };
     case 'annual':
-      parts.push(strings.money.scheduleAnnual);
-      break;
+      return {
+        cadence: strings.money.scheduleAnnual,
+        qualifier: null,
+        date: bare,
+        dateSpoken: strings.money.scheduleNext(bare),
+      };
     case 'custom':
-      parts.push(strings.money.scheduleEveryNDays(clampEveryNDays(rule.everyNDays)));
-      break;
+      return {
+        cadence: strings.money.scheduleEveryNDays(clampEveryNDays(rule.everyNDays)),
+        qualifier: null,
+        date: bare,
+        dateSpoken: strings.money.scheduleNext(bare),
+      };
   }
+}
 
-  parts.push(strings.money.scheduleNext(shortDate(nextDate)));
-  return parts.join(SCHEDULE_SEPARATOR);
+/**
+ * The human schedule line under an upcoming row: "Monthly · 1st · next Aug 1",
+ * "Weekly · Fridays · next Aug 7", "Every 2 weeks · next Aug 14",
+ * "Every 9 days · next Aug 3", "One-time · Aug 12", "Yearly · next Jul 15".
+ *
+ * Still the whole sentence, and still what the row SPEAKS. A round-trip test
+ * pins it against `scheduleParts` so the two can never drift.
+ */
+export function describeSchedule(rule: RecurrenceRule, nextDate: Date): string {
+  const { cadence, qualifier, dateSpoken } = scheduleParts(rule, nextDate);
+  return [cadence, qualifier, dateSpoken].filter(Boolean).join(SCHEDULE_SEPARATOR);
 }
 
 /**
