@@ -52,6 +52,10 @@ export type MonthlyProjection = {
   averageDaily: number;
   daysRemaining: number;
   comparedToLastMonth: number;
+  /** Total spent over the whole previous calendar month, the denominator
+   *  `comparedToLastMonth` is computed against. Carried on the contract so a
+   *  reader needing the money gap does not re-derive the window by hand. */
+  lastMonthTotal: number;
 };
 
 export const DEFAULT_WIDGETS: ReportWidget[] = [

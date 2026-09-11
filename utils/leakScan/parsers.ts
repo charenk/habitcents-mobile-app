@@ -3,8 +3,11 @@
  *
  * Date parsing races multiple formats (ISO, US, EU, textual, compact). Amount
  * parsing strips currency symbols, thousands separators, parentheses negatives,
- * trailing minus, and CR/DR suffixes, deciding the decimal separator by which
- * separator appears last (1,234.56 vs 1.234,56). All amounts return integer cents.
+ * trailing minus, and CR/DR suffixes. A cell carrying both separators decides
+ * the decimal point by which appears last (1,234.56 vs 1.234,56); a cell
+ * carrying only one decides by the shape of the digit groups, so a
+ * thousands-grouped whole dollar amount (1,234) is not read as a decimal. See
+ * parseAmount for the full ladder. All amounts return integer cents.
  */
 
 import type { DateOrder } from './types';
@@ -140,8 +143,25 @@ export type AmountResult = {
 
 /**
  * Parse an amount cell into integer cents plus the sign the cell itself carried.
- * Returns null when there is no numeric content. Handles both 1,234.56 and
- * 1.234,56 by treating whichever of . or , appears LAST as the decimal separator.
+ * Returns null when there is no numeric content, and also when the separators
+ * form a shape with no defensible reading.
+ *
+ * Separator handling, in the order the cases are decided:
+ * - Both . and , present: whichever appears LAST is the decimal separator, so
+ *   1,234.56 and 1.234,56 both give 123456 cents.
+ * - Commas only: well-formed groups of three (1,234 / 1,234,567) are thousands
+ *   separators; a single comma that is not such a group is an EU decimal point
+ *   (4,00 / 12,5 / 0,99); anything else (1,23,45) returns null.
+ * - Dots only: two or more well-formed groups (1.234.567) are thousands
+ *   separators; a single dot is the decimal point.
+ *
+ * Two residual ambiguities a single cell cannot settle, both resolved the way
+ * the app's default (dot-decimal, US exports) points:
+ * - `1.234` is read as 123 cents, not as EU one thousand two hundred thirty
+ *   four. Only a whole-column pass could tell those apart.
+ * - `0,999` matches the grouping shape and is read as $999. A real grouped
+ *   amount never starts with a zero group, but the pattern is deliberately kept
+ *   simple; the shape does not occur in any fixture.
  */
 export function parseAmount(raw: string): AmountResult | null {
   let s = raw.trim();
@@ -182,20 +202,51 @@ export function parseAmount(raw: string): AmountResult | null {
   s = s.replace(/[^\d.,]/g, '');
   if (!s || !/\d/.test(s)) return null;
 
-  // Decide decimal separator by whichever of . or , appears last.
   const lastDot = s.lastIndexOf('.');
   const lastComma = s.lastIndexOf(',');
+  const hasDot = lastDot !== -1;
+  const hasComma = lastComma !== -1;
   let normalized: string;
-  if (lastDot === -1 && lastComma === -1) {
+
+  if (!hasDot && !hasComma) {
     normalized = s;
-  } else if (lastComma > lastDot) {
-    // Comma is the decimal separator: remove dots (thousands), swap comma to dot.
-    normalized = s.replace(/\./g, '').replace(',', '.');
-    // Any remaining commas were thousands separators mid-string; strip them.
-    normalized = normalized.replace(/,/g, '');
+  } else if (hasDot && hasComma) {
+    // Both separators present: the last one is the decimal point. This is the
+    // only case the shape is unambiguous from the cell alone, and it is the
+    // case the original rule got right.
+    if (lastComma > lastDot) {
+      // 1.234,56: remove dots (thousands), swap comma to dot.
+      normalized = s.replace(/\./g, '').replace(',', '.');
+      // Any remaining commas were thousands separators mid-string; strip them.
+      normalized = normalized.replace(/,/g, '');
+    } else {
+      // 1,234.56: remove commas (thousands).
+      normalized = s.replace(/,/g, '');
+    }
+  } else if (hasComma) {
+    // Commas only. The digit groups decide, because the last-separator rule
+    // read every lone comma as a decimal point and turned 1,234 into 123 cents.
+    if (/^\d{1,3}(,\d{3})+$/.test(s)) {
+      // Every comma separates a well-formed group of three: thousands.
+      normalized = s.replace(/,/g, '');
+    } else if (s.indexOf(',') === lastComma) {
+      // A single comma that is not a thousands group: EU decimal (4,00 / 12,5).
+      normalized = s.replace(',', '.');
+    } else {
+      // Several commas that do not form valid groups (1,23,45). Neither reading
+      // is defensible, so say so rather than return a number nobody can trust.
+      return null;
+    }
   } else {
-    // Dot is the decimal separator: remove commas (thousands).
-    normalized = s.replace(/,/g, '');
+    // Dots only. Two or more well-formed groups can only be thousands
+    // separators (1.234.567), which the old rule turned into NaN and dropped.
+    if (/^\d{1,3}(\.\d{3}){2,}$/.test(s)) {
+      normalized = s.replace(/\./g, '');
+    } else {
+      // A single dot stays the decimal point. Anything malformed (1.23.45)
+      // falls through to the isFinite guard below and is rejected there.
+      normalized = s;
+    }
   }
 
   const value = Number(normalized);

@@ -92,6 +92,39 @@ describe('amount parsing', () => {
     expect(parseAmount('hello')).toBeNull();
     expect(parseAmount("'=SUM(A1)")).toBeNull();
   });
+
+  // A lone comma used to be read as a decimal point no matter what followed it,
+  // so a whole-dollar grouped amount parsed 1000 times too small: $1,234 rent
+  // imported as $1.23. The digit groups decide now.
+  it('reads a lone comma with a full group of three as a thousands separator', () => {
+    expect(parseAmount('1,234')).toEqual({ cents: 123400, cellSign: 1 });
+    expect(parseAmount('$1,500')).toEqual({ cents: 150000, cellSign: 1 });
+    expect(parseAmount('-1,200')).toEqual({ cents: 120000, cellSign: -1 });
+    expect(parseAmount('(2,500)')).toEqual({ cents: 250000, cellSign: -1 });
+  });
+
+  it('handles several thousands groups, which replace(",") only half-fixed', () => {
+    expect(parseAmount('1,234,567')).toEqual({ cents: 123456700, cellSign: 1 });
+  });
+
+  it('reads dot-grouped thousands, which used to parse as NaN and drop', () => {
+    expect(parseAmount('1.234.567')).toEqual({ cents: 123456700, cellSign: 1 });
+  });
+
+  it('still reads a single non-grouping comma as an EU decimal point', () => {
+    expect(parseAmount('4,00')).toEqual({ cents: 400, cellSign: 1 });
+    expect(parseAmount('12,5')).toEqual({ cents: 1250, cellSign: 1 });
+    expect(parseAmount('0,99')).toEqual({ cents: 99, cellSign: 1 });
+  });
+
+  it('leaves separator-free and single-dot cells alone', () => {
+    expect(parseAmount('1234')).toEqual({ cents: 123400, cellSign: 1 });
+    expect(parseAmount('1.234')).toEqual({ cents: 123, cellSign: 1 });
+  });
+
+  it('rejects a comma shape that is neither a grouping nor a decimal', () => {
+    expect(parseAmount('1,23,45')).toBeNull();
+  });
 });
 
 describe('date parsing', () => {
