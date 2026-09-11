@@ -460,10 +460,10 @@ export function upcomingWindowPaymentsCount(items: UpcomingItem[]): number {
  * Its 'Today' branch was already unreachable on that surface, since a
  * due-today occurrence is materialized into Spent and advanced past here.
  */
-export function daysUntilLabel(daysUntil: number): string {
-  if (daysUntil <= 0) return 'Today';
-  if (daysUntil === 1) return 'Tomorrow';
-  return `in ${daysUntil} days`;
+export function daysUntilLabel(daysUntil: number, strings: Catalog): string {
+  if (daysUntil <= 0) return strings.money.daysUntilToday;
+  if (daysUntil === 1) return strings.money.daysUntilTomorrow;
+  return strings.money.daysUntilInDays(daysUntil);
 }
 
 /** Sunday of a known week, so a weekday number can be named in the device locale. */

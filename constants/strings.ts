@@ -1233,6 +1233,10 @@ export const strings = {
     // Spoken when the user knows the month but not the day. The row draws the
     // month alone; this is what makes it a sentence for a screen reader.
     scheduleInMonth: (month: string) => `sometime in ${month}`,
+    // "in 6 days" / "Today" / "Tomorrow" (utils/recurring.ts daysUntilLabel).
+    daysUntilToday: 'Today',
+    daysUntilTomorrow: 'Tomorrow',
+    daysUntilInDays: (days: number) => `in ${days} days`,
   },
 
   // Add-upcoming sheet (spec 04 "Add-upcoming sheet"; U8 added edit mode,
