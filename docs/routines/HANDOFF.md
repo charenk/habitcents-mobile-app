@@ -1,5 +1,52 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 26, 2026-09-11: rebase, no conflicts despite the crossing warning, no new work)
+
+`origin/main` had moved 4 commits since run 25's rebase point (`9376cc2` to
+`683ecc3`): the four QA-loop PRs (#161 Insights date windows/category
+names/parser, #162 Categories one-category-per-expense, #164 onboarding/
+Kept-dot/FL-1/scan-link/parser fixes, #163 the paywall readable-at-rest
+layout). Run 25's REVIEW FEEDBACK flagged this as a real crossing risk
+(`constants/strings.ts`, `app/(tabs)/index.tsx`, `app/(tabs)/insights.tsx`,
+`contexts/HabitsContext.tsx`), but `git rebase origin/main` completed with
+**zero conflicts**: the touched regions in each shared file turned out to be
+non-adjacent (this branch's entitlement-gate and share-card lines never
+landed near the QA wave's Insights/Categories/Kept-dot edits), so git's
+line-based merge resolved everything automatically. Spot-checked after the
+rebase anyway, since the warning was explicit: `app/paywall.tsx` (#163's
+readable-at-rest rewrite) does not touch this branch's own paywall call
+sites; `constants/strings.ts`'s new QA keys sit in a different section than
+this branch's `ceilingNote`/`shareCard.*`/leak-finder-promo keys;
+`contexts/HabitsContext.tsx`'s new Kept-dot state is additive and this
+branch never edits that file, only some of its consumers, and those
+consumer edits (the entitlement gate reads) don't overlap the Kept-dot
+consumer edits either. No manual resolution needed anywhere. Force-with-lease
+pushed (`3194d4f`).
+
+Fresh `npm install` (node_modules removed first), `npx tsc --noEmit` clean.
+`npm test`: 121 suites / 1265 tests green on the first attempt, no flake (up
+from 117/1206 at run 25, all from main's own QA-wave tests carried in by the
+rebase, not new code here). PR #132 confirmed via the API: `state: open`,
+`draft: false`, `merged: false`, base now `683ecc3` (main's current tip),
+head `3194d4f` (matches this branch's post-push tip), zero comments, zero
+reviews, unchanged since run 25's review. Re-pulled
+`habitcents-ops/PUNCHLIST.md`'s RESUME marker fresh: still the same
+2026-09-10 interaction-audit items (profile modal-vs-push decision,
+how-it-works scroll-fade, drag-to-dismiss device verification, the standing
+`door3BreakSheet.test.tsx` CI-load flake, the Categories empty-subtitle
+polish note) plus the older zeroth-state wave items; none are payments/legal,
+and the one core-p3-flagged line (leak finder dated entitlement) is still
+the same item already built and closed on this branch at run 8. Checklist in
+`PLAN.md` unchanged, still fully `[x]`/`(C)`; nothing code-shaped remains
+that this routine can reach without a website-repo checkout or a
+Charen-gated external account.
+
+No push notification this run: the decision queue has sat untouched since
+run 6 (now 20 runs idle on the queue itself), run 11 already flagged it once
+and nothing in its content has changed, and this run's own finding (a
+predicted rebase risk that turned out not to materialize) isn't something
+Charen needs to act on.
+
 ## COMPLETE (run 25, 2026-09-11: rebase across two real content conflicts, no new work)
 
 `git rev-list --left-right --count origin/main...routine/core-p3` returned
