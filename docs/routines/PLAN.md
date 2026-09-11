@@ -902,6 +902,21 @@ work, tracked elsewhere).
       `insights`, `addUpcoming`, `habitLogging`, `coachMoments`); re-run
       the sweep as each of those gets a real overlay.
 
+      **Run 26: swept `addUpcoming` (the section this same run
+      translated for item 4) via the same method.** Both real render-path
+      test files that assert against it, `addUpcomingSheet.test.tsx` and
+      `moneyUpcomingTab.test.tsx`, already had `LocaleProvider` and render
+      at the default English locale with nothing mocking a non-English
+      device locale, so their existing `strings.addUpcoming.*` assertions
+      already read the live catalog correctly; no fix needed. Also fixed,
+      not part of the sweep but found while rebasing onto origin/main:
+      `logInPlace.test.tsx` (new on main this run, not yet on this branch
+      at the last rebase) rendered `ReportsProvider` (already
+      `useStrings()`-converted since run 19) without `LocaleProvider` in
+      its local `Providers` wrapper, the standing rebase-risk class run 11
+      first flagged; added `LocaleProvider`, same fix shape as every prior
+      occurrence.
+
 ## 4. Provisional machine translations
 
 - [ ] es, fr, de, pt-BR, it, ja, ko, zh-Hans, hi, nl catalogs. Every
@@ -1306,6 +1321,68 @@ work, tracked elsewhere).
       flake noted since run 13 (timed out on the first run with no code
       change in the Today tree that test covers, passed clean on the
       immediate re-run, consistent with every prior recurrence).
+
+      **Run 26: `addUpcoming` (all 40 string keys; `everyNDaysValue`/
+      `amountLabel` stay function-valued, deferred to item 2's ICU work),
+      populated across all 10 locale overlays.** Picked as the next slice
+      per run 25's "Next" list: confirmed clean first (no locked
+      vocabulary, real render path via
+      `components/money/AddUpcomingSheet.tsx`, already `useStrings()`-
+      converted since before this stream started tracking runs). Reused
+      already-established per-language vocabulary rather than
+      re-deriving it: the "Upcoming" noun from `expenses.upcoming` (run
+      21), the "expense" noun and "edit"/"delete" verbs from
+      `expenseSheet`/`categoryDetail.editCategoryLabel`, and `common.save`
+      for both `save` and `saveChanges` (same reuse-over-redo approach as
+      `expenseSheet.saveExpense`/`saveChanges`, run 23).
+      `whenNextWeek`/`startingNextWeek` share one translation per
+      language, matching the English source's own reuse of "Next week" in
+      both places.
+
+      Two translation judgment calls worth a second look, not gated on
+      Charen (neither touches locked vocabulary or pricing/legal copy,
+      the only two standing gates):
+      - `onThe`, the label above the day-of-month chips (1st/15th/30th/
+        Last day): German/Spanish/French/Italian/Portuguese used their
+        native definite-article-before-a-date-number convention (Am/El/
+        Le/Il/No dia); Dutch used its equivalent preposition phrase (Op
+        de). Japanese, Korean, Chinese and Hindi have no natural
+        standalone connector word for this, so all four instead read as
+        the field's own name (日付/날짜/日期/तारीख, all "date"), a pragmatic
+        substitution rather than a literal "on the" translation.
+      - Question-mark fields (`whatIsIt`, `when`, `onWhichDay`): treated
+        as real sentence questions rather than short labels in ja/
+        zh-Hans, so they take native "？" like `settings.startOverConfirmTitle`
+        (the one existing precedent, per the 2026-09-10 orchestrator
+        review's punctuation ruling); `title`/`editTitle`/`deleteUpcoming`
+        stay on the short-label "." side of the same split, matching
+        `addCategoryModal`'s equivalent titles. Caught one real mistake
+        before committing: `onWhichDay` only ever renders for
+        weekly/biweekly recurrence (confirmed in
+        `AddUpcomingSheet.tsx:720`, gated on `frequency === 'weekly' ||
+        frequency === 'biweekly'`), i.e. it asks for a day of the WEEK,
+        not a day of the month; the first-draft ja translation
+        ("何日ですか？", which reads as day-of-month/day-count) was wrong and
+        fixed to "何曜日ですか？" before the zh-Hans equivalent was even
+        written, and zh-Hans used the unambiguous "星期几？" from the start
+        rather than the more generic "哪一天？".
+
+      40 new keys x 10 languages, 160 of ~660 keys now populated per
+      language (up from 120). No test file changes needed for the sweep
+      (see item 3's run 26 entry above: both real render-path test files
+      already had `LocaleProvider` and asserted at the default English
+      locale). One rebase (74 commits behind origin/main; two real
+      conflicts beyond mechanical import-line merges, both resolved by
+      keeping main's newer refactor: `app/(tabs)/insights.tsx`'s
+      `logVisible` state plus this branch's `useStrings()` line side by
+      side, and `app/(tabs)/index.tsx`'s `handleBreakSheetStart` where
+      main's `useBreakHabitStart()` hook extraction superseded this
+      branch's pre-extraction try/catch version entirely, confirmed via
+      `utils/useBreakHabitStart.ts` already owning the same error toast).
+      One test fix from the rebase, unrelated to this run's translation
+      work (see item 3's run 26 entry). One commit for the translation
+      slice; `tsc --noEmit` clean, full suite green (115/115, 1215/1215)
+      on the first run after the rebase fix, no flake.
 - [ ] leak / skip / kept / slip and the app's quotes are PRODUCT VOICE:
       never finalized by this routine. Provisional entries only, proposal
       table lives in HANDOFF.md's DECISIONS NEEDED until Charen picks.

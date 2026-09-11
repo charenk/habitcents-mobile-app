@@ -2,16 +2,19 @@
 
 ## Status
 
-In progress. Run 25: no REVIEW FEEDBACK was pending at session start
-(the 2026-09-10 review's two fixes were already addressed in run 24),
-and no rebase was needed (branch was already current with origin/main
-throughout this run). Picked up the same review's priority nudge that
-run 24 did not act on: do plan item 3 (test migration off literal-
-English assertions) before item 4's translated surface grows further.
-Swept every test file's literal-string assertions against the 14
-sections item 4 has translated so far and fixed 8 real strays (see
-Completed). Item 4 itself was not touched this run; its next slice is
-still whatever a future run picks per the Next section below.
+In progress. Run 26: no REVIEW FEEDBACK was pending at session start.
+Rebased onto origin/main (74 commits behind; branch had gone stale
+since run 25 while main shipped a "log where you already are" feature
+sweeping several files this stream had already converted). Two real
+conflicts beyond mechanical import-line merges, both resolved by
+keeping main's newer code and this branch's `useStrings()` line
+together (detail in PLAN.md's run 26 entry under item 4). Full suite
+caught one real post-rebase gap (`logInPlace.test.tsx`, new on main,
+missing `LocaleProvider`), fixed before any new work per the standing
+rule to re-run tsc + the full suite after every rebase. Then did plan
+item 4's next slice (`addUpcoming`, 40 keys x 10 languages) plus item
+3's matching sweep of it (see Completed). 160 of ~660 keys now
+populated per language.
 
 ## Completed
 
@@ -484,36 +487,104 @@ still whatever a future run picks per the Next section below.
   One commit; `tsc --noEmit` clean and the full suite green (113/113,
   1210/1210) on the first run, no flake. Full detail, including the
   exact grep method, in PLAN.md's run 25 entry.
+- Run 26, rebase (74 commits behind origin/main, the first real rebase
+  this stream has needed since run 15): two real conflicts, both
+  resolved by keeping the union of main's newer code and this branch's
+  `useStrings()` line.
+  - `app/(tabs)/insights.tsx`: main added `const [logVisible,
+    setLogVisible] = useState(false);` right where this branch's
+    `useStrings()` line landed; kept both.
+  - `app/(tabs)/index.tsx`: main's `handleBreakSheetStart` was
+    refactored to extract its writes into a new
+    `utils/useBreakHabitStart()` hook shared with Money, dropping the
+    function's own try/catch/error-toast entirely; this branch's
+    pre-rebase commit had only updated that now-obsolete try/catch to
+    use `useStrings()`. Confirmed `utils/useBreakHabitStart.ts` already
+    owns the same `strings.toasts.startHabitFailed` toast internally
+    before discarding the obsolete block outright (kept main's version
+    verbatim, no `strings` usage left in this function post-refactor).
+  - Post-rebase, `npm install` (fresh container, no `node_modules`) then
+    `tsc --noEmit` was clean but the full suite had one real failure:
+    `logInPlace.test.tsx`, new on main this run, renders `MoneyScreen`/
+    `InsightsScreen` (both pull in `ReportsProvider`, `useStrings()`-
+    converted since run 19) without `LocaleProvider` in its local
+    `Providers` wrapper. Same class of failure the standing rebase-risk
+    note (below, since run 11) warns about; added `LocaleProvider`,
+    following `emptyStateSurfaces.test.tsx`'s established wrapper
+    ordering (inside `ThemeProvider`, ahead of `CurrencyProvider`).
+    Confirmed via `npx jest __tests__/logInPlace.test.tsx` before
+    re-running the full suite. One commit for both the rebase resolution
+    and this fix (no separate translation work had landed yet to split
+    it from).
+- Run 26, plan item 4's sixth slice: `addUpcoming` (40 string keys;
+  `everyNDaysValue`/`amountLabel` stay function-valued, deferred to item
+  2's ICU work) populated across all 10 locale overlays. Confirmed clean
+  first: no locked vocabulary, real render path via
+  `components/money/AddUpcomingSheet.tsx` (already `useStrings()`-
+  converted). Reused established per-language vocabulary throughout
+  (the "Upcoming" noun from `expenses.upcoming`, the "expense" noun and
+  edit/delete verbs from `expenseSheet`/`categoryDetail`, `common.save`
+  for both `save` and `saveChanges`) rather than re-deriving it.
+  `whenNextWeek`/`startingNextWeek` share one translation per language,
+  matching the English source's own reuse of "Next week" in both
+  places. Two judgment calls made and documented (not gated on Charen,
+  neither touches locked vocabulary or pricing/legal copy): `onThe`
+  reads as the field's own name ("date") in ja/ko/zh-Hans/hi, which have
+  no natural standalone connector word for it; question-mark fields
+  (`whatIsIt`, `when`, `onWhichDay`) take native "？" in ja/zh-Hans,
+  extending the `startOverConfirmTitle` precedent from real dialogs to
+  these field-prompt questions. Full reasoning, plus the one real
+  mistake caught before committing (ja's `onWhichDay` first drafted as
+  day-of-month "何日ですか？" before confirming in `AddUpcomingSheet.tsx`
+  that it actually asks for a day of the WEEK; fixed to "何曜日ですか？"
+  before zh-Hans, which used the unambiguous "星期几？" from the start),
+  in PLAN.md's run 26 entry.
+- Run 26, plan item 3's second sweep, scoped to `addUpcoming` (the
+  section this same run translated for item 4): both real render-path
+  test files (`addUpcomingSheet.test.tsx`, `moneyUpcomingTab.test.tsx`)
+  already had `LocaleProvider` and assert at the default English locale
+  with no non-English device-locale mock, so their existing
+  `strings.addUpcoming.*` assertions already read the live catalog
+  correctly. No fix needed.
+
+  All three run-26 items landed as separate commits (rebase fix,
+  translation slice, sweep confirmation needed no commit of its own);
+  `tsc --noEmit` clean and the full suite green (115/115, 1215/1215) on
+  the first run after the rebase fix, no flake.
 
 ## Next
 
-Plan item 4 is underway (120 of ~660 keys populated across all 10
+Plan item 4 is underway (160 of ~660 keys populated across all 10
 languages: `common` minus `keep`, `sheets`, `tabs`, `screenTitles` (run
 20), plus `expenses`, `categories`, `categoryDetail`, `profile` (run
 21), plus `settings` minus `versionValue`/`supportEmail` (run 22), plus
 `addCategoryModal`, `expenseSheet` minus `amountLabel` (run 23), plus
 `habitDetail.notFound`, `reports.loading`, and 22 of `toasts`' keys
-(run 24); see PLAN.md's run 20-24 entries for the full design).
+(run 24), plus `addUpcoming` minus `everyNDaysValue`/`amountLabel` (run
+26); see PLAN.md's run 20-24 and run 26 entries for the full design).
 `upcoming` stays fully English until item 2's ICU/pluralization work
 lands, since both its keys are function-valued. Budget more than one
 run per meaningful chunk (10 languages x a section adds up fast), the
 same lesson item 2's file-by-file conversion learned repeatedly and
-runs 21-24 stayed within. `habitLogging`, `coachMoments`, `insights`,
-and `today`'s quote arrays still need the DECISIONS NEEDED table below
-settled (or at minimum provisional entries adopted with a clear
-"pending Charen" marker) before translating, since those sections
-contain the locked vocabulary (`insights` confirmed gated run 23:
-`leaksTitle`, `skipValueSheetTitle`, and more) and (for `today`) the
-RETIRED, out-of-scope quote arrays. `paywall` needs a different kind of
-sign-off before this routine touches it, not locked-vocabulary related:
-see DECISIONS NEEDED below. `habitDetail` and `reports` are now fully
-resolved (each had exactly one live key, both translated this run; the
-rest is confirmed dead code, left alone). The next slice needs another
-fresh pick: `onboarding`, `leakScan`, `today` (largely gated), `money`
-(partially gated, contains `habitsEmptyTitle`'s "leak" and the
-leak-counting functions), and `addUpcoming`/`insights` remain
-unchecked. `toasts` has two keys left once `leakDismissed`/
-`stoppedHistoryKept` are settled (see DECISIONS NEEDED).
+runs 21-24 and 26 stayed within. `habitLogging`, `coachMoments`,
+`insights`, `habitDetailV2`, and `today`'s quote arrays still need the
+DECISIONS NEEDED table below settled (or at minimum provisional entries
+adopted with a clear "pending Charen" marker) before translating, since
+those sections contain the locked vocabulary (`insights` confirmed
+gated run 23: `leaksTitle`, `skipValueSheetTitle`, and more;
+`habitDetailV2` confirmed gated run 26 on a first skim: `skipValueSheetTitle`
+uses "skip"/"keeps") and (for `today`) the RETIRED, out-of-scope quote
+arrays. `paywall` needs a different kind of sign-off before this
+routine touches it, not locked-vocabulary related: see DECISIONS NEEDED
+below. `habitDetail` and `reports` are now fully resolved (each had
+exactly one live key, both translated run 24; the rest is confirmed
+dead code, left alone). `addUpcoming` is also now fully resolved. The
+next slice needs another fresh pick: `onboarding`, `leakScan`, `today`
+(largely gated), `money` (partially gated, contains
+`habitsEmptyTitle`'s "leak" and the leak-counting functions), and
+`insights` remain unchecked. `toasts` has two keys left once
+`leakDismissed`/`stoppedHistoryKept` are settled (see DECISIONS
+NEEDED).
 
 What is actually left for a future run:
 - Plan item 2's ICU/pluralization checkbox (function-valued strings
