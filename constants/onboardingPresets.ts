@@ -84,7 +84,7 @@ const PRESET_TABLE: Record<CurrencyCode, CurrencyPresetTable> = {
 };
 
 const VICE_NAMES: Record<ViceId, string> = {
-  coffee: 'Coffee or tea out',
+  coffee: 'Coffee',
   delivery: 'Food delivery',
   impulse: 'Impulse buys',
 };

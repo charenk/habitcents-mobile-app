@@ -68,7 +68,13 @@ export function useBreakHabitStart() {
       // the guard stuck true, which permanently disabled the Start button for
       // the rest of the session with no error surfaced.
       try {
-        const merchantPattern = data.chipId === 'custom' ? data.name : data.chipId;
+        // Impulse habits are custom-like (Charen, 2026-09-10): the typed name
+        // is the identity and the dedupe key, so a premium user can break
+        // "Amazon" and "Target" as two habits. The glyph lookup misses for
+        // them (habitLeakGlyph keys on the preset id) and falls back to the
+        // category emoji; category itself stays the impulse preset's.
+        const merchantPattern =
+          data.chipId === 'custom' || data.chipId === 'impulse' ? data.name : data.chipId;
         const category: ExpenseCategory =
           data.chipId === 'custom' ? 'Other' : VICE_CATEGORIES[data.chipId];
         const categoryId =
