@@ -239,6 +239,40 @@ describe('UpcomingList row multiplier', () => {
   });
 });
 
+describe('UpcomingList row anatomy', () => {
+  /**
+   * 2026-09-11: the row stopped drawing describeSchedule's sentence. The
+   * cadence became a badge and "next" became an elbow arrow, so the row draws
+   * `scheduleParts` and SPEAKS `describeSchedule`. These pin both halves,
+   * because losing the spoken half is the silent failure.
+   */
+  it('draws the cadence as a badge, not as words in a line', async () => {
+    const view = await renderList();
+    expect(view.getAllByText('Weekly').length).toBeGreaterThan(0);
+  });
+
+  it('draws the date without the word "next"', async () => {
+    const view = await renderList();
+    expect(view.queryByText(/next /)).toBeNull();
+    expect(view.queryByText(/Weekly \u00B7 /)).toBeNull();
+  });
+
+  it('still speaks the whole sentence, weekday included', async () => {
+    const view = await renderList();
+    const label = view.getByLabelText(/^Gym,/).props.accessibilityLabel as string;
+    // The badge shows "Weekly"; the qualifier the badge drops survives here.
+    expect(label).toContain('Weekly');
+    expect(label).toContain('Saturdays');
+    expect(label).toContain('next ');
+  });
+
+  it('names the weekday on the date, since the badge cannot hold it', async () => {
+    const view = await renderList();
+    // "Sat, Aug 15" rather than a bare "Aug 15" for a weekly rule.
+    expect(view.getAllByText(/^Sat, /).length).toBeGreaterThan(0);
+  });
+});
+
 describe('UpcomingList rows', () => {
   it('opens edit for the row that was pressed', async () => {
     const onEditItem = jest.fn();

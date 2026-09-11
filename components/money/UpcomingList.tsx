@@ -54,6 +54,7 @@ import { categoryDisplayLabel } from '@/utils/leakScanBridge';
 import {
   describeSchedule,
   resolveRule,
+  scheduleParts,
   shortDate,
   upcomingItemPayments,
   upcomingItemWindowTotal,
@@ -268,6 +269,12 @@ function UpcomingRow({
   // rather than crashing the tab.
   const rule = resolveRule(expense);
   const scheduleLine = rule ? describeSchedule(rule, nextDate) : shortDate(nextDate);
+  // What the row DRAWS. The sentence above is what it says: the cadence is a
+  // badge now and "next" is an elbow arrow, so the pieces and the sentence are
+  // deliberately different (utils/recurring.ts scheduleParts, ADR 0040's
+  // labelSpoken contract). A corrupted row that resolved no rule keeps its date
+  // and simply carries no badge.
+  const parts = rule ? scheduleParts(rule, nextDate) : null;
 
   // The bill, what the window costs, how many and what one costs, then when.
   // A user who stops listening after two words still got the two facts that
@@ -314,9 +321,6 @@ function UpcomingRow({
       accessibilityLabel={spoken}
       style={({ pressed }) => [
         styles.row,
-        // Stacked rows align to the top so the tile sits beside the NAME
-        // rather than floating at the centre of a three-line block.
-        stacked ? styles.rowStacked : null,
         isFirst ? styles.rowFirst : null,
         pressed ? styles.rowPressed : null,
       ]}
@@ -330,14 +334,37 @@ function UpcomingRow({
         <Text style={styles.name} numberOfLines={stacked ? 2 : 1}>
           {name}
         </Text>
-        <Text
-          style={styles.schedule}
-          numberOfLines={stacked ? 2 : 1}
-          maxFontSizeMultiplier={CHROME_MAX_FONT_SCALE}
-        >
-          {scheduleLine}
-        </Text>
+        {/* At accessibility sizes the amount moves directly under the name, so
+            the visible order matches the spoken one: the two things a user
+            came to read first, then the two that qualify them. */}
         {stacked ? amountBlock : null}
+        <View style={styles.dateRow}>
+          <Icon
+            name="CornerDownRight"
+            size={14}
+            color={theme.mistText}
+            importantForAccessibility="no-hide-descendants"
+            accessibilityElementsHidden
+          />
+          <Text
+            style={styles.schedule}
+            numberOfLines={stacked ? 2 : 1}
+            maxFontSizeMultiplier={CHROME_MAX_FONT_SCALE}
+          >
+            {parts ? parts.date : scheduleLine}
+          </Text>
+        </View>
+        {parts ? (
+          <View style={styles.cadenceBadge}>
+            <Text
+              style={styles.cadenceLabel}
+              numberOfLines={1}
+              maxFontSizeMultiplier={CHROME_MAX_FONT_SCALE}
+            >
+              {parts.cadence}
+            </Text>
+          </View>
+        ) : null}
       </View>
       {stacked ? null : amountBlock}
       <Icon
@@ -430,14 +457,16 @@ function createStyles(theme: AppTheme) {
     row: {
       minHeight: 44,
       flexDirection: 'row',
-      alignItems: 'center',
+      // Top-aligned unconditionally (2026-09-11): the left column is three
+      // lines now, and the amount belongs beside the NAME rather than floating
+      // at the vertical centre of the block. This is what the old
+      // accessibility-only `rowStacked` branch already argued for, promoted to
+      // the base value, so that branch collapsed.
+      alignItems: 'flex-start',
       gap: 12,
       paddingVertical: 10,
       borderTopWidth: 1,
       borderTopColor: theme.hairlineSubtle,
-    },
-    rowStacked: {
-      alignItems: 'flex-start',
     },
     rowFirst: {
       borderTopWidth: 0,
@@ -454,20 +483,53 @@ function createStyles(theme: AppTheme) {
       color: theme.ink,
       flexShrink: 1,
     },
+    dateRow: {
+      flexDirection: 'row',
+      // Centred, not top-aligned: the icon is a fixed 14 and does not scale,
+      // while the date beside it grows to the 1.5 chrome cap, so it has to sit
+      // against whatever height that text takes.
+      alignItems: 'center',
+      gap: 4,
+      marginTop: 2,
+    },
+    // Geometry borrowed from SegmentedControl's internal badge, the smallest
+    // sanctioned one, because this sits inside a row rather than on a card.
+    // minHeight and never height: an 11pt label grows with Dynamic Type and a
+    // fixed box clips it. slate on cloud, deliberately: mistText measures
+    // 4.06:1 on a cloud fill (UXUI_AUDIT.md:562) and nothing here tests
+    // contrast. Cadence is a fact, not a judgment, so the fill is neutral and
+    // the meaning is in the word (SegmentedControl's own rule).
+    cadenceBadge: {
+      alignSelf: 'flex-start',
+      minHeight: 18,
+      paddingVertical: 1,
+      paddingHorizontal: 8,
+      borderRadius: radii.pill,
+      backgroundColor: theme.cloud,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginTop: 6,
+    },
+    cadenceLabel: {
+      fontFamily: theme.fonts.uiBold,
+      fontSize: typeScale.eyebrow,
+      color: theme.slate,
+    },
     schedule: {
       fontFamily: theme.fonts.ui,
       fontSize: typeScale.caption,
       color: theme.mistText,
-      marginTop: 2,
+      flexShrink: 1,
     },
     rowAmount: {
       alignItems: 'flex-end',
       marginLeft: 8,
-      // The multiplier line is the widest thing this column ever holds, and
-      // without a cap its intrinsic width won the row and truncated the
-      // schedule line beside it ("Monthly, next Se..."). Capped, both money
-      // lines shrink to fit instead, which is the rule money text already
-      // follows (spec 09 section 1 rule 6).
+      // The cap outlived its original reason: the left column's longest line
+      // is a bare date now, not "Monthly, next Sep 29", so there is nothing
+      // there left to truncate. It stays because the multiplier caption can
+      // still win the row and steal width from the NAME on line 1, which is
+      // the same defect one line up. Capped, both money lines shrink to fit,
+      // which is the rule money text already follows (spec 09 section 1 rule 6).
       flexShrink: 1,
       maxWidth: '46%',
     },
