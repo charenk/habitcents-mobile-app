@@ -11,6 +11,8 @@ import {
   multiPaymentMonth,
   nextOccurrence,
   occurrencesWithin,
+  advancePastToday,
+  occurrencesToMaterialize,
   resolveRule,
   scheduleParts,
   upcomingTotal,
@@ -800,5 +802,138 @@ describe('scheduleParts', () => {
       const rejoined = [cadence, qualifier, dateSpoken].filter(Boolean).join(' · ');
       expect([name, rejoined]).toEqual([name, describeSchedule(rule, date)]);
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Date precision (ADR 0042)
+// ---------------------------------------------------------------------------
+
+/**
+ * A bill can say it knows the month but not the day. `expense.date` still holds
+ * a real date, because storage drops a row whose date will not parse, but its
+ * DAY is an anchor rather than an assertion, and these pin every place that
+ * could leak it back out as a claim.
+ */
+describe('date precision', () => {
+  const sep30 = new Date('2026-09-30T00:00:00');
+
+  function monthlyBill(overrides: Partial<Expense> = {}): Expense {
+    return {
+      id: 'water',
+      title: 'Water',
+      amount: 4200,
+      category: 'Utilities',
+      date: sep30,
+      time: '9:00 AM',
+      isRecurring: true,
+      recurrence: 'monthly',
+      recurrenceRule: { type: 'monthly', monthDay: 'last' },
+      reminderEnabled: false,
+      iconVariant: 'green',
+      datePrecision: 'month',
+      ...overrides,
+    };
+  }
+
+  /**
+   * The parameter defaults, which is the whole reason describeSchedule's ten
+   * literals passed unedited. A future caller that forgets it must get today's
+   * behaviour rather than silently speaking a day nobody gave.
+   */
+  it('defaults to day precision', () => {
+    const rules: RecurrenceRule[] = [
+      { type: 'once' },
+      { type: 'weekly', weekday: 5 },
+      { type: 'biweekly', weekday: 5, biweekAnchor: '2026-08-14' },
+      { type: 'monthly', monthDay: '1' },
+      { type: 'annual' },
+      { type: 'custom', everyNDays: 9 },
+    ];
+    for (const rule of rules) {
+      expect(scheduleParts(rule, sep30)).toEqual(scheduleParts(rule, sep30, 'day'));
+      expect(describeSchedule(rule, sep30)).toBe(describeSchedule(rule, sep30, 'day'));
+    }
+  });
+
+  it('says the month and drops the day, in words and in parts', () => {
+    const parts = scheduleParts({ type: 'monthly', monthDay: 'last' }, sep30, 'month');
+
+    expect(parts.cadence).toBe('Monthly');
+    // The anchor must not leak: "Last day" is storage, not something the user said.
+    expect(parts.qualifier).toBeNull();
+    expect(parts.date).toBe(formatDate(sep30, { month: 'long' }));
+    expect(parts.dateSpoken).toBe('sometime in September');
+
+    const line = describeSchedule({ type: 'monthly', monthDay: 'last' }, sep30, 'month');
+    expect(line).toBe('Monthly · sometime in September');
+    expect(line).not.toContain('Last day');
+    expect(line).not.toContain('next ');
+  });
+
+  /**
+   * The materializer writes a REAL spend into Money > Spent. A bill with no
+   * known day has no due day, so letting it through would fabricate history.
+   * The permanent consequence, recorded in ADR 0042: such a bill never
+   * graduates into the ledger.
+   */
+  it('never materializes a bill whose day is unknown', () => {
+    const longPast = monthlyBill({ date: new Date('2025-09-30T00:00:00') });
+    expect(occurrencesToMaterialize(longPast, new Date('2026-09-11T09:00:00'))).toEqual([]);
+
+    // The same bill at day precision does materialize, so the guard is the
+    // precision and not the fixture.
+    const dayPrecision = { ...longPast, datePrecision: 'day' as const };
+    expect(occurrencesToMaterialize(dayPrecision, new Date('2026-09-11T09:00:00')).length)
+      .toBeGreaterThan(0);
+  });
+
+  /**
+   * advancePastToday exists because the materializer already wrote today's
+   * occurrence into Spent. For an unknown-day bill it wrote nothing, so there
+   * is nothing to advance past, and advancing would make the bill vanish from
+   * its own month on the 30th.
+   */
+  it('does not advance a month-precision item that is due today', () => {
+    const bill = monthlyBill();
+    const todayMid = new Date('2026-09-30T00:00:00').getTime();
+    const items = [
+      {
+        expense: bill,
+        nextDate: sep30,
+        daysUntil: 0,
+        occurrencesInWindow: [sep30, new Date('2026-10-31T00:00:00')],
+      },
+    ];
+
+    const [survivor] = advancePastToday(items, todayMid);
+    expect(survivor).toBeDefined();
+    expect(survivor.nextDate).toEqual(sep30);
+  });
+
+  /**
+   * The window admits a month-precision occurrence as soon as it reaches that
+   * month, because whether it lands before the horizon is unknowable. Without
+   * this a bill added mid-month would be invisible in the narrow window a user
+   * is most likely to be looking at.
+   */
+  it('admits a month-precision bill whose month the window reaches', () => {
+    const from = new Date('2026-09-11T09:00:00');
+    const bill = monthlyBill(); // anchored on Sep 30, ten days past a 14-day horizon
+
+    expect(occurrencesWithin(bill, from, 14).length).toBeGreaterThan(0);
+    // Day precision answers the same question with a plain comparison, so the
+    // same bill is correctly excluded.
+    expect(occurrencesWithin({ ...bill, datePrecision: 'day' }, from, 14)).toEqual([]);
+  });
+
+  it('does not admit a month the window never reaches', () => {
+    const from = new Date('2026-09-11T09:00:00');
+    const far = monthlyBill({
+      date: new Date('2027-06-30T00:00:00'),
+      recurrenceRule: { type: 'annual' },
+      recurrence: 'annual',
+    });
+    expect(occurrencesWithin(far, from, 90)).toEqual([]);
   });
 });

@@ -49,6 +49,29 @@ export type Weekday = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 export type MonthDayOption = '1' | '15' | '30' | 'last';
 
 /**
+ * How precisely the user knows when a bill lands (2026-09-11).
+ *
+ * The sheet used to force a day, so someone who did not know one picked
+ * arbitrarily and the list then rendered that guess as a confident date. This
+ * lets them say what they actually know.
+ *
+ * 'day'   the whole date is the user's claim. Everything before this field
+ *         existed is this, which is why absent means 'day' and there is no
+ *         migration.
+ * 'month' the YEAR AND MONTH are the claim; the day is not. `expense.date`
+ *         still holds a real date, because storage drops a row whose date will
+ *         not parse, but that date's DAY is an anchor rather than an assertion,
+ *         the same class of value as `biweekAnchor`. Every site that could
+ *         render it as a claim is gated on this field.
+ *
+ * Offered only where the payment count per bucket does not depend on the day:
+ * monthly (one per month) and annual (one per year). Weekly and biweekly are
+ * excluded, because a 30-day month holds four or five weekly payments depending
+ * on the weekday, so an unknown day would force the app to invent a count.
+ */
+export type DatePrecision = 'day' | 'month';
+
+/**
  * Schedule for an upcoming expense (step 04). Additive: `RecurrenceFrequency`,
  * `isRecurring` and `recurrence` all stay, and every expense stored before this
  * type existed keeps projecting through the legacy mapping in
@@ -100,6 +123,8 @@ export type Expense = {
   // pointing at a now-gone id, which is fine: they are history, not a live
   // reference that needs to resolve.
   parentId?: string;
+  // Absent means 'day'; see DatePrecision.
+  datePrecision?: DatePrecision;
   iconVariant: 'yellow' | 'green';
   // A glyph the user chose for THIS bill, overriding the category's. Absent
   // means "use the category's", which is what every row stored before this
@@ -141,4 +166,6 @@ export type AddExpenseInput = {
   parentId?: string;
   // The user's own glyph for this bill; see Expense.emoji.
   emoji?: string;
+  // How precisely the date is known; see DatePrecision. Absent means 'day'.
+  datePrecision?: DatePrecision;
 };

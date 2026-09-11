@@ -144,6 +144,14 @@ describe('grouping reconciles with the card', () => {
       d('2026-10-02'),
     ]),
     item(makeExpense({ id: 'netflix', amount: 1599 }), [d('2026-10-05')]),
+    // A bill whose day is unknown, in the same fixture set as everything else.
+    // The whole pane's thesis is that every number reconciles, and precision
+    // has to not break that: a month-precision bill is a real occurrence in a
+    // real month, so it groups and sums like any other.
+    item(
+      makeExpense({ id: 'water', amount: 4200, datePrecision: 'month' }),
+      [d('2026-09-30'), d('2026-10-31')]
+    ),
     // The floor case, in the same fixture set as everything else.
     {
       expense: makeExpense({ id: 'pge', amount: 8740 }),

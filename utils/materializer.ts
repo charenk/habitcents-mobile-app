@@ -141,6 +141,9 @@ export function toChildInput(plan: MaterializedChildPlan): AddExpenseInput {
     // beneath its parent's chosen one, in the same Spent list. Same class of
     // bug as the importId note below.
     emoji: parent.emoji,
+    // A child is a real spend on a real day, so it is always 'day' precision
+    // regardless of the parent's. In practice the guard in
+    // occurrencesToMaterialize means an unknown-day parent never gets here.
     date,
     isRecurring: false,
     reminderEnabled: false,
