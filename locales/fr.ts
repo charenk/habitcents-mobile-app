@@ -32,6 +32,18 @@
  * places. `whatIsIt` uses the typographic apostrophe (’), same as every
  * other apostrophe in this file's existing toasts, so it stays
  * single-quoted like every other string here.
+ *
+ * Run 27 added: `money` minus `habitsEmptyTitle`/`habitsEmptyBody` (locked-
+ * vocabulary gated: "leak") and every function-valued key (deferred ICU
+ * work). `spentEmptyBody`/`upcomingEmptyBody` confirmed dead code (never
+ * rendered, same RETIRED treatment as elsewhere) and left untranslated.
+ * `scheduleSeparator` (a plain " · " middle-dot punctuation mark, no
+ * linguistic content) stays omitted like a function-valued key.
+ * `scheduleOneTime`/`scheduleWeekly`/`scheduleMonthly`/`scheduleAnnual`
+ * reuse `addUpcoming`'s matching frequency translations (same English
+ * source word); `scheduleBiweekly` ('Every 2 weeks') is translated fresh
+ * since its English source differs from `addUpcoming.frequencyBiweekly`
+ * ('Bi-weekly').
  */
 import type { LocaleOverlay } from '@/utils/i18n';
 
@@ -227,5 +239,33 @@ export const fr: LocaleOverlay = {
     everyNDaysDecrease: 'Moins de jours',
     everyNDaysIncrease: 'Plus de jours',
     save: 'Enregistrer',
+  },
+  money: {
+    segmentSpent: 'Dépensé',
+    segmentUpcoming: 'À venir',
+    segmentHabits: 'Habitudes',
+    segmentLabel: 'Vue argent',
+    spentToday: 'Aujourd’hui',
+    spentYesterday: 'Hier',
+    spentTodayEmpty: 'Rien encore aujourd’hui. Ajoutez-la si vous avez dépensé, et profitez-en sinon.',
+    spentEditHint: 'Touchez une ligne pour la modifier ou la supprimer.',
+    recurringRowSuffix: 'récurrent',
+    spentEmptyTitle: 'Toutes vos dépenses au même endroit',
+    upcomingWindowSegmentLabel: 'Fenêtre à venir',
+    upcomingWindowTwoWeeks: '2 semaines',
+    upcomingWindowOneMonth: '1 mois',
+    upcomingWindowThreeMonths: '3 mois',
+    upcomingAddAffordance: 'Ajouter une dépense à venir',
+    spentEmptyCta: 'Consigner une dépense',
+    habitsEmptyCta: 'Se défaire d’une habitude',
+    upcomingListEyebrow: 'Planifié',
+    upcomingEmptyTitle: 'Sachez ce qui arrive avant que ça n’arrive',
+    upcomingWindowEmptyBody: 'Aucune de vos dépenses récurrentes ne tombe dans cette période.',
+    upcomingEmptyCta: 'Ajouter une dépense à venir',
+    scheduleOneTime: 'Une fois',
+    scheduleWeekly: 'Hebdomadaire',
+    scheduleBiweekly: 'Toutes les 2 semaines',
+    scheduleMonthly: 'Mensuel',
+    scheduleAnnual: 'Annuel',
   },
 };

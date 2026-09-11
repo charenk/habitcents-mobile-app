@@ -52,6 +52,20 @@
  * (the connector above the day-of-month chips) has no natural standalone
  * Japanese equivalent, so it reads as the field's own name ("日付", date)
  * instead.
+ *
+ * Run 27 added: `money` minus `habitsEmptyTitle`/`habitsEmptyBody` (locked-
+ * vocabulary gated: "leak"/漏れ) and every function-valued key (deferred
+ * ICU work). `spentEmptyBody`/`upcomingEmptyBody` confirmed dead code
+ * (never rendered, same RETIRED treatment as elsewhere) and left
+ * untranslated. `scheduleSeparator` (a plain " · " middle-dot punctuation
+ * mark, no linguistic content) stays omitted like a function-valued key.
+ * `scheduleOneTime`/`scheduleWeekly`/`scheduleMonthly`/`scheduleAnnual`
+ * reuse `addUpcoming`'s matching frequency translations (same English
+ * source word); `scheduleBiweekly` ('Every 2 weeks') is translated fresh
+ * since its English source differs from `addUpcoming.frequencyBiweekly`
+ * ('Bi-weekly'). `spentTodayEmpty`/`spentEditHint`/`upcomingWindowEmptyBody`
+ * (real sentences) take native "。"; every short label/title stays
+ * unpunctuated, matching this file's short-label-vs-full-sentence split.
  */
 import type { LocaleOverlay } from '@/utils/i18n';
 
@@ -245,5 +259,33 @@ export const ja: LocaleOverlay = {
     everyNDaysDecrease: '日数を減らす',
     everyNDaysIncrease: '日数を増やす',
     save: '保存',
+  },
+  money: {
+    segmentSpent: '支出',
+    segmentUpcoming: '今後の予定',
+    segmentHabits: '習慣',
+    segmentLabel: 'お金の表示',
+    spentToday: '今日',
+    spentYesterday: '昨日',
+    spentTodayEmpty: '今日はまだ何もありません。使ったら追加して、使わなかったら楽しんでください。',
+    spentEditHint: '行をタップして編集または削除します。',
+    recurringRowSuffix: '定期',
+    spentEmptyTitle: 'すべての支出を1か所に',
+    upcomingWindowSegmentLabel: '今後の期間',
+    upcomingWindowTwoWeeks: '2週間',
+    upcomingWindowOneMonth: '1か月',
+    upcomingWindowThreeMonths: '3か月',
+    upcomingAddAffordance: '今後の支出を追加',
+    spentEmptyCta: '支出を記録',
+    habitsEmptyCta: '習慣をやめる',
+    upcomingListEyebrow: '予定',
+    upcomingEmptyTitle: '次に来るものを、来る前に知っておこう',
+    upcomingWindowEmptyBody: 'この期間に該当する定期支出はありません。',
+    upcomingEmptyCta: '今後の支出を追加',
+    scheduleOneTime: '1回のみ',
+    scheduleWeekly: '毎週',
+    scheduleBiweekly: '2週間ごと',
+    scheduleMonthly: '毎月',
+    scheduleAnnual: '毎年',
   },
 };

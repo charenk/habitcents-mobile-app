@@ -39,6 +39,21 @@
  * established -어요/-세요 register; `onThe` (the connector above the
  * day-of-month chips) has no natural standalone Korean equivalent, so it
  * reads as the field's own name ("날짜", date) instead.
+ *
+ * Run 27 added: `money` minus `habitsEmptyTitle`/`habitsEmptyBody` (locked-
+ * vocabulary gated: "leak"/누수) and every function-valued key (deferred
+ * ICU work). `spentEmptyBody`/`upcomingEmptyBody` confirmed dead code
+ * (never rendered, same RETIRED treatment as elsewhere) and left
+ * untranslated. `scheduleSeparator` (a plain " · " middle-dot punctuation
+ * mark, no linguistic content) stays omitted like a function-valued key.
+ * `scheduleOneTime`/`scheduleWeekly`/`scheduleMonthly`/`scheduleAnnual`
+ * reuse `addUpcoming`'s matching frequency translations (same English
+ * source word); `scheduleBiweekly` ('Every 2 weeks') is translated fresh
+ * since its English source differs from `addUpcoming.frequencyBiweekly`
+ * ('Bi-weekly'). `upcomingListEyebrow` ('Scheduled') uses the terse
+ * noun+됨 status style (예정됨), matching this file's established toast
+ * register; the two full-sentence body strings use the conversational
+ * -어요 register.
  */
 import type { LocaleOverlay } from '@/utils/i18n';
 
@@ -232,5 +247,33 @@ export const ko: LocaleOverlay = {
     everyNDaysDecrease: '일수 줄이기',
     everyNDaysIncrease: '일수 늘리기',
     save: '저장',
+  },
+  money: {
+    segmentSpent: '지출',
+    segmentUpcoming: '예정',
+    segmentHabits: '습관',
+    segmentLabel: '금액 보기',
+    spentToday: '오늘',
+    spentYesterday: '어제',
+    spentTodayEmpty: '오늘은 아직 없어요. 지출했다면 추가하고, 안 했다면 그대로 즐기세요.',
+    spentEditHint: '행을 탭하여 수정하거나 삭제하세요.',
+    recurringRowSuffix: '정기',
+    spentEmptyTitle: '모든 지출을 한곳에서',
+    upcomingWindowSegmentLabel: '예정 기간',
+    upcomingWindowTwoWeeks: '2주',
+    upcomingWindowOneMonth: '1개월',
+    upcomingWindowThreeMonths: '3개월',
+    upcomingAddAffordance: '예정된 지출 추가',
+    spentEmptyCta: '지출 기록',
+    habitsEmptyCta: '습관 끊기',
+    upcomingListEyebrow: '예정됨',
+    upcomingEmptyTitle: '다가오기 전에 미리 알아두세요',
+    upcomingWindowEmptyBody: '이 기간에 해당하는 정기 지출이 없어요.',
+    upcomingEmptyCta: '예정된 지출 추가',
+    scheduleOneTime: '한 번',
+    scheduleWeekly: '매주',
+    scheduleBiweekly: '2주마다',
+    scheduleMonthly: '매월',
+    scheduleAnnual: '매년',
   },
 };

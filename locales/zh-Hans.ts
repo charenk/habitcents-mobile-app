@@ -49,6 +49,20 @@
  * instead. `onWhichDay` (weekly/biweekly recurrence only, confirmed in
  * `AddUpcomingSheet.tsx`) asks for a day of the WEEK, so it uses "星期几"
  * rather than the more ambiguous "哪一天".
+ *
+ * Run 27 added: `money` minus `habitsEmptyTitle`/`habitsEmptyBody` (locked-
+ * vocabulary gated: "leak"/漏洞) and every function-valued key (deferred
+ * ICU work). `spentEmptyBody`/`upcomingEmptyBody` confirmed dead code
+ * (never rendered, same RETIRED treatment as elsewhere) and left
+ * untranslated. `scheduleSeparator` (a plain " · " middle-dot punctuation
+ * mark, no linguistic content) stays omitted like a function-valued key.
+ * `scheduleOneTime`/`scheduleWeekly`/`scheduleMonthly`/`scheduleAnnual`
+ * reuse `addUpcoming`'s matching frequency translations (same English
+ * source word); `scheduleBiweekly` ('Every 2 weeks') is translated fresh
+ * since its English source differs from `addUpcoming.frequencyBiweekly`
+ * ('Bi-weekly'). `spentTodayEmpty`/`spentEditHint`/`upcomingWindowEmptyBody`
+ * (real sentences) take native "。"; every short label/title stays
+ * unpunctuated, matching this file's short-label-vs-full-sentence split.
  */
 import type { LocaleOverlay } from '@/utils/i18n';
 
@@ -242,5 +256,33 @@ export const zhHans: LocaleOverlay = {
     everyNDaysDecrease: '减少天数',
     everyNDaysIncrease: '增加天数',
     save: '保存',
+  },
+  money: {
+    segmentSpent: '已花费',
+    segmentUpcoming: '即将到来',
+    segmentHabits: '习惯',
+    segmentLabel: '资金视图',
+    spentToday: '今天',
+    spentYesterday: '昨天',
+    spentTodayEmpty: '今天还没有记录。如果花了钱就添加，没花就好好享受吧。',
+    spentEditHint: '点击一行即可编辑或删除。',
+    recurringRowSuffix: '定期',
+    spentEmptyTitle: '所有支出集中在一处',
+    upcomingWindowSegmentLabel: '即将到来的时间范围',
+    upcomingWindowTwoWeeks: '2周',
+    upcomingWindowOneMonth: '1个月',
+    upcomingWindowThreeMonths: '3个月',
+    upcomingAddAffordance: '添加一笔即将到来的支出',
+    spentEmptyCta: '记录支出',
+    habitsEmptyCta: '戒掉一个习惯',
+    upcomingListEyebrow: '已安排',
+    upcomingEmptyTitle: '提前了解即将发生的支出',
+    upcomingWindowEmptyBody: '你的定期支出都不在这个时间范围内。',
+    upcomingEmptyCta: '添加一笔即将到来的支出',
+    scheduleOneTime: '一次性',
+    scheduleWeekly: '每周',
+    scheduleBiweekly: '每2周',
+    scheduleMonthly: '每月',
+    scheduleAnnual: '每年',
   },
 };
