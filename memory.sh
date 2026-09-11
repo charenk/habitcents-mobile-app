@@ -175,3 +175,23 @@ UDID=A58C5486-9233-4DC0-855A-D7524BB10F45           # iPhone 16
 # lsof -i :8081 -sTCP:LISTEN; lsof -i :8082 -sTCP:LISTEN
 # What the app process is actually connected to (bundle source ground truth):
 # lsof -p <app-pid> -a -i TCP
+
+# --- 2026-09-11: merging a stacked PR chain without closing half of it ---
+
+# GitHub CLOSES a child PR when its base branch is deleted. It does NOT retarget it.
+# So never merge a stack with --delete-branch. Retarget each PR to main first, merge, delete at the end.
+#
+# For each PR bottom-up:
+#   gh pr edit <n> --base main            # retarget BEFORE merging (this re-triggers CI)
+#   gh pr view <n> --json mergeStateStatus -q .mergeStateStatus   # poll until CLEAN
+#   gh pr merge <n> --merge               # no --delete-branch
+# Then, once the whole stack is on main:
+#   git push origin --delete <branch>     # for each merged branch
+#
+# Recovering a PR that was closed because its base branch went away
+# (reopen is refused while the base ref does not exist):
+#   git push origin <sha-of-old-base-tip>:refs/heads/<deleted-base-branch>
+#   gh pr reopen <n> && gh pr edit <n> --base main
+#
+# Confirm a stack is genuinely linear before any of this:
+#   git merge-base --is-ancestor origin/<lower> origin/<upper> && echo linear

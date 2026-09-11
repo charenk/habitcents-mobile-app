@@ -1620,3 +1620,241 @@ CASE STUDY MOMENT
 Reproduced and fixed a device-only data-loss bug flagged by a parallel session, pinned the regression against the real provider, and established dedicated-device discipline for multi-session simulator work.
 
 ---
+
+---
+
+## 2026-09-11 ## 2026-09-11: The app was making the user invent a number, and then reading it back to them as a prediction
+
+### Session scan
+
+**Scope:** end of session
+**Built this session:** Money > Upcoming rebuilt across eight stacked PRs (#165 to #172), all merged to main the same day and all OTA-eligible. The pane's arithmetic now reconciles at three levels; the engine learned `datePrecision` so a bill can know its month but not its day; Yearly got a month and day anchor; a bill can carry its own glyph; and an unknown-day bill reaches the ledger by asking the user rather than guessing. 120 suites, 1325 tests, tsc clean, lint 0 errors. TestFlight build 25 started from main.
+**Pillar scores:** P1: Strong · P2: Strong · P3: Strong · P4: Strong · P5: Strong
+
+---
+
+### P4 PRODUCT AND DESIGN JUDGMENT: The date field that forced a lie
+
+**TWITTER POST**
+
+My user told me the bug: "I didn't know when the bill was due, so I picked "in 15 days". Later the list read like it really was happening in 15 days."
+
+The app forced a date. So it made them invent a number, then rendered the invention back at them as a confident prediction.
+
+VISUAL NOTE: the Upcoming row before and after, showing "next Sep 26" vs the row with no date under a SEPTEMBER header.
+
+---
+
+**TWITTER THREAD**
+
+Tweet 1: My user found a bug I'd have never written a test for. The form forced a date. He didn't know the date. So they guessed, and the app read that guess back to them as a prediction.
+
+Tweet 2: Every other screen in this app refuses to invent numbers. I'd spent the whole week removing fabricated figures from this exact pane. And here it was outsourcing the fabrication to the user.
+
+Tweet 3: Their framing is what made it fixable: the cadence does the bucketing, only the day is unknown. A monthly bill still lands in every month. It still counts. It just doesn't claim a day.
+
+Tweet 4: So precision became a field. 'day' or 'month'. Not a sentinel date, because a sentinel puts the meaning in a value every date comparison silently participates in. A named field means an untaught consumer fails at review, not at runtime.
+
+Final tweet: A form that won't let you say "I don't know" doesn't collect better data. It collects confident garbage.
+
+VISUAL NOTE: tweet 3, the "I don't know" chip sitting beside 1st / 15th / 30th / Last day.
+
+---
+
+**LINKEDIN POST**
+
+A user told me about a bug that no test would have caught.
+
+Adding an upcoming bill, they didn't know the exact date it would land. The form required one. So they picked "in 15 days" more or less at random. Later, scanning the list, they read that row back as a real prediction, because that is exactly what it looked like.
+
+The app had made them invent a number, and then presented the invention to them as a fact.
+
+What made it solvable was their own framing: the cadence does the bucketing, and only the day is unknown. A monthly bill still lands in every month and still counts toward the total. It just does not claim a particular day.
+
+So date precision became an explicit field rather than a guess encoded in the date itself. The alternative, a sentinel date, would have hidden the meaning inside a value that every date comparison in the app silently participates in. A named field means the next screen that has not been taught about precision breaks in code review instead of in production.
+
+The lesson I keep relearning: a form that will not let someone say "I don't know" does not get better data. It gets confident garbage.
+
+VISUAL NOTE: the sheet with the "I don't know" chip, and the resulting row with no date under a month header.
+
+---
+
+CASE STUDY MOMENT
+A user's workaround (picking an arbitrary date) exposed that the product was manufacturing false confidence, and the fix was a new data concept rather than a new control.
+
+---
+
+### P1 CONCEPT DISCOVERED: Precision is a property of a value, not a value
+
+**TWITTER POST**
+
+"I know the month but not the day" is not a missing date. It is a date at a different resolution.
+
+Once I stopped trying to encode that IN the date and gave it its own field, four guards fell out of it and the grouping code needed no change at all.
+
+VISUAL NOTE: NONE
+
+---
+
+**TWITTER THREAD**
+
+Tweet 1: Spent today learning that "I don't know exactly when" is not missing data. It's data at a coarser resolution. Those need very different code.
+
+Tweet 2: My first instinct was a sentinel date. Far future, treat it as unknown. That's a landmine: the meaning now lives in a value that every date comparison in the app silently participates in.
+
+Tweet 3: A named field instead. datePrecision: 'day' | 'month'. Optional, absent means 'day', so every stored row was already correct and there was no migration.
+
+Tweet 4: The payoff is that it fails loudly. A screen that hasn't been taught about precision doesn't quietly render an anchor as a claim. It shows up in review as a place that reads .date without asking.
+
+Final tweet: Sentinels make every consumer accidentally correct. Named fields make the uninformed consumer visibly wrong. Prefer visibly wrong.
+
+VISUAL NOTE: NONE
+
+---
+
+**LINKEDIN POST**
+
+A small modelling decision I think is worth sharing.
+
+A user needed to record a bill where they knew the month but not the day. My first instinct was a sentinel: store a placeholder date and treat it as "unknown" everywhere.
+
+That would have been a mistake. A sentinel puts the meaning inside a value that every date comparison in the codebase silently participates in. Every consumer becomes accidentally correct, until one of them isn't, and nothing tells you which.
+
+So precision became its own field: 'day' or 'month', optional, absent meaning 'day'. Every existing row was already correct, so there was no migration. Four places in the projection engine now consult it explicitly, and each one is a line you can point at in review.
+
+The property I care about most: a screen that has not been taught about precision now fails visibly rather than quietly rendering a storage anchor as a claim to the user.
+
+Sentinels make the uninformed consumer accidentally right. Named fields make it visibly wrong. Visibly wrong is worth a lot.
+
+VISUAL NOTE: NONE
+
+---
+
+### P2 ITERATION WITH RATIONALE: I placed it from a description. They corrected it on the device.
+
+**TWITTER POST**
+
+I described a layout in words. My designer picked from the description. I built it.
+
+Then they saw it on a phone and moved it immediately.
+
+A layout choice made from a description is a guess until it's on a screen. Writing that one down.
+
+VISUAL NOTE: the row with the badge in the left column vs under the amount, side by side.
+
+---
+
+**LINKEDIN POST**
+
+I asked my designer where a small label should sit, and I asked it in words. They picked an option. I built exactly what they picked.
+
+Then they ran it on their phone and moved it within seconds.
+
+In the description, "under the date" sounded balanced. On the device it put three lines in the left column and dropped the widest element onto the row's bottom edge, and with roughly forty rows in view the cost compounded. Moved beside the amount, the two columns balance and every row gets about 20pt shorter.
+
+Neither of us was wrong in the conversation. The conversation was just the wrong medium for the question.
+
+I have started writing this into the project's design records as a standing note: a layout choice made from a description is a guess until it is on a screen. Some questions are cheap to answer in prose, and some only have real answers in hand.
+
+VISUAL NOTE: before and after screenshots of the row.
+
+---
+
+### P3 PLATFORM PATTERN: Two typography traps in React Native
+
+**TWITTER POST**
+
+Two React Native things that cost me real time today:
+
+1. numberOfLines={1} on text that has outgrown its line box CROPS it. It doesn't shrink it. At XXXL my label rendered as a band of half-glyphs.
+
+2. justifyContent: 'center' centres the text's BOX. The descender space is in that box, so a word without descenders sits visibly high.
+
+VISUAL NOTE: the cropped half-glyph label at XXXL, and the badge with its text riding high.
+
+---
+
+**TWITTER THREAD**
+
+Tweet 1: Two typography traps in React Native, both of which looked like my mistake and were actually the platform being literal.
+
+Tweet 2: numberOfLines={1} does not mean "keep this to one line". It means "clip after one line box". Text that has grown past its line box under Dynamic Type gets cropped through the middle of the glyphs. You get a band of half-letters.
+
+Tweet 3: The fix isn't a better clamp, it's letting the row grow and capping the SCALE instead. Chrome caps at 1.5x. The content, the number the user actually came for, stays uncapped.
+
+Tweet 4: Second one: a label rode high inside its pill. justifyContent: 'center' centres the text's box, and the box reserves descender space. "Monthly" has one descender, so the visible ink sits above centre.
+
+Final tweet: Fix was to size the pill from padding around a tightened line height, rather than centring inside a fixed height. Bonus: padding still grows with Dynamic Type, so it doesn't break the "minHeight, never height" rule.
+
+VISUAL NOTE: tweet 2, the cropped label. Tweet 4, the badge before and after.
+
+---
+
+**LINKEDIN POST**
+
+Two React Native typography traps from today, both of which looked like my bug and were really the platform being precise about something I was being vague about.
+
+First: numberOfLines={1} does not mean "keep this to one line". It means "clip after one line box". When Dynamic Type grows text past that box, you do not get shrinking, you get cropping, and at the largest accessibility sizes my label rendered as a band of half-glyphs. The fix was not a better clamp. It was letting the row grow and capping the text scale instead, and capping only the chrome: the number the user actually came to read stays uncapped, because capping content would invert the whole point of Dynamic Type.
+
+Second: a label sat visibly high inside its pill. justifyContent: 'center' centres the text's box, and that box reserves space for descenders. A word whose ink does not reach the descender line therefore sits above the optical centre. The fix was to size the pill from padding around a tightened line height instead of centring inside a fixed height, which also keeps the container growing with Dynamic Type.
+
+Both are small. Both were invisible until a real device at a real accessibility setting showed them.
+
+VISUAL NOTE: the cropped label at XXXL, and the badge before and after.
+
+---
+
+### P5 BUILDING WITH AI HONESTLY: My merge script closed two of my own pull requests
+
+**TWITTER POST**
+
+I wrote a loop to merge an 8-deep PR stack bottom-up, waiting for each child to retarget to main.
+
+It never retargeted. GitHub CLOSES a child PR when its base branch is deleted.
+
+My loop then merged one PR into the wrong branch and closed another. Nothing lost, but I wrote the wrong thing confidently.
+
+VISUAL NOTE: the PR list showing two CLOSED and one merged into a non-main base.
+
+---
+
+**TWITTER THREAD**
+
+Tweet 1: I had 8 stacked PRs, all green. I wrote a loop: merge the bottom one, delete its branch, wait for the child to retarget to main, repeat. Clean idea. Built on a wrong assumption.
+
+Tweet 2: GitHub does not retarget a child PR when you delete its base branch. It CLOSES it. My "wait for retarget" step timed out, and my loop moved on anyway.
+
+Tweet 3: So PR #167 got merged into the still-open intermediate branch instead of main, and deleting THAT branch closed #168. Two PRs closed, one merged into the wrong base.
+
+Tweet 4: Nothing was actually lost, because the stack was strictly linear and every branch was a superset of the one below. I checked that before touching anything else, which is the only reason this was a 20-minute recovery.
+
+Tweet 5: The recovery is non-obvious: you cannot reopen a PR whose base branch is gone. You have to push the deleted ref back first, then reopen, then retarget.
+
+Final tweet: The lesson isn't "be careful with scripts". It's that I asserted a platform behaviour I had not verified, inside a loop that would act on it 8 times. Verify the assumption once before you automate it 8 times.
+
+VISUAL NOTE: tweet 3, the PR list with the wrong base visible.
+
+---
+
+**LINKEDIN POST**
+
+I broke my own pull requests today, and the interesting part is why.
+
+I had eight stacked pull requests, each based on the one below, all with green CI. I wrote a short script to merge them bottom-up: merge, delete the branch, wait for the child to retarget to main, repeat.
+
+The assumption was that GitHub retargets a child pull request when its base branch is deleted. It does not. It closes it.
+
+So my "wait for retarget" step timed out, and the loop continued anyway. One pull request got merged into the intermediate branch instead of main, and deleting that branch closed another. Two closed, one merged into the wrong base.
+
+Nothing was lost, and the reason is worth naming: before doing anything else I verified that the stack was still strictly linear and that every branch still contained the one below it. That check turned a potential mess into a twenty minute recovery. The recovery itself is non-obvious, because a pull request whose base branch no longer exists cannot be reopened at all. You have to push the deleted branch reference back first.
+
+The lesson I took is not "be careful with automation". It is narrower and more useful: I asserted a platform behaviour I had not verified, and then put it inside a loop that would act on it eight times. Verify the assumption once before you automate it eight times.
+
+VISUAL NOTE: the pull request list showing the two closed entries and the one merged into a non-main base.
+
+---
+
+CASE STUDY MOMENT
+An incorrect assumption about GitHub's stacked-PR behaviour, caught and recovered without data loss because the first move after the failure was to verify the underlying git state rather than to retry the tooling.
+
+---
