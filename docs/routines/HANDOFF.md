@@ -1,5 +1,43 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 27, 2026-09-11: re-verify, no new work)
+
+`git rev-list --left-right --count origin/main...routine/core-p3` returned
+`0 33`: zero commits on main's side, branch unchanged at tip `41b83c7`
+(run 26's post-rebase tip, main still `683ecc3`), no rebase needed. PR #132
+confirmed via the API: `state: open`, `draft: false`, `merged: false`,
+`mergeable_state: clean`, head `41b83c758d60a73bc5b9c2e88e96cd87445b7b2c`
+matching this branch's tip, base `683ecc36cc70b5e7089a653bb3d02f667ba8cf6c`
+matching main's current tip, zero comments, zero reviews, unchanged since
+run 26. No new REVIEW FEEDBACK since the 2026-09-11 entry covering runs
+15-25 ("Approved, no fixes owed" plus rebase guidance for run 26, which
+run 26 already executed and this run's zero-diff rebase check confirms
+stayed correct). Re-pulled `habitcents-ops/PUNCHLIST.md`'s RESUME marker
+fresh: byte-identical to what run 26 read, still the 2026-09-10
+interaction-audit wave (profile modal-vs-push decision, how-it-works
+scroll-fade, drag-to-dismiss device verification, the standing
+`door3BreakSheet.test.tsx` CI-load flake, the Categories empty-subtitle
+polish note) plus the older 2026-09-05/06 zeroth-state wave items; none
+payments/legal, and the one core-p3-flagged line (leak finder dated
+entitlement) is still the same item already built and closed on this
+branch at run 8. Checklist in `PLAN.md` unchanged, still fully `[x]`/`(C)`.
+
+Fresh `npm install` (node_modules absent in this container), `npx tsc
+--noEmit` clean. `npm test` first attempt: 120 suites / 1264 passed, 1
+failure in `__tests__/door3BreakSheet.test.tsx`'s auto-open test (5000ms
+Jest timeout under full-suite load, the same standing flake as runs 10,
+12, 14, 16, listed on PUNCHLIST as needing a real fix rather than a
+per-run re-run); isolated re-run confirmed all 19 tests in that file pass
+in 5.4s (the file has grown from 17 to 19 tests since run 16, all from
+main's own commits). Full suite then green: 121 suites / 1265 tests,
+exactly matching run 26's ending count (no regression, no new code this
+run).
+
+No push notification this run: the decision queue has sat untouched since
+run 6 (now 21 runs idle on the queue itself), run 11 already flagged it
+once, and nothing in its content or in the standing flake has changed
+since run 26.
+
 ## COMPLETE (run 26, 2026-09-11: rebase, no conflicts despite the crossing warning, no new work)
 
 `origin/main` had moved 4 commits since run 25's rebase point (`9376cc2` to
