@@ -2,42 +2,22 @@
 
 ## Status
 
-In progress. Run 28: no REVIEW FEEDBACK was pending at session start
-(last review, 2026-09-10 runs 20-23, was fully addressed by run 24). A
-new review (2026-09-11, runs 24-27) landed on origin mid-run and was
-cherry-picked onto this branch before pushing, per the same pattern
-runs 20/24/26 used; addressed below, right after the rebase section.
-Rebased onto origin/main (80 commits behind). One real conflict, the
-same mechanical import-line class runs 15/26 already saw: both
-`app/(tabs)/categories.tsx` and `app/category/[id].tsx` had this
-branch's stale `strings`-import/`expenseBelongsToCategory` pairing
-collide with main's own rename of that helper to
-`resolveExpenseCategory`; resolved both by keeping main's
-`resolveExpenseCategory` import plus this branch's `useStrings()` line,
-dropping the dead `expenseBelongsToCategory` import each file's body no
-longer referenced. `npm install` needed first (fresh container, no
-`node_modules`, same as every prior run); `tsc --noEmit` clean and the
-full suite green (121/121, 1291/1291) right after the rebase, no
-follow-up fix needed this time.
-
-Per run 27's "Next" note, item 4 (provisional translations) is still
-blocked on Charen (DECISIONS NEEDED: the locked-vocabulary proposal
-table and the `paywall` pricing/legal go-ahead, both unanswered as of
-this run), so picked item 2's ICU/pluralization checkbox instead, the
-concrete first case run 27 named: `utils/recurring.ts`'s
-`daysUntilLabel` threaded through the catalog (new
-`money.daysUntilToday`/`daysUntilTomorrow`/`daysUntilInDays` keys, the
-same added-`Catalog`-parameter shape `weekdayPlural`/`monthDayLabel`
-already use). Not the full ICU/CLDR plural-rule work the checkbox is
-ultimately waiting on, just the one concrete gap flagged since run 19;
-see PLAN.md's run 28 entry for the full detail and why the checkbox
-stays open.
-
-The runs 24-27 review (approved, no code fixes owed) landed on origin
-mid-run; its one docs item owed (the `onThe` no-standalone-connector-word
-rule, only recorded in four locale file headers) is now a durable
-bullet in `design/PATTERN_VOCABULARY.md`'s Localization section. See
-Completed for detail.
+In progress. Run 29: branch was already at origin/main (b748ca3) at
+session start, confirmed via `git merge-base --is-ancestor origin/main
+HEAD`; no rebase needed. No REVIEW FEEDBACK was pending (run 28 fully
+addressed the 2026-09-11 runs 24-27 review, including its one docs
+item). Item 4 (translations) is still blocked on Charen (DECISIONS
+NEEDED: the locked-vocabulary proposal table, the `paywall` go-ahead),
+so picked item 6's concrete first target instead, per run 28's Next
+note: `utils/a11y.ts`'s `selectableLabel` (the "selected"/"not
+selected" pair on every selectable chip/row/tab) hardcoded English with
+no catalog key. Full design and the exact files/tests touched are in
+PLAN.md's run 29 entry under item 6; summary below under Completed.
+`presetChipLabel`/`editedChipLabel`, the file's other two similar
+helpers, are confirmed dead code (zero real call sites) and left alone.
+One commit; `tsc --noEmit` clean, full suite green (121/121, 1291/1291)
+on the first run, no flake, `npm install` needed first (fresh
+container, no `node_modules`, same as every prior run).
 
 ## Completed
 
@@ -719,6 +699,60 @@ Completed for detail.
   reusable bullet in `design/PATTERN_VOCABULARY.md`'s Localization
   section. One commit; `tsc --noEmit` clean, full suite green
   (121/121, 1291/1291).
+- Run 29, no rebase needed (branch already at origin/main b748ca3, no
+  new commits landed since run 28's rebase); no REVIEW FEEDBACK pending.
+  Plan item 6's first slice, the concrete first target run 25's sweep
+  flagged and run 28's Next note queued: `utils/a11y.ts`'s
+  `selectableLabel` hardcoded the English words "selected"/"not
+  selected" with no catalog key at all, so every selectable chip/row/tab
+  in the app spoke that word in English regardless of the picked
+  language. Added `common.selected`/`common.notSelected` to
+  `constants/strings.ts` and gave `selectableLabel` a `strings: Catalog`
+  third parameter, the standard added-parameter shape. Threaded through
+  every real call site: three already-`useStrings()`-converted files
+  that had `strings` in scope (`CurrencySheet.tsx`, `LanguageSheet.tsx`
+  at two call sites, `SpentKeptChips.tsx` at two call sites) and two
+  shared leaf components not yet catalog-converted at all,
+  `components/ui/Chip.tsx` and `components/ui/SegmentedControl.tsx`
+  (added `useStrings()` to both). Converting those two shared leaves
+  needed the standard transitive-render-tree check: every screen/sheet
+  that renders either (`ExpenseSheet.tsx`, `AddUpcomingSheet.tsx`,
+  `BreakHabitSheet.tsx`, `UpcomingList.tsx`, `SpendPulse.tsx`,
+  `app/(tabs)/insights.tsx`, `app/(tabs)/money.tsx`) was already
+  `useStrings()`-converted and its tests already carried
+  `LocaleProvider`, except two: `selectionHaptics.test.tsx` (renders
+  `SegmentedControl` directly, no `LocaleProvider` at all) and
+  `categoryChipRow.test.tsx` (renders `Chip` transitively through
+  `CategoryChipRow`, also needed the standard AsyncStorage jest mock
+  added since `LocaleProvider` reads the persisted override through it).
+  Both fixed the same way as every other shared-component conversion in
+  this stream. `__tests__/a11y.test.ts` and the four test files that
+  call `selectableLabel` directly to build a `getByLabelText` query
+  (`currencySheet`, `languageSheet`, `insightsFirstScan`,
+  `insightsPager`) got the third argument added: the static `strings`
+  import where the file's device locale is English, `getCatalog('fr')`
+  in `languageSheet.test.tsx` (three call sites) since that whole file
+  mocks the device to French, matching each file's own established
+  pattern.
+
+  Before starting, confirmed `presetChipLabel`/`editedChipLabel` (the
+  file's other two "selected"/"not selected" helpers, both for
+  onboarding preset chips) are dead code: zero real call sites anywhere
+  outside `utils/a11y.ts` and its own unit test. Left both on their
+  original hardcoded-English signature, same treatment given
+  `habitDetail`/`reports`/`editExpenseModal`/`ViewQuote` in earlier
+  runs; documented in a code comment on both functions and in
+  `design/PATTERN_VOCABULARY.md`'s Localization section. Item 6's
+  checkbox stays open: the rest of `utils/a11y.ts` still hardcodes
+  English, split between locked-vocabulary-gated (`weekDotLabel`,
+  `calendarCellLabel`, `keptHeroLabel`, `arcLabel`, all read
+  `skipped`/`slipped`/`Kept`/`skips` directly) and ungated candidates
+  for a future slice (`remindToggleLabel`, `projectionTrendLabel`,
+  `pulseCellLabel`, `habitCardLabel`, `amountInputLabel`,
+  `fillMerchantLabel`, `deleteCategoryLabel`, `reminderTimeLabel`,
+  `settingsRowLabel`); full detail in PLAN.md's run 29 entry. One
+  commit; `tsc --noEmit` clean, full suite green (121/121, 1291/1291) on
+  the first run, no flake.
 
 ## Next
 
@@ -762,16 +796,17 @@ blocked until Charen answers at least one of those two open questions
 `leakDismissed`/`stoppedHistoryKept` are settled (same locked-vocabulary
 gate).
 
-**Still true as of run 28: item 4 is blocked on Charen for further
+**Still true as of run 29: item 4 is blocked on Charen for further
 progress** (DECISIONS NEEDED unanswered: the locked-vocabulary proposal
 table and the `paywall` pricing/legal go-ahead). A future run picking
 item 4 first should check DECISIONS NEEDED before assuming there is a
-fresh, ungated section left to translate; there is not, as of run 28.
-Run 28 worked the named fallback (item 2's `daysUntilLabel` case, now
-done, see Completed); if neither DECISIONS NEEDED gate has moved by the
-next run, item 5/6 (overflow hardening, localized a11y labels) are the
-remaining fallbacks that do not depend on the locked vocabulary
-decision. Item 6 already has a concrete first target queued (see below).
+fresh, ungated section left to translate; there is not, as of run 29.
+Run 28 worked one named fallback (item 2's `daysUntilLabel` case) and
+run 29 worked another (item 6's `selectableLabel` slice, now done, see
+Completed); if neither DECISIONS NEEDED gate has moved by the next run,
+item 6 has a fresh, concrete, ungated next slice queued (see below,
+replacing the one run 29 just closed), and item 5 (overflow hardening)
+remains untouched as a further fallback.
 
 What is actually left for a future run:
 - Plan item 2's broader ICU/pluralization checkbox (function-valued
@@ -798,16 +833,22 @@ What is actually left for a future run:
   translated section as item 4 progresses, ideally in the same run that
   translates it (cheaper than a separate pass once the list of
   translated sections grows further).
-- Plan item 6 (localized a11y labels) has a concrete first target now,
-  found during run 25's sweep: `utils/a11y.ts`'s
-  `selectableChipLabel`/`presetChipLabel`/`exactPriceChipLabel` helpers
-  hardcode English "selected"/"not selected" in the template string
-  itself, with no catalog key at all, so every chip's accessibility
-  label ends in literal English regardless of the picked language.
-  Needs two new `common` keys (`selected`/`notSelected`) threaded into
-  all three helpers when item 6's turn comes.
-- Plan items 5 (overflow hardening) and 6 (localized a11y labels)
-  otherwise stay sequenced after item 4, as scoped.
+- Plan item 6 (localized a11y labels): run 29 closed the first slice
+  (`selectableLabel`, see Completed and PLAN.md's run 29 entry). Two
+  groups remain in `utils/a11y.ts`, both confirmed ungated or gated
+  during run 29's pass, not yet re-verified for a future run: locked-
+  vocabulary-gated (`weekDotLabel`, `calendarCellLabel`, `keptHeroLabel`,
+  `arcLabel`; wait for the same DECISIONS NEEDED table item 4 is
+  waiting on) and ungated candidates for the next slice
+  (`remindToggleLabel`, `projectionTrendLabel`, `pulseCellLabel`,
+  `habitCardLabel`, `amountInputLabel`, `fillMerchantLabel`,
+  `deleteCategoryLabel`, `reminderTimeLabel`, `settingsRowLabel`). Check
+  each for a real call site before converting, the same
+  confirm-before-converting rigor `presetChipLabel`/`editedChipLabel`
+  needed this run (both turned out dead).
+- Plan item 5 (overflow hardening) is still untouched, sequenced after
+  item 4 as scoped, and does not depend on the locked-vocabulary
+  decision either.
 
 ## Blockers
 
