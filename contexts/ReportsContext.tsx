@@ -42,22 +42,44 @@ function getDefaultConfig(): DashboardConfig {
   };
 }
 
-function getDateRangeForTimeRange(timeRange: TimeRange): { start: Date; end: Date } {
-  const end = new Date();
-  const start = new Date();
+/**
+ * How many calendar days the 'week' window covers, counting today. 7 calendar
+ * days ending today, the convention `merchantDays7` uses in
+ * utils/habitDetection.ts (`daysAgo <= 6`), so the reports rollup and the habit
+ * detector answer "the last 7 days" with the same set of days. Insights imports
+ * this for its range label, so the window and the label can never drift.
+ */
+export const WEEK_WINDOW_DAYS = 7;
+
+/**
+ * The window a TimeRange covers, floored to local midnight at the start and
+ * extended to the end of today. `now` is injectable so the pure calculators
+ * below can be tested against a pinned clock.
+ *
+ * Only 'week' has a caller (app/(tabs)/insights.tsx). The other three cases are
+ * dead paths left from the retired widget dashboard; they keep their original
+ * "step back one unit" semantics rather than being quietly redefined here.
+ */
+export function getDateRangeForTimeRange(
+  timeRange: TimeRange,
+  now: Date = new Date()
+): { start: Date; end: Date } {
+  const end = new Date(now);
+  const start = new Date(now);
 
   switch (timeRange) {
     case 'week':
-      start.setDate(end.getDate() - 7);
+      // Inclusive of today, so today plus the six days before it.
+      start.setDate(now.getDate() - (WEEK_WINDOW_DAYS - 1));
       break;
     case 'month':
-      start.setMonth(end.getMonth() - 1);
+      start.setMonth(now.getMonth() - 1);
       break;
     case 'quarter':
-      start.setMonth(end.getMonth() - 3);
+      start.setMonth(now.getMonth() - 3);
       break;
     case 'year':
-      start.setFullYear(end.getFullYear() - 1);
+      start.setFullYear(now.getFullYear() - 1);
       break;
   }
 
@@ -65,6 +87,94 @@ function getDateRangeForTimeRange(timeRange: TimeRange): { start: Date; end: Dat
   end.setHours(23, 59, 59, 999);
 
   return { start, end };
+}
+
+/**
+ * Spending grouped by category over a TimeRange. Pure, so it can be exercised
+ * without mounting the provider; the context method below delegates to it.
+ */
+export function computeSpendingByCategory(
+  expenses: Expense[],
+  categories: Category[],
+  timeRange: TimeRange,
+  now: Date = new Date()
+): SpendingByCategory[] {
+  const { start, end } = getDateRangeForTimeRange(timeRange, now);
+  const filtered = expenses.filter(e => e.date >= start && e.date <= end);
+
+  const totalSpent = filtered.reduce((sum, e) => sum + e.amount, 0);
+  if (totalSpent === 0) return [];
+
+  // Group by category
+  const byCategory = new Map<string, number>();
+  for (const expense of filtered) {
+    const key = expense.category;
+    byCategory.set(key, (byCategory.get(key) || 0) + expense.amount);
+  }
+
+  // Build result
+  const result: SpendingByCategory[] = [];
+  for (const [categoryName, amount] of byCategory) {
+    const category = categories.find(c => c.name === categoryName);
+    result.push({
+      categoryId: category?.id || categoryName,
+      categoryName,
+      categoryColor: category?.color || '#9E9E9E',
+      amount,
+      percentage: Math.round((amount / totalSpent) * 100),
+    });
+  }
+
+  // Sort by amount descending
+  result.sort((a, b) => b.amount - a.amount);
+  return result;
+}
+
+/**
+ * This month's pace against last month. Pure, same reasoning as above.
+ *
+ * Both month windows use an exclusive upper bound, so no expense can fall in
+ * the gap between "the last day at 00:00" and the end of that day. Last month
+ * is [lastMonthStart, monthStart), matching `hasFullMonthOfData`'s
+ * `e.date < monthStart` in utils/recurring.ts.
+ */
+export function computeMonthlyProjection(
+  expenses: Expense[],
+  now: Date = new Date()
+): MonthlyProjection {
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  const daysInMonth = monthEnd.getDate();
+  const dayOfMonth = now.getDate();
+  const daysRemaining = daysInMonth - dayOfMonth;
+
+  // Current month spending
+  const currentMonthExpenses = expenses.filter(e => e.date >= monthStart && e.date <= now);
+  const currentSpent = currentMonthExpenses.reduce((sum, e) => sum + e.amount, 0);
+
+  // Average daily spending
+  const averageDaily = dayOfMonth > 0 ? currentSpent / dayOfMonth : 0;
+
+  // Projected total
+  const projectedTotal = currentSpent + (averageDaily * daysRemaining);
+
+  // Last month comparison
+  const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const lastMonthExpenses = expenses.filter(e => e.date >= lastMonthStart && e.date < monthStart);
+  const lastMonthTotal = lastMonthExpenses.reduce((sum, e) => sum + e.amount, 0);
+
+  const comparedToLastMonth = lastMonthTotal > 0
+    ? Math.round(((projectedTotal - lastMonthTotal) / lastMonthTotal) * 100)
+    : 0;
+
+  return {
+    currentSpent,
+    projectedTotal: Math.round(projectedTotal),
+    averageDaily: Math.round(averageDaily),
+    daysRemaining,
+    comparedToLastMonth,
+    lastMonthTotal,
+  };
 }
 
 export function ReportsProvider({ children }: { children: React.ReactNode }) {
@@ -177,37 +287,7 @@ export function ReportsProvider({ children }: { children: React.ReactNode }) {
     expenses: Expense[],
     categories: Category[],
     timeRange: TimeRange
-  ): SpendingByCategory[] => {
-    const { start, end } = getDateRangeForTimeRange(timeRange);
-    const filtered = expenses.filter(e => e.date >= start && e.date <= end);
-
-    const totalSpent = filtered.reduce((sum, e) => sum + e.amount, 0);
-    if (totalSpent === 0) return [];
-
-    // Group by category
-    const byCategory = new Map<string, number>();
-    for (const expense of filtered) {
-      const key = expense.category;
-      byCategory.set(key, (byCategory.get(key) || 0) + expense.amount);
-    }
-
-    // Build result
-    const result: SpendingByCategory[] = [];
-    for (const [categoryName, amount] of byCategory) {
-      const category = categories.find(c => c.name === categoryName);
-      result.push({
-        categoryId: category?.id || categoryName,
-        categoryName,
-        categoryColor: category?.color || '#9E9E9E',
-        amount,
-        percentage: Math.round((amount / totalSpent) * 100),
-      });
-    }
-
-    // Sort by amount descending
-    result.sort((a, b) => b.amount - a.amount);
-    return result;
-  }, []);
+  ): SpendingByCategory[] => computeSpendingByCategory(expenses, categories, timeRange), []);
 
   const calculateSpendingOverTime = useCallback((
     expenses: Expense[],
@@ -272,42 +352,10 @@ export function ReportsProvider({ children }: { children: React.ReactNode }) {
     return Array.from(groups.values()).sort((a, b) => a.date.getTime() - b.date.getTime());
   }, []);
 
-  const calculateMonthlyProjection = useCallback((expenses: Expense[]): MonthlyProjection => {
-    const now = new Date();
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-    const daysInMonth = monthEnd.getDate();
-    const dayOfMonth = now.getDate();
-    const daysRemaining = daysInMonth - dayOfMonth;
-
-    // Current month spending
-    const currentMonthExpenses = expenses.filter(e => e.date >= monthStart && e.date <= now);
-    const currentSpent = currentMonthExpenses.reduce((sum, e) => sum + e.amount, 0);
-
-    // Average daily spending
-    const averageDaily = dayOfMonth > 0 ? currentSpent / dayOfMonth : 0;
-
-    // Projected total
-    const projectedTotal = currentSpent + (averageDaily * daysRemaining);
-
-    // Last month comparison
-    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
-    const lastMonthExpenses = expenses.filter(e => e.date >= lastMonthStart && e.date <= lastMonthEnd);
-    const lastMonthTotal = lastMonthExpenses.reduce((sum, e) => sum + e.amount, 0);
-
-    const comparedToLastMonth = lastMonthTotal > 0
-      ? Math.round(((projectedTotal - lastMonthTotal) / lastMonthTotal) * 100)
-      : 0;
-
-    return {
-      currentSpent,
-      projectedTotal: Math.round(projectedTotal),
-      averageDaily: Math.round(averageDaily),
-      daysRemaining,
-      comparedToLastMonth,
-    };
-  }, []);
+  const calculateMonthlyProjection = useCallback(
+    (expenses: Expense[]): MonthlyProjection => computeMonthlyProjection(expenses),
+    []
+  );
 
   // Every field is either plain state (config, isLoading) or a useCallback
   // already listed here, so this deps list is exhaustive.

@@ -11,7 +11,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
-import { useReports } from '@/contexts/ReportsContext';
+import { useReports, WEEK_WINDOW_DAYS } from '@/contexts/ReportsContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
 import { useCategories } from '@/contexts/CategoriesContext';
 import { useHabits } from '@/contexts/HabitsContext';
@@ -45,13 +45,6 @@ type InsightsView = 'month' | 'scan';
 /** Pane order, left to right. Matches the segmented control above them, and
  *  module-level so the pager's handlers keep a stable identity across renders. */
 const INSIGHTS_VIEWS = ['month', 'scan'] as const satisfies readonly InsightsView[];
-
-/**
- * The "where it went" window. 'week' is the only TimeRange whose day count is
- * exact (getDateRangeForTimeRange steps back 7 days), so the range label can
- * name the window honestly.
- */
-const WHERE_IT_WENT_DAYS = 7;
 
 export default function InsightsScreen() {
   const insets = useSafeAreaInsets();
@@ -197,7 +190,9 @@ export default function InsightsScreen() {
   // still applies once there IS month data but no leak has been detected yet.
   const monthHasData = expenses.length > 0 || leakRows.length > 0;
 
-  // 2. Where it went: reuse the single category rollup implementation.
+  // 2. Where it went: reuse the single category rollup implementation. The
+  // 'week' window and the range label below both read WEEK_WINDOW_DAYS, so the
+  // card cannot claim a number of days it did not sum.
   const spendingByCategory = useMemo(
     () => calculateSpendingByCategory(expenses, categories, 'week'),
     [calculateSpendingByCategory, expenses, categories]
@@ -212,26 +207,23 @@ export default function InsightsScreen() {
 
   const monthLabel = useMemo(() => formatDate(new Date(), { month: 'long' }), []);
 
-  // The projection contract returns the last-month delta as a percentage only,
-  // so the money gap is summed here over the same previous-calendar-month
-  // window ReportsContext uses. No projection math is duplicated.
+  // The projection contract carries the last-month total, so the money gap is
+  // read off it rather than re-summed here. The local lastMonthStart survives
+  // only to name the month; no window and no projection math is duplicated.
   const comparison: PaceComparison | null = useMemo(() => {
     if (!projection) return null;
-    const now = new Date();
-    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
-    const lastMonthTotal = expenses
-      .filter((e) => e.date >= lastMonthStart && e.date <= lastMonthEnd)
-      .reduce((sum, e) => sum + e.amount, 0);
+    const { lastMonthTotal } = projection;
     if (lastMonthTotal === 0) return null;
 
+    const now = new Date();
+    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const delta = projection.projectedTotal - lastMonthTotal;
     return {
       differenceCents: Math.abs(delta),
       direction: delta <= 0 ? 'under' : 'over',
       monthLabel: formatDate(lastMonthStart, { month: 'long' }),
     };
-  }, [projection, expenses]);
+  }, [projection]);
 
   // Entitlement touchpoint (ADR 0007, BET-004): the pick-one sheet blocks Start
   // once the active-habit count reaches the entitlement ceiling.
@@ -311,7 +303,7 @@ export default function InsightsScreen() {
 
                 <WhereItWentCard
                   rows={spendingByCategory}
-                  rangeLabel={strings.insights.whereItWentRange(WHERE_IT_WENT_DAYS)}
+                  rangeLabel={strings.insights.whereItWentRange(WEEK_WINDOW_DAYS)}
                 />
 
                 <PaceCard monthLabel={monthLabel} projection={projection} comparison={comparison} />
