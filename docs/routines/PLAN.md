@@ -541,6 +541,60 @@ queue has now sat untouched since run 6, run 11 already flagged it once,
 and nothing in its content has changed (18 runs idle on the decision
 queue itself, though this run did do real rebase work).
 
+## Run 25: rebase across two real content conflicts, no new plan work
+
+`git rev-list --left-right --count origin/main...routine/core-p3` returned
+`14 29`: `origin/main` had moved 14 commits since run 24's rebase (the
+2026-09-10 "sheets: one platform pattern" pinned-title/pinned-footer
+rewrite of `Sheet.tsx`, PRs #155-#159, plus the leak-funnel/check-in-card
+wave). This flipped the usual mechanical `design/decisions/README.md`
+conflict into three genuine ones, all in the same run-4 entitlement-gate
+commit (`dd2c1b0`):
+
+1. `components/habit-logging/PickOneSheet.tsx` and
+   `components/onboarding/BreakHabitSheet.tsx`, same shape in both files.
+   Main's pinned-footer rewrite moved each gated sheet's CTA buttons out of
+   the scrolling body into the new `footer` prop, but that footer was still
+   the old undifferentiated "See Premium / Maybe later" pair with no
+   `atCeiling` branch. This branch's run-4 commit had added the
+   `atCeiling`-conditional footer (ceiling dismiss vs upgrade pitch) back
+   when the CTAs still lived in the scrolling body. Resolved by moving the
+   `atCeiling` conditional onto the new `footer` prop in both files (ceiling
+   → single `ceilingDismiss` button, otherwise the existing upgrade/maybe-later
+   pair) and deleting the now-redundant in-body button block and its
+   `style={styles.primary}` (confirmed dead: `styles.primary` is not defined
+   in either file post-rewrite). The gated body content itself (evidence
+   block, gate card, `atCeiling`-conditional copy) merged clean, untouched.
+2. `design/decisions/components/BreakHabitSheet.md`, an add/add conflict:
+   main's 2026-09-10 redesign entry (annotation set 1, new Sheet platform)
+   and this branch's 2026-09-05 entitlement-gate entry were two independent
+   rewrites of the same file with no shared ancestor content. Resolved by
+   keeping main's current Direction/States/Decisions/Open/Iterations as the
+   base (it reflects the file as it actually reads today) and folding in
+   this branch's entitlement decision as an additional Decisions/Iterations
+   entry, plus one added sentence in States noting the gate still splits on
+   `entitlement`, and one added Open line for the pre-existing gated-only
+   test-coverage gap. Nothing from either side dropped.
+
+Fresh `npm install` (node_modules removed first), `npx tsc --noEmit` clean.
+`npm test`: 117 suites / 1206 tests green on the first attempt, no flake
+(both `pickOneSheet.test.tsx` and `breakHabitSheetGate.test.tsx` pass,
+confirming the footer restructuring didn't change either gate's observable
+behavior). Force-with-lease pushed. PR #132 confirmed via the API: head and
+base both updated to match (base now `9376cc2`, main's current tip), open,
+not draft, merged false, zero comments, zero reviews, unchanged since run
+15's last review. Re-checked `habitcents-ops/PUNCHLIST.md`'s RESUME marker
+fresh: the new items since run 24 (a profile-modal-vs-push navigation
+decision, a how-it-works scroll-fade question, sheet drag-to-dismiss device
+verification, the known `door3BreakSheet.test.tsx` CI flake, a Categories
+empty-subtitle polish note) are all design/QA-shaped, none payments/legal;
+the one core-p3-flagged line (leak finder dated entitlement) is still the
+same item already built and closed at run 8. Checklist unchanged, still
+fully `[x]`/`(C)`. No new push notification: the decision queue has sat
+untouched since run 6 (now 19 runs idle on the queue itself), run 11
+already flagged it once, and nothing in its content has changed, though
+this run did real rebase-and-resolve work.
+
 ## If this routine fires again
 
 The branch and PR stay open until Charen merges or closes them (routine
