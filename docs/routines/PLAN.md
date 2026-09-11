@@ -595,6 +595,22 @@ untouched since run 6 (now 19 runs idle on the queue itself), run 11
 already flagged it once, and nothing in its content has changed, though
 this run did real rebase-and-resolve work.
 
+## Run 26: rebase, no conflicts despite the crossing warning, no new plan work
+
+`origin/main` moved 4 commits since run 25's rebase point (`9376cc2` to
+`683ecc3`: the four QA-loop PRs #161-#164, including #163's paywall
+readable-at-rest layout). Run 25's REVIEW FEEDBACK named real crossing risk
+in `constants/strings.ts`, `app/(tabs)/index.tsx`, `app/(tabs)/insights.tsx`,
+and `contexts/HabitsContext.tsx`, but the rebase completed with zero
+conflicts: the edited regions in each shared file didn't land adjacent to
+each other. Spot-checked all four named files after rebasing to confirm
+nothing silently dropped; full detail in `docs/routines/HANDOFF.md`'s run 26
+section. No new REVIEW FEEDBACK, no new PUNCHLIST core-p3 item (its RESUME
+marker is still the 2026-09-10 interaction-audit wave, all design/QA-shaped),
+checklist unchanged, still fully `[x]`/`(C)`. `npx tsc --noEmit` clean,
+`npm test` 121 suites / 1265 tests green on the first attempt, no flake (up
+from 117/1206, all from main's own QA-wave tests carried in by the rebase).
+
 ## If this routine fires again
 
 The branch and PR stay open until Charen merges or closes them (routine
