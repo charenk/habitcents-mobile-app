@@ -986,8 +986,6 @@ the status board's DECISIONS NEEDED for Charen; do not decide it
 yourself. The mechanism ADR will be drafted by the orchestrator once
 that answer lands, so it records the final shape.
 
-## REVIEW FEEDBACK (2026-09-11 addition)
-
 2026-09-11, orchestrator, runs 15-25 reviewed (through badc0ab; runs
 15-23 docs-only re-verifies, run 24 a clean rebase, run 25 the real
 one). **Approved, no fixes owed.** Run 25's three conflict
