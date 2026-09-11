@@ -467,12 +467,19 @@ export function HabitsProvider({ children }: { children: React.ReactNode }) {
     };
 
     const updatedGoals = [...goals, newGoal];
-    const updatedHabits = habits.map(h =>
+    // Map over the ref, not the render closure. The break sheet seeds and
+    // starts in one handler tick, so the closure `habits` predates the seed:
+    // mapping it here silently DROPPED the just-seeded habit from the commit,
+    // leaving a goal with no habit behind it (no Breaking now card, dock
+    // flipped, survived relaunch - found on device 2026-09-10). The find
+    // above already read through the ref for exactly this reason.
+    const currentHabits = habitsRef.current;
+    const updatedHabits = currentHabits.map(h =>
       h.id === habitId
         ? { ...h, status: 'changing' as HabitStatus, changeGoal: newGoal }
         : h
     );
-    await commitGoalsAndHabits(updatedGoals, updatedHabits, goals, habits);
+    await commitGoalsAndHabits(updatedGoals, updatedHabits, goals, currentHabits);
 
     track('habit_goal_created', { cadence: habit.frequency, value_edited: valueEdited });
     track('habit_tracking_started', { cadence: habit.frequency, source: source ?? 'unknown' });

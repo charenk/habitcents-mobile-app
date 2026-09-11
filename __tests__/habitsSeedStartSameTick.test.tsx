@@ -23,7 +23,7 @@ import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { HabitsProvider, useHabits } from '@/contexts/HabitsContext';
 
 function Harness() {
-  const { seedDiscoveredHabit, startBreakingHabit, getGoalByHabitId } = useHabits();
+  const { seedDiscoveredHabit, startBreakingHabit, getGoalByHabitId, getActiveHabits } = useHabits();
   const [outcome, setOutcome] = React.useState<'pending' | 'ok' | 'threw'>('pending');
   const [habitId, setHabitId] = React.useState<string | null>(null);
 
@@ -48,11 +48,13 @@ function Harness() {
   };
 
   const goal = habitId ? getGoalByHabitId(habitId) : undefined;
+  const active = habitId ? getActiveHabits().find((h) => h.id === habitId) : undefined;
   return (
     <>
       <Button title="run" onPress={run} />
       <Text testID="outcome">{outcome}</Text>
       <Text testID="goal">{goal ? 'goal-created' : 'no-goal'}</Text>
+      <Text testID="habit">{active ? `habit-${active.status}` : 'habit-gone'}</Text>
     </>
   );
 }
@@ -77,4 +79,10 @@ it('seed then start in one handler tick creates the goal without throwing', asyn
 
   expect(view.getByTestId('outcome').props.children).toBe('ok');
   expect(view.getByTestId('goal').props.children).toBe('goal-created');
+  // The sharper half of the regression (device find, 2026-09-10): the FIRST
+  // fix made the lookup read through habitsRef, but the status-flip map still
+  // ran over the stale closure, so the commit dropped the seeded habit
+  // entirely - a goal with no habit behind it, no Breaking now card, and the
+  // detection meter back on screen. The habit must survive as 'changing'.
+  expect(view.getByTestId('habit').props.children).toBe('habit-changing');
 });
