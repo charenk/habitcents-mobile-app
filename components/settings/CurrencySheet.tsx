@@ -74,7 +74,7 @@ export function CurrencySheet({ visible, onClose }: CurrencySheetProps): React.J
               onPress={() => handleSelect(c.code)}
               accessibilityRole="button"
               accessibilityState={{ selected }}
-              accessibilityLabel={selectableLabel(label, selected)}
+              accessibilityLabel={selectableLabel(label, selected, strings)}
               style={({ pressed }) => [
                 styles.row,
                 index === CURRENCIES.length - 1 && styles.rowLast,

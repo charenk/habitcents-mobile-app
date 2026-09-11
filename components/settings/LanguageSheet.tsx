@@ -62,7 +62,7 @@ export function LanguageSheet({ visible, onClose }: LanguageSheetProps): React.J
               onPress={() => handleSelect(null)}
               accessibilityRole="button"
               accessibilityState={{ selected: systemSelected }}
-              accessibilityLabel={selectableLabel(strings.settings.languageSystemDefault, systemSelected)}
+              accessibilityLabel={selectableLabel(strings.settings.languageSystemDefault, systemSelected, strings)}
               style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
             >
               <Text style={styles.rowLabel}>{strings.settings.languageSystemDefault}</Text>
@@ -80,7 +80,7 @@ export function LanguageSheet({ visible, onClose }: LanguageSheetProps): React.J
               onPress={() => handleSelect(l.code)}
               accessibilityRole="button"
               accessibilityState={{ selected }}
-              accessibilityLabel={selectableLabel(label, selected)}
+              accessibilityLabel={selectableLabel(label, selected, strings)}
               style={({ pressed }) => [
                 styles.row,
                 index === LOCALES.length - 1 && styles.rowLast,

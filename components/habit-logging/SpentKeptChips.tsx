@@ -120,7 +120,7 @@ export function SpentKeptChips({
         }}
         accessibilityRole="tab"
         accessibilityState={{ selected: spentSelected }}
-        accessibilityLabel={selectableLabel(spentValueLabel, spentSelected)}
+        accessibilityLabel={selectableLabel(spentValueLabel, spentSelected, strings)}
         style={[styles.segment, spentSelected ? styles.segmentSelected : null]}
         // DI-7: a stable non-a11y hook for tests, since both Today panes now
         // stay mounted and can carry their own "Kept"/"Spent"-prefixed a11y
@@ -162,7 +162,7 @@ export function SpentKeptChips({
         }}
         accessibilityRole="tab"
         accessibilityState={{ selected: keptSelected }}
-        accessibilityLabel={selectableLabel(keptValueLabel, keptSelected) + pendingSuffix}
+        accessibilityLabel={selectableLabel(keptValueLabel, keptSelected, strings) + pendingSuffix}
         style={[styles.segment, keptSelected ? styles.segmentSelected : null]}
         testID="kept-chip"
       >

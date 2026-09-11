@@ -18,6 +18,10 @@ export const strings = {
     keep: 'Keep',
     close: 'Close',
     dismiss: 'Dismiss',
+    // Accessibility state words appended to a selectable chip/row/tab's
+    // spoken label (utils/a11y.ts selectableLabel), e.g. "Food, selected".
+    selected: 'selected',
+    notSelected: 'not selected',
   },
   // Shared sheet chrome for the disabled-until-valid Save/Start convention
   // (ops ADR 0028, 2026-08-16): a disabled primary action carries an

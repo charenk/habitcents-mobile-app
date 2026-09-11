@@ -74,11 +74,11 @@ describe('CurrencySheet', () => {
 
     // Default currency is USD (DEFAULT_CURRENCY): the row carries both the
     // accessible "selected" status and a visible check icon, not just a tint.
-    const usdRow = view.getByLabelText(selectableLabel('US Dollar (USD)', true));
+    const usdRow = view.getByLabelText(selectableLabel('US Dollar (USD)', true, strings));
     expect(usdRow).toBeTruthy();
     expect(usdRow.props.accessibilityState).toMatchObject({ selected: true });
 
-    const eurRow = view.getByLabelText(selectableLabel('Euro (EUR)', false));
+    const eurRow = view.getByLabelText(selectableLabel('Euro (EUR)', false, strings));
     expect(eurRow.props.accessibilityState).toMatchObject({ selected: false });
   });
 
@@ -87,7 +87,7 @@ describe('CurrencySheet', () => {
     const view = await renderSheet(onClose);
 
     await act(async () => {
-      fireEvent.press(view.getByLabelText(selectableLabel('Euro (EUR)', false)));
+      fireEvent.press(view.getByLabelText(selectableLabel('Euro (EUR)', false, strings)));
     });
 
     expect(onClose).toHaveBeenCalledTimes(1);

@@ -11,6 +11,7 @@
  * re-formatted here), so zero-decimal currencies stay correct.
  */
 
+import type { Catalog } from '@/utils/i18n';
 import type { DayState } from '@/types/habit';
 
 /** Kept hero: one utterance, read on settle only (spec 09 §2, row "Kept hero"). */
@@ -46,16 +47,24 @@ export function arcLabel(totalSkips: number, chapterName: string): string {
 }
 
 /** A selectable chip: "{name}, {selected/not selected}" (spec 09 §2, "Log form", "Onboarding chips"). */
-export function selectableLabel(name: string, selected: boolean): string {
-  return `${name}, ${selected ? 'selected' : 'not selected'}`;
+export function selectableLabel(name: string, selected: boolean, strings: Catalog): string {
+  return `${name}, ${selected ? strings.common.selected : strings.common.notSelected}`;
 }
 
-/** An onboarding preset chip at its preset price (spec 09 §2, "Onboarding chips + bands"). */
+/**
+ * An onboarding preset chip at its preset price (spec 09 §2, "Onboarding
+ * chips + bands"). Confirmed dead (routine/localization, 2026-09-11): no
+ * real call site anywhere outside this file and its own unit test, so left
+ * on the static-English signature rather than threaded through the
+ * catalog, same treatment as the other dead sections this routine has
+ * found (habitDetail, reports, editExpenseModal). Convert if a real render
+ * path returns.
+ */
 export function presetChipLabel(name: string, formattedPreset: string, selected: boolean): string {
   return `${name}, about ${formattedPreset} a month, ${selected ? 'selected' : 'not selected'}`;
 }
 
-/** An onboarding preset chip after the user edits its price (spec 09 §2). */
+/** An onboarding preset chip after the user edits its price (spec 09 §2). Also dead; see presetChipLabel. */
 export function editedChipLabel(name: string, formattedExact: string, selected: boolean): string {
   return `${name}, ${formattedExact}, your price, ${selected ? 'selected' : 'not selected'}`;
 }

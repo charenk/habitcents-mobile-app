@@ -135,7 +135,7 @@ function segmentLabel(segment: 'month' | 'scan', selected: boolean): string {
     segment === 'scan'
       ? `${strings.insights.scanSegment}, ${strings.insights.scanSegmentBadgeSpoken}`
       : strings.insights.monthSegment;
-  return selectableLabel(spoken, selected);
+  return selectableLabel(spoken, selected, strings);
 }
 
 function isSelected(view: View, segment: 'month' | 'scan', selected: boolean): boolean {

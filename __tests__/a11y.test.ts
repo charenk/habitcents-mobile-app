@@ -16,6 +16,7 @@ import {
   deleteCategoryLabel,
   reminderTimeLabel,
 } from '@/utils/a11y';
+import { strings } from '@/constants/strings';
 
 describe('a11y label builders (spec 09)', () => {
   it('kept hero is one utterance with the money-you-did-not-spend framing', () => {
@@ -39,8 +40,8 @@ describe('a11y label builders (spec 09)', () => {
   });
 
   it('selectable chip announces selection state', () => {
-    expect(selectableLabel('Food', true)).toBe('Food, selected');
-    expect(selectableLabel('Food', false)).toBe('Food, not selected');
+    expect(selectableLabel('Food', true, strings)).toBe('Food, selected');
+    expect(selectableLabel('Food', false, strings)).toBe('Food, not selected');
   });
 
   it('onboarding preset chip uses the about-price framing, edited uses your-price', () => {
@@ -90,7 +91,7 @@ describe('a11y label builders (spec 09)', () => {
       weekDotLabel('Monday', 'skipped', false),
       calendarCellLabel('July', 4, 'slipped'),
       arcLabel(10, 'Rhythm'),
-      selectableLabel('Food', true),
+      selectableLabel('Food', true, strings),
       presetChipLabel('Music', '$11', false),
       editedChipLabel('Music', '$9', true),
       habitCardLabel(2, 'Influence', 'likely'),
