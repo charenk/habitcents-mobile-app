@@ -1470,3 +1470,153 @@ CASE STUDY MOMENT
 Recognised tool-input drift from contradictory screenshots, fell back to ground-truth captures and explicit touch paths, and corrected a merge-before-CI ordering on the next two pull requests.
 
 ---
+
+---
+
+## 2026-09-10 — Sheet platform clamp, break sheet redesign, card simplification, and the leak funnel that stopped promising
+
+### Session scan
+
+**Scope:** end of session
+**Built this session:** Three annotation sets from the designer became two merged PRs in one day: a platform-wide bottom-sheet rule (never past 80% of the screen, keyboard included, pinned title and footer), a redesigned break-habit sheet with mandatory names for impulse habits, a check-in card stripped to its habit loop with a new dollar-dot language, and a leak funnel where candidate rows replace a numeric progress meter. Also found and fixed a device bug a parallel session had flagged: starting a habit erased the habit while saving its goal.
+**Pillar scores:** P1: Strong · P2: Weak · P3: Strong · P4: Strong · P5: Strong
+
+---
+
+### P1 CONCEPT DISCOVERED — The progress bar that could not keep its promise
+
+**TWITTER POST**
+We killed a progress bar today. It said "2 of 4 logs at the same place" and filled toward a leak detection. The problem: the count and the detection disagree. Detection also applies a confidence floor and a minimum monthly spend, so the bar could reach 4 of 4, sit at 100%, and say "keep logging" forever. A progress bar is a promise about what happens at the end. If the system cannot keep that promise, the bar is not simplification, it is a lie with good typography. We replaced it with evidence: rows that show your actual buys and grow a Break button only when detection really fires.
+
+VISUAL NOTE: Before/after pair: the full "4 of 4 logs" meter next to the new candidate row with its 7-day strip.
+
+---
+
+**TWITTER THREAD**
+Tweet 1: We shipped a progress bar that could reach 100% and stay there forever. Today we killed it, and the reason generalizes.
+Tweet 2: The bar counted logs at one merchant: "2 of 4 logs at the same place." Four logs was the detection threshold, so the bar filled toward a promised moment: your leak gets found.
+Tweet 3: Except the count was not the whole gate. Detection also applies a confidence floor (four scattered logs score 0.45 against a 0.5 floor) and a minimum monthly spend. And dismissing a found leak removes it permanently, which drops you back onto a full bar.
+Tweet 4: So the honest states of that bar included "100%, nothing happened, keep logging." A user cannot tell that apart from "broken." We could not fix the copy, because the copy was not the problem. The promise was.
+Tweet 5: The replacement makes no promise. A merchant with two logs becomes a row showing real evidence: which of the last 7 days had a buy, how much so far. When detection actually fires, the same row grows a Break button in place.
+Final tweet: A progress bar is a contract about its own last pixel. If any hidden gate sits between 100% and the payoff, show evidence instead of progress.
+
+VISUAL NOTE: Tweet 3 wants the two-line math: 4 logs, confidence 0.45, floor 0.5.
+
+---
+
+**LINKEDIN POST**
+Today we deleted a well-meaning progress bar, and I think the reasoning applies to most product funnels.
+
+The bar counted how many times you had logged spending at one merchant: "2 of 4 logs at the same place," filling toward the moment the app names your leak. Four was the real detection threshold, so this looked like honest progress.
+
+It was not, because the count was not the whole gate. Detection also applies a confidence floor that exactly four scattered logs cannot pass, and a minimum monthly spend. Dismissing a found leak removes it permanently, which lands you back on a full bar. So the bar had a reachable state that read "100%, keep logging" and meant nothing. The designer flagged it from screenshots before any of us traced the code; the code trace showed it was worse than the screenshots suggested.
+
+The fix was not better copy. It was withdrawing the promise. A merchant now earns a compact row at its second log, showing evidence rather than progress: which of the last seven days had a buy, and the observed total. When detection genuinely fires, that same row grows its Break button in place. Nothing counts toward a moment the system might not deliver.
+
+The principle I took away: a progress bar is a contract about what happens at its last pixel. If any hidden gate sits between 100% and the payoff, show the user their own evidence instead.
+
+VISUAL NOTE: The before/after pair, meter versus candidate row.
+
+---
+
+CASE STUDY MOMENT
+Replaced a numeric detection meter, whose full-bar state was reachable and permanent, with evidence rows that graduate into the action only when the system can actually deliver it.
+
+---
+
+### P3 PLATFORM PATTERN — One height rule for every drawer
+
+**TWITTER POST**
+Audit finding: eight bottom sheets each carried their own max-height cap (0.82 or 0.86 of the window), five had no cap at all, and every cap measured the full window, so the software keyboard still pushed tall sheets off the top of the screen with the drag handle invisible. The fix was one pure function: a sheet is at most 80% of the window, and with the keyboard up, at most the visible strip above it. The keyboard height comes from where its top edge lands, not from trusting a resize event, so the same math holds on iOS and Android. Fifteen call sites deleted their local rules.
+
+VISUAL NOTE: The break sheet with the keyboard up, handle and title still visible above it.
+
+---
+
+**LINKEDIN POST**
+A platform lesson from this week: when the same constant appears eight times with two different values, neither value is the design.
+
+Our bottom sheets each capped their own height: some at 82% of the window, some at 86%, five not at all. Every cap measured the full window height, which the software keyboard does not respect, so a tall sheet with the keyboard open slid off the top of the screen and took its drag handle with it. The designer's screenshot of that state is what opened the whole audit.
+
+The replacement is one pure function in one file: a sheet never exceeds 80% of the window, and with the keyboard up it is clamped to the visible strip above the keyboard, with a floor so landscape cannot crush it. Keyboard height is derived from where the keyboard's top edge lands on screen rather than from trusting a resize event, which makes the same arithmetic correct on both platforms, including inside a translucent modal that Android never resizes. Because it is a pure function, the height rule has unit tests, which none of the eight scattered constants ever had.
+
+The structural half of the same change: the sheet primitive now owns the body scroll and a pinned footer slot, so titles stay visible, buttons stay reachable, and a negative-margin hack that one sheet used to stick its keyboard bar in place got deleted rather than documented.
+
+Fifteen call sites migrated. The pattern: when a rule matters, it should exist exactly once, in a form a test can hold.
+
+VISUAL NOTE: NONE.
+
+---
+
+CASE STUDY MOMENT
+Replaced eight per-sheet height caps and five uncapped sheets with one keyboard-aware, unit-tested height rule in the sheet primitive, then migrated all fifteen usages.
+
+---
+
+### P4 PRODUCT AND DESIGN JUDGMENT — Green is for the win, so the mock's legend got inverted
+
+**TWITTER POST**
+The designer proposed dollar-sign dots for the habit card: green dollar for a day you spent, gray for a day you skipped. I pushed back on the colors, not the glyph. This app has one hard palette rule: green marks the win, never the spend. So we shipped the inverse of the mock's legend: green dollar for money KEPT on the habit card, neutral gray dollar for spend evidence on the leak rows. Now the whole app reads as one sentence: gray dollars are money leaving, green dollars are money you decided to keep.
+
+VISUAL NOTE: The two strips side by side: leak row (gray dollars) above the habit card (green dollars).
+
+---
+
+**LINKEDIN POST**
+A small design decision I want to remember, because it is the kind that compounds.
+
+The designer sketched a new visual for habit tracking: seven circles for the week, a dollar sign in each, green when filled. In the sketch, green meant "you spent that day." The glyph was right, and the instinct to unify the visual language across the tracking card and the leak list was right. The colors could not ship, because this product has one locked palette rule: green is positive only. Green is the brand, the kept total, the win. A green dot celebrating a purchase would quietly teach users the opposite of what the product stands for.
+
+So we shipped the inverse of the sketch's legend. On the habit card, a green dollar fills a day you skipped: money kept. On the leak rows, a muted gray dollar marks a day you bought: evidence, not judgment, and definitely not a reward. Slips stay flat and neutral, never red, because a slip is information.
+
+What I like about the outcome is that the whole app now speaks one sentence with color: gray dollars are money leaving, green dollars are money you decided to keep. The designer took the inversion immediately once the rule was named. Consistency rules earn their keep on exactly these days: they turn a taste argument into a lookup.
+
+VISUAL NOTE: The two strips side by side.
+
+---
+
+CASE STUDY MOMENT
+Adopted the designer's dollar-dot proposal but inverted its color legend to honor the green-positive-only rule, producing one consistent money-color language across tracking and evidence surfaces.
+
+---
+
+### P5 BUILDING WITH AI HONESTLY — Two agents, one repo, one simulator
+
+**TWITTER POST**
+Honest notes from a day with two AI sessions on one codebase. Main moved five PRs while I built, including a refactor that relocated the exact function I was editing; the rebase meant re-applying my change inside their new shared hook. Our shared simulator kept dialing the other session's bundler no matter what I wrote to its config; the durable fix was claiming a separate device and naming it on every single tool call, because one screenshot tool defaulted to the other session's screen and I briefly debugged their app believing it was mine. And the best catch was not mine: the other session left a note that a green test suite was hiding a broken device flow. It was right.
+
+VISUAL NOTE: NONE.
+
+---
+
+**TWITTER THREAD**
+Tweet 1: Ran two AI coding sessions against one repo and one Mac today. What broke was never the code. It was every assumption about what "my environment" meant.
+Tweet 2: Main moved five pull requests while I worked, one of which extracted the exact code path I was modifying into a new shared hook. The rebase was fine because both sides changed things for stated reasons; my edit moved into their hook rather than fighting it.
+Tweet 3: The simulator was worse. The app on our shared device kept fetching JavaScript from the other session's bundler port, even after I rewrote the setting that controls it and cold-started the app. A clean reinstall fixed it once. Then it reverted.
+Tweet 4: I stopped fighting for the device and claimed a different one. And started passing the device id on every tool call, because the screenshot tool defaults to some booted device, and one of my screenshots was silently the other session's screen. I reasoned about it as mine for a full step.
+Tweet 5: The redeeming part: the other session had left a written note that a habit-creation flow was broken on device while its test suite stayed green, because the tests mock the data layer. The note was exactly right, and it saved me an hour of disbelief when I hit the same wall.
+Final tweet: Multi-agent coding works when the agents leave each other evidence: notes, records, regression tests against real providers. It fails when they share mutable state silently, like a simulator, a port, or an assumption.
+
+VISUAL NOTE: NONE.
+
+---
+
+**LINKEDIN POST**
+Notes from running two AI coding sessions against one repository, because the failure modes were not where I expected.
+
+The code part went fine. Main absorbed five pull requests from the other session while I built mine, including a refactor that moved the exact function I was editing into a new shared hook. The rebase resolved cleanly because both sides had written down why they changed what they changed, and my edit belonged inside their new structure rather than beside it.
+
+The environment part is where the honesty goes. The two sessions shared one iOS simulator, and the app on it kept loading code from the other session's bundler even after I rewrote the setting that points it at mine and cold-started it. A clean reinstall fixed it exactly once. The durable fix was to stop sharing: boot a dedicated device, and pass its identifier on every single tool call, because the screenshot tool falls back to some booted device and one of my screenshots was silently the other session's screen. I spent a step reasoning about an app state that was never mine.
+
+The best moment belonged to the other session. It had left a written warning that a habit-creation flow wrote its goal but lost the habit on a real device while the test suite stayed green, because those tests mock the data layer. The warning was precise and correct. I reproduced it live, traced it to a stale closure overwriting freshly written state, fixed it, and pinned the regression against the real provider so a mock can never hide it again.
+
+Multi-agent development seems to work on one condition: the agents leave each other evidence. Written findings, decision records, regression tests that touch real code paths. What breaks it is silently shared mutable state, whether that is a simulator, a port, or an untested assumption.
+
+VISUAL NOTE: NONE.
+
+---
+
+CASE STUDY MOMENT
+Reproduced and fixed a device-only data-loss bug flagged by a parallel session, pinned the regression against the real provider, and established dedicated-device discipline for multi-session simulator work.
+
+---
