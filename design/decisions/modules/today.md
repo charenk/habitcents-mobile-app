@@ -10,10 +10,20 @@ Vocabulary (ADR 0034): **Zero** nothing ever happened here; **Quiet** history el
 - Spent First log (Live overlay): logged-today list, InfoRibbon receipt under it, then the watch nudge (needs a merchant). Reach: Door 1 with a merchant.
 - Spent Quiet: honest $0.00 chip, persistent ribbon inside Today's log, no quote. Reach: returning user, delete today's rows.
 - Spent Live: rows, View all, no quote.
-- Kept Zero: no band, hook (a 96pt money sack since ADR 0036), one underlined link "Learn how skips and habits work" that opens [HowItWorksSheet](../components/HowItWorksSheet.md), and "Break your first habit" in the dock below (ADR 0038). No CTA in the stack and no explainer since 2026-09-07; no quote since ADR 0037. Same silhouette as Spent Zero. Kept Quiet: detection meter n of 4. Kept Live: Leaks found / Breaking now straight under the chips, no band since 2026-09-07; check-in sub-states pending, skipped, slipped, milestone, backfill, weekly. Reach: returning user; milestone, backfill, weekly and Door 3 are canvas only.
+- Kept Zero: no band, hook (a 96pt money sack since ADR 0036), one underlined link "Learn how skips and habits work" that opens [HowItWorksSheet](../components/HowItWorksSheet.md), and "Break your first habit" in the dock below (ADR 0038). No CTA in the stack and no explainer since 2026-09-07; no quote since ADR 0037. Same silhouette as Spent Zero. Kept Quiet: candidate leak rows from the second same-merchant log (one shared card, max three); with no candidate, the Zero hook and how-it-works link stay. Kept Live: Leaks found / Breaking now straight under the chips, no band since 2026-09-07; check-in sub-states pending, skipped, slipped, milestone, backfill, weekly. Reach: returning user; milestone, backfill, weekly and Door 3 are canvas only.
 - Sheets from Today: log, edit, pick one (and its gate), break habit, partial slip. See [drawers](drawers.md).
 
 ## Decisions
+- 2026-09-11 (Charen, annotation sets 2+3): the detection meter is gone. Its
+  1-of-4 fired on any first log (and 0-of-4 existed for merchantless logs),
+  its full bar was reachable and permanent after a dismissal (detection's
+  confidence and $20/month floors sit behind the count), and its Log an
+  expense CTA was an untracked pane switch. One Leaks section now carries
+  detected rows first and candidate rows after (LeakRow, two densities);
+  candidates need 2+ logs, dismissed merchants never resurface. Check-in
+  cards simplified to the loop (see CheckInCard.md); habit names are the
+  bare merchant (the " Spending" suffix died in detection); one $ dot
+  language app-wide - green $ = kept day, neutral $ = spend evidence.
 - 2026-09-07 (Charen): the "Kept so far" band is gone from the Kept pane in every state (Live and loading). Why: once a leak or a breaking habit exists it sat above the list repeating a number the chips and each habit's own stat already carry, and with the current patterns it was not valuable. The pane is the list plus the dock. Where the cross-habit total surfaces next is deferred. See [KeptHero](../components/KeptHero.md).
 - 2026-09-10 (Charen): the how-it-works sheet is rebuilt as one spine with two phases, and it now names the moment a leak becomes a habit. Why: the old four rows said "break a leak", the word for something the app found, about an act only the user can do, so a skip was never tied to a habit at all. Two headings, "First we find it" and "Then you break it", a row for the step that was missing (you pick one), and a connector that changes colour exactly at the handover. The long arc closes it with the money before the number, because "around 66 skips" alone reads as a wait when Kept in fact moves on skip one. See [HowItWorksSheet](../components/HowItWorksSheet.md).
 - 2026-09-10 (Charen): both docks come down to a 44pt field in a 66pt shell, the pill corners become a rounded rect (`radii.feature` outside, `radii.control` inside), Kept loses every fill so its dashed edge is the whole button, and the free-plan caption goes. Why, in one line each: more compact was asked for and the caption's removal freed the height; a fully round composer promised a corner the sheet behind it did not keep; a snow slab inside a dashed snow-grey outline was two containers doing one job; and a ceiling nobody has pressed against is not a thing to announce. Verified live on both panes at default and at `accessibility-extra-extra-extra-large`. See [DockCard](../components/DockCard.md) and [BreakHabitRow](../components/BreakHabitRow.md).
@@ -34,7 +44,7 @@ Vocabulary (ADR 0034): **Zero** nothing ever happened here; **Quiet** history el
 
 ## Open
 - Closed 2026-09-07 by removal: the Kept SectionList scrolled under the fixed band and cards clipped mid-scroll. The band is gone; the list scrolls between the chips and the dock and fades into the dock.
-- Detection names a leak "<merchant> Spending" ("Blue Bottle Spending" on the card and the pick-one sheet). Candidate: the merchant name alone.
+- RESOLVED 2026-09-11 (bare merchant name ships): detection named a leak "<merchant> Spending" ("Blue Bottle Spending" on the card and the pick-one sheet). Candidate: the merchant name alone.
 - "Skipped it · keeps $6.50" wraps to two lines at the default text size beside a one-line "Bought it".
 - Free tier at the limit: Break another routes to the paywall rather than the gated sheet the code also carries. Decide which is intended.
 - The FL-1 coach slot on Kept Quiet is snow on the snow ground and reads as floating text.

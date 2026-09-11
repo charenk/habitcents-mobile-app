@@ -1,4 +1,8 @@
-# LeakCard (components/habit-logging/LeakCard.tsx)
+# LeakCard - SUPERSEDED 2026-09-11 by LeakRow.md
+
+The component was removed; Today renders detected leaks as LeakRow's
+detected density inside its own card. History below for the record.
+
 
 ## Direction (current)
 The "Leaks found" card: name, evidence (observed count and total until the rate is reliable, then a monthly rate), Break it (primary) / Not this one (secondary), the DT-1 coach slot once. Real buttons, never swipe-only.

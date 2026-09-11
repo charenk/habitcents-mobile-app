@@ -46,6 +46,7 @@ const mockStartBreakingHabit = jest.fn(async () => ({}));
 
 jest.mock('@/contexts/HabitsContext', () => ({
   useHabits: () => ({
+    habits: mockHabits,
     goals: mockGoals,
     isLoading: false,
     refreshHabits: jest.fn(async () => {}),
@@ -253,7 +254,7 @@ describe('Today: zero-state composition (quotes retired, ADR 0037)', () => {
     const view = await renderToday();
 
     const keptPane = within(view.getByTestId('kept-pane'));
-    expect(keptPane.getByText(strings.habitLogging.leaksFoundSection)).toBeTruthy();
+    expect(keptPane.getByText(strings.habitLogging.leaksSection)).toBeTruthy();
     expect(keptPane.queryByText(strings.habitLogging.keptSoFar)).toBeNull();
     expect(keptPane.queryByTestId('kept-quote')).toBeNull();
   });
