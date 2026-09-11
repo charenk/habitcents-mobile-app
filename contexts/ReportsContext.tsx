@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useState, useCallback, use
 import { getDashboardConfig, saveDashboardConfig } from '@/utils/storage';
 import { strings } from '@/constants/strings';
 import { formatDate } from '@/utils/dates';
-import { expenseBelongsToCategory } from '@/utils/expenseCategory';
+import { resolveExpenseCategory } from '@/utils/expenseCategory';
 import type {
   DashboardConfig,
   ReportWidget,
@@ -94,7 +94,7 @@ export function getDateRangeForTimeRange(
  * Spending grouped by category over a TimeRange. Pure, so it can be exercised
  * without mounting the provider; the context method below delegates to it.
  *
- * Each row is resolved to a real Category through `expenseBelongsToCategory`
+ * Each row is resolved to exactly one Category through `resolveExpenseCategory`
  * before it is grouped, the same helper Categories and category detail use. A
  * name match alone missed the two defaults whose display name is not their
  * stored value ('Subscriptions' stores 'Software & Subscriptions', 'Home'
@@ -105,13 +105,9 @@ export function getDateRangeForTimeRange(
  * value survives only as the fallback for an orphan row whose category no
  * longer exists.
  *
- * An explicit categoryId is tried across the whole list BEFORE the helper's
- * name rungs. Every custom category writes 'Other' as the row's stored value
- * (`toExpenseCategory` falls back to it for any name it does not know) and the
- * default 'Other' sits ahead of every custom category in the list, so a plain
- * find-first over the helper would bank all custom-category spend under Other.
- * The id is a foreign key and the shared stored value is a coincidence, so the
- * key wins.
+ * The precedence (explicit categoryId before the name rungs) lives on
+ * resolveExpenseCategory, which Categories and category detail share, so all
+ * three surfaces bucket an expense the same way.
  */
 export function computeSpendingByCategory(
   expenses: Expense[],
@@ -128,9 +124,7 @@ export function computeSpendingByCategory(
   // Group by resolved category, falling back to the stored value for an orphan.
   const byCategory = new Map<string, { name: string; color: string; amount: number }>();
   for (const expense of filtered) {
-    const match =
-      (expense.categoryId ? categories.find(c => c.id === expense.categoryId) : undefined) ??
-      categories.find(c => expenseBelongsToCategory(expense, c));
+    const match = resolveExpenseCategory(expense, categories);
     const key = match?.id ?? expense.category;
     const existing = byCategory.get(key);
     if (existing) {
