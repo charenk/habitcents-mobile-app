@@ -751,3 +751,31 @@ No orchestrator review recorded yet for runs 12-14 as of this writing;
 run 14 marked the PR ready for review on its own authority per the
 routine's own completion instructions once the plan was fully checked, not
 pending a further review round on this branch.
+
+2026-09-11, orchestrator, runs 16-27 reviewed (through 26b3699; runs
+16-25 were docs-only status commits, runs 25-27 also carried the
+rebases). **Approved, no fixes owed.** The run 26 re-audit of main's
+Sheet.tsx rewrite was independently verified: the 600pt cap
+(`width: '100%'`, `maxWidth: layout.contentMaxWidth`,
+`alignSelf: 'center'`) is present on the rewritten panel style in
+`components/ui/Sheet.tsx` with its rationale comment intact, and the
+pinned footer slot renders inside that capped panel, so the audit's
+"footer inherits the cap for free" claim holds. Good discipline
+keeping runs 16-25 to one honest status line each instead of
+manufacturing work.
+
+Action for the next run, a real one: main gained four QA merges after
+run 26's rebase (#161-#164, main now 683ecc3), and #163 rewrote
+`app/paywall.tsx`'s layout (all three plans readable at rest). That is
+one of your four decision-1 fixed-footer cap surfaces, so the next
+rebase must re-audit the paywall cap against the new layout and re-run
+`paywallTabletCap.test.tsx`, not just replay commits. `app/(tabs)/
+index.tsx` (Kept-dot rework) and `app/(tabs)/insights.tsx` (`?view=`
+param) also moved; both are capped surfaces, so include them in the
+re-grep. Expect `logInPlace.test.tsx` and `todayQuoteRibbonPlacement.
+test.tsx` growth from the QA wave in the suite counts.
+
+Also noting for the device pass whenever it happens: TestFlight build
+24 went out 2026-09-11 from main 683ecc3, which does not carry this
+branch, so build 24 cannot serve as the iPad pass build. The pass
+still needs PR #133 merged first and a build after that.
