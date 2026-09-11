@@ -110,15 +110,19 @@ first pass, no flake: 118 suites / 1233 tests (up from run 27's 114/1174,
 entirely main's own four-commit test growth, net of nothing removed on
 this branch), including `paywallTabletCap.test.tsx`, `scopeScreen.test.tsx`,
 `billsScreen.test.tsx`, and `payoffScreen.test.tsx` (the other three
-decision-1 surfaces) all green. PR #133: still open, not draft; base SHA
-will read the new main tip once this push lands (was `9376cc2`,
-pre-rebase). `get_comments` and `get_reviews` both empty. Issue #139
+decision-1 surfaces) all green. Pushed (force-with-lease, history
+rewritten): PR #133 now reads `mergeable_state: clean`, base SHA
+`683ecc3` (main's tip, matching exactly), head `ed18353`. Its `verify`
+check was still `in_progress` moments after the push landed, too soon to
+read a result this run; next run confirms it went green before treating
+that as settled. `get_comments` and `get_reviews` both empty. Issue #139
 re-checked via `get_comments`: still the single 2026-09-07 comment, zero
 reactions, already implemented; no new REVIEW FEEDBACK there. Re-verified
 item 7 (`app.json` orientation still `"portrait"`, `supportsTablet` still
-`true`). Pushing this rebase (force-with-lease, history rewritten) plus
-this HANDOFF update; no plan content changed, since the re-audit found the
-merge correct rather than regressed.
+`true`). This HANDOFF update (committed and pushed separately, after the
+rebase push above) is the only other change this run; no plan content
+changed, since the re-audit found the merge correct rather than
+regressed.
 
 Run 27. Verified per this file's own COMPLETE instruction: plan fully
 checked, nothing new to do. `origin/main` has not moved since run 26's
