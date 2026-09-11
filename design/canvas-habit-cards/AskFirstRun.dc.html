@@ -1,0 +1,72 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <style>
+  body{margin:0;background:#F7F9FC;font-family:Inter,system-ui,sans-serif;color:#1A1D23;-webkit-font-smoothing:antialiased}
+  .wrap{padding:20px}
+  .card{background:#FFFFFF;border:1px solid #E8EDF2;border-radius:20px;padding:18px;box-shadow:0 4px 8px rgba(26,29,35,0.04)}
+  .hdr{display:flex;align-items:center;gap:8px}
+  .name{font-weight:600;font-size:16px;line-height:20px;color:#1A1D23}
+  .sp{flex:1}
+  .pill{background:rgba(142,124,243,0.14);border-radius:999px;padding:4px 8px;font-weight:600;font-size:11px;color:#1A1D23}
+  .chip{background:#F7F9FC;border-radius:999px;padding:4px 10px;font-weight:600;font-size:12.5px;color:#4A5568}
+  .strip{display:flex;justify-content:space-between;margin-top:14px}
+  .day{display:flex;flex-direction:column;align-items:center;gap:6px}
+  .dot{width:26px;height:26px;border-radius:13px;display:flex;align-items:center;justify-content:center;background:#FFFFFF;box-sizing:border-box}
+  .dot.skip{background:#2C7851}
+  .dot.slip{background:#E8EDF2}
+  .dot.today{border:1.5px solid #2C7851}
+  .dot.open{border:1.5px solid #E8EDF2}
+  .dl{font-size:9px;font-weight:700;color:#677481}
+  .sum{margin-top:10px;font-size:12.5px;color:#4A5568;font-variant-numeric:tabular-nums}
+  .sum b{font-weight:600;color:#1A1D23}
+  .q{margin-top:14px;font-size:15px;line-height:20px;color:#1A1D23}
+  .first{margin-top:4px;font-size:13px;line-height:18px;color:#4A5568}
+  .btns{display:flex;gap:8px;margin-top:12px}
+  .btn{display:flex;align-items:center;justify-content:center;min-height:50px;border-radius:10px;font-weight:600;font-size:16px;padding:0 20px;text-align:center}
+  .btn.pri{flex:1.6;background:#2C7851;color:#FFFFFF}
+  .btn.sec{flex:1;background:#FFFFFF;border:1px solid #E8EDF2;color:#1A1D23}
+  .btn.sm{min-height:44px;font-size:14px;flex:1}
+  .ans{margin-top:14px}
+  .crow{display:flex;align-items:center;gap:12px}
+  .badge{width:40px;height:40px;border-radius:999px;display:flex;align-items:center;justify-content:center;flex:none}
+  .badge.skip{background:#2C7851}
+  .badge.slip{background:#E8EDF2}
+  .ctxt{flex:1;min-width:0}
+  .chead{font-weight:600;font-size:15px;line-height:20px;color:#1A1D23;font-variant-numeric:tabular-nums}
+  .cdet{font-size:13px;line-height:18px;color:#4A5568;margin-top:2px;font-variant-numeric:tabular-nums}
+  .links{display:flex;gap:18px;margin-top:14px}
+  .link{font-weight:600;font-size:14px;color:#4A5568}
+  .coach{margin-top:12px;border-radius:14px;padding:12px;display:flex;gap:8px;align-items:flex-start;font-size:13.5px;line-height:19px;color:#4A5568}
+  .coach.sage{background:#E8F5EE}
+  .coach.ms{background:rgba(142,124,243,0.14)}
+  .coach .h{font-weight:600;color:#1A1D23;margin-bottom:2px}
+  .bf{border-top:1px solid #F1F4F8;margin-top:14px;padding-top:12px}
+  .bfp{font-size:13px;color:#4A5568}
+  .bfdone{font-size:13px;color:#4A5568;margin-top:12px;font-variant-numeric:tabular-nums}
+  .eyebrow{font-size:11px;letter-spacing:0.88px;font-weight:600;color:#677481;text-transform:uppercase}
+  .lrow{display:flex;align-items:center;gap:12px;padding:12px 0}
+  .lrow+.lrow{border-top:1px solid #F1F4F8}
+  .tile{width:36px;height:36px;border-radius:10px;background:#F1F4F8;display:flex;align-items:center;justify-content:center;font-size:18px;flex:none}
+  .lcol{flex:1;min-width:0}
+  .lname{font-weight:600;font-size:14px;color:#1A1D23}
+  .lsub{font-size:12.5px;color:#4A5568;margin-top:2px;font-variant-numeric:tabular-nums}
+  .lstrip{display:flex;gap:5px;margin-top:6px}
+  .ldot{width:20px;height:20px;border-radius:10px;display:flex;align-items:center;justify-content:center;box-sizing:border-box}
+  .ldot.spent{background:#E8EDF2}
+  .ldot.none{border:1.5px solid #E8EDF2}
+  .evid{font-size:13px;line-height:19px;color:#4A5568;margin-top:8px;font-variant-numeric:tabular-nums}
+  .lbtns{display:flex;gap:8px;margin-top:12px}
+</style>
+</helmet>
+<div class="wrap"><div class="card"><div class="hdr"><div class="name">Tims</div><div class="sp"></div><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#677481" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></div><div class="strip"><div class="day"><div class="dot open"></div><div class="dl">M</div></div><div class="day"><div class="dot open"></div><div class="dl">T</div></div><div class="day"><div class="dot open"></div><div class="dl">W</div></div><div class="day"><div class="dot today"></div><div class="dl">T</div></div><div class="day"><div class="dot open"></div><div class="dl">F</div></div><div class="day"><div class="dot open"></div><div class="dl">S</div></div><div class="day"><div class="dot open"></div><div class="dl">S</div></div></div><div class="q">Did you skip it today?</div><div class="first">Your first skip starts the counter.</div><div class="btns"><div class="btn pri">Skipped &middot; +$55.00</div><div class="btn sec">Bought it</div></div></div></div>
+</x-dc>
+</body>
+</html>

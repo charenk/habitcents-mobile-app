@@ -396,8 +396,8 @@ export function EditSkipValueSheet({
     <Sheet
       visible={visible}
       onClose={onCancel}
-      avoidKeyboard
       accessibilityLabel={strings.habitDetailV2.skipValueSheetTitle}
+      contentContainerStyle={styles.editSheetContainer}
       // Pinned header-save (ADR 0031) inside Sheet's drag zone: the old
       // small grey label became the shared serif header and the bottom
       // Save/Cancel pair is gone. Grab handle, header drag, scrim, and
@@ -413,15 +413,13 @@ export function EditSkipValueSheet({
         />
       }
     >
-      <View style={styles.editSheetContainer}>
-        <AmountField
-          valueCents={cents}
-          onChangeCents={setCents}
-          autoFocus={visible}
-          size={48}
-          accessibilityLabel={`${strings.habitDetailV2.skipValueSheetTitle}, ${format(cents)}`}
-        />
-      </View>
+      <AmountField
+        valueCents={cents}
+        onChangeCents={setCents}
+        autoFocus={visible}
+        size={48}
+        accessibilityLabel={`${strings.habitDetailV2.skipValueSheetTitle}, ${format(cents)}`}
+      />
     </Sheet>
   );
 }

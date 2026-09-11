@@ -5,6 +5,15 @@
  * ourselves (Animated + Easing, not reanimated: reanimated inside a Modal is
  * unreliable under the New Architecture).
  *
+ * Structure (Charen, 2026-09-10, the pattern for every drawer): pinned title
+ * area inside the drag zone, a scrolling body, a pinned footer. The panel is
+ * clamped to at most 80% of the window, and with the software keyboard up it
+ * is clamped to the visible strip above the keyboard (utils/sheetLayout.ts)
+ * instead of being pushed off the top the way the old KeyboardAvoidingView
+ * wrapper did. The keyboard lift is plain layout (marginBottom) on a wrapper
+ * node: `progress` and its native-driver translateY stay the single animation
+ * driver on the panel's transform, untouched.
+ *
  * Motion honors prefers-reduced-motion: default is translateY(panelHeight)->0
  * plus a scrim fade; under reduced motion the panel does not translate and only
  * the opacity animates.
@@ -14,54 +23,77 @@ import {
   AccessibilityInfo,
   Animated,
   Easing,
-  KeyboardAvoidingView,
   Modal,
   PanResponder,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
+  TextInput,
   View,
   findNodeHandle,
+  useWindowDimensions,
   type LayoutChangeEvent,
   type PanResponderGestureState,
+  type StyleProp,
+  type ViewStyle,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/contexts/ThemeContext';
 import { motion, radii, shadows } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
 import { useReducedMotion } from '@/utils/motion';
+import { useKeyboardHeight } from '@/utils/keyboard';
+import { sheetMaxHeight } from '@/utils/sheetLayout';
 import { strings } from '@/constants/strings';
 
 export type SheetProps = {
   visible: boolean;
   onClose: () => void;
   children: React.ReactNode;
-  avoidKeyboard?: boolean;
   dismissOnScrim?: boolean;
   accessibilityLabel?: string;
   /**
-   * Pinned header (usually ui/SheetHeader) rendered inside the drag zone,
-   * directly under the grab handle. Drawer feedback (Charen, 2026-09-04):
-   * the drag used to live on the 36x5 handle alone, so a finger on the
-   * title row moved nothing. With the header in the same zone the whole
-   * top of the sheet tracks the finger; the body below stays free for its
-   * own ScrollView.
+   * Pinned header rendered inside the drag zone, directly under the grab
+   * handle: ui/SheetHeader for form sheets, ui/SheetTitle for decision
+   * sheets. Drawer feedback (Charen, 2026-09-04): the drag used to live on
+   * the 36x5 handle alone, so a finger on the title row moved nothing. With
+   * the header in the same zone the whole top of the sheet tracks the
+   * finger; the body below stays free for its own scroll.
    */
   header?: React.ReactNode;
+  /**
+   * Pinned below the body: the thumb-zone CTAs of a decision sheet, or the
+   * expense sheet's iOS Done bar. Owns the bottom safe-area inset; the
+   * keyboard supersedes that inset so the footer sits flush on it.
+   */
+  footer?: React.ReactNode;
+  /**
+   * The body is a Sheet-owned ScrollView by default so every sheet scrolls
+   * under the clamp. Pass false when the children bring their own scroller
+   * (a FlatList) - the body becomes a plain shrinkable View.
+   */
+  scrollable?: boolean;
+  /** Forwarded to the internal ScrollView's contentContainerStyle. */
+  contentContainerStyle?: StyleProp<ViewStyle>;
 };
 
 export function Sheet({
   visible,
   onClose,
   children,
-  avoidKeyboard,
   dismissOnScrim,
   accessibilityLabel,
   header,
+  footer,
+  scrollable = true,
+  contentContainerStyle,
 }: SheetProps): React.JSX.Element | null {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const reduceMotion = useReducedMotion();
+  const { height: windowHeight } = useWindowDimensions();
+  const keyboardHeight = useKeyboardHeight();
   const styles = React.useMemo(() => createStyles(theme), [theme]);
 
   // Keep the Modal mounted through the exit animation before unmounting.
@@ -73,9 +105,12 @@ export function Sheet({
   // announcement that anything had appeared. setAccessibilityFocus was used
   // nowhere in the app before this.
   const panelRef = useRef<View | null>(null);
+  const scrollRef = useRef<ScrollView | null>(null);
   const progress = useRef(new Animated.Value(0)).current;
   // Panel height, measured on layout; drives the slide distance. Start with a
-  // generous fallback so the first frame is off-screen, not mid-panel.
+  // generous fallback so the first frame is off-screen, not mid-panel. The
+  // keyboard clamp changes the measured height; onPanelLayout re-fires and
+  // the slide distance and drag threshold recompute from the new value.
   const panelHeight = useRef(new Animated.Value(600)).current;
   const measuredHeight = useRef(600);
 
@@ -213,6 +248,26 @@ export function Sheet({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
 
+  // Keep the focused input visible once the clamp lands. RN's scroll
+  // responder does the measuring; the rAF lets the shrunken layout settle
+  // first. Covers mid-body fields (the break sheet's name input); sheets that
+  // lead with their amount field are already at content top.
+  useEffect(() => {
+    if (!scrollable || keyboardHeight <= 0) return;
+    const input = TextInput.State.currentlyFocusedInput?.();
+    const scrollNode = scrollRef.current;
+    if (!input || !scrollNode) return;
+    const responder = scrollNode.getScrollResponder?.();
+    const raf = requestAnimationFrame(() => {
+      responder?.scrollResponderScrollNativeHandleToKeyboard?.(
+        input,
+        12,
+        !reduceMotionRef.current
+      );
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [keyboardHeight, scrollable]);
+
   if (!rendered) return null;
 
   const onPanelLayout = (e: LayoutChangeEvent) => {
@@ -235,39 +290,25 @@ export function Sheet({
     if (dismissOnScrim !== false) onClose();
   };
 
-  const panel = (
-    <Animated.View
-      ref={panelRef}
-      style={[styles.panel, { paddingBottom: insets.bottom }, panelAnimatedStyle]}
-      onLayout={onPanelLayout}
-      accessibilityViewIsModal
-      accessibilityLabel={accessibilityLabel}
-      // UX-024: accessibilityViewIsModal hides the sibling scrim "Close"
-      // pressable from VoiceOver, so the two-finger-Z dismiss gesture is the
-      // only way a screen-reader user can back out without that control.
-      // Wire it to the same onClose the scrim uses.
-      onAccessibilityEscape={onClose}
+  const maxHeight = sheetMaxHeight(windowHeight, insets.top, keyboardHeight);
+  // The bottom-most fixed element owns the safe-area inset, and the keyboard
+  // supersedes it (the keyboard IS the bottom edge then). This is what
+  // retired ExpenseSheet's -insets.bottom Done-bar hack.
+  const panelPaddingBottom = footer ? 0 : keyboardHeight > 0 ? 0 : insets.bottom;
+  const footerPaddingBottom = keyboardHeight > 0 ? 12 : Math.max(insets.bottom, 12);
+
+  const body = scrollable ? (
+    <ScrollView
+      ref={scrollRef}
+      style={styles.body}
+      contentContainerStyle={contentContainerStyle}
+      keyboardShouldPersistTaps="handled"
+      contentInsetAdjustmentBehavior="never"
     >
-      {/*
-       * UX-041 (resolved): the grab handle now backs its promise. The
-       * PanResponder above lives on this handle strip only, so a downward drag
-       * here tracks the finger and dismisses past threshold, while a scroll in
-       * the sheet body is never intercepted. onAccessibilityEscape below still
-       * carries screen-reader dismissal.
-       */}
-      <View
-        style={styles.dragZone}
-        hitSlop={{ top: 8 }}
-        testID="sheet-drag-zone"
-        {...panResponder.panHandlers}
-      >
-        <View style={styles.handleZone}>
-          <View style={styles.handle} />
-        </View>
-        {header}
-      </View>
       {children}
-    </Animated.View>
+    </ScrollView>
+  ) : (
+    <View style={styles.body}>{children}</View>
   );
 
   return (
@@ -292,16 +333,59 @@ export function Sheet({
             accessibilityLabel={strings.common.close}
           />
         </Animated.View>
-        {avoidKeyboard ? (
-          <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-            pointerEvents="box-none"
+        {/*
+          The keyboard lift: plain layout on this wrapper, never a second
+          driver on the panel's animated transform. On Android the translucent
+          Modal ignores adjustResize, so the shared hook's overlap math is
+          what moves the sheet.
+        */}
+        <View style={{ marginBottom: keyboardHeight }} pointerEvents="box-none">
+          <Animated.View
+            ref={panelRef}
+            style={[
+              styles.panel,
+              { maxHeight, paddingBottom: panelPaddingBottom },
+              panelAnimatedStyle,
+            ]}
+            onLayout={onPanelLayout}
+            accessibilityViewIsModal
+            accessibilityLabel={accessibilityLabel}
+            // UX-024: accessibilityViewIsModal hides the sibling scrim "Close"
+            // pressable from VoiceOver, so the two-finger-Z dismiss gesture is
+            // the only way a screen-reader user can back out without that
+            // control. Wire it to the same onClose the scrim uses.
+            onAccessibilityEscape={onClose}
           >
-            {panel}
-          </KeyboardAvoidingView>
-        ) : (
-          panel
-        )}
+            {/*
+             * UX-041 (resolved): the grab handle now backs its promise. The
+             * PanResponder above lives on this handle strip only, so a
+             * downward drag here tracks the finger and dismisses past
+             * threshold, while a scroll in the sheet body is never
+             * intercepted. onAccessibilityEscape below still carries
+             * screen-reader dismissal.
+             */}
+            <View
+              style={styles.dragZone}
+              hitSlop={{ top: 8 }}
+              testID="sheet-drag-zone"
+              {...panResponder.panHandlers}
+            >
+              <View style={styles.handleZone}>
+                <View style={styles.handle} />
+              </View>
+              {header}
+            </View>
+            {body}
+            {footer ? (
+              <View
+                style={[styles.footer, { paddingBottom: footerPaddingBottom }]}
+                testID="sheet-footer"
+              >
+                {footer}
+              </View>
+            ) : null}
+          </Animated.View>
+        </View>
       </View>
     </Modal>
   );
@@ -341,6 +425,23 @@ function createStyles(theme: AppTheme) {
       alignSelf: 'center',
       marginTop: 8,
       marginBottom: 4,
+    },
+    // Content-sized until the panel clamp binds, then it shrinks and scrolls.
+    // flexGrow stays 0 so a short sheet never stretches to the cap.
+    body: {
+      flexGrow: 0,
+      flexShrink: 1,
+      alignSelf: 'stretch',
+    },
+    // The scroll-under edge: a cloud hairline matching SheetHeader's bottom
+    // edge, so content visibly slides beneath the pinned footer.
+    footer: {
+      alignSelf: 'stretch',
+      paddingHorizontal: 20,
+      paddingTop: 12,
+      gap: 8,
+      borderTopWidth: 1,
+      borderTopColor: theme.cloud,
     },
   });
 }

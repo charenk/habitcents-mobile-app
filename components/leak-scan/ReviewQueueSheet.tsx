@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, useWindowDimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Button } from '@/components/ui/Button';
 import { Sheet } from '@/components/ui/Sheet';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -49,7 +49,6 @@ type ReviewQueueSheetProps = {
 export function ReviewQueueSheet({ visible, items, onCorrect, onClose }: ReviewQueueSheetProps) {
   const theme = useTheme();
   const { format } = useCurrency();
-  const { height } = useWindowDimensions();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [doneStems, setDoneStems] = useState<Set<string>>(new Set());
 
@@ -67,16 +66,24 @@ export function ReviewQueueSheet({ visible, items, onCorrect, onClose }: ReviewQ
       visible={visible}
       onClose={onClose}
       accessibilityLabel={strings.leakScan.reviewQueueTitle(items.length)}
-    >
-      <View style={[styles.body, { maxHeight: height * 0.82 }]}>
+      // Compact data-sheet title block pinned in the drag zone; the queue
+      // scrolls under it and the one action stays pinned below.
+      header={
         <View style={styles.header}>
           <Text style={styles.title} accessibilityRole="header">
             {strings.leakScan.reviewQueueTitle(items.length)}
           </Text>
           <Text style={styles.progress}>{strings.leakScan.reviewQueueProgress(doneCount, items.length)}</Text>
         </View>
-
-        <ScrollView style={styles.scroll} contentContainerStyle={styles.listContent}>
+      }
+      contentContainerStyle={styles.listContent}
+      footer={
+        <Button
+          label={remaining.length === 0 ? strings.leakScan.reviewQueueDone : strings.leakScan.reviewQueueSkipRest}
+          onPress={onClose}
+        />
+      }
+    >
           {remaining.map((item) => (
             <View key={item.merchantStem} style={styles.itemCard}>
               <View
@@ -113,24 +120,12 @@ export function ReviewQueueSheet({ visible, items, onCorrect, onClose }: ReviewQ
               </View>
             </View>
           ))}
-        </ScrollView>
-
-        <View style={styles.footer}>
-          <Button
-            label={remaining.length === 0 ? strings.leakScan.reviewQueueDone : strings.leakScan.reviewQueueSkipRest}
-            onPress={onClose}
-          />
-        </View>
-      </View>
     </Sheet>
   );
 }
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
-    body: {
-      flexShrink: 1,
-    },
     header: {
       paddingHorizontal: 20,
       paddingTop: 4,
@@ -148,9 +143,6 @@ function createStyles(theme: AppTheme) {
       color: theme.slate,
       marginTop: 4,
       marginBottom: 4,
-    },
-    scroll: {
-      flexShrink: 1,
     },
     listContent: {
       paddingHorizontal: 20,
@@ -207,11 +199,6 @@ function createStyles(theme: AppTheme) {
       fontSize: typeScale.caption,
       fontFamily: theme.fonts.uiSemibold,
       color: theme.chipInactiveText,
-    },
-    footer: {
-      paddingHorizontal: 20,
-      paddingTop: 12,
-      paddingBottom: 4,
     },
   });
 }

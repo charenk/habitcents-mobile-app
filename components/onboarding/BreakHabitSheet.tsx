@@ -21,12 +21,13 @@
  * caller to write an expense.
  */
 import React, { useEffect, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { AmountField } from '@/components/ui/AmountField';
 import { Button } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { Sheet } from '@/components/ui/Sheet';
+import { SheetTitle } from '@/components/ui/SheetTitle';
 import { TextField } from '@/components/ui/TextField';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -105,7 +106,6 @@ export function BreakHabitSheet({
 }: BreakHabitSheetProps) {
   const theme = useTheme();
   const { currency, format } = useCurrency();
-  const { height } = useWindowDimensions();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   const presets = useMemo(() => vicePresets(currency), [currency]);
@@ -146,17 +146,22 @@ export function BreakHabitSheet({
   const prefillCents = selectedChip && selectedChip !== CUSTOM_CHIP_ID ? presetCentsById.get(selectedChip) ?? 0 : 0;
   const valueEdited = amountCents !== prefillCents;
 
-  const name =
-    selectedChip === CUSTOM_CHIP_ID
-      ? customName.trim()
-      : selectedChip
-        ? presetNameById.get(selectedChip) ?? ''
-        : '';
+  // Impulse buys needs a typed name like a custom habit does (Charen,
+  // 2026-09-10): "impulse buys" is a bucket, not a breakable habit, until
+  // the user names what they actually buy. The amount prefill stays, so the
+  // value_edited analytics field keeps its meaning.
+  const needsName = selectedChip === CUSTOM_CHIP_ID || selectedChip === 'impulse';
+
+  const name = needsName
+    ? customName.trim()
+    : selectedChip
+      ? presetNameById.get(selectedChip) ?? ''
+      : '';
 
   const canStart =
     !!selectedChip &&
     amountCents > 0 &&
-    (selectedChip !== CUSTOM_CHIP_ID || customName.trim().length > 0);
+    (!needsName || customName.trim().length > 0);
 
   // Disabled-Start hint (ops ADR 0028, 2026-08-16): names the FIRST thing
   // canStart is missing, in the same order canStart checks it, so a
@@ -164,7 +169,7 @@ export function BreakHabitSheet({
   // once. Only read while Start is actually disabled (see the Button below).
   const startHint = !selectedChip
     ? strings.onboarding.breakSheetHintPickHabit
-    : selectedChip === CUSTOM_CHIP_ID && customName.trim().length === 0
+    : needsName && customName.trim().length === 0
       ? strings.onboarding.breakSheetHintNameIt
       : strings.sheets.saveHintAmount;
 
@@ -185,17 +190,24 @@ export function BreakHabitSheet({
 
   if (freeTierBlocked) {
     return (
-      <Sheet visible={visible} onClose={onClose} accessibilityLabel={strings.onboarding.breakSheetTitle}>
-        <ScrollView
-          style={{ maxHeight: height * 0.86 }}
-          contentContainerStyle={styles.content}
-          showsVerticalScrollIndicator={false}
-        >
-          <Text style={styles.title} accessibilityRole="header" maxFontSizeMultiplier={1.5}>
-            {strings.onboarding.breakSheetTitle}
-          </Text>
-          <Text style={styles.caption}>{strings.onboarding.breakSheetCaption}</Text>
-
+      <Sheet
+        visible={visible}
+        onClose={onClose}
+        accessibilityLabel={strings.onboarding.breakSheetTitle}
+        header={
+          <SheetTitle
+            title={strings.onboarding.breakSheetTitle}
+            caption={strings.onboarding.breakSheetCaption}
+          />
+        }
+        contentContainerStyle={styles.content}
+        footer={
+          <>
+            <Button label={strings.habitLogging.gateUpgradeCta} onPress={() => onStartTrial?.()} />
+            <Button label={strings.habitLogging.gateMaybeLater} variant="tertiary" onPress={onClose} />
+          </>
+        }
+      >
           <View style={styles.gateCard}>
             <Text style={styles.gateEyebrow}>{strings.habitLogging.freeTierNote}</Text>
             <Text style={styles.gateTitle}>{strings.habitLogging.gateTitle}</Text>
@@ -204,14 +216,6 @@ export function BreakHabitSheet({
             </Text>
             <Text style={styles.gatePlanned}>{strings.paywall.plannedBanner}</Text>
           </View>
-
-          <Button
-            label={strings.habitLogging.gateUpgradeCta}
-            onPress={() => onStartTrial?.()}
-            style={styles.primary}
-          />
-          <Button label={strings.habitLogging.gateMaybeLater} variant="tertiary" onPress={onClose} />
-        </ScrollView>
       </Sheet>
     );
   }
@@ -220,21 +224,26 @@ export function BreakHabitSheet({
     <Sheet
       visible={visible}
       onClose={onClose}
-      avoidKeyboard
       accessibilityLabel={strings.onboarding.breakSheetTitle}
+      header={
+        <SheetTitle
+          title={strings.onboarding.breakSheetTitle}
+          caption={strings.onboarding.breakSheetCaption}
+        />
+      }
+      contentContainerStyle={styles.content}
+      footer={
+        <Button
+          label={strings.habitLogging.startBreakingIt}
+          onPress={handleStart}
+          disabled={!canStart}
+          // Only carried while disabled, so VoiceOver never reads stale
+          // guidance on an already-enabled button (Button.tsx passes the
+          // hint straight through unconditionally).
+          accessibilityHint={canStart ? undefined : startHint}
+        />
+      }
     >
-      <View style={[styles.body, { maxHeight: height * 0.86 }]}>
-        <ScrollView
-          style={styles.scroll}
-          contentContainerStyle={styles.content}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
-          <Text style={styles.title} accessibilityRole="header" maxFontSizeMultiplier={1.5}>
-            {strings.onboarding.breakSheetTitle}
-          </Text>
-          <Text style={styles.caption}>{strings.onboarding.breakSheetCaption}</Text>
-
           <View style={styles.chipRow}>
             {VICE_IDS.map((id) => (
               <Chip
@@ -251,7 +260,7 @@ export function BreakHabitSheet({
             />
           </View>
 
-          {selectedChip === CUSTOM_CHIP_ID && (
+          {needsName && (
             <TextField
               variant="white"
               value={customName}
@@ -266,8 +275,20 @@ export function BreakHabitSheet({
           <AmountField
             valueCents={amountCents}
             onChangeCents={setAmountCents}
-            size={48}
+            // Enclosed at ExpenseSheet's density (Charen, 2026-09-10): the
+            // underline field read as a different component from the rest of
+            // the app's money inputs.
+            size={40}
+            variant="enclosed"
             accessibilityLabel={`${strings.habitLogging.pickOneFieldLabel}, ${format(amountCents)}`}
+          />
+
+          <Text style={styles.eyebrow}>{strings.onboarding.breakSheetBoughtTodayLabel}</Text>
+          <SegmentedControl
+            options={BOUGHT_OPTIONS}
+            value={boughtToday}
+            onChange={setBoughtToday}
+            accessibilityLabel={strings.onboarding.breakSheetBoughtTodayLabel}
           />
 
           <Text style={styles.eyebrow}>{strings.onboarding.breakSheetCadenceLabel}</Text>
@@ -278,68 +299,17 @@ export function BreakHabitSheet({
             accessibilityLabel={strings.onboarding.breakSheetCadenceLabel}
           />
 
-          <Text style={styles.yearlyLine}>{yearlyLine}</Text>
-
-          <Text style={styles.eyebrow}>{strings.onboarding.breakSheetBoughtTodayLabel}</Text>
-          <SegmentedControl
-            options={BOUGHT_OPTIONS}
-            value={boughtToday}
-            onChange={setBoughtToday}
-            accessibilityLabel={strings.onboarding.breakSheetBoughtTodayLabel}
-          />
-        </ScrollView>
-
-        <View style={styles.footer}>
-          <Button
-            label={strings.habitLogging.startBreakingIt}
-            onPress={handleStart}
-            disabled={!canStart}
-            // Only carried while disabled, so VoiceOver never reads stale
-            // guidance on an already-enabled button (Button.tsx passes the
-            // hint straight through unconditionally).
-            accessibilityHint={canStart ? undefined : startHint}
-          />
-        </View>
-      </View>
+          {amountCents > 0 ? <Text style={styles.yearlyLine}>{yearlyLine}</Text> : null}
     </Sheet>
   );
 }
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
-    body: {
-      flexShrink: 1,
-    },
-    scroll: {
-      flexShrink: 1,
-    },
     content: {
       paddingTop: 10,
       paddingHorizontal: 20,
       paddingBottom: 16,
-    },
-    footer: {
-      paddingHorizontal: 20,
-      paddingTop: 12,
-    },
-    title: {
-      fontFamily: theme.fonts.display,
-      // Batch 2: the third decision-moment sheet title. It sat at 28 while the
-      // partial-slip and pick-one sheets sat at 32, a spread nobody can read
-      // as intent. All three now share displayMid, leaving two ranks that mean
-      // something: sheetTitle 26 for utility sheets, displayMid 30 for the
-      // sheets that ask you to decide something. UX-018.
-      fontSize: typeScale.displayMid,
-      lineHeight: 34,
-      color: theme.ink,
-    },
-    caption: {
-      fontFamily: theme.fonts.ui,
-      fontSize: typeScale.label,
-      lineHeight: 20,
-      color: theme.slate,
-      marginTop: 4,
-      marginBottom: 16,
     },
     chipRow: {
       flexDirection: 'row',
@@ -364,9 +334,6 @@ function createStyles(theme: AppTheme) {
       lineHeight: 20,
       color: theme.slate,
       marginTop: 12,
-    },
-    primary: {
-      marginTop: spacing.xxl,
     },
     gateCard: {
       backgroundColor: theme.snow,

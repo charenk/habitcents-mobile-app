@@ -491,14 +491,14 @@ export const strings = {
     intentScanTitle: 'See where it all goes',
     intentScanDescription: 'Scan a bank statement on your phone. Nothing uploads, ever.',
     intentBreakEyebrow: 'About a minute',
-    intentBreakTitle: 'Break an expensive habit',
+    intentBreakTitle: 'Break a habit',
     intentBreakDescription: 'Name it, price it, start today.',
     // Ratified inviting phrasing (Charen, 2026-08-04); replaces 'Skip for now'.
     skipForNow: "I'll explore on my own",
     // "Something else" is shared: the intent picker's audit chips used to own
     // it, and the Door 3 break sheet (below) reuses it rather than duplicating.
     somethingElse: 'Something else',
-    somethingElseNamePlaceholder: 'What is it called?',
+    somethingElseNamePlaceholder: 'What do you usually buy?',
     // ---------------------------------------------------------------------
     // Door 3 break sheet (W3, "the app is the onboarding" complete, ADR 0020
     // + 0022). The audit/reveal/success screens this used to lead to are
@@ -507,8 +507,8 @@ export const strings = {
     // goal". The amount/CTA copy below is deliberately identical to the
     // pick-one sheet's (strings.habitLogging), reused rather than duplicated.
     // ---------------------------------------------------------------------
-    breakSheetTitle: 'Break an expensive habit.',
-    breakSheetCaption: 'Pick one or name your own. One is free, always.',
+    breakSheetTitle: 'Break a habit.',
+    breakSheetCaption: 'Pick one or name your own.',
     breakSheetCadenceLabel: 'How often',
     breakSheetCadenceMostDays: 'Most days',
     breakSheetCadenceWeekly: 'Weekly',

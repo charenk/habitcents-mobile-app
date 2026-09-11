@@ -66,15 +66,30 @@ export function ConfirmSheet({
   };
 
   return (
-    <Sheet visible={visible} onClose={onClose} accessibilityLabel={title}>
-      <View style={styles.content}>
-        <Text style={styles.title} accessibilityRole="header" maxFontSizeMultiplier={1.5}>
-          {title}
-        </Text>
-        <Text style={styles.body}>{body}</Text>
-        <Button label={confirmLabel} variant="destructiveFill" onPress={handleConfirm} />
-        <Button label={cancelLabel} variant="secondary" onPress={handleCancel} />
-      </View>
+    <Sheet
+      visible={visible}
+      onClose={onClose}
+      accessibilityLabel={title}
+      // Title pinned in the drag zone, CTAs pinned below the body (the
+      // 2026-09-10 drawer pattern). The 26pt sheetTitle rank is this
+      // sheet's identity, so it keeps its own header View rather than
+      // borrowing SheetTitle's displayMid.
+      header={
+        <View style={styles.titleWrap}>
+          <Text style={styles.title} accessibilityRole="header" maxFontSizeMultiplier={1.5}>
+            {title}
+          </Text>
+        </View>
+      }
+      contentContainerStyle={styles.content}
+      footer={
+        <>
+          <Button label={confirmLabel} variant="destructiveFill" onPress={handleConfirm} />
+          <Button label={cancelLabel} variant="secondary" onPress={handleCancel} />
+        </>
+      }
+    >
+      <Text style={styles.body}>{body}</Text>
     </Sheet>
   );
 }
@@ -86,6 +101,11 @@ function createStyles(theme: AppTheme) {
       paddingTop: 4,
       paddingBottom: 12,
       gap: 10,
+    },
+    titleWrap: {
+      paddingHorizontal: 20,
+      paddingTop: 4,
+      paddingBottom: 6,
     },
     title: {
       fontSize: typeScale.sheetTitle,

@@ -141,6 +141,7 @@ import type { DetectedHabit } from '@/types/habit';
 const presets = vicePresets('USD');
 const coffee = presets.find((p) => p.id === 'coffee')!;
 const delivery = presets.find((p) => p.id === 'delivery')!;
+const impulse = presets.find((p) => p.id === 'impulse')!;
 
 const initialMetrics = {
   frame: { x: 0, y: 0, width: 390, height: 844 },
@@ -292,6 +293,52 @@ describe('Door 3 break sheet: disabled-Start hint (ops ADR 0028)', () => {
     const start = view.getByRole('button', { name: strings.habitLogging.startBreakingIt });
     expect(start.props.accessibilityState?.disabled).toBe(false);
     expect(start.props.accessibilityHint).toBeUndefined();
+  });
+
+  // Charen, 2026-09-10: "impulse buys" is a bucket, not a breakable habit,
+  // until the user names what they actually buy. The amount prefill stays,
+  // so the only gap the hint can name is the name field.
+  it('impulse buys needs a typed name before Start enables', async () => {
+    mockParams = { view: 'kept', breakEntry: '1' };
+    const view = await renderToday();
+
+    await tap(view.getByText(impulse.name));
+    let start = view.getByRole('button', { name: strings.habitLogging.startBreakingIt });
+    expect(start.props.accessibilityState?.disabled).toBe(true);
+    expect(start.props.accessibilityHint).toBe(strings.onboarding.breakSheetHintNameIt);
+
+    await act(async () => {
+      fireEvent.changeText(
+        view.getByLabelText(strings.onboarding.somethingElseNamePlaceholder),
+        'Amazon'
+      );
+    });
+    start = view.getByRole('button', { name: strings.habitLogging.startBreakingIt });
+    expect(start.props.accessibilityState?.disabled).toBe(false);
+    expect(start.props.accessibilityHint).toBeUndefined();
+  });
+
+  it('a named impulse habit seeds custom-like: the typed name is the dedupe key', async () => {
+    mockParams = { view: 'kept', breakEntry: '1' };
+    const view = await renderToday();
+
+    await tap(view.getByText(impulse.name));
+    await act(async () => {
+      fireEvent.changeText(
+        view.getByLabelText(strings.onboarding.somethingElseNamePlaceholder),
+        'Amazon'
+      );
+    });
+    await tap(view.getByText(strings.habitLogging.startBreakingIt));
+
+    expect(mockSeedDiscoveredHabit).toHaveBeenCalledTimes(1);
+    expect(mockSeedDiscoveredHabit.mock.calls[0][0]).toMatchObject({
+      merchantPattern: 'Amazon',
+      name: 'Amazon',
+      averageAmount: impulse.perItemCents,
+      // Category stays the impulse preset's, not custom's 'Other'.
+      categoryId: 'cat-shopping',
+    });
   });
 });
 

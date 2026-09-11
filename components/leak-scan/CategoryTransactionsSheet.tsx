@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, useWindowDimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
 import { Button } from '@/components/ui/Button';
 import { Sheet } from '@/components/ui/Sheet';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -59,7 +59,6 @@ export function CategoryTransactionsSheet({
 }: CategoryTransactionsSheetProps) {
   const theme = useTheme();
   const { format } = useCurrency();
-  const { height } = useWindowDimensions();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [openChipFor, setOpenChipFor] = useState<string | null>(null);
 
@@ -114,12 +113,22 @@ export function CategoryTransactionsSheet({
   if (!category) return null;
 
   return (
-    <Sheet visible={visible} onClose={onClose} accessibilityLabel={categoryDisplayLabel(category)}>
-      <View style={[styles.body, { maxHeight: height * 0.82 }]}>
+    <Sheet
+      visible={visible}
+      onClose={onClose}
+      accessibilityLabel={categoryDisplayLabel(category)}
+      // scrollable={false}: the FlatList is the scroller here, and nesting a
+      // virtualized list inside Sheet's own ScrollView would kill both
+      // virtualization and scrolling. The panel clamp still bounds it; the
+      // list shrinks inside the plain body View.
+      scrollable={false}
+      header={
         <Text style={styles.title} accessibilityRole="header">
           {categoryDisplayLabel(category)}
         </Text>
-
+      }
+      footer={<Button label={strings.common.ok} onPress={onClose} />}
+    >
         <FlatList
           data={rows}
           keyExtractor={keyExtractor}
@@ -127,20 +136,12 @@ export function CategoryTransactionsSheet({
           style={styles.scroll}
           contentContainerStyle={styles.listContent}
         />
-
-        <View style={styles.footer}>
-          <Button label={strings.common.ok} onPress={onClose} />
-        </View>
-      </View>
     </Sheet>
   );
 }
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
-    body: {
-      flexShrink: 1,
-    },
     // BATCH 2: literal 18 -> typeScale.titleSm, the compact bold sheet-title
     // step the token sweep ratified for exactly this kind of data sheet.
     title: {
@@ -216,11 +217,6 @@ function createStyles(theme: AppTheme) {
       fontSize: typeScale.caption,
       fontFamily: theme.fonts.uiSemibold,
       color: theme.chipInactiveText,
-    },
-    footer: {
-      paddingHorizontal: 20,
-      paddingTop: 12,
-      paddingBottom: 4,
     },
   });
 }
