@@ -22,6 +22,7 @@ import {
   CircleUser,
   Coffee,
   CreditCard,
+  DollarSign,
   Dumbbell,
   Ellipsis,
   ExternalLink,
@@ -64,6 +65,7 @@ import type { CategoryIcon } from '@/types/category';
 
 const GLYPHS = {
   Check,
+  DollarSign,
   CircleCheck,
   // Radio controls: filled dot for on, empty circle for off (paywall plan picker).
   CircleDot,
