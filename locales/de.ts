@@ -30,6 +30,18 @@
  * `useStrings()`-converted. `whenNextWeek`/`startingNextWeek` share one
  * translation, matching the English source reusing "Next week" in both
  * places.
+ *
+ * Run 27 added: `money` minus `habitsEmptyTitle`/`habitsEmptyBody` (locked-
+ * vocabulary gated: "leak") and every function-valued key (deferred ICU
+ * work). `spentEmptyBody`/`upcomingEmptyBody` confirmed dead code (never
+ * rendered, same RETIRED treatment as elsewhere) and left untranslated.
+ * `scheduleSeparator` (a plain " \u00b7 " middle-dot punctuation mark, no
+ * linguistic content) stays omitted like a function-valued key.
+ * `scheduleOneTime`/`scheduleWeekly`/`scheduleMonthly`/`scheduleAnnual`
+ * reuse `addUpcoming`'s matching frequency translations (same English
+ * source word); `scheduleBiweekly` ('Every 2 weeks') is translated fresh
+ * since its English source differs from `addUpcoming.frequencyBiweekly`
+ * ('Bi-weekly').
  */
 import type { LocaleOverlay } from '@/utils/i18n';
 
@@ -225,5 +237,33 @@ export const de: LocaleOverlay = {
     everyNDaysDecrease: 'Weniger Tage',
     everyNDaysIncrease: 'Mehr Tage',
     save: 'Speichern',
+  },
+  money: {
+    segmentSpent: 'Ausgegeben',
+    segmentUpcoming: 'Bevorstehend',
+    segmentHabits: 'Gewohnheiten',
+    segmentLabel: 'Geldansicht',
+    spentToday: 'Heute',
+    spentYesterday: 'Gestern',
+    spentTodayEmpty: 'Heute noch nichts. Füge es hinzu, wenn du etwas ausgegeben hast, und genieße es, wenn nicht.',
+    spentEditHint: 'Tippe eine Zeile an, um sie zu bearbeiten oder zu löschen.',
+    recurringRowSuffix: 'wiederkehrend',
+    spentEmptyTitle: 'Alle Ausgaben an einem Ort',
+    upcomingWindowSegmentLabel: 'Bevorstehender Zeitraum',
+    upcomingWindowTwoWeeks: '2 Wochen',
+    upcomingWindowOneMonth: '1 Monat',
+    upcomingWindowThreeMonths: '3 Monate',
+    upcomingAddAffordance: 'Bevorstehende Ausgabe hinzufügen',
+    spentEmptyCta: 'Ausgabe erfassen',
+    habitsEmptyCta: 'Mit einer Gewohnheit brechen',
+    upcomingListEyebrow: 'Geplant',
+    upcomingEmptyTitle: 'Erfahre, was kommt, bevor es da ist',
+    upcomingWindowEmptyBody: 'Keine deiner wiederkehrenden Ausgaben fällt in diesen Zeitraum.',
+    upcomingEmptyCta: 'Bevorstehende Ausgabe hinzufügen',
+    scheduleOneTime: 'Einmalig',
+    scheduleWeekly: 'Wöchentlich',
+    scheduleBiweekly: 'Alle 2 Wochen',
+    scheduleMonthly: 'Monatlich',
+    scheduleAnnual: 'Jährlich',
   },
 };

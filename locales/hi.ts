@@ -41,6 +41,22 @@
  * (1st/15th/30th/Last day), has no clean standalone Hindi preposition
  * equivalent, so it reads as the field's own name ("तारीख", date) instead
  * of a literal "on the" connector.
+ *
+ * Run 27 added: `money` minus `habitsEmptyTitle`/`habitsEmptyBody` (locked-
+ * vocabulary gated: "leak"/रिसाव) and every function-valued key (deferred
+ * ICU work). `spentEmptyBody`/`upcomingEmptyBody` confirmed dead code
+ * (never rendered, same RETIRED treatment as elsewhere) and left
+ * untranslated. `scheduleSeparator` (a plain " · " middle-dot punctuation
+ * mark, no linguistic content) stays omitted like a function-valued key.
+ * `scheduleOneTime`/`scheduleWeekly`/`scheduleMonthly`/`scheduleAnnual`
+ * reuse `addUpcoming`'s matching frequency translations (same English
+ * source word); `scheduleBiweekly` ('Every 2 weeks') is translated fresh
+ * since its English source differs from `addUpcoming.frequencyBiweekly`
+ * ('Bi-weekly'). `habitsEmptyCta` ('Break a habit') deliberately uses
+ * तोड़ें (break, literal, "आदत तोड़ना" is a real Hindi idiom) rather than
+ * छोड़ें, which is this file's proposed provisional translation for the
+ * locked term "skip" (see HANDOFF's DECISIONS NEEDED table) and would
+ * collide if reused here for an unrelated concept.
  */
 import type { LocaleOverlay } from '@/utils/i18n';
 
@@ -234,5 +250,33 @@ export const hi: LocaleOverlay = {
     everyNDaysDecrease: 'कम दिन',
     everyNDaysIncrease: 'अधिक दिन',
     save: 'सहेजें',
+  },
+  money: {
+    segmentSpent: 'खर्च किया गया',
+    segmentUpcoming: 'आगामी',
+    segmentHabits: 'आदतें',
+    segmentLabel: 'पैसे का दृश्य',
+    spentToday: 'आज',
+    spentYesterday: 'कल',
+    spentTodayEmpty: 'आज अभी तक कुछ नहीं। अगर खर्च किया तो जोड़ें, और अगर नहीं किया तो आनंद लें।',
+    spentEditHint: 'संपादित करने या हटाने के लिए किसी पंक्ति पर टैप करें।',
+    recurringRowSuffix: 'आवर्ती',
+    spentEmptyTitle: 'सभी खर्च एक ही जगह',
+    upcomingWindowSegmentLabel: 'आगामी अवधि',
+    upcomingWindowTwoWeeks: '2 सप्ताह',
+    upcomingWindowOneMonth: '1 महीना',
+    upcomingWindowThreeMonths: '3 महीने',
+    upcomingAddAffordance: 'एक आगामी खर्च जोड़ें',
+    spentEmptyCta: 'एक खर्च दर्ज करें',
+    habitsEmptyCta: 'एक आदत तोड़ें',
+    upcomingListEyebrow: 'निर्धारित',
+    upcomingEmptyTitle: 'आने से पहले जानें कि क्या आ रहा है',
+    upcomingWindowEmptyBody: 'इस अवधि में आपका कोई भी आवर्ती खर्च नहीं आता।',
+    upcomingEmptyCta: 'एक आगामी खर्च जोड़ें',
+    scheduleOneTime: 'एक बार',
+    scheduleWeekly: 'साप्ताहिक',
+    scheduleBiweekly: 'हर 2 सप्ताह में',
+    scheduleMonthly: 'मासिक',
+    scheduleAnnual: 'वार्षिक',
   },
 };

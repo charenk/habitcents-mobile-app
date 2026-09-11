@@ -30,6 +30,18 @@
  * `useStrings()`-converted. `whenNextWeek`/`startingNextWeek` share one
  * translation, matching the English source reusing "Next week" in both
  * places.
+ *
+ * Run 27 added: `money` minus `habitsEmptyTitle`/`habitsEmptyBody` (locked-
+ * vocabulary gated: "leak") and every function-valued key (deferred ICU
+ * work). `spentEmptyBody`/`upcomingEmptyBody` confirmed dead code (never
+ * rendered, same RETIRED treatment as elsewhere) and left untranslated.
+ * `scheduleSeparator` (a plain " \u00b7 " middle-dot punctuation mark, no
+ * linguistic content) stays omitted like a function-valued key.
+ * `scheduleOneTime`/`scheduleWeekly`/`scheduleMonthly`/`scheduleAnnual`
+ * reuse `addUpcoming`'s matching frequency translations (same English
+ * source word); `scheduleBiweekly` ('Every 2 weeks') is translated fresh
+ * since its English source differs from `addUpcoming.frequencyBiweekly`
+ * ('Bi-weekly').
  */
 import type { LocaleOverlay } from '@/utils/i18n';
 
@@ -223,5 +235,33 @@ export const ptBR: LocaleOverlay = {
     everyNDaysDecrease: 'Menos dias',
     everyNDaysIncrease: 'Mais dias',
     save: 'Salvar',
+  },
+  money: {
+    segmentSpent: 'Gasto',
+    segmentUpcoming: 'Próximas',
+    segmentHabits: 'Hábitos',
+    segmentLabel: 'Visão de dinheiro',
+    spentToday: 'Hoje',
+    spentYesterday: 'Ontem',
+    spentTodayEmpty: 'Nada ainda hoje. Adicione se você gastou, e aproveite se não gastou.',
+    spentEditHint: 'Toque em uma linha para editar ou excluir.',
+    recurringRowSuffix: 'recorrente',
+    spentEmptyTitle: 'Todas as despesas em um só lugar',
+    upcomingWindowSegmentLabel: 'Janela de próximas',
+    upcomingWindowTwoWeeks: '2 semanas',
+    upcomingWindowOneMonth: '1 mês',
+    upcomingWindowThreeMonths: '3 meses',
+    upcomingAddAffordance: 'Adicionar uma despesa próxima',
+    spentEmptyCta: 'Registrar uma despesa',
+    habitsEmptyCta: 'Quebrar um hábito',
+    upcomingListEyebrow: 'Agendado',
+    upcomingEmptyTitle: 'Saiba o que vem antes que chegue',
+    upcomingWindowEmptyBody: 'Nenhuma das suas despesas recorrentes cai nesta janela.',
+    upcomingEmptyCta: 'Adicionar uma despesa próxima',
+    scheduleOneTime: 'Uma vez',
+    scheduleWeekly: 'Semanal',
+    scheduleBiweekly: 'A cada 2 semanas',
+    scheduleMonthly: 'Mensal',
+    scheduleAnnual: 'Anual',
   },
 };

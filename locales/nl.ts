@@ -30,6 +30,18 @@
  * `useStrings()`-converted. `whenNextWeek`/`startingNextWeek` share one
  * translation, matching the English source reusing "Next week" in both
  * places.
+ *
+ * Run 27 added: `money` minus `habitsEmptyTitle`/`habitsEmptyBody` (locked-
+ * vocabulary gated: "leak") and every function-valued key (deferred ICU
+ * work). `spentEmptyBody`/`upcomingEmptyBody` confirmed dead code (never
+ * rendered, same RETIRED treatment as elsewhere) and left untranslated.
+ * `scheduleSeparator` (a plain " \u00b7 " middle-dot punctuation mark, no
+ * linguistic content) stays omitted like a function-valued key.
+ * `scheduleOneTime`/`scheduleWeekly`/`scheduleMonthly`/`scheduleAnnual`
+ * reuse `addUpcoming`'s matching frequency translations (same English
+ * source word); `scheduleBiweekly` ('Every 2 weeks') is translated fresh
+ * since its English source differs from `addUpcoming.frequencyBiweekly`
+ * ('Bi-weekly').
  */
 import type { LocaleOverlay } from '@/utils/i18n';
 
@@ -223,5 +235,33 @@ export const nl: LocaleOverlay = {
     everyNDaysDecrease: 'Minder dagen',
     everyNDaysIncrease: 'Meer dagen',
     save: 'Opslaan',
+  },
+  money: {
+    segmentSpent: 'Uitgegeven',
+    segmentUpcoming: 'Binnenkort',
+    segmentHabits: 'Gewoontes',
+    segmentLabel: 'Geldweergave',
+    spentToday: 'Vandaag',
+    spentYesterday: 'Gisteren',
+    spentTodayEmpty: 'Nog niets vandaag. Voeg het toe als je iets uitgaf, en geniet ervan als je niets uitgaf.',
+    spentEditHint: 'Tik op een rij om te bewerken of te verwijderen.',
+    recurringRowSuffix: 'terugkerend',
+    spentEmptyTitle: 'Alle uitgaven op één plek',
+    upcomingWindowSegmentLabel: 'Periode voor binnenkort',
+    upcomingWindowTwoWeeks: '2 weken',
+    upcomingWindowOneMonth: '1 maand',
+    upcomingWindowThreeMonths: '3 maanden',
+    upcomingAddAffordance: 'Aankomende uitgave toevoegen',
+    spentEmptyCta: 'Uitgave registreren',
+    habitsEmptyCta: 'Een gewoonte doorbreken',
+    upcomingListEyebrow: 'Gepland',
+    upcomingEmptyTitle: 'Weet wat eraan komt voordat het er is',
+    upcomingWindowEmptyBody: 'Geen van je terugkerende uitgaven valt in deze periode.',
+    upcomingEmptyCta: 'Aankomende uitgave toevoegen',
+    scheduleOneTime: 'Eenmalig',
+    scheduleWeekly: 'Wekelijks',
+    scheduleBiweekly: 'Elke 2 weken',
+    scheduleMonthly: 'Maandelijks',
+    scheduleAnnual: 'Jaarlijks',
   },
 };

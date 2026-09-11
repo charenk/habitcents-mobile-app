@@ -31,6 +31,18 @@
  * translation, matching the English source reusing "Next week" in both
  * places. `whatIsIt` uses the typographic apostrophe (’) so it stays
  * single-quoted.
+ *
+ * Run 27 added: `money` minus `habitsEmptyTitle`/`habitsEmptyBody` (locked-
+ * vocabulary gated: "leak") and every function-valued key (deferred ICU
+ * work). `spentEmptyBody`/`upcomingEmptyBody` confirmed dead code (never
+ * rendered, same RETIRED treatment as elsewhere) and left untranslated.
+ * `scheduleSeparator` (a plain " · " middle-dot punctuation mark, no
+ * linguistic content) stays omitted like a function-valued key.
+ * `scheduleOneTime`/`scheduleWeekly`/`scheduleMonthly`/`scheduleAnnual`
+ * reuse `addUpcoming`'s matching frequency translations (same English
+ * source word); `scheduleBiweekly` ('Every 2 weeks') is translated fresh
+ * since its English source differs from `addUpcoming.frequencyBiweekly`
+ * ('Bi-weekly').
  */
 import type { LocaleOverlay } from '@/utils/i18n';
 
@@ -225,5 +237,33 @@ export const it: LocaleOverlay = {
     everyNDaysDecrease: 'Meno giorni',
     everyNDaysIncrease: 'Più giorni',
     save: 'Salva',
+  },
+  money: {
+    segmentSpent: 'Speso',
+    segmentUpcoming: 'Prossime',
+    segmentHabits: 'Abitudini',
+    segmentLabel: 'Vista denaro',
+    spentToday: 'Oggi',
+    spentYesterday: 'Ieri',
+    spentTodayEmpty: 'Ancora niente oggi. Aggiungila se hai speso, e goditela se no.',
+    spentEditHint: 'Tocca una riga per modificarla o eliminarla.',
+    recurringRowSuffix: 'ricorrente',
+    spentEmptyTitle: 'Tutte le spese in un unico posto',
+    upcomingWindowSegmentLabel: 'Finestra prossime',
+    upcomingWindowTwoWeeks: '2 settimane',
+    upcomingWindowOneMonth: '1 mese',
+    upcomingWindowThreeMonths: '3 mesi',
+    upcomingAddAffordance: 'Aggiungi una spesa prossima',
+    spentEmptyCta: 'Registra una spesa',
+    habitsEmptyCta: 'Interrompi un’abitudine',
+    upcomingListEyebrow: 'Programmato',
+    upcomingEmptyTitle: 'Sappi cosa sta arrivando prima che arrivi',
+    upcomingWindowEmptyBody: 'Nessuna delle tue spese ricorrenti rientra in questa finestra.',
+    upcomingEmptyCta: 'Aggiungi una spesa prossima',
+    scheduleOneTime: 'Una tantum',
+    scheduleWeekly: 'Settimanale',
+    scheduleBiweekly: 'Ogni 2 settimane',
+    scheduleMonthly: 'Mensile',
+    scheduleAnnual: 'Annuale',
   },
 };
