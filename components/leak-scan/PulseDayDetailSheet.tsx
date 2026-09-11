@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Icon } from '@/components/ui/Icon';
 import { Sheet } from '@/components/ui/Sheet';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -58,8 +58,11 @@ export function PulseDayDetailSheet({ cell, rows, onClose }: PulseDayDetailSheet
   const dateLabel = formatCellDate(cell.key);
 
   return (
-    <Sheet visible={!!cell} onClose={onClose} accessibilityLabel={dateLabel}>
-      <View style={styles.content}>
+    <Sheet
+      visible={!!cell}
+      onClose={onClose}
+      accessibilityLabel={dateLabel}
+      header={
         <View style={styles.headerRow}>
           <Text style={styles.date} accessibilityRole="header" numberOfLines={1}>
             {dateLabel}
@@ -73,7 +76,9 @@ export function PulseDayDetailSheet({ cell, rows, onClose }: PulseDayDetailSheet
             <Icon name="X" size={18} color={theme.slate} />
           </TouchableOpacity>
         </View>
-
+      }
+      contentContainerStyle={styles.content}
+    >
         {cell.state === 'out-of-coverage' && (
           <Text style={styles.emptyText}>{strings.leakScan.pulseLegendOutOfCoverage}</Text>
         )}
@@ -83,17 +88,14 @@ export function PulseDayDetailSheet({ cell, rows, onClose }: PulseDayDetailSheet
         {cell.state === 'spend' && (
           <>
             <Text style={styles.total}>{format(cell.totalCents)}</Text>
-            <ScrollView style={styles.list}>
-              {rows.map((row) => (
-                <View key={row.id} style={styles.row}>
-                  <Text style={styles.merchant}>{row.merchantDisplay || row.rawDescription}</Text>
-                  <Text style={styles.amount}>{format(Math.abs(row.amountCents))}</Text>
-                </View>
-              ))}
-            </ScrollView>
+            {rows.map((row) => (
+              <View key={row.id} style={styles.row}>
+                <Text style={styles.merchant}>{row.merchantDisplay || row.rawDescription}</Text>
+                <Text style={styles.amount}>{format(Math.abs(row.amountCents))}</Text>
+              </View>
+            ))}
           </>
         )}
-      </View>
     </Sheet>
   );
 }
@@ -102,14 +104,15 @@ function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     content: {
       paddingHorizontal: 20,
-      paddingTop: 4,
       paddingBottom: 20,
     },
     headerRow: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      marginBottom: 8,
+      paddingHorizontal: 20,
+      paddingTop: 4,
+      paddingBottom: 8,
     },
     date: {
       // Sits beside the sheet's largest number; the date yields (ADR 0039).
@@ -130,9 +133,6 @@ function createStyles(theme: AppTheme) {
       fontFamily: theme.fonts.ui,
       color: theme.slate,
       marginBottom: 4,
-    },
-    list: {
-      maxHeight: 320,
     },
     row: {
       flexDirection: 'row',

@@ -16,8 +16,6 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  ScrollView,
-  useWindowDimensions,
 } from 'react-native';
 import { Icon, categoryIconName } from '@/components/ui/Icon';
 import { Sheet } from '@/components/ui/Sheet';
@@ -108,7 +106,6 @@ export function AddCategoryModal({
   isEditing = false,
 }: AddCategoryModalProps) {
   const theme = useTheme();
-  const { height } = useWindowDimensions();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const { show } = useToast();
   // The sheet stays open until the write lands, so Save is reachable twice on
@@ -182,8 +179,8 @@ export function AddCategoryModal({
     <Sheet
       visible={visible}
       onClose={handleClose}
-      avoidKeyboard
       accessibilityLabel={title}
+      contentContainerStyle={styles.content}
       // Pinned header-save (ADR 0031) inside Sheet's drag zone: title + Save
       // fixed above the scroll, no in-sheet Cancel (grab handle, header
       // drag, scrim, and VoiceOver escape dismiss; handleClose still resets
@@ -198,13 +195,6 @@ export function AddCategoryModal({
         />
       }
     >
-      <View style={[styles.body, { maxHeight: height * 0.86 }]}>
-        <ScrollView
-          style={styles.scroll}
-          contentContainerStyle={styles.content}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
         {/* Preview */}
         <View style={styles.previewContainer}>
           <View style={[styles.previewIcon, { backgroundColor: withAlpha(selectedColor, 0.12) }]}>
@@ -276,21 +266,12 @@ export function AddCategoryModal({
             </TouchableOpacity>
           ))}
         </View>
-
-        </ScrollView>
-      </View>
     </Sheet>
   );
 }
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
-    body: {
-      flexShrink: 1,
-    },
-    scroll: {
-      flexShrink: 1,
-    },
     content: {
       paddingTop: 16,
       paddingHorizontal: 20,

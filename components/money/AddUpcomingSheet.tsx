@@ -37,11 +37,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   View,
-  useWindowDimensions,
 } from 'react-native';
 import { AmountField } from '@/components/ui/AmountField';
 import { Button } from '@/components/ui/Button';
@@ -328,7 +326,6 @@ export function AddUpcomingSheet({
 }: AddUpcomingSheetProps): React.JSX.Element {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
-  const { height } = useWindowDimensions();
   const { show } = useToast();
   const { format } = useCurrency();
   const { getVisibleCategories } = useCategories();
@@ -599,8 +596,21 @@ export function AddUpcomingSheet({
     <Sheet
       visible={visible}
       onClose={onClose}
-      avoidKeyboard
       accessibilityLabel={title}
+      contentContainerStyle={styles.content}
+      // Save moved into the pinned header (ADR 0031); the destructive action
+      // rides Sheet's pinned footer slot in edit mode. Add mode passes no
+      // footer at all, so its padding never leaves a dead gap.
+      footer={
+        mode === 'edit' ? (
+          <Button
+            label={strings.addUpcoming.deleteUpcoming}
+            onPress={handleDelete}
+            variant="destructive"
+            style={styles.delete}
+          />
+        ) : undefined
+      }
       // Pinned header-save (ADR 0031) inside Sheet's drag zone, so the title
       // row drags the sheet too; hint only while disabled, so VoiceOver
       // never reads stale guidance on an enabled button (ADR 0028).
@@ -614,13 +624,6 @@ export function AddUpcomingSheet({
         />
       }
     >
-      <View style={[styles.body, { maxHeight: height * 0.82 }]}>
-        <ScrollView
-          style={styles.scroll}
-          contentContainerStyle={styles.content}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
           <AmountField
             valueCents={cents}
             onChangeCents={setCents}
@@ -782,23 +785,6 @@ export function AddUpcomingSheet({
               ) : null}
             </>
           )}
-        </ScrollView>
-
-        {/* Save moved into the pinned header (ADR 0031); the destructive
-            action stays at the bottom like ExpenseSheet's edit footer. Add
-            mode renders no footer at all, so its padding never leaves a
-            dead gap. */}
-        {mode === 'edit' ? (
-          <View style={styles.footer}>
-            <Button
-              label={strings.addUpcoming.deleteUpcoming}
-              onPress={handleDelete}
-              variant="destructive"
-              style={styles.delete}
-            />
-          </View>
-        ) : null}
-      </View>
     </Sheet>
   );
 }
@@ -841,12 +827,6 @@ function StepperButton({
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
-    body: {
-      flexShrink: 1,
-    },
-    scroll: {
-      flexShrink: 1,
-    },
     content: {
       paddingTop: 16,
       paddingHorizontal: 20,
@@ -911,11 +891,6 @@ function createStyles(theme: AppTheme) {
       fontVariant: ['tabular-nums'],
       minWidth: 110,
       textAlign: 'center',
-    },
-    footer: {
-      paddingHorizontal: 20,
-      paddingTop: 12,
-      gap: 8,
     },
     delete: {
       marginTop: 0,

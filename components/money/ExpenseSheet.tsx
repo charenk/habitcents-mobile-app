@@ -61,8 +61,7 @@
  * built from the values just sent to addExpense rather than its return value.
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Keyboard, Platform, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Keyboard, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { AmountField } from '@/components/ui/AmountField';
 import { Button } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
@@ -80,28 +79,9 @@ import { useExpenses } from '@/contexts/ExpensesContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import type { Expense, ExpenseCategory } from '@/types/expense';
 import { toExpenseCategory } from '@/utils/expenseCategory';
+import { useKeyboardHeight } from '@/utils/keyboard';
 import { hapticError, hapticSuccess } from '@/utils/motion';
 import { CategoryChipRow } from './CategoryChipRow';
-
-/**
- * Tracks whether the iOS keyboard is currently up, so the Done bar (below)
- * renders only while it would have something to dismiss. keyboardWillShow/
- * Hide are iOS-only events; on Android this stays permanently false, which is
- * fine since the bar is gated on Platform.OS === 'ios' anyway (Android's
- * decimal pad has its own done key).
- */
-function useKeyboardVisible(): boolean {
-  const [visible, setVisible] = useState(false);
-  useEffect(() => {
-    const showSub = Keyboard.addListener('keyboardWillShow', () => setVisible(true));
-    const hideSub = Keyboard.addListener('keyboardWillHide', () => setVisible(false));
-    return () => {
-      showSub.remove();
-      hideSub.remove();
-    };
-  }, []);
-  return visible;
-}
 
 /** How many recent-merchant chips the sheet offers before it stops (log
  *  mode's natural recency list; edit mode may add one more, see below). */
@@ -150,9 +130,7 @@ export function ExpenseSheet({
 }: ExpenseSheetProps): React.JSX.Element {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
-  const { height } = useWindowDimensions();
-  const insets = useSafeAreaInsets();
-  const keyboardVisible = useKeyboardVisible();
+  const keyboardVisible = useKeyboardHeight() > 0;
   const { show } = useToast();
   const { format } = useCurrency();
   const { getVisibleCategories } = useCategories();
@@ -358,24 +336,28 @@ export function ExpenseSheet({
 
   // iOS only: Android's decimal pad has its own done key and the merchant
   // field already sets returnKeyType="done", so there is nothing for a Done
-  // bar to add there.
+  // bar to add there. It rides Sheet's pinned footer slot, which zeroes the
+  // bottom safe-area inset while the keyboard is up, so the bar sits flush
+  // on the keyboard with no negative-margin lift (the old doneBarLift hack).
   const showDoneBar = Platform.OS === 'ios' && keyboardVisible;
-  // Sheet gives the panel `paddingBottom: insets.bottom` unconditionally
-  // (constants/theme.ts via components/ui/Sheet.tsx), sized for the resting,
-  // no-keyboard case (home-indicator clearance). With the keyboard up,
-  // avoidKeyboard's KeyboardAvoidingView already lifts the whole panel to sit
-  // right above the keyboard, so that same bottom padding becomes a stray
-  // gap between the Done bar and the keyboard's top edge. Pulling the bar
-  // down by that same inset while the keyboard is visible closes the gap
-  // without touching Sheet.tsx.
-  const doneBarLift = insets.bottom > 0 ? { marginBottom: -insets.bottom } : undefined;
 
   return (
     <Sheet
       visible={visible}
       onClose={onClose}
-      avoidKeyboard
       accessibilityLabel={eyebrow}
+      contentContainerStyle={styles.content}
+      footer={
+        showDoneBar ? (
+          <View style={styles.doneBar}>
+            <Button
+              label={strings.expenseSheet.keyboardDone}
+              onPress={() => Keyboard.dismiss()}
+              variant="tertiary"
+            />
+          </View>
+        ) : undefined
+      }
       // This sheet originated the pinned header-save pattern (2026-08-16
       // workflow redesign, UX-040 serif title); the anatomy now lives in
       // ui/SheetHeader (ADR 0031) and every form sheet shares it, rendered
@@ -403,14 +385,7 @@ export function ExpenseSheet({
         />
       }
     >
-      <View style={[styles.body, { maxHeight: height * 0.82 }]}>
-        <ScrollView
-          style={styles.scroll}
-          contentContainerStyle={styles.content}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator
-        >
-          {coachLineText ? (
+      {coachLineText ? (
             <View style={styles.coachLine}>
               <Icon name="Sprout" size={14} color={theme.primaryDark} />
               <Text style={styles.coachLineText}>{coachLineText}</Text>
@@ -477,30 +452,12 @@ export function ExpenseSheet({
             onChange={setCategory}
             scrollToSelected={mode === 'edit' && visible}
           />
-        </ScrollView>
-
-        {showDoneBar ? (
-          <View style={[styles.doneBar, doneBarLift]}>
-            <Button
-              label={strings.expenseSheet.keyboardDone}
-              onPress={() => Keyboard.dismiss()}
-              variant="tertiary"
-            />
-          </View>
-        ) : null}
-      </View>
     </Sheet>
   );
 }
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
-    body: {
-      flexShrink: 1,
-    },
-    scroll: {
-      flexShrink: 1,
-    },
     content: {
       paddingTop: 16,
       paddingHorizontal: 20,
@@ -540,15 +497,10 @@ function createStyles(theme: AppTheme) {
       gap: 8,
       paddingRight: 12,
     },
-    // iOS-only Done bar, last child of the body View so it rides the Sheet's
-    // own KeyboardAvoidingView.
+    // iOS-only Done bar, rendered in Sheet's footer slot, which owns the
+    // padding, hairline, and keyboard-flush inset; only alignment lives here.
     doneBar: {
-      minHeight: 44,
-      justifyContent: 'center',
       alignItems: 'flex-end',
-      paddingHorizontal: 20,
-      borderTopWidth: StyleSheet.hairlineWidth,
-      borderTopColor: theme.cloud,
     },
   });
 }

@@ -47,12 +47,23 @@ export function CurrencySheet({ visible, onClose }: CurrencySheetProps): React.J
   };
 
   return (
-    <Sheet visible={visible} onClose={onClose} accessibilityLabel={strings.settings.currencySheetTitle}>
-      <View style={styles.content}>
-        <Text style={styles.title} accessibilityRole="header" maxFontSizeMultiplier={1.5}>
-          {strings.settings.currencySheetTitle}
-        </Text>
-
+    <Sheet
+      visible={visible}
+      onClose={onClose}
+      accessibilityLabel={strings.settings.currencySheetTitle}
+      // Title pinned in the drag zone; the row list scrolls under the panel
+      // clamp it never had (the XXXL Dynamic Type overflow case), and Cancel
+      // stays reachable in the pinned footer.
+      header={
+        <View style={styles.titleWrap}>
+          <Text style={styles.title} accessibilityRole="header" maxFontSizeMultiplier={1.5}>
+            {strings.settings.currencySheetTitle}
+          </Text>
+        </View>
+      }
+      contentContainerStyle={styles.content}
+      footer={<Button label={strings.common.cancel} variant="tertiary" onPress={onClose} />}
+    >
         {CURRENCIES.map((c, index) => {
           const selected = c.code === currency;
           const label = strings.settings.currencyRowLabel(c.name, c.code);
@@ -74,14 +85,6 @@ export function CurrencySheet({ visible, onClose }: CurrencySheetProps): React.J
             </Pressable>
           );
         })}
-
-        <Button
-          label={strings.common.cancel}
-          variant="tertiary"
-          onPress={onClose}
-          style={styles.cancel}
-        />
-      </View>
     </Sheet>
   );
 }
@@ -93,13 +96,17 @@ function createStyles(theme: AppTheme) {
       paddingTop: 4,
       paddingBottom: 12,
     },
+    titleWrap: {
+      paddingHorizontal: 20,
+      paddingTop: 4,
+      paddingBottom: 8,
+    },
     title: {
       fontFamily: theme.fonts.display,
       fontSize: typeScale.sheetTitle,
       lineHeight: 32,
       color: theme.ink,
       includeFontPadding: false,
-      marginBottom: 8,
     },
     row: {
       flexDirection: 'row',
@@ -120,9 +127,6 @@ function createStyles(theme: AppTheme) {
       fontSize: typeScale.body,
       color: theme.ink,
       flexShrink: 1,
-    },
-    cancel: {
-      marginTop: 14,
     },
   });
 }

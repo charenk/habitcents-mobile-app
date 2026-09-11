@@ -21,15 +21,14 @@
  * "Amount, ..." accessibility label PREFIX (the suffix changes with the
  * current value as soon as typing starts).
  *
- * Done bar (below): components/ui/Sheet.tsx's avoidKeyboard wraps the panel
- * in a real KeyboardAvoidingView, which ALSO subscribes to 'keyboardWillShow'
- * on iOS to size its own padding. That listener and the sheet's own Done-bar
- * hook end up registered under the same event name, so the test tells them
- * apart by arity: the hook's is an inline, zero-argument
- * `() => setVisible(true)`; KeyboardAvoidingView's is a bound, one-argument
- * `_onKeyboardChange`. jest-expo's haste config defaults Platform.OS to
- * 'ios' for tests, so the bar's Platform.OS === 'ios' gate is satisfied here
- * without mocking Platform.
+ * Done bar (below): the one keyboard subscription is utils/keyboard.ts's
+ * shared useKeyboardHeight hook (the old KeyboardAvoidingView and the
+ * sheet-local useKeyboardVisible are both gone). On iOS it listens to
+ * 'keyboardWillChangeFrame' and derives the overlap from
+ * endCoordinates.screenY, so the test drives it with a synthetic frame event.
+ * jest-expo's haste config defaults Platform.OS to 'ios' for tests, so the
+ * bar's Platform.OS === 'ios' gate is satisfied here without mocking
+ * Platform.
  */
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock')
@@ -472,18 +471,20 @@ describe('ExpenseSheet: iOS Done bar', () => {
 
     const view = await renderLogSheet();
 
-    // Both the sheet's Done-bar hook and Sheet.tsx's own KeyboardAvoidingView
-    // register a 'keyboardWillShow' listener (see the file header comment);
-    // pick out the hook's zero-argument one specifically.
-    const showCall = addListenerSpy.mock.calls.find(
-      ([eventName, listener]) =>
-        eventName === 'keyboardWillShow' && (listener as (...args: unknown[]) => void).length === 0
+    // The shared useKeyboardHeight hook subscribes 'keyboardWillChangeFrame'
+    // on iOS (see the file header comment); drive it with a synthetic frame
+    // whose screenY puts a 300pt keyboard on screen. The sheet renders once
+    // in ExpenseSheet (the Done-bar gate) and once in ui/Sheet (the clamp),
+    // so any registered frame listener works: fire them all.
+    const frameCalls = addListenerSpy.mock.calls.filter(
+      ([eventName]) => eventName === 'keyboardWillChangeFrame'
     );
-    expect(showCall).toBeTruthy();
-    const showListener = showCall![1] as () => void;
+    expect(frameCalls.length).toBeGreaterThan(0);
 
     await act(async () => {
-      showListener();
+      for (const [, listener] of frameCalls) {
+        (listener as (e: unknown) => void)({ endCoordinates: { screenY: 0 } });
+      }
     });
 
     const doneButton = view.getByRole('button', { name: strings.expenseSheet.keyboardDone });

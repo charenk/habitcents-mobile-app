@@ -13,7 +13,7 @@
  * internals were rebuilt on Sheet + AmountField.
  */
 import React, { useEffect, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import { AmountField } from '@/components/ui/AmountField';
 import { Sheet } from '@/components/ui/Sheet';
 import { SheetHeader } from '@/components/ui/SheetHeader';
@@ -33,7 +33,6 @@ type PartialSlipSheetProps = {
 export function PartialSlipSheet({ visible, skipValue, onCancel, onSave }: PartialSlipSheetProps) {
   const theme = useTheme();
   const { format } = useCurrency();
-  const { height } = useWindowDimensions();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [cents, setCents] = useState(0);
 
@@ -62,8 +61,8 @@ export function PartialSlipSheet({ visible, skipValue, onCancel, onSave }: Parti
     <Sheet
       visible={visible}
       onClose={onCancel}
-      avoidKeyboard
       accessibilityLabel={strings.habitLogging.partialSheetTitle}
+      contentContainerStyle={styles.content}
       // Pinned header-save (ADR 0031) inside Sheet's drag zone: this sheet
       // takes an amount and saves, so it heads with sheetTitle like every
       // form sheet rather than the displayMid decision treatment it launched
@@ -80,13 +79,6 @@ export function PartialSlipSheet({ visible, skipValue, onCancel, onSave }: Parti
         />
       }
     >
-      <View style={[styles.body, { maxHeight: height * 0.86 }]}>
-        <ScrollView
-          style={styles.scroll}
-          contentContainerStyle={styles.content}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
           <Text style={styles.subtitle}>
             {strings.habitLogging.partialSheetSubtitle(format(skipValue))}
           </Text>
@@ -98,20 +90,12 @@ export function PartialSlipSheet({ visible, skipValue, onCancel, onSave }: Parti
             size={48}
             accessibilityLabel={`${strings.habitLogging.partialAmountLabel}, ${format(cents)}`}
           />
-        </ScrollView>
-      </View>
     </Sheet>
   );
 }
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
-    body: {
-      flexShrink: 1,
-    },
-    scroll: {
-      flexShrink: 1,
-    },
     content: {
       paddingTop: 16,
       paddingHorizontal: 20,

@@ -44,7 +44,7 @@
  * are inherited.
  */
 import { useMemo } from 'react';
-import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { Button } from '@/components/ui/Button';
 import { Sheet } from '@/components/ui/Sheet';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -136,22 +136,28 @@ function PhaseRow({
 export function HowItWorksSheet({ visible, onClose }: HowItWorksSheetProps) {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
-  const { height } = useWindowDimensions();
   const breakRows = strings.today.howItWorksBreakRows;
 
   return (
-    <Sheet visible={visible} onClose={onClose} accessibilityLabel={strings.today.howItWorksTitle}>
+    <Sheet
+      visible={visible}
+      onClose={onClose}
+      accessibilityLabel={strings.today.howItWorksTitle}
+      // Title pinned, rows scroll, Got it pinned: at XXXL Dynamic Type the
+      // rows used to push past the screen with no scroll at all (the open
+      // item this closes); now the panel clamp + body scroll carry it.
+      header={
+        <View style={styles.titleWrap}>
+          <Text style={styles.title} accessibilityRole="header" maxFontSizeMultiplier={1.5}>
+            {strings.today.howItWorksTitle}
+          </Text>
+        </View>
+      }
+      contentContainerStyle={styles.content}
+      footer={<Button label={strings.today.howItWorksDone} variant="secondary" onPress={onClose} />}
+    >
       {/* Sheet has no testID prop of its own; the wrapper carries it. */}
-      <ScrollView
-        style={{ maxHeight: height * 0.86 }}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-        testID="how-it-works-sheet"
-      >
-        <Text style={styles.title} accessibilityRole="header" maxFontSizeMultiplier={1.5}>
-          {strings.today.howItWorksTitle}
-        </Text>
-
+      <View testID="how-it-works-sheet">
         <PhaseRow label={strings.today.howItWorksFindTitle} tone="find" styles={styles} />
         {strings.today.howItWorksFindRows.map((row) => (
           <SpineRow key={row.rest} row={row} tone="find" styles={styles} />
@@ -181,14 +187,7 @@ export function HowItWorksSheet({ visible, onClose }: HowItWorksSheetProps) {
             {strings.today.howItWorksArcBody}
           </Text>
         </View>
-
-        <Button
-          label={strings.today.howItWorksDone}
-          variant="secondary"
-          onPress={onClose}
-          style={styles.done}
-        />
-      </ScrollView>
+      </View>
     </Sheet>
   );
 }
@@ -197,8 +196,13 @@ function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     content: {
       paddingHorizontal: spacing.gutter,
-      paddingTop: spacing.tight,
+      paddingTop: spacing.sm,
       paddingBottom: spacing.stack,
+    },
+    titleWrap: {
+      paddingHorizontal: spacing.gutter,
+      paddingTop: spacing.tight,
+      paddingBottom: spacing.xs,
     },
     title: {
       fontSize: typeScale.sheetTitle,
@@ -206,7 +210,6 @@ function createStyles(theme: AppTheme) {
       fontFamily: theme.fonts.display,
       color: theme.ink,
       includeFontPadding: false,
-      marginBottom: spacing.lg,
     },
     row: {
       flexDirection: 'row',
@@ -294,9 +297,6 @@ function createStyles(theme: AppTheme) {
     arcTerm: {
       fontFamily: theme.fonts.uiSemibold,
       color: theme.ink,
-    },
-    done: {
-      marginTop: spacing.md,
     },
   });
 }
