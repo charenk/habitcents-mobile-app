@@ -44,7 +44,7 @@ function Providers({ children }: { children: React.ReactNode }) {
 function thinHabit(overrides: Partial<DetectedHabit> = {}): DetectedHabit {
   return {
     id: 'h1',
-    name: 'Pizzahut Spending',
+    name: 'Pizzahut',
     description: '$87 on pizzahut across 5 buys so far',
     categoryId: 'food',
     merchantPattern: 'pizzahut',
@@ -99,7 +99,7 @@ describe('PickOneSheet evidence', () => {
   it('states what was observed and never a monthly rate under a thin span', async () => {
     const view = await renderSheet();
 
-    expect(view.getByText('$87.00 at Pizzahut Spending across 5 buys.')).toBeTruthy();
+    expect(view.getByText('$87.00 at Pizzahut across 5 buys.')).toBeTruthy();
     expect(view.getByText(strings.habitLogging.leakEvidenceKeepLogging)).toBeTruthy();
     // The $522 line Charen saw on device.
     expect(view.queryByText(/522/)).toBeNull();
@@ -119,7 +119,7 @@ describe('PickOneSheet evidence', () => {
     });
 
     expect(
-      view.getByText('Pizzahut Spending costs you about $150.00 a month. You bought it 40 times in the last 3 months.')
+      view.getByText('Pizzahut costs you about $150.00 a month. You bought it 40 times in the last 3 months.')
     ).toBeTruthy();
     expect(view.queryByText(strings.habitLogging.leakEvidenceKeepLogging)).toBeNull();
   });
@@ -201,7 +201,7 @@ describe('PickOneSheet gated (free tier)', () => {
     expect(view.getByText(/\$3\.99 a month/)).toBeTruthy();
     expect(view.getByText(strings.paywall.plannedBanner)).toBeTruthy();
     // The leak itself is still on screen: the user sees what they would break.
-    expect(view.getByText('$87.00 at Pizzahut Spending across 5 buys.')).toBeTruthy();
+    expect(view.getByText('$87.00 at Pizzahut across 5 buys.')).toBeTruthy();
   });
 
   it('offers an enabled upgrade CTA and a neutral exit', async () => {

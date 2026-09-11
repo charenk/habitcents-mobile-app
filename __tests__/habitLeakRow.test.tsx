@@ -28,7 +28,7 @@ function Providers({ children }: { children: React.ReactNode }) {
 function habit(status: HabitStatus, overrides: Partial<DetectedHabit> = {}): DetectedHabit {
   return {
     id: 'h1',
-    name: 'Pizzahut Spending',
+    name: 'Pizzahut',
     description: '$87 on pizzahut across 5 buys so far',
     categoryId: 'food',
     merchantPattern: 'pizzahut',
