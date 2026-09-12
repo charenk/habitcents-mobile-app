@@ -67,6 +67,67 @@ device pass is separate and additional to that one, not a substitute.
 
 ## Status
 
+Run 30. `origin/main` moved 27 commits since run 28's rebase point
+(`683ecc3`..`3890ba1`, "the Upcoming wave, eight PRs merged and TestFlight
+build 25": a rewrite of Money's Upcoming pane, `components/money/
+UpcomingList.tsx` and `MonthDayPicker.tsx` new, `AddUpcomingSheet.tsx` and
+`ExpenseRow.tsx` heavily reworked, `Sheet.tsx` and `SpentList.tsx` touched
+again, plus a new `utils/textScale.ts` Dynamic Type policy). Rebased onto
+it; per the run 8/14 "re-audit, not re-run" rule, did not stop at a clean
+replay report. Three conflicts, all mechanical, all resolved keeping both
+sides:
+- `design/decisions/README.md`'s component index: main added four new
+  entries (ExpenseRow, AddUpcomingSheet, MonthDayPicker, UpcomingList),
+  this branch's run-5 commit carries OnboardingCarousel; unioned all five,
+  nothing dropped.
+- `components/money/SpentList.tsx`'s import list: main added
+  `CHROME_MAX_FONT_SCALE` (from the new `utils/textScale.ts`) on the same
+  line this branch's run-8 commit added `contentColumnStyle`; kept both.
+  This landed on run 8's historical commit, so a duplicate `testID` briefly
+  reappeared mid-replay (the exact run-14 shape) and was gone again once
+  run 14's own later commit reapplied cleanly; confirmed only one
+  `testID="spent-list"` remains post-rebase, not assumed from the replay
+  succeeding.
+- `design/decisions/modules/money.md`: both sides appended dated lines;
+  kept both, ordered by date.
+
+Re-audited every surface the incoming wave touched, not just the
+conflicts:
+- `components/ui/Sheet.tsx`: `panel` still carries `maxWidth:
+  layout.contentMaxWidth` and `alignSelf: 'center'` after the wave: no
+  change to Sheet's own shape landed here, unlike run 26.
+- `components/money/SpentList.tsx`: `listContent` still spreads
+  `...contentColumnStyle`; single `testID="spent-list"` confirmed (see
+  above).
+- `app/(tabs)/money.tsx`: the Upcoming and Habits panes both render through
+  the same shared `styles.scrollContent`, which still spreads
+  `...contentColumnStyle`; the new `UpcomingList.tsx` component itself owns
+  no ScrollView of its own (it renders inside that already-capped parent
+  ScrollView, confirmed by direct reading), so it needed no cap of its own.
+- `components/money/MonthDayPicker.tsx`: its one `ScrollView` is a
+  horizontal day-rail inside `AddUpcomingSheet`, which itself renders
+  through the already-capped `<Sheet>` panel; same shape as a paging unit,
+  not a case for its own cap.
+- `components/money/AddUpcomingSheet.tsx`, `ExpenseRow.tsx`: neither reads
+  `useWindowDimensions` directly (confirmed by grep), consistent with run
+  26's finding that per-sheet height clamps live in `Sheet.tsx`/
+  `utils/keyboard.ts` now, not in individual sheet components.
+- Fresh `useWindowDimensions` grep: `CheckInCard.tsx`, `Sheet.tsx`,
+  `OnboardingCarousel.tsx`, `AuroraBackground.tsx` (dead code),
+  `utils/keyboard.ts`, `utils/useSegmentPager.ts` (all already known), plus
+  one new site, `utils/textScale.ts`'s `useAccessibilityTextSize`: reads
+  `fontScale` only, same Dynamic-Type shape as `CheckInCard.tsx`, out of
+  this plan's scope (not a width/tablet concern).
+`npx tsc --noEmit` clean from a fresh `npm ci`. Full suite green on the
+first pass, no flake: 122 suites / 1335 tests (up from run 29's 118/1233,
+entirely main's own Upcoming-wave test growth, net of nothing removed on
+this branch). Re-verified item 7 (`app.json` orientation still
+`"portrait"`, `supportsTablet` still `true`). Pushed (force-with-lease,
+history rewritten). PR #133 and issue #139 both re-checked via
+`get_comments`/`get_reviews`: no new activity on either since run 28/29,
+zero reactions on #139. No REVIEW FEEDBACK found in this file or on the
+status board.
+
 Run 29. Verified per this file's own COMPLETE instruction: plan fully
 checked, nothing new to do. `origin/main` has not moved since run 28's
 rebase (`git merge-base --is-ancestor origin/main routine/ipad`, still at
