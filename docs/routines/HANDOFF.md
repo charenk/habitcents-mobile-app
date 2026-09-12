@@ -2,7 +2,22 @@
 
 ## Status
 
-In progress. Run 31: no rebase needed, branch was already at
+In progress. Run 32: no rebase needed, branch was already at
+`origin/main`'s tip (`3890ba1`) from run 31; no REVIEW FEEDBACK was
+pending. Item 4 (translations) is still blocked on Charen (DECISIONS
+NEEDED: the locked-vocabulary proposal table, the `paywall` go-ahead),
+and item 6's ungated candidate list is empty as of run 31, so picked
+item 5 (overflow hardening) per run 31's Next note naming it the
+standing fallback. Audited and hardened all three surfaces the item
+names: `SpentKeptChips.tsx`'s eyebrow labels, `SheetHeader.tsx`'s title,
+and the category detail stat band's six Text elements, all now
+`numberOfLines={1}`. Item 5's single checkbox is now checked; full
+detail below under Completed and in PLAN.md's run 32 entry. `npm
+install` needed first (fresh container, no `node_modules`, same as
+every prior run). One commit; `tsc --noEmit` clean, full suite green
+(125/125, 1393/1393) on the first run, no flake.
+
+Run 31: no rebase needed, branch was already at
 `origin/main`'s tip from run 30's rebase; no REVIEW FEEDBACK was
 pending. Item 4 (translations) is still blocked on Charen (DECISIONS
 NEEDED: the locked-vocabulary proposal table, the `paywall` go-ahead),
@@ -839,6 +854,38 @@ first run, no flake.
   before starting. One commit; `tsc --noEmit` clean, full suite green
   (125/125, 1393/1393) on the first run, no flake. Full detail in
   PLAN.md's run 31 entry.
+- Run 32, plan item 5 (overflow hardening), now fully closed: audited
+  the three surfaces the item names and found each was missing a
+  `numberOfLines` guard on its most overflow-prone text, even though
+  the house convention (`Chip.tsx`, `SegmentedControl.tsx`) already
+  applies one to every tight label. `components/habit-logging/
+  SpentKeptChips.tsx`: the eyebrow Text (`spentChipLabel`/
+  `keptChipLabel`) had no cap, unlike the amount/placeholder text right
+  below it in the same segment (already guarded since the file's own
+  UX-067 fix); added `numberOfLines={1}` to both eyebrows.
+  `components/ui/SheetHeader.tsx`: the title Text (shares its row with
+  Save and, on one consumer, a secondary icon action) had no cap at
+  all; fixed at the component level so every form-sheet consumer
+  inherits it. `app/category/[id].tsx`'s stat band: three
+  hairline-divided columns, none of whose six Text elements
+  (`statBandAmount`, `statValue` x2, `statBandLabel` x3,
+  `summaryTrendText`) had a cap, despite the lead column's own code
+  comment already flagging the trend caption needs the room to stay on
+  one line at the default type size. Added `numberOfLines={1}` to all
+  six. No copy changed anywhere, per the item's own "fix truncation/
+  wrapping, not the copy"; `ellipsizeMode` left at RN's default
+  ("tail"), matching every existing use in the codebase. `today`
+  (SpentKeptChips's own section) is still fully untranslated, gated on
+  the locked-vocabulary DECISIONS NEEDED table since "Kept today"
+  contains the locked word "Kept", so this fix is defensive ahead of
+  real translated text landing there, not a response to a live overflow
+  bug. No test asserted multi-line text at any of the six sites before
+  this, so no test file changes were needed. Design decision docs
+  updated in the same commit: `SheetHeader.md`, `SpentKeptChips.md`,
+  and `categories.md` (the closest existing module doc to the category
+  detail screen; there is no dedicated `CategoryDetail.md`). One
+  commit; `tsc --noEmit` clean, full suite green (125/125, 1393/1393)
+  on the first run, no flake. Full detail in PLAN.md's run 32 entry.
 
 ## Next
 
@@ -882,19 +929,28 @@ blocked until Charen answers at least one of those two open questions
 `leakDismissed`/`stoppedHistoryKept` are settled (same locked-vocabulary
 gate).
 
-**Still true as of run 31: item 4 is blocked on Charen for further
+**Still true as of run 32: item 4 is blocked on Charen for further
 progress** (DECISIONS NEEDED unanswered: the locked-vocabulary proposal
 table and the `paywall` pricing/legal go-ahead). A future run picking
 item 4 first should check DECISIONS NEEDED before assuming there is a
-fresh, ungated section left to translate; there is not, as of run 31.
-Run 28 worked one named fallback (item 2's `daysUntilLabel` case) and
+fresh, ungated section left to translate; there is not, as of run 32.
+Run 28 worked one named fallback (item 2's `daysUntilLabel` case),
 runs 29-31 worked another (item 6's `utils/a11y.ts` slices, now fully
 closed out down to the locked-vocabulary-gated remainder, see
-Completed). If neither DECISIONS NEEDED gate has moved by the next run,
-item 6 no longer has a queued next slice (the ungated candidate list is
-now empty; see item 6's Next bullet above for where a fresh one would
-have to come from), so item 5 (overflow hardening) is the standing
-fallback.
+Completed), and run 32 worked the last remaining named fallback (item
+5, overflow hardening, now fully closed, see Completed). **If the
+DECISIONS NEEDED gate still has not moved by the next run, there is no
+further named fallback item left on the plan**: items 2's ICU work,
+3's test-migration sweep, and 6's remaining slice are all themselves
+gated on item 4 progressing further (see each item's own Next bullet
+below for the specific trigger that would unblock it), and item 5 has
+no more work of its own past this run's three named surfaces. A future
+run in that position should re-check DECISIONS NEEDED first; if still
+unanswered, the next real option is a fresh, self-contained finding
+(e.g. the targeted a11y-label grep item 6's bullet already names, or a
+targeted overflow grep beyond the three surfaces item 5 named,
+confirmed genuinely new before starting, not a rehash of a closed
+checkbox) rather than assuming one of the six items has open work left.
 
 What is actually left for a future run:
 - Plan item 2's broader ICU/pluralization checkbox (function-valued
@@ -938,9 +994,12 @@ What is actually left for a future run:
   needs to turn up elsewhere in the app (a targeted grep for other
   `accessibilityLabel={\`...\`}` template literals outside the catalog,
   not assumed to be limited to `utils/a11y.ts`).
-- Plan item 5 (overflow hardening) is still untouched, sequenced after
-  item 4 as scoped, and does not depend on the locked-vocabulary
-  decision either.
+- Plan item 5 (overflow hardening): closed run 32. All three named
+  surfaces (`SpentKeptChips.tsx` eyebrows, `SheetHeader.tsx` title, the
+  category detail stat band) now guard their text with
+  `numberOfLines={1}`, matching the house convention `Chip.tsx`/
+  `SegmentedControl.tsx` already used elsewhere. See Completed and
+  PLAN.md's run 32 entry.
 
 ## Blockers
 
