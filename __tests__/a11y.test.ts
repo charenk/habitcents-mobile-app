@@ -54,13 +54,13 @@ describe('a11y label builders (spec 09)', () => {
   });
 
   it('habit card header reads rank, class, and tier', () => {
-    expect(habitCardLabel(1, 'Govern', 'solid')).toBe('rank 1, Govern, solid');
+    expect(habitCardLabel(1, 'Govern', 'solid', strings)).toBe('rank 1, Govern, solid');
   });
 
   it('pulse cell distinguishes spend, zero spend, and outside coverage', () => {
-    expect(pulseCellLabel('July 4', 'spend', '$18')).toBe('July 4, $18 spent');
-    expect(pulseCellLabel('July 4', 'zero')).toBe('July 4, no spend');
-    expect(pulseCellLabel('July 4', 'outside')).toBe('July 4, outside your files');
+    expect(pulseCellLabel('July 4', 'spend', strings, '$18')).toBe('July 4, $18 spent');
+    expect(pulseCellLabel('July 4', 'zero', strings)).toBe('July 4, no spend');
+    expect(pulseCellLabel('July 4', 'outside', strings)).toBe('July 4, outside your files');
   });
 
   it('remind toggle and settings row read their value', () => {
@@ -81,7 +81,7 @@ describe('a11y label builders (spec 09)', () => {
 
   it('merchant, delete, and reminder-time builders compose name and value', () => {
     expect(fillMerchantLabel('Starbucks')).toBe('Fill merchant, Starbucks');
-    expect(deleteCategoryLabel('Coffee')).toBe('Delete Coffee');
+    expect(deleteCategoryLabel('Coffee', strings)).toBe('Delete Coffee');
     expect(reminderTimeLabel('9:00 AM')).toBe('Reminder time, 9:00 AM');
   });
 
@@ -94,14 +94,14 @@ describe('a11y label builders (spec 09)', () => {
       selectableLabel('Food', true, strings),
       presetChipLabel('Music', '$11', false),
       editedChipLabel('Music', '$9', true),
-      habitCardLabel(2, 'Influence', 'likely'),
-      pulseCellLabel('July 4', 'spend', '$5'),
+      habitCardLabel(2, 'Influence', 'likely', strings),
+      pulseCellLabel('July 4', 'spend', strings, '$5'),
       remindToggleLabel(true, strings),
       settingsRowLabel('Version', '1.0.0'),
       projectionTrendLabel(true, 12),
       amountInputLabel('Euro'),
       fillMerchantLabel('Starbucks'),
-      deleteCategoryLabel('Coffee'),
+      deleteCategoryLabel('Coffee', strings),
       reminderTimeLabel('9:00 AM'),
     ];
     for (const s of samples) expect(s).not.toContain('—');

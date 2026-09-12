@@ -116,7 +116,7 @@ function HabitCardImpl({
         <View
           style={styles.headerBadges}
           accessible
-          accessibilityLabel={habitCardLabel(rank, classBadge.label, tierLabel)}
+          accessibilityLabel={habitCardLabel(rank, classBadge.label, tierLabel, strings)}
         >
           <Text style={styles.rank}>{rank}</Text>
           <View style={[styles.classPill, { backgroundColor: classBadge.bg }]}>
