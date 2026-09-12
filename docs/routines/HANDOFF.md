@@ -2,22 +2,28 @@
 
 ## Status
 
-In progress. Run 29: branch was already at origin/main (b748ca3) at
-session start, confirmed via `git merge-base --is-ancestor origin/main
-HEAD`; no rebase needed. No REVIEW FEEDBACK was pending (run 28 fully
-addressed the 2026-09-11 runs 24-27 review, including its one docs
-item). Item 4 (translations) is still blocked on Charen (DECISIONS
-NEEDED: the locked-vocabulary proposal table, the `paywall` go-ahead),
-so picked item 6's concrete first target instead, per run 28's Next
-note: `utils/a11y.ts`'s `selectableLabel` (the "selected"/"not
-selected" pair on every selectable chip/row/tab) hardcoded English with
-no catalog key. Full design and the exact files/tests touched are in
-PLAN.md's run 29 entry under item 6; summary below under Completed.
-`presetChipLabel`/`editedChipLabel`, the file's other two similar
-helpers, are confirmed dead code (zero real call sites) and left alone.
-One commit; `tsc --noEmit` clean, full suite green (121/121, 1291/1291)
-on the first run, no flake, `npm install` needed first (fresh
-container, no `node_modules`, same as every prior run).
+In progress. Run 30: branch was 87 commits behind `origin/main` at
+session start (main's own U8 Upcoming redesign landed in that window:
+grouped-by-month rows, ADR 0041/0042 date precision, the
+AddUpcomingSheet name-chip simplification). Rebase hit real structural
+conflicts, not just import-line noise, across `utils/recurring.ts`,
+`components/money/UpcomingList.tsx`, `components/money/
+AddUpcomingSheet.tsx`, `components/ui/Chip.tsx`,
+`__tests__/recurrenceRule.test.ts`, and
+`__tests__/moneyMaterializerIntegration.test.tsx`; also found and fixed
+a real auto-merge casualty from an earlier (pre-run-30) rebase that had
+silently corrupted `components/onboarding/BreakHabitSheet.tsx`'s JSX
+with no conflict ever flagged. Full detail in PLAN.md's run 30 entry.
+No REVIEW FEEDBACK was pending. Item 4 (translations) is still blocked
+on Charen (DECISIONS NEEDED: the locked-vocabulary proposal table, the
+`paywall` go-ahead), so continued item 6 per run 29's Next note:
+`utils/a11y.ts`'s `remindToggleLabel` ("on"/"off" pair, one real call
+site in `ProjectionSection.tsx`) hardcoded English with no catalog key.
+Summary below under Completed. `npm install` needed first (fresh
+container, no `node_modules`, same as every prior run). Two commits
+(rebase-fallout fixes bundled with the historical replay, then the new
+`remindToggleLabel` slice); `tsc --noEmit` clean, full suite green
+(125/125, 1393/1393) after both, no flake.
 
 ## Completed
 
@@ -753,6 +759,51 @@ container, no `node_modules`, same as every prior run).
   `settingsRowLabel`); full detail in PLAN.md's run 29 entry. One
   commit; `tsc --noEmit` clean, full suite green (121/121, 1291/1291) on
   the first run, no flake.
+- Run 30, mandatory rebase (87 commits behind `origin/main`, main's own
+  U8 Upcoming redesign): real structural conflicts in
+  `utils/recurring.ts` (`scheduleParts`/`describeSchedule`/
+  `daysUntilLabel`/`cadenceWord` needed a `strings: Catalog` parameter
+  threaded through main's new precision-aware bodies),
+  `components/money/UpcomingList.tsx` (kept main's grouped-by-month
+  render, restored the `label`/`labelSpoken` split the auto-merge had
+  collapsed into one string), `components/money/AddUpcomingSheet.tsx`
+  (kept main's simplified no-tint name chips, made `buildNameChips`
+  read them from the catalog), `components/ui/Chip.tsx`,
+  `__tests__/recurrenceRule.test.ts` (a dozen call sites needed the same
+  `strings` parameter added), and
+  `__tests__/moneyMaterializerIntegration.test.tsx` (kept main's
+  rewritten assertions, since the row no longer renders the literal
+  text the old ones queried). Also found and fixed a real casualty from
+  an *earlier* (pre-run-30) rebase: `components/onboarding/
+  BreakHabitSheet.tsx` had a dangling `</ScrollView>` + footer `</View>`
+  with no matching opening tags, a broken JSX tree that `tsc` catches
+  but that no rebase step had ever flagged as a conflict, because the
+  merge algorithm applied two non-conflicting hunks that didn't
+  structurally fit together. Removed the orphaned closing tags to match
+  main's actual (simpler, no sticky footer) structure. Two test files
+  needed `LocaleProvider` added to their local `Providers` wrapper for
+  the same standing reason as run 29's Chip/SegmentedControl fallout:
+  `__tests__/logInPlace.test.tsx` and
+  `__tests__/segmentedControlCompact.test.tsx`. Full root-cause and file
+  list in PLAN.md's run 30 entry. Checked the run 29 coordination note
+  about `routine/ipad`'s `paywallTabletCap.test.tsx` needing
+  `LocaleProvider`: that file does not exist on `origin/main` yet, no
+  action needed this run.
+
+  Item 6's next slice: `remindToggleLabel`'s "on"/"off" pair (one real
+  call site, `components/leak-scan/ProjectionSection.tsx`, already
+  `useStrings()`-converted). Added `leakScan.remindToggleOn`/
+  `remindToggleOff` to `constants/strings.ts` (matching the
+  `scopeOn`/`scopeOff` and `billsRowOn`/`billsRowOff` naming precedent
+  already in that section), gave `remindToggleLabel` the standard
+  `strings: Catalog` second parameter, updated the one call site and
+  `__tests__/a11y.test.ts`'s three assertions. Also resolved
+  `settingsRowLabel` off run 29's candidate list without converting it:
+  it is a pure `"{label}, {value}"` join with no hardcoded English word,
+  so there is nothing to translate. Two commits total this run (the
+  rebase-fallout fixes landed bundled with the historical replay itself,
+  then a separate commit for the new slice); `tsc --noEmit` clean, full
+  suite green (125/125, 1393/1393) after both, no flake.
 
 ## Next
 
@@ -796,14 +847,15 @@ blocked until Charen answers at least one of those two open questions
 `leakDismissed`/`stoppedHistoryKept` are settled (same locked-vocabulary
 gate).
 
-**Still true as of run 29: item 4 is blocked on Charen for further
+**Still true as of run 30: item 4 is blocked on Charen for further
 progress** (DECISIONS NEEDED unanswered: the locked-vocabulary proposal
 table and the `paywall` pricing/legal go-ahead). A future run picking
 item 4 first should check DECISIONS NEEDED before assuming there is a
-fresh, ungated section left to translate; there is not, as of run 29.
+fresh, ungated section left to translate; there is not, as of run 30.
 Run 28 worked one named fallback (item 2's `daysUntilLabel` case) and
-run 29 worked another (item 6's `selectableLabel` slice, now done, see
-Completed); if neither DECISIONS NEEDED gate has moved by the next run,
+runs 29-30 worked another (item 6's `selectableLabel` and
+`remindToggleLabel` slices, now done, see Completed); if neither
+DECISIONS NEEDED gate has moved by the next run,
 item 6 has a fresh, concrete, ungated next slice queued (see below,
 replacing the one run 29 just closed), and item 5 (overflow hardening)
 remains untouched as a further fallback.
@@ -833,19 +885,21 @@ What is actually left for a future run:
   translated section as item 4 progresses, ideally in the same run that
   translates it (cheaper than a separate pass once the list of
   translated sections grows further).
-- Plan item 6 (localized a11y labels): run 29 closed the first slice
-  (`selectableLabel`, see Completed and PLAN.md's run 29 entry). Two
-  groups remain in `utils/a11y.ts`, both confirmed ungated or gated
-  during run 29's pass, not yet re-verified for a future run: locked-
+- Plan item 6 (localized a11y labels): runs 29-30 closed two slices
+  (`selectableLabel`, `remindToggleLabel`; see Completed and PLAN.md's
+  run 29/30 entries). Two groups remain in `utils/a11y.ts`: locked-
   vocabulary-gated (`weekDotLabel`, `calendarCellLabel`, `keptHeroLabel`,
   `arcLabel`; wait for the same DECISIONS NEEDED table item 4 is
   waiting on) and ungated candidates for the next slice
-  (`remindToggleLabel`, `projectionTrendLabel`, `pulseCellLabel`,
-  `habitCardLabel`, `amountInputLabel`, `fillMerchantLabel`,
-  `deleteCategoryLabel`, `reminderTimeLabel`, `settingsRowLabel`). Check
-  each for a real call site before converting, the same
-  confirm-before-converting rigor `presetChipLabel`/`editedChipLabel`
-  needed this run (both turned out dead).
+  (`projectionTrendLabel`, `pulseCellLabel`, `habitCardLabel`,
+  `amountInputLabel`, `fillMerchantLabel`, `deleteCategoryLabel`,
+  `reminderTimeLabel`). Check each for a real call site before
+  converting, the same confirm-before-converting rigor
+  `presetChipLabel`/`editedChipLabel` needed run 29 (both turned out
+  dead). `settingsRowLabel` is resolved, not just deferred: run 30
+  confirmed it is a pure `"{label}, {value}"` join with no hardcoded
+  word, so it needs no catalog entry and is off the candidate list for
+  good.
 - Plan item 5 (overflow hardening) is still untouched, sequenced after
   item 4 as scoped, and does not depend on the locked-vocabulary
   decision either.
