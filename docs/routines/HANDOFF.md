@@ -67,6 +67,23 @@ device pass is separate and additional to that one, not a substitute.
 
 ## Status
 
+Run 31. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 30's
+rebase (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`3890ba1`), so no rebase and no new regression surface this run. No
+REVIEW FEEDBACK section addition since run 30's check; issue #139 (last
+updated 2026-09-11, before run 30's rebase and re-audit) still shows no
+new activity, its listed blocker unchanged: the device pass, gated on
+PR #133 merging (which per the board's stated merge order waits behind
+core-p3's payments-gated PR #132). `npx tsc --noEmit` clean from a fresh
+`npm ci`. Full suite green on the first pass, no flake: 122 suites / 1335
+tests, zero drift from run 30. PR #133: re-checked via `get`/`get_comments`,
+still open, not draft, `mergeable_state: clean`, base SHA `3890ba1`
+(main's tip, matching exactly), head `cac3389` unchanged, no new comments.
+Re-verified item 7 (`app.json` orientation still `"portrait"`,
+`supportsTablet` still `true`). This HANDOFF update is the only change
+this run; no production code or plan content changed.
+
 Run 30. `origin/main` moved 27 commits since run 28's rebase point
 (`683ecc3`..`3890ba1`, "the Upcoming wave, eight PRs merged and TestFlight
 build 25": a rewrite of Money's Upcoming pane, `components/money/
