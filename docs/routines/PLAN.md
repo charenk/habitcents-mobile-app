@@ -666,6 +666,21 @@ matching run 28. Checklist unchanged, still fully `[x]`/`(C)`. No new push
 notification; run 11's already covers the idle decision queue (now 23
 runs idle) and nothing has changed since.
 
+## Run 30: closed out again
+
+Same shape as runs 9-22/24/27/29: no new commits on `origin/main` beyond
+what the branch already contains (`git rev-list --left-right --count
+origin/main...routine/core-p3` returned `0 35` at the start of this run,
+branch tip unchanged at `47dc564`), `mergeable_state: clean` and zero
+comments/reviews on PR #132, PUNCHLIST's RESUME marker unchanged and still
+the 2026-09-10 interaction-audit wave, none core-p3-shaped (the one
+flagged line, the leak finder dated entitlement, stays the item already
+built and closed at run 8). Fresh `npm install`, `npx tsc --noEmit`
+clean. `npm test` 125 suites / 1367 tests green on the first attempt, no
+flake this run, exactly matching run 29. Checklist unchanged, still fully
+`[x]`/`(C)`. No new push notification; run 11's already covers the idle
+decision queue (now 24 runs idle) and nothing has changed since.
+
 ## If this routine fires again
 
 The branch and PR stay open until Charen merges or closes them (routine
