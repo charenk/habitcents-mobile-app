@@ -628,6 +628,29 @@ Checklist unchanged, still fully `[x]`/`(C)`. No new push notification;
 run 11's already covers the idle decision queue (now 21 runs idle) and
 nothing has changed since.
 
+## Run 28: rebase across two real content conflicts, closed out again
+
+`origin/main` moved 29 commits since run 27's rebase point (the 2026-09-11/12
+"Upcoming" wave, PRs #165-#173: month sections, custom glyphs, yearly
+anchors, unknown-day bills, date precision, dynamic-type row survival,
+mark-as-paid). Two genuine conflicts, same recurring shape as runs 7/8/13/24:
+`design/decisions/README.md`'s component index (twice, union-resolved as
+always) and `app/(tabs)/money.tsx`'s import block, where main's Upcoming
+rewrite (`getEntitlement`, `advancePastToday`, `getStoredUpcomingWindowDays`,
+`pickDefaultUpcomingWindow`) collided with this branch's own `useEntitlement`
+switch; kept HEAD's full import list but swapped in `useEntitlement` (the
+call site the file actually uses) and dropped a stale unused `UpcomingItem`
+type import from the incoming side. Full reasoning in
+`docs/routines/HANDOFF.md`'s run 28 section. No new REVIEW FEEDBACK,
+no new PUNCHLIST core-p3 item (RESUME marker still the 2026-09-10
+interaction-audit wave, all design/QA-shaped), checklist unchanged, still
+fully `[x]`/`(C)`. Fresh `npm install`, `npx tsc --noEmit` clean, `npm test`
+125 suites / 1367 tests green on the first attempt, no flake (up from
+121/1265, all from main's own Upcoming-wave tests carried in by the
+rebase). Force-with-lease pushed (`5534bff`). No new push notification;
+run 11's already covers the idle decision queue (now 22 runs idle) and
+nothing in its content has changed since.
+
 ## If this routine fires again
 
 The branch and PR stay open until Charen merges or closes them (routine
