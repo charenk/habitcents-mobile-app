@@ -259,8 +259,8 @@ export default function CategoryDetailScreen() {
             keeps the trend line. */}
         <View style={styles.statBand}>
           <View style={[styles.statBandCol, styles.statBandLead]}>
-            <Text style={styles.statBandAmount}>{format(stats.thisMonth)}</Text>
-            <Text style={styles.statBandLabel}>{strings.categoryDetail.thisMonth}</Text>
+            <Text style={styles.statBandAmount} numberOfLines={1}>{format(stats.thisMonth)}</Text>
+            <Text style={styles.statBandLabel} numberOfLines={1}>{strings.categoryDetail.thisMonth}</Text>
             {stats.lastMonth > 0 && (
               // UX-008: both directions render in theme.slate. Coral/sage
               // (red/green P&L coding) shame-coded a month where someone
@@ -272,7 +272,10 @@ export default function CategoryDetailScreen() {
                   size={14}
                   color={theme.slate}
                 />
-                <Text style={[styles.summaryTrendText, { color: theme.slate }]}>
+                <Text
+                  style={[styles.summaryTrendText, { color: theme.slate }]}
+                  numberOfLines={1}
+                >
                   {strings.categoryDetail.vsLastMonth(Math.abs(trendPercentage))}
                 </Text>
               </View>
@@ -280,13 +283,13 @@ export default function CategoryDetailScreen() {
           </View>
           <View style={styles.statBandDivider} />
           <View style={styles.statBandCol}>
-            <Text style={styles.statValue}>{stats.logCount}</Text>
-            <Text style={styles.statBandLabel}>{strings.categoryDetail.logsStat}</Text>
+            <Text style={styles.statValue} numberOfLines={1}>{stats.logCount}</Text>
+            <Text style={styles.statBandLabel} numberOfLines={1}>{strings.categoryDetail.logsStat}</Text>
           </View>
           <View style={styles.statBandDivider} />
           <View style={[styles.statBandCol, styles.statBandColWide]}>
-            <Text style={styles.statValue}>{format(stats.average)}</Text>
-            <Text style={styles.statBandLabel}>{strings.categoryDetail.averageStat}</Text>
+            <Text style={styles.statValue} numberOfLines={1}>{format(stats.average)}</Text>
+            <Text style={styles.statBandLabel} numberOfLines={1}>{strings.categoryDetail.averageStat}</Text>
           </View>
         </View>
 
