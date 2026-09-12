@@ -64,8 +64,8 @@ describe('a11y label builders (spec 09)', () => {
   });
 
   it('remind toggle and settings row read their value', () => {
-    expect(remindToggleLabel(true)).toBe('remind me the day before, on');
-    expect(remindToggleLabel(false)).toBe('remind me the day before, off');
+    expect(remindToggleLabel(true, strings)).toBe('remind me the day before, on');
+    expect(remindToggleLabel(false, strings)).toBe('remind me the day before, off');
     expect(settingsRowLabel('Currency', 'US dollar')).toBe('Currency, US dollar');
   });
 
@@ -96,7 +96,7 @@ describe('a11y label builders (spec 09)', () => {
       editedChipLabel('Music', '$9', true),
       habitCardLabel(2, 'Influence', 'likely'),
       pulseCellLabel('July 4', 'spend', '$5'),
-      remindToggleLabel(true),
+      remindToggleLabel(true, strings),
       settingsRowLabel('Version', '1.0.0'),
       projectionTrendLabel(true, 12),
       amountInputLabel('Euro'),

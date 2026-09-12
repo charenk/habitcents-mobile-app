@@ -86,8 +86,8 @@ export function pulseCellLabel(
 }
 
 /** A reminder toggle row: "remind me the day before, {on/off}" (spec 09 §2, "Projection"). */
-export function remindToggleLabel(on: boolean): string {
-  return `remind me the day before, ${on ? 'on' : 'off'}`;
+export function remindToggleLabel(on: boolean, strings: Catalog): string {
+  return on ? strings.leakScan.remindToggleOn : strings.leakScan.remindToggleOff;
 }
 
 /** Monthly projection trend (ADA-010): direction must be spoken, never carried by color alone. */

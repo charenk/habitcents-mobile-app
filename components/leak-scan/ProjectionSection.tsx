@@ -107,7 +107,7 @@ export function ProjectionSection({ summary, onSave, saving = false }: Projectio
                   <Switch
                     value={!!remindBefore[item.merchantStem]}
                     onValueChange={() => toggleRemind(item.merchantStem)}
-                    accessibilityLabel={remindToggleLabel(!!remindBefore[item.merchantStem])}
+                    accessibilityLabel={remindToggleLabel(!!remindBefore[item.merchantStem], strings)}
                   />
                 </View>
               </View>

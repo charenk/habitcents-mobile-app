@@ -1568,6 +1568,55 @@ work, tracked elsewhere).
       got here before assuming it is worth converting. One commit; `tsc
       --noEmit` clean, full suite green (121/121, 1291/1291).
 
+      **Run 30: `remindToggleLabel`'s "on"/"off" pair.** Confirmed a real
+      call site first (`components/leak-scan/ProjectionSection.tsx`,
+      already `useStrings()`-converted, `strings` in scope). Added
+      `leakScan.remindToggleOn` / `remindToggleOff` (the two complete
+      phrases, matching the `scopeOn`/`scopeOff` and `billsRowOn`/
+      `billsRowOff` naming precedent already in that section) to
+      `constants/strings.ts`, gave `remindToggleLabel` the standard
+      `strings: Catalog` second parameter, updated the one call site and
+      `__tests__/a11y.test.ts`'s three assertions. Most of this run went
+      to the mandatory pre-work instead: `origin/main` had moved 87
+      commits since the last rebase (main's own U8 Upcoming redesign:
+      grouped-by-month rows, ADR 0041/0042 date precision, the
+      AddUpcomingSheet name-chip simplification), so the rebase hit real
+      structural conflicts, not just import-line noise, across
+      `utils/recurring.ts` (`scheduleParts`/`describeSchedule`/
+      `daysUntilLabel`/`cadenceWord` all needed a `strings: Catalog`
+      parameter threaded through main's new precision-aware bodies),
+      `components/money/UpcomingList.tsx`, `components/money/
+      AddUpcomingSheet.tsx`, `components/ui/Chip.tsx`,
+      `__tests__/recurrenceRule.test.ts` (a dozen `scheduleParts`/
+      `describeSchedule` call sites needed the same parameter added),
+      and `__tests__/moneyMaterializerIntegration.test.tsx`. Also found
+      and fixed a real auto-merge casualty unrelated to this run's own
+      conflicts: an earlier rebase (before run 30) had silently corrupted
+      `components/onboarding/BreakHabitSheet.tsx`'s JSX (a dangling
+      `</ScrollView>`/footer `</View>` pair with no matching opening
+      tags, never flagged as a conflict because the merge algorithm
+      applied non-overlapping hunks that didn't structurally fit
+      together); removed the orphaned closing tags to match main's actual
+      (simpler, no sticky footer) structure. `__tests__/logInPlace.test.tsx`
+      and `__tests__/segmentedControlCompact.test.tsx` needed
+      `LocaleProvider` added to their local wrappers (same standing
+      pattern as run 29's Chip/SegmentedControl fallout: main's own
+      redesigns had started rendering `useStrings()`-converted components
+      these tests hadn't wrapped yet). `npm install` needed first (fresh
+      container). One commit for the rebase-fallout fixes bundled with
+      the historical replay, one commit for the new `remindToggleLabel`
+      slice; `tsc --noEmit` clean, full suite green (125/125, 1393/1393)
+      after both.
+
+      Checkbox stays open: `habitCardLabel`, `projectionTrendLabel`,
+      `pulseCellLabel`, `amountInputLabel`, `fillMerchantLabel`,
+      `deleteCategoryLabel`, `reminderTimeLabel` remain from run 29's
+      candidate list (each still needs its own real-call-site check
+      before converting). `settingsRowLabel` turned out to need no
+      catalog entry at all on inspection: it is a pure `"{label}, {value}"`
+      join with no hardcoded English word in it, so there is nothing to
+      translate; leave it as is and drop it from the candidate list.
+
 ## Explicitly out of scope
 
 - Store listing metadata and screenshots (human work).

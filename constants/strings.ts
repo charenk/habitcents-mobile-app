@@ -564,6 +564,10 @@ export const strings = {
   // percentage; leak/skip/kept vocabulary elsewhere is untouched by this screen.
   leakScan: {
     reminderTimeLabel: 'Reminder time',
+    // Projection's per-item reminder-intent toggle (utils/a11y.ts
+    // remindToggleLabel; v1: intent capture only, no notification scheduled).
+    remindToggleOn: 'remind me the day before, on',
+    remindToggleOff: 'remind me the day before, off',
     // Intake
     intakeTitle: 'Scan your statement.',
     intakeSubtitle: 'CSV files only. Everything stays on this device.',
