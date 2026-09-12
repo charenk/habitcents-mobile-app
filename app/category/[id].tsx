@@ -21,6 +21,7 @@ import type { CategoryIcon } from '@/types/category';
 import type { Expense } from '@/types/expense';
 import { resolveExpenseCategory } from '@/utils/expenseCategory';
 import { useStrings } from '@/utils/i18n';
+import { CHROME_MAX_FONT_SCALE, useAccessibilityTextSize } from '@/utils/textScale';
 
 // UX-067: the 40pt category identity icon renders in the raw category hue on
 // its own 12% tint. Several category colors are light enough (e.g. groceries
@@ -53,6 +54,7 @@ export default function CategoryDetailScreen() {
   const { format } = useCurrency();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const stacked = useAccessibilityTextSize();
 
   const { categories, getCategoryById, updateCategory } = useCategories();
   const { expenses } = useExpenses();
@@ -257,10 +259,25 @@ export default function CategoryDetailScreen() {
             and the two half-width stat cards merged into one horizontal
             band, three columns with hairline dividers. The lead column
             keeps the trend line. */}
-        <View style={styles.statBand}>
-          <View style={[styles.statBandCol, styles.statBandLead]}>
-            <Text style={styles.statBandAmount} numberOfLines={1}>{format(stats.thisMonth)}</Text>
-            <Text style={styles.statBandLabel} numberOfLines={1}>{strings.categoryDetail.thisMonth}</Text>
+        {/* DYNAMIC TYPE (2026-09-12, localization routine): three columns
+            competing for width is exactly the case utils/textScale.ts warns
+            about, so at the five accessibility sizes the band stacks into one
+            column instead. The amount and count are content (never capped,
+            never cropped with numberOfLines); the labels and trend caption
+            are metadata, so they take CHROME_MAX_FONT_SCALE the way
+            ExpenseRow's subtitle and WhereItWentCard's cardTitle do. */}
+        <View style={[styles.statBand, stacked ? styles.statBandStacked : null]}>
+          <View
+            style={[
+              styles.statBandCol,
+              !stacked ? styles.statBandLead : null,
+              stacked ? styles.statBandColStacked : null,
+            ]}
+          >
+            <Text style={styles.statBandAmount}>{format(stats.thisMonth)}</Text>
+            <Text style={styles.statBandLabel} numberOfLines={1} maxFontSizeMultiplier={CHROME_MAX_FONT_SCALE}>
+              {strings.categoryDetail.thisMonth}
+            </Text>
             {stats.lastMonth > 0 && (
               // UX-008: both directions render in theme.slate. Coral/sage
               // (red/green P&L coding) shame-coded a month where someone
@@ -275,21 +292,32 @@ export default function CategoryDetailScreen() {
                 <Text
                   style={[styles.summaryTrendText, { color: theme.slate }]}
                   numberOfLines={1}
+                  maxFontSizeMultiplier={CHROME_MAX_FONT_SCALE}
                 >
                   {strings.categoryDetail.vsLastMonth(Math.abs(trendPercentage))}
                 </Text>
               </View>
             )}
           </View>
-          <View style={styles.statBandDivider} />
-          <View style={styles.statBandCol}>
-            <Text style={styles.statValue} numberOfLines={1}>{stats.logCount}</Text>
-            <Text style={styles.statBandLabel} numberOfLines={1}>{strings.categoryDetail.logsStat}</Text>
+          {!stacked && <View style={styles.statBandDivider} />}
+          <View style={[styles.statBandCol, stacked ? styles.statBandColStacked : null]}>
+            <Text style={styles.statValue}>{stats.logCount}</Text>
+            <Text style={styles.statBandLabel} numberOfLines={1} maxFontSizeMultiplier={CHROME_MAX_FONT_SCALE}>
+              {strings.categoryDetail.logsStat}
+            </Text>
           </View>
-          <View style={styles.statBandDivider} />
-          <View style={[styles.statBandCol, styles.statBandColWide]}>
-            <Text style={styles.statValue} numberOfLines={1}>{format(stats.average)}</Text>
-            <Text style={styles.statBandLabel} numberOfLines={1}>{strings.categoryDetail.averageStat}</Text>
+          {!stacked && <View style={styles.statBandDivider} />}
+          <View
+            style={[
+              styles.statBandCol,
+              !stacked ? styles.statBandColWide : null,
+              stacked ? styles.statBandColStacked : null,
+            ]}
+          >
+            <Text style={styles.statValue}>{format(stats.average)}</Text>
+            <Text style={styles.statBandLabel} numberOfLines={1} maxFontSizeMultiplier={CHROME_MAX_FONT_SCALE}>
+              {strings.categoryDetail.averageStat}
+            </Text>
           </View>
         </View>
 
@@ -453,6 +481,13 @@ function createStyles(theme: AppTheme) {
       alignItems: 'stretch',
       marginBottom: 24,
     },
+    // Accessibility text sizes (2026-09-12): three columns side by side has
+    // no room left once figures scale past XXXL, so the band becomes one
+    // column instead of competing for width (utils/textScale.ts).
+    statBandStacked: {
+      flexDirection: 'column',
+      alignItems: 'stretch',
+    },
     // Left-aligned inside every column (Charen, 2026-09-04): value, label,
     // and trend caption share one left edge per column, so the band reads
     // as three aligned blocks instead of three centered islands.
@@ -477,6 +512,13 @@ function createStyles(theme: AppTheme) {
     },
     statBandColWide: {
       flex: 1.15,
+    },
+    // Stacked: each column takes the full row and gets its own vertical
+    // rhythm instead of the hairline dividers, which are row-only.
+    statBandColStacked: {
+      width: '100%',
+      paddingHorizontal: 16,
+      marginBottom: 14,
     },
     statBandDivider: {
       width: 1,
