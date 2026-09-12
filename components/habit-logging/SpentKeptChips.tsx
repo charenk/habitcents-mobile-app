@@ -131,6 +131,9 @@ export function SpentKeptChips({
         <Text
           style={[styles.eyebrow, spentSelected ? styles.eyebrowSpentSelected : null]}
           maxFontSizeMultiplier={1.5}
+          // Overflow hardening: a longer translated eyebrow (German/French)
+          // must not wrap and misalign the amount below it.
+          numberOfLines={1}
         >
           {strings.today.spentChipLabel}
         </Text>
@@ -170,6 +173,7 @@ export function SpentKeptChips({
           <Text
             style={[styles.eyebrow, keptSelected ? styles.eyebrowKeptSelected : null]}
             maxFontSizeMultiplier={1.5}
+            numberOfLines={1}
           >
             {strings.today.keptChipLabel}
           </Text>
