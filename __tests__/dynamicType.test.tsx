@@ -17,16 +17,29 @@ jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
   default: () => ({ width: 390, height: 844, scale: 3, fontScale: mockFontScale }),
 }));
 
+jest.mock('expo-router', () => ({
+  useRouter: () => ({ push: jest.fn(), back: jest.fn() }),
+  useLocalSearchParams: () => ({ id: 'cat-custom' }),
+}));
+
 import fs from 'fs';
 import path from 'path';
 import React from 'react';
 import { act, cleanup, render } from '@testing-library/react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { LocaleProvider } from '@/contexts/LocaleContext';
+import { ToastProvider } from '@/components/ui/Toast';
+import { CategoriesProvider } from '@/contexts/CategoriesContext';
+import { ExpensesProvider } from '@/contexts/ExpensesContext';
 import { CheckInCard } from '@/components/habit-logging/CheckInCard';
 import { KeptHero } from '@/components/habit-logging/KeptHero';
+import CategoryDetailScreen from '@/app/category/[id]';
+import { saveCategories, saveExpenses } from '@/utils/storage';
 import { strings } from '@/constants/strings';
+import type { Category } from '@/types/category';
+import type { Expense } from '@/types/expense';
 import type { DetectedHabit, HabitChangeGoal } from '@/types/habit';
 
 const habit = {
@@ -139,6 +152,103 @@ describe('the kept band scales instead of breaking', () => {
     expect(amount.props.maxFontSizeMultiplier).toBe(1.3);
     expect(amount.props.numberOfLines).toBe(1);
     expect(amount.props.adjustsFontSizeToFit).toBe(true);
+  });
+});
+
+/**
+ * Category detail's stat band (app/category/[id].tsx): three columns side by
+ * side is exactly the "no room left" case utils/textScale.ts describes, so it
+ * used to break at the accessibility sizes the same way ExpenseRow and
+ * WhereItWentCard used to before their own fixes. Fixed 2026-09-12
+ * (localization routine, correcting its own run 32 overflow-hardening pass,
+ * which had added numberOfLines={1} to the amount and count -- content, never
+ * capped -- with no reflow, the exact anti-pattern this file's header warns
+ * about).
+ */
+describe('the category detail stat band scales instead of breaking', () => {
+  const categoryFixture: Category = {
+    id: 'cat-custom',
+    name: 'Hobbies',
+    icon: 'game-controller-outline',
+    color: '#8E7CF3',
+    isDefault: false,
+    isHidden: false,
+    createdAt: new Date('2026-01-01T00:00:00.000Z'),
+  };
+
+  function expenseFixture(overrides: Partial<Expense> = {}): Expense {
+    return {
+      id: 'e1',
+      title: 'Board game night',
+      amount: 3200,
+      category: 'Other',
+      categoryId: 'cat-custom',
+      date: new Date(),
+      time: '7:00 PM',
+      isRecurring: false,
+      reminderEnabled: false,
+      iconVariant: 'green',
+      ...overrides,
+    };
+  }
+
+  function DetailProviders({ children }: { children: React.ReactNode }) {
+    return (
+      <SafeAreaProvider
+        initialMetrics={{ frame: { x: 0, y: 0, width: 390, height: 844 }, insets: { top: 47, left: 0, right: 0, bottom: 34 } }}
+      >
+        <ThemeProvider>
+          <LocaleProvider>
+            <ToastProvider>
+              <CurrencyProvider>
+                <CategoriesProvider>
+                  <ExpensesProvider>{children}</ExpensesProvider>
+                </CategoriesProvider>
+              </CurrencyProvider>
+            </ToastProvider>
+          </LocaleProvider>
+        </ThemeProvider>
+      </SafeAreaProvider>
+    );
+  }
+
+  async function renderDetail() {
+    const view = await render(
+      <DetailProviders>
+        <CategoryDetailScreen />
+      </DetailProviders>
+    );
+    await act(async () => {});
+    return view;
+  }
+
+  it('lays the three columns side by side at the default text size', async () => {
+    mockFontScale = 1;
+    await saveCategories([categoryFixture]);
+    await saveExpenses([expenseFixture()]);
+
+    const view = await renderDetail();
+
+    expect(layoutDirectionAbove(view.getByText(strings.categoryDetail.logsStat))).toBe('row');
+  });
+
+  it('stacks the columns once the user turns text up, and never crops the figures', async () => {
+    mockFontScale = 2;
+    await saveCategories([categoryFixture]);
+    await saveExpenses([expenseFixture()]);
+
+    const view = await renderDetail();
+
+    expect(layoutDirectionAbove(view.getByText(strings.categoryDetail.logsStat))).toBe('column');
+
+    // Content (the amount, the count) is never line-capped: it is the thing
+    // the user came here to read, so it must be free to grow, not crop.
+    const logCount = view.getByText('1');
+    expect(logCount.props.numberOfLines).toBeUndefined();
+
+    // Metadata (the labels) caps at the ratified chrome ceiling instead.
+    const label = view.getByText(strings.categoryDetail.logsStat);
+    expect(label.props.maxFontSizeMultiplier).toBe(1.5);
   });
 });
 
