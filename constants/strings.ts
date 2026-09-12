@@ -289,6 +289,12 @@ export const strings = {
     deleteMessage: "Your existing expenses are kept; they'll just no longer show this category.",
     deleteConfirmCta: 'Delete category',
     deleteCancel: 'Keep category',
+    // Category row's delete-button spoken label (utils/a11y.ts
+    // deleteCategoryLabel). A function-valued key, not a plain word joined at
+    // the call site, so a locale whose natural word order is not
+    // verb-object (e.g. name-first) can control that in its own overlay
+    // (2026-09-12, orchestrator review, runs 28-31).
+    deleteCategorySpokenLabel: (name: string) => `Delete ${name}`,
     thisMonthSuffix: (amount: string) => `${amount} this month`,
     addCategoryLabel: 'Add category',
     // Redesign step 04: serif "Categories." title plus two eyebrow-labelled
@@ -686,11 +692,14 @@ export const strings = {
     pulseLegendSpend: 'more spent',
     pulseLegendZero: 'no spend',
     pulseLegendOutOfCoverage: 'outside your files',
-    // Per-cell VoiceOver label (utils/a11y.ts pulseCellLabel). The zero/outside
-    // wording reuses pulseLegendZero/pulseLegendOutOfCoverage verbatim; this is
-    // the one word ("spent") that legend byte-for-byte reuse cannot cover,
-    // since pulseLegendSpend's own text ("more spent") is legend-specific.
-    pulseCellSpentLabel: 'spent',
+    // Per-cell VoiceOver label for a spend day (utils/a11y.ts pulseCellLabel).
+    // A function-valued key, not a plain word joined at the call site: unlike
+    // the zero/outside branches (a "date, state" pair, screen-reader
+    // convention rather than prose), this composes date + amount + word into
+    // an actual sentence, so a locale's own overlay must control the word
+    // order (2026-09-12, orchestrator review, runs 28-31).
+    pulseCellSpentSpokenLabel: (dateLabel: string, formattedAmount: string) =>
+      `${dateLabel}, ${formattedAmount} spent`,
     // Density line: transacted days out of the window's calendar length. Both
     // arguments used to be distinct-transacted-day counts, so this read
     // "You transacted on 27 of 27 days" (UX-073).
@@ -701,8 +710,12 @@ export const strings = {
     biggestLeakEyebrow: 'Your biggest leak',
     seeFullPicture: "See the full picture: categories, pulse, next month's projection",
     // Habit cards (spec 5.4, visual spec 6)
-    // VoiceOver header prefix (utils/a11y.ts habitCardLabel): "rank {n}, {class}, {tier}".
-    habitCardRankLabel: 'rank',
+    // VoiceOver header (utils/a11y.ts habitCardLabel): "rank {n}, {class}, {tier}".
+    // A function-valued key, not a plain word ("rank") joined at the call
+    // site, so a locale's own overlay can control word order
+    // (2026-09-12, orchestrator review, runs 28-31).
+    habitCardSpokenLabel: (rank: number, className: string, tierName: string) =>
+      `rank ${rank}, ${className}, ${tierName}`,
     classGovern: 'Govern',
     classInfluence: 'Influence',
     classFixed: 'Fixed',

@@ -71,7 +71,7 @@ export function editedChipLabel(name: string, formattedExact: string, selected: 
 
 /** A Leak Scan habit card header: "rank {n}, {class}, {tier}" (spec 09 §2, "Habit cards"). */
 export function habitCardLabel(rank: number, className: string, tierName: string, strings: Catalog): string {
-  return `${strings.leakScan.habitCardRankLabel} ${rank}, ${className}, ${tierName}`;
+  return strings.leakScan.habitCardSpokenLabel(rank, className, tierName);
 }
 
 /** A SpendPulse cell (spec 09 §2, "SpendPulse"): spent / no spend / outside coverage are distinct. */
@@ -83,7 +83,7 @@ export function pulseCellLabel(
 ): string {
   if (kind === 'outside') return `${dateLabel}, ${strings.leakScan.pulseLegendOutOfCoverage}`;
   if (kind === 'zero') return `${dateLabel}, ${strings.leakScan.pulseLegendZero}`;
-  return `${dateLabel}, ${formattedAmount ?? ''} ${strings.leakScan.pulseCellSpentLabel}`.trim();
+  return strings.leakScan.pulseCellSpentSpokenLabel(dateLabel, formattedAmount ?? '');
 }
 
 /** A reminder toggle row: "remind me the day before, {on/off}" (spec 09 §2, "Projection"). */
@@ -120,7 +120,7 @@ export function fillMerchantLabel(merchant: string): string {
 }
 
 export function deleteCategoryLabel(name: string, strings: Catalog): string {
-  return `${strings.common.delete} ${name}`;
+  return strings.categories.deleteCategorySpokenLabel(name);
 }
 
 /**
