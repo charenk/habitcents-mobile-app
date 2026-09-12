@@ -2,20 +2,28 @@
 
 ## Status
 
-In progress. Run 32: no rebase needed, branch was already at
-`origin/main`'s tip (`3890ba1`) from run 31; no REVIEW FEEDBACK was
-pending. Item 4 (translations) is still blocked on Charen (DECISIONS
-NEEDED: the locked-vocabulary proposal table, the `paywall` go-ahead),
-and item 6's ungated candidate list is empty as of run 31, so picked
-item 5 (overflow hardening) per run 31's Next note naming it the
-standing fallback. Audited and hardened all three surfaces the item
-names: `SpentKeptChips.tsx`'s eyebrow labels, `SheetHeader.tsx`'s title,
-and the category detail stat band's six Text elements, all now
-`numberOfLines={1}`. Item 5's single checkbox is now checked; full
-detail below under Completed and in PLAN.md's run 32 entry. `npm
-install` needed first (fresh container, no `node_modules`, same as
-every prior run). One commit; `tsc --noEmit` clean, full suite green
-(125/125, 1393/1393) on the first run, no flake.
+In progress. Run 32: no rebase needed against `origin/main` (branch was
+already at its tip, `3890ba1`, from run 31); no REVIEW FEEDBACK was
+pending at session start. Item 4 (translations) is still blocked on
+Charen (DECISIONS NEEDED: the locked-vocabulary proposal table, the
+`paywall` go-ahead), and item 6's ungated candidate list was empty as
+of run 31, so picked item 5 (overflow hardening) per run 31's Next note
+naming it the standing fallback. Audited and hardened all three
+surfaces the item names: `SpentKeptChips.tsx`'s eyebrow labels,
+`SheetHeader.tsx`'s title, and the category detail stat band's six Text
+elements, all now `numberOfLines={1}`. Item 5's single checkbox is now
+checked. While this work was in progress, the orchestrator's review of
+runs 28-31 landed directly on `origin/routine/localization` (approved,
+one small a11y fix owed); rebased onto it before pushing and addressed
+the owed fix in this same run per the standing rule (address REVIEW
+FEEDBACK before new work; here it arrived mid-run, so addressed
+alongside rather than deferred, same as runs 20/24/26/28's precedent
+for a review landing out of band). Full detail below under Completed
+and in PLAN.md's run 32 entry. `npm install` needed first (fresh
+container, no `node_modules`, same as every prior run). Three commits
+(the overflow-hardening slice, the HANDOFF/PLAN update, then the review
+fix); `tsc --noEmit` clean, full suite green (125/125, 1393/1393) after
+every commit, no flake.
 
 Run 31: no rebase needed, branch was already at
 `origin/main`'s tip from run 30's rebase; no REVIEW FEEDBACK was
@@ -886,6 +894,34 @@ first run, no flake.
   detail screen; there is no dedicated `CategoryDetail.md`). One
   commit; `tsc --noEmit` clean, full suite green (125/125, 1393/1393)
   on the first run, no flake. Full detail in PLAN.md's run 32 entry.
+- Run 32, review feedback (2026-09-12 orchestrator, runs 28-31, landed
+  directly on `origin/routine/localization` mid-run and was rebased
+  onto before pushing): **one small fix owed, addressed.** Three item-6
+  a11y helpers composed their sentence inline in `utils/a11y.ts`,
+  hardcoding English word order for every locale: `habitCardLabel`
+  (`${strings.leakScan.habitCardRankLabel} ${rank}, ...`),
+  `deleteCategoryLabel` (`${strings.common.delete} ${name}`, flagged
+  because verb-object order is not universal), and `pulseCellLabel`'s
+  spent branch (`${dateLabel}, ${amount} ${spentLabel}`). Moved each
+  composition into a new function-valued catalog key, the house shape
+  the review named (`money.editAccessibilityLabel`,
+  `categories.categorySpoken`): `leakScan.habitCardSpokenLabel(rank,
+  className, tierName)`, `categories.deleteCategorySpokenLabel(name)`,
+  `leakScan.pulseCellSpentSpokenLabel(dateLabel, formattedAmount)`.
+  `utils/a11y.ts` keeps the branching; the catalog now owns each
+  sentence, so a locale's overlay will control word order once item 4
+  reaches these sections. English output is byte-identical, pinned by
+  the existing `__tests__/a11y.test.ts` assertions (unchanged, still
+  asserting the exact same strings). The now-superseded
+  `habitCardRankLabel`/`pulseCellSpentLabel` word keys removed outright
+  rather than left as dead code: both were added this same routine (run
+  31), had exactly one call site each (the function this fix just
+  rewrote), and no locale overlay references either (`leakScan` is
+  still fully English-only pending item 4's locked-vocabulary
+  decision), so nothing depended on keeping them. The review's
+  `selectableLabel`/`remindToggleLabel` "fine as is" verdicts needed no
+  action. One commit; `tsc --noEmit` clean, full suite green (125/125,
+  1393/1393) on the first run, no flake.
 
 ## Next
 
