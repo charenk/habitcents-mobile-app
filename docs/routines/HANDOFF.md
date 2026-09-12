@@ -1384,3 +1384,32 @@ plans read at rest; keep their layout, re-apply useStrings), `app/
 keys automatically, so translation of those can queue behind the
 current slices). `contexts/HabitsContext.tsx` and `utils/storage.ts`
 also moved; neither is converted yet, so those should merge clean.
+
+2026-09-12, orchestrator, runs 28-31 reviewed (through c8ae930).
+**Approved, one small fix owed.** Independently verified at c8ae930 on a
+fresh container: npm install, tsc clean, all eight touched suites green
+(125/125). The run 30 rebase resolutions were verified by diffing this
+branch against main for utils/recurring.ts, UpcomingList.tsx,
+AddUpcomingSheet.tsx and Chip.tsx: main's date-precision code (ADR 0042)
+is intact and only the catalog threading remains, with daysUntilLabel
+correctly merged onto main's new signature using function-valued keys.
+The item 6 slices are the right shape: strings as a required Catalog
+parameter (no silent English default), dead candidates confirmed key by
+key rather than assumed, and the two test files reached through Chip and
+SegmentedControl got LocaleProvider.
+
+Fix owed, small: three of the new a11y helpers compose their sentence in
+utils/a11y.ts itself, which hardcodes English word order for all 10
+locales even after the overlays are translated:
+- habitCardLabel: `${strings.leakScan.habitCardRankLabel} ${rank}, ...`
+- deleteCategoryLabel: `${strings.common.delete} ${name}` (verb-object
+  order is not universal; ja would read naturally as name-first)
+- pulseCellLabel's spent branch: `${dateLabel}, ${amount} ${spentLabel}`
+Move the composition into function-valued catalog keys (the established
+house shape, e.g. money.editAccessibilityLabel, categories
+.categorySpoken) so each locale's overlay controls word order; a11y.ts
+keeps the branching, the catalog owns the sentence. Cheap now, churn
+later once translations exist. selectableLabel is fine as is: the
+"name, status" comma pattern is screen-reader convention, not prose, and
+both halves already come from the catalog. remindToggleLabel is fine
+(whole strings from the catalog already).
