@@ -1,5 +1,36 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 29, 2026-09-12: re-verify, no new work)
+
+`git rev-list --left-right --count origin/main...routine/core-p3` returned
+`0 35`: zero commits on main's side since run 28's rebase, branch unchanged
+at tip `2c23516`, no rebase needed. PR #132 confirmed via the API: `state:
+open`, `draft: false`, `merged: false`, `mergeable_state: clean`, head
+`2c235161e003827a509270a442f11c5329f47cf4` (matches this branch's tip),
+base `3890ba173bdbe43778cf5501e30cbd7d8b01d320` (matches main's current
+tip), zero comments (`get_comments` returned `[]`), zero reviews
+(`get_reviews` returned `[]`), unchanged since run 28. No new REVIEW
+FEEDBACK section present. Re-pulled `habitcents-ops/PUNCHLIST.md`'s RESUME
+marker fresh: byte-identical to what run 28 read, still the 2026-09-10
+interaction-audit wave (profile modal-vs-push decision, how-it-works
+scroll-fade, drag-to-dismiss device verification, the standing
+`door3BreakSheet.test.tsx` CI-load flake, the Categories empty-subtitle
+polish note) plus the older 2026-09-05/06 zeroth-state wave items; none
+payments/legal, and the one core-p3-flagged line (leak finder dated
+entitlement) is still the same item already built and closed on this
+branch at run 8. Checklist in `PLAN.md` unchanged, still fully `[x]`/`(C)`.
+
+Fresh `npm install` (node_modules removed first), `npx tsc --noEmit`
+clean. `npm test`: 125 suites / 1367 tests green on the first attempt, no
+flake this run (the standing `door3BreakSheet.test.tsx` full-suite timing
+flake did not reproduce), exactly matching run 28's ending count (no
+regression, no new code either side).
+
+No push notification this run: the decision queue has sat untouched since
+run 6 (now 23 runs idle on the queue itself), run 11 already flagged it
+once, and nothing in its content or in the standing flake has changed
+since run 28.
+
 ## COMPLETE (run 28, 2026-09-12: rebase across two real content conflicts, no new work)
 
 `git rev-list --left-right --count origin/main...routine/core-p3` returned
