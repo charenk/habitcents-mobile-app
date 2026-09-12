@@ -1,5 +1,68 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 28, 2026-09-12: rebase across two real content conflicts, no new work)
+
+`git rev-list --left-right --count origin/main...routine/core-p3` returned
+`29 34`: `origin/main` had moved 29 commits since run 27 (the 2026-09-11/12
+"Upcoming" wave, PRs #165-#173: month sections, custom glyphs, yearly
+anchors, unknown-day bills, date precision, dynamic-type row survival, mark
+as paid, plus the `/eos` merge commit). `git rebase origin/main` hit two
+genuine content conflicts, both the same recurring shape as runs 7/8/13/24:
+
+1. `design/decisions/README.md`'s component index, twice (once per branch
+   commit it replayed past: this branch's `ce2bbc7` ShareCounterCard entry,
+   then its `b53727d` PickOneSheet/BreakHabitSheet entries) against main's
+   incoming `ExpenseRow`/`AddUpcomingSheet`/`MonthDayPicker`/`UpcomingList`
+   entries from the Upcoming wave. Resolved both by keeping the union of
+   all entries, nothing dropped.
+2. `app/(tabs)/money.tsx`'s import block, genuine: main's Upcoming-wave
+   rewrite of this file (already replayed onto HEAD by the time this
+   conflict landed) imports `getEntitlement`, `advancePastToday`,
+   `getStoredUpcomingWindowDays`, and `pickDefaultUpcomingWindow`; this
+   branch's own `b53727d` (the reactive-entitlement-reads fix) changes the
+   entitlement import to `useEntitlement` and, in its own version of the
+   file, used older names (`getUpcomingWindowDays`, no
+   `pickDefaultUpcomingWindow`, an unused `UpcomingItem` type import).
+   Checked what the file actually calls post-conflict: `useEntitlement()`
+   at the gate (line ~312, unchanged both sides, confirming that's the
+   correct call), and `getEntitlement` had zero call sites left in the
+   file (dead import). Resolved by keeping HEAD's full import list
+   (`advancePastToday`, `computeUpcoming`, `resolveRule`,
+   `getStoredUpcomingWindowDays`, `setUpcomingWindowDays`,
+   `pickDefaultUpcomingWindow`, `DEFAULT_UPCOMING_WINDOW_DAYS`,
+   `UpcomingWindowDays`) but swapping `getEntitlement` for `useEntitlement`;
+   dropped the incoming side's stale `UpcomingItem` type import (grepped,
+   unused anywhere in the file).
+
+Fresh `npm install` (node_modules absent in this container), `npx tsc
+--noEmit` clean. `npm test`: 125 suites / 1367 tests green on the first
+attempt, no flake this run (the standing `door3BreakSheet.test.tsx`
+full-suite timing flake from runs 10/12/14/16/27 did not reproduce this
+time; up from 121/1265 at run 27, all from main's own Upcoming-wave tests
+carried in by the rebase, not new code here). Force-with-lease pushed
+(`5534bff`). PR #132 confirmed via the API: `state: open`, `draft: false`,
+`merged: false`, `mergeable_state: clean`, head `5534bff` (matches this
+branch's tip), base `3890ba1` (main's current tip), zero comments, zero
+reviews, unchanged since run 26's review. Re-pulled
+`habitcents-ops/PUNCHLIST.md`'s RESUME marker fresh: byte-identical to what
+runs 25-27 read, still the 2026-09-10 interaction-audit wave (profile
+modal-vs-push decision, how-it-works scroll-fade, drag-to-dismiss device
+verification, the standing `door3BreakSheet.test.tsx` CI-load flake, the
+Categories empty-subtitle polish note) plus the older 2026-09-05/06
+zeroth-state wave items; none payments/legal, and the one core-p3-flagged
+line (leak finder dated entitlement) is still the same item already built
+and closed on this branch at run 8. Checklist in `PLAN.md` unchanged, still
+fully `[x]`/`(C)`.
+
+No push notification this run: the decision queue has sat untouched since
+run 6 (now 22 runs idle on the queue itself), run 11 already flagged it
+once, and nothing in its content has changed since run 27, notwithstanding
+this run's real rebase-and-resolve work (a mechanical index conflict plus
+one genuine but low-risk import-list conflict, both resolved with no
+behavior change: `npm test`'s green run of `pickOneSheet`-adjacent and
+money-tab-adjacent suites confirms the entitlement gate still reads
+reactively after the merge).
+
 ## COMPLETE (run 27, 2026-09-11: re-verify, no new work)
 
 `git rev-list --left-right --count origin/main...routine/core-p3` returned
