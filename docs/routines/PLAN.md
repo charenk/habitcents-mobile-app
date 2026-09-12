@@ -1494,9 +1494,62 @@ work, tracked elsewhere).
 
 ## 5. Overflow hardening
 
-- [ ] Audit long German/French strings on tight surfaces: Today chips,
+- [x] Audit long German/French strings on tight surfaces: Today chips,
       sheet headers, the category stat band. Fix truncation/wrapping, not
       the copy.
+
+      **Run 32.** All three named surfaces audited and hardened; none of
+      them had `numberOfLines` protecting the exact text most likely to
+      grow under a longer translation, even though the house pattern
+      (`Chip.tsx`, `SegmentedControl.tsx`) already uses `numberOfLines={1}`
+      on every tight label they render. This is a real gap, not a
+      duplication of existing coverage, confirmed by reading both files
+      before starting.
+      - `components/habit-logging/SpentKeptChips.tsx`: the eyebrow Text
+        (`spentChipLabel`/`keptChipLabel`, e.g. "Spent today"/"Kept today")
+        had no line cap, unlike the amount/placeholder Text directly below
+        it in the same segment (already `numberOfLines={1}` since the
+        file's own UX-067 fix). Added the same guard to both eyebrows.
+        `today` is still fully untranslated (gated on the locked-vocabulary
+        DECISIONS NEEDED table, since "Kept today" contains the locked word
+        "Kept"), so this is defensive: real German/French text is not live
+        yet, but the layout is now safe for whenever it lands.
+      - `components/ui/SheetHeader.tsx`: the title Text (`flex: 1`, shares
+        its row with the Save button and, on one consumer, a secondary icon
+        action) had no line cap at all. A component-level fix, so every
+        consumer (`ExpenseSheet`, `AddUpcomingSheet`, and any future form
+        sheet) is covered without touching each call site.
+      - `app/category/[id].tsx`'s stat band: three hairline-divided columns,
+        none of whose Text elements (`statBandAmount`, `statValue`, both
+        `statBandLabel` instances per column, `summaryTrendText`) had a line
+        cap. The lead column's own code comment already flagged the trend
+        caption needs the room to stay on one line at the default type
+        size, i.e. this was a known, named risk, just not yet guarded in
+        code. Added `numberOfLines={1}` to all six Text elements in the
+        band.
+
+      Confirmed via grep that the house convention (`Chip.tsx` label,
+      `SegmentedControl.tsx` label and badge) already applies
+      `numberOfLines={1}` to every tight label; this run brings the three
+      plan-named surfaces up to that same standard rather than inventing a
+      new pattern. No copy changed anywhere (per the item's own "fix
+      truncation/wrapping, not the copy"); `ellipsizeMode` left at its RN
+      default ("tail"), matching every existing use in the codebase (none
+      sets it explicitly). No test asserted multi-line text at any of the
+      six sites before this, so no test file changes were needed. Design
+      decision docs updated in the same commit: `SheetHeader.md`,
+      `SpentKeptChips.md`, and `categories.md` (closest existing module doc
+      to the category detail screen; there is no dedicated
+      `CategoryDetail.md`). One commit; `tsc --noEmit` clean, full suite
+      green (125/125, 1393/1393) on the first run, no flake.
+
+      Item 5 has exactly one checkbox and it is now fully addressed for
+      the three surfaces the plan names. If a future overflow risk turns
+      up elsewhere in the app (a targeted grep for tight, multi-column, or
+      button-adjacent Text without `numberOfLines`, not assumed limited to
+      these three files), that is new-finding work for whichever plan item
+      it best fits (most likely a fresh item 5 sub-note), not a reopening
+      of this checkbox.
 
 ## 6. Localized accessibility labels
 
