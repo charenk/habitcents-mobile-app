@@ -2,7 +2,32 @@
 
 ## Status
 
-In progress. Run 32: no rebase needed against `origin/main` (branch was
+In progress. Run 33: no rebase needed (branch already at main's tip,
+`3890ba1`, since run 31); no REVIEW FEEDBACK section pending (the runs
+28-31 review's owed fix was already addressed in run 32). Checked the
+status board (issue #139) directly: both DECISIONS NEEDED items gating
+item 4 (locked vocabulary, decision 8; paywall pricing copy, decision
+10) are still open, no new comment resolves either, so item 4 stayed
+blocked. Per run 32's own Next note, worked the two named fallbacks:
+the item 6 accessibility-label grep came up empty again (14 hits, all
+either the established "X, Y" comma convention or catalog+data joins,
+no hardcoded English), but the item 5 overflow grep found something
+real, just not overflow: run 32's category-detail stat band fix
+(`numberOfLines={1}` on the amount and log-count Text) turned out to
+violate a Dynamic Type/accessibility rule that had landed on main the
+day before run 32 shipped (`design/PATTERN_VOCABULARY.md`'s "chrome
+caps, content does not" entry, 2026-09-11): those two are content, and
+capping content with no font-scale guard crops it at the accessibility
+text sizes instead of letting it reflow. Fixed the way
+`ExpenseRow.tsx`/`WhereItWentCard.tsx` already do it (stack the three
+columns at accessibility sizes via `useAccessibilityTextSize()`, move
+the line cap onto the two metadata labels where it belonged), pinned
+with two new cases in `__tests__/dynamicType.test.tsx`. Full detail in
+PLAN.md's run 33 entry. `npm install` needed first (fresh container, no
+`node_modules`). One commit; `tsc --noEmit` clean, full suite green
+(125/125, 1395/1395), no flake.
+
+Run 32: no rebase needed against `origin/main` (branch was
 already at its tip, `3890ba1`, from run 31); no REVIEW FEEDBACK was
 pending at session start. Item 4 (translations) is still blocked on
 Charen (DECISIONS NEEDED: the locked-vocabulary proposal table, the
@@ -43,6 +68,27 @@ first run, no flake.
 
 ## Completed
 
+- Run 33 (correction to run 32's item 5 fix, not a new checkbox): fixed a
+  Dynamic Type/accessibility regression run 32 introduced in
+  `app/category/[id].tsx`'s stat band. `statBandAmount`/`statValue` are
+  content (the month total, the log count) and `utils/textScale.ts`'s
+  "chrome caps, content does not" rule (landed on main 2026-09-11) says
+  content must never be line-capped without a reflow path; run 32 added
+  `numberOfLines={1}` to both with no font-scale guard, which crops them
+  at the five iOS accessibility text sizes instead of letting the row
+  grow. Fixed with `useAccessibilityTextSize()` stacking the three
+  columns into one at those sizes (matching `ExpenseRow.tsx`/
+  `WhereItWentCard.tsx`'s established pattern), and moved the line cap
+  onto the two metadata elements (`statBandLabel`, `summaryTrendText`),
+  now paired with `maxFontSizeMultiplier={CHROME_MAX_FONT_SCALE}`. Two
+  new cases in `__tests__/dynamicType.test.tsx` pin both the default
+  side-by-side layout and the stacked/uncapped behavior above the
+  accessibility threshold. `design/decisions/modules/categories.md`:
+  the run 32 entry kept in place and marked superseded, new entry
+  explains the correction. Full detail in PLAN.md's run 33 entry. Not
+  investigated further: whether `components/leak-scan/KpiRow.tsx`'s
+  three-column KPI cards have the same content-vs-chrome gap (flagged
+  under Next, likely not this routine's to fix).
 - Plan item 1, full (earlier run): `expo-localization`, `utils/locale.ts`,
   `utils/storage.ts` override get/set, `contexts/LocaleContext.tsx`,
   Profile's Language row + `LanguageSheet` (cosmetic only, no catalog yet).
@@ -965,28 +1011,51 @@ blocked until Charen answers at least one of those two open questions
 `leakDismissed`/`stoppedHistoryKept` are settled (same locked-vocabulary
 gate).
 
-**Still true as of run 32: item 4 is blocked on Charen for further
+**Still true as of run 33: item 4 is blocked on Charen for further
 progress** (DECISIONS NEEDED unanswered: the locked-vocabulary proposal
-table and the `paywall` pricing/legal go-ahead). A future run picking
-item 4 first should check DECISIONS NEEDED before assuming there is a
-fresh, ungated section left to translate; there is not, as of run 32.
+table and the `paywall` pricing/legal go-ahead; confirmed directly
+against the status board, issue #139, at run 33's start, no new comment
+resolves either). A future run picking item 4 first should check
+DECISIONS NEEDED before assuming there is a fresh, ungated section left
+to translate; there is not, as of run 33.
 Run 28 worked one named fallback (item 2's `daysUntilLabel` case),
 runs 29-31 worked another (item 6's `utils/a11y.ts` slices, now fully
 closed out down to the locked-vocabulary-gated remainder, see
 Completed), and run 32 worked the last remaining named fallback (item
-5, overflow hardening, now fully closed, see Completed). **If the
+5, overflow hardening, now fully closed, see Completed). **Run 33
+found there genuinely was no further named fallback left**, exactly as
+predicted: it re-checked both (the item 6 a11y-label grep, empty again;
+the item 5 overflow grep, which surfaced not new overflow but a real
+bug in run 32's own fix, a Dynamic Type/accessibility regression, now
+corrected; see Completed and PLAN.md's run 33 entry). **If the
 DECISIONS NEEDED gate still has not moved by the next run, there is no
-further named fallback item left on the plan**: items 2's ICU work,
-3's test-migration sweep, and 6's remaining slice are all themselves
-gated on item 4 progressing further (see each item's own Next bullet
-below for the specific trigger that would unblock it), and item 5 has
-no more work of its own past this run's three named surfaces. A future
-run in that position should re-check DECISIONS NEEDED first; if still
-unanswered, the next real option is a fresh, self-contained finding
-(e.g. the targeted a11y-label grep item 6's bullet already names, or a
-targeted overflow grep beyond the three surfaces item 5 named,
-confirmed genuinely new before starting, not a rehash of a closed
-checkbox) rather than assuming one of the six items has open work left.
+standing named fallback item left on the plan at all**: items 2's ICU
+work, 3's test-migration sweep, and 6's remaining slice are all
+themselves gated on item 4 progressing further (see each item's own
+Next bullet below for the specific trigger that would unblock it), and
+item 5 has no more work of its own. A future run in that position
+should re-check DECISIONS NEEDED first; if still unanswered, do not
+assume a third grep pass over the same two named fallbacks will find
+anything (both came up genuinely empty of new item 5/6 work this run);
+instead treat it as a real "nothing left to do under this routine's own
+charter until Charen answers" state and consider whether a small,
+clearly-in-scope correction exists (as run 33 found one) before falling
+back to a fresh grep. One concrete lead for a future run, NOT
+localization's own item 5/6 charter but worth naming since run 33 found
+it while investigating: `components/leak-scan/KpiRow.tsx`'s
+three-column KPI cards (`amount`/`label`/`subtitle` Text, no
+`numberOfLines`, no `maxFontSizeMultiplier`) look like the same
+content-vs-chrome shape the category detail stat band had; not
+confirmed broken (KpiRow does not currently line-cap its content, so it
+would reflow-by-default-wrap rather than crop, which is safer than what
+run 32 shipped, just not yet using the house `useAccessibilityTextSize`
+pattern either), and not investigated further this run since it is
+Leak Scan surface area, not a localization/translation-overflow
+concern. Flag it to whichever routine owns the Dynamic Type/
+accessibility line of work (`__tests__/dynamicType.test.tsx`'s existing
+focus -- CheckInCard, KeptHero, HabitCard's pills -- suggests
+`routine/core` or `routine/ipad`, not this one) rather than picking it
+up here.
 
 What is actually left for a future run:
 - Plan item 2's broader ICU/pluralization checkbox (function-valued
@@ -1030,12 +1099,15 @@ What is actually left for a future run:
   needs to turn up elsewhere in the app (a targeted grep for other
   `accessibilityLabel={\`...\`}` template literals outside the catalog,
   not assumed to be limited to `utils/a11y.ts`).
-- Plan item 5 (overflow hardening): closed run 32. All three named
-  surfaces (`SpentKeptChips.tsx` eyebrows, `SheetHeader.tsx` title, the
-  category detail stat band) now guard their text with
+- Plan item 5 (overflow hardening): closed run 32, corrected run 33. All
+  three named surfaces (`SpentKeptChips.tsx` eyebrows, `SheetHeader.tsx`
+  title, the category detail stat band) guard their metadata text with
   `numberOfLines={1}`, matching the house convention `Chip.tsx`/
-  `SegmentedControl.tsx` already used elsewhere. See Completed and
-  PLAN.md's run 32 entry.
+  `SegmentedControl.tsx` already used elsewhere; the category detail
+  stat band's content (amount, log count) no longer carries that cap and
+  instead reflows to a single stacked column at the accessibility text
+  sizes, per run 33's fix. See Completed and PLAN.md's run 32/33
+  entries.
 
 ## Blockers
 

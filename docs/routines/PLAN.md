@@ -1551,6 +1551,65 @@ work, tracked elsewhere).
       it best fits (most likely a fresh item 5 sub-note), not a reopening
       of this checkbox.
 
+      **Run 33: correction to the category detail stat band fix above.**
+      Both DECISIONS NEEDED items (locked vocabulary, paywall) were still
+      unanswered on the status board (issue #139) at run 33's start, so
+      item 4 stayed blocked and the standing fallback applied: a targeted
+      grep for other `accessibilityLabel={\`...\`}` template literals
+      outside the catalog (item 6's own named fallback) turned up 14 hits,
+      but every one either concatenates two catalog-sourced pieces (the
+      established "X, Y" comma convention runs 29-31's review already
+      ruled fine) or joins catalog text with plain data (a name, an
+      amount), not hardcoded English; no new item 6 work. The other named
+      fallback, a targeted overflow grep beyond item 5's three surfaces,
+      is what actually found something, but not new overflow: reading
+      `design/PATTERN_VOCABULARY.md`'s Accessibility section turned up a
+      2026-09-11 entry ("chrome caps, content does not, and rows reflow
+      rather than compete") that landed on main the day before run 32
+      shipped, and run 32's own fix violated it. `statBandAmount` and
+      `statValue` are content (the month total, the log count), which
+      `utils/textScale.ts` says must never be line-capped; run 32 had
+      capped them anyway with no font-scale guard, so at the five iOS
+      accessibility text sizes those figures would render at up to 3.12x
+      inside a `numberOfLines={1}` box and get silently cropped, exactly
+      the anti-pattern that file's header calls "never the fix". Fixed
+      the way `components/money/ExpenseRow.tsx` and
+      `components/insights/WhereItWentCard.tsx` already do it:
+      `useAccessibilityTextSize()` reflows the three columns into one
+      stacked column at the accessibility sizes (new `statBandStacked`/
+      `statBandColStacked` styles, hairline dividers hidden while
+      stacked) instead of competing for width, and `numberOfLines={1}`
+      moved off the two content elements onto the two metadata elements
+      it always belonged on (`statBandLabel`, `summaryTrendText`), now
+      paired with `maxFontSizeMultiplier={CHROME_MAX_FONT_SCALE}` like
+      every other capped label in the app. The original German/French
+      length concern item 5 was solving for is unaffected: at the default
+      text size the columns are still side by side, single line. Two new
+      test cases in `__tests__/dynamicType.test.tsx` (already the house
+      home for this bug class, alongside the check-in-answers and
+      kept-band cases) pin both the side-by-side default layout and the
+      stacked/uncapped behavior past the accessibility threshold.
+      `design/decisions/modules/categories.md` updated: the run 32 entry
+      is left in place and marked superseded, with a new entry explaining
+      the correction, rather than rewritten in place, so the history of
+      the mistake stays legible. One commit; `tsc --noEmit` clean, full
+      suite green (125/125, 1395/1395, the two new cases included).
+
+      This is a correction to item 5's own prior work, not a new item 5
+      checkbox (there is only the one, already checked). Recorded here
+      because the finding and the fix both belong to item 5's surfaces.
+      Whether the same content-vs-chrome gap exists on other stat-tile-
+      shaped surfaces elsewhere in the app (`components/leak-scan/
+      KpiRow.tsx`'s three-column KPI cards look like the same shape: an
+      `amount` Text with no font-scale cap now getting a fresh
+      `numberOfLines={1}` would repeat this exact mistake, though KpiRow
+      does not currently have one) was not investigated further this run;
+      flagged in HANDOFF's Next section as a genuinely new candidate for
+      whichever routine owns the Dynamic Type/accessibility line of work
+      (this looks like `routine/core`'s or `routine/ipad`'s territory
+      based on `dynamicType.test.tsx`'s existing focus, not localization's
+      own charter), not assumed to be this routine's to fix.
+
 ## 6. Localized accessibility labels
 
 - [ ] `utils/a11y.ts` label helpers pull from the active catalog instead of
