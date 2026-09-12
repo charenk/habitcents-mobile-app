@@ -5,6 +5,7 @@ import { useCurrency } from '@/contexts/CurrencyContext';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { radii, spacing, typeScale, type AppTheme } from '@/constants/theme';
 import { useStrings } from '@/utils/i18n';
+import type { Catalog } from '@/utils/i18n';
 import { buildSpendPulse } from '@/utils/leakScan/spendPulse';
 import type { PulseCell, PulseGranularity } from '@/utils/leakScan/spendPulse';
 import type { ScanResult } from '@/utils/leakScan/types';
@@ -101,7 +102,7 @@ function SpendPulseImpl({ result, onCellPress }: SpendPulseProps) {
               style={[styles.cellWrap, { width: `${100 / columns}%` }]}
               onPress={() => handleCellPress(cell)}
               accessibilityRole="button"
-              accessibilityLabel={cellA11yLabel(cell, format)}
+              accessibilityLabel={cellA11yLabel(cell, format, strings)}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
               <PulseCellView cell={cell} theme={theme} styles={styles} />
@@ -143,10 +144,10 @@ function SpendPulseImpl({ result, onCellPress }: SpendPulseProps) {
  */
 export const SpendPulse = memo(SpendPulseImpl);
 
-function cellA11yLabel(cell: PulseCell, format: (cents: number) => string): string {
-  if (cell.state === 'out-of-coverage') return pulseCellLabel(cell.key, 'outside');
-  if (cell.state === 'zero-spend') return pulseCellLabel(cell.key, 'zero');
-  return pulseCellLabel(cell.key, 'spend', format(cell.totalCents));
+function cellA11yLabel(cell: PulseCell, format: (cents: number) => string, strings: Catalog): string {
+  if (cell.state === 'out-of-coverage') return pulseCellLabel(cell.key, 'outside', strings);
+  if (cell.state === 'zero-spend') return pulseCellLabel(cell.key, 'zero', strings);
+  return pulseCellLabel(cell.key, 'spend', strings, format(cell.totalCents));
 }
 
 function PulseCellView({ cell, theme, styles }: { cell: PulseCell; theme: AppTheme; styles: Styles }) {

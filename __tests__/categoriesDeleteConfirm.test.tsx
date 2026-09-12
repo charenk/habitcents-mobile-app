@@ -113,7 +113,7 @@ describe('Categories delete confirm', () => {
     const view = await renderScreen();
 
     await act(async () => {
-      fireEvent.press(view.getByLabelText(deleteCategoryLabel('Hobbies')));
+      fireEvent.press(view.getByLabelText(deleteCategoryLabel('Hobbies', strings)));
     });
 
     expect(view.getByText(strings.categories.deleteTitle('Hobbies'))).toBeTruthy();
@@ -125,7 +125,7 @@ describe('Categories delete confirm', () => {
     const view = await renderScreen();
 
     await act(async () => {
-      fireEvent.press(view.getByLabelText(deleteCategoryLabel('Hobbies')));
+      fireEvent.press(view.getByLabelText(deleteCategoryLabel('Hobbies', strings)));
     });
     await act(async () => {
       fireEvent.press(view.getByText(strings.categories.deleteCancel));
@@ -138,7 +138,7 @@ describe('Categories delete confirm', () => {
     const view = await renderScreen();
 
     await act(async () => {
-      fireEvent.press(view.getByLabelText(deleteCategoryLabel('Hobbies')));
+      fireEvent.press(view.getByLabelText(deleteCategoryLabel('Hobbies', strings)));
     });
     await act(async () => {
       fireEvent.press(view.getByText(strings.categories.deleteConfirmCta));

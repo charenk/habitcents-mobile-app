@@ -1617,6 +1617,100 @@ work, tracked elsewhere).
       join with no hardcoded English word in it, so there is nothing to
       translate; leave it as is and drop it from the candidate list.
 
+      **Run 31: `pulseCellLabel`, `habitCardLabel`, `deleteCategoryLabel`
+      converted; three siblings confirmed dead.** No rebase needed
+      (branch already at `origin/main`'s tip from run 30); no REVIEW
+      FEEDBACK pending. Checked all seven remaining run-29 candidates for
+      a real call site first, per the standing rigor:
+      `projectionTrendLabel`, `amountInputLabel`, `fillMerchantLabel`, and
+      `reminderTimeLabel` (the a11y function; distinct from
+      `constants/strings.ts`'s own unrelated, also-dead
+      `leakScan.reminderTimeLabel` key that happens to share the name)
+      all came back with zero real call sites anywhere outside
+      `utils/a11y.ts` and `__tests__/a11y.test.ts` (`grep -rn` for each
+      name, confirmed a second time with `grep -C1` to rule out
+      doc-comment false positives). Left all four on their static-English
+      signature and documented each as confirmed dead in its own doc
+      comment, the same treatment `presetChipLabel`/`editedChipLabel` got
+      run 29.
+
+      The other three had real call sites, confirmed and converted:
+      - `pulseCellLabel` (`components/leak-scan/SpendPulse.tsx`'s
+        module-level `cellA11yLabel` helper, one call site inside
+        `SpendPulseImpl`'s body where `strings` was already in scope).
+        Rather than add three brand-new keys, reused two existing
+        `leakScan` keys whose English text matches byte-for-byte:
+        `pulseLegendZero` ("no spend") and `pulseLegendOutOfCoverage`
+        ("outside your files"), both already rendered a few lines above
+        as the SpendPulse legend's own labels. Only the "spent" suffix in
+        the spend-amount case had no existing match (`pulseLegendSpend`
+        is "more spent", legend-specific, not a byte-for-byte fit), so
+        added one new key, `leakScan.pulseCellSpentLabel: 'spent'`. Gave
+        `pulseCellLabel` a `strings: Catalog` parameter; since
+        `formattedAmount` is already optional it has to stay the last
+        parameter, so `strings` landed third, before it.
+      - `habitCardLabel` (`components/leak-scan/HabitCard.tsx`, one call
+        site inside the component body, `strings` already in scope). Only
+        the fixed prefix word "rank" was hardcoded; `className`/
+        `tierName` were already fully catalog-driven at the call site.
+        Added `leakScan.habitCardRankLabel: 'rank'` and threaded it in.
+      - `deleteCategoryLabel` (`components/CategoryRow.tsx`, one call
+        site inside the component body, `strings` already in scope).
+        Reused the already-translated `common.delete` ("Delete") rather
+        than adding a new key, matching the reuse-over-redo approach runs
+        21/23/26/27 used for exact English-text matches.
+
+      All three new/reused `leakScan` keys (the new `pulseCellSpentLabel`/
+      `habitCardRankLabel`, and the reused `pulseLegendZero`/
+      `pulseLegendOutOfCoverage`) stay English-only in every overlay for
+      now, confirmed via `grep` on `locales/*.ts`: `leakScan` is still
+      fully untranslated (item 4 has not reached this locked-vocabulary-
+      gated section yet, and run 30's `remindToggleOn`/`remindToggleOff`
+      additions confirm the same is true of every other `leakScan` key
+      added by this item's earlier slices), so these fall back to English
+      the same way, inheriting it until item 4 reaches this section for
+      real. `common.delete` needed no such caveat, already translated in
+      every locale since run 20/21.
+
+      Test updates: `__tests__/a11y.test.ts`'s three direct-call
+      assertions (`habitCardLabel`, `pulseCellLabel` at two call sites,
+      `deleteCategoryLabel`) got the static `strings` import added as an
+      argument, same shape as `describeSchedule`'s/`cardText`'s
+      direct-call tests (runs 19/28); this file already imported
+      `strings` for `selectableLabel`/`remindToggleLabel`'s own
+      assertions. `__tests__/categoriesDeleteConfirm.test.tsx` calls
+      `deleteCategoryLabel('Hobbies')` directly at three
+      `getByLabelText` sites to build its query; it already imported the
+      static `strings` for its other assertions and renders at the
+      default English locale, so the same static import was passed
+      through rather than adding a new one. No other test file needed a
+      change: `SpendPulse.tsx`/`HabitCard.tsx`/`CategoryRow.tsx` are all
+      reached only through screens already `LocaleProvider`-covered from
+      earlier runs (`resultsScreen*`/`deckScreen`/`leakScanOnboardingExit`
+      for the first two, `categoriesEmptyState`/`categoriesDeleteConfirm`/
+      `categoryDetailScreen` for the third), confirmed before starting.
+
+      One commit; `tsc --noEmit` clean, full suite green (125/125,
+      1393/1393) on the first run, no flake.
+
+      Checkbox stays open, but the ungated candidate list from runs 29-30
+      is now empty: every helper in `utils/a11y.ts` is either converted
+      (`selectableLabel`, `remindToggleLabel`, `pulseCellLabel`,
+      `habitCardLabel`, `deleteCategoryLabel`), confirmed dead
+      (`presetChipLabel`, `editedChipLabel`, `projectionTrendLabel`,
+      `amountInputLabel`, `fillMerchantLabel`, `reminderTimeLabel`),
+      needs no catalog entry (`settingsRowLabel`), or gated on the same
+      DECISIONS NEEDED table item 4 is waiting on (`weekDotLabel`,
+      `calendarCellLabel`, `keptHeroLabel`, `arcLabel`, all read
+      `skipped`/`slipped`/`Kept`/`skips` directly). A future run cannot
+      make further progress on item 6 without either the DECISIONS
+      NEEDED table moving, or a fresh a11y-adjacent hardcoded-English
+      spot turning up elsewhere in the app (worth a targeted grep for
+      other files matching `utils/a11y.ts`'s pattern, i.e. plain
+      `accessibilityLabel={\`...\`}` template literals outside the
+      catalog, rather than assuming this file is the only place the
+      pattern occurs).
+
 ## Explicitly out of scope
 
 - Store listing metadata and screenshots (human work).

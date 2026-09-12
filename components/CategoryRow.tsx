@@ -73,7 +73,7 @@ export function CategoryRow({
           onPress={onDelete}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           accessibilityRole="button"
-          accessibilityLabel={deleteCategoryLabel(category.name)}
+          accessibilityLabel={deleteCategoryLabel(category.name, strings)}
         >
           <Icon name="Trash2" size={18} color={theme.coral} />
         </Pressable>

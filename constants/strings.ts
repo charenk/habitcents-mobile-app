@@ -686,6 +686,11 @@ export const strings = {
     pulseLegendSpend: 'more spent',
     pulseLegendZero: 'no spend',
     pulseLegendOutOfCoverage: 'outside your files',
+    // Per-cell VoiceOver label (utils/a11y.ts pulseCellLabel). The zero/outside
+    // wording reuses pulseLegendZero/pulseLegendOutOfCoverage verbatim; this is
+    // the one word ("spent") that legend byte-for-byte reuse cannot cover,
+    // since pulseLegendSpend's own text ("more spent") is legend-specific.
+    pulseCellSpentLabel: 'spent',
     // Density line: transacted days out of the window's calendar length. Both
     // arguments used to be distinct-transacted-day counts, so this read
     // "You transacted on 27 of 27 days" (UX-073).
@@ -696,6 +701,8 @@ export const strings = {
     biggestLeakEyebrow: 'Your biggest leak',
     seeFullPicture: "See the full picture: categories, pulse, next month's projection",
     // Habit cards (spec 5.4, visual spec 6)
+    // VoiceOver header prefix (utils/a11y.ts habitCardLabel): "rank {n}, {class}, {tier}".
+    habitCardRankLabel: 'rank',
     classGovern: 'Govern',
     classInfluence: 'Influence',
     classFixed: 'Fixed',
