@@ -1535,6 +1535,67 @@ work, tracked elsewhere).
       `tsc --noEmit` clean, full suite green (117/117, 1232/1232) on the
       first run, no flake. Full reasoning, the exact key list, and the
       vocabulary-reuse table are in this entry.
+
+      **Run 35: `habits.loading` populated across all 10 locale overlays,
+      a small item-4 slice found by re-listing every top-level section in
+      `constants/strings.ts` rather than trusting the Next section's named
+      list of remaining sections.** `habits` (distinct from `habitDetail`/
+      `habitDetailV2`/`habitLogging`) was never confirmed clean or gated by
+      any earlier run and was not named in the Next section's gated-section
+      list, so it read as a genuine gap rather than a re-check. Checked key
+      by key via `grep -rn` (the same rigor run 24 used for `habitDetail`/
+      `reports`): `title` ('Your Habits'), `spottingYourLeak` ('Spotting
+      your leak', locked-vocabulary content but moot since the key is dead),
+      `logsAtSamePlace` (function-valued anyway), `logsAtSamePlaceSuffix`,
+      and `logsAtSamePlaceBody` all have zero real call sites anywhere
+      outside `constants/strings.ts`; only `loading` ("Loading.") has one,
+      `app/(tabs)/index.tsx`'s habits-tab loading state, already
+      `useStrings()`-converted since run 16. Translated `habits.loading` by
+      reusing each language's existing `categories.loading`/`reports.loading`
+      value (byte-identical English source, same reuse-over-redo approach
+      runs 21/23/26/27 used elsewhere), same treatment `reports.loading` got
+      run 24. Left the four dead keys untranslated and documented as such in
+      each locale file's header, same treatment as `habitDetail`'s/
+      `editExpenseModal`'s/`ViewQuote`'s dead code.
+
+      One real test fix needed: `__tests__/i18n.test.tsx`'s "falls back to
+      English for keys the overlay does not cover yet" test asserted
+      `es.habits` `toBe` (reference-equal to) `strings.habits` on the
+      premise that the whole section was untouched; now that `loading` is
+      translated, that premise is false. Fixed by asserting a different,
+      still fully untouched whole section (`onboarding`, confirmed
+      locked-vocabulary-gated) for the whole-section-fallback case, and
+      added a new, arguably better assertion for the partial-section case
+      `habits` now actually demonstrates: `es.habits.loading` reads the
+      translated value while `es.habits.title`/`spottingYourLeak` still
+      fall back to the English `strings.habits` values. No other test file
+      needed a change (`localeCatalogs.test.ts` is schema-driven and covers
+      new overlay keys automatically). One commit; `tsc --noEmit` clean,
+      full suite green (125/125, 1395/1395) on the first run, no flake.
+
+      Also done this run, no code change needed: re-confirmed DECISIONS
+      NEEDED is still unanswered (status board issue #139 checked directly;
+      only comment since run 34 remains the unrelated 2026-09-07 iPad-footer
+      decision), re-ran item 6's fresh-candidate search (a repo-wide grep
+      for hardcoded `accessibilityLabel={\`...\`}`/`accessibilityLabel="..."`
+      literals outside `utils/a11y.ts`, per run 34's Next pointer) and found
+      every hit already composes catalog values with data, no new candidate;
+      and widened item 3's sweep a second way (grepped the whole test suite
+      for literal English button/status words shared across several
+      already-translated sections' catalog values -- Cancel, Save, Delete,
+      Edit, Close, Add, Done, Continue, Back, Skip, Kept, Yes, No -- looking
+      for the same "composed value hides in an unrelated test file" class
+      run 34 found for `common.selected`/`notSelected`). Every hit found is
+      either a generic component's own contract test passing an arbitrary
+      literal prop (`Button`, `Toast`, `EmptyState`, `ScreenHeader`'s own
+      unit tests, the same class run 25's PATTERN_VOCABULARY.md entry
+      already names), fixture data (merchant/category/habit names), a
+      negative assertion pinning that a retired string does NOT appear, or
+      a real catalog value (`money.scheduleWeekly` via `utils/recurring.ts`)
+      asserted in a file with no non-English locale mock, so it already
+      resolves correctly. No new item-3 stray found this run; full method
+      and the specific files checked are in this entry so a future run
+      does not have to re-derive the word list from scratch.
 - [ ] leak / skip / kept / slip and the app's quotes are PRODUCT VOICE:
       never finalized by this routine. Provisional entries only, proposal
       table lives in HANDOFF.md's DECISIONS NEEDED until Charen picks.

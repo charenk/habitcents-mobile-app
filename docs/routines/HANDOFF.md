@@ -2,7 +2,33 @@
 
 ## Status
 
-In progress. Run 34: no rebase needed (branch already at main's tip,
+In progress. Run 35: no rebase needed (branch already at main's tip,
+`3890ba1`, same as run 34); no REVIEW FEEDBACK section pending. Checked
+the status board (issue #139) directly: still only the 2026-09-07
+iPad-fixed-footers comment since run 34, unrelated to decisions 8 (locked
+vocabulary) or 10 (paywall), so item 4 stayed blocked for its main line.
+Re-ran item 6's fresh-candidate search (a repo-wide grep for hardcoded
+`accessibilityLabel` literals outside `utils/a11y.ts`) and item 3's
+widened sweep a second way (13 more shared button/status words grepped
+across the whole test suite); both came back clean, no new stray or
+candidate. Found real item-4 work instead by re-listing every top-level
+section in `constants/strings.ts` rather than trusting the Next section's
+named list: `habits` (distinct from `habitDetail`/`habitDetailV2`/
+`habitLogging`) had never been confirmed clean, gated, or dead by any
+earlier run. Checked key by key: four of its five keys are dead code,
+the fifth (`loading`) has one real call site and reused the
+already-translated "Loading." value from `categories.loading`/
+`reports.loading` across all 10 overlays. One test fix needed
+(`__tests__/i18n.test.tsx`'s whole-section-fallback assertion, which
+`habits.loading` now translating made false; fixed to a still-untouched
+section plus a new, better partial-section-fallback assertion). Full
+detail in PLAN.md's run 35 entry (item 4) and this file's Completed
+section. `npm install` needed first (fresh container, no `node_modules`).
+Two commits (the translation slice plus its test fix landed together in
+one commit, the PLAN/HANDOFF update in the other); `tsc --noEmit` clean,
+full suite green (125/125, 1395/1395) on the first run, no flake.
+
+Run 34: no rebase needed (branch already at main's tip,
 `3890ba1`); no REVIEW FEEDBACK section pending. Checked the status board
 (issue #139) directly: the only comment since run 33 is the 2026-09-07
 iPad-fixed-footers decision, unrelated to decisions 8 (locked vocabulary)
@@ -1028,19 +1054,73 @@ first run, no flake.
   the newly-translated section's own file list. Full detail in PLAN.md's
   run 34 entry. One commit; `tsc --noEmit` clean, full suite green
   (125/125, 1395/1395) on the first run, no flake.
+- Run 35, plan item 4's eighth slice: `habits.loading` populated across
+  all 10 locale overlays, a small gap found by re-listing every top-level
+  section of `constants/strings.ts` (`grep -n "^  [a-zA-Z][a-zA-Z0-9]*: {"
+  constants/strings.ts`) instead of trusting the Next section's named
+  list of remaining gated sections, since `habits` (distinct from
+  `habitDetail`/`habitDetailV2`/`habitLogging`) was never named in that
+  list at all, gated or otherwise. Checked every key: `title`, the
+  locked-vocabulary-containing `spottingYourLeak` ('Spotting your leak'),
+  and the function-valued `logsAtSamePlace`/`logsAtSamePlaceSuffix`/
+  `logsAtSamePlaceBody` all have zero real call sites outside
+  `constants/strings.ts` (confirmed via `grep -rn` for each key name
+  individually, same rigor run 24 used for `habitDetail`/`reports`); only
+  `loading` renders, at `app/(tabs)/index.tsx`'s habits-tab loading state
+  (already `useStrings()`-converted since run 16). Reused each language's
+  existing `categories.loading`/`reports.loading` translation (identical
+  English source), same reuse-over-redo approach runs 21/23/26/27 used.
+  Documented the four dead keys in each locale file's header, same
+  treatment as `habitDetail`'s own dead keys.
+
+  One real test fix: `__tests__/i18n.test.tsx`'s "falls back to English
+  for keys the overlay does not cover yet" test asserted `es.habits` was
+  reference-equal to `strings.habits`, true only while the whole section
+  was untouched; translating `loading` made that false. Fixed by moving
+  the whole-section-fallback assertion to `onboarding` (still fully
+  untouched, confirmed locked-vocabulary-gated) and adding a new
+  assertion for the partial-section case `habits` now demonstrates:
+  `es.habits.loading` reads the translation while `es.habits.title`/
+  `spottingYourLeak` still fall back to English. No other test file
+  needed a change (`localeCatalogs.test.ts` is schema-driven).
+
+  Also this run, no code change needed: re-checked DECISIONS NEEDED
+  directly against issue #139 (still only the unrelated 2026-09-07
+  iPad-footer comment since run 34, item 4's main line stays blocked);
+  re-ran item 6's fresh-candidate search across the whole app (a
+  repo-wide grep for `accessibilityLabel={` template literals and plain
+  string literals outside `utils/a11y.ts`, per run 34's own Next
+  pointer) and found every hit already composes catalog values with
+  data, nothing hardcoded, no new candidate; and widened item 3's sweep
+  a second way, grepping the whole test suite for 13 more shared button/
+  status words used across several already-translated sections' catalog
+  values (Cancel, Save, Delete, Edit, Close, Add, Done, Continue, Back,
+  Skip, Kept, Yes, No) for the same "composed value hides in an
+  unrelated test file" class run 34 found. Every hit is either a generic
+  component's own contract test with an arbitrary literal prop (`Button`,
+  `Toast`, `EmptyState`, `ScreenHeader`, the class run 25's
+  PATTERN_VOCABULARY.md entry already names), fixture data, a negative
+  assertion pinning a retired string's absence, or a real catalog value
+  read in a file with no non-English locale mock. No new item-3 stray
+  found. Full method and exact files checked are in PLAN.md's run 35
+  entry, so a future run in this same "nothing named is fresh" position
+  does not have to re-derive the word list. One commit for the
+  translation slice and its test fix; `tsc --noEmit` clean, full suite
+  green (125/125, 1395/1395) on the first run, no flake.
 
 ## Next
 
-Plan item 4 is underway (186 of ~660 keys populated across all 10
+Plan item 4 is underway (187 of ~660 keys populated across all 10
 languages: `common` minus `keep`, `sheets`, `tabs`, `screenTitles` (run
 20), plus `expenses`, `categories`, `categoryDetail`, `profile` (run
 21), plus `settings` minus `versionValue`/`supportEmail` (run 22), plus
 `addCategoryModal`, `expenseSheet` minus `amountLabel` (run 23), plus
 `habitDetail.notFound`, `reports.loading`, and 22 of `toasts`' keys
 (run 24), plus `addUpcoming` minus `everyNDaysValue`/`amountLabel` (run
-26), plus `money` minus `habitsEmptyTitle`/`habitsEmptyBody` (run 27);
-see PLAN.md's run 20-24, run 26 and run 27 entries for the full
-design). `upcoming` stays fully English until item 2's ICU/pluralization
+26), plus `money` minus `habitsEmptyTitle`/`habitsEmptyBody` (run 27),
+plus `habits.loading` (run 35); see PLAN.md's run 20-24, run 26, run 27
+and run 35 entries for the full design). `upcoming` stays fully English
+until item 2's ICU/pluralization
 work lands, since both its keys are function-valued. Budget more than
 one run per meaningful chunk (10 languages x a section adds up fast),
 the same lesson item 2's file-by-file conversion learned repeatedly and
@@ -1058,8 +1138,8 @@ explicit "Locked vocabulary: leak/skip/kept/slip" comment in
 `onboarding`'s own source) and (for `today`) the RETIRED, out-of-scope
 quote arrays. `paywall` needs a different kind of sign-off before this
 routine touches it, not locked-vocabulary related: see DECISIONS NEEDED
-below. `habitDetail`, `reports`, `addUpcoming`, and now `money` are
-fully resolved (each section's live, non-gated, non-function-valued
+below. `habitDetail`, `reports`, `addUpcoming`, `money`, and now `habits`
+are fully resolved (each section's live, non-gated, non-function-valued
 keys are translated; the rest is confirmed dead code or deferred ICU
 work, left alone). The next slice needs a genuinely fresh pick: every
 remaining untranslated section (`habitLogging`, `coachMoments`,
@@ -1071,14 +1151,25 @@ blocked until Charen answers at least one of those two open questions
 `leakDismissed`/`stoppedHistoryKept` are settled (same locked-vocabulary
 gate).
 
-**Still true as of run 34: item 4 is blocked on Charen for further
-progress** (DECISIONS NEEDED unanswered: the locked-vocabulary proposal
-table and the `paywall` pricing/legal go-ahead; confirmed directly
-against the status board, issue #139, at run 34's start, no new comment
-resolves either, only the unrelated 2026-09-07 iPad-footer decision).
-A future run picking item 4 first should check DECISIONS NEEDED before
-assuming there is a fresh, ungated section left to translate; there is
-not, as of run 34.
+**Still true as of run 35: item 4's translated-section line is blocked on
+Charen for further progress** (DECISIONS NEEDED unanswered: the
+locked-vocabulary proposal table and the `paywall` pricing/legal
+go-ahead; confirmed directly against the status board, issue #139, at
+run 35's start, no new comment resolves either, only the unrelated
+2026-09-07 iPad-footer decision). A future run picking item 4 first
+should check DECISIONS NEEDED before assuming there is a fresh, ungated
+SECTION left to translate wholesale; there is not, as of run 35.
+However, run 35 shows the gated-section list itself can still have a
+gap: `habits` was a genuinely fresh, ungated, mostly-dead section that
+no earlier run had confirmed either way, found only by re-listing every
+top-level key in `constants/strings.ts`
+(`grep -n "^  [a-zA-Z][a-zA-Z0-9]*: {" constants/strings.ts`) rather than
+trusting this Next section's own named list of gated sections. A future
+run in this blocked position should run that same top-level listing
+once and diff it against every section named anywhere in this Next
+section (translated, gated, or dead) before concluding there is nothing
+left; a small single-key section like `habits` is easy for a
+purely narrative Next section to omit by accident.
 Run 28 worked one named fallback (item 2's `daysUntilLabel` case),
 runs 29-31 worked another (item 6's `utils/a11y.ts` slices, now fully
 closed out down to the locked-vocabulary-gated remainder, see
@@ -1124,6 +1215,18 @@ accessibility line of work (`__tests__/dynamicType.test.tsx`'s existing
 focus -- CheckInCard, KeptHero, HabitCard's pills -- suggests
 `routine/core` or `routine/ipad`, not this one) rather than picking it
 up here.
+
+**Run 35 re-ran both item 6's fresh-candidate search and item 3's
+widened sweep (a second, broader word list this time) and found both
+still clean, exactly as run 34's own prediction implied they might stay
+until item 4 unblocks; it found real work instead on item 4's own line**,
+not by translating a new gated section (still blocked) but by finding
+`habits`, a section the gated-section list itself had never named either
+way. See the paragraph above (item 4) and PLAN.md's run 35 entry for the
+method. This confirms the run 34 lesson generalizes one step further:
+before treating "nothing named is fresh" as settled, check not just
+whether the NAMED candidates still come up empty, but whether the naming
+itself is complete.
 
 What is actually left for a future run:
 - Plan item 2's broader ICU/pluralization checkbox (function-valued
