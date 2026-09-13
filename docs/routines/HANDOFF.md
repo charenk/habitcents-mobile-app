@@ -2,7 +2,32 @@
 
 ## Status
 
-In progress. Run 33: no rebase needed (branch already at main's tip,
+In progress. Run 34: no rebase needed (branch already at main's tip,
+`3890ba1`); no REVIEW FEEDBACK section pending. Checked the status board
+(issue #139) directly: the only comment since run 33 is the 2026-09-07
+iPad-fixed-footers decision, unrelated to decisions 8 (locked vocabulary)
+or 10 (paywall), so item 4 stayed blocked, exactly as run 33 predicted.
+Items 5 and 6 have no fresh candidates either (confirmed again). Per
+HANDOFF's own standing guidance for this state, looked for a small
+in-scope correction rather than re-running the same two empty greps a
+fourth time: broadened item 3's sweep method past its original
+per-section scope (a value from an already-translated section can
+resurface as a literal inside an unrelated section's test file through
+a shared composition helper) and grepped every test file directly for
+the literal words "selected"/"not selected" (`common.selected`/
+`notSelected`, translated run 20, composed via `utils/a11y.ts`'s
+`selectableLabel()`). Found five real strays across
+`segmentedControlCompact.test.tsx`, `moneyUpcomingTab.test.tsx`,
+`todaySpentKept.test.tsx`, `addUpcomingSheet.test.tsx`, and
+`expenseSheet.test.tsx`, none caught by runs 25-27's narrower
+per-section sweeps; fixed all to read `strings.common.selected`/
+`notSelected`. Full detail in PLAN.md's run 34 entry (item 3) and
+`design/PATTERN_VOCABULARY.md`'s updated sweep-method bullet. `npm
+install` needed first (fresh container, no `node_modules`). One commit;
+`tsc --noEmit` clean, full suite green (125/125, 1395/1395) on the first
+run, no flake.
+
+Run 33: no rebase needed (branch already at main's tip,
 `3890ba1`, since run 31); no REVIEW FEEDBACK section pending (the runs
 28-31 review's owed fix was already addressed in run 32). Checked the
 status board (issue #139) directly: both DECISIONS NEEDED items gating
@@ -968,6 +993,41 @@ first run, no flake.
   `selectableLabel`/`remindToggleLabel` "fine as is" verdicts needed no
   action. One commit; `tsc --noEmit` clean, full suite green (125/125,
   1393/1393) on the first run, no flake.
+- Run 34, plan item 3, a broadened sweep pass: found and fixed five real
+  literal-English strays that runs 25-27's narrower per-section sweeps
+  could not have caught, since they grepped each newly-translated
+  section for that section's own leaf-string values only. The gap: a
+  value from one already-translated section (`common.selected`/
+  `notSelected`, translated run 20) is composed into other components'
+  accessible names by `utils/a11y.ts`'s `selectableLabel()`, so it can
+  resurface as a hardcoded English literal inside a completely different
+  section's test file. Grepped every test file directly for the literal
+  words "selected"/"not selected" instead. Fixed:
+  `__tests__/segmentedControlCompact.test.tsx` (4 hits; new on main
+  after run 25's sweep, picked up by run 30's rebase which fixed its
+  `LocaleProvider` wrapper but not its assertions),
+  `__tests__/moneyUpcomingTab.test.tsx` (2),
+  `__tests__/todaySpentKept.test.tsx` (12),
+  `__tests__/addUpcomingSheet.test.tsx` (26), and
+  `__tests__/expenseSheet.test.tsx` (7); all five existed at the time of
+  an earlier per-section sweep of their own section but were never
+  checked against `common`'s values. All five already imported `strings`
+  for other assertions; fixed each to read
+  `strings.common.selected`/`notSelected`, via template-literal
+  interpolation where the original was a plain string and
+  `new RegExp(...)` wrapping a template literal where the original baked
+  the word into a regex pattern. Confirmed `__tests__/a11y.test.ts`'s own
+  "selected"/"not selected" literals need no fix (direct-call tests
+  passing the real `strings` catalog as an argument, or exercising the
+  two confirmed-dead `presetChipLabel`/`editedChipLabel` functions that
+  still hardcode English by design); `__tests__/insightsPager.test.tsx`
+  already calls `selectableLabel()` itself, also correct.
+  `design/PATTERN_VOCABULARY.md`'s item-3 sweep-method bullet extended
+  with this lesson: a composed/shared catalog value needs a direct
+  whole-suite grep for its literal text, not just a per-section sweep of
+  the newly-translated section's own file list. Full detail in PLAN.md's
+  run 34 entry. One commit; `tsc --noEmit` clean, full suite green
+  (125/125, 1395/1395) on the first run, no flake.
 
 ## Next
 
@@ -1011,13 +1071,14 @@ blocked until Charen answers at least one of those two open questions
 `leakDismissed`/`stoppedHistoryKept` are settled (same locked-vocabulary
 gate).
 
-**Still true as of run 33: item 4 is blocked on Charen for further
+**Still true as of run 34: item 4 is blocked on Charen for further
 progress** (DECISIONS NEEDED unanswered: the locked-vocabulary proposal
 table and the `paywall` pricing/legal go-ahead; confirmed directly
-against the status board, issue #139, at run 33's start, no new comment
-resolves either). A future run picking item 4 first should check
-DECISIONS NEEDED before assuming there is a fresh, ungated section left
-to translate; there is not, as of run 33.
+against the status board, issue #139, at run 34's start, no new comment
+resolves either, only the unrelated 2026-09-07 iPad-footer decision).
+A future run picking item 4 first should check DECISIONS NEEDED before
+assuming there is a fresh, ungated section left to translate; there is
+not, as of run 34.
 Run 28 worked one named fallback (item 2's `daysUntilLabel` case),
 runs 29-31 worked another (item 6's `utils/a11y.ts` slices, now fully
 closed out down to the locked-vocabulary-gated remainder, see
@@ -1027,20 +1088,27 @@ found there genuinely was no further named fallback left**, exactly as
 predicted: it re-checked both (the item 6 a11y-label grep, empty again;
 the item 5 overflow grep, which surfaced not new overflow but a real
 bug in run 32's own fix, a Dynamic Type/accessibility regression, now
-corrected; see Completed and PLAN.md's run 33 entry). **If the
-DECISIONS NEEDED gate still has not moved by the next run, there is no
-standing named fallback item left on the plan at all**: items 2's ICU
-work, 3's test-migration sweep, and 6's remaining slice are all
-themselves gated on item 4 progressing further (see each item's own
-Next bullet below for the specific trigger that would unblock it), and
+corrected; see Completed and PLAN.md's run 33 entry). **Run 34 found the
+same held true for items 5/6 (nothing new) but found real item 3 work by
+widening the sweep's own method** (see Completed and PLAN.md's run 34
+entry): a composed/shared catalog value (`common.selected`/
+`notSelected` via `selectableLabel()`) can hide in a section's test file
+that a per-section-scoped sweep would never check. **If the DECISIONS
+NEEDED gate still has not moved by the next run, item 4's translation
+line is still the only source of real new work, but item 3's sweep
+method now covers more ground than "grep the newly-translated section
+only"**: items 2's ICU work and 6's remaining slice are still gated on
+item 4 progressing further (see each item's own Next bullet below), and
 item 5 has no more work of its own. A future run in that position
-should re-check DECISIONS NEEDED first; if still unanswered, do not
-assume a third grep pass over the same two named fallbacks will find
-anything (both came up genuinely empty of new item 5/6 work this run);
-instead treat it as a real "nothing left to do under this routine's own
-charter until Charen answers" state and consider whether a small,
-clearly-in-scope correction exists (as run 33 found one) before falling
-back to a fresh grep. One concrete lead for a future run, NOT
+should re-check DECISIONS NEEDED first; if still unanswered, re-run item
+3's sweep with the widened method (grep every catalog value known to be
+composed into other components' names, not just each section's own
+values, across the whole test suite rather than a per-section file
+list) before assuming there is nothing left, since run 34 shows that
+pass alone still finds real strays; only if that also comes up clean
+should a run treat it as a real "nothing left to do under this
+routine's own charter until Charen answers" state. One concrete lead for
+a future run, NOT
 localization's own item 5/6 charter but worth naming since run 33 found
 it while investigating: `components/leak-scan/KpiRow.tsx`'s
 three-column KPI cards (`amount`/`label`/`subtitle` Text, no
@@ -1075,13 +1143,22 @@ What is actually left for a future run:
   handling; no infra change needed to start, just the first real case.
 - Plan item 3 (test migration away from literal-English assertions):
   run 25 swept the 14 sections item 4 has translated so far and fixed
-  the 8 real strays it found (see Completed and PLAN.md's run 25
-  entry); the checkbox stays open because this is not a standing
-  guarantee for sections item 4 has not reached yet. Re-run the sweep
-  method recorded in `design/PATTERN_VOCABULARY.md` against each newly-
-  translated section as item 4 progresses, ideally in the same run that
-  translates it (cheaper than a separate pass once the list of
-  translated sections grows further).
+  the 8 real strays it found; run 34 widened the method (a composed/
+  shared catalog value can hide in an unrelated section's test file,
+  invisible to a per-section-only sweep) and fixed 5 more strays across
+  `common.selected`/`notSelected`'s call sites (see Completed and
+  PLAN.md's run 25 and run 34 entries). The checkbox stays open because
+  neither pass is a standing guarantee for sections item 4 has not
+  reached yet, or for other composed values not yet checked the run-34
+  way. Re-run the per-section sweep method recorded in
+  `design/PATTERN_VOCABULARY.md` against each newly-translated section
+  as item 4 progresses, ideally in the same run that translates it
+  (cheaper than a separate pass once the list of translated sections
+  grows further); separately, if a future slice adds another shared
+  composition helper like `selectableLabel()` (one catalog value
+  rendered into many components' accessible names), grep the whole test
+  suite for that value's literal text directly, the run-34 way, rather
+  than assuming a per-section sweep already covered it.
 - Plan item 6 (localized a11y labels): runs 29-31 closed three slices
   (`selectableLabel`, `remindToggleLabel`, then `pulseCellLabel`/
   `habitCardLabel`/`deleteCategoryLabel`; see Completed and PLAN.md's
