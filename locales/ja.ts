@@ -66,6 +66,13 @@
  * ('Bi-weekly'). `spentTodayEmpty`/`spentEditHint`/`upcomingWindowEmptyBody`
  * (real sentences) take native "。"; every short label/title stays
  * unpunctuated, matching this file's short-label-vs-full-sentence split.
+ *
+ * Run 35 added: `habits.loading`, reusing the same "Loading." translation
+ * as `categories.loading`/`reports.loading`. This section's other four keys
+ * (`title`, `spottingYourLeak`, `logsAtSamePlace`, `logsAtSamePlaceSuffix`,
+ * `logsAtSamePlaceBody`) are dead code, confirmed via grep with zero real
+ * call sites anywhere outside constants/strings.ts; left untranslated, same
+ * treatment as habitDetail's/reports' own dead keys.
  */
 import type { LocaleOverlay } from '@/utils/i18n';
 
@@ -133,6 +140,9 @@ export const ja: LocaleOverlay = {
     recentLogs: '最近の記録',
     noExpensesLogged: 'このカテゴリーにはまだ何も記録されていません。',
     trendEmpty: 'グラフに表示する支出がまだありません。',
+  },
+  habits: {
+    loading: '読み込み中.',
   },
   habitDetail: {
     notFound: '習慣が見つかりません',

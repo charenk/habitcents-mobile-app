@@ -54,6 +54,13 @@
  * noun+됨 status style (예정됨), matching this file's established toast
  * register; the two full-sentence body strings use the conversational
  * -어요 register.
+ *
+ * Run 35 added: `habits.loading`, reusing the same "Loading." translation
+ * as `categories.loading`/`reports.loading`. This section's other four keys
+ * (`title`, `spottingYourLeak`, `logsAtSamePlace`, `logsAtSamePlaceSuffix`,
+ * `logsAtSamePlaceBody`) are dead code, confirmed via grep with zero real
+ * call sites anywhere outside constants/strings.ts; left untranslated, same
+ * treatment as habitDetail's/reports' own dead keys.
  */
 import type { LocaleOverlay } from '@/utils/i18n';
 
@@ -121,6 +128,9 @@ export const ko: LocaleOverlay = {
     recentLogs: '최근 기록',
     noExpensesLogged: '이 카테고리에 아직 기록된 내용이 없어요.',
     trendEmpty: '아직 표시할 지출이 없어요.',
+  },
+  habits: {
+    loading: '불러오는 중.',
   },
   habitDetail: {
     notFound: '습관을 찾을 수 없습니다',

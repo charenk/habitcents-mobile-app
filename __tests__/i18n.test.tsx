@@ -49,8 +49,14 @@ describe('getCatalog', () => {
     // common.keep is locked vocabulary, deliberately withheld (see
     // locales/es.ts's header and HANDOFF.md's DECISIONS NEEDED).
     expect(es.common.keep).toBe(strings.common.keep);
-    // habits is a whole section this run's overlay slice does not touch.
-    expect(es.habits).toBe(strings.habits);
+    // onboarding is a whole section no overlay touches yet (locked-vocabulary
+    // gated: "leak"/"skip"/"kept" throughout its English source).
+    expect(es.onboarding).toBe(strings.onboarding);
+    // habits is a partial section: only its one live key (loading) is
+    // translated, so the untouched dead-code keys must still fall back.
+    expect(es.habits.loading).toBe('Cargando.');
+    expect(es.habits.title).toBe(strings.habits.title);
+    expect(es.habits.spottingYourLeak).toBe(strings.habits.spottingYourLeak);
   });
 
   it('returns a stable (memoized) reference per locale across calls', () => {
