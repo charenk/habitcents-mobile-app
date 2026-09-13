@@ -2,7 +2,34 @@
 
 ## Status
 
-In progress. Run 35: no rebase needed (branch already at main's tip,
+In progress. Run 36: no rebase needed (branch already at main's tip,
+`3890ba1`, same as run 35); no REVIEW FEEDBACK section pending. Checked
+the status board (issue #139) directly: still only the 2026-09-07
+iPad-fixed-footers comment, DECISIONS NEEDED unanswered, item 4 stays
+blocked. Re-ran run 35's section-completeness check (all 27 top-level
+`constants/strings.ts` sections accounted for, no fresh `habits`-style
+gap) and item 6's fresh-candidate grep (clean). Replaced item 3's
+hand-picked word-list sweep with a small script that parses every leaf
+string value out of all 17 translated sections (213 values) and greps
+the whole test suite's assertion calls for a literal match: 43 raw hits,
+all classified as generic-component contract tests, the never-translated
+`settings.versionValue`, or a script false positive (the regex matched
+the apostrophe in `"Today's log"` as a closing quote; both files
+actually already read `strings.today.*`). Zero real strays. No code
+change needed this run; `tsc --noEmit` clean, full suite green
+(125/125, 1395/1395) on the first run, no flake. One commit (PLAN/
+HANDOFF update only). Full method in PLAN.md's run 36 entry (item 3).
+
+**Standing fact, now worth stating plainly rather than re-deriving each
+run: item 4's real translation work has been blocked on Charen since run
+27 (this is the ninth run without movement), and items 3/5/6 have found
+no fresh candidates since run 32 (five runs).** Every remaining
+untranslated section is gated on either the locked-vocabulary proposal
+table or the paywall pricing/legal go-ahead (both in DECISIONS NEEDED
+below); until one moves, this routine's bounded per-run work is
+re-verification of the kind runs 33-36 did, not new translated content.
+
+Run 35: no rebase needed (branch already at main's tip,
 `3890ba1`, same as run 34); no REVIEW FEEDBACK section pending. Checked
 the status board (issue #139) directly: still only the 2026-09-07
 iPad-fixed-footers comment since run 34, unrelated to decisions 8 (locked
@@ -1227,6 +1254,22 @@ method. This confirms the run 34 lesson generalizes one step further:
 before treating "nothing named is fresh" as settled, check not just
 whether the NAMED candidates still come up empty, but whether the naming
 itself is complete.
+
+**Run 36 re-checked both the section-completeness listing and item 6's
+grep once more and found no further gap** (all 27 top-level sections
+now confirmed accounted for twice, run 35 and run 36); it also replaced
+item 3's manual sweep with a script covering every leaf value of all 17
+translated sections at once, still zero real strays. This is the first
+run in this stretch where re-verification alone was the entire result,
+no new fix or translated key. A future run in this same blocked position
+should not expect another `habits`-style gap to still be hiding: two
+independent full listings have now confirmed there is not one. Re-running
+the same three checks a fourth time with no new method is unlikely to
+find anything either; the honest state is that this routine has no
+further bounded work until Charen answers DECISIONS NEEDED, and a future
+run landing here should check DECISIONS NEEDED first and, if still
+unanswered, say so plainly (as this run and run 33 did) rather than
+manufacturing busywork.
 
 What is actually left for a future run:
 - Plan item 2's broader ICU/pluralization checkbox (function-valued

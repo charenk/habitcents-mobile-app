@@ -1596,6 +1596,57 @@ work, tracked elsewhere).
       resolves correctly. No new item-3 stray found this run; full method
       and the specific files checked are in this entry so a future run
       does not have to re-derive the word list from scratch.
+
+      **Run 36: automated the sweep instead of hand-picking a word list.**
+      Re-checked DECISIONS NEEDED first (status board issue #139, still
+      only the unrelated 2026-09-07 iPad-footer comment since run 35;
+      both gates unanswered, item 4's translated-section line stays
+      blocked). Re-ran run 35's section-completeness check (`grep -n
+      "^  [a-zA-Z][a-zA-Z0-9]*: {" constants/strings.ts`, diffed against
+      every section named anywhere as translated/gated/dead): all 27
+      top-level sections accounted for, no second `habits`-style gap this
+      time. Re-ran item 6's fresh-candidate grep (repo-wide
+      `accessibilityLabel={\`...\`}`), clean again, every hit already
+      composes a gated-section catalog value with interpolated data.
+
+      For item 3, rather than another hand-picked word list, wrote a small
+      Node script (kept in this run's notes, not committed, since it is a
+      one-off audit tool rather than product code) that parses every
+      simple string-literal leaf value out of all 17 translated sections
+      (`common`, `sheets`, `tabs`, `screenTitles`, `expenses`, `habits`,
+      `habitDetail`, `categories`, `categoryDetail`, `reports`,
+      `settings`, `profile`, `addCategoryModal`, `toasts`, `expenseSheet`,
+      `money`, `addUpcoming` -- 213 values total) and greps every test
+      file's `getByText`/`queryByText`/`findByText`/`getByLabelText`/
+      `queryByLabelText`/`findByLabelText`/`toHaveTextContent`/`getByRole`
+      calls for a literal match. 43 raw hits across 8 files, all
+      classified and none needing a fix: `screenHeader.test.tsx`,
+      `sheetHeader.test.tsx`, `uiPrimitives.test.tsx`, `toast.test.tsx`
+      and `actionDock.test.tsx` are generic/shared component contract
+      tests passing arbitrary example prop text with no `useStrings()`/
+      catalog involved (the same class run 25's PATTERN_VOCABULARY.md
+      entry already names); `profile.test.tsx`'s `1.0.0` hit is
+      `settings.versionValue`, a version number that is deliberately never
+      translated in any locale, so no non-English overlay value could ever
+      diverge from it; `loggedTodayList.test.tsx` and
+      `todayQuoteRibbonPlacement.test.tsx`'s `Today` hits were a script
+      false positive (the regex's closing-quote character class also
+      matches the apostrophe in `"Today's log"`, `loggedTodayEyebrow`'s
+      real value), confirmed by reading both files directly: both already
+      assert `strings.today.*`, not a literal. Zero real strays. Also
+      re-confirmed by direct read that `settings.versionValue`/
+      `supportEmail` (a version number and an email address) and
+      `money.habitsEmptyTitle`/`habitsEmptyBody` (contains "leak", locked
+      vocabulary) stay correctly excluded from item 4, nothing missed
+      there either. No code change needed this run; `tsc --noEmit` clean,
+      full suite green (125/125, 1395/1395) on the first run, no flake.
+      Flagging for Charen (not new, but now a standing fact worth stating
+      plainly): item 4's real translation work has been fully blocked on
+      the DECISIONS NEEDED table since run 27 (nine runs), and items 3/5/6
+      have come up clean on every fresh-candidate search since run 32
+      (five runs); until the locked-vocabulary picks or the paywall
+      pricing go-ahead land, this routine's only remaining bounded work
+      per run is re-verification of the same kind this run did.
 - [ ] leak / skip / kept / slip and the app's quotes are PRODUCT VOICE:
       never finalized by this routine. Provisional entries only, proposal
       table lives in HANDOFF.md's DECISIONS NEEDED until Charen picks.
