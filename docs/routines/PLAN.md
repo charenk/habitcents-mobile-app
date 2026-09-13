@@ -1647,6 +1647,32 @@ work, tracked elsewhere).
       (five runs); until the locked-vocabulary picks or the paywall
       pricing go-ahead land, this routine's only remaining bounded work
       per run is re-verification of the same kind this run did.
+
+      **Run 37: checked DECISIONS NEEDED via the GitHub API directly**
+      (`issue_read` on #139: `get` for the body, `get_comments` for the
+      thread) rather than trusting this file's memory of run 36's check.
+      Issue body last edited 2026-09-13 by the orchestrator's ninth run,
+      both gates (8: locked vocabulary; 10: paywall pricing/legal) still
+      named as open and blocking; only comment on the issue remains the
+      2026-09-07 iPad-footer one. Also checked PR #134 directly (`get`,
+      `get_comments`, `get_reviews`): open, draft, `mergeable_state:
+      clean`, head `49905b1` matching this branch's own tip, one
+      pre-existing comment from 2026-09-09 about an unrelated flake,
+      zero reviews, nothing new. Per run 36's own explicit guidance
+      ("re-running the same three checks a fourth time with no new
+      method is unlikely to find anything"), did not re-run items 3/5/6's
+      fresh-candidate sweeps a sixth time; run 36 already covered them
+      twice with two different methods and found nothing, and nothing
+      has changed on origin/main (still `3890ba1`) or the status board
+      since then that would give a sweep a new angle to find. Fresh `npm
+      install`, `tsc --noEmit` clean, full suite green (125/125,
+      1395/1395) on the first run, no flake, exactly matching run 36's
+      counts. No code change; one commit (HANDOFF/PLAN update only). No
+      push notification sent: run 36 already flagged this exact blocked
+      state to Charen, and nothing has moved since, so a second alert
+      would only be noise. Standing fact updated: item 4 has now been
+      blocked ten runs (since run 27), items 3/5/6 clean six runs (since
+      run 32).
 - [ ] leak / skip / kept / slip and the app's quotes are PRODUCT VOICE:
       never finalized by this routine. Provisional entries only, proposal
       table lives in HANDOFF.md's DECISIONS NEEDED until Charen picks.

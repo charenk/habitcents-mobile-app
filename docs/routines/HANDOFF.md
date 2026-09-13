@@ -2,32 +2,40 @@
 
 ## Status
 
-In progress. Run 36: no rebase needed (branch already at main's tip,
-`3890ba1`, same as run 35); no REVIEW FEEDBACK section pending. Checked
-the status board (issue #139) directly: still only the 2026-09-07
-iPad-fixed-footers comment, DECISIONS NEEDED unanswered, item 4 stays
-blocked. Re-ran run 35's section-completeness check (all 27 top-level
-`constants/strings.ts` sections accounted for, no fresh `habits`-style
-gap) and item 6's fresh-candidate grep (clean). Replaced item 3's
-hand-picked word-list sweep with a small script that parses every leaf
-string value out of all 17 translated sections (213 values) and greps
-the whole test suite's assertion calls for a literal match: 43 raw hits,
-all classified as generic-component contract tests, the never-translated
-`settings.versionValue`, or a script false positive (the regex matched
-the apostrophe in `"Today's log"` as a closing quote; both files
-actually already read `strings.today.*`). Zero real strays. No code
-change needed this run; `tsc --noEmit` clean, full suite green
-(125/125, 1395/1395) on the first run, no flake. One commit (PLAN/
-HANDOFF update only). Full method in PLAN.md's run 36 entry (item 3).
+In progress. Run 37: no rebase needed (branch already contains main's
+tip, `3890ba1`, unchanged since run 35); no REVIEW FEEDBACK section
+pending. Checked the status board (issue #139) directly via the GitHub
+API rather than trusting the last-known state: issue body last edited
+2026-09-13 by the orchestrator's ninth run, still only the one
+2026-09-07 comment (iPad fixed footers, decision 1, unrelated), both
+DECISIONS NEEDED items (8: locked vocabulary; 10: paywall pricing/legal)
+still open and named as still-blocking in the issue body itself. Item 4
+stays blocked, tenth run without movement. Per run 36's own explicit
+guidance (re-running the same three checks a fourth time with no new
+method is unlikely to find anything), did not re-run items 3/5/6's
+fresh-candidate sweeps a sixth time with no new method; confirmed
+instead via PR #134 (open, draft, `mergeable_state: clean`, head
+`49905b1` matching this branch's pre-push tip, one pre-existing comment
+from 2026-09-09 about an unrelated flake, zero reviews) that nothing
+external landed on the branch's own PR either. Fresh `npm install`,
+`tsc --noEmit` clean, full suite green (125/125, 1395/1395) on the first
+run, no flake, exactly matching run 36's counts with zero drift. One
+commit (HANDOFF/PLAN update only). No push notification: run 36 already
+flagged this exact blocked state and sent one; nothing has changed since,
+so a second alert would be noise, not signal.
 
 **Standing fact, now worth stating plainly rather than re-deriving each
 run: item 4's real translation work has been blocked on Charen since run
-27 (this is the ninth run without movement), and items 3/5/6 have found
-no fresh candidates since run 32 (five runs).** Every remaining
+27 (this is the tenth run without movement), and items 3/5/6 have found
+no fresh candidates since run 32 (six runs).** Every remaining
 untranslated section is gated on either the locked-vocabulary proposal
 table or the paywall pricing/legal go-ahead (both in DECISIONS NEEDED
 below); until one moves, this routine's bounded per-run work is
-re-verification of the kind runs 33-36 did, not new translated content.
+re-verification of the kind runs 33-37 did, not new translated content.
+A future run landing here should check DECISIONS NEEDED first via the
+API (not just this file's memory of it) and, if still unanswered, log a
+plain re-verification run rather than inventing new sweep methods with
+no reason to expect a different result.
 
 Run 35: no rebase needed (branch already at main's tip,
 `3890ba1`, same as run 34); no REVIEW FEEDBACK section pending. Checked
@@ -1270,6 +1278,17 @@ further bounded work until Charen answers DECISIONS NEEDED, and a future
 run landing here should check DECISIONS NEEDED first and, if still
 unanswered, say so plainly (as this run and run 33 did) rather than
 manufacturing busywork.
+
+**Run 37 confirmed the same holds via the status board API directly**
+(issue #139's body and comments, plus PR #134's state) rather than
+relying on this file's account of run 36: still nothing new, item 4
+still blocked, no fresh item 3/5/6 candidate implied by anything that
+landed since. Did not re-run the sweeps a sixth time with no new method,
+per run 36's own guidance quoted above. A future run landing in this
+same position should keep doing exactly this (a direct API check plus
+the standard tsc/test verification, logged as `ok`) rather than
+resuming the sweep-widening cycle unless it has an actual new angle to
+try.
 
 What is actually left for a future run:
 - Plan item 2's broader ICU/pluralization checkbox (function-valued
