@@ -20,6 +20,7 @@ import { StyleSheet } from 'react-native';
 import { act, render } from '@testing-library/react-native';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
+import { LocaleProvider } from '@/contexts/LocaleContext';
 import { OnboardingProvider } from '@/contexts/OnboardingContext';
 import { EmptyState, EMPTY_BLOCK_MIN_HEIGHT } from '@/components/ui/EmptyState';
 import { SpentList } from '@/components/money/SpentList';
@@ -30,9 +31,11 @@ import { layout, spacing } from '@/constants/theme';
 function Providers({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider>
-      <CurrencyProvider>
-        <OnboardingProvider>{children}</OnboardingProvider>
-      </CurrencyProvider>
+      <LocaleProvider>
+        <CurrencyProvider>
+          <OnboardingProvider>{children}</OnboardingProvider>
+        </CurrencyProvider>
+      </LocaleProvider>
     </ThemeProvider>
   );
 }

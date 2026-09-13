@@ -37,7 +37,7 @@ import { track } from '@/utils/analytics';
 import { layout, spacing, typeScale, type AppTheme } from '@/constants/theme';
 import type { DetectedHabit } from '@/types/habit';
 import type { ScanSummary } from '@/types/scanSummary';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
 import { useSegmentPager } from '@/utils/useSegmentPager';
 
 type InsightsView = 'month' | 'scan';
@@ -50,6 +50,7 @@ export default function InsightsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [logVisible, setLogVisible] = useState(false);
+  const strings = useStrings();
   // Empty state as an onboarding surface (PRD v3.1 sect 5). Insights' leaks
   // list is empty because nothing has been logged often enough to detect yet,
   // so the honest first action is logging, not breaking.
@@ -173,7 +174,7 @@ export default function InsightsScreen() {
           badgeSpoken: strings.insights.scanSegmentBadgeSpoken,
         },
       ] as const,
-    []
+    [strings]
   );
 
   // 1. Your leaks: everything worth an action, biggest monthly drain first.

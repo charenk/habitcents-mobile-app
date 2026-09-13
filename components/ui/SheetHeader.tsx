@@ -66,7 +66,16 @@ export function SheetHeader({
 
   return (
     <View style={styles.header}>
-      <Text style={styles.title} accessibilityRole="header" maxFontSizeMultiplier={1.5}>
+      <Text
+        style={styles.title}
+        accessibilityRole="header"
+        maxFontSizeMultiplier={1.5}
+        // Overflow hardening: title shares the row with Save (and, some
+        // consumers, a secondary icon action); a longer translated title
+        // must truncate rather than wrap and push the row taller than the
+        // pinned header expects.
+        numberOfLines={1}
+      >
         {title}
       </Text>
       <View style={styles.actions}>

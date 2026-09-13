@@ -4,7 +4,8 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { radii, spacing, typeScale, type AppTheme } from '@/constants/theme';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
+import type { Catalog } from '@/utils/i18n';
 import { buildSpendPulse } from '@/utils/leakScan/spendPulse';
 import type { PulseCell, PulseGranularity } from '@/utils/leakScan/spendPulse';
 import type { ScanResult } from '@/utils/leakScan/types';
@@ -18,15 +19,6 @@ type SpendPulseProps = {
 };
 
 type Styles = ReturnType<typeof createStyles>;
-
-// UX-037: standalone chips were a third switcher; the pattern vocabulary has
-// exactly one (the cloud-track SegmentedControl). Options built once, not
-// re-templated per render, mirroring the HATCH_LINE_TOPS treatment below.
-const GRANULARITY_OPTIONS: { value: PulseGranularity; label: string }[] = [
-  { value: 'day', label: strings.leakScan.pulseGranularityDay },
-  { value: 'month', label: strings.leakScan.pulseGranularityMonth },
-  { value: 'year', label: strings.leakScan.pulseGranularityYear },
-];
 
 // UX-033: the hatch pattern's 4 lines sit at fixed offsets that never change
 // across renders (only the index they come from is fixed), so this is
@@ -45,7 +37,19 @@ const HATCH_LINE_TOPS: `${number}%`[] = [0, 1, 2, 3].map((i) => `${i * 30 - 15}%
 function SpendPulseImpl({ result, onCellPress }: SpendPulseProps) {
   const theme = useTheme();
   const { format } = useCurrency();
+  const strings = useStrings();
   const styles = useMemo(() => createStyles(theme), [theme]);
+
+  // UX-037: standalone chips were a third switcher; the pattern vocabulary has
+  // exactly one (the cloud-track SegmentedControl).
+  const granularityOptions = useMemo(
+    () => [
+      { value: 'day' as const, label: strings.leakScan.pulseGranularityDay },
+      { value: 'month' as const, label: strings.leakScan.pulseGranularityMonth },
+      { value: 'year' as const, label: strings.leakScan.pulseGranularityYear },
+    ],
+    [strings]
+  );
 
   const autoData = useMemo(() => buildSpendPulse(result), [result]);
   const [granularity, setGranularity] = useState<PulseGranularity>(autoData.granularity);
@@ -83,7 +87,7 @@ function SpendPulseImpl({ result, onCellPress }: SpendPulseProps) {
           which also brings the correct tablist/tab roles for free. */}
       <View style={styles.toggleRow}>
         <SegmentedControl
-          options={GRANULARITY_OPTIONS}
+          options={granularityOptions}
           value={granularity}
           onChange={setGranularity}
           accessibilityLabel={strings.leakScan.pulseGranularityLabel}
@@ -98,7 +102,7 @@ function SpendPulseImpl({ result, onCellPress }: SpendPulseProps) {
               style={[styles.cellWrap, { width: `${100 / columns}%` }]}
               onPress={() => handleCellPress(cell)}
               accessibilityRole="button"
-              accessibilityLabel={cellA11yLabel(cell, format)}
+              accessibilityLabel={cellA11yLabel(cell, format, strings)}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
               <PulseCellView cell={cell} theme={theme} styles={styles} />
@@ -140,10 +144,10 @@ function SpendPulseImpl({ result, onCellPress }: SpendPulseProps) {
  */
 export const SpendPulse = memo(SpendPulseImpl);
 
-function cellA11yLabel(cell: PulseCell, format: (cents: number) => string): string {
-  if (cell.state === 'out-of-coverage') return pulseCellLabel(cell.key, 'outside');
-  if (cell.state === 'zero-spend') return pulseCellLabel(cell.key, 'zero');
-  return pulseCellLabel(cell.key, 'spend', format(cell.totalCents));
+function cellA11yLabel(cell: PulseCell, format: (cents: number) => string, strings: Catalog): string {
+  if (cell.state === 'out-of-coverage') return pulseCellLabel(cell.key, 'outside', strings);
+  if (cell.state === 'zero-spend') return pulseCellLabel(cell.key, 'zero', strings);
+  return pulseCellLabel(cell.key, 'spend', strings, format(cell.totalCents));
 }
 
 function PulseCellView({ cell, theme, styles }: { cell: PulseCell; theme: AppTheme; styles: Styles }) {

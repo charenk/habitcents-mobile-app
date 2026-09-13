@@ -18,6 +18,7 @@ import { StyleSheet } from 'react-native';
 import { render, fireEvent } from '@testing-library/react-native';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
+import { LocaleProvider } from '@/contexts/LocaleContext';
 import { QuickLogRow } from '@/components/money/QuickLogRow';
 import { DOCK_FIELD_HEIGHT } from '@/components/today/DockCard';
 import { strings } from '@/constants/strings';
@@ -26,7 +27,9 @@ import { radii, lightTheme } from '@/constants/theme';
 function Providers({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider>
-      <CurrencyProvider>{children}</CurrencyProvider>
+      <LocaleProvider>
+        <CurrencyProvider>{children}</CurrencyProvider>
+      </LocaleProvider>
     </ThemeProvider>
   );
 }

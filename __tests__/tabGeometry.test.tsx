@@ -22,6 +22,7 @@ import { StyleSheet } from 'react-native';
 import { render } from '@testing-library/react-native';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
+import { LocaleProvider } from '@/contexts/LocaleContext';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { SpentKeptChips } from '@/components/habit-logging/SpentKeptChips';
 import { radii } from '@/constants/theme';
@@ -31,7 +32,9 @@ const TRACK_PADDING = 3;
 function Providers({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider>
-      <CurrencyProvider>{children}</CurrencyProvider>
+      <LocaleProvider>
+        <CurrencyProvider>{children}</CurrencyProvider>
+      </LocaleProvider>
     </ThemeProvider>
   );
 }

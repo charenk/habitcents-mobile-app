@@ -70,7 +70,7 @@ import { Sheet } from '@/components/ui/Sheet';
 import { SheetHeader } from '@/components/ui/SheetHeader';
 import { TextField } from '@/components/ui/TextField';
 import { useToast } from '@/components/ui/Toast';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
 import { typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
 import { useCategories } from '@/contexts/CategoriesContext';
@@ -129,6 +129,7 @@ export function ExpenseSheet({
   onSaved,
 }: ExpenseSheetProps): React.JSX.Element {
   const theme = useTheme();
+  const strings = useStrings();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const keyboardVisible = useKeyboardHeight() > 0;
   const { show } = useToast();

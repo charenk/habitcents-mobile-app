@@ -16,6 +16,7 @@ import {
   saveOnboardingState,
   setCurrency,
   setHasOnboarded,
+  setLocaleOverride,
 } from '@/utils/storage';
 import type { Expense } from '@/types/expense';
 
@@ -44,6 +45,7 @@ describe('writes reject rather than swallowing', () => {
     ['saveOnboardingState', () => saveOnboardingState({} as never)],
     ['setHasOnboarded', () => setHasOnboarded()],
     ['setCurrency', () => setCurrency('USD')],
+    ['setLocaleOverride', () => setLocaleOverride('fr')],
   ])('%s rejects when the device cannot write', async (_name, write) => {
     jest.spyOn(console, 'error').mockImplementation(() => {});
     jest.spyOn(AsyncStorage, 'setItem').mockRejectedValueOnce(disk.full());

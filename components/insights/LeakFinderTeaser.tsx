@@ -22,7 +22,7 @@ import { Icon } from '@/components/ui/Icon';
 import { useTheme } from '@/contexts/ThemeContext';
 import { EMPTY_ART, EMPTY_ART_SIZE } from '@/constants/emptyArt';
 import { spacing, typeScale, type AppTheme } from '@/constants/theme';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
 
 type LeakFinderTeaserProps = {
   /** True once the user has opted in: the invitation and its CTA are replaced
@@ -33,6 +33,7 @@ type LeakFinderTeaserProps = {
 
 export function LeakFinderTeaser({ interestRecorded, onRecordInterest }: LeakFinderTeaserProps) {
   const theme = useTheme();
+  const strings = useStrings();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   return (

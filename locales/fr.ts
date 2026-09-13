@@ -1,0 +1,281 @@
+/**
+ * Provisional machine translation, needs human review.
+ *
+ * Locale: fr (French). Plan item 4: `common` (except `keep`, held back
+ * deliberately, see below), `sheets`, `tabs`, `screenTitles` (run 20), plus
+ * `expenses`, `categories`, `categoryDetail`, `profile` (run 21), plus
+ * `settings` minus `versionValue`/`supportEmail` (run 22, not localizable
+ * content), plus `addCategoryModal`, `expenseSheet` minus the function-
+ * valued `amountLabel` (run 23). Every other section is not yet translated
+ * and falls back to English via mergeCatalog() in utils/i18n.ts.
+ * Function-valued keys (pluralized or interpolated) are omitted
+ * throughout and inherit the English function, per plan item 2's
+ * deferred ICU work.
+ *
+ * `common.keep` is withheld on purpose: it is close enough to the app's
+ * locked vocabulary (leak/skip/kept/slip, ops CLAUDE.md) that this routine
+ * will not guess at it. It stays English until Charen picks a translation;
+ * see docs/routines/HANDOFF.md's DECISIONS NEEDED.
+ *
+ * Run 24 added: `habitDetail.notFound` (its other four keys are dead code,
+ * confirmed unused anywhere in the app); `reports.loading` (dead-code
+ * audited section, only this key and the function-valued `weekOf` are
+ * actually rendered); `toasts` minus `stoppedHistoryKept`/`leakDismissed`
+ * (locked-vocabulary gated), `yesterdayNoted` (dead code), and every
+ * function-valued key (deferred ICU work, same as every other section).
+ *
+ * Run 26 added: `addUpcoming` (all string keys; `everyNDaysValue`/
+ * `amountLabel` stay omitted, both function-valued). Real render path
+ * confirmed via `components/money/AddUpcomingSheet.tsx`, already
+ * `useStrings()`-converted. `whenNextWeek`/`startingNextWeek` share one
+ * translation, matching the English source reusing "Next week" in both
+ * places. `whatIsIt` uses the typographic apostrophe (’), same as every
+ * other apostrophe in this file's existing toasts, so it stays
+ * single-quoted like every other string here.
+ *
+ * Run 27 added: `money` minus `habitsEmptyTitle`/`habitsEmptyBody` (locked-
+ * vocabulary gated: "leak") and every function-valued key (deferred ICU
+ * work). `spentEmptyBody`/`upcomingEmptyBody` confirmed dead code (never
+ * rendered, same RETIRED treatment as elsewhere) and left untranslated.
+ * `scheduleSeparator` (a plain " · " middle-dot punctuation mark, no
+ * linguistic content) stays omitted like a function-valued key.
+ * `scheduleOneTime`/`scheduleWeekly`/`scheduleMonthly`/`scheduleAnnual`
+ * reuse `addUpcoming`'s matching frequency translations (same English
+ * source word); `scheduleBiweekly` ('Every 2 weeks') is translated fresh
+ * since its English source differs from `addUpcoming.frequencyBiweekly`
+ * ('Bi-weekly').
+ *
+ * Run 35 added: `habits.loading`, reusing the same "Loading." translation
+ * as `categories.loading`/`reports.loading`. This section's other four keys
+ * (`title`, `spottingYourLeak`, `logsAtSamePlace`, `logsAtSamePlaceSuffix`,
+ * `logsAtSamePlaceBody`) are dead code, confirmed via grep with zero real
+ * call sites anywhere outside constants/strings.ts; left untranslated, same
+ * treatment as habitDetail's/reports' own dead keys.
+ */
+import type { LocaleOverlay } from '@/utils/i18n';
+
+export const fr: LocaleOverlay = {
+  common: {
+    save: 'Enregistrer',
+    cancel: 'Annuler',
+    delete: 'Supprimer',
+    ok: 'OK',
+    back: 'Retour',
+    close: 'Fermer',
+    dismiss: 'Ignorer',
+  },
+  sheets: {
+    saveHintAmount: 'Entrez d’abord un montant',
+    saveHintCategoryName: 'Entrez d’abord un nom de catégorie',
+  },
+  tabs: {
+    today: 'Aujourd’hui',
+    money: 'Argent',
+    insights: 'Aperçus',
+    categories: 'Catégories',
+  },
+  screenTitles: {
+    today: 'Aujourd’hui.',
+    money: 'Argent.',
+    insights: 'Aperçus.',
+    categories: 'Catégories.',
+  },
+  expenses: {
+    recent: 'Récent',
+    upcoming: 'À venir',
+    merchantPlaceholder: 'Commerçant (p. ex. Starbucks)',
+    merchantFieldLabel: 'Commerçant',
+    noteFieldLabel: 'Note',
+    amountHint: 'Appuyez deux fois pour saisir un montant',
+    notePlaceholder: 'Note (facultatif)',
+    saveExpense: 'Enregistrer la dépense',
+    savedConfirmation: 'Enregistré',
+    all: 'Tous',
+  },
+  categories: {
+    title: 'Catégories',
+    defaultCategories: 'Catégories par défaut',
+    customCategories: 'Catégories personnalisées',
+    loading: 'Chargement.',
+    emptyTitle: 'Regroupez vos dépenses à votre façon',
+    emptySubtitle: 'Les groupes rendent les tendances plus faciles à voir.',
+    emptyCta: 'Ajoutez votre première catégorie',
+    deleteMessage:
+      'Vos dépenses existantes sont conservées ; elles n’afficheront simplement plus cette catégorie.',
+    deleteConfirmCta: 'Supprimer la catégorie',
+    deleteCancel: 'Conserver la catégorie',
+    addCategoryLabel: 'Ajouter une catégorie',
+    eyebrowDefault: 'Par défaut',
+    eyebrowCustom: 'Personnalisée',
+  },
+  categoryDetail: {
+    notFound: 'Catégorie introuvable',
+    editCategoryLabel: 'Modifier la catégorie',
+    thisMonth: 'ce mois-ci',
+    logsStat: 'entrées',
+    averageStat: 'moyenne',
+    sixMonthTrend: 'Tendance sur 6 mois',
+    topMerchants: 'Principaux commerçants',
+    recentLogs: 'Entrées récentes',
+    noExpensesLogged: 'Rien d’enregistré dans cette catégorie pour l’instant.',
+    trendEmpty: 'Aucune dépense à représenter pour l’instant.',
+  },
+  habits: {
+    loading: 'Chargement.',
+  },
+  habitDetail: {
+    notFound: 'Habitude introuvable',
+  },
+  reports: {
+    loading: 'Chargement.',
+  },
+  profile: {
+    title: 'Profil.',
+    headerLabel: 'Profil',
+    supportRow: 'Assistance',
+  },
+  settings: {
+    opensInBrowserHint: 'S’ouvre dans votre navigateur.',
+    preferences: 'Préférences',
+    currency: 'Devise',
+    about: 'À propos',
+    privacyPolicy: 'Politique de confidentialité',
+    termsOfService: 'Conditions d’utilisation',
+    restorePurchases: 'Restaurer les achats',
+    version: 'Version',
+    currencySheetTitle: 'Devise.',
+    language: 'Langue',
+    languageSheetTitle: 'Langue.',
+    languageSystemDefault: 'Système par défaut',
+    restoreNoneMessage: 'Aucun achat précédent à restaurer.',
+    restoreDoneMessage: 'Vos achats ont été restaurés.',
+    groupGeneral: 'Général',
+    groupMore: 'Plus',
+    subscriptionRow: 'Abonnement',
+    subscriptionValueFree: 'Gratuit',
+    subscriptionValuePremium: 'Premium',
+    startOverRow: 'Recommencer',
+    startOverHint: 'les données restent sur cet appareil',
+    startOverConfirmTitle: 'Recommencer ?',
+    startOverConfirmBody:
+      'Vous ramène aux écrans de départ. Vos données restent sur cet appareil.',
+    startOverConfirmCta: 'Recommencer',
+    startOverConfirmCancel: 'Continuer',
+    startOverToast: 'Redémarrage en cours. Vos données restent sur cet appareil.',
+    linkOpenFailed: 'Impossible d’ouvrir le lien.',
+    mailOpenFailed: 'Impossible d’ouvrir la messagerie.',
+  },
+  addCategoryModal: {
+    editCategory: 'Modifier la catégorie.',
+    newCategory: 'Nouvelle catégorie.',
+    categoryNamePreview: 'Nom de la catégorie',
+    name: 'Nom',
+    namePlaceholder: 'Saisissez le nom de la catégorie',
+    icon: 'Icône',
+    color: 'Couleur',
+  },
+  expenseSheet: {
+    logEyebrow: 'Consigner une dépense',
+    editEyebrow: 'Modifier la dépense',
+    categoryEyebrow: 'Catégorie',
+    whereEyebrow: 'Où',
+    saveExpense: 'Enregistrer',
+    saveChanges: 'Enregistrer',
+    deleteExpense: 'Supprimer la dépense',
+    keyboardDone: 'Terminé',
+  },
+  toasts: {
+    logged: 'Consigné.',
+    saved: 'Enregistré.',
+    deleted: 'Supprimé.',
+    undo: 'Annuler',
+    restored: 'Restauré.',
+    addedToUpcoming: 'Ajouté à la liste À venir.',
+    trialStarted: 'Essai commencé. 14 jours gratuits.',
+    startHabitFailed: 'Cela n’a pas pu démarrer. Réessayez.',
+    logFailed: 'Cela n’a pas été enregistré. Réessayez.',
+    saveFailed: 'Cela n’a pas été enregistré. Réessayez.',
+    deleteFailed: 'Cela n’a pas été supprimé. Réessayez.',
+    restoreFailed: 'Cela n’est pas revenu. Réessayez.',
+    addUpcomingFailed: 'Cela n’a pas été enregistré. Réessayez.',
+    checkInFailed: 'Cela n’a pas été enregistré. Réessayez.',
+    stopHabitFailed: 'Cela ne s’est pas arrêté. Réessayez.',
+    skipValueFailed: 'Cela n’a pas été enregistré. Réessayez.',
+    dismissLeakFailed: 'Cela n’a pas été enregistré. Réessayez.',
+    categoryFailed: 'Cela n’a pas été enregistré. Réessayez.',
+    currencyFailed: 'Cela n’a pas été enregistré. Réessayez.',
+    languageFailed: 'Cela n’a pas été enregistré. Réessayez.',
+    startOverFailed: 'Cela n’a pas pu recommencer. Réessayez.',
+    importFailed: 'Cela n’a pas été enregistré. Rien n’a été importé. Réessayez.',
+  },
+  addUpcoming: {
+    title: 'Ajouter une dépense à venir.',
+    editTitle: 'Modifier la dépense à venir.',
+    saveChanges: 'Enregistrer',
+    deleteUpcoming: 'Supprimer la dépense à venir',
+    whatIsIt: 'Qu’est-ce que c’est ?',
+    namePlaceholder: 'Nommez-le',
+    nameFieldLabel: 'Nom',
+    nameRent: 'Loyer',
+    nameInternet: 'Internet',
+    namePhone: 'Téléphone',
+    nameGym: 'Salle de sport',
+    nameInsurance: 'Assurance',
+    nameUtilities: 'Charges',
+    schedule: 'Planification',
+    oneTime: 'Une fois',
+    repeats: 'Se répète',
+    scheduleSegmentLabel: 'Type de planification',
+    when: 'Quand ?',
+    whenTomorrow: 'Demain',
+    whenNextWeek: 'La semaine prochaine',
+    whenInTwoWeeks: 'Dans deux semaines',
+    whenNextMonth: 'Le mois prochain',
+    frequencyWeekly: 'Hebdomadaire',
+    frequencyBiweekly: 'Toutes les deux semaines',
+    frequencyMonthly: 'Mensuel',
+    frequencyCustom: 'Personnalisé',
+    frequencyAnnual: 'Annuel',
+    onWhichDay: 'Quel jour ?',
+    starting: 'À partir de',
+    startingThisWeek: 'Cette semaine',
+    startingNextWeek: 'La semaine prochaine',
+    onThe: 'Le',
+    monthDayFirst: '1er',
+    monthDayFifteenth: '15',
+    monthDayThirtieth: '30',
+    monthDayLast: 'Dernier jour',
+    everyNDaysLabel: 'Tous les N jours',
+    everyNDaysDecrease: 'Moins de jours',
+    everyNDaysIncrease: 'Plus de jours',
+    save: 'Enregistrer',
+  },
+  money: {
+    segmentSpent: 'Dépensé',
+    segmentUpcoming: 'À venir',
+    segmentHabits: 'Habitudes',
+    segmentLabel: 'Vue argent',
+    spentToday: 'Aujourd’hui',
+    spentYesterday: 'Hier',
+    spentTodayEmpty: 'Rien encore aujourd’hui. Ajoutez-la si vous avez dépensé, et profitez-en sinon.',
+    spentEditHint: 'Touchez une ligne pour la modifier ou la supprimer.',
+    recurringRowSuffix: 'récurrent',
+    spentEmptyTitle: 'Toutes vos dépenses au même endroit',
+    upcomingWindowSegmentLabel: 'Fenêtre à venir',
+    upcomingWindowTwoWeeks: '2 semaines',
+    upcomingWindowOneMonth: '1 mois',
+    upcomingWindowThreeMonths: '3 mois',
+    upcomingAddAffordance: 'Ajouter une dépense à venir',
+    spentEmptyCta: 'Consigner une dépense',
+    habitsEmptyCta: 'Se défaire d’une habitude',
+    upcomingListEyebrow: 'Planifié',
+    upcomingEmptyTitle: 'Sachez ce qui arrive avant que ça n’arrive',
+    upcomingWindowEmptyBody: 'Aucune de vos dépenses récurrentes ne tombe dans cette période.',
+    upcomingEmptyCta: 'Ajouter une dépense à venir',
+    scheduleOneTime: 'Une fois',
+    scheduleWeekly: 'Hebdomadaire',
+    scheduleBiweekly: 'Toutes les 2 semaines',
+    scheduleMonthly: 'Mensuel',
+    scheduleAnnual: 'Annuel',
+  },
+};

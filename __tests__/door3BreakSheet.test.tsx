@@ -136,6 +136,7 @@ import { act, cleanup, fireEvent, render } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
+import { LocaleProvider } from '@/contexts/LocaleContext';
 import { ToastProvider } from '@/components/ui/Toast';
 import TodayScreen from '@/app/(tabs)/index';
 import { strings } from '@/constants/strings';
@@ -158,9 +159,11 @@ function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SafeAreaProvider initialMetrics={initialMetrics}>
       <ThemeProvider>
-        <CurrencyProvider>
-          <ToastProvider>{children}</ToastProvider>
-        </CurrencyProvider>
+        <LocaleProvider>
+          <CurrencyProvider>
+            <ToastProvider>{children}</ToastProvider>
+          </CurrencyProvider>
+        </LocaleProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );
@@ -473,7 +476,7 @@ describe('Door 3 break sheet: close without starting', () => {
 
     // The Sheet's scrim/backdrop dismiss (components/ui/Sheet.tsx), the same
     // path a swipe-down or tap-outside takes.
-    await tap(view.getByLabelText('Close'));
+    await tap(view.getByLabelText(strings.common.close));
 
     expect(mockSeedDiscoveredHabit).not.toHaveBeenCalled();
     expect(mockStartBreakingHabit).not.toHaveBeenCalled();
@@ -516,7 +519,7 @@ describe('Door 3 break sheet: stack review findings', () => {
     await tap(view.getByText(strings.habitLogging.startBreakingIt));
 
     // Mid-flight: the user taps the scrim.
-    await tap(view.getByLabelText('Close'));
+    await tap(view.getByLabelText(strings.common.close));
 
     // Release the write and let the handler finish.
     await act(async () => {
@@ -551,7 +554,7 @@ describe('Door 3 break sheet: stack review findings', () => {
 
     // The user gives up and dismisses: the gentle path completes onboarding
     // rather than stranding them mid-flow forever.
-    await tap(view.getByLabelText('Close'));
+    await tap(view.getByLabelText(strings.common.close));
 
     expect(mockCompleteOnboarding).toHaveBeenCalledTimes(1);
     expect(view.getByText(strings.today.door3RibbonGentle)).toBeTruthy();

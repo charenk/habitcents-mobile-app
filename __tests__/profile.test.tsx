@@ -38,11 +38,19 @@ jest.mock('@/utils/storage', () => {
   return { ...actual, clearOnboarding: jest.fn(async () => {}) };
 });
 
+// LocaleProvider resolves the device locale on mount (routine/localization
+// plan item 1); this suite does not exercise language selection, so a fixed
+// English device locale keeps it out of the way.
+jest.mock('expo-localization', () => ({
+  getLocales: () => [{ languageCode: 'en', languageScriptCode: null, regionCode: 'US' }],
+}));
+
 import React from 'react';
 import { Linking } from 'react-native';
 import { act, cleanup, fireEvent, render } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '@/contexts/ThemeContext';
+import { LocaleProvider } from '@/contexts/LocaleContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { OnboardingProvider } from '@/contexts/OnboardingContext';
 import { ToastProvider } from '@/components/ui/Toast';
@@ -68,11 +76,13 @@ function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SafeAreaProvider initialMetrics={initialMetrics}>
       <ThemeProvider>
-        <CurrencyProvider>
-          <OnboardingProvider>
-            <ToastProvider>{children}</ToastProvider>
-          </OnboardingProvider>
-        </CurrencyProvider>
+        <LocaleProvider>
+          <CurrencyProvider>
+            <OnboardingProvider>
+              <ToastProvider>{children}</ToastProvider>
+            </OnboardingProvider>
+          </CurrencyProvider>
+        </LocaleProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );
@@ -123,7 +133,7 @@ describe('Profile', () => {
     expect(view.getByText(strings.settings.groupMore)).toBeTruthy();
 
     // Rows are found by their accessibility label, which is what VoiceOver reads.
-    expect(view.getByLabelText('Currency, USD')).toBeTruthy();
+    expect(view.getByLabelText(settingsRowLabel(strings.settings.currency, 'USD'))).toBeTruthy();
     expect(
       view.getByLabelText(
         settingsRowLabel(strings.settings.subscriptionRow, strings.settings.subscriptionValueFree)
@@ -150,7 +160,7 @@ describe('Profile', () => {
     expect(view.getByText(strings.settings.supportEmail)).toBeTruthy();
     // Version is a muted centered footer line, not a row.
     expect(view.getByText(strings.settings.versionFooter('1.0.0'))).toBeTruthy();
-    expect(view.queryByLabelText('Version, 1.0.0')).toBeNull();
+    expect(view.queryByLabelText(settingsRowLabel(strings.settings.version, '1.0.0'))).toBeNull();
   });
 
   it('the shared header back button pops the screen', async () => {

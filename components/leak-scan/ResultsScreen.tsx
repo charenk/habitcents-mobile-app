@@ -9,7 +9,8 @@ import { formatDate, parseDateOnly } from '@/utils/dates';
 import { useExpenses } from '@/contexts/ExpensesContext';
 import { useHabits } from '@/contexts/HabitsContext';
 import { radii, typeScale, spacing, type AppTheme } from '@/constants/theme';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
+import type { Catalog } from '@/utils/i18n';
 import { hapticError } from '@/utils/motion';
 import { KpiRow } from './KpiRow';
 import { CategoryList } from './CategoryList';
@@ -75,7 +76,7 @@ function formatDayOnly(dateISO: string): string {
   return parsed ? formatDate(parsed, { month: 'short', day: 'numeric' }) : dateISO;
 }
 
-function evidenceWindowLabel(result: ScanResult, nAccounts: number): string {
+function evidenceWindowLabel(strings: Catalog, result: ScanResult, nAccounts: number): string {
   if (!result.coverage) return '';
   const start = formatDayOnly(result.coverage.startISO);
   const end = formatDayOnly(result.coverage.endISO);
@@ -165,6 +166,7 @@ const HabitCardItem = memo(function HabitCardItem({
  */
 export function ResultsScreen({ result: initialResult, files }: ResultsScreenProps) {
   const theme = useTheme();
+  const strings = useStrings();
   const router = useRouter();
   const toast = useToast();
   const { addExpenses, deleteExpense, expenses } = useExpenses();
@@ -196,7 +198,7 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
   // components/ui/Toast.tsx, ~:88).
   React.useEffect(() => {
     AccessibilityInfo.announceForAccessibility(strings.leakScan.resultsTitle);
-  }, []);
+  }, [strings]);
 
   const rerun = useCallback(
     async (correct: (current: ScanRules) => ScanRules) => {
@@ -244,7 +246,10 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
   const kpi = useMemo(() => buildKpiSummary(result), [result]);
   const categories = useMemo(() => buildCategorySummary(result), [result]);
   const reviewQueue = useMemo(() => buildReviewQueue(result.rows), [result]);
-  const evidenceWindow = useMemo(() => evidenceWindowLabel(result, kpi.nAccounts), [result, kpi]);
+  const evidenceWindow = useMemo(
+    () => evidenceWindowLabel(strings, result, kpi.nAccounts),
+    [strings, result, kpi]
+  );
 
   // Finding-first ladder (ADR 0020): ONE ranking governs the whole ladder,
   // monthly cost with frequency tiebreak. The card takes its head, the list
@@ -411,7 +416,7 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
         setSavingProjection(false);
       }
     },
-    [result, addExpenses, expenses, toast, savingProjection]
+    [result, addExpenses, expenses, toast, savingProjection, strings]
   );
 
   const handleUndo = useCallback(async () => {
@@ -443,7 +448,7 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
     } finally {
       undoInFlightRef.current = false;
     }
-  }, [expenses, result.importId, deleteExpense, toast]);
+  }, [expenses, result.importId, deleteExpense, toast, strings]);
 
   const handleBringInDays = useCallback(async () => {
     // UX-035: guards the "Bring in your last N days" CTA against a double
@@ -487,7 +492,7 @@ export function ResultsScreen({ result: initialResult, files }: ResultsScreenPro
     } finally {
       setBringingInDays(false);
     }
-  }, [result, addExpenses, expenses, router, toast, completeScanOnboarding, bringingInDays]);
+  }, [result, addExpenses, expenses, router, toast, completeScanOnboarding, bringingInDays, strings]);
 
   // UX-033: CategoryList is React.memo'd; this is what makes that memo
   // effective (the old inline arrow was recreated every render).

@@ -20,6 +20,7 @@ import { act, cleanup, fireEvent, render } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
+import { LocaleProvider } from '@/contexts/LocaleContext';
 import { ToastProvider } from '@/components/ui/Toast';
 import { CurrencySheet } from '@/components/settings/CurrencySheet';
 import { strings } from '@/constants/strings';
@@ -34,11 +35,13 @@ function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SafeAreaProvider initialMetrics={initialMetrics}>
       <ThemeProvider>
-        <CurrencyProvider>
-          {/* The sheet now says so when a currency change fails to persist,
-              so it needs the toast the app root always provides. */}
-          <ToastProvider>{children}</ToastProvider>
-        </CurrencyProvider>
+        <LocaleProvider>
+          <CurrencyProvider>
+            {/* The sheet now says so when a currency change fails to persist,
+                so it needs the toast the app root always provides. */}
+            <ToastProvider>{children}</ToastProvider>
+          </CurrencyProvider>
+        </LocaleProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );
@@ -71,11 +74,11 @@ describe('CurrencySheet', () => {
 
     // Default currency is USD (DEFAULT_CURRENCY): the row carries both the
     // accessible "selected" status and a visible check icon, not just a tint.
-    const usdRow = view.getByLabelText(selectableLabel('US Dollar (USD)', true));
+    const usdRow = view.getByLabelText(selectableLabel('US Dollar (USD)', true, strings));
     expect(usdRow).toBeTruthy();
     expect(usdRow.props.accessibilityState).toMatchObject({ selected: true });
 
-    const eurRow = view.getByLabelText(selectableLabel('Euro (EUR)', false));
+    const eurRow = view.getByLabelText(selectableLabel('Euro (EUR)', false, strings));
     expect(eurRow.props.accessibilityState).toMatchObject({ selected: false });
   });
 
@@ -84,7 +87,7 @@ describe('CurrencySheet', () => {
     const view = await renderSheet(onClose);
 
     await act(async () => {
-      fireEvent.press(view.getByLabelText(selectableLabel('Euro (EUR)', false)));
+      fireEvent.press(view.getByLabelText(selectableLabel('Euro (EUR)', false, strings)));
     });
 
     expect(onClose).toHaveBeenCalledTimes(1);
