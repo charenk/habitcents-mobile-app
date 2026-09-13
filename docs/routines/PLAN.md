@@ -963,6 +963,63 @@ work, tracked elsewhere).
       \s*name:\s*'(Today|Yesterday|Spent|Upcoming|Habits|Scheduled|2
       weeks|1 month|3 months)'" __tests__/*.tsx` returning nothing.
 
+      **Run 34: no rebase needed (branch already at main's tip), no
+      REVIEW FEEDBACK pending, DECISIONS NEEDED still unanswered (checked
+      issue #139 directly: only comment since run 33 is the 2026-09-07
+      iPad-footer decision, unrelated to decisions 8/10), so item 4
+      stayed blocked and no fresh item 5/6 fallback existed either (both
+      fully closed since run 32/33, per HANDOFF's own prediction). Per
+      HANDOFF's own guidance for this exact state ("consider whether a
+      small, clearly-in-scope correction exists before falling back to a
+      fresh grep"), re-ran item 3's sweep, but broadened past its
+      original per-section method: runs 25-27's sweeps grepped each
+      section for *that section's own* leaf-string values, which misses
+      a value from an already-translated section (`common.selected`/
+      `notSelected`, translated run 20, consumed via `selectableLabel()`
+      in `utils/a11y.ts`) reappearing as a hardcoded English literal
+      inside an unrelated section's test file (`addUpcoming`, `money`,
+      or a shared component's own test). Grepped every test file for the
+      literal words "selected"/"not selected" directly instead of
+      per-section, independent of which section's test file it lived in.
+
+      Found five real strays, none caught by runs 25-27's narrower
+      per-section sweeps: `__tests__/segmentedControlCompact.test.tsx`
+      (4 hits; added on main after run 25's sweep and picked up by run
+      30's rebase, which fixed its `LocaleProvider` wrapper but not its
+      assertions), `__tests__/moneyUpcomingTab.test.tsx` and
+      `__tests__/todaySpentKept.test.tsx` (2 and 12 hits; both existed at
+      run 25 but were swept only for their own section's values, `money`/
+      `today`, never for `common.selected`), `__tests__/
+      addUpcomingSheet.test.tsx` and `__tests__/expenseSheet.test.tsx`
+      (26 and 7 hits; same gap, `addUpcoming`/`expenseSheet` sections).
+      All five already imported `strings` from `constants/strings` for
+      other assertions. Fixed every hit to read
+      `strings.common.selected`/`notSelected`: template-literal
+      interpolation where the original was a plain string
+      (`segmentedControlCompact`, `addUpcomingSheet`, `expenseSheet`),
+      `new RegExp(...)` wrapping a template literal where the original
+      was a regex literal with the word baked into the pattern
+      (`moneyUpcomingTab`, `todaySpentKept`). Confirmed
+      `__tests__/a11y.test.ts`'s own "selected"/"not selected" literals
+      need no fix: they test `selectableLabel`/`presetChipLabel`/
+      `editedChipLabel` directly, either passing the real `strings`
+      catalog as an argument and asserting the resulting output (the
+      established direct-call-test pattern, runs 19/28/29) or exercising
+      the two confirmed-dead functions that still hardcode English in
+      their own body by design (run 29's documented dead-code
+      treatment); neither is a real app-rendered call site.
+      `__tests__/insightsPager.test.tsx`'s two "selected" hits already
+      call `selectableLabel()` itself, also correct. `design/
+      PATTERN_VOCABULARY.md`'s item-3 sweep-method bullet extended with
+      a note about this gap: a value from one section reused inside
+      another section's assertions needs a value-based grep across all
+      test files, not just the newly-translated section's own file list,
+      the same lesson run 22 learned for a mocked device locale. One
+      commit; `tsc --noEmit` clean, full suite green (125/125, 1395/1395)
+      on the first run, no flake. Checkbox stays open: this is one more
+      confirmed-clean pass over a value already in wide use, not a
+      standing guarantee for every section item 4 has not yet reached.
+
 ## 4. Provisional machine translations
 
 - [ ] es, fr, de, pt-BR, it, ja, ko, zh-Hans, hi, nl catalogs. Every
