@@ -42,6 +42,13 @@
  * source word); `scheduleBiweekly` ('Every 2 weeks') is translated fresh
  * since its English source differs from `addUpcoming.frequencyBiweekly`
  * ('Bi-weekly').
+ *
+ * Run 35 added: `habits.loading`, reusing the same "Loading." translation
+ * as `categories.loading`/`reports.loading`. This section's other four keys
+ * (`title`, `spottingYourLeak`, `logsAtSamePlace`, `logsAtSamePlaceSuffix`,
+ * `logsAtSamePlaceBody`) are dead code, confirmed via grep with zero real
+ * call sites anywhere outside constants/strings.ts; left untranslated, same
+ * treatment as habitDetail's/reports' own dead keys.
  */
 import type { LocaleOverlay } from '@/utils/i18n';
 
@@ -110,6 +117,9 @@ export const de: LocaleOverlay = {
     recentLogs: 'Letzte Einträge',
     noExpensesLogged: 'In dieser Kategorie ist noch nichts erfasst.',
     trendEmpty: 'Noch keine Ausgaben für ein Diagramm.',
+  },
+  habits: {
+    loading: 'Wird geladen.',
   },
   habitDetail: {
     notFound: 'Gewohnheit nicht gefunden',

@@ -57,6 +57,13 @@
  * छोड़ें, which is this file's proposed provisional translation for the
  * locked term "skip" (see HANDOFF's DECISIONS NEEDED table) and would
  * collide if reused here for an unrelated concept.
+ *
+ * Run 35 added: `habits.loading`, reusing the same "Loading." translation
+ * as `categories.loading`/`reports.loading`. This section's other four keys
+ * (`title`, `spottingYourLeak`, `logsAtSamePlace`, `logsAtSamePlaceSuffix`,
+ * `logsAtSamePlaceBody`) are dead code, confirmed via grep with zero real
+ * call sites anywhere outside constants/strings.ts; left untranslated, same
+ * treatment as habitDetail's/reports' own dead keys.
  */
 import type { LocaleOverlay } from '@/utils/i18n';
 
@@ -124,6 +131,9 @@ export const hi: LocaleOverlay = {
     recentLogs: 'हाल के लॉग',
     noExpensesLogged: 'इस श्रेणी में अभी तक कुछ भी दर्ज नहीं हुआ है।',
     trendEmpty: 'चार्ट के लिए अभी तक कोई खर्च नहीं है।',
+  },
+  habits: {
+    loading: 'लोड हो रहा है.',
   },
   habitDetail: {
     notFound: 'आदत नहीं मिली',
