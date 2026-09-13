@@ -199,7 +199,7 @@ describe('ExpenseSheet log mode: merchant capture', () => {
     const view = await renderLogSheet();
 
     await typeAmount(view, '450');
-    await tap(view.getByLabelText('Food, not selected'));
+    await tap(view.getByLabelText(`Food, ${strings.common.notSelected}`));
     await tap(view.getByRole('button', { name: strings.expenseSheet.saveExpense }));
 
     expect(mockAddExpense).toHaveBeenCalledTimes(1);
@@ -214,7 +214,7 @@ describe('ExpenseSheet log mode: merchant capture', () => {
     const view = await renderLogSheet();
 
     await typeAmount(view, '450');
-    await tap(view.getByLabelText('Food, not selected'));
+    await tap(view.getByLabelText(`Food, ${strings.common.notSelected}`));
     await typeMerchant(view, '  Starbucks  ');
     await tap(view.getByRole('button', { name: strings.expenseSheet.saveExpense }));
 
@@ -239,11 +239,11 @@ describe('ExpenseSheet log mode: merchant capture', () => {
 
     // Tapping a chip fills the field, so the next save reuses the exact
     // spelling detection already groups on.
-    await tap(view.getByLabelText('Starbucks, not selected'));
+    await tap(view.getByLabelText(`Starbucks, ${strings.common.notSelected}`));
     expect(view.getByLabelText(strings.expenses.merchantFieldLabel).props.value).toBe(
       'Starbucks'
     );
-    expect(view.getByLabelText('Starbucks, selected')).toBeTruthy();
+    expect(view.getByLabelText(`Starbucks, ${strings.common.selected}`)).toBeTruthy();
 
     await typeAmount(view, '450');
     await tap(view.getByRole('button', { name: strings.expenseSheet.saveExpense }));
@@ -319,8 +319,8 @@ describe('ExpenseSheet edit mode: merchant editing', () => {
     ];
     const view = await renderEditSheet(expense);
 
-    expect(view.getByLabelText('Starbucks, selected')).toBeTruthy();
-    expect(view.getByLabelText('Chipotle, not selected')).toBeTruthy();
+    expect(view.getByLabelText(`Starbucks, ${strings.common.selected}`)).toBeTruthy();
+    expect(view.getByLabelText(`Chipotle, ${strings.common.notSelected}`)).toBeTruthy();
   });
 
   it('prepends the current merchant when older logs pushed it out of the recent list', async () => {
@@ -334,7 +334,7 @@ describe('ExpenseSheet edit mode: merchant editing', () => {
 
     const view = await renderEditSheet(expense);
 
-    expect(view.getByLabelText('Old Favorite, selected')).toBeTruthy();
+    expect(view.getByLabelText(`Old Favorite, ${strings.common.selected}`)).toBeTruthy();
   });
 
   it('deletes with no confirmation and offers an undo toast', async () => {

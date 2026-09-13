@@ -189,7 +189,7 @@ describe('AddUpcomingSheet add mode (regression)', () => {
     const view = await renderAdd();
 
     await typeAmount(view, '12');
-    await tap(view.getByLabelText('Gym, not selected'));
+    await tap(view.getByLabelText(`Gym, ${strings.common.notSelected}`));
     await tap(view.getByRole('button', { name: strings.addUpcoming.save }));
 
     expect(mockAddExpense).toHaveBeenCalledTimes(1);
@@ -203,7 +203,7 @@ describe('AddUpcomingSheet add mode (regression)', () => {
     const view = await renderAdd();
 
     await typeAmount(view, '5');
-    await tap(view.getByLabelText('Yearly, not selected'));
+    await tap(view.getByLabelText(`Yearly, ${strings.common.notSelected}`));
     await tap(view.getByRole('button', { name: strings.addUpcoming.save }));
 
     const saved = mockAddExpense.mock.calls[0][0];
@@ -235,7 +235,7 @@ describe('AddUpcomingSheet: one pattern with the log sheet', () => {
     const expense = makeExpense({ id: 'e1', category: 'Entertainment' });
     const view = await renderEdit(expense);
 
-    await tap(view.getByLabelText('Mortgage/Rent, not selected'));
+    await tap(view.getByLabelText(`Mortgage/Rent, ${strings.common.notSelected}`));
     await tap(view.getByRole('button', { name: strings.addUpcoming.saveChanges }));
 
     const [, updates] = mockUpdateExpense.mock.calls[0];
@@ -249,7 +249,7 @@ describe('AddUpcomingSheet: one pattern with the log sheet', () => {
     const view = await renderAdd();
 
     await typeAmount(view, '30');
-    await tap(view.getByLabelText('Gym, not selected'));
+    await tap(view.getByLabelText(`Gym, ${strings.common.notSelected}`));
 
     expect(view.getByLabelText(/^Entertainment,.*selected/)).toBeTruthy();
   });
@@ -285,7 +285,7 @@ describe('AddUpcomingSheet: one pattern with the log sheet', () => {
     const expense = makeExpense({ id: 'e1', emoji: '\u{1F4E6}', category: 'Entertainment' });
     const view = await renderEdit(expense);
 
-    await tap(view.getByLabelText('Mortgage/Rent, not selected'));
+    await tap(view.getByLabelText(`Mortgage/Rent, ${strings.common.notSelected}`));
     await tap(view.getByRole('button', { name: strings.addUpcoming.saveChanges }));
 
     const [, updates] = mockUpdateExpense.mock.calls[0];
@@ -320,7 +320,7 @@ describe('AddUpcomingSheet: one pattern with the log sheet', () => {
     });
     const view = await renderEdit(expense);
 
-    await tap(view.getByLabelText('15th, not selected'));
+    await tap(view.getByLabelText(`15th, ${strings.common.notSelected}`));
     await tap(view.getByRole('button', { name: strings.addUpcoming.saveChanges }));
 
     const [, updates] = mockUpdateExpense.mock.calls[0];
@@ -334,7 +334,7 @@ describe('AddUpcomingSheet: one pattern with the log sheet', () => {
   it('lets a yearly bill know its month but not its day', async () => {
     const view = await renderAdd();
     await typeAmount(view, '480');
-    await tap(view.getByLabelText('Yearly, not selected'));
+    await tap(view.getByLabelText(`Yearly, ${strings.common.notSelected}`));
     await tap(view.getByLabelText(/^Mar, /));
     await tap(view.getByLabelText(new RegExp(`^${strings.addUpcoming.monthDayUnknown},`)));
     await tap(view.getByRole('button', { name: strings.addUpcoming.save }));
@@ -365,8 +365,8 @@ describe('AddUpcomingSheet edit mode: prefill and untouched-schedule round trip'
     const view = await renderEdit(expense);
 
     // The monthly/15th chip is prefilled selected from the stored rule.
-    expect(view.getByLabelText('Monthly, selected')).toBeTruthy();
-    expect(view.getByLabelText('15th, selected')).toBeTruthy();
+    expect(view.getByLabelText(`Monthly, ${strings.common.selected}`)).toBeTruthy();
+    expect(view.getByLabelText(`15th, ${strings.common.selected}`)).toBeTruthy();
     expect(view.getByDisplayValue('Gym')).toBeTruthy();
 
     await tap(view.getByRole('button', { name: strings.addUpcoming.saveChanges }));
@@ -398,13 +398,13 @@ describe('AddUpcomingSheet edit mode: prefill and untouched-schedule round trip'
     });
     const view = await renderEdit(expense);
 
-    expect(view.getByLabelText('Monthly, selected')).toBeTruthy();
+    expect(view.getByLabelText(`Monthly, ${strings.common.selected}`)).toBeTruthy();
     // The regression pin: no chip claims this rule.
-    expect(view.queryByLabelText('1st, selected')).toBeNull();
-    expect(view.getByLabelText('1st, not selected')).toBeTruthy();
-    expect(view.getByLabelText('15th, not selected')).toBeTruthy();
-    expect(view.getByLabelText('30th, not selected')).toBeTruthy();
-    expect(view.getByLabelText('Last day, not selected')).toBeTruthy();
+    expect(view.queryByLabelText(`1st, ${strings.common.selected}`)).toBeNull();
+    expect(view.getByLabelText(`1st, ${strings.common.notSelected}`)).toBeTruthy();
+    expect(view.getByLabelText(`15th, ${strings.common.notSelected}`)).toBeTruthy();
+    expect(view.getByLabelText(`30th, ${strings.common.notSelected}`)).toBeTruthy();
+    expect(view.getByLabelText(`Last day, ${strings.common.notSelected}`)).toBeTruthy();
 
     // And it names the date it is actually on, which is what made the defect
     // invisible: nothing on the sheet echoed the schedule it would write.
@@ -434,7 +434,7 @@ describe('AddUpcomingSheet edit mode: prefill and untouched-schedule round trip'
     });
     const view = await renderEdit(expense);
 
-    await tap(view.getByLabelText('15th, not selected'));
+    await tap(view.getByLabelText(`15th, ${strings.common.notSelected}`));
     await tap(view.getByRole('button', { name: strings.addUpcoming.saveChanges }));
 
     const [, updates] = mockUpdateExpense.mock.calls[0];
@@ -480,7 +480,7 @@ describe('AddUpcomingSheet edit mode: prefill and untouched-schedule round trip'
     const view = await renderAdd();
     await typeAmount(view, '480');
 
-    await tap(view.getByLabelText('Yearly, not selected'));
+    await tap(view.getByLabelText(`Yearly, ${strings.common.notSelected}`));
     await tap(view.getByLabelText(/^Mar, /));
     await tap(view.getByLabelText(/^14, /));
     await tap(view.getByRole('button', { name: strings.addUpcoming.save }));
@@ -496,7 +496,7 @@ describe('AddUpcomingSheet edit mode: prefill and untouched-schedule round trip'
 
   it('echoes the anchor it is about to write', async () => {
     const view = await renderAdd();
-    await tap(view.getByLabelText('Yearly, not selected'));
+    await tap(view.getByLabelText(`Yearly, ${strings.common.notSelected}`));
     await tap(view.getByLabelText(/^Mar, /));
     await tap(view.getByLabelText(/^14, /));
 
@@ -507,7 +507,7 @@ describe('AddUpcomingSheet edit mode: prefill and untouched-schedule round trip'
   // never reflows under a finger already moving toward it.
   it('disables the days a month does not have', async () => {
     const view = await renderAdd();
-    await tap(view.getByLabelText('Yearly, not selected'));
+    await tap(view.getByLabelText(`Yearly, ${strings.common.notSelected}`));
     await tap(view.getByLabelText(/^Feb, /));
 
     const thirty = view.getByLabelText(/^30, /);
@@ -529,8 +529,8 @@ describe('AddUpcomingSheet edit mode: prefill and untouched-schedule round trip'
     const view = await renderEdit(expense);
 
     // Round-trip the frequency, which is enough to mark the schedule touched.
-    await tap(view.getByLabelText('Monthly, not selected'));
-    await tap(view.getByLabelText('Yearly, not selected'));
+    await tap(view.getByLabelText(`Monthly, ${strings.common.notSelected}`));
+    await tap(view.getByLabelText(`Yearly, ${strings.common.notSelected}`));
     await tap(view.getByRole('button', { name: strings.addUpcoming.saveChanges }));
 
     const [, updates] = mockUpdateExpense.mock.calls[0];
@@ -547,7 +547,7 @@ describe('AddUpcomingSheet edit mode: prefill and untouched-schedule round trip'
     });
     const view = await renderEdit(expense);
 
-    expect(view.getByLabelText('Yearly, selected')).toBeTruthy();
+    expect(view.getByLabelText(`Yearly, ${strings.common.selected}`)).toBeTruthy();
 
     await tap(view.getByRole('button', { name: strings.addUpcoming.saveChanges }));
 
@@ -561,7 +561,7 @@ describe('AddUpcomingSheet edit mode: actually changing the schedule', () => {
     const expense = makeExpense({ id: 'e1' }); // starts monthly/15th
     const view = await renderEdit(expense);
 
-    await tap(view.getByLabelText('Weekly, not selected'));
+    await tap(view.getByLabelText(`Weekly, ${strings.common.notSelected}`));
     await tap(view.getByRole('button', { name: strings.addUpcoming.saveChanges }));
 
     const updates = mockUpdateExpense.mock.calls[0][1];
@@ -584,7 +584,7 @@ describe('AddUpcomingSheet edit mode: materialized-child collision (queue2 revie
     const parent = makeExpense({ id: 'e1' });
     const view = await renderEdit(parent);
 
-    await tap(view.getByLabelText('Weekly, not selected'));
+    await tap(view.getByLabelText(`Weekly, ${strings.common.notSelected}`));
     await tap(view.getByRole('button', { name: strings.addUpcoming.saveChanges }));
 
     capturedNaturalDate = mockUpdateExpense.mock.calls[0][1].date as Date;
@@ -606,7 +606,7 @@ describe('AddUpcomingSheet edit mode: materialized-child collision (queue2 revie
     mockExpenses = [parent, child];
 
     const view = await renderEdit(parent);
-    await tap(view.getByLabelText('Weekly, not selected'));
+    await tap(view.getByLabelText(`Weekly, ${strings.common.notSelected}`));
     await tap(view.getByRole('button', { name: strings.addUpcoming.saveChanges }));
 
     const updates = mockUpdateExpense.mock.calls[0][1];
@@ -623,7 +623,7 @@ describe('AddUpcomingSheet edit mode: materialized-child collision (queue2 revie
     const parent = makeExpense({ id: 'e1' }); // monthly, the 15th
     const view = await renderEdit(parent);
 
-    await tap(view.getByLabelText('Monthly, selected'));
+    await tap(view.getByLabelText(`Monthly, ${strings.common.selected}`));
     await tap(view.getByRole('button', { name: strings.addUpcoming.saveChanges }));
 
     const updates = mockUpdateExpense.mock.calls[0][1];

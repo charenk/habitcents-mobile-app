@@ -329,8 +329,8 @@ describe('Today: Spent/Kept chips', () => {
   it('defaults to the Spent view with the quick-log control open', async () => {
     const view = await renderToday();
 
-    expect(view.getByLabelText(/^Spent .*, selected/)).toBeTruthy();
-    expect(view.getByLabelText(/^Kept .*, not selected/)).toBeTruthy();
+    expect(view.getByLabelText(new RegExp(`^Spent .*, ${strings.common.selected}`))).toBeTruthy();
+    expect(view.getByLabelText(new RegExp(`^Kept .*, ${strings.common.notSelected}`))).toBeTruthy();
     expect(view.getAllByLabelText(strings.today.quickLogOpenLabel).length).toBeGreaterThan(0);
   });
 
@@ -363,8 +363,8 @@ describe('Today: Spent/Kept chips', () => {
     // Both panes stay mounted (DI-7), so selection is proved by which chip
     // reports selected, not by pane content existing. The tap also fires the
     // existing tap analytics event unchanged.
-    expect(view.getByLabelText(/^Kept .*, selected/)).toBeTruthy();
-    expect(view.getByLabelText(/^Spent .*, not selected/)).toBeTruthy();
+    expect(view.getByLabelText(new RegExp(`^Kept .*, ${strings.common.selected}`))).toBeTruthy();
+    expect(view.getByLabelText(new RegExp(`^Spent .*, ${strings.common.notSelected}`))).toBeTruthy();
     expect(mockTrack).toHaveBeenCalledWith('today_view_switched', { to: 'kept', method: 'tap' });
   });
 
@@ -372,12 +372,12 @@ describe('Today: Spent/Kept chips', () => {
     const view = await renderToday();
 
     await tap(view.getByTestId('kept-chip'));
-    expect(view.getByLabelText(/^Kept .*, selected/)).toBeTruthy();
+    expect(view.getByLabelText(new RegExp(`^Kept .*, ${strings.common.selected}`))).toBeTruthy();
 
     await tap(view.getByTestId('spent-chip'));
 
-    expect(view.getByLabelText(/^Spent .*, selected/)).toBeTruthy();
-    expect(view.getByLabelText(/^Kept .*, not selected/)).toBeTruthy();
+    expect(view.getByLabelText(new RegExp(`^Spent .*, ${strings.common.selected}`))).toBeTruthy();
+    expect(view.getByLabelText(new RegExp(`^Kept .*, ${strings.common.notSelected}`))).toBeTruthy();
     expect(mockTrack).toHaveBeenLastCalledWith('today_view_switched', { to: 'spent', method: 'tap' });
   });
 
@@ -393,8 +393,8 @@ describe('Today: Spent/Kept chips', () => {
       });
     });
 
-    expect(view.getByLabelText(/^Kept .*, selected/)).toBeTruthy();
-    expect(view.getByLabelText(/^Spent .*, not selected/)).toBeTruthy();
+    expect(view.getByLabelText(new RegExp(`^Kept .*, ${strings.common.selected}`))).toBeTruthy();
+    expect(view.getByLabelText(new RegExp(`^Spent .*, ${strings.common.notSelected}`))).toBeTruthy();
     expect(mockTrack).toHaveBeenCalledWith('today_view_switched', { to: 'kept', method: 'swipe' });
   });
 
@@ -412,7 +412,7 @@ describe('Today: Spent/Kept chips', () => {
       });
     });
 
-    expect(view.getByLabelText(/^Kept .*, selected/)).toBeTruthy();
+    expect(view.getByLabelText(new RegExp(`^Kept .*, ${strings.common.selected}`))).toBeTruthy();
     expect(mockTrack).toHaveBeenCalledWith('today_view_switched', { to: 'kept', method: 'swipe' });
 
     // The momentum end that a faster release would also deliver lands on the
@@ -441,7 +441,7 @@ describe('Today: Spent/Kept chips', () => {
       });
     });
 
-    expect(view.getByLabelText(/^Spent .*, selected/)).toBeTruthy();
+    expect(view.getByLabelText(new RegExp(`^Spent .*, ${strings.common.selected}`))).toBeTruthy();
     expect(mockTrack).not.toHaveBeenCalled();
   });
 
@@ -534,7 +534,7 @@ describe('Today: the break-habit affordance (DI-6, states per ADR 0038)', () => 
 
     await tap(view.getByTestId('kept-chip'));
 
-    expect(view.getByLabelText(/^Kept .*, selected/)).toBeTruthy();
+    expect(view.getByLabelText(new RegExp(`^Kept .*, ${strings.common.selected}`))).toBeTruthy();
     expect(view.getByText(strings.today.breakFirstHabitCta)).toBeTruthy();
     expect(view.queryByText(strings.today.breakAnotherHabitCta)).toBeNull();
     // Nothing has been refused yet, so there is no limit to warn about.
@@ -549,7 +549,7 @@ describe('Today: the break-habit affordance (DI-6, states per ADR 0038)', () => 
 
     await tap(view.getByTestId('kept-chip'));
 
-    expect(view.getByLabelText(/^Kept .*, selected/)).toBeTruthy();
+    expect(view.getByLabelText(new RegExp(`^Kept .*, ${strings.common.selected}`))).toBeTruthy();
     expect(view.getByText(strings.today.breakAnotherHabitCta)).toBeTruthy();
     // No caption anywhere on the dock any more (Charen, 2026-09-10). Growth
     // copy waits until the user actually reaches for a second habit: the gate
