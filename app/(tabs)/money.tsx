@@ -39,7 +39,7 @@ import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { categoryEmoji, categoryIdentityColor } from '@/constants/categoryEmoji';
 import { habitLeakGlyph } from '@/constants/onboardingPresets';
 import { strings } from '@/constants/strings';
-import { layout, spacing, type AppTheme } from '@/constants/theme';
+import { contentColumnStyle, layout, spacing, type AppTheme } from '@/constants/theme';
 import { useCategories } from '@/contexts/CategoriesContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
 import { useHabits } from '@/contexts/HabitsContext';
@@ -469,6 +469,7 @@ function createStyles(theme: AppTheme) {
       // layout.paneContentTop.
       paddingTop: layout.paneContentTop,
       paddingBottom: layout.screenBottomClearance,
+      ...contentColumnStyle,
     },
     // Zero states only: grow to the pane so EmptyState's fill wrapper has a
     // height to centre in, and trade the 100pt end clearance for 24, which

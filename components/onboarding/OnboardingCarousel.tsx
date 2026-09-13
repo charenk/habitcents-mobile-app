@@ -11,7 +11,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@/components/ui';
 import { useTheme } from '@/contexts/ThemeContext';
-import { radii, spacing, typeScale, type AppTheme } from '@/constants/theme';
+import { contentColumnStyle, radii, spacing, typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import { BeatMedia, type BeatAsset } from './BeatMedia';
 
@@ -118,17 +118,23 @@ export function OnboardingCarousel({ onPick, onSkip, beats = BEATS }: Onboarding
       >
         {beats.map((beat, i) => (
           <View key={beat.intent} style={[styles.beat, { width }]}>
-            <BeatMedia asset={beat.asset} accessibilityLabel={beat.headline} />
-            <Text style={styles.headline} accessibilityRole="header">
-              {beat.headline}
-            </Text>
-            <Text style={styles.hook}>{beat.hook}</Text>
-            <Button
-              label={beat.cta}
-              onPress={() => onPick(beat.intent)}
-              style={styles.cta}
-              accessibilityHint={strings.onboarding.beatProgress(i + 1, beats.length)}
-            />
+            {/* beat itself must stay window width: it is the paging unit, and
+                handleScroll's offset math above divides by that same width.
+                beatContent caps and centers only the readable content inside
+                it, same shared column as every other screen. */}
+            <View style={styles.beatContent} testID={`beat-content-${beat.intent}`}>
+              <BeatMedia asset={beat.asset} accessibilityLabel={beat.headline} />
+              <Text style={styles.headline} accessibilityRole="header">
+                {beat.headline}
+              </Text>
+              <Text style={styles.hook}>{beat.hook}</Text>
+              <Button
+                label={beat.cta}
+                onPress={() => onPick(beat.intent)}
+                style={styles.cta}
+                accessibilityHint={strings.onboarding.beatProgress(i + 1, beats.length)}
+              />
+            </View>
           </View>
         ))}
       </ScrollView>
@@ -168,6 +174,9 @@ function createStyles(theme: AppTheme) {
       paddingHorizontal: spacing.gutter,
       paddingTop: 12,
       justifyContent: 'center',
+    },
+    beatContent: {
+      ...contentColumnStyle,
     },
     headline: {
       fontSize: typeScale.displayMid,

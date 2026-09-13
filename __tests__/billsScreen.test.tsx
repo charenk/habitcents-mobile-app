@@ -26,7 +26,13 @@ import { undoImport } from '@/utils/leakScan/importWrite';
 import { getExpenses } from '@/utils/storage';
 import { strings } from '@/constants/strings';
 import { track } from '@/utils/analytics';
+import { layout } from '@/constants/theme';
 import type { RecurringItem, ScanResult } from '@/utils/leakScan/types';
+
+function flattenStyle(style: unknown): Record<string, unknown> {
+  const styles = Array.isArray(style) ? style.flat(Infinity) : [style];
+  return Object.assign({}, ...styles.filter((s): s is Record<string, unknown> => !!s && typeof s === 'object'));
+}
 
 const trackMock = track as jest.MockedFunction<typeof track>;
 
@@ -222,5 +228,16 @@ describe('bills screen', () => {
     const written = await getExpenses();
     expect(written.every((e) => e.isRecurring)).toBe(true);
     expect(written.every((e) => e.recurrence === 'monthly')).toBe(true);
+  });
+
+  it('caps and centers the fixed footer at the shared content column width (routine/ipad, decision 1)', async () => {
+    const { view } = await renderBills();
+
+    const footer = view.getByTestId('bills-footer');
+    const flat = flattenStyle(footer.props.style);
+
+    expect(flat.width).toBe('100%');
+    expect(flat.maxWidth).toBe(layout.contentMaxWidth);
+    expect(flat.alignSelf).toBe('center');
   });
 });
