@@ -158,7 +158,7 @@ describe('Money > Upcoming: window filter', () => {
     const view = await renderMoney();
     await openUpcomingSegment(view);
 
-    expect(view.getByRole('tab', { name: /1 month, selected/ })).toBeTruthy();
+    expect(view.getByRole('tab', { name: new RegExp(`1 month, ${strings.common.selected}`) })).toBeTruthy();
     expect(view.getByText(windowLabel(30))).toBeTruthy();
     // The point of the derivation: the pane it opens on is not empty.
     expect(view.queryByText(strings.money.upcomingWindowEmptyBody)).toBeNull();
@@ -171,7 +171,7 @@ describe('Money > Upcoming: window filter', () => {
     const view = await renderMoney();
     await openUpcomingSegment(view);
 
-    expect(view.getByRole('tab', { name: /3 months, selected/ })).toBeTruthy();
+    expect(view.getByRole('tab', { name: new RegExp(`3 months, ${strings.common.selected}`) })).toBeTruthy();
     expect(view.getByText(windowLabel(90))).toBeTruthy();
   });
 });

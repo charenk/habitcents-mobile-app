@@ -20,6 +20,10 @@ import { ThemeProvider } from '@/contexts/ThemeContext';
 import { LocaleProvider } from '@/contexts/LocaleContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
+import { strings } from '@/constants/strings';
+
+const selected = strings.common.selected;
+const notSelected = strings.common.notSelected;
 
 function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -55,8 +59,8 @@ describe('SegmentedControl labelSpoken', () => {
     const view = await renderFilter();
 
     expect(view.getByText('2w')).toBeTruthy();
-    expect(view.getByLabelText('2 weeks, selected')).toBeTruthy();
-    expect(view.getByLabelText('1 month, not selected')).toBeTruthy();
+    expect(view.getByLabelText(`2 weeks, ${selected}`)).toBeTruthy();
+    expect(view.getByLabelText(`1 month, ${notSelected}`)).toBeTruthy();
     expect(view.queryByLabelText(/^2w/)).toBeNull();
   });
 
@@ -71,7 +75,7 @@ describe('SegmentedControl labelSpoken', () => {
       </Providers>
     );
 
-    expect(view.getByLabelText('Alpha, selected')).toBeTruthy();
+    expect(view.getByLabelText(`Alpha, ${selected}`)).toBeTruthy();
   });
 
   it('composes labelSpoken ahead of badgeSpoken, in that order', async () => {
@@ -93,7 +97,7 @@ describe('SegmentedControl labelSpoken', () => {
       </Providers>
     );
 
-    expect(view.getByLabelText('Leak finder, coming soon, selected')).toBeTruthy();
+    expect(view.getByLabelText(`Leak finder, coming soon, ${selected}`)).toBeTruthy();
   });
 });
 
