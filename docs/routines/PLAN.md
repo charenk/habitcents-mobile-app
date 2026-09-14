@@ -1758,6 +1758,32 @@ work, tracked elsewhere).
       fact updated: item 4 blocked eleven runs now (since run 27); items
       3/5/6 clean seven runs (since run 32); the run 38 VALUE CHANGE sweep
       angle has now been re-checked once with no new hits.
+
+      **Run 40: confirmed nothing moved, re-verification only.** No
+      rebase needed (`origin/main` still `3890ba1`, unchanged since run
+      38, confirmed via `git fetch` and `git merge-base --is-ancestor
+      origin/main HEAD`); no REVIEW FEEDBACK section pending. Checked
+      DECISIONS NEEDED via the GitHub API directly: issue #139 unchanged
+      since run 39's check (still last edited 2026-09-13 by the
+      orchestrator's ninth run), both gates (8: locked vocabulary; 10:
+      paywall pricing/legal) still open, only comment remains the
+      2026-09-07 iPad-footer one; PR #134 still open, draft,
+      `mergeable_state: clean`, head `ada0be5` matching this branch's own
+      pre-run tip, no new comments or reviews. Re-ran the run-38 sweep a
+      third time: `grep -n "VALUE CHANGE" constants/strings.ts` still
+      finds exactly the same 5 hits, all annotated "re-translated run
+      38", none unresolved; the broader `needs re-translation`/`STALE`/
+      `TODO|FIXME.*translat` grep also still empty. Per run 36's own
+      guidance, did not re-run items 3/5/6's exhausted fresh-candidate
+      sweeps a ninth/tenth time with no new method. Fresh `npm install`
+      (fresh container, no `node_modules`), `tsc --noEmit` clean, full
+      suite green (125/125, 1395/1395) on the first run, no flake,
+      exactly matching run 39's counts. No code change; one commit
+      (HANDOFF/PLAN update only). No push notification: this is the
+      second consecutive run with zero movement since run 38's real fix.
+      Standing fact updated: item 4 blocked thirteen runs now (since run
+      27); items 3/5/6 clean eight runs (since run 32); the VALUE CHANGE
+      sweep angle now re-checked twice with no new hits.
 - [ ] leak / skip / kept / slip and the app's quotes are PRODUCT VOICE:
       never finalized by this routine. Provisional entries only, proposal
       table lives in HANDOFF.md's DECISIONS NEEDED until Charen picks.
