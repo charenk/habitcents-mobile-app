@@ -2,7 +2,30 @@
 
 ## Status
 
-In progress. Run 39: no rebase needed (`origin/main` unchanged at
+In progress. Run 40: no rebase needed (`origin/main` unchanged at
+`3890ba1` since run 38, confirmed via `git fetch` plus `git merge-base
+--is-ancestor origin/main HEAD`); no REVIEW FEEDBACK pending. Checked
+DECISIONS NEEDED via the GitHub API directly: issue #139 unchanged since
+run 39's check (still last edited 2026-09-13 by the orchestrator's ninth
+run), both gates (8: locked vocabulary; 10: paywall pricing/legal) still
+open, only comment remains the 2026-09-07 iPad-footer one, unrelated; PR
+#134 still open, draft, `mergeable_state: clean`, head `ada0be5` matching
+this branch's own pre-run tip, one comment (the same iPad-footer one via
+the issue), no reviews. Re-ran the run-38 `VALUE CHANGE` sweep again:
+`grep -n "VALUE CHANGE" constants/strings.ts` still finds exactly the
+same 5 hits, all annotated "re-translated run 38", none unresolved;
+also re-ran the broader `needs re-translation`/`STALE`/`TODO|FIXME.*translat`
+grep, still nothing. Items 3/5/6 stayed exhausted (eighth/ninth
+re-check with no new method, per run 36's guidance, would not be
+expected to find anything, and did not). `npm install` needed first
+(fresh container, no `node_modules`). One commit (HANDOFF/PLAN update
+only); `tsc --noEmit` clean, full suite green (125/125, 1395/1395) on
+the first run, no flake, exactly matching run 39's counts. No push
+notification: this is the second consecutive run with zero movement
+since run 38's real fix, and run 36/39 already flagged the standing
+blocked state; a third alert in a row would be noise, not signal.
+
+Run 39: no rebase needed (`origin/main` unchanged at
 `3890ba1` since run 38); no REVIEW FEEDBACK pending. Checked DECISIONS
 NEEDED via the GitHub API directly: issue #139 unchanged since the
 orchestrator's ninth run (2026-09-13), both gates (8: locked vocabulary;
@@ -1467,8 +1490,15 @@ in this position should keep re-running it (cheap, and a future English-
 source edit could add a fresh hit at any time) but should not expect it
 alone to be a standing source of work absent a new main-side copy edit;
 treat a clean result the same as items 3/5/6's exhausted state until
-something changes on main. Standing counts as of run 39: item 4 blocked
-twelve runs (since run 27); items 3/5/6 clean seven runs (since run 32).
+something changes on main.
+
+**Run 40 re-ran the same grep a third time, still nothing new.** Standing
+counts as of run 40: item 4 blocked thirteen runs (since run 27); items
+3/5/6 clean eight runs (since run 32); the VALUE CHANGE sweep clean twice
+(since run 38's fix). A future run landing here should keep doing exactly
+this (DECISIONS NEEDED check via the API, the VALUE CHANGE grep, tsc/test
+verification, logged as `ok`) until either decision moves or a new
+main-side copy edit produces a fresh VALUE CHANGE hit.
 
 ## Blockers
 
