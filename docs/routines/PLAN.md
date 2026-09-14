@@ -1673,6 +1673,63 @@ work, tracked elsewhere).
       would only be noise. Standing fact updated: item 4 has now been
       blocked ten runs (since run 27), items 3/5/6 clean six runs (since
       run 32).
+
+      **Run 38: found and fixed real drift, not just re-verification.**
+      Rebase: no-op (branch already at main's tip `3890ba1`); no REVIEW
+      FEEDBACK pending. Checked DECISIONS NEEDED via the GitHub API
+      directly (issue #139: still both gates 8/10 open, issue body last
+      edited by the orchestrator's ninth run 2026-09-13, no new comment;
+      PR #134: open, draft, `mergeable_state: clean`, one pre-existing
+      2026-09-09 flake comment, nothing new). Rather than re-running the
+      same exhausted items 3/5/6 fresh-candidate sweeps an eighth/seventh
+      time, tried a new angle on already-translated content instead: a
+      section item 4 already finished can go stale on its own after a
+      later English-source edit, with no rebase conflict to ever flag it
+      (a copy change to an unrelated line never conflicts). `grep -n
+      "VALUE CHANGE" constants/strings.ts` found exactly this: the
+      2026-09-11 "upcoming/recurring expense" -> "bill" noun pass (main,
+      unrelated to this branch) had left explicit "needs re-translation"
+      comments on 5 keys across `money`/`addUpcoming`, both sections item
+      4 finished in run 26/27, before that change landed. Checked all 10
+      locale overlays and confirmed every one still said "upcoming
+      expense"/"gasto próximo"/"dépense à venir"/etc.; the schema-driven
+      `localeCatalogs.test.ts` has no content check, so nothing else would
+      ever have caught this. Re-translated `money.upcomingAddAffordance`/
+      `upcomingEmptyCta`/`upcomingWindowEmptyBody` and `addUpcoming.title`/
+      `editTitle`/`deleteUpcoming` (6 keys x 10 locales) to the new noun
+      ("bill": factura/facture/Rechnung/conta/bolletta/請求/청구/账单/बिल/
+      rekening), also dropping `addUpcoming.title`/`editTitle`'s now-
+      removed trailing period per locale to match the English source,
+      preserving each file's own established short-label-vs-sentence
+      punctuation convention (ja/zh-Hans "。" kept on the one real
+      sentence, dropped on the two short titles; ko's -어요 register kept;
+      hi's danda kept on the sentence). One judgment call flagged in
+      `locales/it.ts`'s header, not gated on Charen: Italian has no single
+      word spanning both utility bills and subscriptions the way English
+      "bill" does; picked "bolletta" (the everyday utility-bill word) over
+      the more formal "fattura" (invoice), worth a human look at the same
+      pass that reviews the rest of this file's provisional content.
+      Cleared every "(needs re-translation)" VALUE CHANGE comment in
+      `constants/strings.ts` once its key was fixed. Checked all 4 call
+      sites (`app/category/[id].tsx` was NOT one of them; the real sites
+      are `components/money/UpcomingList.tsx` and
+      `components/money/AddUpcomingSheet.tsx`) and the 4 test files that
+      assert these keys (`moneyUpcomingTab`, `addUpcomingSheet`,
+      `emptyStateSurfaces`, `upcomingList`): all read `strings.money.*`/
+      `strings.addUpcoming.*` from the catalog object directly, none
+      mocks a non-English device locale, so no test file changes needed.
+      Documented the new sweep method (`grep -n "VALUE CHANGE"
+      constants/strings.ts` after any rebase or whenever item 4 looks
+      exhausted) in `design/PATTERN_VOCABULARY.md`'s Localization section
+      for future runs to reuse; also swept the rest of the file for any
+      other unresolved VALUE CHANGE marker and found none once these 5
+      were fixed. One commit (translation + comment fix); `npm install`
+      needed first (fresh container, no `node_modules`); `tsc --noEmit`
+      clean and the full suite green (125/125, 1395/1395) twice (once
+      before, once after the header-comment-only edits), no flake either
+      time. Items 3/5/6 stay untouched this run (still exhausted per run
+      32-37's own record; no new candidate reason to re-check them
+      appeared). Full detail in HANDOFF.md's Completed section.
 - [ ] leak / skip / kept / slip and the app's quotes are PRODUCT VOICE:
       never finalized by this routine. Provisional entries only, proposal
       table lives in HANDOFF.md's DECISIONS NEEDED until Charen picks.

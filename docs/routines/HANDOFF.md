@@ -2,7 +2,44 @@
 
 ## Status
 
-In progress. Run 37: no rebase needed (branch already contains main's
+In progress. Run 38: no rebase needed (branch already at main's tip
+`3890ba1`); no REVIEW FEEDBACK pending. Checked DECISIONS NEEDED via the
+GitHub API directly (issue #139, PR #134): both gates (8: locked
+vocabulary; 10: paywall pricing/legal) still open and named as blocking,
+issue body last edited by the orchestrator's ninth run (2026-09-13), no new
+comment since; PR #134 still draft, `mergeable_state: clean`, one
+pre-existing 2026-09-09 flake comment, nothing new. Items 3/5/6 stayed
+exhausted (no new reason to re-check them this run), so instead of a
+fourth/eighth plain re-verification, tried a new angle: a section item 4
+already finished can drift stale on its own after a later English-source
+edit, since a copy-only change to an unrelated line never produces a
+rebase conflict to flag it. `grep -n "VALUE CHANGE" constants/strings.ts`
+found exactly that: 5 keys across `money`/`addUpcoming` (both sections
+finished in run 26/27) carried explicit "needs re-translation" comments
+from a 2026-09-11 "upcoming/recurring expense" -> "bill" noun pass on
+main that landed after their translation. Confirmed all 10 locale
+overlays were still on the old noun (the schema-driven
+`localeCatalogs.test.ts` has no content check, so nothing else would have
+caught this) and re-translated `money.upcomingAddAffordance`/
+`upcomingEmptyCta`/`upcomingWindowEmptyBody` and `addUpcoming.title`/
+`editTitle`/`deleteUpcoming` across all 10 locales, dropping
+`addUpcoming.title`/`editTitle`'s now-removed trailing period to match.
+One judgment call flagged in `locales/it.ts`'s header (not gated on
+Charen): "bolletta" picked over "fattura" for "bill", since Italian has
+no single word spanning both utility bills and subscriptions. Cleared
+every resolved VALUE CHANGE comment and confirmed no other one remains
+unresolved in the file. Documented the new sweep method in
+`design/PATTERN_VOCABULARY.md`'s Localization section so a future run
+does not have to rediscover it. `npm install` needed first (fresh
+container, no `node_modules`). One commit; `tsc --noEmit` clean, full
+suite green (125/125, 1395/1395) twice (before and after the
+header-comment-only edits), no flake. No push notification: this is real,
+if narrow, new content movement (not another empty re-verification), but
+it does not change the standing blocked state on items 4/8/10 that run 36
+already flagged, so nothing here needs Charen's attention before the next
+natural check-in.
+
+Run 37: no rebase needed (branch already contains main's
 tip, `3890ba1`, unchanged since run 35); no REVIEW FEEDBACK section
 pending. Checked the status board (issue #139) directly via the GitHub
 API rather than trusting the last-known state: issue body last edited
@@ -154,6 +191,37 @@ first run, no flake.
 
 ## Completed
 
+- Run 38, real item-4 drift fix (a new find, not a re-verification): the
+  2026-09-11 "upcoming/recurring expense" -> "bill" noun pass on main
+  landed after run 26/27 had already translated `money.
+  upcomingAddAffordance`/`upcomingEmptyCta`/`upcomingWindowEmptyBody` and
+  `addUpcoming.title`/`editTitle`/`deleteUpcoming`, so all 10 locale
+  overlays carried the old noun (and, for `addUpcoming.title`/`editTitle`,
+  a trailing period that change also dropped) with nothing to ever flag
+  it: a copy-only edit to an unrelated line never produces a rebase
+  conflict, and `localeCatalogs.test.ts` is schema-driven, not
+  content-driven. Found via a new sweep method, `grep -n "VALUE CHANGE"
+  constants/strings.ts`, now documented in `design/PATTERN_VOCABULARY.md`
+  for future runs. Re-translated the 6 keys across all 10 locales (the
+  new noun: factura/facture/Rechnung/conta/bolletta/請求/청구/账单/बिल/
+  rekening), preserving each file's own punctuation convention (ja/
+  zh-Hans keep "。" on the one real sentence, drop it on the two short
+  titles; ko keeps its -어요 register; hi keeps its danda on the
+  sentence). One judgment call, flagged in `locales/it.ts`'s header, not
+  gated on Charen: "bolletta" over "fattura" for "bill" (Italian has no
+  single word spanning both utility bills and subscriptions). Cleared
+  every resolved "(needs re-translation)" VALUE CHANGE comment in
+  `constants/strings.ts`; confirmed via a second grep that none remained
+  unresolved. Checked the real call sites
+  (`components/money/UpcomingList.tsx`, `components/money/
+  AddUpcomingSheet.tsx`) and all 4 asserting test files (`moneyUpcomingTab`,
+  `addUpcomingSheet`, `emptyStateSurfaces`, `upcomingList`): all read the
+  catalog object directly, none mocks a non-English device locale, no
+  test file changes needed. Items 3/5/6 untouched this run, still
+  exhausted per runs 32-37's record. `npm install` needed first (fresh
+  container, no `node_modules`). One commit; `tsc --noEmit` clean, full
+  suite green (125/125, 1395/1395) twice, no flake. Full detail in
+  PLAN.md's run 38 entry (item 4).
 - Run 33 (correction to run 32's item 5 fix, not a new checkbox): fixed a
   Dynamic Type/accessibility regression run 32 introduced in
   `app/category/[id].tsx`'s stat band. `statBandAmount`/`statValue` are
@@ -1350,6 +1418,26 @@ What is actually left for a future run:
   instead reflows to a single stacked column at the accessibility text
   sizes, per run 33's fix. See Completed and PLAN.md's run 32/33
   entries.
+
+**Run 38 found a new source of real work while DECISIONS NEEDED stays
+unmoved: drift inside sections item 4 already finished.** Main can edit
+the English source of an already-translated key (a copy/noun pass) with no
+rebase conflict to ever flag it on this branch, and the schema-driven
+`localeCatalogs.test.ts` has no content check, so a stale overlay compiles
+and passes silently. `grep -n "VALUE CHANGE" constants/strings.ts` after
+any rebase, or whenever item 4 looks exhausted, surfaces every English key
+someone flagged with a "needs re-translation" comment; check each hit
+against all 10 locale overlays before assuming translated content stays
+correct forever. This run found and fixed 5 such keys (`money.
+upcomingAddAffordance`/`upcomingEmptyCta`/`upcomingWindowEmptyBody`,
+`addUpcoming.title`/`editTitle`/`deleteUpcoming`, `deleteUpcoming` sharing
+one comment with `title`/`editTitle`) stale since the 2026-09-11 "bill"
+noun pass; see Completed and PLAN.md's run 38 entry. A future run in the
+same blocked position should run this grep before falling back to a plain
+re-verification: it is a fourth, cheap, ungated angle alongside items
+3/5/6's exhausted fallbacks, and (unlike those three) nothing has swept
+it yet, so it may still turn up something after this run's fix clears the
+five known hits.
 
 ## Blockers
 
