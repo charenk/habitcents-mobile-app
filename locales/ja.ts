@@ -73,6 +73,15 @@
  * `logsAtSamePlaceBody`) are dead code, confirmed via grep with zero real
  * call sites anywhere outside constants/strings.ts; left untranslated, same
  * treatment as habitDetail's/reports' own dead keys.
+ *
+ * Run 38 fixed: `money.upcomingAddAffordance`/`upcomingEmptyCta`/
+ * `upcomingWindowEmptyBody` and `addUpcoming.title`/`editTitle`/
+ * `deleteUpcoming` had gone stale after the 2026-09-11 "upcoming/recurring
+ * expense" -> "bill" noun pass on main (translated in run 26/27, before the
+ * value change landed); re-translated the noun to "請求" (matching this
+ * file's established short-label-vs-full-sentence split above: the "。" on
+ * `upcomingWindowEmptyBody` stays, `addUpcoming.title`/`editTitle`'s now-
+ * removed trailing "." drops to match the English source).
  */
 import type { LocaleOverlay } from '@/utils/i18n';
 
@@ -229,10 +238,10 @@ export const ja: LocaleOverlay = {
     importFailed: '保存できませんでした。何もインポートされていません。もう一度お試しください。',
   },
   addUpcoming: {
-    title: '今後の支出を追加.',
-    editTitle: '今後の支出を編集.',
+    title: '請求を追加',
+    editTitle: '請求を編集',
     saveChanges: '保存',
-    deleteUpcoming: '今後の支出を削除',
+    deleteUpcoming: '請求を削除',
     whatIsIt: '何ですか？',
     namePlaceholder: '名前を付ける',
     nameFieldLabel: '名前',
@@ -285,13 +294,13 @@ export const ja: LocaleOverlay = {
     upcomingWindowTwoWeeks: '2週間',
     upcomingWindowOneMonth: '1か月',
     upcomingWindowThreeMonths: '3か月',
-    upcomingAddAffordance: '今後の支出を追加',
+    upcomingAddAffordance: '請求を追加',
     spentEmptyCta: '支出を記録',
     habitsEmptyCta: '習慣をやめる',
     upcomingListEyebrow: '予定',
     upcomingEmptyTitle: '次に来るものを、来る前に知っておこう',
-    upcomingWindowEmptyBody: 'この期間に該当する定期支出はありません。',
-    upcomingEmptyCta: '今後の支出を追加',
+    upcomingWindowEmptyBody: 'この期間に該当する請求はありません。',
+    upcomingEmptyCta: '請求を追加',
     scheduleOneTime: '1回のみ',
     scheduleWeekly: '毎週',
     scheduleBiweekly: '2週間ごと',

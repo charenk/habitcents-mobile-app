@@ -50,6 +50,18 @@
  * `logsAtSamePlaceBody`) are dead code, confirmed via grep with zero real
  * call sites anywhere outside constants/strings.ts; left untranslated, same
  * treatment as habitDetail's/reports' own dead keys.
+ *
+ * Run 38 fixed: `money.upcomingAddAffordance`/`upcomingEmptyCta`/
+ * `upcomingWindowEmptyBody` and `addUpcoming.title`/`editTitle`/
+ * `deleteUpcoming` had gone stale after the 2026-09-11 "upcoming/recurring
+ * expense" -> "bill" noun pass on main (translated in run 26/27, before the
+ * value change landed); re-translated the noun to "bolletta", also dropping
+ * `addUpcoming.title`/`editTitle`'s now-removed trailing period to match.
+ * Judgment call, not gated on Charen: Italian has no single word spanning
+ * both utility bills and subscriptions the way English "bill" does here;
+ * "bolletta" (the utility-bill word) was picked as the closer everyday fit
+ * over "fattura" (a formal invoice). Worth a human pass at the same review
+ * that covers the rest of this file's provisional content.
  */
 import type { LocaleOverlay } from '@/utils/i18n';
 
@@ -207,10 +219,10 @@ export const it: LocaleOverlay = {
     importFailed: 'Non è stato salvato. Non è stato importato nulla. Riprova.',
   },
   addUpcoming: {
-    title: 'Aggiungi prossima spesa.',
-    editTitle: 'Modifica prossima spesa.',
+    title: 'Aggiungi bolletta',
+    editTitle: 'Modifica bolletta',
     saveChanges: 'Salva',
-    deleteUpcoming: 'Elimina prossima spesa',
+    deleteUpcoming: 'Elimina bolletta',
     whatIsIt: 'Cos’è?',
     namePlaceholder: 'Dagli un nome',
     nameFieldLabel: 'Nome',
@@ -263,13 +275,13 @@ export const it: LocaleOverlay = {
     upcomingWindowTwoWeeks: '2 settimane',
     upcomingWindowOneMonth: '1 mese',
     upcomingWindowThreeMonths: '3 mesi',
-    upcomingAddAffordance: 'Aggiungi una spesa prossima',
+    upcomingAddAffordance: 'Aggiungi una bolletta',
     spentEmptyCta: 'Registra una spesa',
     habitsEmptyCta: 'Interrompi un’abitudine',
     upcomingListEyebrow: 'Programmato',
     upcomingEmptyTitle: 'Sappi cosa sta arrivando prima che arrivi',
-    upcomingWindowEmptyBody: 'Nessuna delle tue spese ricorrenti rientra in questa finestra.',
-    upcomingEmptyCta: 'Aggiungi una spesa prossima',
+    upcomingWindowEmptyBody: 'Nessuna delle tue bollette rientra in questa finestra.',
+    upcomingEmptyCta: 'Aggiungi una bolletta',
     scheduleOneTime: 'Una tantum',
     scheduleWeekly: 'Settimanale',
     scheduleBiweekly: 'Ogni 2 settimane',

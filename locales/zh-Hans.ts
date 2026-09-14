@@ -70,6 +70,15 @@
  * `logsAtSamePlaceBody`) are dead code, confirmed via grep with zero real
  * call sites anywhere outside constants/strings.ts; left untranslated, same
  * treatment as habitDetail's/reports' own dead keys.
+ *
+ * Run 38 fixed: `money.upcomingAddAffordance`/`upcomingEmptyCta`/
+ * `upcomingWindowEmptyBody` and `addUpcoming.title`/`editTitle`/
+ * `deleteUpcoming` had gone stale after the 2026-09-11 "upcoming/recurring
+ * expense" -> "bill" noun pass on main (translated in run 26/27, before the
+ * value change landed); re-translated the noun to "账单" (matching this
+ * file's established short-label-vs-full-sentence split above: the "。" on
+ * `upcomingWindowEmptyBody` stays, `addUpcoming.title`/`editTitle`'s now-
+ * removed trailing "." drops to match the English source).
  */
 import type { LocaleOverlay } from '@/utils/i18n';
 
@@ -226,10 +235,10 @@ export const zhHans: LocaleOverlay = {
     importFailed: '未能保存。没有导入任何内容。请重试。',
   },
   addUpcoming: {
-    title: '添加即将到来的支出.',
-    editTitle: '编辑即将到来的支出.',
+    title: '添加账单',
+    editTitle: '编辑账单',
     saveChanges: '保存',
-    deleteUpcoming: '删除即将到来的支出',
+    deleteUpcoming: '删除账单',
     whatIsIt: '这是什么？',
     namePlaceholder: '起个名字',
     nameFieldLabel: '名称',
@@ -282,13 +291,13 @@ export const zhHans: LocaleOverlay = {
     upcomingWindowTwoWeeks: '2周',
     upcomingWindowOneMonth: '1个月',
     upcomingWindowThreeMonths: '3个月',
-    upcomingAddAffordance: '添加一笔即将到来的支出',
+    upcomingAddAffordance: '添加一笔账单',
     spentEmptyCta: '记录支出',
     habitsEmptyCta: '戒掉一个习惯',
     upcomingListEyebrow: '已安排',
     upcomingEmptyTitle: '提前了解即将发生的支出',
-    upcomingWindowEmptyBody: '你的定期支出都不在这个时间范围内。',
-    upcomingEmptyCta: '添加一笔即将到来的支出',
+    upcomingWindowEmptyBody: '你的账单都不在这个时间范围内。',
+    upcomingEmptyCta: '添加一笔账单',
     scheduleOneTime: '一次性',
     scheduleWeekly: '每周',
     scheduleBiweekly: '每2周',

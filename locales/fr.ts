@@ -51,6 +51,13 @@
  * `logsAtSamePlaceBody`) are dead code, confirmed via grep with zero real
  * call sites anywhere outside constants/strings.ts; left untranslated, same
  * treatment as habitDetail's/reports' own dead keys.
+ *
+ * Run 38 fixed: `money.upcomingAddAffordance`/`upcomingEmptyCta`/
+ * `upcomingWindowEmptyBody` and `addUpcoming.title`/`editTitle`/
+ * `deleteUpcoming` had gone stale after the 2026-09-11 "upcoming/recurring
+ * expense" -> "bill" noun pass on main (translated in run 26/27, before the
+ * value change landed); re-translated the noun to "facture", also dropping
+ * `addUpcoming.title`/`editTitle`'s now-removed trailing period to match.
  */
 import type { LocaleOverlay } from '@/utils/i18n';
 
@@ -209,10 +216,10 @@ export const fr: LocaleOverlay = {
     importFailed: 'Cela n’a pas été enregistré. Rien n’a été importé. Réessayez.',
   },
   addUpcoming: {
-    title: 'Ajouter une dépense à venir.',
-    editTitle: 'Modifier la dépense à venir.',
+    title: 'Ajouter une facture',
+    editTitle: 'Modifier la facture',
     saveChanges: 'Enregistrer',
-    deleteUpcoming: 'Supprimer la dépense à venir',
+    deleteUpcoming: 'Supprimer la facture',
     whatIsIt: 'Qu’est-ce que c’est ?',
     namePlaceholder: 'Nommez-le',
     nameFieldLabel: 'Nom',
@@ -265,13 +272,13 @@ export const fr: LocaleOverlay = {
     upcomingWindowTwoWeeks: '2 semaines',
     upcomingWindowOneMonth: '1 mois',
     upcomingWindowThreeMonths: '3 mois',
-    upcomingAddAffordance: 'Ajouter une dépense à venir',
+    upcomingAddAffordance: 'Ajouter une facture',
     spentEmptyCta: 'Consigner une dépense',
     habitsEmptyCta: 'Se défaire d’une habitude',
     upcomingListEyebrow: 'Planifié',
     upcomingEmptyTitle: 'Sachez ce qui arrive avant que ça n’arrive',
-    upcomingWindowEmptyBody: 'Aucune de vos dépenses récurrentes ne tombe dans cette période.',
-    upcomingEmptyCta: 'Ajouter une dépense à venir',
+    upcomingWindowEmptyBody: 'Aucune de vos factures ne tombe dans cette période.',
+    upcomingEmptyCta: 'Ajouter une facture',
     scheduleOneTime: 'Une fois',
     scheduleWeekly: 'Hebdomadaire',
     scheduleBiweekly: 'Toutes les 2 semaines',

@@ -1211,10 +1211,11 @@ export const strings = {
       if (payments === bills) return paymentLabel;
       return `${paymentLabel} from ${bills} bill${bills === 1 ? '' : 's'}`;
     },
-    // 2026-09-11 VALUE CHANGE (needs re-translation): "upcoming expense"
-    // became "bill", finishing the noun pass the pane started. The pane was
-    // using four words for one object; this and the three keys under
-    // `addUpcoming` were the half that had to move together with the sheet.
+    // 2026-09-11 VALUE CHANGE: "upcoming expense" became "bill", finishing
+    // the noun pass the pane started. The pane was using four words for one
+    // object; this and the three keys under `addUpcoming` were the half that
+    // had to move together with the sheet. Re-translated across all 10
+    // locale overlays, run 38 (was stale "upcoming/recurring expense").
     upcomingAddAffordance: 'Add a bill',
     // The row action for a bill whose day is unknown. The materializer will
     // never write one of those into Spent, because it would be asserting a day
@@ -1248,12 +1249,12 @@ export const strings = {
     // to do a thing they had already done. States the actual situation; the
     // window picker in the card's corner is how they widen it.
     // 2026-09-11: "repeating expenses" became "bills", settling on one noun
-    // for this object (the pane was using four). VALUE CHANGE: the ten locale
-    // overlays need a re-translation of this key.
+    // for this object (the pane was using four). VALUE CHANGE, re-translated
+    // across all 10 locale overlays, run 38.
     upcomingWindowEmptyBody: 'None of your bills land in this window.',
     // Same words as upcomingAddAffordance (the header affordance), its own key
     // so the true-zero empty state's CTA can be targeted unambiguously.
-    // 2026-09-11 VALUE CHANGE (needs re-translation), see above.
+    // 2026-09-11 VALUE CHANGE, re-translated run 38, see above.
     upcomingEmptyCta: 'Add a bill',
     // RETIRED FROM RENDERING (2026-09-11): the row now carries its own
     // multiplier, scoped to the picked window, and the pill was scoped to a
@@ -1304,19 +1305,20 @@ export const strings = {
   // Add-upcoming sheet (spec 04 "Add-upcoming sheet"; U8 added edit mode,
   // mirroring ExpenseSheet's log/edit split).
   addUpcoming: {
-    // 2026-09-11 VALUE CHANGE (needs re-translation). Two things moved:
-    // "upcoming" became "bill" (the pane's settled noun), and the trailing
-    // period went. The period is the DECISION-sheet convention ('Currency.',
-    // 'Break a habit.', 'Profile.'), rendered by ui/SheetTitle; this is a form
-    // sheet on ui/SheetHeader, where its only sibling reads 'Log expense' and
-    // 'Edit expense'. AddUpcoming was the one form sheet carrying the other
-    // family's punctuation.
+    // 2026-09-11 VALUE CHANGE. Two things moved: "upcoming" became "bill"
+    // (the pane's settled noun), and the trailing period went. The period is
+    // the DECISION-sheet convention ('Currency.', 'Break a habit.',
+    // 'Profile.'), rendered by ui/SheetTitle; this is a form sheet on
+    // ui/SheetHeader, where its only sibling reads 'Log expense' and 'Edit
+    // expense'. AddUpcoming was the one form sheet carrying the other
+    // family's punctuation. Re-translated across all 10 locale overlays
+    // (noun swap and period drop both), run 38.
     title: 'Add bill',
     editTitle: 'Edit bill',
     // One word on every form-sheet header (see expenseSheet.saveExpense).
     saveChanges: 'Save',
-    // 2026-09-11 VALUE CHANGE (needs re-translation): matches the log sheet's
-    // 'Delete expense' exactly, now that the two are one form.
+    // 2026-09-11 VALUE CHANGE: matches the log sheet's 'Delete expense'
+    // exactly, now that the two are one form. Re-translated run 38.
     deleteUpcoming: 'Delete bill',
     whatIsIt: 'What is it?',
     // The glyph picker (2026-09-11). A typed name like "Amazon Prime" has no

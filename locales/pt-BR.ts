@@ -49,6 +49,13 @@
  * `logsAtSamePlaceBody`) are dead code, confirmed via grep with zero real
  * call sites anywhere outside constants/strings.ts; left untranslated, same
  * treatment as habitDetail's/reports' own dead keys.
+ *
+ * Run 38 fixed: `money.upcomingAddAffordance`/`upcomingEmptyCta`/
+ * `upcomingWindowEmptyBody` and `addUpcoming.title`/`editTitle`/
+ * `deleteUpcoming` had gone stale after the 2026-09-11 "upcoming/recurring
+ * expense" -> "bill" noun pass on main (translated in run 26/27, before the
+ * value change landed); re-translated the noun to "conta", also dropping
+ * `addUpcoming.title`/`editTitle`'s now-removed trailing period to match.
  */
 import type { LocaleOverlay } from '@/utils/i18n';
 
@@ -205,10 +212,10 @@ export const ptBR: LocaleOverlay = {
     importFailed: 'Isso não foi salvo. Nada foi importado. Tente novamente.',
   },
   addUpcoming: {
-    title: 'Adicionar despesa próxima.',
-    editTitle: 'Editar despesa próxima.',
+    title: 'Adicionar conta',
+    editTitle: 'Editar conta',
     saveChanges: 'Salvar',
-    deleteUpcoming: 'Excluir despesa próxima',
+    deleteUpcoming: 'Excluir conta',
     whatIsIt: 'O que é?',
     namePlaceholder: 'Dê um nome',
     nameFieldLabel: 'Nome',
@@ -261,13 +268,13 @@ export const ptBR: LocaleOverlay = {
     upcomingWindowTwoWeeks: '2 semanas',
     upcomingWindowOneMonth: '1 mês',
     upcomingWindowThreeMonths: '3 meses',
-    upcomingAddAffordance: 'Adicionar uma despesa próxima',
+    upcomingAddAffordance: 'Adicionar uma conta',
     spentEmptyCta: 'Registrar uma despesa',
     habitsEmptyCta: 'Quebrar um hábito',
     upcomingListEyebrow: 'Agendado',
     upcomingEmptyTitle: 'Saiba o que vem antes que chegue',
-    upcomingWindowEmptyBody: 'Nenhuma das suas despesas recorrentes cai nesta janela.',
-    upcomingEmptyCta: 'Adicionar uma despesa próxima',
+    upcomingWindowEmptyBody: 'Nenhuma das suas contas cai nesta janela.',
+    upcomingEmptyCta: 'Adicionar uma conta',
     scheduleOneTime: 'Uma vez',
     scheduleWeekly: 'Semanal',
     scheduleBiweekly: 'A cada 2 semanas',
