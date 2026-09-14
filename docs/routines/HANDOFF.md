@@ -2,7 +2,31 @@
 
 ## Status
 
-In progress. Run 40: no rebase needed (`origin/main` unchanged at
+In progress. Run 41: no rebase needed (`origin/main` still `3890ba1`,
+unchanged since run 38, branch tip already matched it). No REVIEW
+FEEDBACK pending. Checked DECISIONS NEEDED via the GitHub API directly:
+issue #139 last edited 2026-09-14 by the orchestrator's tenth run, both
+gates (8: locked vocabulary; 10: paywall pricing/legal) still open, the
+board's own text now calls the queue "7 days untouched," only comment
+remains the 2026-09-07 iPad-footer one, unrelated; PR #134 still open,
+draft, `mergeable_state: clean`, head `bc115fb` matching this branch's
+own pre-run tip, one comment (the same iPad-footer one via the issue), no
+reviews. Re-ran the run-38 `VALUE CHANGE` sweep a fourth time: `grep -n
+"VALUE CHANGE" constants/strings.ts` still finds exactly the same 5
+hits, all annotated "re-translated run 38", none unresolved; also re-ran
+the broader `needs re-translation`/`STALE`/`TODO|FIXME.*translat` grep,
+still nothing. Items 3/5/6 stayed exhausted (a tenth/eleventh re-check
+with no new method would not be expected to find anything, per run 36's
+guidance, and did not). `npm install` needed first (fresh container, no
+`node_modules`). One commit (HANDOFF/PLAN update only); `tsc --noEmit`
+clean, full suite green (125/125, 1395/1395) on the first run, no flake,
+exactly matching run 40's counts. No push notification: this is the
+third consecutive run with zero movement since run 38's real fix, and
+the orchestrator's own status board already surfaces this same
+standing-blocked state to Charen as of today; a fourth alert in a row
+would be noise, not signal.
+
+Run 40: no rebase needed (`origin/main` unchanged at
 `3890ba1` since run 38, confirmed via `git fetch` plus `git merge-base
 --is-ancestor origin/main HEAD`); no REVIEW FEEDBACK pending. Checked
 DECISIONS NEEDED via the GitHub API directly: issue #139 unchanged since
@@ -1497,6 +1521,17 @@ counts as of run 40: item 4 blocked thirteen runs (since run 27); items
 3/5/6 clean eight runs (since run 32); the VALUE CHANGE sweep clean twice
 (since run 38's fix). A future run landing here should keep doing exactly
 this (DECISIONS NEEDED check via the API, the VALUE CHANGE grep, tsc/test
+verification, logged as `ok`) until either decision moves or a new
+main-side copy edit produces a fresh VALUE CHANGE hit.
+
+**Run 41 re-ran the same grep a fourth time, still nothing new.** The
+orchestrator's tenth run (issue #139, 2026-09-14) now states the decision
+queue outright as "7 days untouched" and names items 8/10 as unblocking
+the most work; nothing else about the queue moved. Standing counts as of
+run 41: item 4 blocked fourteen runs (since run 27); items 3/5/6 clean
+nine runs (since run 32); the VALUE CHANGE sweep clean three times (since
+run 38's fix). A future run landing here should keep doing exactly this
+(DECISIONS NEEDED check via the API, the VALUE CHANGE grep, tsc/test
 verification, logged as `ok`) until either decision moves or a new
 main-side copy edit produces a fresh VALUE CHANGE hit.
 
