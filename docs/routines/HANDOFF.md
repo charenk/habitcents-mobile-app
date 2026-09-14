@@ -2,7 +2,29 @@
 
 ## Status
 
-In progress. Run 38: no rebase needed (branch already at main's tip
+In progress. Run 39: no rebase needed (`origin/main` unchanged at
+`3890ba1` since run 38); no REVIEW FEEDBACK pending. Checked DECISIONS
+NEEDED via the GitHub API directly: issue #139 unchanged since the
+orchestrator's ninth run (2026-09-13), both gates (8: locked vocabulary;
+10: paywall pricing/legal) still open, only comment remains the
+2026-09-07 iPad-footer one, unrelated; PR #134 still open, draft,
+`mergeable_state: clean`, head `eb68d8a` matching this branch's own
+pre-run tip, no new comments or reviews. Re-ran run 38's new sweep method
+first (the cheapest, newest angle): `grep -n "VALUE CHANGE"
+constants/strings.ts` still finds exactly the same 5 hits, all already
+annotated "re-translated run 38"; confirmed in context
+(`constants/strings.ts:1180-1288`) that none is unresolved. Also grepped
+for `needs re-translation`, `STALE`, and `TODO`/`FIXME.*translat` as a
+broader check for any other marker style; none found. Items 3/5/6 stayed
+exhausted (no new reason to re-check them an eighth/ninth time, per run
+36's own guidance). `npm install` needed first (fresh container, no
+`node_modules`). One commit (HANDOFF/PLAN update only); `tsc --noEmit`
+clean, full suite green (125/125, 1395/1395) on the first run, no flake,
+exactly matching run 38's counts. No push notification: run 36 already
+flagged the standing blocked state and nothing has moved since run 38
+either, so a repeat alert would be noise, not signal.
+
+Run 38: no rebase needed (branch already at main's tip
 `3890ba1`); no REVIEW FEEDBACK pending. Checked DECISIONS NEEDED via the
 GitHub API directly (issue #139, PR #134): both gates (8: locked
 vocabulary; 10: paywall pricing/legal) still open and named as blocking,
@@ -1438,6 +1460,15 @@ re-verification: it is a fourth, cheap, ungated angle alongside items
 3/5/6's exhausted fallbacks, and (unlike those three) nothing has swept
 it yet, so it may still turn up something after this run's fix clears the
 five known hits.
+
+**Run 39 re-ran that same grep and found nothing new**: the same 5 hits,
+all still annotated "re-translated run 38", none unresolved. A future run
+in this position should keep re-running it (cheap, and a future English-
+source edit could add a fresh hit at any time) but should not expect it
+alone to be a standing source of work absent a new main-side copy edit;
+treat a clean result the same as items 3/5/6's exhausted state until
+something changes on main. Standing counts as of run 39: item 4 blocked
+twelve runs (since run 27); items 3/5/6 clean seven runs (since run 32).
 
 ## Blockers
 
