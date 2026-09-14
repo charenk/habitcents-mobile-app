@@ -64,6 +64,15 @@
  * `logsAtSamePlaceBody`) are dead code, confirmed via grep with zero real
  * call sites anywhere outside constants/strings.ts; left untranslated, same
  * treatment as habitDetail's/reports' own dead keys.
+ *
+ * Run 38 fixed: `money.upcomingAddAffordance`/`upcomingEmptyCta`/
+ * `upcomingWindowEmptyBody` and `addUpcoming.title`/`editTitle`/
+ * `deleteUpcoming` had gone stale after the 2026-09-11 "upcoming/recurring
+ * expense" -> "bill" noun pass on main (translated in run 26/27, before the
+ * value change landed); re-translated the noun to "बिल" (the common Hindi
+ * loanword for "bill", no collision with either locked-vocabulary
+ * candidate above), also dropping `addUpcoming.title`/`editTitle`'s now-
+ * removed trailing period to match.
  */
 import type { LocaleOverlay } from '@/utils/i18n';
 
@@ -220,10 +229,10 @@ export const hi: LocaleOverlay = {
     importFailed: 'वह सहेजा नहीं जा सका। कुछ भी आयात नहीं हुआ। फिर से कोशिश करें।',
   },
   addUpcoming: {
-    title: 'आगामी खर्च जोड़ें.',
-    editTitle: 'आगामी खर्च संपादित करें.',
+    title: 'बिल जोड़ें',
+    editTitle: 'बिल संपादित करें',
     saveChanges: 'सहेजें',
-    deleteUpcoming: 'आगामी खर्च हटाएं',
+    deleteUpcoming: 'बिल हटाएं',
     whatIsIt: 'यह क्या है?',
     namePlaceholder: 'नाम दें',
     nameFieldLabel: 'नाम',
@@ -276,13 +285,13 @@ export const hi: LocaleOverlay = {
     upcomingWindowTwoWeeks: '2 सप्ताह',
     upcomingWindowOneMonth: '1 महीना',
     upcomingWindowThreeMonths: '3 महीने',
-    upcomingAddAffordance: 'एक आगामी खर्च जोड़ें',
+    upcomingAddAffordance: 'एक बिल जोड़ें',
     spentEmptyCta: 'एक खर्च दर्ज करें',
     habitsEmptyCta: 'एक आदत तोड़ें',
     upcomingListEyebrow: 'निर्धारित',
     upcomingEmptyTitle: 'आने से पहले जानें कि क्या आ रहा है',
-    upcomingWindowEmptyBody: 'इस अवधि में आपका कोई भी आवर्ती खर्च नहीं आता।',
-    upcomingEmptyCta: 'एक आगामी खर्च जोड़ें',
+    upcomingWindowEmptyBody: 'इस अवधि में आपका कोई भी बिल नहीं आता।',
+    upcomingEmptyCta: 'एक बिल जोड़ें',
     scheduleOneTime: 'एक बार',
     scheduleWeekly: 'साप्ताहिक',
     scheduleBiweekly: 'हर 2 सप्ताह में',

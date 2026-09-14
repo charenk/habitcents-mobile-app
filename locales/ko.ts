@@ -61,6 +61,14 @@
  * `logsAtSamePlaceBody`) are dead code, confirmed via grep with zero real
  * call sites anywhere outside constants/strings.ts; left untranslated, same
  * treatment as habitDetail's/reports' own dead keys.
+ *
+ * Run 38 fixed: `money.upcomingAddAffordance`/`upcomingEmptyCta`/
+ * `upcomingWindowEmptyBody` and `addUpcoming.title`/`editTitle`/
+ * `deleteUpcoming` had gone stale after the 2026-09-11 "upcoming/recurring
+ * expense" -> "bill" noun pass on main (translated in run 26/27, before the
+ * value change landed); re-translated the noun to "청구", keeping
+ * `upcomingWindowEmptyBody`'s -어요 register and dropping
+ * `addUpcoming.title`/`editTitle`'s now-removed trailing period to match.
  */
 import type { LocaleOverlay } from '@/utils/i18n';
 
@@ -217,10 +225,10 @@ export const ko: LocaleOverlay = {
     importFailed: '저장하지 못했어요. 아무것도 가져오지 못했어요. 다시 시도해 주세요.',
   },
   addUpcoming: {
-    title: '예정된 지출 추가.',
-    editTitle: '예정된 지출 편집.',
+    title: '청구 추가',
+    editTitle: '청구 편집',
     saveChanges: '저장',
-    deleteUpcoming: '예정된 지출 삭제',
+    deleteUpcoming: '청구 삭제',
     whatIsIt: '무엇인가요?',
     namePlaceholder: '이름 짓기',
     nameFieldLabel: '이름',
@@ -273,13 +281,13 @@ export const ko: LocaleOverlay = {
     upcomingWindowTwoWeeks: '2주',
     upcomingWindowOneMonth: '1개월',
     upcomingWindowThreeMonths: '3개월',
-    upcomingAddAffordance: '예정된 지출 추가',
+    upcomingAddAffordance: '청구 추가',
     spentEmptyCta: '지출 기록',
     habitsEmptyCta: '습관 끊기',
     upcomingListEyebrow: '예정됨',
     upcomingEmptyTitle: '다가오기 전에 미리 알아두세요',
-    upcomingWindowEmptyBody: '이 기간에 해당하는 정기 지출이 없어요.',
-    upcomingEmptyCta: '예정된 지출 추가',
+    upcomingWindowEmptyBody: '이 기간에 해당하는 청구가 없어요.',
+    upcomingEmptyCta: '청구 추가',
     scheduleOneTime: '한 번',
     scheduleWeekly: '매주',
     scheduleBiweekly: '2주마다',

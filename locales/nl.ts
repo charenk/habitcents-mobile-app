@@ -49,6 +49,13 @@
  * `logsAtSamePlaceBody`) are dead code, confirmed via grep with zero real
  * call sites anywhere outside constants/strings.ts; left untranslated, same
  * treatment as habitDetail's/reports' own dead keys.
+ *
+ * Run 38 fixed: `money.upcomingAddAffordance`/`upcomingEmptyCta`/
+ * `upcomingWindowEmptyBody` and `addUpcoming.title`/`editTitle`/
+ * `deleteUpcoming` had gone stale after the 2026-09-11 "upcoming/recurring
+ * expense" -> "bill" noun pass on main (translated in run 26/27, before the
+ * value change landed); re-translated the noun to "rekening", also dropping
+ * `addUpcoming.title`/`editTitle`'s now-removed trailing period to match.
  */
 import type { LocaleOverlay } from '@/utils/i18n';
 
@@ -205,10 +212,10 @@ export const nl: LocaleOverlay = {
     importFailed: 'Dat is niet opgeslagen. Er is niets geïmporteerd. Probeer het opnieuw.',
   },
   addUpcoming: {
-    title: 'Aankomende uitgave toevoegen.',
-    editTitle: 'Aankomende uitgave bewerken.',
+    title: 'Rekening toevoegen',
+    editTitle: 'Rekening bewerken',
     saveChanges: 'Opslaan',
-    deleteUpcoming: 'Aankomende uitgave verwijderen',
+    deleteUpcoming: 'Rekening verwijderen',
     whatIsIt: 'Wat is het?',
     namePlaceholder: 'Geef het een naam',
     nameFieldLabel: 'Naam',
@@ -261,13 +268,13 @@ export const nl: LocaleOverlay = {
     upcomingWindowTwoWeeks: '2 weken',
     upcomingWindowOneMonth: '1 maand',
     upcomingWindowThreeMonths: '3 maanden',
-    upcomingAddAffordance: 'Aankomende uitgave toevoegen',
+    upcomingAddAffordance: 'Rekening toevoegen',
     spentEmptyCta: 'Uitgave registreren',
     habitsEmptyCta: 'Een gewoonte doorbreken',
     upcomingListEyebrow: 'Gepland',
     upcomingEmptyTitle: 'Weet wat eraan komt voordat het er is',
-    upcomingWindowEmptyBody: 'Geen van je terugkerende uitgaven valt in deze periode.',
-    upcomingEmptyCta: 'Aankomende uitgave toevoegen',
+    upcomingWindowEmptyBody: 'Geen van je rekeningen valt in deze periode.',
+    upcomingEmptyCta: 'Rekening toevoegen',
     scheduleOneTime: 'Eenmalig',
     scheduleWeekly: 'Wekelijks',
     scheduleBiweekly: 'Elke 2 weken',

@@ -49,6 +49,13 @@
  * `logsAtSamePlaceBody`) are dead code, confirmed via grep with zero real
  * call sites anywhere outside constants/strings.ts; left untranslated, same
  * treatment as habitDetail's/reports' own dead keys.
+ *
+ * Run 38 fixed: `money.upcomingAddAffordance`/`upcomingEmptyCta`/
+ * `upcomingWindowEmptyBody` and `addUpcoming.title`/`editTitle`/
+ * `deleteUpcoming` had gone stale after the 2026-09-11 "upcoming/recurring
+ * expense" -> "bill" noun pass on main (translated in run 26/27, before the
+ * value change landed); re-translated the noun to "factura", also dropping
+ * `addUpcoming.title`/`editTitle`'s now-removed trailing period to match.
  */
 import type { LocaleOverlay } from '@/utils/i18n';
 
@@ -206,10 +213,10 @@ export const es: LocaleOverlay = {
     importFailed: 'Eso no se guardó. No se importó nada. Inténtalo de nuevo.',
   },
   addUpcoming: {
-    title: 'Añadir gasto próximo.',
-    editTitle: 'Editar gasto próximo.',
+    title: 'Añadir factura',
+    editTitle: 'Editar factura',
     saveChanges: 'Guardar',
-    deleteUpcoming: 'Eliminar gasto próximo',
+    deleteUpcoming: 'Eliminar factura',
     whatIsIt: '¿Qué es?',
     namePlaceholder: 'Ponle un nombre',
     nameFieldLabel: 'Nombre',
@@ -262,13 +269,13 @@ export const es: LocaleOverlay = {
     upcomingWindowTwoWeeks: '2 semanas',
     upcomingWindowOneMonth: '1 mes',
     upcomingWindowThreeMonths: '3 meses',
-    upcomingAddAffordance: 'Agregar un gasto próximo',
+    upcomingAddAffordance: 'Agregar una factura',
     spentEmptyCta: 'Registrar un gasto',
     habitsEmptyCta: 'Romper un hábito',
     upcomingListEyebrow: 'Programado',
     upcomingEmptyTitle: 'Entérate de lo que viene antes de que llegue',
-    upcomingWindowEmptyBody: 'Ninguno de tus gastos recurrentes cae en esta ventana.',
-    upcomingEmptyCta: 'Agregar un gasto próximo',
+    upcomingWindowEmptyBody: 'Ninguna de tus facturas cae en esta ventana.',
+    upcomingEmptyCta: 'Agregar una factura',
     scheduleOneTime: 'Una vez',
     scheduleWeekly: 'Semanal',
     scheduleBiweekly: 'Cada 2 semanas',

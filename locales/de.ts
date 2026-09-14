@@ -49,6 +49,13 @@
  * `logsAtSamePlaceBody`) are dead code, confirmed via grep with zero real
  * call sites anywhere outside constants/strings.ts; left untranslated, same
  * treatment as habitDetail's/reports' own dead keys.
+ *
+ * Run 38 fixed: `money.upcomingAddAffordance`/`upcomingEmptyCta`/
+ * `upcomingWindowEmptyBody` and `addUpcoming.title`/`editTitle`/
+ * `deleteUpcoming` had gone stale after the 2026-09-11 "upcoming/recurring
+ * expense" -> "bill" noun pass on main (translated in run 26/27, before the
+ * value change landed); re-translated the noun to "Rechnung", also dropping
+ * `addUpcoming.title`/`editTitle`'s now-removed trailing period to match.
  */
 import type { LocaleOverlay } from '@/utils/i18n';
 
@@ -207,10 +214,10 @@ export const de: LocaleOverlay = {
     importFailed: 'Das wurde nicht gespeichert. Es wurde nichts importiert. Versuch es noch mal.',
   },
   addUpcoming: {
-    title: 'Bevorstehende Ausgabe hinzufügen.',
-    editTitle: 'Bevorstehende Ausgabe bearbeiten.',
+    title: 'Rechnung hinzufügen',
+    editTitle: 'Rechnung bearbeiten',
     saveChanges: 'Speichern',
-    deleteUpcoming: 'Bevorstehende Ausgabe löschen',
+    deleteUpcoming: 'Rechnung löschen',
     whatIsIt: 'Was ist es?',
     namePlaceholder: 'Benenne es',
     nameFieldLabel: 'Name',
@@ -263,13 +270,13 @@ export const de: LocaleOverlay = {
     upcomingWindowTwoWeeks: '2 Wochen',
     upcomingWindowOneMonth: '1 Monat',
     upcomingWindowThreeMonths: '3 Monate',
-    upcomingAddAffordance: 'Bevorstehende Ausgabe hinzufügen',
+    upcomingAddAffordance: 'Rechnung hinzufügen',
     spentEmptyCta: 'Ausgabe erfassen',
     habitsEmptyCta: 'Mit einer Gewohnheit brechen',
     upcomingListEyebrow: 'Geplant',
     upcomingEmptyTitle: 'Erfahre, was kommt, bevor es da ist',
-    upcomingWindowEmptyBody: 'Keine deiner wiederkehrenden Ausgaben fällt in diesen Zeitraum.',
-    upcomingEmptyCta: 'Bevorstehende Ausgabe hinzufügen',
+    upcomingWindowEmptyBody: 'Keine deiner Rechnungen fällt in diesen Zeitraum.',
+    upcomingEmptyCta: 'Rechnung hinzufügen',
     scheduleOneTime: 'Einmalig',
     scheduleWeekly: 'Wöchentlich',
     scheduleBiweekly: 'Alle 2 Wochen',
