@@ -1,5 +1,41 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 38, 2026-09-14: re-verify, no new work)
+
+`git rev-list --left-right --count origin/main...routine/core-p3` returned
+`0 44` at the start of this run (branch tip unchanged at `3ba6847`, run
+37's own commit); `origin/main` is still at `3890ba1`, unchanged since run
+37, so no rebase needed. PR #132 confirmed via the API: `state: open`,
+`draft: false`, `merged: false`, `mergeable_state: clean`, head
+`3ba6847b62a1e26774f9d2c8cda01a744d907101` (matches this branch's tip),
+base `3890ba173bdbe43778cf5501e30cbd7d8b01d320` (matches main's current
+tip), 0 comments, 0 reviews, unchanged since run 37. Also cross-checked
+against the routines-orchestrator's tenth-run status board (issue #139,
+updated today): core-worker section reads "Progress: complete since run
+8... Review verdict: approved, nothing owed... Blockers: PR #132 waits on
+the payments human gate (decisions 2-4), now 31 worker runs idle" -
+confirms this session's own read independently. No new REVIEW FEEDBACK
+section present (latest is still the 2026-09-11 orchestrator review of
+runs 15-25). Re-pulled `habitcents-ops`'s `PUNCHLIST.md` fresh: RESUME
+marker unchanged, still the 2026-09-10 interaction-audit wave (profile
+modal-vs-push decision, how-it-works scroll-fade, drag-to-dismiss device
+verification, the standing `door3BreakSheet.test.tsx` CI-load flake, the
+Categories empty-subtitle polish note) plus the older 2026-09-05/06
+zeroth-state wave items; none payments/legal, and the one core-p3-flagged
+line (leak finder dated entitlement) is still the same item already built
+and closed on this branch at run 8. Checklist in `PLAN.md` unchanged,
+still fully `[x]`/`(C)`.
+
+Fresh `npm install`, `npx tsc --noEmit` clean. `npm test`: 125 suites /
+1367 tests green on the first attempt, no flake this run, exactly
+matching run 37's ending count (no regression, no new code either side).
+
+No push notification this run: the decision queue has sat untouched since
+run 6 (now 32 runs idle on the queue itself), already flagged repeatedly
+by this routine and by the orchestrator's tenth run and localization's
+run 36/38, and nothing in the queue's content, the PR, or the PUNCHLIST
+RESUME marker has changed since.
+
 ## COMPLETE (run 37, 2026-09-14: re-verify, no new work)
 
 `git rev-list --left-right --count origin/main...routine/core-p3` returned
