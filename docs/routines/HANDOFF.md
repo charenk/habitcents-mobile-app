@@ -1,5 +1,39 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 37, 2026-09-14: re-verify, no new work)
+
+`git rev-list --left-right --count origin/main...routine/core-p3` returned
+`0 43` at the start of this run (branch tip unchanged at `95b16db`, run
+36's own commit); `origin/main` is still at `3890ba1`, the same tip run 36
+saw, so no rebase needed. PR #132 confirmed via the API: `state: open`,
+`draft: false`, `merged: false`, `mergeable_state: clean`, head
+`95b16dbfb57a5773b2bca54356ad29fca531c349` (matches this branch's tip),
+base `3890ba173bdbe43778cf5501e30cbd7d8b01d320` (matches main's current
+tip), 0 issue comments, 0 reviews, unchanged since run 36's check. No new
+REVIEW FEEDBACK section present (latest is still the 2026-09-11
+orchestrator review of runs 15-25). Re-pulled `habitcents-ops`'s
+`PUNCHLIST.md` fresh (ops main fast-forwarded to `a31629c`, but that
+commit is the same 2026-09-10 interaction-audit wave run 36 already
+read, not a new marker): RESUME still the profile modal-vs-push decision,
+how-it-works scroll-fade, drag-to-dismiss device verification, the
+standing `door3BreakSheet.test.tsx` CI-load flake, and the Categories
+empty-subtitle polish note, plus the older 2026-09-05/06 zeroth-state
+wave items; none payments/legal, and the one core-p3-flagged line (leak
+finder dated entitlement) is still the same item already built and
+closed on this branch at run 8. Checklist in `PLAN.md` unchanged, still
+fully `[x]`/`(C)`.
+
+Fresh `npm install`, `npx tsc --noEmit` clean. `npm test`: 125 suites /
+1367 tests green on the first attempt, no flake this run, exactly
+matching run 36's ending count (no regression, no new code either side).
+
+No push notification this run: the decision queue has sat untouched since
+run 6 (now 31 runs idle on the queue itself). Run 11 already flagged it
+once on this branch, and the routines-orchestrator plus the sibling
+routine streams already surfaced the same shared-queue block in a prior
+notification; nothing in the queue's content, the PR, or the PUNCHLIST
+RESUME marker has changed since.
+
 ## COMPLETE (run 36, 2026-09-14: re-verify, no new work)
 
 `git rev-list --left-right --count origin/main...routine/core-p3` returned
