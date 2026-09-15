@@ -2,7 +2,44 @@
 
 ## Status
 
-In progress. Run 43: no rebase needed (`origin/main` still `3890ba1`,
+In progress. Run 44: no rebase needed (`origin/main` still `3890ba1`,
+unchanged since run 38, confirmed via `git fetch` plus `git merge-base
+--is-ancestor origin/main HEAD`). No REVIEW FEEDBACK pending (checked
+the full HANDOFF.md history; the last entry is the 2026-09-12 runs
+28-31 review, already closed out by run 32). Checked DECISIONS NEEDED
+via the GitHub API directly: issue #139 has moved since run 43's check,
+but not on either gate this branch waits on. The orchestrator posted
+its eleventh run today (2026-09-15): both gates (8: locked vocabulary;
+10: paywall pricing/legal) are still open and unanswered, seventeen
+runs now for item 4 since run 27. The new content is item 11, a fresh
+recommendation (not a decision this branch can act on): pause or thin
+the three worker routines' cadence at claude.ai/code/routines since all
+three are fully blocked or complete and have run a full install-and-test
+cycle every 6 hours for over a week with no code output. That is a
+cadence/cost call for Charen to make via the routines UI, not something
+this session can change from inside a run, and it does not alter this
+branch's own DECISIONS NEEDED gates (8, 10) or its instruction to run a
+bounded increment each firing; noted here so a future run does not
+mistake it for a third open gate on item 4. PR #134 still open, draft,
+`mergeable_state: clean`, head `9fdaff4` matching this branch's own
+pre-run tip, still one comment (the 2026-09-07 iPad-footer one), no
+reviews. Re-ran the run-38 `VALUE CHANGE` sweep a seventh time: `grep -n
+"VALUE CHANGE" constants/strings.ts` still finds exactly the same 5
+hits, all annotated "re-translated run 38", none unresolved; also
+re-ran the broader `needs re-translation`/`STALE`/`TODO|FIXME.*translat`
+grep, still nothing. Items 3/5/6 stayed exhausted (a further re-check
+with no new method would not be expected to find anything, per run 36's
+guidance, and did not). `npm install` needed first (fresh container, no
+`node_modules`). One commit (HANDOFF/PLAN update only); `tsc --noEmit`
+clean, full suite green (125/125, 1395/1395) on the first run, no
+flake, exactly matching run 43's counts. No push notification: item 11
+is a cadence/cost recommendation already visible on the public status
+board (issue #139) that a different routine (the orchestrator) surfaced
+today; it is not new information only this session holds, and nothing
+about this branch's own blocked state changed, so an alert here would
+be duplicate signal, not new signal.
+
+Run 43: no rebase needed (`origin/main` still `3890ba1`,
 unchanged since run 38, confirmed via `git fetch` plus `git merge-base
 --is-ancestor origin/main HEAD`). No REVIEW FEEDBACK pending (checked
 the full HANDOFF.md history; the last entry is the 2026-09-12 runs
@@ -1582,6 +1619,21 @@ runs (since run 32); the VALUE CHANGE sweep clean five times (since run
 (DECISIONS NEEDED check via the API, the VALUE CHANGE grep, tsc/test
 verification, logged as `ok`) until either decision moves or a new
 main-side copy edit produces a fresh VALUE CHANGE hit.
+
+**Run 44 re-ran the same grep a seventh time, still nothing new.** Issue
+#139 moved (the orchestrator's eleventh run, 2026-09-15) but not on
+either gate this branch waits on; see Status above for the new item 11
+cadence recommendation, which is Charen's call via the routines UI, not
+a fix this run can make. Standing counts as of run 44: item 4 blocked
+seventeen runs (since run 27); items 3/5/6 clean twelve runs (since run
+32); the VALUE CHANGE sweep clean six times (since run 38's fix). A
+future run landing here should keep doing exactly this (DECISIONS
+NEEDED check via the API, the VALUE CHANGE grep, tsc/test verification,
+logged as `ok`) until either decision moves, a new main-side copy edit
+produces a fresh VALUE CHANGE hit, or the cadence itself changes (in
+which case follow whatever schedule is then in effect; the per-run
+bounded-increment contract in this file's header is unchanged either
+way).
 
 ## Blockers
 
