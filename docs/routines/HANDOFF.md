@@ -1,5 +1,45 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 42, 2026-09-15: re-verify, no new work)
+
+`git rev-list --left-right --count origin/main...routine/core-p3` returned
+`0 48` at the start of this run (branch tip unchanged at `8fb9a3a`, run
+41's own commit); `origin/main` is still at `3890ba1`, unchanged since run
+41, so no rebase needed. PR #132 confirmed via the API: `state: open`,
+`draft: false`, `merged: false`, `mergeable_state: clean`, head
+`8fb9a3a686186a861d2907cd52acb66c7e9c456b` (matches this branch's tip),
+base `3890ba173bdbe43778cf5501e30cbd7d8b01d320` (matches main's current
+tip), 0 comments, 0 reviews, unchanged since run 41. No new REVIEW
+FEEDBACK section present (latest is still the 2026-09-11 orchestrator
+review of runs 15-25). Re-pulled `habitcents-ops`'s `PUNCHLIST.md` fresh
+(ops main fast-forwarded to `81cbb5f`, but that commit only touched
+`docs/runs.log` with an ipad-worker log line): RESUME marker unchanged,
+still the 2026-09-10 interaction-audit wave plus older zeroth-state items;
+none payments/legal, and the one core-p3-flagged line (leak finder dated
+entitlement) is still the same item already built and closed on this
+branch at run 8. Checklist in `PLAN.md` unchanged, still fully `[x]`/`(C)`.
+
+Also checked the routines-orchestrator's status board (mobile-app issue
+#139) fresh, since its last-write timestamp had moved (2026-09-15T12:24:23Z,
+after run 41's 12:09:29Z read): the core-worker section itself is unchanged
+("approved, nothing owed," 33 idle runs, same blockers), but the board
+gained a new item 11 in DECISIONS NEEDED: the orchestrator now explicitly
+recommends Charen pause or thin the three worker routines (core-p3,
+localization, ipad) to daily since all three are fully blocked or complete
+and have run 12 full install-and-test cycles a day for over a week with
+zero code output, pure cost with no work waiting on the workers. This is
+new content directed at Charen, not something this routine can act on
+itself (it can't change its own schedule), so it is surfaced via push
+notification this run rather than left silent.
+
+Fresh `npm install`, `npx tsc --noEmit` clean. `npm test`: 125 suites /
+1367 tests green on the first attempt, no flake this run, exactly
+matching run 41's ending count (no regression, no new code either side).
+
+Push notification sent this run: the status board's new item 11 (pause/
+thin recommendation) is new information Charen hasn't seen, distinct from
+the standing decision-queue idleness already flagged at run 6/11.
+
 ## COMPLETE (run 41, 2026-09-15: re-verify, no new work)
 
 `git rev-list --left-right --count origin/main...routine/core-p3` returned
