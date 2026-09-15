@@ -1,5 +1,38 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 41, 2026-09-15: re-verify, no new work)
+
+`git rev-list --left-right --count origin/main...routine/core-p3` returned
+`0 47` at the start of this run (branch tip unchanged at `c0e8249`, run
+40's own commit); `origin/main` is still at `3890ba1`, unchanged since run
+40, so no rebase needed. PR #132 confirmed via the API: `state: open`,
+`draft: false`, `merged: false`, `mergeable_state: clean`, head
+`c0e8249a7c93a2a792d7656fc7b56e30d49d50ef` (matches this branch's tip),
+base `3890ba173bdbe43778cf5501e30cbd7d8b01d320` (matches main's current
+tip), 0 comments, 0 reviews, unchanged since run 40. No new REVIEW
+FEEDBACK section present (latest is still the 2026-09-11 orchestrator
+review of runs 15-25). Cross-checked against the routines-orchestrator's
+tenth-run status board (issue #139, last written 2026-09-14T12:09:29Z,
+unchanged since run 40's check): core-worker section still reads
+"approved, nothing owed," blockers unchanged (decisions 2-4, payments
+gate). Re-pulled `habitcents-ops`'s `PUNCHLIST.md` fresh (confirmed via
+`git log -- PUNCHLIST.md`, last touched at a localization-worker runs.log
+commit only, no content change): RESUME marker unchanged, still the
+2026-09-10 interaction-audit wave plus older zeroth-state items; none
+payments/legal, and the one core-p3-flagged line (leak finder dated
+entitlement) is still the same item already built and closed on this
+branch at run 8. Checklist in `PLAN.md` unchanged, still fully `[x]`/`(C)`.
+
+Fresh `npm install`, `npx tsc --noEmit` clean. `npm test`: 125 suites /
+1367 tests green on the first attempt, no flake this run, exactly
+matching run 40's ending count (no regression, no new code either side).
+
+No push notification this run: the decision queue has sat untouched since
+run 6 (now 35 runs idle on the queue itself), already flagged repeatedly
+by this routine and the orchestrator, and nothing in the queue's content,
+the PR, the status board, or the PUNCHLIST RESUME marker has changed since
+run 40.
+
 ## COMPLETE (run 40, 2026-09-15: re-verify, no new work)
 
 `git rev-list --left-right --count origin/main...routine/core-p3` returned
