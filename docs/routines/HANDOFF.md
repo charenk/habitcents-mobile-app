@@ -1,5 +1,44 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 43, 2026-09-15: re-verify, no new work)
+
+`git rev-list --left-right --count origin/main...routine/core-p3` returned
+`0 49` at the start of this run (branch tip unchanged at `82be68d`, run
+42's own commit); `origin/main` is still at `3890ba1`, unchanged since run
+42, so no rebase needed. PR #132 confirmed via the API: `state: open`,
+`draft: false`, `merged: false`, `mergeable_state: clean`, head
+`82be68d85a181e38e40540eaac745c5bedecf835` (matches this branch's tip),
+base `3890ba173bdbe43778cf5501e30cbd7d8b01d320` (matches main's current
+tip), 0 comments, 0 reviews, unchanged since run 42. No new REVIEW
+FEEDBACK section present (latest is still the 2026-09-11 orchestrator
+review of runs 15-25). Re-pulled `habitcents-ops`'s `PUNCHLIST.md` fresh
+(ops main fast-forwarded to `02b605c`, but that commit only touched
+`docs/runs.log` with an ipad-worker log line): RESUME marker unchanged,
+still the 2026-09-10 interaction-audit wave plus older zeroth-state items;
+none payments/legal, and the one core-p3-flagged line (leak finder dated
+entitlement) is still the same item already built and closed on this
+branch at run 8. Checklist in `PLAN.md` unchanged, still fully `[x]`/`(C)`.
+
+Also re-checked the routines-orchestrator's status board (mobile-app
+issue #139): unchanged since run 42's read (still last written
+2026-09-15T12:24:23Z). Core-worker's own section still reads "complete
+since run 8... approved, nothing owed... 33 runs idle" (the board's
+last-reviewed SHA for this branch, `8fb9a3a`, is run 41's tip, meaning the
+board was compiled before run 42 pushed; nothing in its content has moved
+since run 42 read it, item 11's pause/thin recommendation included). Run
+42 already surfaced item 11 via push notification, so there is nothing new
+here for Charen.
+
+Fresh `npm install` (node_modules absent in this container), `npx tsc
+--noEmit` clean. `npm test`: 125 suites / 1367 tests green on the first
+attempt, no flake this run, exactly matching run 42's ending count (no
+regression, no new code either side).
+
+No push notification this run: item 11 (pause/thin recommendation) and the
+standing decision-queue idleness were both already surfaced by run 42's
+notification, and nothing in the queue's content, the PR, the status
+board, or the PUNCHLIST RESUME marker has changed since.
+
 ## COMPLETE (run 42, 2026-09-15: re-verify, no new work)
 
 `git rev-list --left-right --count origin/main...routine/core-p3` returned
