@@ -700,6 +700,27 @@ notification; the decision queue (now 32 runs idle) has already been
 flagged repeatedly by this routine and the orchestrator, nothing has
 changed since.
 
+## Run 42: closed out again, orchestrator's pause recommendation flagged
+
+Same shape as runs 9-22/24/27/29/30/31-41: no new commits on `origin/main`
+beyond what the branch already contains (`git rev-list --left-right --count
+origin/main...routine/core-p3` returned `0 48` at the start of this run,
+branch tip unchanged at `8fb9a3a`), `mergeable_state: clean` and zero
+comments/reviews on PR #132, PUNCHLIST's RESUME marker unchanged and still
+the 2026-09-10 interaction-audit wave, none core-p3-shaped. Fresh
+`npm install`, `npx tsc --noEmit` clean. `npm test` 125 suites / 1367 tests
+green on the first attempt, no flake this run, exactly matching run 41.
+Checklist unchanged, still fully `[x]`/`(C)`.
+
+New this run: the routines-orchestrator's status board (mobile-app issue
+#139) picked up a new item 11 in DECISIONS NEEDED since run 41's read,
+recommending Charen pause or thin all three worker routines (core-p3,
+localization, ipad) given 12 install-and-test cycles a day producing zero
+code for over a week, pure cost with nothing waiting on the workers. That
+recommendation is outside anything this routine can act on (it cannot
+change its own schedule), so it was surfaced via push notification this
+run rather than re-filed silently like the standing decision-queue flag.
+
 ## If this routine fires again
 
 The branch and PR stay open until Charen merges or closes them (routine
