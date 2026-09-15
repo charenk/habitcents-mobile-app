@@ -67,38 +67,34 @@ device pass is separate and additional to that one, not a substitute.
 
 ## Status
 
-Run 44. Verified per this file's own COMPLETE instruction: plan fully
+Run 45. Verified per this file's own COMPLETE instruction: plan fully
 checked, nothing new to do. `origin/main` has not moved since run 33's
 check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
 `3890ba1`), so no rebase and no new regression surface this run. Fresh
 `npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass, no
-flake: 122 suites / 1335 tests, zero drift from runs 33-43. PR #133:
+flake: 122 suites / 1335 tests, zero drift from runs 33-44. PR #133:
 re-checked via `get`/`get_comments`/`get_reviews`/`get_check_runs`, still
 open, not draft, `mergeable_state: clean`, base SHA `3890ba1` (main's tip,
-matching exactly), head `9f3c950` unchanged, no new comments or reviews,
-`verify` check green. Issue #139 (doubling as the Routine status board)
-re-checked via `get`/`get_comments`: still the single 2026-09-07
-decision-1 comment, zero reactions, already implemented; the board's own
-ipad-worker section (last written 2026-09-15, eleventh orchestrator run)
-still says "approved, nothing owed, 15 consecutive zero-drift runs."
-Blocker unchanged: the device pass, gated on PR #133 merging behind
-PR #132's payments gate (decision 6, still open, now 8 days untouched per
-the board's own count). Decisions 2, 3, 4, 5, 7, 8, 9, 10 also remain
-unanswered, none of which this branch owns or can act on. **New on the
-board this run: item 11**, the orchestrator's own recommendation to pause
-or thin all three worker routines' cadence (12 install-and-test cycles a
-day producing no new code across localization/ipad/core) until at least
-one of decisions 2, 8, or 10 lands. That is a scheduling decision for
-Charen at claude.ai/code/routines, not something this routine can act on
-for itself; noted here, not acted on. Re-verified item 7 (`app.json`
-orientation still `"portrait"`, `supportsTablet` still `true`). This
-HANDOFF update is the only change this run; no production code or plan
-content changed. No push notification: item 11 is the orchestrator's
-finding to surface via its own board and run, not a new fact specific to
-this routine's own scope; nothing else new for Charen since run 11's
-original notification and the board's repeated surfacing. This is the
-sixteenth consecutive run (29-44) at zero drift while the device-pass
-blocker stays outside this routine's reach.
+matching exactly), head `6f1ad1d` (run 44's own status commit) unchanged
+by any code, no new comments or reviews, `verify` check green. Issue #139
+(doubling as the Routine status board) re-checked via `get`/`get_comments`:
+still the single 2026-09-07 decision-1 comment, zero reactions, already
+implemented; the board's own ipad-worker section (last written 2026-09-15,
+eleventh orchestrator run, not yet refreshed since) still says "approved,
+nothing owed," blocker unchanged: the device pass, gated on PR #133
+merging behind PR #132's payments gate (decision 6, still open, 8 days
+untouched per the board's own count). Decisions 2, 3, 4, 5, 7, 8, 9, 10
+also remain unanswered, none of which this branch owns or can act on.
+Item 11 (the orchestrator's recommendation to pause or thin worker
+cadence while blocked) is still open on the board too; still a scheduling
+decision for Charen, not something this routine can act on for itself.
+Re-verified item 7 (`app.json` orientation still `"portrait"`,
+`supportsTablet` still `true`). This HANDOFF update is the only change
+this run; no production code or plan content changed. No push
+notification: nothing new for Charen since run 11's original one and the
+board's repeated surfacing, including item 11 which is already reported.
+This is the seventeenth consecutive run (29-45) at zero drift while the
+device-pass blocker stays outside this routine's reach.
 
 Run 43. Verified per this file's own COMPLETE instruction: plan fully
 checked, nothing new to do. `origin/main` has not moved since run 33's
