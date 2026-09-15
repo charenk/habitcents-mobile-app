@@ -2,28 +2,30 @@
 
 ## Status
 
-In progress. Run 42: no rebase needed (`origin/main` still `3890ba1`,
+In progress. Run 43: no rebase needed (`origin/main` still `3890ba1`,
 unchanged since run 38, confirmed via `git fetch` plus `git merge-base
 --is-ancestor origin/main HEAD`). No REVIEW FEEDBACK pending (checked
 the full HANDOFF.md history; the last entry is the 2026-09-12 runs
 28-31 review, already closed out by run 32). Checked DECISIONS NEEDED
-via the GitHub API directly: issue #139 unchanged since run 41's check
+via the GitHub API directly: issue #139 unchanged since run 42's check
 (still last edited 2026-09-14 by the orchestrator's tenth run), both
 gates (8: locked vocabulary; 10: paywall pricing/legal) still open,
 only comment remains the 2026-09-07 iPad-footer one, unrelated; PR
-#134 still open, draft, `mergeable_state: clean`, head `5d2e4a2`
+#134 still open, draft, `mergeable_state: clean`, head `b54407a`
 matching this branch's own pre-run tip, one comment (the same
 iPad-footer one via the issue), no reviews. Re-ran the run-38 `VALUE
-CHANGE` sweep a fifth time: `grep -n "VALUE CHANGE" constants/strings.ts`
+CHANGE` sweep a sixth time: `grep -n "VALUE CHANGE" constants/strings.ts`
 still finds exactly the same 5 hits, all annotated "re-translated run
-38", none unresolved; also re-ran the broader `needs re-translation`/
-`STALE`/`TODO|FIXME.*translat` grep, still nothing. Items 3/5/6 stayed
-exhausted (an eleventh/twelfth re-check with no new method would not be
-expected to find anything, per run 36's guidance, and did not). `npm
+38", none unresolved (re-read the surrounding context in
+`constants/strings.ts:1180-1288` again to confirm, not just the grep
+count); also re-ran the broader `needs re-translation`/`STALE`/
+`TODO|FIXME.*translat` grep, still nothing. Items 3/5/6 stayed
+exhausted (a twelfth/thirteenth re-check with no new method would not
+be expected to find anything, per run 36's guidance, and did not). `npm
 install` needed first (fresh container, no `node_modules`). One commit
 (HANDOFF/PLAN update only); `tsc --noEmit` clean, full suite green
 (125/125, 1395/1395) on the first run, no flake, exactly matching run
-41's counts. No push notification: this is the fourth consecutive run
+42's counts. No push notification: this is the fifth consecutive run
 with zero movement since run 38's real fix, and the orchestrator's own
 status board already surfaces this same standing-blocked state to
 Charen; another alert would be noise, not signal.
@@ -1566,6 +1568,16 @@ main-side copy edit produces a fresh VALUE CHANGE hit.
 orchestrator's tenth run; PR #134 unchanged. Standing counts as of run
 42: item 4 blocked fifteen runs (since run 27); items 3/5/6 clean ten
 runs (since run 32); the VALUE CHANGE sweep clean four times (since run
+38's fix). A future run landing here should keep doing exactly this
+(DECISIONS NEEDED check via the API, the VALUE CHANGE grep, tsc/test
+verification, logged as `ok`) until either decision moves or a new
+main-side copy edit produces a fresh VALUE CHANGE hit.
+
+**Run 43 re-ran the same grep a sixth time, still nothing new.** Issue
+#139 unchanged since run 42's check, still last edited 2026-09-14 by the
+orchestrator's tenth run; PR #134 unchanged. Standing counts as of run
+43: item 4 blocked sixteen runs (since run 27); items 3/5/6 clean eleven
+runs (since run 32); the VALUE CHANGE sweep clean five times (since run
 38's fix). A future run landing here should keep doing exactly this
 (DECISIONS NEEDED check via the API, the VALUE CHANGE grep, tsc/test
 verification, logged as `ok`) until either decision moves or a new
