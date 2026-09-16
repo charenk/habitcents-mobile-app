@@ -2,7 +2,41 @@
 
 ## Status
 
-In progress. Run 48: no rebase needed (`origin/main` still `3890ba1`,
+In progress. Run 49: no rebase needed (`origin/main` still `3890ba1`,
+unchanged since run 38, confirmed via `git fetch` plus `git merge-base
+--is-ancestor origin/main HEAD`). No REVIEW FEEDBACK pending (checked
+the full HANDOFF.md history; the last entry is the 2026-09-12 runs
+28-31 review, already closed out by run 32). Checked DECISIONS NEEDED
+via the GitHub API directly against issue #139 in habitcents-mobile-app
+(not habitcents-ops; confirmed the correct repo this run after a
+habitcents-ops lookup 404'd): the status board is now on its twelfth
+orchestrator run (2026-09-16), both gates this branch waits on (8:
+locked vocabulary; 10: paywall pricing/legal) still open and
+unanswered, the decision queue is now called out as "9 days untouched"
+on the board itself. No new comment on #139 beyond the unrelated
+2026-09-07 iPad-footer one. Item 11 (pause or thin the worker routines
+while blocked) was delivered to Charen directly by core-worker's run 42
+push notification on 2026-09-15 and remains unanswered as of this run;
+nothing new for this worker to add there. PR #134 still open, draft,
+`mergeable_state: clean`, head `724c6fd` matching this branch's own
+pre-run tip, still one comment (the iPad-footer one), no reviews.
+Re-ran the run-38 `VALUE CHANGE` sweep again: `grep -n "VALUE CHANGE"
+constants/strings.ts` still finds exactly the same 5 hits, all
+annotated "re-translated run 38", none unresolved; also re-ran the
+broader `needs re-translation`/`STALE`/`TODO|FIXME.*translat` grep,
+only the same historical resolved-stale comments across the 10 locale
+files (no new unresolved marker). Items 3/5/6 stayed exhausted (a
+further re-check with no new method would not be expected to find
+anything, per run 36's guidance, and did not). `npm ci` clean (fresh
+container, no `node_modules`). One commit (HANDOFF/PLAN update only);
+`tsc --noEmit` clean, full suite green (125/125, 1395/1395) on the
+first run, no flake, exactly matching run 48's counts. No push
+notification: nothing moved since run 48's check (same two open gates,
+item 11 still unanswered but already delivered once and standing on
+the public status board), so an alert here would be duplicate signal,
+not new signal.
+
+Run 48: no rebase needed (`origin/main` still `3890ba1`,
 unchanged since run 38, confirmed via `git fetch` plus `git merge-base
 --is-ancestor origin/main HEAD`). No REVIEW FEEDBACK pending (checked
 the full HANDOFF.md history; the last entry is the 2026-09-12 runs
