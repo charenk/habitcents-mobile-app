@@ -4,7 +4,7 @@ import { Icon } from '@/components/ui';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { radii, typeScale, type AppTheme } from '@/constants/theme';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
 import { TierBadge } from './TierBadge';
 import { categoryDisplayLabel } from '@/utils/leakScanBridge';
 import type { CategorySummary } from '@/utils/leakScan/resultsSummary';
@@ -23,6 +23,7 @@ type CategoryListProps = {
 function CategoryListImpl({ categories, onCategoryPress }: CategoryListProps) {
   const theme = useTheme();
   const { format } = useCurrency();
+  const strings = useStrings();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [expanded, setExpanded] = useState(false);
 

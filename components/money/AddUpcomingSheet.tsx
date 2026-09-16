@@ -59,7 +59,6 @@ import { Sheet } from '@/components/ui/Sheet';
 import { SheetHeader } from '@/components/ui/SheetHeader';
 import { TextField } from '@/components/ui/TextField';
 import { useToast } from '@/components/ui/Toast';
-import { strings } from '@/constants/strings';
 import { radii, typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
 import { useCategories } from '@/contexts/CategoriesContext';
@@ -77,6 +76,8 @@ import type {
 import { formatDate } from '@/utils/dates';
 import { toExpenseCategory } from '@/utils/expenseCategory';
 import { atMidnight } from '@/utils/habitLogging';
+import type { Catalog } from '@/utils/i18n';
+import { useStrings } from '@/utils/i18n';
 import { hapticError, hapticSuccess } from '@/utils/motion';
 import { nextOccurrence, resolveRule, shortDate } from '@/utils/recurring';
 
@@ -100,6 +101,13 @@ const MIN_EVERY_N_DAYS = 2;
 const MAX_EVERY_N_DAYS = 90;
 const DEFAULT_EVERY_N_DAYS = 10;
 
+type NameChip = {
+  key: string;
+  label: string;
+  emoji: string;
+  category: ExpenseCategory;
+};
+
 /**
  * The six name presets from spec 04: a name, a glyph, and the category the
  * name usually files under. Tapping one fills the name field and MOVES THE
@@ -113,19 +121,16 @@ const DEFAULT_EVERY_N_DAYS = 10;
  * said another. The presets now share the log sheet's soft pill shape, with no
  * per-chip hue at all, and the category is a field the user can see.
  */
-const NAME_CHIPS: ReadonlyArray<{
-  key: string;
-  label: string;
-  emoji: string;
-  category: ExpenseCategory;
-}> = [
-  { key: 'rent', label: strings.addUpcoming.nameRent, emoji: '🏠', category: 'Mortgage' },
-  { key: 'internet', label: strings.addUpcoming.nameInternet, emoji: '📡', category: 'Utilities' },
-  { key: 'phone', label: strings.addUpcoming.namePhone, emoji: '📱', category: 'Software & Subscriptions' },
-  { key: 'gym', label: strings.addUpcoming.nameGym, emoji: '🏋️', category: 'Entertainment' },
-  { key: 'insurance', label: strings.addUpcoming.nameInsurance, emoji: '🛡️', category: 'Other' },
-  { key: 'utilities', label: strings.addUpcoming.nameUtilities, emoji: '💡', category: 'Utilities' },
-];
+function buildNameChips(strings: Catalog): ReadonlyArray<NameChip> {
+  return [
+    { key: 'rent', label: strings.addUpcoming.nameRent, emoji: '🏠', category: 'Mortgage' },
+    { key: 'internet', label: strings.addUpcoming.nameInternet, emoji: '📡', category: 'Utilities' },
+    { key: 'phone', label: strings.addUpcoming.namePhone, emoji: '📱', category: 'Software & Subscriptions' },
+    { key: 'gym', label: strings.addUpcoming.nameGym, emoji: '🏋️', category: 'Entertainment' },
+    { key: 'insurance', label: strings.addUpcoming.nameInsurance, emoji: '🛡️', category: 'Other' },
+    { key: 'utilities', label: strings.addUpcoming.nameUtilities, emoji: '💡', category: 'Utilities' },
+  ];
+}
 
 /** Monday first, matching the week strip everywhere else in the app. */
 const WEEKDAY_ORDER: readonly Weekday[] = [1, 2, 3, 4, 5, 6, 0];
@@ -139,12 +144,16 @@ function weekdayShortLabel(weekday: Weekday): string {
   return formatDate(d, { weekday: 'short' });
 }
 
-const MONTH_DAY_CHIPS: ReadonlyArray<{ value: MonthDayOption; label: string }> = [
-  { value: '1', label: strings.addUpcoming.monthDayFirst },
-  { value: '15', label: strings.addUpcoming.monthDayFifteenth },
-  { value: '30', label: strings.addUpcoming.monthDayThirtieth },
-  { value: 'last', label: strings.addUpcoming.monthDayLast },
-];
+function buildMonthDayChips(
+  strings: Catalog
+): ReadonlyArray<{ value: MonthDayOption; label: string }> {
+  return [
+    { value: '1', label: strings.addUpcoming.monthDayFirst },
+    { value: '15', label: strings.addUpcoming.monthDayFifteenth },
+    { value: '30', label: strings.addUpcoming.monthDayThirtieth },
+    { value: 'last', label: strings.addUpcoming.monthDayLast },
+  ];
+}
 
 function startOfToday(): Date {
   const d = new Date();
@@ -340,9 +349,9 @@ type ScheduleDraftFields = ScheduleDraft & { cents: number; nameChipKey: string 
  * to a rule (computeUpcoming's own invariant), so the 'once' fallback below is
  * defensive, not a real path.
  */
-function draftFromExpense(expense: Expense): ScheduleDraftFields {
+function draftFromExpense(expense: Expense, nameChips: ReadonlyArray<NameChip>): ScheduleDraftFields {
   const rule = resolveRule(expense) ?? { type: 'once' as const };
-  const chip = NAME_CHIPS.find(
+  const chip = nameChips.find(
     (c) => c.label.toLowerCase() === (expense.title || '').trim().toLowerCase()
   );
   const rawDate = expense.date instanceof Date ? expense.date : new Date(expense.date);
@@ -394,6 +403,7 @@ export function AddUpcomingSheet({
   expense = null,
 }: AddUpcomingSheetProps): React.JSX.Element {
   const theme = useTheme();
+  const strings = useStrings();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const { show } = useToast();
   const { format } = useCurrency();
@@ -401,6 +411,8 @@ export function AddUpcomingSheet({
   const { addExpense, updateExpense, deleteExpense, restoreExpense, expenses } = useExpenses();
 
   const categories = getVisibleCategories();
+  const nameChips = useMemo(() => buildNameChips(strings), [strings]);
+  const monthDayChips = useMemo(() => buildMonthDayChips(strings), [strings]);
 
   const [cents, setCents] = useState(0);
   const [nameChipKey, setNameChipKey] = useState<string | null>(null);
@@ -439,7 +451,7 @@ export function AddUpcomingSheet({
     setScheduleTouched(false);
 
     if (mode === 'edit' && expense) {
-      const draft = draftFromExpense(expense);
+      const draft = draftFromExpense(expense, nameChips);
       setCents(draft.cents);
       setNameChipKey(draft.nameChipKey);
       setName(draft.name);
@@ -478,7 +490,7 @@ export function AddUpcomingSheet({
   }, [visible, mode, expense]);
 
   const pickNameChip = (key: string) => {
-    const chip = NAME_CHIPS.find((c) => c.key === key);
+    const chip = nameChips.find((c) => c.key === key);
     if (!chip) return;
     setNameChipKey(key);
     // The chip prefills the field; the field stays editable, so "Gym" can
@@ -581,7 +593,7 @@ export function AddUpcomingSheet({
     // as a defensive guard.
     if (!canSave) return;
 
-    const chip = NAME_CHIPS.find((c) => c.key === nameChipKey);
+    const chip = nameChips.find((c) => c.key === nameChipKey);
     // The category rail is the source of truth (2026-09-11). It is seeded from
     // the row in edit mode and moved by a preset tap, so "keep the row's own
     // category unless a chip says otherwise" is now just "write what the rail
@@ -819,7 +831,7 @@ export function AddUpcomingSheet({
             contentContainerStyle={styles.presetRow}
             style={styles.chipScroll}
           >
-            {NAME_CHIPS.map((chip) => (
+            {nameChips.map((chip) => (
               <Chip
                 key={chip.key}
                 label={chip.label}
@@ -859,6 +871,7 @@ export function AddUpcomingSheet({
               selected={emoji === undefined}
               onPress={() => setEmoji(undefined)}
               styles={styles}
+              strings={strings}
             />
             {SPEND_GLYPHS.map((g) => (
               <GlyphCell
@@ -868,6 +881,7 @@ export function AddUpcomingSheet({
                 selected={emoji === g}
                 onPress={() => setEmoji(g)}
                 styles={styles}
+                strings={strings}
               />
             ))}
           </View>
@@ -966,7 +980,7 @@ export function AddUpcomingSheet({
                 <>
                   <Text style={styles.subLabel}>{strings.addUpcoming.onThe}</Text>
                   <View style={styles.chipRow}>
-                    {MONTH_DAY_CHIPS.map((option) => (
+                    {monthDayChips.map((option) => (
                       <Chip
                         key={option.value}
                         label={option.label}
@@ -1096,18 +1110,20 @@ function GlyphCell({
   selected,
   onPress,
   styles,
+  strings,
 }: {
   glyph: string;
   label: string;
   selected: boolean;
   onPress: () => void;
   styles: ReturnType<typeof createStyles>;
+  strings: Catalog;
 }) {
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={selectableLabel(label, selected)}
+      accessibilityLabel={selectableLabel(label, selected, strings)}
       accessibilityState={{ selected }}
       style={({ pressed }) => [
         styles.glyphCell,

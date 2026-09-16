@@ -10,7 +10,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { radii, typeScale, type AppTheme } from '@/constants/theme';
 import type { DetectedHabit } from '@/types/habit';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
 import { HabitLeakRow, type LeakRowData } from '@/components/habit-logging/HabitLeakRow';
 import { EmptyState } from '@/components/ui';
 
@@ -29,6 +29,7 @@ type LeaksCardProps = {
 
 export function LeaksCard({ rows, onBreak, onOpenHabit, onLogExpense }: LeaksCardProps) {
   const theme = useTheme();
+  const strings = useStrings();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   return (

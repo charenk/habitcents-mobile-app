@@ -36,7 +36,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { Icon } from '@/components/ui/Icon';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
 import type { AppTheme } from '@/constants/theme';
 
 /**
@@ -99,6 +99,7 @@ export function SettingsRow({
   accessibilityLabel,
   accessibilityHint,
 }: SettingsRowProps): React.JSX.Element {
+  const strings = useStrings();
   const rowStyle: StyleProp<ViewStyle> = [styles.row, last ? styles.rowLast : null];
   // UX-029: hint (the reassurance line, e.g. "data stays on this device") used
   // to be silently dropped whenever a caller relied on the default label

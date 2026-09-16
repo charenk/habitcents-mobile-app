@@ -28,6 +28,7 @@
 import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useStrings } from '@/utils/i18n';
 import type { AppTheme } from '@/constants/theme';
 import { radii, typeScale } from '@/constants/theme';
 import { selectableLabel } from '@/utils/a11y';
@@ -78,6 +79,7 @@ export function Chip({
   labelSpoken,
 }: ChipProps): React.JSX.Element {
   const theme = useTheme();
+  const strings = useStrings();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   const tintedBorder =
@@ -92,7 +94,7 @@ export function Chip({
       onPress={onPress}
       disabled={disabled}
       accessibilityRole="button"
-      accessibilityLabel={selectableLabel(labelSpoken ?? label, selected)}
+      accessibilityLabel={selectableLabel(labelSpoken ?? label, selected, strings)}
       accessibilityState={{ selected, disabled }}
       hitSlop={{ top: 4, bottom: 4, left: 2, right: 2 }}
       style={({ pressed }) => [

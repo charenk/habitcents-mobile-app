@@ -22,6 +22,7 @@ import { StyleSheet } from 'react-native';
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
+import { LocaleProvider } from '@/contexts/LocaleContext';
 import { UpcomingList } from '@/components/money/UpcomingList';
 import { strings } from '@/constants/strings';
 import type { Expense } from '@/types/expense';
@@ -31,7 +32,9 @@ import { upcomingWindowEnd } from '@/utils/upcomingWindow';
 function Providers({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider>
-      <CurrencyProvider>{children}</CurrencyProvider>
+      <LocaleProvider>
+        <CurrencyProvider>{children}</CurrencyProvider>
+      </LocaleProvider>
     </ThemeProvider>
   );
 }

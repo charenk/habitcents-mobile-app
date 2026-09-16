@@ -13,6 +13,8 @@ import { Button } from '@/components/ui';
 import { useTheme } from '@/contexts/ThemeContext';
 import { radii, spacing, typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
+import type { Catalog } from '@/utils/i18n';
+import { useStrings } from '@/utils/i18n';
 import { BeatMedia, type BeatAsset } from './BeatMedia';
 
 // The scan beat was removed 2026-09-05 (decision 0009): the leak scan is
@@ -41,20 +43,25 @@ export type Beat = {
  * empty frame meanwhile rather than a mock-up, which is the entire point of
  * ADR 0026: beats show the real app or they show nothing.
  */
-export const BEATS: Beat[] = [
-  {
-    intent: 'track',
-    headline: strings.onboarding.beatTrackHeadline,
-    hook: strings.onboarding.beatTrackHook,
-    cta: strings.onboarding.beatTrackCta,
-  },
-  {
-    intent: 'break',
-    headline: strings.onboarding.beatBreakHeadline,
-    hook: strings.onboarding.beatBreakHook,
-    cta: strings.onboarding.beatBreakCta,
-  },
-];
+export function buildBeats(strings: Catalog): Beat[] {
+  return [
+    {
+      intent: 'track',
+      headline: strings.onboarding.beatTrackHeadline,
+      hook: strings.onboarding.beatTrackHook,
+      cta: strings.onboarding.beatTrackCta,
+    },
+    {
+      intent: 'break',
+      headline: strings.onboarding.beatBreakHeadline,
+      hook: strings.onboarding.beatBreakHook,
+      cta: strings.onboarding.beatBreakCta,
+    },
+  ];
+}
+
+/** English fixture, kept for the default prop shape and as a test seam. */
+export const BEATS: Beat[] = buildBeats(strings);
 
 type OnboardingCarouselProps = {
   /** Start the beat's REAL workflow. Never a preview of one. */
@@ -82,11 +89,14 @@ type OnboardingCarouselProps = {
  * paging and rubber-banding natively, and beats-as-recordings means there are
  * no scenes to animate.
  */
-export function OnboardingCarousel({ onPick, onSkip, beats = BEATS }: OnboardingCarouselProps) {
+export function OnboardingCarousel({ onPick, onSkip, beats }: OnboardingCarouselProps) {
   const theme = useTheme();
+  const strings = useStrings();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const styles = useMemo(() => createStyles(theme), [theme]);
+  const localizedBeats = useMemo(() => buildBeats(strings), [strings]);
+  const activeBeats = beats ?? localizedBeats;
   const [index, setIndex] = useState(0);
   const lastIndexRef = useRef(0);
 
@@ -94,12 +104,12 @@ export function OnboardingCarousel({ onPick, onSkip, beats = BEATS }: Onboarding
     (e: NativeSyntheticEvent<NativeScrollEvent>) => {
       if (width <= 0) return;
       const next = Math.round(e.nativeEvent.contentOffset.x / width);
-      const clamped = Math.max(0, Math.min(beats.length - 1, next));
+      const clamped = Math.max(0, Math.min(activeBeats.length - 1, next));
       if (clamped === lastIndexRef.current) return;
       lastIndexRef.current = clamped;
       setIndex(clamped);
     },
-    [width, beats.length]
+    [width, activeBeats.length]
   );
 
   return (
@@ -116,7 +126,7 @@ export function OnboardingCarousel({ onPick, onSkip, beats = BEATS }: Onboarding
         scrollEventThrottle={16}
         style={styles.pager}
       >
-        {beats.map((beat, i) => (
+        {activeBeats.map((beat, i) => (
           <View key={beat.intent} style={[styles.beat, { width }]}>
             <BeatMedia asset={beat.asset} accessibilityLabel={beat.headline} />
             <Text style={styles.headline} accessibilityRole="header">
@@ -127,7 +137,7 @@ export function OnboardingCarousel({ onPick, onSkip, beats = BEATS }: Onboarding
               label={beat.cta}
               onPress={() => onPick(beat.intent)}
               style={styles.cta}
-              accessibilityHint={strings.onboarding.beatProgress(i + 1, beats.length)}
+              accessibilityHint={strings.onboarding.beatProgress(i + 1, activeBeats.length)}
             />
           </View>
         ))}
@@ -138,9 +148,9 @@ export function OnboardingCarousel({ onPick, onSkip, beats = BEATS }: Onboarding
           style={styles.dots}
           accessible
           accessibilityRole="progressbar"
-          accessibilityLabel={strings.onboarding.beatProgress(index + 1, beats.length)}
+          accessibilityLabel={strings.onboarding.beatProgress(index + 1, activeBeats.length)}
         >
-          {beats.map((beat, i) => (
+          {activeBeats.map((beat, i) => (
             <View
               key={beat.intent}
               style={[styles.dot, i === index ? styles.dotActive : null]}

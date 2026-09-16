@@ -23,8 +23,8 @@ import { AddCategoryModal } from '@/components/AddCategoryModal';
 import { useEmptyStateAction } from '@/components/onboarding/useEmptyStateAction';
 import { layout, radii, spacing, typeScale, type AppTheme } from '@/constants/theme';
 import type { Category, CategoryIcon } from '@/types/category';
-import { strings } from '@/constants/strings';
 import { resolveExpenseCategory } from '@/utils/expenseCategory';
+import { useStrings } from '@/utils/i18n';
 import { hapticError, hapticWarning } from '@/utils/motion';
 import { useToast } from '@/components/ui/Toast';
 
@@ -37,6 +37,7 @@ export default function CategoriesScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const theme = useTheme();
+  const strings = useStrings();
   const { show } = useToast();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -70,7 +71,7 @@ export default function CategoriesScreen() {
     }
 
     return result;
-  }, [categories, getDefaultCategories, getCustomCategories]);
+  }, [categories, getDefaultCategories, getCustomCategories, strings]);
 
   // Empty state as an onboarding surface (PRD v3.1 sect 5). This screen owns
   // the add modal, so the action opens in place.
@@ -112,7 +113,7 @@ export default function CategoriesScreen() {
       return;
     }
     setDeleteConfirmVisible(false);
-  }, [deleteTarget, deleteCategory, show]);
+  }, [deleteTarget, deleteCategory, show, strings]);
 
   const handleCategoryPress = useCallback((category: Category) => {
     router.push(`/category/${category.id}`);
