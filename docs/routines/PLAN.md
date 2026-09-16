@@ -2009,6 +2009,39 @@ work, tracked elsewhere).
       (since run 27); items 3/5/6 clean fifteen runs (since run 32);
       the VALUE CHANGE sweep angle now re-checked nine times with no
       new hits.
+
+      **Run 48: confirmed nothing moved, re-verification only.** No
+      rebase needed (`origin/main` still `3890ba1`, unchanged since run
+      38, confirmed via `git fetch` plus `git merge-base --is-ancestor
+      origin/main HEAD`); no REVIEW FEEDBACK section pending (checked
+      the full HANDOFF.md history; the last entry is the 2026-09-12
+      runs 28-31 review, already closed out by run 32). Checked
+      DECISIONS NEEDED via the GitHub API directly: issue #139
+      unchanged since run 47's check, `updated_at` still
+      2026-09-15T12:24:23Z, both gates (8: locked vocabulary; 10:
+      paywall pricing/legal) still open, only comment remains the
+      2026-09-07 iPad-footer one, unrelated; item 11 (the cadence
+      recommendation) unchanged, already delivered to Charen by
+      core-worker's run 42, nothing new to add here. PR #134 still
+      open, draft, `mergeable_state: clean`, head `4c99ded` matching
+      this branch's own pre-run tip, one comment (the same iPad-footer
+      one), no reviews. Re-ran the run-38 `VALUE CHANGE` sweep an
+      eleventh time: `grep -n "VALUE CHANGE" constants/strings.ts`
+      still finds exactly the same 5 hits, all annotated "re-translated
+      run 38", none unresolved; the broader `needs re-translation`/
+      `STALE`/`TODO|FIXME.*translat` grep also still only the same
+      historical resolved-stale comments, no new unresolved marker. Per
+      run 36's own guidance, did not re-run items 3/5/6's exhausted
+      fresh-candidate sweeps again with no new method. Fresh `npm
+      install` (fresh container, no `node_modules`), `tsc --noEmit`
+      clean, full suite green (125/125, 1395/1395) on the first run, no
+      flake, exactly matching run 47's counts. No code change; one
+      commit (HANDOFF/PLAN update only). No push notification: nothing
+      moved since run 47's check, so an alert here would be duplicate
+      signal. Standing fact updated: item 4 blocked twenty-one runs now
+      (since run 27); items 3/5/6 clean sixteen runs (since run 32);
+      the VALUE CHANGE sweep angle now re-checked ten times with no new
+      hits.
 - [ ] leak / skip / kept / slip and the app's quotes are PRODUCT VOICE:
       never finalized by this routine. Provisional entries only, proposal
       table lives in HANDOFF.md's DECISIONS NEEDED until Charen picks.
