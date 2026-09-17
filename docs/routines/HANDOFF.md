@@ -1,5 +1,44 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 51, 2026-09-17: re-verify, no new work)
+
+`git rev-list --left-right --count origin/main...routine/core-p3` returned
+`0 57` at the start of this run (branch tip unchanged at `53a5b7c`, run
+50's own status commit); `origin/main` is still at `3890ba1`, unchanged
+since run 50, so no rebase needed. PR #132 re-confirmed via the API
+(`get`): `state: open`, `draft: false`, `merged: false`,
+`mergeable_state: clean`, head `53a5b7cedee508fa51c4916ee68433913d248236`
+(matches this branch's tip), base
+`3890ba173bdbe43778cf5501e30cbd7d8b01d320` (matches main's current tip),
+`updated_at` moved only to reflect the routine's own run-50 push (no
+external activity). Re-checked the routines-orchestrator's status board
+(mobile-app issue #139): still the thirteenth orchestrator run,
+`updated_at` unchanged at `2026-09-17T12:04:29Z`, content unchanged
+("complete since run 8... approved, nothing owed," blocked on the
+payments gate, decisions 2-4). The board still confirms this routine
+holds the sole escalation slot for item 11 (pause/thin worker cadence)
+with a 2026-09-18 fourth-day threshold; today is still 2026-09-17, so the
+threshold has not yet arrived and no escalation is due this run. No new
+REVIEW FEEDBACK section present (grepped the whole file; latest is still
+the 2026-09-11 orchestrator review of runs 15-25). Re-pulled
+`habitcents-ops`'s `PUNCHLIST.md` fresh (ops main fast-forwarded to
+`bb7c5ae`, that range only touched other routines' and the ADR-index
+merge's `docs/runs.log`/ADR files): RESUME marker byte-identical to what
+runs 38-50 read, still the 2026-09-10 interaction-audit wave plus the
+older zeroth-state items; none payments/legal, and the one
+core-p3-flagged line (leak finder dated entitlement) is still the same
+item already built and closed on this branch at run 8. Checklist in
+`PLAN.md` unchanged: 36 `[x]`/`(C)` items, the sole remaining `[ ]` is
+the legend line itself, not a real item.
+
+Fresh `npm install`, `npx tsc --noEmit` clean. `npm test`: 125 suites /
+1367 tests green on the first attempt, no flake this run, exactly
+matching run 50's ending count (no regression, no new code either side).
+
+No push notification this run: nothing has changed since run 50's own
+no-notification call, and the 2026-09-18 escalation threshold has not
+yet arrived (today is 2026-09-17).
+
 ## COMPLETE (run 50, 2026-09-17: re-verify, no new work)
 
 `git rev-list --left-right --count origin/main...routine/core-p3` returned
