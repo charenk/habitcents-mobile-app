@@ -1,5 +1,47 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 49, 2026-09-17: re-verify, no new work)
+
+`git rev-list --left-right --count origin/main...routine/core-p3` returned
+`0 55` at the start of this run (branch tip unchanged at `f4457c7`, run
+48's own status commit); `origin/main` is still at `3890ba1`, unchanged
+since run 48, so no rebase needed. PR #132 re-confirmed via the API
+(get/get_comments/get_reviews): `state: open`, `draft: false`,
+`merged: false`, `mergeable_state: clean`, head `f4457c704163488050df1
+4d19fcaba6a29479824` (matches this branch's tip), base
+`3890ba173bdbe43778cf5501e30cbd7d8b01d320` (matches main's current tip),
+0 comments, 0 reviews, unchanged since run 48. No new REVIEW FEEDBACK
+section present (grepped the whole file; latest is still the 2026-09-11
+orchestrator review of runs 15-25). Re-checked the routines-orchestrator's
+status board (mobile-app issue #139) directly via the API: still the
+twelfth run, `updated_at` unchanged at `2026-09-16T12:12:50Z`, content
+byte-identical to run 48's read: core-worker section still "complete
+since run 8... approved, nothing owed," blocked on the payments gate
+(decisions 2-4); item 11's pause/thin recommendation still the newest
+board content, delivered to Charen by run 42's push notification on
+2026-09-15, still unanswered. Today's date is still 2026-09-17, the same
+calendar day as run 48's own check, so this is still the third day
+unanswered, not yet the fourth day run 48 flagged as the threshold for a
+fresh escalation; ipad-worker's runs 50-51 (this same window) independently
+reached the same conclusion and deferred as well. Re-pulled
+`habitcents-ops`'s `PUNCHLIST.md` fresh (ops main unchanged at `4e8f6c5`):
+RESUME marker byte-identical to what runs 38-48 read, still the
+2026-09-10 interaction-audit wave plus the older zeroth-state items; none
+payments/legal, and the one core-p3-flagged line (leak finder dated
+entitlement) is still the same item already built and closed on this
+branch at run 8. Checklist in `PLAN.md` unchanged: 36 `[x]`/`(C)` items,
+the sole remaining `[ ]` is the legend line itself, not a real item.
+
+Fresh `npm install`, `npx tsc --noEmit` clean. `npm test`: 125 suites /
+1367 tests green on the first attempt, exactly matching run 48's ending
+count (no regression, no new code either side).
+
+No push notification this run: nothing has changed since run 48's own
+no-notification call, made earlier the same day. The standing
+decision-queue idleness and item 11's pause/thin recommendation remain
+already surfaced (run 42); the fourth-day threshold run 48 set for a
+fresh escalation has not yet been reached.
+
 ## COMPLETE (run 48, 2026-09-17: re-verify, no new work)
 
 `git rev-list --left-right --count origin/main...routine/core-p3` returned
