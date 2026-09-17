@@ -203,6 +203,95 @@ describe('the ghost exit is also the Android back handler', () => {
   });
 });
 
+/**
+ * The funnel's top (audit, 2026-09-17).
+ *
+ * `onboarding_started` fires inside completeStep('welcome'), which only runs
+ * once a beat is PICKED, so it lands at the same instant as
+ * onboarding_intent_selected and there was no event at all for the carousel
+ * being seen. That left the pick rate without a denominator and made the second
+ * beat, which sits entirely below the fold behind an unprompted swipe,
+ * impossible to tell apart from one nobody wanted.
+ */
+describe('the funnel has a top', () => {
+  function events(name: string) {
+    return trackMock.mock.calls.filter(([e]) => e === name);
+  }
+
+  // Page the horizontal pager by offset. The x is deliberately far past the
+  // last beat rather than a computed width: the component clamps to
+  // beats.length - 1, so this selects the final beat without the test needing
+  // to know the window width.
+  // momentumScrollEnd, not scroll: the pager settles on a beat rather than
+  // reporting every frame of the drag, which is the whole reason a mid-swipe
+  // pixel offset never counts as a view.
+  function pageTo(view: Awaited<ReturnType<typeof render>>, x: number) {
+    fireEvent(view.getByTestId('onboarding-pager'), 'momentumScrollEnd', {
+      nativeEvent: { contentOffset: { x, y: 0 } },
+    });
+  }
+
+  it('reports the carousel being shown, before anything is picked', async () => {
+    await renderCarousel();
+
+    expect(events('onboarding_carousel_shown')).toHaveLength(1);
+    expect(events('onboarding_carousel_shown')[0][1]).toEqual({});
+    // The distinction the event exists for: nothing has been chosen yet.
+    expect(events('onboarding_started')).toHaveLength(0);
+    expect(events('onboarding_intent_selected')).toHaveLength(0);
+  });
+
+  // The denominator has to survive the outcome it is measuring, including the
+  // one where the user leaves immediately.
+  it('reports it even when the user skips straight out', async () => {
+    const view = await renderCarousel();
+
+    await act(async () => {
+      fireEvent.press(view.getByRole('button', { name: strings.onboarding.skipForNow }));
+    });
+
+    expect(events('onboarding_carousel_shown')).toHaveLength(1);
+  });
+
+  it('counts the first beat as viewed on arrival, not on a swipe', async () => {
+    await renderCarousel();
+
+    const viewed = events('onboarding_beat_viewed');
+    expect(viewed).toHaveLength(1);
+    expect(viewed[0][1]).toEqual({ intent: 'track', index: 0 });
+  });
+
+  it('counts the second beat only once it is actually paged to', async () => {
+    const view = await renderCarousel();
+
+    expect(events('onboarding_beat_viewed')).toHaveLength(1);
+
+    await act(async () => {
+      pageTo(view, 100000);
+    });
+
+    expect(events('onboarding_beat_viewed').map(([, p]) => p)).toEqual([
+      { intent: 'track', index: 0 },
+      { intent: 'break', index: 1 },
+    ]);
+  });
+
+  // "Seen once" is the funnel question, so swiping back and forth must not
+  // inflate either beat's count.
+  it('counts each beat once however often it is paged back to', async () => {
+    const view = await renderCarousel();
+
+    await act(async () => {
+      pageTo(view, 100000);
+      pageTo(view, 0);
+      pageTo(view, 100000);
+      pageTo(view, 0);
+    });
+
+    expect(events('onboarding_beat_viewed')).toHaveLength(2);
+  });
+});
+
 describe('the rules that do not bend', () => {
   it('never auto-advances', async () => {
     // Fake timers BEFORE the render, not after. Installed afterwards, any
