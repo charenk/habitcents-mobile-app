@@ -2,7 +2,41 @@
 
 ## Status
 
-In progress. Run 51: no rebase needed (`origin/main` still `3890ba1`,
+In progress. Run 52: no rebase needed (`origin/main` still `3890ba1`,
+unchanged since run 38, confirmed via `git fetch` plus a clean rebase
+onto `origin/main` with no commits to replay). No REVIEW FEEDBACK
+pending (checked the full HANDOFF.md history; the last entry is the
+2026-09-12 runs 28-31 review, already closed out by run 32). Checked
+DECISIONS NEEDED via the GitHub API directly against issue #139: now the
+thirteenth orchestrator run, `updated_at` 2026-09-17T12:04:29Z, both
+gates this branch waits on (8: locked vocabulary; 10: paywall
+pricing/legal) still open and unanswered, the board's own text now calls
+the queue "10 days untouched." No new comment on #139 beyond the
+unrelated 2026-09-07 iPad-footer one. Item 11 (pause or thin the worker
+routines while blocked) remains unanswered since core-worker's run 42
+push notification on 2026-09-15; the board now records core-worker
+holding a fourth-day escalation threshold for 2026-09-18 if nothing
+lands by then, so this worker adds nothing new there (a duplicate
+escalation is explicitly not this routine's job). PR #134 still open,
+draft, `mergeable_state: clean`, head `7c562f9` matching this branch's
+own pre-run tip, still one comment (the iPad-footer one), no reviews.
+Re-ran the run-38 `VALUE CHANGE` sweep a fifteenth time: `grep -n "VALUE
+CHANGE" constants/strings.ts` still finds exactly the same 5 hits, all
+annotated "re-translated run 38", none unresolved; also re-ran the
+broader `needs re-translation`/`STALE`/`TODO|FIXME.*translat` grep,
+zero matches at all this run (no historical resolved hits surfaced
+either, consistent with a clean state). Items 3/5/6 stayed exhausted (a
+further re-check with no new method would not be expected to find
+anything, per run 36's guidance, and did not). `npm install` needed
+first (fresh container, no `node_modules`). One commit (HANDOFF/PLAN
+update only); `tsc --noEmit` clean, full suite green (125/125,
+1395/1395) on the first run, no flake, exactly matching run 51's counts.
+No push notification: nothing moved since run 51's check (same two open
+gates, item 11 still unanswered but already delivered once and now
+explicitly reserved for core-worker's day-4 escalation), so an alert
+here would be duplicate signal, not new signal.
+
+Run 51: no rebase needed (`origin/main` still `3890ba1`,
 unchanged since run 38, confirmed via `git fetch` plus `git merge-base
 --is-ancestor origin/main HEAD`). No REVIEW FEEDBACK pending (checked
 the full HANDOFF.md history; the last entry is the 2026-09-12 runs
@@ -1827,6 +1861,28 @@ landing here should keep doing exactly this (DECISIONS NEEDED check via
 the API, the VALUE CHANGE grep, tsc/test verification, logged as `ok`)
 until either decision moves, a new main-side copy edit produces a fresh
 VALUE CHANGE hit, or the cadence itself changes.
+
+**Runs 51-52 each re-ran the same checks, still nothing new.** Issue
+#139 advanced from the twelfth to the thirteenth orchestrator run
+between the two (`updated_at` now 2026-09-17T12:04:29Z), but neither
+gate 8 nor gate 10 moved; the board now calls the queue "10 days
+untouched" and records core-worker holding the one sanctioned
+escalation slot for a 2026-09-18 fourth-day threshold, so this worker's
+own item-11 note adds nothing further. PR #134 unchanged apart from its
+head SHA advancing with each run's own status commit. The VALUE CHANGE
+grep stayed clean both runs (now re-checked fifteen times total since
+run 38's fix, zero new hits); run 52's broader stale-marker grep came
+back with zero matches of any kind for the first time (previously it
+still surfaced old resolved comments). Standing counts as of run 52:
+item 4 blocked twenty-five runs (since run 27); items 3/5/6 clean twenty
+runs (since run 32). A future run landing here should keep doing exactly
+this (DECISIONS NEEDED check via the API, the VALUE CHANGE grep,
+tsc/test verification, logged as `ok`) until either decision moves, a
+new main-side copy edit produces a fresh VALUE CHANGE hit, or the
+cadence itself changes. If core-worker's 2026-09-18 escalation fires and
+Charen answers gate 8 or 10, the next run here should treat that as
+REVIEW-FEEDBACK-equivalent priority work: check DECISIONS NEEDED first,
+before any re-verification sweep.
 
 ## Blockers
 

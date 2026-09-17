@@ -2127,6 +2127,44 @@ work, tracked elsewhere).
       4 blocked twenty-four runs now (since run 27); items 3/5/6 clean
       nineteen runs (since run 32); the VALUE CHANGE sweep angle now
       re-checked thirteen times with no new hits.
+
+      **Run 52: confirmed nothing moved, re-verification only.** No
+      rebase needed (`origin/main` still `3890ba1`, unchanged since run
+      38, confirmed via `git fetch` plus a clean rebase onto
+      `origin/main` with no commits to replay); no REVIEW FEEDBACK
+      section pending (last entry 2026-09-12, runs 28-31, already closed
+      out by run 32). Checked DECISIONS NEEDED via the GitHub API
+      directly against issue #139: now the thirteenth orchestrator run
+      (`updated_at` 2026-09-17T12:04:29Z), both gates (8: locked
+      vocabulary; 10: paywall pricing/legal) still open and unanswered,
+      only comment remains the 2026-09-07 iPad-footer one, unrelated;
+      the board now calls the queue "10 days untouched." Item 11 (the
+      cadence-pause recommendation) is unchanged: still unanswered since
+      its 2026-09-15 delivery, and the board records core-worker holding
+      the one sanctioned escalation slot for a 2026-09-18 fourth-day
+      threshold, so this worker adds nothing there (duplicate escalation
+      is explicitly not this routine's to send). PR #134 still open,
+      draft, `mergeable_state: clean`, head `7c562f9` matching this
+      branch's own pre-run tip, one comment (the same iPad-footer one),
+      no reviews. Re-ran the run-38 `VALUE CHANGE` sweep a fifteenth
+      time: `grep -n "VALUE CHANGE" constants/strings.ts` still finds
+      exactly the same 5 hits, all already resolved; the broader
+      `needs re-translation`/`STALE`/`TODO|FIXME.*translat` grep across
+      `constants/strings.ts` and `locales/` came back with zero matches
+      (no hits at all this run, not even historical resolved ones,
+      consistent with a clean state). Per run 36's guidance, did not
+      re-run items 3/5/6's exhausted fresh-candidate sweeps again with no
+      new method. Fresh `npm install` needed first (fresh container, no
+      `node_modules`); `tsc --noEmit` clean, full suite green (125/125,
+      1395/1395) on the first run, no flake, exactly matching run 51's
+      counts. No code change; one commit (HANDOFF/PLAN update only). No
+      push notification: nothing moved since run 51's check (same two
+      open gates, item 11 still unanswered but already delivered once
+      and now explicitly reserved for core-worker's day-4 escalation), so
+      an alert here would be duplicate signal, not new signal. Standing
+      fact updated: item 4 blocked twenty-five runs now (since run 27);
+      items 3/5/6 clean twenty runs (since run 32); the VALUE CHANGE
+      sweep angle now re-checked fourteen times with no new hits.
 - [ ] leak / skip / kept / slip and the app's quotes are PRODUCT VOICE:
       never finalized by this routine. Provisional entries only, proposal
       table lives in HANDOFF.md's DECISIONS NEEDED until Charen picks.
