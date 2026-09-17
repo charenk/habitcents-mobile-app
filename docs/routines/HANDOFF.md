@@ -1,5 +1,47 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 48, 2026-09-17: re-verify, no new work)
+
+`git rev-list --left-right --count origin/main...routine/core-p3` returned
+`0 54` at the start of this run (branch tip unchanged at `241bd7d`, run
+47's own commit); `origin/main` is still at `3890ba1`, unchanged since run
+47, so no rebase needed. PR #132 re-confirmed via the API: `state: open`,
+`draft: false`, `merged: false`, `mergeable_state: clean`, head
+`241bd7d1c11a5f7b336ec79a28d18c8779451bf7` (matches this branch's tip),
+base `3890ba173bdbe43778cf5501e30cbd7d8b01d320` (matches main's current
+tip), 0 comments, 0 reviews, unchanged since run 47. No new REVIEW
+FEEDBACK section present (latest is still the 2026-09-11 orchestrator
+review of runs 15-25). Re-checked the routines-orchestrator's status
+board (mobile-app issue #139, still the twelfth run, dated 2026-09-16,
+no thirteenth run posted yet): content unchanged in substance from run
+47's read (core-worker still "complete since run 8... approved, nothing
+owed," blocked on the payments gate, decisions 2-4). Issue #139's only
+comment is dated 2026-09-07 (decision 1, already closed); item 11's
+pause/thin recommendation, pushed to Charen directly by run 42's
+notification on 2026-09-15, is still unanswered as of this run, now
+unanswered for a third day running. Re-pulled `habitcents-ops`'s
+`PUNCHLIST.md` fresh (ops main unchanged, already up to date at
+`4e8f6c5`): RESUME marker byte-identical to what runs 38-47 read, still
+the 2026-09-10 interaction-audit wave plus the older zeroth-state items;
+none payments/legal, and the one core-p3-flagged line (leak finder dated
+entitlement) is still the same item already built and closed on this
+branch at run 8. Checklist in `PLAN.md` unchanged: 36 `[x]`/`(C)` items,
+the sole remaining `[ ]` is the legend line itself, not a real item.
+
+Fresh `npm install`, `npx tsc --noEmit` clean. `npm test`: 125 suites /
+1367 tests green on the first attempt, no flake this run, exactly
+matching run 47's ending count (no regression, no new code either side).
+
+No push notification this run: nothing has changed since run 47's own
+no-notification call. The standing decision-queue idleness and item 11's
+pause/thin recommendation were already surfaced (run 42), and nothing in
+the queue's content, the PR, the status board, or the PUNCHLIST RESUME
+marker has moved since. Item 11 is now unanswered for its third day; if
+it remains unanswered past a fourth day (or if any new drift appears),
+the next run should consider a fresh, distinctly-worded escalation rather
+than staying silent indefinitely, since the underlying cost-waste concern
+compounds even though the facts are unchanged.
+
 ## COMPLETE (run 47, 2026-09-16: re-verify, no new work)
 
 `git rev-list --left-right --count origin/main...routine/core-p3` returned
