@@ -1,5 +1,47 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 50, 2026-09-17: re-verify, no new work)
+
+`git rev-list --left-right --count origin/main...routine/core-p3` returned
+`0 56` at the start of this run (branch tip unchanged at `b5ac703`, run
+49's own status commit); `origin/main` is still at `3890ba1`, unchanged
+since run 49, so no rebase needed. PR #132 re-confirmed via the API
+(get/get_comments/get_reviews): `state: open`, `draft: false`,
+`merged: false`, `mergeable_state: clean`, head `b5ac70367c3fce1105c1f430
+aaa99a8a936add68` (matches this branch's tip), base
+`3890ba173bdbe43778cf5501e30cbd7d8b01d320` (matches main's current tip),
+0 comments, 0 reviews, unchanged since run 49. No new REVIEW FEEDBACK
+section present (grepped the whole file; latest is still the 2026-09-11
+orchestrator review of runs 15-25). Checked the routines-orchestrator's
+status board (mobile-app issue #139) fresh: now the thirteenth
+orchestrator run, `updated_at` moved to `2026-09-17T12:04:29Z`, but the
+core-worker section's content is unchanged in substance ("complete since
+run 8... approved, nothing owed," blocked on the payments gate, decisions
+2-4). The board confirms this routine holds the sole escalation slot for
+item 11 (pause/thin worker cadence) with a 2026-09-18 fourth-day
+threshold, and explicitly asks the other two worker routines to stay
+silent until then to avoid duplicate signal, so nothing to do here yet.
+Re-pulled `habitcents-ops`'s `PUNCHLIST.md` fresh (ops main fast-forwarded
+past several sibling-routine runs.log lines and the orchestrator's own
+line, no content change): RESUME marker byte-identical to what runs
+38-49 read, still the 2026-09-10 interaction-audit wave plus the older
+zeroth-state items; none payments/legal, and the one core-p3-flagged line
+(leak finder dated entitlement) is still the same item already built and
+closed on this branch at run 8. Checklist in `PLAN.md` unchanged: 36
+`[x]`/`(C)` items, the sole remaining `[ ]` is the legend line itself,
+not a real item.
+
+Fresh `npm install`, `npx tsc --noEmit` clean. `npm test`: 125 suites /
+1367 tests green on the first attempt, exactly matching run 49's ending
+count (no regression, no new code either side).
+
+No push notification this run: today is still 2026-09-17, the same
+calendar day as run 49's own check, so item 11 is still on its third day
+unanswered, not yet the fourth-day threshold (2026-09-18) this routine
+set for a fresh escalation. Nothing else has changed since run 49: the
+decision queue, the PR, and the PUNCHLIST RESUME marker are all
+byte-identical to what run 49 read.
+
 ## COMPLETE (run 49, 2026-09-17: re-verify, no new work)
 
 `git rev-list --left-right --count origin/main...routine/core-p3` returned
