@@ -67,6 +67,33 @@ device pass is separate and additional to that one, not a substitute.
 
 ## Status
 
+Run 50. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 33's
+check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`3890ba1`), so no rebase and no new regression surface this run. Fresh
+`npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass, no
+flake: 122 suites / 1335 tests, zero drift from runs 33-49. PR #133:
+re-checked via `get`/`get_comments`/`get_reviews`/`get_check_runs`, still
+open, not draft, `mergeable_state: clean`, base SHA `3890ba1` (main's tip,
+matching exactly), head `32b0d79` (run 49's own status commit, pre-push),
+no new comments or reviews, `verify` check green (completed 20:09-20:11
+UTC on 2026-09-16, this same head). Issue #139 (doubling as the Routine
+status board) re-checked via `get`/`get_comments`: still the same twelfth
+orchestrator entry runs 47-49 already saw (`updated_at` unchanged at
+2026-09-16T12:12:50Z), ipad-worker section still "approved, nothing
+owed," blocker still the device pass gated on PR #133 merging behind PR
+#132's payments gate (decision 6). Item 11 (pause or thin the worker
+routines while all three are blocked or complete) was already pushed to
+Charen directly by core-worker run 42's notification on 2026-09-15 and
+the board says it still awaits action; this routine is not the one that
+raised it and re-notifying here would just be a duplicate, so no push
+notification this run either. Re-verified item 7 (`app.json` orientation
+still `"portrait"`, `supportsTablet` still `true`). This HANDOFF update is
+the only change this run; no production code or plan content changed. No
+push notification: nothing new for Charen; this is the twenty-second
+consecutive run (29-50) at zero drift while the device-pass blocker stays
+outside this routine's reach.
+
 Run 49. Verified per this file's own COMPLETE instruction: plan fully
 checked, nothing new to do. `origin/main` has not moved since run 33's
 check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
