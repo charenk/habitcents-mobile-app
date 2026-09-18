@@ -67,6 +67,46 @@ device pass is separate and additional to that one, not a substitute.
 
 ## Status
 
+Run 55. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 33's
+check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`3890ba1`), so no rebase and no new regression surface this run. Fresh
+`npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass, no
+flake, locally: 122 suites / 1335 tests, zero drift from runs 33-54.
+**PR #133's `verify` check failed for the first time in 26 runs** (job
+105455253405, commit `d90c96c`, run 54's own pre-push head): one assertion
+in `__tests__/habitDetection.test.ts` (`spanDays` expected `0`, got
+`1.157e-8`, i.e. 1ms of CI-runner jitter between the fixture's five
+separate `new Date()` calls, since `spanDays` at `utils/habitDetection.ts:
+482-484` is a raw millisecond-difference float with no flooring). Confirmed
+via `get_files` that neither `utils/habitDetection.ts` nor its test file
+are touched by this branch's diff (layout/width-cap only): not this PR's
+failure to fix. `rerun_failed_jobs` returned 403 (no permission to re-run
+the job directly); a fresh local full-suite run on the same commit passed
+clean (122/122, including this file), which is the flake evidence available
+without that permission. Per the drive-to-green rules, a fix for code
+outside this PR's scope does not get pushed into it: posted one PR comment
+(https://github.com/charenk/habitcents-mobile-app/pull/133#issuecomment-5727178382)
+naming the failure, the root cause, and a proposed patch (floor `spanDays`
+to whole days, or give `pizzahutCluster()` one shared timestamp instead of
+five wall-clock ones) for whoever owns that file. `mergeable_state` is now
+`unstable` (was `clean`) for the same reason, base SHA still `3890ba1`
+(main's tip, unchanged), head still `d90c96c`. No new comments or reviews
+otherwise. Issue #139 (Routine status board) re-checked via `get`/
+`get_comments`: unchanged since run 54's check (`updated_at` still
+`2026-09-17T12:04:29Z`, still the thirteenth orchestrator entry), ipad-
+worker section still "approved, nothing owed," blocker still the device
+pass gated on PR #133 merging behind PR #132's payments gate (decision 6).
+Decision queue still reads 10 days untouched as of the board's last write;
+today (2026-09-18) is core-worker's own fourth-day escalation threshold,
+which is core-worker's to send, not this routine's, so no push notification
+for that. Re-verified item 7 (`app.json` orientation still `"portrait"`,
+`supportsTablet` still `true`). This HANDOFF update and the PR comment above
+are the only changes this run; no production code or plan content changed.
+No push notification: the CI failure is diagnosed, reported on the PR, and
+not this routine's code to fix; nothing else is new for Charen beyond what
+the board and core-worker's escalation slot already cover.
+
 Run 54. Verified per this file's own COMPLETE instruction: plan fully
 checked, nothing new to do. `origin/main` has not moved since run 33's
 check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
