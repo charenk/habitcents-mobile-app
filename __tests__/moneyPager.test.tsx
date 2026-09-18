@@ -19,6 +19,9 @@ jest.mock('@/utils/analytics', () => ({ track: jest.fn() }));
 const mockPush = jest.fn();
 jest.mock('expo-router', () => ({
   useRouter: () => ({ push: mockPush }),
+  // Money reads deep-link params since the bills door (arc v2); no params
+  // in these suites, which is exactly a plain open.
+  useLocalSearchParams: () => ({}),
 }));
 
 import React from 'react';
