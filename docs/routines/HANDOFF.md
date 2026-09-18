@@ -1,5 +1,63 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 54, 2026-09-18: re-verify, no new work)
+
+`git rev-list --left-right --count origin/main...routine/core-p3` returned
+`0 60` at the start of this run (branch tip unchanged at `5715b92`, run
+53's own status commit); `origin/main` is still at `3890ba1`, unchanged
+since run 53, so no rebase needed. PR #132 re-confirmed via the API
+(`get`): `state: open`, `draft: false`, `merged: false`,
+`mergeable_state: clean`, head `5715b922eb842c89ba469d05d6eef03dfda60368`
+(matches this branch's tip), base
+`3890ba173bdbe43778cf5501e30cbd7d8b01d320` (matches main's current tip),
+`updated_at` at `2026-09-18T10:11:51Z` reflects only run 53's own push, no
+external activity. No new REVIEW FEEDBACK section present (grepped the
+whole file; latest is still the 2026-09-11 orchestrator review of runs
+15-25). Re-checked the routines-orchestrator's status board (mobile-app
+issue #139): now the fourteenth orchestrator run, `updated_at` moved to
+`2026-09-18T12:06:23Z`. Core-worker's own section is unchanged in substance
+("complete since run 8... approved, nothing owed," blocked on the payments
+gate, decisions 2-4). Two items are new on the board since run 53's read:
+item 9 (ops repo PRs #41/#42, ADRs 0043/0044, sit green with no merger for
+ten days; a process-gap question about who merges ops PRs) and item 12 (a
+newly diagnosed flaky test in `main`-owned code, `__tests__/habitDetection
+.test.ts`, caused by `spanDays` in `utils/habitDetection.ts` doing a raw
+millisecond-difference float against a fixture that calls `new Date()` five
+separate times; it cost PR #133 one red check on 2026-09-18, cleared on the
+next push, with a one-line patch already written up in that PR's comment
+thread). Neither is core-p3-flagged or actionable from this branch: item 9
+is an ops-repo merge-authority question that has nothing to do with P3/P4
+work, and item 12's own board text says explicitly "this is main-owned
+code, so no routine branch will fix it," proposing a `fix/*` session or
+folding it into the next session that touches `habitDetection.ts` instead.
+The board also states outright, in its own opening paragraph, that no
+further notifications are wanted from any stream until something lands
+("Core-worker sent the sanctioned item 11 escalation on 2026-09-18 as
+scheduled; no further notifications from any stream until something
+lands"), so this run does not send one even though two new items appeared,
+since neither is new information Charen doesn't already have via the board
+and neither needs this routine's action. Re-pulled `habitcents-ops`'s
+`PUNCHLIST.md` fresh (ops main fast-forwarded from `4cec000` to `667df0e`;
+that range added ADRs 0040-0042 index entries and sibling-routine/
+orchestrator `docs/runs.log` lines only, no PUNCHLIST content change):
+RESUME marker byte-identical to what runs 38-53 read, still the 2026-09-10
+interaction-audit wave plus the older zeroth-state items; none
+payments/legal, and the one core-p3-flagged line (leak finder dated
+entitlement) is still the same item already built and closed on this
+branch at run 8. Checklist in `PLAN.md` unchanged: 36 `[x]`/`(C)` items,
+the sole remaining `[ ]` is the legend line itself, not a real item.
+
+Fresh `npm install`, `npx tsc --noEmit` clean. `npm test`: 125 suites /
+1367 tests green on the first attempt, no flake this run, exactly matching
+run 53's ending count (no regression, no new code either side).
+
+No push notification this run: nothing changed that is either new to
+Charen or actionable by this routine. Item 11's fourth-day escalation was
+already sent today by run 52; the two new board items (9, 12) are process/
+main-owned matters outside this routine's remit, already visible to Charen
+on the status board, and the board itself asked every stream to stay quiet
+until something lands.
+
 ## COMPLETE (run 53, 2026-09-18: re-verify, no new work)
 
 `git rev-list --left-right --count origin/main...routine/core-p3` returned
