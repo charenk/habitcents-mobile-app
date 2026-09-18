@@ -7,11 +7,13 @@
  * rather than dropped. That contract is the acquisition metric for the whole
  * redesign, which is why it survives the screen it was written against.
  *
- * Two beats since decision 0009, not three: the scan beat is out while the
- * leak scan is dormant behind SCAN_FLOW_ENABLED, because a beat whose CTA
- * cannot start its real workflow is the one thing ADR 0026 forbids. What that
- * removal must not break is pinned below: nothing routes to /leak-scan, no
- * scan copy renders, and the counts the pager derives all follow.
+ * Three beats since arc v2 (2026-09-18, onboarding story arc canvas), in
+ * hook-first order: break, track, bills. The scan beat stays out while the
+ * leak scan is dormant behind SCAN_FLOW_ENABLED (decision 0009), because a
+ * beat whose CTA cannot start its real workflow is the one thing ADR 0026
+ * forbids; bills passes that rule by opening the real add-bill sheet on
+ * Money > Upcoming. Nothing routing to /leak-scan is still pinned below, and
+ * the counts the pager derives all follow beats.length.
  *
  * Carried over: each intent is reachable by accessible name, fires
  * onboarding_intent_selected with its own intent, REPLACES into Today with its
@@ -36,6 +38,7 @@ jest.mock('@/utils/analytics', () => ({ track: jest.fn() }));
 
 import React from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Dimensions } from 'react-native';
 import { act, cleanup, fireEvent, render } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '@/contexts/ThemeContext';
@@ -93,13 +96,15 @@ function selectedIntents() {
 }
 
 describe('the beats', () => {
-  it('offers both at once, each with its own CTA', async () => {
+  it('offers all three, each with its own CTA', async () => {
     const view = await renderCarousel();
 
-    expect(view.getByText(strings.onboarding.beatTrackHeadline)).toBeTruthy();
     expect(view.getByText(strings.onboarding.beatBreakHeadline)).toBeTruthy();
-    expect(view.getByRole('button', { name: strings.onboarding.beatTrackCta })).toBeTruthy();
+    expect(view.getByText(strings.onboarding.beatTrackHeadline)).toBeTruthy();
+    expect(view.getByText(strings.onboarding.beatBillsHeadline)).toBeTruthy();
     expect(view.getByRole('button', { name: strings.onboarding.beatBreakCta })).toBeTruthy();
+    expect(view.getByRole('button', { name: strings.onboarding.beatTrackCta })).toBeTruthy();
+    expect(view.getByRole('button', { name: strings.onboarding.beatBillsCta })).toBeTruthy();
   });
 
   // Carried from the retired welcomeHero suite: each beat headline is a
@@ -110,8 +115,9 @@ describe('the beats', () => {
     const headers = view.getAllByRole('header').map((h) => h.props.children);
     expect(headers).toEqual(
       expect.arrayContaining([
-        strings.onboarding.beatTrackHeadline,
         strings.onboarding.beatBreakHeadline,
+        strings.onboarding.beatTrackHeadline,
+        strings.onboarding.beatBillsHeadline,
       ])
     );
   });
@@ -137,6 +143,20 @@ describe('the beats', () => {
 
     expect(selectedIntents()).toEqual(['break']);
     expect(mockReplace).toHaveBeenCalledWith('/(tabs)?view=kept&breakEntry=1');
+    expect(mockPush).not.toHaveBeenCalled();
+  });
+
+  // Arc v2's third door: the one beat that lands somewhere other than Today,
+  // because the add-bill sheet's real home is Money > Upcoming.
+  it('sends the bills beat into Money with the billsEntry param, replacing not pushing', async () => {
+    const view = await renderCarousel();
+
+    await act(async () => {
+      fireEvent.press(view.getByRole('button', { name: strings.onboarding.beatBillsCta }));
+    });
+
+    expect(selectedIntents()).toEqual(['bills']);
+    expect(mockReplace).toHaveBeenCalledWith('/(tabs)/money?view=upcoming&billsEntry=1');
     expect(mockPush).not.toHaveBeenCalled();
   });
 
@@ -258,37 +278,42 @@ describe('the funnel has a top', () => {
 
     const viewed = events('onboarding_beat_viewed');
     expect(viewed).toHaveLength(1);
-    expect(viewed[0][1]).toEqual({ intent: 'track', index: 0 });
+    expect(viewed[0][1]).toEqual({ intent: 'break', index: 0 });
   });
 
-  it('counts the second beat only once it is actually paged to', async () => {
+  it('counts the later beats only once each is actually paged to', async () => {
     const view = await renderCarousel();
+    const { width } = Dimensions.get('window');
 
     expect(events('onboarding_beat_viewed')).toHaveLength(1);
 
     await act(async () => {
+      pageTo(view, width);
       pageTo(view, 100000);
     });
 
     expect(events('onboarding_beat_viewed').map(([, p]) => p)).toEqual([
-      { intent: 'track', index: 0 },
-      { intent: 'break', index: 1 },
+      { intent: 'break', index: 0 },
+      { intent: 'track', index: 1 },
+      { intent: 'bills', index: 2 },
     ]);
   });
 
   // "Seen once" is the funnel question, so swiping back and forth must not
-  // inflate either beat's count.
+  // inflate any beat's count.
   it('counts each beat once however often it is paged back to', async () => {
     const view = await renderCarousel();
+    const { width } = Dimensions.get('window');
 
     await act(async () => {
-      pageTo(view, 100000);
+      pageTo(view, width);
       pageTo(view, 0);
+      pageTo(view, width);
       pageTo(view, 100000);
       pageTo(view, 0);
     });
 
-    expect(events('onboarding_beat_viewed')).toHaveLength(2);
+    expect(events('onboarding_beat_viewed')).toHaveLength(3);
   });
 });
 
@@ -309,7 +334,7 @@ describe('the rules that do not bend', () => {
         await jest.advanceTimersByTimeAsync(30000);
       });
 
-      expect(view.getByLabelText(strings.onboarding.beatProgress(1, 2))).toBeTruthy();
+      expect(view.getByLabelText(strings.onboarding.beatProgress(1, 3))).toBeTruthy();
     } finally {
       jest.useRealTimers();
     }
@@ -327,8 +352,8 @@ describe('the rules that do not bend', () => {
   it('shows an honest empty frame rather than a mock-up until captures land', async () => {
     const view = await renderCarousel();
 
-    expect(view.getAllByTestId('beat-media-pending')).toHaveLength(2);
-    expect(view.getAllByText(strings.onboarding.beatMediaPending)).toHaveLength(2);
+    expect(view.getAllByTestId('beat-media-pending')).toHaveLength(3);
+    expect(view.getAllByText(strings.onboarding.beatMediaPending)).toHaveLength(3);
   });
 
   it('invents no totals on the way in', async () => {

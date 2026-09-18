@@ -20,7 +20,9 @@ import { BeatMedia, type BeatAsset } from './BeatMedia';
 // real workflow is the one thing ADR 0026 forbids. The analytics enum keeps
 // its 'scan' member (utils/analytics.ts) so the funnel stays readable across
 // the change; it simply stops being fired.
-export type BeatIntent = 'track' | 'break';
+// 'bills' joined with arc v2 (2026-09-18): its CTA opens the real add-bill
+// sheet on Money > Upcoming, so it passes the same rule.
+export type BeatIntent = 'track' | 'break' | 'bills';
 
 export type Beat = {
   intent: BeatIntent;
@@ -31,10 +33,13 @@ export type Beat = {
 };
 
 /**
- * The beats, in the order the intent picker used, so the funnel stays
- * comparable across the change. Two since decision 0009 (the scan beat sat
- * between these two); every count in this file reads beats.length, so the
- * dots, the paging and the "step n of total" hint all followed on their own.
+ * The beats, hook-first (arc v2, onboarding story arc canvas, Charen
+ * 2026-09-18): the differentiated promise leads, the mechanism follows, bills
+ * close. This deliberately ends the old order's funnel comparability; the
+ * carousel-level events shipped 2026-09-17 are the new baseline, and
+ * beat-position versus completion is the question they exist to answer.
+ * Every count in this file reads beats.length, so the dots, the paging and
+ * the "step n of total" hint all follow on their own.
  *
  * `asset` is absent until the captures land (see
  * design/captures/onboarding-beats/RUNBOOK.md). BeatMedia renders an honest
@@ -43,16 +48,22 @@ export type Beat = {
  */
 export const BEATS: Beat[] = [
   {
+    intent: 'break',
+    headline: strings.onboarding.beatBreakHeadline,
+    hook: strings.onboarding.beatBreakHook,
+    cta: strings.onboarding.beatBreakCta,
+  },
+  {
     intent: 'track',
     headline: strings.onboarding.beatTrackHeadline,
     hook: strings.onboarding.beatTrackHook,
     cta: strings.onboarding.beatTrackCta,
   },
   {
-    intent: 'break',
-    headline: strings.onboarding.beatBreakHeadline,
-    hook: strings.onboarding.beatBreakHook,
-    cta: strings.onboarding.beatBreakCta,
+    intent: 'bills',
+    headline: strings.onboarding.beatBillsHeadline,
+    hook: strings.onboarding.beatBillsHook,
+    cta: strings.onboarding.beatBillsCta,
   },
 ];
 

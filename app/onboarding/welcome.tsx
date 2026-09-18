@@ -13,6 +13,7 @@ import { track } from '@/utils/analytics';
 const DOOR_FOR_INTENT: Record<BeatIntent, 'fresh' | 'statements'> = {
   track: 'fresh',
   break: 'fresh',
+  bills: 'fresh',
 };
 
 /**
@@ -120,6 +121,13 @@ export default function OnboardingWelcomeScreen() {
         // the sheet resolves still resumes at this carousel.
         if (intent === 'track') {
           router.replace('/(tabs)?view=spent&firstLog=1');
+          return;
+        }
+        if (intent === 'bills') {
+          // The one door that lands somewhere other than Today: the add-bill
+          // sheet lives on Money > Upcoming, and opening it there keeps the
+          // rule that a beat starts its real workflow in its real home.
+          router.replace('/(tabs)/money?view=upcoming&billsEntry=1');
           return;
         }
         router.replace('/(tabs)?view=kept&breakEntry=1');

@@ -11,12 +11,21 @@ showing something fake.
 
 ## What to produce
 
-Two beats, each needing two files:
+Three beats (arc v2, hook-first order, onboarding story arc canvas,
+Charen 2026-09-18), each needing two files:
 
 | Beat | Intent | Records | Files |
 |---|---|---|---|
-| 1 | track | Logging one expense end to end | `beat-track.mp4`, `beat-track.png` |
-| 2 | break | Naming a habit, pricing it, starting it | `beat-break.mp4`, `beat-break.png` |
+| 1 | break | Picking a habit, pricing it, skipping once, kept counts | `beat-break.mp4`, `beat-break.png` |
+| 2 | track | Logging one expense end to end | `beat-track.mp4`, `beat-track.png` |
+| 3 | bills | Upcoming's month ahead, then a bill marked paid | `beat-bills.mp4`, `beat-bills.png` |
+
+Frame-by-frame storyboards for all three, with timecodes and the poster
+frame marked, live on the arc canvas's "Capture storyboards" page. One
+seeded state covers all three takes: a Coffee habit at $6.50, one Blue
+Bottle log, and three bills (Rent $1,200.00 monthly, Electric $84.20 due
+in three days, Spotify $9.99); every total on screen must reconcile, rows
+to header to card.
 
 The scan beat was removed from the carousel on 2026-09-05 (decision 0009):
 the leak scan is dormant behind `SCAN_FLOW_ENABLED`, and a beat whose CTA
