@@ -1,5 +1,50 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 55, 2026-09-18: re-verify, no new work)
+
+`git rev-list --left-right --count origin/main...routine/core-p3` returned
+`0 61` at the start of this run (branch tip unchanged at `8f79d91`, run
+54's own status commit); `origin/main` is still at `3890ba1`, unchanged
+since run 54, so no rebase needed. PR #132 re-confirmed via the API
+(`get`/`get_comments`): `state: open`, `draft: false`, `merged: false`,
+`mergeable_state: clean`, head `8f79d91a177d1fbf0b0e5ce128f36a49769c1783`
+(matches this branch's tip), base
+`3890ba173bdbe43778cf5501e30cbd7d8b01d320` (matches main's current tip),
+0 comments, unchanged since run 54. No new REVIEW FEEDBACK section
+present (grepped the whole file; latest is still the 2026-09-11
+orchestrator review of runs 15-25). Re-checked the routines-orchestrator's
+status board (mobile-app issue #139) via the API: unchanged since run 54's
+read, still the fourteenth orchestrator run, `updated_at` still
+`2026-09-18T12:06:23Z`. Core-worker's own section unchanged in substance
+("complete since run 8... approved, nothing owed," blocked on the
+payments gate, decisions 2-4). Items 9 (ops PRs #41/#42 unmerged, day 10)
+and 12 (main-owned `habitDetection.test.ts` flake) are unchanged from run
+54's read; neither is core-p3-flagged or actionable from this branch, and
+the board's own text still asks every stream to stay quiet until
+something lands. Item 11 (pause/thin worker cadence) remains unanswered
+since run 52's fourth-day escalation; no further action due from this
+routine on it per the board. Re-pulled `habitcents-ops`'s `PUNCHLIST.md`
+fresh (ops main fast-forwarded from `667df0e` to `e4cf7b6`, that range
+added only sibling-routine `docs/runs.log` lines, no PUNCHLIST content
+change): RESUME marker byte-identical to what runs 38-54 read, still the
+2026-09-10 interaction-audit wave plus the 2026-09-05/06 zeroth-state wave
+items; none payments/legal, and the one core-p3-flagged line (leak finder
+dated entitlement) is still the same item already built and closed on
+this branch at run 8. Checklist in `PLAN.md` unchanged: 36 `[x]`/`(C)`
+items, the sole remaining `[ ]` is the legend line itself, not a real
+item.
+
+Fresh `npm install`, `npx tsc --noEmit` clean. `npm test`: 125 suites /
+1367 tests green on the first attempt, no flake this run, exactly
+matching run 54's ending count (no regression, no new code either side).
+
+No push notification this run: nothing changed that is either new to
+Charen or actionable by this routine. Item 11's fourth-day escalation was
+already sent by run 52; items 9 and 12 are process/main-owned matters
+outside this routine's remit, already visible to Charen on the status
+board, and the board itself asked every stream to stay quiet until
+something lands.
+
 ## COMPLETE (run 54, 2026-09-18: re-verify, no new work)
 
 `git rev-list --left-right --count origin/main...routine/core-p3` returned
