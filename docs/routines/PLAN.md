@@ -738,6 +738,28 @@ overdue by its own deadline, plus the decision queue's 13-day idleness
 (since run 6) with PR #132 unreviewed the whole time. Full detail in
 `docs/routines/HANDOFF.md`'s run 52 section.
 
+## Run 54: closed out again, no new work
+
+Same shape as runs 9-22/24/27/29/30/31-53: no new commits on `origin/main`
+beyond what the branch already contains (`git rev-list --left-right --count
+origin/main...routine/core-p3` returned `0 60` at the start of this run,
+branch tip unchanged at `5715b92`), `mergeable_state: clean` on PR #132,
+PUNCHLIST's RESUME marker unchanged and still none core-p3-shaped. Fresh
+`npm install`, `npx tsc --noEmit` clean. `npm test` 125 suites / 1367 tests
+green on the first attempt, no flake this run, exactly matching run 53.
+Checklist unchanged, still fully `[x]`/`(C)`.
+
+The routines-orchestrator's status board (issue #139, fourteenth run) picked
+up two new items since run 53's read: item 9 (two ops-repo ADR PRs with no
+merger, a process gap) and item 12 (a flaky test in `main`-owned code,
+`habitDetection.test.ts`). Neither is core-p3-shaped or actionable from this
+branch: item 9 is an ops-repo merge-authority question outside this
+routine's scope, and item 12 is explicitly main-owned per the board's own
+text ("no routine branch will fix it"), flagged for a separate `fix/*`
+session. The board also states outright that no further notifications are
+wanted from any stream until something lands, so this run does not send
+one. Full detail in `docs/routines/HANDOFF.md`'s run 54 section.
+
 ## If this routine fires again
 
 The branch and PR stay open until Charen merges or closes them (routine
