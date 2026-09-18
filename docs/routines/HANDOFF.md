@@ -2,7 +2,41 @@
 
 ## Status
 
-In progress. Run 54: no rebase needed (`origin/main` still `3890ba1`,
+In progress. Run 55: no rebase needed (`origin/main` still `3890ba1`,
+unchanged since run 38, confirmed via `git fetch` plus a clean
+`git merge-base --is-ancestor origin/main HEAD` check). No REVIEW
+FEEDBACK pending (checked the full HANDOFF.md history; the last entry
+is the 2026-09-12 runs 28-31 review, already closed out by run 32).
+Checked DECISIONS NEEDED via the GitHub API directly against issue
+#139: unchanged since run 54's check, `updated_at` still
+2026-09-17T12:04:29Z (still the thirteenth orchestrator run), both
+gates this branch waits on (8: locked vocabulary; 10: paywall
+pricing/legal) still open and unanswered. No new comment on #139
+beyond the unrelated 2026-09-07 iPad-footer one. Today is still
+2026-09-18, the day core-worker's own fourth-day escalation threshold
+for item 11 (pause or thin the worker routines while blocked) was set
+to fire if unanswered; that escalation is core-worker's to send, not
+this worker's (per the board's own text: "the orchestrator and the
+other workers stay silent to avoid duplicates"), so this run adds
+nothing there and does not duplicate it. PR #134 still open, draft,
+`mergeable_state: clean`, head `cf0f54f` matching this branch's own
+pre-run tip, still one comment (the iPad-footer one), no reviews.
+Re-ran the run-38 `VALUE CHANGE` sweep an eighteenth time: `grep -n
+"VALUE CHANGE" constants/strings.ts` still finds exactly the same 5
+hits, all annotated "re-translated run 38", none unresolved; also
+re-ran the broader `needs re-translation`/`STALE`/`TODO|FIXME.*translat`
+grep, zero matches again, matching run 54's clean result. Items 3/5/6
+stayed exhausted (a further re-check with no new method would not be
+expected to find anything, per run 36's guidance, and did not). `npm
+install` needed first (fresh container, no `node_modules`). One commit
+(HANDOFF/PLAN update only); `tsc --noEmit` clean, full suite green
+(125/125, 1395/1395) on the first run, no flake, exactly matching run
+54's counts. No push notification: nothing moved since run 54's check
+(same two open gates, item 11's escalation is core-worker's alone to
+send today), so an alert here would be duplicate signal, not new
+signal.
+
+Run 54: no rebase needed (`origin/main` still `3890ba1`,
 unchanged since run 38, confirmed via `git fetch` plus a clean
 `git merge-base --is-ancestor origin/main HEAD` check). No REVIEW
 FEEDBACK pending (checked the full HANDOFF.md history; the last entry
