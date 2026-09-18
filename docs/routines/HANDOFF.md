@@ -67,6 +67,44 @@ device pass is separate and additional to that one, not a substitute.
 
 ## Status
 
+Run 56. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 33's
+check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`3890ba1`), so no rebase and no new regression surface this run. Fresh
+`npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass, no
+flake: 122 suites / 1335 tests, zero drift from runs 33-55. PR #133:
+re-checked via `get`/`get_comments`/`get_reviews`/`get_check_runs`: still
+open, not draft, `mergeable_state: clean` (back from run 55's `unstable`),
+base SHA `3890ba1` (main's tip, unchanged), head still `e8c1c8f` (run 55's
+own status commit, unchanged by any code this run). The `verify` check that
+failed once on run 55 (job 105455253405, the `habitDetection.ts` `spanDays`
+CI-jitter flake diagnosed and reported there) is now green on a re-run of
+the same head (job 105530162545, completed 08:13:37 UTC, after run 55's PR
+comment at 08:11:49 UTC), confirming the flake diagnosis: no code changed,
+the same commit now passes. No new comments or reviews since run 55's own
+comment. Issue #139 (Routine status board) re-checked via `get`/
+`get_comments`: fourteenth orchestrator entry landed since run 55's check
+(`updated_at` now `2026-09-18T12:06:23Z`), reviewing run 55's flake handling
+explicitly: "approved, nothing owed... The flake handling followed the
+drive-to-green rules exactly," plus a standing instruction for future runs
+("a second failure of the same assertion on a head that is green locally is
+real, not flake; escalate then"), noted here for the next run that sees a
+red `verify` check. Board also logged a new item 12 (the flake itself, as a
+main-owned decision item for Charen: spin a fix session, fold into the next
+`habitDetection.ts` touch, or accept occasional red checks) and repeats item
+11 (pause/thin worker cadence, core-worker's sanctioned escalation already
+sent 2026-09-18); neither is this routine's to act on or re-notify. Blocker
+unchanged: the device pass, gated on PR #133 merging behind PR #132's
+payments gate (decision 6). Decision queue now 11 days untouched per the
+board's own count. Re-verified item 7 (`app.json` orientation still
+`"portrait"`, `supportsTablet` still `true`). This HANDOFF update is the
+only change this run; no production code or plan content changed. No push
+notification: the flake that worried run 55 is confirmed resolved (green
+again, no code owed from this branch), and everything else on the board is
+already known to Charen or not this routine's to escalate; this is the
+twenty-eighth consecutive run (29-56, i.e. runs 29 through 56) at zero
+drift while the device-pass blocker stays outside this routine's reach.
+
 Run 55. Verified per this file's own COMPLETE instruction: plan fully
 checked, nothing new to do. `origin/main` has not moved since run 33's
 check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
