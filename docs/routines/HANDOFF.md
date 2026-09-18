@@ -1,5 +1,47 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 53, 2026-09-18: re-verify, no new work)
+
+`git rev-list --left-right --count origin/main...routine/core-p3` returned
+`0 59` at the start of this run (branch tip unchanged at `a51fdc2`, run
+52's own status commit); `origin/main` is still at `3890ba1`, unchanged
+since run 52, so no rebase needed. PR #132 re-confirmed via the API
+(`get`): `state: open`, `draft: false`, `merged: false`,
+`mergeable_state: clean`, head `a51fdc2984a9e1788236ce31c875cd5965e68382`
+(matches this branch's tip), base
+`3890ba173bdbe43778cf5501e30cbd7d8b01d320` (matches main's current tip),
+`updated_at` moved only to reflect run 52's own push (04:11:07Z), no
+external activity. No new REVIEW FEEDBACK section present (grepped the
+whole file; latest is still the 2026-09-11 orchestrator review of runs
+15-25). Re-checked the routines-orchestrator's status board (mobile-app
+issue #139) via the API: `updated_at` unchanged at `2026-09-17T12:04:29Z`,
+still one comment total (the 2026-09-07 decision-1 close, already
+closed); content unchanged in substance ("complete since run 8...
+approved, nothing owed," blocked on the payments gate, decisions 2-4).
+Confirmed via `habitcents-ops`'s `docs/runs.log` that run 52's fresh
+item-11 escalation was in fact delivered today and that localization run
+55 and ipad run 55 both independently deferred to it rather than
+duplicating; nothing has changed since that notification went out, so
+this run does not repeat it. Re-pulled `habitcents-ops`'s `PUNCHLIST.md`
+fresh (ops main fast-forwarded to `f8c7e54`, that range added
+localization-worker run 55 and ipad-worker run 55 `docs/runs.log` lines
+only, plus ipad's PR #133 CI-flake comment; no PUNCHLIST content change):
+RESUME marker byte-identical to what runs 38-52 read; none payments/legal,
+and the one core-p3-flagged line (leak finder dated entitlement) is still
+the same item already built and closed on this branch at run 8. Checklist
+in `PLAN.md` unchanged: 36 `[x]`/`(C)` items, the sole remaining `[ ]` is
+the legend line itself, not a real item.
+
+Fresh `npm install`, `npx tsc --noEmit` clean. `npm test`: 125 suites /
+1367 tests green on the first attempt, no flake this run, exactly
+matching run 52's ending count (no regression, no new code either side).
+
+No push notification this run: run 52 already sent today's fresh
+escalation on item 11 (the fourth-day threshold this routine set for
+itself) plus the 13-day decision-queue idleness; nothing in the queue's
+content, the PR, the status board, or the PUNCHLIST RESUME marker has
+moved since. Repeating it today would be duplicate signal.
+
 ## COMPLETE (run 52, 2026-09-18: re-verify, no new work, fresh escalation sent)
 
 `git rev-list --left-right --count origin/main...routine/core-p3` returned
