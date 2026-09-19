@@ -23,6 +23,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { act, cleanup, fireEvent, render } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '@/contexts/ThemeContext';
+import { LocaleProvider } from '@/contexts/LocaleContext';
 import { OnboardingProvider } from '@/contexts/OnboardingContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { CategoriesProvider } from '@/contexts/CategoriesContext';
@@ -53,6 +54,7 @@ function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SafeAreaProvider initialMetrics={initialMetrics}>
       <ThemeProvider>
+        <LocaleProvider>
         <CurrencyProvider>
           <CategoriesProvider>
             <ExpensesProvider>
@@ -62,6 +64,7 @@ function Providers({ children }: { children: React.ReactNode }) {
             </ExpensesProvider>
           </CategoriesProvider>
         </CurrencyProvider>
+        </LocaleProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );
@@ -155,7 +158,7 @@ describe('Money > Upcoming: window filter', () => {
     const view = await renderMoney();
     await openUpcomingSegment(view);
 
-    expect(view.getByRole('tab', { name: /1 month, selected/ })).toBeTruthy();
+    expect(view.getByRole('tab', { name: new RegExp(`1 month, ${strings.common.selected}`) })).toBeTruthy();
     expect(view.getByText(windowLabel(30))).toBeTruthy();
     // The point of the derivation: the pane it opens on is not empty.
     expect(view.queryByText(strings.money.upcomingWindowEmptyBody)).toBeNull();
@@ -168,7 +171,7 @@ describe('Money > Upcoming: window filter', () => {
     const view = await renderMoney();
     await openUpcomingSegment(view);
 
-    expect(view.getByRole('tab', { name: /3 months, selected/ })).toBeTruthy();
+    expect(view.getByRole('tab', { name: new RegExp(`3 months, ${strings.common.selected}`) })).toBeTruthy();
     expect(view.getByText(windowLabel(90))).toBeTruthy();
   });
 });

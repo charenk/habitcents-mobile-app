@@ -13,6 +13,7 @@ import React from 'react';
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
+import { LocaleProvider } from '@/contexts/LocaleContext';
 import { HabitLeakRow, type LeakRowData } from '@/components/habit-logging/HabitLeakRow';
 import { strings } from '@/constants/strings';
 import type { DetectedHabit, HabitStatus } from '@/types/habit';
@@ -20,7 +21,9 @@ import type { DetectedHabit, HabitStatus } from '@/types/habit';
 function Providers({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider>
-      <CurrencyProvider>{children}</CurrencyProvider>
+      <LocaleProvider>
+        <CurrencyProvider>{children}</CurrencyProvider>
+      </LocaleProvider>
     </ThemeProvider>
   );
 }

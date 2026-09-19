@@ -18,6 +18,10 @@ export const strings = {
     keep: 'Keep',
     close: 'Close',
     dismiss: 'Dismiss',
+    // Accessibility state words appended to a selectable chip/row/tab's
+    // spoken label (utils/a11y.ts selectableLabel), e.g. "Food, selected".
+    selected: 'selected',
+    notSelected: 'not selected',
   },
   // Shared sheet chrome for the disabled-until-valid Save/Start convention
   // (ops ADR 0028, 2026-08-16): a disabled primary action carries an
@@ -285,6 +289,12 @@ export const strings = {
     deleteMessage: "Your existing expenses are kept; they'll just no longer show this category.",
     deleteConfirmCta: 'Delete category',
     deleteCancel: 'Keep category',
+    // Category row's delete-button spoken label (utils/a11y.ts
+    // deleteCategoryLabel). A function-valued key, not a plain word joined at
+    // the call site, so a locale whose natural word order is not
+    // verb-object (e.g. name-first) can control that in its own overlay
+    // (2026-09-12, orchestrator review, runs 28-31).
+    deleteCategorySpokenLabel: (name: string) => `Delete ${name}`,
     thisMonthSuffix: (amount: string) => `${amount} this month`,
     addCategoryLabel: 'Add category',
     // Redesign step 04: serif "Categories." title plus two eyebrow-labelled
@@ -353,6 +363,15 @@ export const strings = {
     // (the code, e.g. USD), not the symbol.
     currencySheetTitle: 'Currency.',
     currencyRowLabel: (name: string, code: string) => `${name} (${code})`,
+    // Language row + sheet (routine/localization plan item 1). Selecting a
+    // language only sets the override for now; no catalog exists yet to
+    // change any other on-screen text (plan item 2), so this row is a
+    // foundation piece, not a finished feature.
+    language: 'Language',
+    languageSheetTitle: 'Language.',
+    languageSystemDefault: 'System default',
+    languageRowLabel: (nativeName: string, englishName: string) =>
+      nativeName === englishName ? nativeName : `${nativeName} (${englishName})`,
     // Restore purchases (BET-004, mock mode). No purchases exist to restore yet.
     // The row itself moved off Profile onto the paywall footer (design/
     // profile-restructure U9); these two outcome messages stay here because
@@ -551,6 +570,10 @@ export const strings = {
   // percentage; leak/skip/kept vocabulary elsewhere is untouched by this screen.
   leakScan: {
     reminderTimeLabel: 'Reminder time',
+    // Projection's per-item reminder-intent toggle (utils/a11y.ts
+    // remindToggleLabel; v1: intent capture only, no notification scheduled).
+    remindToggleOn: 'remind me the day before, on',
+    remindToggleOff: 'remind me the day before, off',
     // Intake
     intakeTitle: 'Scan your statement.',
     intakeSubtitle: 'CSV files only. Everything stays on this device.',
@@ -669,6 +692,14 @@ export const strings = {
     pulseLegendSpend: 'more spent',
     pulseLegendZero: 'no spend',
     pulseLegendOutOfCoverage: 'outside your files',
+    // Per-cell VoiceOver label for a spend day (utils/a11y.ts pulseCellLabel).
+    // A function-valued key, not a plain word joined at the call site: unlike
+    // the zero/outside branches (a "date, state" pair, screen-reader
+    // convention rather than prose), this composes date + amount + word into
+    // an actual sentence, so a locale's own overlay must control the word
+    // order (2026-09-12, orchestrator review, runs 28-31).
+    pulseCellSpentSpokenLabel: (dateLabel: string, formattedAmount: string) =>
+      `${dateLabel}, ${formattedAmount} spent`,
     // Density line: transacted days out of the window's calendar length. Both
     // arguments used to be distinct-transacted-day counts, so this read
     // "You transacted on 27 of 27 days" (UX-073).
@@ -679,6 +710,12 @@ export const strings = {
     biggestLeakEyebrow: 'Your biggest leak',
     seeFullPicture: "See the full picture: categories, pulse, next month's projection",
     // Habit cards (spec 5.4, visual spec 6)
+    // VoiceOver header (utils/a11y.ts habitCardLabel): "rank {n}, {class}, {tier}".
+    // A function-valued key, not a plain word ("rank") joined at the call
+    // site, so a locale's own overlay can control word order
+    // (2026-09-12, orchestrator review, runs 28-31).
+    habitCardSpokenLabel: (rank: number, className: string, tierName: string) =>
+      `rank ${rank}, ${className}, ${tierName}`,
     classGovern: 'Govern',
     classInfluence: 'Influence',
     classFixed: 'Fixed',
@@ -816,6 +853,7 @@ export const strings = {
     dismissLeakFailed: 'That did not save. Try again.',
     categoryFailed: 'That did not save. Try again.',
     currencyFailed: 'That did not save. Try again.',
+    languageFailed: 'That did not save. Try again.',
     startOverFailed: 'That did not reset. Try again.',
     importFailed: 'That did not save. Nothing was imported. Try again.',
     // enterCategoryNameFirst removed (ADR 0031): the last of the
@@ -1139,10 +1177,11 @@ export const strings = {
       if (payments === bills) return paymentLabel;
       return `${paymentLabel} from ${bills} bill${bills === 1 ? '' : 's'}`;
     },
-    // 2026-09-11 VALUE CHANGE (needs re-translation): "upcoming expense"
-    // became "bill", finishing the noun pass the pane started. The pane was
-    // using four words for one object; this and the three keys under
-    // `addUpcoming` were the half that had to move together with the sheet.
+    // 2026-09-11 VALUE CHANGE: "upcoming expense" became "bill", finishing
+    // the noun pass the pane started. The pane was using four words for one
+    // object; this and the three keys under `addUpcoming` were the half that
+    // had to move together with the sheet. Re-translated across all 10
+    // locale overlays, run 38 (was stale "upcoming/recurring expense").
     upcomingAddAffordance: 'Add a bill',
     // The row action for a bill whose day is unknown. The materializer will
     // never write one of those into Spent, because it would be asserting a day
@@ -1176,12 +1215,12 @@ export const strings = {
     // to do a thing they had already done. States the actual situation; the
     // window picker in the card's corner is how they widen it.
     // 2026-09-11: "repeating expenses" became "bills", settling on one noun
-    // for this object (the pane was using four). VALUE CHANGE: the ten locale
-    // overlays need a re-translation of this key.
+    // for this object (the pane was using four). VALUE CHANGE, re-translated
+    // across all 10 locale overlays, run 38.
     upcomingWindowEmptyBody: 'None of your bills land in this window.',
     // Same words as upcomingAddAffordance (the header affordance), its own key
     // so the true-zero empty state's CTA can be targeted unambiguously.
-    // 2026-09-11 VALUE CHANGE (needs re-translation), see above.
+    // 2026-09-11 VALUE CHANGE, re-translated run 38, see above.
     upcomingEmptyCta: 'Add a bill',
     // RETIRED FROM RENDERING (2026-09-11): the row now carries its own
     // multiplier, scoped to the picked window, and the pill was scoped to a
@@ -1223,24 +1262,29 @@ export const strings = {
     // Spoken when the user knows the month but not the day. The row draws the
     // month alone; this is what makes it a sentence for a screen reader.
     scheduleInMonth: (month: string) => `sometime in ${month}`,
+    // "in 6 days" / "Today" / "Tomorrow" (utils/recurring.ts daysUntilLabel).
+    daysUntilToday: 'Today',
+    daysUntilTomorrow: 'Tomorrow',
+    daysUntilInDays: (days: number) => `in ${days} days`,
   },
 
   // Add-upcoming sheet (spec 04 "Add-upcoming sheet"; U8 added edit mode,
   // mirroring ExpenseSheet's log/edit split).
   addUpcoming: {
-    // 2026-09-11 VALUE CHANGE (needs re-translation). Two things moved:
-    // "upcoming" became "bill" (the pane's settled noun), and the trailing
-    // period went. The period is the DECISION-sheet convention ('Currency.',
-    // 'Break a habit.', 'Profile.'), rendered by ui/SheetTitle; this is a form
-    // sheet on ui/SheetHeader, where its only sibling reads 'Log expense' and
-    // 'Edit expense'. AddUpcoming was the one form sheet carrying the other
-    // family's punctuation.
+    // 2026-09-11 VALUE CHANGE. Two things moved: "upcoming" became "bill"
+    // (the pane's settled noun), and the trailing period went. The period is
+    // the DECISION-sheet convention ('Currency.', 'Break a habit.',
+    // 'Profile.'), rendered by ui/SheetTitle; this is a form sheet on
+    // ui/SheetHeader, where its only sibling reads 'Log expense' and 'Edit
+    // expense'. AddUpcoming was the one form sheet carrying the other
+    // family's punctuation. Re-translated across all 10 locale overlays
+    // (noun swap and period drop both), run 38.
     title: 'Add bill',
     editTitle: 'Edit bill',
     // One word on every form-sheet header (see expenseSheet.saveExpense).
     saveChanges: 'Save',
-    // 2026-09-11 VALUE CHANGE (needs re-translation): matches the log sheet's
-    // 'Delete expense' exactly, now that the two are one form.
+    // 2026-09-11 VALUE CHANGE: matches the log sheet's 'Delete expense'
+    // exactly, now that the two are one form. Re-translated run 38.
     deleteUpcoming: 'Delete bill',
     whatIsIt: 'What is it?',
     // The glyph picker (2026-09-11). A typed name like "Amazon Prime" has no

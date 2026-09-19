@@ -7,6 +7,7 @@ The pinned row every form sheet shares: serif `sheetTitle` left, compact primary
 Save enabled / disabled (with `saveHint` only while disabled); with / without the icon action.
 
 ## Decisions
+- 2026-09-12 (localization routine, overflow hardening): title takes `numberOfLines={1}`. Why: the title shares the row with Save (and sometimes `secondaryAction`), so a longer translated title (German/French) must truncate rather than wrap and grow the pinned row taller than the header expects. No test asserted multi-line before this; no test change needed.
 - 2026-09-04: one optional icon action, not a slot. Why: the sixth consumer ADR 0031 anticipated arrived (edit delete); one action keeps the row legible. ADR 0033.
 - 2026-09-04: the icon sits 12pt left of Save, never flush. Why: destructive beside the most-tapped button is the classic mis-tap layout. ADR 0033.
 - 2026-09-04: Save label is one word on every consumer. ADR 0033.
@@ -16,4 +17,5 @@ Save enabled / disabled (with `saveHint` only while disabled); with / without th
 - None.
 
 ## Iterations
+- 2026-09-12: `numberOfLines={1}` on title (overflow hardening).
 - 2026-09-04 d739f59: `secondaryAction`; consumers moved to `Sheet` `header`.

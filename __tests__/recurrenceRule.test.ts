@@ -22,6 +22,7 @@ import {
   upcomingWindowTotal,
 } from '@/utils/recurring';
 import { formatDate } from '@/utils/dates';
+import { strings } from '@/constants/strings';
 import type { Expense, RecurrenceFrequency, RecurrenceRule } from '@/types/expense';
 
 function expense(overrides: Partial<Expense> = {}): Expense {
@@ -641,29 +642,29 @@ describe('describeSchedule', () => {
   const jul15 = new Date('2026-07-15T00:00:00');
 
   it('renders each rule shape', () => {
-    expect(describeSchedule({ type: 'monthly', monthDay: '1' }, aug1)).toBe('Monthly · 1st · next Aug 1');
-    expect(describeSchedule({ type: 'monthly', monthDay: '15' }, jul15)).toBe(
+    expect(describeSchedule({ type: 'monthly', monthDay: '1' }, aug1, strings)).toBe('Monthly · 1st · next Aug 1');
+    expect(describeSchedule({ type: 'monthly', monthDay: '15' }, jul15, strings)).toBe(
       'Monthly · 15th · next Jul 15'
     );
-    expect(describeSchedule({ type: 'monthly', monthDay: '30' }, new Date('2026-08-30T00:00:00'))).toBe(
+    expect(describeSchedule({ type: 'monthly', monthDay: '30' }, new Date('2026-08-30T00:00:00'), strings)).toBe(
       'Monthly · 30th · next Aug 30'
     );
-    expect(describeSchedule({ type: 'monthly', monthDay: 'last' }, new Date('2026-08-31T00:00:00'))).toBe(
+    expect(describeSchedule({ type: 'monthly', monthDay: 'last' }, new Date('2026-08-31T00:00:00'), strings)).toBe(
       'Monthly · Last day · next Aug 31'
     );
-    expect(describeSchedule({ type: 'monthly' }, jul15)).toBe('Monthly · next Jul 15');
-    expect(describeSchedule({ type: 'weekly', weekday: 5 }, aug7)).toBe('Weekly · Fridays · next Aug 7');
-    expect(describeSchedule({ type: 'biweekly', weekday: 5, biweekAnchor: '2026-08-14' }, aug14)).toBe(
+    expect(describeSchedule({ type: 'monthly' }, jul15, strings)).toBe('Monthly · next Jul 15');
+    expect(describeSchedule({ type: 'weekly', weekday: 5 }, aug7, strings)).toBe('Weekly · Fridays · next Aug 7');
+    expect(describeSchedule({ type: 'biweekly', weekday: 5, biweekAnchor: '2026-08-14' }, aug14, strings)).toBe(
       'Every 2 weeks · next Aug 14'
     );
-    expect(describeSchedule({ type: 'custom', everyNDays: 9 }, aug3)).toBe('Every 9 days · next Aug 3');
-    expect(describeSchedule({ type: 'once' }, aug12)).toBe('One-time · Aug 12');
-    expect(describeSchedule({ type: 'annual' }, jul15)).toBe('Yearly · next Jul 15');
+    expect(describeSchedule({ type: 'custom', everyNDays: 9 }, aug3, strings)).toBe('Every 9 days · next Aug 3');
+    expect(describeSchedule({ type: 'once' }, aug12, strings)).toBe('One-time · Aug 12');
+    expect(describeSchedule({ type: 'annual' }, jul15, strings)).toBe('Yearly · next Jul 15');
   });
 
   it('names every weekday from the rule, not from the date', () => {
     const names = [0, 1, 2, 3, 4, 5, 6].map((w) =>
-      describeSchedule({ type: 'weekly', weekday: w as 0 }, aug7).split(' · ')[1]
+      describeSchedule({ type: 'weekly', weekday: w as 0 }, aug7, strings).split(' · ')[1]
     );
     expect(names).toEqual([
       'Sundays',
@@ -677,22 +678,22 @@ describe('describeSchedule', () => {
   });
 
   it('builds date text through the locale-aware helper (ADA-008)', () => {
-    const line = describeSchedule({ type: 'monthly', monthDay: '1' }, aug1);
+    const line = describeSchedule({ type: 'monthly', monthDay: '1' }, aug1, strings);
     expect(line.endsWith(formatDate(aug1, { month: 'short', day: 'numeric' }))).toBe(true);
   });
 
   it('clamps a corrupt custom cadence in the label too', () => {
-    expect(describeSchedule({ type: 'custom', everyNDays: 900 }, aug3)).toBe('Every 90 days · next Aug 3');
+    expect(describeSchedule({ type: 'custom', everyNDays: 900 }, aug3, strings)).toBe('Every 90 days · next Aug 3');
   });
 
   it('uses the middot separator and never an em or en dash', () => {
     const lines = [
-      describeSchedule({ type: 'monthly', monthDay: '1' }, aug1),
-      describeSchedule({ type: 'weekly', weekday: 5 }, aug7),
-      describeSchedule({ type: 'once' }, aug12),
-      describeSchedule({ type: 'annual' }, jul15),
-      describeSchedule({ type: 'biweekly', weekday: 5, biweekAnchor: '2026-08-14' }, aug14),
-      describeSchedule({ type: 'custom', everyNDays: 9 }, aug3),
+      describeSchedule({ type: 'monthly', monthDay: '1' }, aug1, strings),
+      describeSchedule({ type: 'weekly', weekday: 5 }, aug7, strings),
+      describeSchedule({ type: 'once' }, aug12, strings),
+      describeSchedule({ type: 'annual' }, jul15, strings),
+      describeSchedule({ type: 'biweekly', weekday: 5, biweekAnchor: '2026-08-14' }, aug14, strings),
+      describeSchedule({ type: 'custom', everyNDays: 9 }, aug3, strings),
     ];
     for (const line of lines) {
       expect(line).toContain('·');
@@ -703,7 +704,7 @@ describe('describeSchedule', () => {
   it('pairs with resolveRule for a legacy row without extra plumbing', () => {
     const e = legacy('weekly', '2026-06-29T00:00:00'); // Mondays
     const next = nextOccurrence(e, FROM)!;
-    expect(describeSchedule(resolveRule(e)!, next)).toBe('Weekly · Mondays · next Jul 6');
+    expect(describeSchedule(resolveRule(e)!, next, strings)).toBe('Weekly · Mondays · next Jul 6');
   });
 });
 
@@ -737,25 +738,25 @@ describe('scheduleParts', () => {
   ];
 
   it('splits the cadence, the qualifier and the date', () => {
-    expect(scheduleParts({ type: 'monthly', monthDay: '1' }, aug1)).toEqual({
+    expect(scheduleParts({ type: 'monthly', monthDay: '1' }, aug1, strings)).toEqual({
       cadence: 'Monthly',
       qualifier: '1st',
       date: 'Aug 1',
       dateSpoken: 'next Aug 1',
     });
-    expect(scheduleParts({ type: 'monthly' }, jul15)).toEqual({
+    expect(scheduleParts({ type: 'monthly' }, jul15, strings)).toEqual({
       cadence: 'Monthly',
       qualifier: null,
       date: 'Jul 15',
       dateSpoken: 'next Jul 15',
     });
-    expect(scheduleParts({ type: 'annual' }, jul15).cadence).toBe('Yearly');
-    expect(scheduleParts({ type: 'custom', everyNDays: 9 }, aug3).cadence).toBe('Every 9 days');
+    expect(scheduleParts({ type: 'annual' }, jul15, strings).cadence).toBe('Yearly');
+    expect(scheduleParts({ type: 'custom', everyNDays: 9 }, aug3, strings).cadence).toBe('Every 9 days');
   });
 
   // A one-time bill happens once, so its date is not a "next".
   it('does not call a one-time date the next one', () => {
-    const parts = scheduleParts({ type: 'once' }, aug12);
+    const parts = scheduleParts({ type: 'once' }, aug12, strings);
     expect(parts).toEqual({
       cadence: 'One-time',
       qualifier: null,
@@ -770,21 +771,21 @@ describe('scheduleParts', () => {
    * moves onto the date instead of being lost.
    */
   it('names the weekday on the date for weekly and biweekly rules only', () => {
-    expect(scheduleParts({ type: 'weekly', weekday: 5 }, aug7).date).toBe(
+    expect(scheduleParts({ type: 'weekly', weekday: 5 }, aug7, strings).date).toBe(
       formatDate(aug7, { weekday: 'short', month: 'short', day: 'numeric' })
     );
     expect(
-      scheduleParts({ type: 'biweekly', weekday: 5, biweekAnchor: '2026-08-14' }, aug14).date
+      scheduleParts({ type: 'biweekly', weekday: 5, biweekAnchor: '2026-08-14' }, aug14, strings).date
     ).toBe(formatDate(aug14, { weekday: 'short', month: 'short', day: 'numeric' }));
 
     // Everything else keeps the bare date.
-    expect(scheduleParts({ type: 'monthly', monthDay: '1' }, aug1).date).toBe('Aug 1');
-    expect(scheduleParts({ type: 'annual' }, jul15).date).toBe('Jul 15');
+    expect(scheduleParts({ type: 'monthly', monthDay: '1' }, aug1, strings).date).toBe('Aug 1');
+    expect(scheduleParts({ type: 'annual' }, jul15, strings).date).toBe('Jul 15');
   });
 
   it('builds every date through the locale-aware helper (ADA-008)', () => {
     for (const [name, rule, date] of CASES) {
-      const parts = scheduleParts(rule, date);
+      const parts = scheduleParts(rule, date, strings);
       expect(parts.dateSpoken).toContain(formatDate(date, { month: 'short', day: 'numeric' }));
       expect(name).toBeTruthy();
     }
@@ -798,9 +799,9 @@ describe('scheduleParts', () => {
    */
   it('joins back into exactly what describeSchedule returns', () => {
     for (const [name, rule, date] of CASES) {
-      const { cadence, qualifier, dateSpoken } = scheduleParts(rule, date);
+      const { cadence, qualifier, dateSpoken } = scheduleParts(rule, date, strings);
       const rejoined = [cadence, qualifier, dateSpoken].filter(Boolean).join(' · ');
-      expect([name, rejoined]).toEqual([name, describeSchedule(rule, date)]);
+      expect([name, rejoined]).toEqual([name, describeSchedule(rule, date, strings)]);
     }
   });
 });
@@ -851,13 +852,13 @@ describe('date precision', () => {
       { type: 'custom', everyNDays: 9 },
     ];
     for (const rule of rules) {
-      expect(scheduleParts(rule, sep30)).toEqual(scheduleParts(rule, sep30, 'day'));
-      expect(describeSchedule(rule, sep30)).toBe(describeSchedule(rule, sep30, 'day'));
+      expect(scheduleParts(rule, sep30, strings)).toEqual(scheduleParts(rule, sep30, strings, 'day'));
+      expect(describeSchedule(rule, sep30, strings)).toBe(describeSchedule(rule, sep30, strings, 'day'));
     }
   });
 
   it('says the month and drops the day, in words and in parts', () => {
-    const parts = scheduleParts({ type: 'monthly', monthDay: 'last' }, sep30, 'month');
+    const parts = scheduleParts({ type: 'monthly', monthDay: 'last' }, sep30, strings, 'month');
 
     expect(parts.cadence).toBe('Monthly');
     // The anchor must not leak: "Last day" is storage, not something the user said.
@@ -865,7 +866,7 @@ describe('date precision', () => {
     expect(parts.date).toBe(formatDate(sep30, { month: 'long' }));
     expect(parts.dateSpoken).toBe('sometime in September');
 
-    const line = describeSchedule({ type: 'monthly', monthDay: 'last' }, sep30, 'month');
+    const line = describeSchedule({ type: 'monthly', monthDay: 'last' }, sep30, strings, 'month');
     expect(line).toBe('Monthly · sometime in September');
     expect(line).not.toContain('Last day');
     expect(line).not.toContain('next ');
