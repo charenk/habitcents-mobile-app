@@ -67,32 +67,33 @@ device pass is separate and additional to that one, not a substitute.
 
 ## Status
 
-Run 60. Verified per this file's own COMPLETE instruction: plan fully
+Run 61. Verified per this file's own COMPLETE instruction: plan fully
 checked, nothing new to do. `origin/main` has not moved since run 33's
 check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
 `3890ba1`), so no rebase and no new regression surface this run. Fresh
 `npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass, no
-flake: 122 suites / 1335 tests, zero drift from runs 33-59. PR #133:
-re-checked via `get`/`get_check_runs`: still open, not draft,
-`mergeable_state: clean`, base SHA `3890ba1` (main's tip, unchanged), head
-still `52889d4` (run 59's own status commit, unchanged by any code this
-run), `verify` check green (completed 08:11-08:13 UTC on 2026-09-19 on this
-same head). Issue #139 (Routine status board) re-checked via `get`:
-fifteenth orchestrator entry landed since run 59's check (`updated_at` now
-`2026-09-19T12:04:19Z`), still purely a re-verification: ipad-worker
-section still "approved, nothing owed," blocker still the device pass
-gated on PR #133 merging behind PR #132's payments gate (decision 6).
-Decision queue now 12 days untouched per the board's own count; item 11's
-sanctioned escalation (pause/thin worker cadence) stands unanswered per the
-board's own "no further notifications until something lands" posture, and
-item 12 (the habitDetection.ts flake) is unchanged; neither is this
-routine's to act on or re-notify. Re-verified item 7 (`app.json`
-orientation still `"portrait"`, `supportsTablet` still `true`). This
-HANDOFF update is the only change this run; no production code or plan
-content changed. No push notification: nothing new for Charen beyond what
-the board already covers; this is the thirty-second consecutive run (29-60)
-at zero drift while the device-pass blocker stays outside this routine's
-reach.
+flake: 122 suites / 1335 tests, zero drift from runs 33-60. PR #133:
+re-checked via `get`/`get_check_runs`/`get_comments`/`get_reviews`: still
+open, not draft, `mergeable_state: clean`, base SHA `3890ba1` (main's tip,
+unchanged), head still `2dd4581` (run 60's own status commit, unchanged by
+any code this run), `verify` check green (completed 14:09-14:11 UTC on
+2026-09-19 on this same head). No new comments since run 55's flake
+comment, no reviews. Issue #139 (Routine status board) re-checked via
+`get`: `updated_at` unchanged at `2026-09-19T12:04:19Z`, still the
+fifteenth orchestrator entry run 60 already saw, still purely a
+re-verification: ipad-worker section still "approved, nothing owed,"
+blocker still the device pass gated on PR #133 merging behind PR #132's
+payments gate (decision 6). Decision queue still 12 days untouched per the
+board's own count; item 11's sanctioned escalation (pause/thin worker
+cadence) stands unanswered per the board's own "no further notifications
+until something lands" posture, and item 12 (the habitDetection.ts flake)
+is unchanged; neither is this routine's to act on or re-notify. Re-verified
+item 7 (`app.json` orientation still `"portrait"`, `supportsTablet` still
+`true`). This HANDOFF update is the only change this run; no production
+code or plan content changed. No push notification: nothing new for Charen
+beyond what the board already covers; this is the thirty-third consecutive
+run (29-61) at zero drift while the device-pass blocker stays outside this
+routine's reach.
 
 Run 59. Verified per this file's own COMPLETE instruction: plan fully
 checked, nothing new to do. `origin/main` has not moved since run 33's
