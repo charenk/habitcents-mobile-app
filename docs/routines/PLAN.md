@@ -2437,6 +2437,41 @@ work, tracked elsewhere).
       run 27); items 3/5/6 clean twenty-eight runs (since run 32); the
       VALUE CHANGE sweep angle now re-checked twenty-two times with no
       new hits.
+
+      **Run 61: confirmed nothing moved, re-verification only.** No
+      rebase needed (`origin/main` still `3890ba1`, unchanged since run
+      38, confirmed via `git fetch` plus a clean `git merge-base
+      --is-ancestor origin/main HEAD` check); no REVIEW FEEDBACK section
+      pending (last entry is the 2026-09-12 runs 28-31 review, closed out
+      by run 32). Checked DECISIONS NEEDED via the GitHub API directly
+      against issue #139: unchanged since run 60's check, `updated_at`
+      still 2026-09-19T12:04:19Z (still the fifteenth orchestrator run),
+      both gates (8: locked vocabulary; 10: paywall pricing/legal) still
+      open and unanswered, the board's own text still calls the queue
+      "12 days untouched." Item 11's sanctioned escalation (sent
+      2026-09-18) stands unanswered; the board again says no further
+      notifications from any stream until something lands, so this run
+      took no action there. Item 12 (the flaky `habitDetection.test.ts`
+      assertion) remains main-owned code, not this branch's to fix.
+      Checked issue #139's comments directly: still only the one
+      unrelated 2026-09-07 iPad-footer comment. PR #134 still open,
+      draft, `mergeable_state: clean`, head `560d86f` matching this
+      branch's own pre-run tip, one comment (the iPad-footer one), no
+      reviews. Re-ran the run-38 `VALUE CHANGE` sweep a twenty-fourth
+      time: same 5 already-resolved hits; the broader `needs
+      re-translation`/`STALE`/`TODO|FIXME.*translat` grep again came
+      back empty, matching run 60's clean result. Per run 36's guidance,
+      did not re-run items 3/5/6's exhausted fresh-candidate sweeps again
+      with no new method. Fresh `npm install` needed first (fresh
+      container, no `node_modules`); `tsc --noEmit` clean, full suite
+      green (125/125, 1395/1395) on the first run, no flake, exactly
+      matching run 60's counts. No code change; one commit (HANDOFF/PLAN
+      update only). No push notification: nothing moved since run 60's
+      check (same two open gates, item 11's escalation already sent and
+      standing unanswered). Standing fact updated: item 4 blocked
+      thirty-four runs now (since run 27); items 3/5/6 clean twenty-nine
+      runs (since run 32); the VALUE CHANGE sweep angle now re-checked
+      twenty-three times with no new hits.
 - [ ] leak / skip / kept / slip and the app's quotes are PRODUCT VOICE:
       never finalized by this routine. Provisional entries only, proposal
       table lives in HANDOFF.md's DECISIONS NEEDED until Charen picks.
