@@ -2,7 +2,42 @@
 
 ## Status
 
-In progress. Run 57: no rebase needed (`origin/main` still `3890ba1`,
+In progress. Run 58: no rebase needed (`origin/main` still `3890ba1`,
+unchanged since run 38, confirmed via `git fetch` plus a clean
+`git merge-base --is-ancestor origin/main HEAD` check). No REVIEW
+FEEDBACK pending (checked the full HANDOFF.md history; the last entry
+is the 2026-09-12 runs 28-31 review, already closed out by run 32).
+Checked DECISIONS NEEDED via the GitHub API directly against issue
+#139: `updated_at` unchanged at 2026-09-18T12:06:23Z (same fourteenth
+orchestrator run run 57 checked), both gates this branch waits on (8:
+locked vocabulary; 10: paywall pricing/legal) still open and
+unanswered, the board's own text still calls the queue "11 days
+untouched." Core-worker's sanctioned item-11 escalation (sent
+2026-09-18) stands with no answer yet; the board's own text says no
+further notifications from any stream until something lands, so this
+run adds nothing there. Item 12 (the `habitDetection.test.ts` flake) is
+still main-owned code outside this branch, not this routine's to fix.
+No new comment on issue #139 beyond the unrelated 2026-09-07
+iPad-footer one. PR #134 still open, draft, `mergeable_state: clean`,
+head `28408d0` matching this branch's own pre-run tip, still one
+comment (the iPad-footer one), no reviews. Re-ran the run-38 `VALUE
+CHANGE` sweep a twenty-first time: `grep -n "VALUE CHANGE"
+constants/strings.ts` still finds exactly the same 5 hits, all
+annotated "re-translated run 38", none unresolved; also re-ran the
+broader `needs re-translation`/`STALE`/`TODO|FIXME.*translat` grep,
+only the same historical resolved-stale comments across the 10 locale
+files, matching run 57's clean result. Items 3/5/6 stayed exhausted (a
+further re-check with no new method would not be expected to find
+anything, per run 36's guidance, and did not). `npm install` needed
+first (fresh container, no `node_modules`). One commit (HANDOFF/PLAN
+update only); `tsc --noEmit` clean, full suite green (125/125,
+1395/1395) on the first run, no flake, exactly matching run 57's
+counts. No push notification: nothing moved since run 57's check (same
+two open gates, item 11's escalation already sent and standing
+unanswered), so an alert here would be duplicate signal, not new
+signal.
+
+Run 57: no rebase needed (`origin/main` still `3890ba1`,
 unchanged since run 38, confirmed via `git fetch` plus a clean
 `git merge-base --is-ancestor origin/main HEAD` check). No REVIEW
 FEEDBACK pending (checked the full HANDOFF.md history; the last entry
