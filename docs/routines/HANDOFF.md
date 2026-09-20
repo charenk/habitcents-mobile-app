@@ -2,7 +2,48 @@
 
 ## Status
 
-In progress. Run 63: no rebase needed (`origin/main` still `3890ba1`,
+In progress. Run 64: no rebase needed (`origin/main` still `3890ba1`,
+unchanged since run 38, confirmed via `git fetch` plus a clean
+`git merge-base --is-ancestor origin/main HEAD` check). No REVIEW
+FEEDBACK pending (checked the full HANDOFF.md history; the last entry
+is the 2026-09-12 runs 28-31 review, already closed out by run 32).
+Checked DECISIONS NEEDED directly against issue #139 via a fresh fetch
+of the issue body: `updated_at` now 2026-09-20T12:05:18Z (the
+sixteenth orchestrator run, landed since run 63's check), both gates
+this branch waits on (8: locked vocabulary; 10: paywall pricing/legal)
+still open and unanswered, the board's own text now calls the queue
+"13 days untouched." Item 11's sanctioned escalation (sent 2026-09-18)
+stands with no answer yet, now day 6; the board's own text still says
+no further notifications from any stream until something lands, so
+this run adds nothing there either. Item 12 (the `habitDetection.test.ts`
+flake) is still main-owned code outside this branch, not this
+routine's to fix. **Correction to a long-standing mislabel in this
+file's history:** the single comment on PR #134 was re-checked via the
+API this run and is dated 2026-09-09T12:27:10Z, about the
+`habitDetection.test.ts` CI flake (unrelated to localization, no
+action taken, matches issue #139 item 12), not the "2026-09-07
+iPad-footer" comment this section has been describing since around run
+33. No second comment exists and nothing was deleted; this is a
+description error carried forward run to run, now fixed. PR #134
+otherwise unchanged: still open, draft, `mergeable_state: clean`, head
+`951b348` matching this branch's own pre-run tip, zero reviews. Re-ran
+the run-38 `VALUE CHANGE` sweep a twenty-seventh time: `grep -n "VALUE
+CHANGE" constants/strings.ts` still finds exactly the same 5 hits, all
+annotated "re-translated run 38", none unresolved; also re-ran the
+broader `needs re-translation`/`STALE` grep across `constants/strings.ts`
+and every locale file, only the same historical resolved-stale
+comments, matching run 63's clean result. Items 3/5/6 stayed exhausted
+(a further re-check with no new method would not be expected to find
+anything, per run 36's guidance, and did not). Fresh `npm ci`, `tsc
+--noEmit` clean, full suite green (125/125, 1395/1395) on the first
+run, no flake, exactly matching run 63's counts. One commit
+(HANDOFF/PLAN update only). No push notification: nothing moved since
+run 63's check (same two open gates, item 11's escalation already sent
+and standing unanswered, the board's own text explicitly asking for no
+further notifications), so an alert here would be duplicate signal,
+not new signal.
+
+Run 63: no rebase needed (`origin/main` still `3890ba1`,
 unchanged since run 38, confirmed via `git fetch` plus a clean
 `git merge-base --is-ancestor origin/main HEAD` check). No REVIEW
 FEEDBACK pending (checked the full HANDOFF.md history; the last entry
