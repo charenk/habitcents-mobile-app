@@ -2,21 +2,56 @@
 
 ## Status
 
-In progress, blocked. Run 68 (2026-09-21): no rebase needed (`origin/main`
-still `3890ba1`, unchanged since run 38). No REVIEW FEEDBACK pending.
-Re-checked issue #139 directly: still the 16th orchestrator snapshot
-(`updated_at` 2026-09-20T12:05:18Z), decisions 8 (locked vocabulary) and
-10 (paywall pricing/legal) both still open and unanswered, one-comment
-count unchanged (the resolved 2026-09-07 item, confirmed via the API).
-Item 11's cost-saving escalation (recommending the three worker
-routines pause or thin while blocked) was sent 2026-09-18 and is now
-unanswered for 3 days on top of the 13-day-old decision queue itself.
-Fresh `npm ci`, `tsc --noEmit` clean, full suite green (125/125,
-1395/1395), matching run 67. Logging this run **blocked** rather than
-`ok` (prior runs 53-67 logged `ok`): per this routine's own failure
-policy, config/human-pending blockers stop after 2 identical failures
-and get marked blocked in runs.log, and this is now roughly 30 runs
-past that threshold with a filed, updated decision item and a standing
+In progress, blocked. Run 69 (2026-09-21): no rebase needed (`origin/main`
+still `3890ba1`, unchanged since run 38, confirmed via `git fetch` plus a
+clean `git merge-base --is-ancestor origin/main HEAD` check). No REVIEW
+FEEDBACK pending (last entry is the 2026-09-12 runs 28-31 review, closed
+out by run 32). Checked DECISIONS NEEDED directly against issue #139 via
+a fresh fetch: `updated_at` now 2026-09-21T12:12:04Z (the seventeenth
+orchestrator run, posted after run 68's check), both gates this branch
+waits on (8: locked vocabulary; 10: paywall pricing/legal) still open
+and unanswered, the board's own text now calls the queue "14 days
+untouched." Item 11's cost-saving escalation (sent 2026-09-18,
+recommending the three worker routines pause or thin while blocked)
+stands unanswered, now day 3; per the board's own posture, no further
+notifications from any stream until something lands. Issue #139's one
+comment is unchanged (the 2026-09-07 iPad-footer item, unrelated); no
+new comment. PR #134 still open, draft, `mergeable_state: clean`, head
+`0b7d1dc` matching this branch's own pre-run tip, still one comment (the
+2026-09-09 `habitDetection.test.ts` CI-flake note on the PR, not the
+issue; a prior HANDOFF miscategorization already corrected at run 64),
+zero reviews. Re-ran the run-38 `VALUE CHANGE` sweep again: `grep -n
+"VALUE CHANGE" constants/strings.ts` still finds exactly the same 5
+hits, all annotated "re-translated run 38", none unresolved; the broader
+`needs re-translation`/`STALE` grep across `constants/strings.ts` and
+every locale file is clean too. Items 3/5/6 stayed exhausted (no new
+method to try, per run 36's guidance). Fresh `npm ci`, `tsc --noEmit`
+clean, full suite green (125/125, 1395/1395), matching run 68. Logging
+this run **blocked** again (same standing rationale run 68 recorded: 30+
+runs past the config/human-pending threshold, a filed and updated
+decision item, a standing unanswered escalation). No push notification
+this run: nothing changed in substance since run 68's alert (same two
+open gates, the board's own repost is not new information, item 11
+still on its own no-further-notifications posture), so a second alert
+today would be duplicate signal, not new signal. One commit (HANDOFF/PLAN
+touch only, no code changes: everything translatable without decisions
+8/10 was already done as of run 35).
+
+Run 68: no rebase needed (`origin/main` still `3890ba1`,
+unchanged since run 38). No REVIEW FEEDBACK pending. Re-checked issue
+#139 directly: still the 16th orchestrator snapshot (`updated_at`
+2026-09-20T12:05:18Z), decisions 8 (locked vocabulary) and 10 (paywall
+pricing/legal) both still open and unanswered, one-comment count
+unchanged (the resolved 2026-09-07 item, confirmed via the API). Item
+11's cost-saving escalation (recommending the three worker routines
+pause or thin while blocked) was sent 2026-09-18 and is now unanswered
+for 3 days on top of the 13-day-old decision queue itself. Fresh
+`npm ci`, `tsc --noEmit` clean, full suite green (125/125, 1395/1395),
+matching run 67. Logging this run **blocked** rather than `ok` (prior
+runs 53-67 logged `ok`): per this routine's own failure policy,
+config/human-pending blockers stop after 2 identical failures and get
+marked blocked in runs.log, and this is now roughly 30 runs past that
+threshold with a filed, updated decision item and a standing
 escalation, so `blocked` is the accurate signal for the weekly digest.
 Also sent one push notification to Charen this run flagging the stuck
 decision queue and the unanswered pause-the-workers cost recommendation,
