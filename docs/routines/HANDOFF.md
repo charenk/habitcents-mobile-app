@@ -1,5 +1,51 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 66, 2026-09-21: re-verify, no new work)
+
+`git rev-list --left-right --count origin/main...routine/core-p3` returned
+`0 72` at the start of this run (branch tip unchanged at `6e0ba7e`, run
+65's own status commit); `origin/main` is still at `3890ba1`, unchanged
+since run 65, so no rebase needed. PR #132 re-confirmed via the API
+(`get`/`get_comments`): `state: open`, `draft: false`, `merged: false`,
+`mergeable_state: clean`, head `6e0ba7e1536f89c5ef54099d15bf8815193ea4df`
+(matches this branch's tip), base `3890ba173bdbe43778cf5501e30cbd7d8b01d320`
+(matches main's current tip), 0 comments, unchanged since run 65. No new
+REVIEW FEEDBACK section present (grepped the whole file; latest is still
+the 2026-09-11 orchestrator review of runs 15-25). Re-checked the
+routines-orchestrator's status board (mobile-app issue #139) via the API:
+now the seventeenth orchestrator run, `updated_at` moved to
+`2026-09-21T12:12:04Z`, 1 comment total (still the 2026-09-07 decision-1
+close, already closed). Content unchanged in substance from run 65's read:
+core-worker's own section still "complete since run 8... approved, nothing
+owed," blocked on the payments gate (decisions 2-4). Decision queue now
+"14 days untouched" on the board's own text (up from 13); item 11's
+escalation (sent run 52, 2026-09-18) still stands unanswered; items 9
+(ops PRs #41/#42 unmerged) and 12 (main-owned `habitDetection.test.ts`
+flake, hit PR #133 a second time on 09-20 and cleared on its own re-run)
+remain unchanged in substance, neither core-p3-flagged nor actionable
+from this branch; the board's own text still asks every stream to stay
+quiet until something lands. Re-pulled `habitcents-ops`'s `PUNCHLIST.md`
+fresh (ops main force-updated again, same known post-09-15 runs.log
+history-rewrite pattern the board already flagged as benign; reset to
+`origin/main`, verified the RESUME marker's content, not just presence):
+still the 2026-09-10 interaction-audit wave plus the 2026-09-05/06
+zeroth-state wave items; none payments/legal, and the one core-p3-flagged
+line (leak finder dated entitlement) is still the same item already built
+and closed on this branch at run 8 (its PUNCHLIST checkbox itself stays
+unflipped, not this routine's to edit). Checklist in `PLAN.md` unchanged:
+48 `[x]`/`(C)` markers, zero `[ ]` items remaining (the one `[ ]` grep hit
+is the legend line, not an open item).
+
+Fresh `npm install`, `npx tsc --noEmit` clean. `npm test`: 125 suites /
+1367 tests green on the first attempt, no flake this run, exactly
+matching run 65's ending count (no regression, no new code either side).
+
+No push notification this run: nothing changed that is either new to
+Charen or actionable by this routine. Item 11's escalation stands sent
+since 2026-09-18 and still unanswered; items 9 and 12 are process/main-owned
+matters outside this routine's remit, already visible to Charen on the
+status board.
+
 ## COMPLETE (run 65, 2026-09-21: re-verify, no new work)
 
 `git rev-list --left-right --count origin/main...routine/core-p3` returned
