@@ -2,7 +2,30 @@
 
 ## Status
 
-In progress. Run 67: no rebase needed (`origin/main` still `3890ba1`,
+In progress, blocked. Run 68 (2026-09-21): no rebase needed (`origin/main`
+still `3890ba1`, unchanged since run 38). No REVIEW FEEDBACK pending.
+Re-checked issue #139 directly: still the 16th orchestrator snapshot
+(`updated_at` 2026-09-20T12:05:18Z), decisions 8 (locked vocabulary) and
+10 (paywall pricing/legal) both still open and unanswered, one-comment
+count unchanged (the resolved 2026-09-07 item, confirmed via the API).
+Item 11's cost-saving escalation (recommending the three worker
+routines pause or thin while blocked) was sent 2026-09-18 and is now
+unanswered for 3 days on top of the 13-day-old decision queue itself.
+Fresh `npm ci`, `tsc --noEmit` clean, full suite green (125/125,
+1395/1395), matching run 67. Logging this run **blocked** rather than
+`ok` (prior runs 53-67 logged `ok`): per this routine's own failure
+policy, config/human-pending blockers stop after 2 identical failures
+and get marked blocked in runs.log, and this is now roughly 30 runs
+past that threshold with a filed, updated decision item and a standing
+escalation, so `blocked` is the accurate signal for the weekly digest.
+Also sent one push notification to Charen this run flagging the stuck
+decision queue and the unanswered pause-the-workers cost recommendation,
+since the escalation channel (issue #139) has had zero human response
+for 13+ days and this routine has no way to confirm Charen has seen it.
+One commit (HANDOFF/PLAN touch only, no code changes: everything
+translatable without decisions 8/10 was already done as of run 35).
+
+Run 67: no rebase needed (`origin/main` still `3890ba1`,
 unchanged since run 38, confirmed via `git fetch` plus a clean
 `git merge-base --is-ancestor origin/main HEAD` check). No REVIEW
 FEEDBACK pending (checked the full HANDOFF.md history; the last entry
