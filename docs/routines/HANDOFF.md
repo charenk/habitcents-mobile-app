@@ -67,6 +67,51 @@ device pass is separate and additional to that one, not a substitute.
 
 ## Status
 
+Run 66. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 33's
+check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`3890ba1`), so no rebase and no new regression surface this run. Fresh
+`npm ci`, `npx tsc --noEmit` clean. Full suite green locally on the first
+pass, no flake: 122 suites / 1335 tests, zero drift from runs 33-65.
+**PR #133's `verify` check failed a second time** (job
+[106141608170](https://github.com/charenk/habitcents-mobile-app/actions/runs/35534733993/job/106141608170),
+on run 65's own status-commit push, head `fe38ccf`, completed 20:12 UTC
+2026-09-20): the identical `habitDetection.test.ts` `spanDays` assertion
+from run 55 (`Expected: 0, Received: 1.157e-8`), confirmed via `get_files`
+still untouched by this branch's diff, confirmed green on a fresh local
+full-suite run of the same commit. `rerun_failed_jobs` returned 403 again
+(no permission). Per issue #139's standing instruction ("a second failure
+of the same assertion on a head that is green locally is real, not flake;
+escalate then"), posted one PR comment
+(https://github.com/charenk/habitcents-mobile-app/pull/133#issuecomment-5754512815)
+flagging this explicitly as the second occurrence rather than re-treating
+it as a one-off, alongside the same diagnosis and the same "not this PR's
+code, already queued as decision item 12" disposition as run 55. Not
+pushing a fix: `habitDetection.ts` is outside this PR's scope and
+main-owned per item 12, which already carries the proposed patch and an
+"accept occasional red checks" option; leaving the call to that decision.
+`mergeable_state` is `unstable` for this reason only, base SHA `3890ba1`
+(main's tip, unchanged). No new reviews. Issue #139 (Routine status board)
+re-checked via `get`/`get_comments`: unchanged since run 65's check
+(`updated_at` still `2026-09-20T12:05:18Z`, still the sixteenth
+orchestrator entry, predates this CI event), ipad-worker section still
+"approved, nothing owed," blocker still the device pass gated on PR #133
+merging behind PR #132's payments gate (decision 6). Decision queue still
+13+ days untouched per the board's own count; item 11's sanctioned
+escalation stands unanswered per the board's own "no further
+notifications until something lands" posture; item 12 (the flake itself)
+already anticipates and sanctions occasional recurrences like this one, so
+not re-escalating past the PR comment above. Re-verified item 7
+(`app.json` orientation still `"portrait"`, `supportsTablet` still
+`true`). This HANDOFF update and the PR comment above are the only
+changes this run; no production code or plan content changed. No push
+notification: the recurrence is diagnosed, reported on the PR where the
+next reader (orchestrator or Charen) will see it, matches an outcome
+decision item 12 already anticipated and sanctioned, and the board's
+"no further notifications" posture on the stale decision queue still
+holds; this is the thirty-eighth consecutive run (29-66) with the plan at
+zero drift, though not zero-CI-drift given the flake noted above.
+
 Run 65. Verified per this file's own COMPLETE instruction: plan fully
 checked, nothing new to do. `origin/main` has not moved since run 33's
 check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
