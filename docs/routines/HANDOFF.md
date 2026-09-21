@@ -67,6 +67,39 @@ device pass is separate and additional to that one, not a substitute.
 
 ## Status
 
+Run 67. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 33's
+check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`3890ba1`), so no rebase and no new regression surface this run. Fresh
+`npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass, no
+flake: 122 suites / 1335 tests, zero drift from runs 33-66. PR #133
+re-checked via `get`/`get_comments`/`get_reviews`: still open, not draft,
+`mergeable_state` back to `clean` (from run 66's `unstable`) with the head
+sha unchanged at `2bec5ba` (run 66's own status commit, no new push
+between), meaning the flaky `verify` check cleared on its own re-run
+without any code change, consistent with the flake diagnosis from runs 55
+and 66. No new comments since run 66's second-occurrence note
+(`issuecomment-5754512815`), no reviews. Issue #139 (Routine status board)
+re-checked via `get`/`get_comments`: unchanged since run 66's check
+(`updated_at` still `2026-09-20T12:05:18Z`, still the sixteenth
+orchestrator entry, predating run 66's CI comment), ipad-worker section
+still "approved, nothing owed," blocker still the device pass gated on PR
+#133 merging behind PR #132's payments gate (decision 6). Note: the
+board's item 12 text ("no recurrence since 09-18") is now stale relative
+to PR #133, which recorded a second flake occurrence on 2026-09-21 (run
+66); that staleness is the orchestrator's board to refresh on its next
+pass, not this routine's file to edit, and item 12 already sanctions
+"accept occasional red checks" as one disposition, so no new escalation
+from this routine either. Decision queue still 13+ days untouched per the
+board's own last count; item 11's sanctioned escalation stands unanswered
+per the board's "no further notifications until something lands" posture.
+Re-verified item 7 (`app.json` orientation still `"portrait"`,
+`supportsTablet` still `true`). This HANDOFF update is the only change
+this run; no production code or plan content changed. No push
+notification: nothing new for Charen beyond what the board already
+covers and what run 66's PR comment already surfaced; this is the
+thirty-ninth consecutive run (29-67) with the plan at zero drift.
+
 Run 66. Verified per this file's own COMPLETE instruction: plan fully
 checked, nothing new to do. `origin/main` has not moved since run 33's
 check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
