@@ -1,5 +1,44 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 67, 2026-09-21: re-verify, no new work)
+
+`git rev-list --left-right --count origin/main...routine/core-p3` returned
+`0 73` at the start of this run (branch tip unchanged at `6aa6e2d`, run
+66's own status commit); `origin/main` is still at `3890ba1`, unchanged
+since run 66, so no rebase needed. PR #132 re-confirmed via the API
+(`get`/`get_comments`): `state: open`, `draft: false`, `merged: false`,
+`mergeable_state: clean`, head `6aa6e2d47bb01006e09e3d781c571013e3539ae6`
+(matches this branch's tip), base `3890ba173bdbe43778cf5501e30cbd7d8b01d320`
+(matches main's current tip), 0 comments, unchanged since run 66. No new
+REVIEW FEEDBACK section present (grepped the whole file; latest is still
+the 2026-09-11 orchestrator review of runs 15-25). Re-checked the
+routines-orchestrator's status board (mobile-app issue #139) via the API:
+still the seventeenth orchestrator run, `updated_at` unchanged at
+`2026-09-21T12:12:04Z`, 1 comment total (still the 2026-09-07 decision-1
+close, already closed). Content unchanged in substance from run 66's read:
+core-worker's own section still "complete since run 8... approved, nothing
+owed," blocked on the payments gate (decisions 2-4). Decision queue still
+"14 days untouched" on the board's own text; item 11's original escalation
+(sent run 52, 2026-09-18) still stands unanswered, and localization-worker's
+run 68 already re-sent a fresh push notification this cycle (2026-09-21,
+logged blocked) naming the same stuck queue and cadence recommendation, so
+this run does not repeat it. Items 9 (ops PRs #41/#42 unmerged) and 12
+(main-owned `habitDetection.test.ts` flake, second occurrence cleared on
+its own re-run per run 66's ipad-worker note) remain unchanged in substance,
+neither core-p3-flagged nor actionable from this branch. Checklist in
+`PLAN.md` unchanged: 48 `[x]`/`(C)` markers, zero `[ ]` items remaining
+(the one `[ ]` grep hit is the legend line, not an open item).
+
+Fresh `npm install`, `npx tsc --noEmit` clean. `npm test`: 125 suites /
+1367 tests green on the first attempt, no flake this run, exactly
+matching run 66's ending count (no regression, no new code either side).
+
+No push notification this run: nothing changed that is either new to
+Charen or actionable by this routine, and localization-worker's run 68
+already delivered a fresh notification on the same stuck decision queue
+and item 11 cadence recommendation earlier this cycle; a second one would
+be duplicate signal.
+
 ## COMPLETE (run 66, 2026-09-21: re-verify, no new work)
 
 `git rev-list --left-right --count origin/main...routine/core-p3` returned
