@@ -2,9 +2,43 @@
 
 ## Status
 
-In progress, blocked, standing since run 38 (decisions 8/10 unanswered);
-run 71's "new blocker" was a false alarm, corrected this run. Run 72
-(2026-09-22): rebase no-op (`origin/main` still `3890ba1`, unchanged since
+In progress, blocked, standing since run 38 (decisions 8/10 unanswered).
+Run 73 (2026-09-22): rebase no-op (`origin/main` still `3890ba1`,
+unchanged since run 38, confirmed via `git fetch` plus a clean
+`git merge-base --is-ancestor origin/main HEAD` check). No REVIEW
+FEEDBACK section pending for this branch's own work: the last entry in
+this file is the 2026-09-22 runs 68-71 review, which run 72 already
+addressed in full (Blockers section restored, withdrawal logged, board
+address recorded, no third notification sent); nothing newer targets
+this routine. Checked issue #139 directly (correct repo,
+`charenk/habitcents-mobile-app`, confirmed per run 72's fix): the
+orchestrator posted its eighteenth run since run 72's read, `updated_at`
+now 2026-09-22T12:06:04Z, one comment (still the unrelated 2026-09-07
+iPad-footer item), and confirms the run 71 false alarm was correctly
+withdrawn with no further action owed from this routine. Decisions 8
+(locked vocabulary) and 10 (paywall pricing/legal) both still open and
+unanswered; the board itself now calls the queue "15 days untouched."
+Item 11's cost-saving escalation (sent 2026-09-18) stands unanswered;
+the board repeats its "no further notifications from any stream until
+something lands" posture, so this run adds nothing there. New item 9 on
+the board (unrelated ops-repo ADR-merge process gap) and item 12
+(main-owned test flake) are both outside this routine's charter. No new
+PLAN.md work possible: items 3/5/6 remain exhausted, item 4 remains
+blocked on decisions 8/10, item 2's ICU/CLDR sub-item remains blocked
+behind item 4's real catalog usage (per run 28's note). Re-ran the
+run-38 `VALUE CHANGE` sweep: `grep -n "VALUE CHANGE" constants/strings.ts`
+still finds exactly the same 5 hits, all annotated "re-translated run
+38", none unresolved; the broader `needs re-translation`/`STALE` grep
+across `constants/strings.ts` and every locale file is clean too,
+matching run 72. Fresh `npm ci`, `tsc --noEmit` clean, full suite green
+(125/125, 1395/1395), matching run 72's counts. One commit (HANDOFF/PLAN
+touch only, no code changes). No push notification this run: nothing
+moved since run 72 (same two open gates, item 11's escalation already
+sent and standing unanswered, the board's own text explicitly asking for
+no further notifications), so an alert here would be duplicate signal,
+not new signal.
+
+Run 72 (2026-09-22): rebase no-op (`origin/main` still `3890ba1`, unchanged since
 run 38). No REVIEW FEEDBACK pending (last entry is the 2026-09-08 runs
 14-16 review, closed out long ago; full-file check confirms no newer
 section exists). **Correction to run 71's "issue #139 gone" finding: it
@@ -2571,16 +2605,16 @@ REVIEW-FEEDBACK-equivalent priority work per run 52's note above).
 (charenk/habitcents-mobile-app) still open and unanswered**, gating all
 remaining translation work (locked vocabulary for `habitLogging`/
 `coachMoments`/etc., and the `paywall` pricing/trial copy). Decision
-queue is 14+ days untouched; item 11's cost-saving escalation (sent
-2026-09-18) unanswered as of run 72 (day 4). Run 71's "the status-board
-channel is gone" finding is withdrawn: it queried
-charenk/habitcents-ops, where issue #139 was never filed, got a
-404/empty listing there, and mistook that for the board disappearing.
-The board has always lived in charenk/habitcents-mobile-app and is
-confirmed alive and unchanged there (see Notes for the exact address).
-No new notification sent for the withdrawal: Charen already received
-both the run 71 false alarm and ipad-worker run 71's same-day
-correction; a third message would be noise.
+queue is 15+ days untouched per the board's own 2026-09-22 eighteenth
+orchestrator run; item 11's cost-saving escalation (sent 2026-09-18)
+unanswered as of run 73. Run 71's "the status-board channel is gone"
+finding, withdrawn at run 72, is further confirmed closed: the
+orchestrator's eighteenth run explicitly reads it as a false alarm with
+no action owed. The board has always lived in
+charenk/habitcents-mobile-app and is confirmed alive and unchanged there
+(see Notes for the exact address). No new notification sent: Charen
+already received both the run 71 false alarm and ipad-worker run 71's
+same-day correction; nothing new has landed since.
 
 ## DECISIONS NEEDED
 
