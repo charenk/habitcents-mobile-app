@@ -1,5 +1,47 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 71, 2026-09-22: re-verify, no new work)
+
+`git rev-list --left-right --count origin/main...routine/core-p3` returned
+`0 77` at the start of this run (branch tip unchanged at `130a8d6`, run
+70's own status commit); `origin/main` is still at `3890ba1`, unchanged
+since run 70, so no rebase needed. PR #132 re-confirmed via the API
+(`get`/`get_comments`): `state: open`, `draft: false`, `merged: false`,
+`mergeable_state: clean`, head `130a8d65e7d74e532c37049b46d04a14ccd33f41`
+(matches this branch's tip), base `3890ba173bdbe43778cf5501e30cbd7d8b01d320`
+(matches main's current tip), 0 comments, unchanged since run 70. No new
+`## REVIEW FEEDBACK` section present (grepped the whole file; the one
+heading hit is still the 2026-09-08 orchestrator review of runs 12-14,
+already closed). Re-checked the routines-orchestrator's status board
+(mobile-app issue #139) via the API: eighteenth orchestrator run,
+`updated_at` unchanged at `2026-09-22T12:06:04Z`, 1 comment total (still
+the 2026-09-07 decision-1 close). Core-worker's own section reads
+"complete since run 8... approved, nothing owed," blocked on the payments
+gate (decisions 2-4), unchanged in substance from run 70's read. The
+localization false-alarm episode (item noted at run 70) is already
+withdrawn and corrected, nothing new to act on. Decision queue still "15
+days untouched" on the board's own text; item 11's escalation (sent run
+52, 2026-09-18) still stands unanswered, and the board's own standing
+posture remains no further notifications from any stream until something
+lands. Items 9 (ops PRs #41/#42 unmerged) and 12 (main-owned
+`habitDetection.test.ts` flake) remain unchanged, neither core-p3-flagged
+nor actionable from this branch. Re-pulled `habitcents-ops`'s
+`PUNCHLIST.md` fresh (ops main at `625ee32`): RESUME marker unchanged in
+content from what run 70 read, still the 2026-09-10 interaction-audit wave
+plus the 2026-09-05/06 zeroth-state wave items; none payments/legal, and
+the one core-p3-flagged line (leak finder dated entitlement) is still the
+same item already built and closed on this branch at run 8. Checklist in
+`PLAN.md` unchanged: zero `[ ]` items remaining beyond the legend line.
+
+Fresh `npm install`, `tsc --noEmit` clean, full suite green on the first
+attempt: 125 suites / 1367 tests, zero drift from run 70.
+
+No push notification this run: nothing changed that is either new to
+Charen or actionable by this routine. The decision queue's idleness and
+item 11's cadence recommendation are already visible to Charen via the
+status board and this routine's own run 52 escalation; repeating either
+would be duplicate signal.
+
 ## COMPLETE (run 70, 2026-09-22: re-verify, no new work)
 
 `git rev-list --left-right --count origin/main...routine/core-p3` returned
