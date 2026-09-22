@@ -2,7 +2,42 @@
 
 ## Status
 
-In progress, blocked. Run 70 (2026-09-22): same as run 69, no movement.
+In progress, blocked, NEW BLOCKER this run. Run 71 (2026-09-22): rebase
+no-op (`origin/main` still `3890ba1`, unchanged since run 38), no REVIEW
+FEEDBACK pending (last entry still the 2026-09-12 runs 28-31 review,
+closed out by run 32). **Issue #139 (the orchestrator's status board,
+this routine's and its two siblings' sole source for decisions 8/10 and
+for item 11's escalation) is gone: a direct `issue_read` returns 404,
+and `list_issues` (state ALL) on charenk/habitcents-ops returns zero
+issues total, open or closed.** This is new, not a repeat of the
+standing "still blocked" finding: ipad-worker's run 70 (also
+2026-09-22, logged earlier today per `docs/runs.log`) read the issue
+successfully (`updated_at` 2026-09-21T12:12:04Z, seventeenth
+orchestrator entry, unchanged from run 69), so the issue existed
+earlier today and was removed sometime between ipad-worker's run 70
+and this run. Checked for an alternative source before treating this as
+a hard blocker: searched Notion (the ops CLAUDE.md's other system of
+record) for the decision inbox; the only matching database
+("Decision inbox," scout-proposal shaped: discover/visit/aha/capture/
+install/activate/retain/pay/refer stages, proposed-by
+scout/triage/scorekeeper/scribe/charen) does not carry the specific
+locked-vocabulary or paywall-pricing items this branch waits on, so it
+is not a substitute; `PUNCHLIST.md`'s RESUME marker (last updated
+2026-09-11) predates issue #139 entirely and says nothing about its
+removal. No corroborating signal found anywhere that decisions 8/10
+were actually made and the board was closed out as a result; equally
+no signal that the issue was deleted in error. Cannot verify either
+way, so this run cannot safely assume unblocked and cannot safely
+assume it should keep waiting on a channel that no longer exists.
+Fresh `npm ci`, `tsc --noEmit` clean, full suite green (125/125,
+1395/1395), matching run 70; no code changes (still nothing to build
+without a confirmed answer on 8/10). **Sent a push notification this
+run**: this is materially new information (a channel disappearing, not
+a channel staying stuck), distinct from run 68's "stuck queue" alert,
+so the prior "no further notifications, nothing changed" posture does
+not apply. One commit (HANDOFF/PLAN touch only, no code changes).
+
+Run 70 (2026-09-22): same as run 69, no movement.
 Rebase no-op, no REVIEW FEEDBACK, decisions 8 (locked vocabulary) and 10
 (paywall pricing/legal) on issue #139 still open and unanswered, item 11's
 cost-saving escalation (sent 2026-09-18) now unanswered day 4. Fresh
@@ -2499,7 +2534,21 @@ REVIEW-FEEDBACK-equivalent priority work per run 52's note above).
 
 ## Blockers
 
-None.
+**New, run 71 (2026-09-22): the status-board channel is gone.** Issue
+#139 in charenk/habitcents-ops, the orchestrator's shared-state issue
+that this routine (and routine/core-p3, routine/ipad) polled every run
+for decisions 8/10 and for item 11's escalation, now 404s and does not
+appear in a full open+closed issue listing for that repo. Confirmed
+via `mcp__github__issue_read` and `mcp__github__list_issues`
+(state: ALL) directly, not secondhand. Last confirmed to exist earlier
+today (ipad-worker run 70). No replacement channel found: Notion's
+"Decision inbox" database is scout-proposal shaped and does not carry
+these specific items; `PUNCHLIST.md` predates issue #139. Until Charen
+either restores the issue, confirms decisions 8/10 through some other
+channel, or tells this routine where the board moved, this routine has
+no way to learn whether it may proceed with the locked-vocabulary and
+paywall-pricing translation work. Flagged to Charen via push
+notification this run.
 
 ## DECISIONS NEEDED
 
