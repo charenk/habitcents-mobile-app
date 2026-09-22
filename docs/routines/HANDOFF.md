@@ -1,5 +1,33 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 68, 2026-09-22: re-verify, no new work)
+
+`git rev-list --left-right --count origin/main...routine/core-p3` returned
+`0 74` at the start of this run (branch tip unchanged at `1736dbd`, run
+67's own status commit); `origin/main` is still at `3890ba1`, unchanged
+since run 67, so no rebase needed. PR #132 re-confirmed via the API:
+`state: open`, `draft: false`, `merged: false`, `mergeable_state: clean`,
+head `1736dbdd7934c266325651c37cb2e9c614e1e89f` (matches this branch's
+tip), base `3890ba173bdbe43778cf5501e30cbd7d8b01d320` (matches main's
+current tip), 0 issue comments, 0 reviews, 0 review-comment threads.
+No new REVIEW FEEDBACK section present (grepped the whole file; latest is
+still the 2026-09-11 orchestrator review of runs 15-25). Re-checked the
+routines-orchestrator's status board (mobile-app issue #139) via the API:
+`updated_at` exactly matches run 67's read (`2026-09-21T12:12:04Z`),
+still the seventeenth orchestrator run, still 1 comment total (the
+2026-09-07 decision-1 close). Zero content change since run 67: payments
+gate (decisions 2-4) still unanswered, decision queue still "14 days
+untouched," item 11's escalation (sent run 52, 2026-09-18, re-sent by
+localization-worker run 68 on 2026-09-21) still unanswered, board's own
+standing posture is no further notifications from any stream until
+something lands, so this run sends none either. Items 9 (ops PRs #41/#42
+unmerged) and 12 (main-owned `habitDetection.test.ts` flake) remain
+unchanged, neither core-p3-flagged nor actionable from this branch.
+Checklist in `PLAN.md` unchanged: 48 `[x]`/`(C)` markers, zero `[ ]` items
+remaining (the one `[ ]` grep hit is the legend line, not an open item).
+Fresh `npm install`, `tsc --noEmit` clean, full suite green on the first
+attempt: 125 suites / 1367 tests, zero drift from run 67.
+
 ## COMPLETE (run 67, 2026-09-21: re-verify, no new work)
 
 `git rev-list --left-right --count origin/main...routine/core-p3` returned
