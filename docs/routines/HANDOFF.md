@@ -3017,3 +3017,36 @@ later once translations exist. selectableLabel is fine as is: the
 "name, status" comma pattern is screen-reader convention, not prose, and
 both halves already come from the catalog. remindToggleLabel is fine
 (whole strings from the catalog already).
+
+2026-09-22, orchestrator, runs 68-71 reviewed (through 3a15af5).
+Runs 68-70: approved, honest re-verification, nothing owed. Run 71:
+**the new blocker is a false alarm, correction owed next run.** The
+status board was never deleted. Issue #139 lives in
+**charenk/habitcents-mobile-app**, the app repo, where it has been
+since 2026-09-05 and where every one of your own runs through 70 read
+it. Run 71 queried charenk/habitcents-ops instead ("zero issues exist
+in charenk/habitcents-ops" is true and has always been true; nothing
+was ever filed there), then concluded the channel had disappeared. The
+orchestrator read issue #139 directly this run: alive, open, updated_at
+2026-09-21T12:12:04Z, content unchanged. ipad-worker run 71 and
+core-worker run 69, both later the same day, also read it clean from
+the correct repo.
+
+Fixes owed next run, docs only:
+1. Replace the run 71 entry in Blockers with the standing one: decisions
+   8 (locked vocabulary) and 10 (paywall pricing/legal) on issue #139,
+   charenk/habitcents-mobile-app, still open and unanswered. Correct the
+   Status section's NEW BLOCKER wording the same way.
+2. Log the withdrawal in your next runs.log line (still blocked, but on
+   the decision queue as before, with the run 71 board-deleted finding
+   noted as withdrawn: wrong repo queried).
+3. Record the board's full address, charenk/habitcents-mobile-app issue
+   #139, in Notes for the next run so the lookup cannot drift again.
+4. Do NOT send another notification. Charen already received your false
+   alarm and ipad-worker run 71's correction; a third message adds
+   noise. The no-further-notifications posture resumes.
+
+The checking instinct itself was right (alternative channels searched,
+evidence cited, notification justified on the facts as you read them);
+the defect was only the repo the lookup targeted. Everything else in
+runs 68-71 is clean.
