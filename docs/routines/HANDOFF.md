@@ -2567,21 +2567,20 @@ REVIEW-FEEDBACK-equivalent priority work per run 52's note above).
 
 ## Blockers
 
-**New, run 71 (2026-09-22): the status-board channel is gone.** Issue
-#139 in charenk/habitcents-ops, the orchestrator's shared-state issue
-that this routine (and routine/core-p3, routine/ipad) polled every run
-for decisions 8/10 and for item 11's escalation, now 404s and does not
-appear in a full open+closed issue listing for that repo. Confirmed
-via `mcp__github__issue_read` and `mcp__github__list_issues`
-(state: ALL) directly, not secondhand. Last confirmed to exist earlier
-today (ipad-worker run 70). No replacement channel found: Notion's
-"Decision inbox" database is scout-proposal shaped and does not carry
-these specific items; `PUNCHLIST.md` predates issue #139. Until Charen
-either restores the issue, confirms decisions 8/10 through some other
-channel, or tells this routine where the board moved, this routine has
-no way to learn whether it may proceed with the locked-vocabulary and
-paywall-pricing translation work. Flagged to Charen via push
-notification this run.
+**Standing since run 38: decisions 8 and 10 on issue #139
+(charenk/habitcents-mobile-app) still open and unanswered**, gating all
+remaining translation work (locked vocabulary for `habitLogging`/
+`coachMoments`/etc., and the `paywall` pricing/trial copy). Decision
+queue is 14+ days untouched; item 11's cost-saving escalation (sent
+2026-09-18) unanswered as of run 72 (day 4). Run 71's "the status-board
+channel is gone" finding is withdrawn: it queried
+charenk/habitcents-ops, where issue #139 was never filed, got a
+404/empty listing there, and mistook that for the board disappearing.
+The board has always lived in charenk/habitcents-mobile-app and is
+confirmed alive and unchanged there (see Notes for the exact address).
+No new notification sent for the withdrawal: Charen already received
+both the run 71 false alarm and ipad-worker run 71's same-day
+correction; a third message would be noise.
 
 ## DECISIONS NEEDED
 
@@ -2689,6 +2688,16 @@ only if ADR 0037 is reversed and the quote rotation un-retires.
 
 ## Notes for the next run
 
+- **Status board full address: issue #139 in `charenk/habitcents-mobile-app`
+  (the app repo, not the ops repo).** It has lived there since
+  2026-09-05; every run through 70 read it correctly from there. Run 71
+  queried `charenk/habitcents-ops` instead, got a 404/empty listing (true
+  and expected, since nothing was ever filed there), and wrongly
+  concluded the board had disappeared; corrected in run 72 after the
+  orchestrator's REVIEW FEEDBACK and independent same-day confirmations
+  from ipad-worker (run 71) and core-worker (run 69). Always target
+  `charenk/habitcents-mobile-app` for issue #139 so this cannot drift
+  again.
 - This container had no `node_modules` at session start (fresh checkout);
   `npm install` was needed before `tsc`/`jest` would run at all. Expect the
   same on a fresh container next time.
