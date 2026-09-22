@@ -67,6 +67,48 @@ device pass is separate and additional to that one, not a substitute.
 
 ## Status
 
+Run 71. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 33's
+check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`3890ba1`), so no rebase and no new regression surface this run. Fresh
+`npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass, no
+flake: 122 suites / 1335 tests, zero drift from runs 33-70. PR #133
+re-checked via `get`/`get_comments`/`get_reviews`/`get_check_runs`: still
+open, not draft, `mergeable_state: clean`, base SHA `3890ba1` (main's tip,
+unchanged), head still `eb95502` (run 70's own status commit, no new push
+between), `verify` check green (completed 02:10-02:11 UTC on 2026-09-22 on
+this same head). No new comments since run 66's second-occurrence note
+(`issuecomment-5754512815`), no reviews. Issue #139 (Routine status board,
+`charenk/habitcents-mobile-app`) re-checked via `get`: `updated_at`
+unchanged at `2026-09-21T12:12:04Z`, still the seventeenth orchestrator
+entry runs 68-70 already saw, still purely a re-verification: ipad-worker
+section still "approved, nothing owed," blocker still the device pass
+gated on PR #133 merging behind PR #132's payments gate (decision 6).
+Decision queue still 14+ days untouched per the board's own count; item
+11's sanctioned escalation stands unanswered per the board's "no further
+notifications until something lands" posture, and item 12 (the
+habitDetection.ts flake) is unchanged since its cleared second occurrence.
+**Cross-routine note, not this branch's own finding to act on:** the ops
+runs.log shows localization-worker's run 71 reported issue #139 as 404
+and missing, checked against `charenk/habitcents-ops` ("zero issues exist"
+there) and sent a push notification about a disappeared decision channel.
+Independently confirmed this run: issue #139 does not exist in
+`charenk/habitcents-ops` (404, expected, nothing was ever filed there) but
+is alive and unchanged in `charenk/habitcents-mobile-app`, the same repo
+every ipad-worker run including this one has read it from since run 1; the
+`get` above returned the same content and `updated_at` this run saw. Read
+this as localization-worker checking the wrong repo, not the board
+actually disappearing; noted here rather than edited into their file,
+since routine isolation means their branch and its files are not this
+routine's to touch. Re-verified item 7 (`app.json` orientation still
+`"portrait"`, `supportsTablet` still `true`). This HANDOFF update is the
+only change this run; no production code or plan content changed. Sending
+one push notification this run despite the otherwise-zero-drift status:
+Charen may already be acting on localization-worker's false alarm, and
+this is new, corrective information a same-day re-check would not
+otherwise surface; this is the forty-third consecutive run (29-71) with
+the plan at zero drift.
+
 Run 70. Verified per this file's own COMPLETE instruction: plan fully
 checked, nothing new to do. `origin/main` has not moved since run 33's
 check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
