@@ -2,7 +2,15 @@
 
 ## Status
 
-In progress, blocked. Run 69 (2026-09-21): no rebase needed (`origin/main`
+In progress, blocked. Run 70 (2026-09-22): same as run 69, no movement.
+Rebase no-op, no REVIEW FEEDBACK, decisions 8 (locked vocabulary) and 10
+(paywall pricing/legal) on issue #139 still open and unanswered, item 11's
+cost-saving escalation (sent 2026-09-18) now unanswered day 4. Fresh
+`npm ci`, `tsc --noEmit` clean, full suite green (125/125, 1395/1395). No
+push notification (nothing changed since run 68's alert). One commit
+(HANDOFF/PLAN touch only, no code changes).
+
+Run 69 (2026-09-21): no rebase needed (`origin/main`
 still `3890ba1`, unchanged since run 38, confirmed via `git fetch` plus a
 clean `git merge-base --is-ancestor origin/main HEAD` check). No REVIEW
 FEEDBACK pending (last entry is the 2026-09-12 runs 28-31 review, closed
