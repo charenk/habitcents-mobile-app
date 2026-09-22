@@ -2,7 +2,40 @@
 
 ## Status
 
-In progress, blocked, NEW BLOCKER this run. Run 71 (2026-09-22): rebase
+In progress, blocked, standing since run 38 (decisions 8/10 unanswered);
+run 71's "new blocker" was a false alarm, corrected this run. Run 72
+(2026-09-22): rebase no-op (`origin/main` still `3890ba1`, unchanged since
+run 38). No REVIEW FEEDBACK pending (last entry is the 2026-09-08 runs
+14-16 review, closed out long ago; full-file check confirms no newer
+section exists). **Correction to run 71's "issue #139 gone" finding: it
+was a wrong-repo check, not an actual disappearance.** Run 71 read
+`issue_read`/`list_issues` against `charenk/habitcents-ops`, where #139
+was never filed, got a 404/zero-issues result, and treated that as the
+status board vanishing. A fresh direct `issue_read` this run against the
+correct repo, `charenk/habitcents-mobile-app`, confirms #139 is alive and
+unchanged: still the seventeenth orchestrator run, `updated_at`
+2026-09-21T12:12:04Z, one comment (the unrelated 2026-09-07 iPad-footer
+item), decisions 8 (locked vocabulary) and 10 (paywall pricing/legal)
+both still open and unanswered, item 11's cost-saving escalation (sent
+2026-09-18) now unanswered day 4. Both sibling routines independently
+caught the same mistake the same day (ipad-worker run 71, core-worker run
+69, both in their own HANDOFF/runs.log) but correctly left this branch's
+files alone per routine isolation; this entry is this routine's own
+correction of its own error. No further push notification needed for the
+correction itself: ipad-worker's run 71 already sent Charen a corrective
+notification the same morning ("Charen may be acting on
+localization-worker's false alarm right now"), so a second one here would
+be duplicate signal. No new PLAN.md work possible: items 3/5/6 remain
+exhausted, item 4 remains blocked on decisions 8/10, item 2's ICU/CLDR
+sub-item remains blocked behind item 4's real catalog usage (per run 28's
+note). Fresh `npm ci`, `tsc --noEmit` clean, full suite green (125/125,
+1395/1395), matching run 71's counts. One commit (HANDOFF/PLAN touch
+only, no code changes). No push notification this run: the real blocker
+(decisions 8/10, item 11) is unchanged since run 68's alert, and the
+false-alarm correction is already covered by ipad-worker's own
+notification, so nothing new for Charen to act on.
+
+Run 71 (2026-09-22): rebase
 no-op (`origin/main` still `3890ba1`, unchanged since run 38), no REVIEW
 FEEDBACK pending (last entry still the 2026-09-12 runs 28-31 review,
 closed out by run 32). **Issue #139 (the orchestrator's status board,
