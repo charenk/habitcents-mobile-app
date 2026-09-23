@@ -3,6 +3,43 @@
 ## Status
 
 In progress, blocked, standing since run 38 (decisions 8/10 unanswered).
+Run 76 (2026-09-23): rebase no-op (`origin/main` still `3890ba1`,
+unchanged since run 38, confirmed via `git fetch` plus a clean
+`git merge-base --is-ancestor origin/main HEAD` check). No REVIEW
+FEEDBACK section pending: full-file check confirms the newest entry is
+still the 2026-09-22 runs 68-71 review, closed out by run 72; nothing
+newer targets this routine. Read issue #139 directly
+(charenk/habitcents-mobile-app) via the API: `updated_at` advanced to
+2026-09-23T12:03:20Z (the nineteenth orchestrator run, posted after run
+75's read), content otherwise the same verdict as run 75
+("approved, nothing owed" for this stream); one comment, still the
+unrelated 2026-09-07 iPad-footer item. Decisions 8 (locked vocabulary)
+and 10 (paywall pricing/legal) both still open and unanswered; the
+board's own text now calls the queue "16 days untouched." Item 11's
+cost-saving escalation (sent 2026-09-18, thin or pause the worker
+routines while blocked) stands unanswered, now day 5. PR #134 still
+open, draft, `mergeable_state: clean`, head `0816a8a` matching this
+branch's own pre-run tip, still one comment, zero reviews. No new
+PLAN.md work possible: items 3/5/6 remain exhausted, item 4 remains
+blocked on decisions 8/10, item 2's ICU/CLDR sub-item remains blocked
+behind item 4's real catalog usage (per run 28's note). Re-ran the
+run-38 `VALUE CHANGE` sweep: `grep -n "VALUE CHANGE" constants/strings.ts`
+still finds exactly the same 5 hits, all annotated "re-translated run
+38", none unresolved; the broader `needs re-translation`/`STALE` grep
+across `constants/strings.ts` and every locale file is clean too,
+matching run 75. Fresh `npm ci`, `tsc --noEmit` clean, full suite green
+(125/125, 1395/1395), matching run 75's counts exactly. One commit
+(HANDOFF/PLAN touch only, no code changes). **Sent a push notification
+this run**: nothing new in substance (same two gates, same escalation),
+but it has now been 5 days since item 11's two-minute pause/thin
+decision went unanswered and 110+ verify-only runs have burned cost
+across the three worker routines since blocking; a periodic reminder
+serves Charen better here than indefinite silence under the "no
+duplicate signal" posture, since no one has been reminded since run 71
+(2026-09-22, itself a false-alarm correction, not a substantive queue
+nudge). Next run should return to the no-notification default unless
+something actually changes.
+
 Run 75 (2026-09-23): rebase no-op (`origin/main` still `3890ba1`,
 unchanged since run 38, confirmed via `git fetch` plus a clean
 `git merge-base --is-ancestor origin/main HEAD` check). No REVIEW
@@ -2662,16 +2699,16 @@ REVIEW-FEEDBACK-equivalent priority work per run 52's note above).
 (charenk/habitcents-mobile-app) still open and unanswered**, gating all
 remaining translation work (locked vocabulary for `habitLogging`/
 `coachMoments`/etc., and the `paywall` pricing/trial copy). Decision
-queue is 15+ days untouched per the board's own 2026-09-22 eighteenth
+queue is 16 days untouched per the board's own 2026-09-23 nineteenth
 orchestrator run; item 11's cost-saving escalation (sent 2026-09-18)
-unanswered as of run 73. Run 71's "the status-board channel is gone"
-finding, withdrawn at run 72, is further confirmed closed: the
-orchestrator's eighteenth run explicitly reads it as a false alarm with
-no action owed. The board has always lived in
-charenk/habitcents-mobile-app and is confirmed alive and unchanged there
-(see Notes for the exact address). No new notification sent: Charen
-already received both the run 71 false alarm and ipad-worker run 71's
-same-day correction; nothing new has landed since.
+unanswered as of run 76, now day 5. Run 71's "the status-board channel
+is gone" finding, withdrawn at run 72, remains confirmed closed. The
+board has always lived in charenk/habitcents-mobile-app and is
+confirmed alive and unchanged there (see Notes for the exact address).
+Run 76 sent a periodic reminder notification (see Status): the first
+since run 71's false-alarm correction, flagging item 11's still-open
+two-minute pause/thin decision and the accumulating verify-only run
+cost.
 
 ## DECISIONS NEEDED
 
