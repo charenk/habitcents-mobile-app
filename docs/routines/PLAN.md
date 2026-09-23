@@ -836,6 +836,22 @@ and items 9/12 are process/main-owned matters outside this routine's
 remit, already visible to Charen on the status board (seventeenth
 orchestrator run, decision queue called "14 days untouched").
 
+## Run 72: closed out again
+
+Same shape as runs 9-22/24/27/29/30/31-69: no new commits on `origin/main`
+beyond what the branch already contains (`git rev-list --left-right --count
+origin/main...origin/routine/core-p3` returned `0 78` at the start of this
+run, branch tip unchanged at `49412f6`), `mergeable_state: clean` on PR
+#132, 0 comments, PUNCHLIST's RESUME marker unchanged and still none
+core-p3-shaped. Fresh `npm install`, `npx tsc --noEmit` clean. `npm test`
+125 suites / 1367 tests green on the first attempt, no flake this run,
+exactly matching run 71. Checklist unchanged, still fully `[x]`/`(C)`.
+No new push notification: item 11's escalation (run 52) stands unanswered
+and items 9/12 are process/main-owned matters outside this routine's
+remit, already visible to Charen on the status board (eighteenth
+orchestrator run, decision queue called "15 days untouched," unchanged
+from run 71).
+
 ## If this routine fires again
 
 The branch and PR stay open until Charen merges or closes them (routine
