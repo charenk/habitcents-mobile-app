@@ -3,6 +3,36 @@
 ## Status
 
 In progress, blocked, standing since run 38 (decisions 8/10 unanswered).
+Run 75 (2026-09-23): rebase no-op (`origin/main` still `3890ba1`,
+unchanged since run 38, confirmed via `git fetch` plus a clean
+`git merge-base --is-ancestor origin/main HEAD` check). No REVIEW
+FEEDBACK section pending: full-file check confirms the newest entry is
+still the 2026-09-22 runs 68-71 review, closed out by run 72; nothing
+newer targets this routine. Read issue #139 directly
+(charenk/habitcents-mobile-app) via the API: unchanged since run 74's
+read, `updated_at` still 2026-09-22T12:06:04Z (still the eighteenth
+orchestrator run), one comment (the unrelated 2026-09-07 iPad-footer
+item, confirmed via a fresh comments fetch). Decisions 8 (locked
+vocabulary) and 10 (paywall pricing/legal) both still open and
+unanswered; item 11's cost-saving escalation (sent 2026-09-18, thin or
+pause the worker routines) stands unanswered, now day 5. PR #134 still
+open, draft, `mergeable_state: clean`, head `8b3226c` matching this
+branch's own pre-run tip, still one comment, zero reviews. No new
+PLAN.md work possible: items 3/5/6 remain exhausted, item 4 remains
+blocked on decisions 8/10, item 2's ICU/CLDR sub-item remains blocked
+behind item 4's real catalog usage (per run 28's note). Re-ran the
+run-38 `VALUE CHANGE` sweep: `grep -n "VALUE CHANGE" constants/strings.ts`
+still finds exactly the same 5 hits, all annotated "re-translated run
+38", none unresolved; the broader `needs re-translation`/`STALE` grep
+across `constants/strings.ts` and every locale file is clean too,
+matching run 74. Fresh `npm ci`, `tsc --noEmit` clean, full suite green
+(125/125, 1395/1395), matching run 74's counts exactly. One commit
+(HANDOFF/PLAN touch only, no code changes). No push notification this
+run: nothing moved since run 74 (same two open gates, item 11's
+escalation already sent and standing unanswered, the board's own text
+still asking for no further notifications), so an alert here would be
+duplicate signal, not new signal.
+
 Run 74 (2026-09-23): rebase no-op (`origin/main` still `3890ba1`,
 unchanged since run 38, confirmed via `git fetch` plus a clean
 `git merge-base --is-ancestor origin/main HEAD` check). No REVIEW
