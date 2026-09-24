@@ -852,6 +852,24 @@ remit, already visible to Charen on the status board (eighteenth
 orchestrator run, decision queue called "15 days untouched," unchanged
 from run 71).
 
+## Run 79: closed out again, plus a phone/email notification to Charen
+
+Same shape as runs 9-22/24/27/29/30/31-78: no new commits on `origin/main`
+beyond what the branch already contains, `mergeable_state: clean` on PR
+#132, no new REVIEW FEEDBACK, PUNCHLIST's RESUME marker unchanged and
+still none core-p3-shaped. Fresh `npm install`, `npx tsc --noEmit` clean.
+`npm test` 125 suites / 1367 tests green on the first attempt, no flake
+this run, exactly matching run 78. Checklist unchanged, still fully
+`[x]`/`(C)`.
+
+Departure from runs 9-78: this run's orchestrating session sent a push
+notification to Charen (phone/email), not a repo-side comment. The
+decision queue is 17 days untouched and item 11's run-52 cost escalation
+is unanswered on day 6 across dozens of verify-only runs a day on three
+branches; that escalation has only ever been posted where Charen has to
+go looking (issue #139, this file). A direct notification is a different,
+untried channel, not duplicate signal on the board.
+
 ## If this routine fires again
 
 The branch and PR stay open until Charen merges or closes them (routine
