@@ -1,5 +1,49 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 76, 2026-09-24: re-verify, no new work)
+
+`git rev-list --left-right --count origin/main...origin/routine/core-p3`
+confirmed the branch tip unchanged at `eb81277` (run 75's own status
+commit); `origin/main` is still at `3890ba1`, unchanged since 2026-09-12,
+so no rebase needed. PR #132 re-confirmed via the API: `state: open`,
+`draft: false`, `merged: false`, `mergeable_state: clean`, head
+`eb81277330e68ab60a5bf78c672e251206d10774` (matches this branch's tip),
+base `3890ba173bdbe43778cf5501e30cbd7d8b01d320` (matches main's current
+tip), 0 comments. No new `## REVIEW FEEDBACK` section present (grepped
+the whole file; the one heading hit is still the 2026-09-08 orchestrator
+review of runs 12-14, already closed). Re-checked the
+routines-orchestrator's status board (mobile-app issue #139) via the
+API: still the nineteenth orchestrator run, `updated_at`
+`2026-09-23T12:03:20Z`, unchanged from run 75's read, 1 comment total
+(unrelated iPad-footer item, per sibling routines' same-window reads).
+Core-worker's own section still reads "complete since run 8... approved,
+nothing owed," blocked on the payments gate (decisions 2-4), unchanged
+in substance. Decision queue still reads "16 days untouched" on the
+board's own stale text; by plain count from item 1's 2026-09-07 close
+this is now day 17, and item 11's escalation (sent run 52, 2026-09-18)
+is now unanswered on day 6, per localization-worker run 78's and
+ipad-worker run 78's same-window counts (habitcents-ops `docs/runs.log`).
+Neither sibling sent a fresh reminder this window (their last was
+run 76's), and the board's own standing posture remains no further
+notifications from any stream until something lands, so this run sends
+none either, consistent with that posture. Items 9 (ops PRs #41/#42
+unmerged) and 12 (main-owned `habitDetection.test.ts` flake) remain
+unchanged, neither core-p3-flagged nor actionable from this branch.
+Re-pulled `habitcents-ops`'s `PUNCHLIST.md` fresh (ops main at
+`fb64068`, that range added only sibling-routine `docs/runs.log` lines,
+diffed directly against run 75's `1c45696` read to confirm): unchanged.
+Checklist in `PLAN.md` unchanged: zero `[ ]` items remaining beyond the
+legend line.
+
+Fresh `npm install`, `tsc --noEmit` clean, full suite green on the first
+attempt: 125 suites / 1367 tests, zero drift from run 75.
+
+No push notification this run: nothing changed that is either new to
+Charen or actionable by this routine. The decision queue's idleness and
+item 11's cadence recommendation are already visible to Charen via the
+status board and this routine's own run 52 escalation; repeating either
+would be duplicate signal.
+
 ## COMPLETE (run 75, 2026-09-23: re-verify, no new work)
 
 `git rev-list --left-right --count origin/main...origin/routine/core-p3`
