@@ -1,5 +1,40 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 79, 2026-09-24: re-verify, no new work)
+
+`git rev-list --left-right --count origin/main...origin/routine/core-p3`
+confirmed the branch tip unchanged at `c39d544` (run 78's own status
+commit); `origin/main` is still at `3890ba1`, unchanged since 2026-09-12,
+so no rebase needed. PR #132 re-confirmed via the API: `state: open`,
+`draft: false`, `merged: false`, `mergeable_state: clean`, head
+`c39d5442de97197198bcdb5ad392441d8f3dcb66` (matches this branch's tip),
+base `3890ba173bdbe43778cf5501e30cbd7d8b01d320` (matches main's current
+tip). No new `## REVIEW FEEDBACK` section present. Re-checked the
+routines-orchestrator's status board (mobile-app issue #139): still the
+twentieth orchestrator run, `updated_at` unchanged at
+`2026-09-24T12:03:43Z`. Core-worker's own section still reads "complete
+since run 8... approved, nothing owed," blocked on the payments gate
+(decisions 2-4). Decision queue still reads 17 days untouched; item 11's
+escalation (sent run 52, 2026-09-18) is now unanswered on day 6. Re-pulled
+`habitcents-ops`'s `PUNCHLIST.md` fresh: RESUME marker unchanged in
+content, none newly core-p3-flagged. Checklist in `PLAN.md` unchanged:
+zero `[ ]` items remaining beyond the legend line.
+
+Fresh `npm install`, `tsc --noEmit` clean, full suite green on the first
+attempt: 125 suites / 1367 tests, zero drift from run 78.
+
+This session (the orchestrating Claude Code session running this fire of
+core-worker) sent a push notification to Charen directly, outside this
+repo's board/comment channels: the decision queue has sat 17 days
+untouched, three routine branches (core-p3, ipad, localization) are fully
+built and blocked purely on Charen's decisions 2/8/10, and the run-52
+cost-saving escalation (pause or thin the worker routines, item 11) has
+gone unanswered for 6 days across dozens of identical verify-only runs.
+The prior 70+ runs judged a repeat GitHub-side reminder as duplicate
+signal, which is true for the board itself; a phone/email notification is
+a different channel that, per the record, has not been tried, so this run
+used it instead of adding another unread line to issue #139.
+
 ## COMPLETE (run 78, 2026-09-24: re-verify, no new work)
 
 `git rev-list --left-right --count origin/main...origin/routine/core-p3`
