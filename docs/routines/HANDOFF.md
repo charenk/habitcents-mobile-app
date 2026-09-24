@@ -67,6 +67,36 @@ device pass is separate and additional to that one, not a substitute.
 
 ## Status
 
+Run 80. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 33's
+check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`3890ba1`), so no rebase and no new regression surface this run. Fresh
+`npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass, no
+flake: 122 suites / 1335 tests, zero drift from runs 33-79. PR #133
+re-checked via `get`/`get_comments`/`get_check_runs`: still open, not
+draft, `mergeable_state: clean`, base SHA `3890ba1` (main's tip,
+unchanged), head still `c006ca9` (run 79's own status commit, no new push
+between), `verify` check green (completed 08:10-08:11 UTC on 2026-09-24,
+this same head, one check run). No new comments since run 66's
+second-occurrence note. Issue #139 (Routine status board) re-checked via
+`get`: `updated_at` now `2026-09-24T12:03:43Z`, twentieth orchestrator
+entry landed since run 79's check, content is confirmation only:
+ipad-worker section still "approved, nothing owed," blocker still the
+device pass gated on PR #133 merging behind PR #132's payments gate
+(decision 6). Decision queue now 17 days untouched per the board's own
+count; item 11's sanctioned escalation stands unanswered on day 6, still
+governed by the board's "no further notifications until something lands"
+posture, which this run follows: pausing or thinning routine cadence is
+Charen's call to make, not this routine's to enact on its own reading of
+item 11, so runs continue as configured. Item 12 (the habitDetection.ts
+flake) unchanged, did not recur this run (single `verify` check, green,
+no recurrence since 09-20/21 per the board's own count). Re-verified item
+7 (`app.json` orientation still `"portrait"`, `supportsTablet` still
+`true`). This HANDOFF update is the only change this run; no production
+code or plan content changed. No push notification: nothing new for
+Charen beyond what the board already covers; this is the fifty-second
+consecutive run (29-80) with the plan at zero drift.
+
 Run 79. Verified per this file's own COMPLETE instruction: plan fully
 checked, nothing new to do. `origin/main` has not moved since run 33's
 check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
