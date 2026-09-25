@@ -67,6 +67,41 @@ device pass is separate and additional to that one, not a substitute.
 
 ## Status
 
+Run 84. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 33's
+check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`3890ba1`), so no rebase and no new regression surface this run. Fresh
+`npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass, no
+flake: 122 suites / 1335 tests, zero drift from runs 33-83. PR #133
+re-checked via `get`/`get_comments`/`get_reviews`/`get_check_runs`: still
+open, not draft, `mergeable_state: clean`, base SHA `3890ba1` (main's tip,
+unchanged), head still `02c23c8` (run 83's own status commit, no new push
+between), `verify` check green (completed 08:10-08:11 UTC on 2026-09-25,
+this same head, one check run, SUCCESS). No new comments since run 66's
+second-occurrence note, no reviews. Issue #139 (Routine status board)
+re-checked via `get`/`get_comments`: `updated_at` advanced to
+`2026-09-25T12:03:48Z`, a twenty-first orchestrator entry landed since run
+83's check (same-day board refresh, no new comments, all change is to the
+issue body). ipad-worker's own line is unchanged: "approved, nothing
+owed," blocker still the device pass gated on PR #133 merging behind PR
+#132's payments gate (decision 6). Item 11's sanctioned escalation is now
+on its seventh unanswered day, and the board records core-worker's run 79
+sending a first direct phone/email alert on 2026-09-24 about it, also
+still unanswered; that alert and the decision of whether to pause or thin
+routine cadence are core-worker's and Charen's to make, not something this
+routine's own read of item 11 enacts or duplicates with a second
+notification, consistent with the board's own "no further notifications
+until something lands" posture and every prior run's reading of it. Item
+12 (the habitDetection.ts flake) unchanged, did not recur this run (single
+`verify` check, green, no recurrence since 09-20/21, matching the board's
+own note). Re-verified item 7 (`app.json` orientation still `"portrait"`,
+`supportsTablet` still `true`). This HANDOFF update is the only change
+this run; no production code or plan content changed. No push
+notification: nothing new for Charen on this routine's own PR or plan
+beyond what the board already covers and what core-worker already sent;
+this is the fifty-sixth consecutive run (29-84) with the plan at zero
+drift.
+
 Run 83. Verified per this file's own COMPLETE instruction: plan fully
 checked, nothing new to do. `origin/main` has not moved since run 33's
 check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
