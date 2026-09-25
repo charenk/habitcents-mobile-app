@@ -1,5 +1,63 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 83, 2026-09-25: real rebase, not a no-op, for the first time since run 8)
+
+`origin/main` (mobile-app) advanced `3890ba1..ad091e2` (PRs #175/#176,
+already noted by ipad-worker's run 85 rebase yesterday: onboarding arc v2
+Dynamic Type fix and a primer copy pass). `git rebase origin/main` hit two
+conflicts, both in `design/decisions/README.md`'s component index, each an
+additive collision: this branch's own P4-3 commit (`88e399a`, shareable
+counter card v1) adding `ShareCounterCard` against main's already-landed
+`OnboardingCarousel`/`BeatMedia` entries, then this branch's entitlement-gate
+commit (`84cc3ec`) adding `PickOneSheet`/`BreakHabitSheet` against the
+now-merged `ShareCounterCard` line. Both resolved by keeping every name from
+both sides in one line, per the design-records rule (nothing here was a real
+code collision); verified both new files (`PickOneSheet.md`,
+`BreakHabitSheet.md`) exist on disk before resolving. All 89 commits on this
+branch replayed clean after that, zero other conflicts.
+
+Re-audited rather than trusting the clean rebase: reread the two resolved
+README diffs above, and diffed `origin/main...HEAD` file list against the
+pre-rebase branch (`git rev-list --left-right --count` now reads `0  89`
+against the new main) to confirm nothing this branch owns was dropped or
+duplicated by the replay.
+
+No REVIEW FEEDBACK section (grepped the whole file; the one open heading hit
+is still the 2026-09-08 orchestrator review of runs 12-14, already closed).
+Re-pulled `habitcents-ops`'s PUNCHLIST.md and ADR index fresh (ops main
+advanced `f55f5c3..d781a58`: ADRs 0043/0044/0045 merged, a dev-menu-v2
+state-preset inventory added, `docs/reminders-spec.md` added): none of that
+range is core-p3-flagged (iPad content column, i18n catalog seam, onboarding
+arc v2, dev-menu QA presets, bill-reminder spec are all other streams' or
+out-of-scope work). Checklist in `PLAN.md` unchanged: zero `[ ]` items
+remaining beyond the legend line.
+
+Fresh `npm install`, `tsc --noEmit` clean, full suite green on the first
+attempt: 127 suites / 1388 tests, up from 125/1367, entirely main's own
+growth (PRs #175/#176) plus this run's merge, which needed no new test case
+of its own.
+
+Force-pushed the rebased branch plus this HANDOFF/PLAN update to
+`routine/core-p3`. PR #132's `mergeable_state` read `dirty` before this
+push (expected: GitHub had not yet recomputed against the new main tip) and
+is re-confirmed `clean` after.
+
+Re-checked the routines-orchestrator's status board (mobile-app issue
+#139) directly: still the twenty-first orchestrator entry, `updated_at`
+unchanged at `2026-09-25T12:03:48Z`. Core-worker's own section still reads
+"complete since run 8... approved, nothing owed," blocked on the payments
+gate (decisions 2-4). Decision queue now 18 days untouched. Item 11's
+escalation (sent run 52, 2026-09-18) and run 79's direct phone/email alert
+(sent 2026-09-24) both remain unanswered/unopened; the board's run-21 post
+already named the orchestrator, not the worker streams, as owner of the next
+follow-up (due 2026-09-26 if the queue is still untouched then). Nothing
+about that changed this run.
+
+No push notification: this run is a real rebase and merge-conflict
+resolution, not decision-queue movement, and the orchestrator has already
+taken explicit ownership of the next alert. Sending one here would be
+duplicate signal on the same unresolved blocker.
+
 ## COMPLETE (run 82, 2026-09-25: re-verify, no new work; orchestrator now owns the next alert)
 
 `git rev-list --left-right --count origin/main...origin/routine/core-p3`

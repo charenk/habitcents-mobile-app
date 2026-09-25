@@ -958,6 +958,38 @@ the queue is still untouched), so a fresh one from this routine now would
 be duplicate signal on top of both run 79's still-unopened alert and the
 orchestrator's own stated plan.
 
+## Run 83: real rebase, first since run 8
+
+Unlike runs 9-82's no-op re-verifies, `origin/main` had actually moved:
+`3890ba1..ad091e2` (PRs #175/#176, onboarding arc v2 Dynamic Type fix and a
+primer copy pass; ipad-worker's run 85 hit the same range a day earlier).
+`git rebase origin/main` produced two conflicts, both additive collisions in
+`design/decisions/README.md`'s component index (this branch's own P4-3 and
+entitlement-gate commits each adding component links against main's
+already-merged additions), resolved by keeping every name from both sides
+in one line per the design-records rule; confirmed the newly-referenced
+files (`PickOneSheet.md`, `BreakHabitSheet.md`) exist before resolving. No
+other conflicts across the full replay of all 89 commits.
+
+Re-pulled `habitcents-ops`'s PUNCHLIST.md and ADR index fresh (ops main
+`f55f5c3..d781a58`: ADRs 0043/0044/0045, a dev-menu-v2 QA preset inventory,
+`docs/reminders-spec.md`): none core-p3-flagged. Checklist in this file
+unchanged, still fully `[x]`/`(C)`.
+
+Fresh `npm install`, `npx tsc --noEmit` clean, `npm test` 127 suites / 1388
+tests green on the first attempt (up from 125/1367, entirely main's own
+growth plus this merge, no new test case needed). Force-pushed the rebased
+branch plus HANDOFF/PLAN updates to `routine/core-p3`. PR #132's
+`mergeable_state` read `dirty` pre-push (expected, stale against the old
+main tip) and is `clean` again after.
+
+Status board (issue #139) re-checked: unchanged since run 82's read, still
+the twenty-first orchestrator entry, decision queue still 18 days
+untouched, orchestrator still owns the next alert (due 2026-09-26 if still
+untouched). No push notification: a rebase and conflict resolution with a
+clean re-audit is this routine's ordinary bounded work, not decision-queue
+movement, and the orchestrator already owns the next alert.
+
 ## If this routine fires again
 
 The branch and PR stay open until Charen merges or closes them (routine
