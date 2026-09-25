@@ -8,6 +8,7 @@ import type { OnboardingState, ProgressiveFeatureState, AuditAnswers } from '@/t
 import type { ScanSummary } from '@/types/scanSummary';
 import { type CurrencyCode, DEFAULT_CURRENCY, isCurrencyCode } from '@/utils/currency';
 import { type CoachMomentState, createInitialCoachMomentState } from '@/utils/coachMoments';
+import { DEFAULT_REMINDER_PREFS, type ReminderPrefs } from '@/utils/reminders/plan';
 import {
   isUpcomingWindowDays,
   type UpcomingWindowDays,
@@ -57,6 +58,10 @@ const LEAKS_SEEN_AT_KEY = '@habitcents_leaks_seen_at';
 // utils/materializer.ts planMaterialization's header comment for why this
 // exists instead of "plan only forward from the newest child".
 const RECURRING_TOMBSTONES_KEY = '@habitcents_recurring_tombstones';
+// Bill reminder preferences, Tier 2 (ops docs/reminders-spec.md): the global
+// switch and the default time of day. Per-bill intent lives on the expense
+// row itself (Expense.reminderEnabled), not here.
+const REMINDER_PREFS_KEY = '@habitcents_reminder_prefs';
 
 // =====================
 // SAFE LOAD HELPERS
@@ -237,6 +242,47 @@ export async function getLeaksSeenAt(): Promise<Date | null> {
 /** Record that the Kept pane has been looked at, as of `when`. */
 export async function setLeaksSeenAt(when: Date = new Date()): Promise<void> {
   return persist(LEAKS_SEEN_AT_KEY, when.toISOString());
+}
+
+/**
+ * Bill reminder preferences, defaulting field by field so a half-written or
+ * older blob degrades to defaults rather than to a broken shape.
+ *
+ * `enabled` DEFAULTS TRUE and must stay that way: it is a master override,
+ * not a second opt-in (reminders spec section 4). Per-bill reminders default
+ * off, so if this also defaulted off, a user who turns a bill's reminder on
+ * would get nothing at all with no indication why, which is the worst state
+ * the feature can be in.
+ */
+export async function getReminderPrefs(): Promise<ReminderPrefs> {
+  try {
+    const value = await AsyncStorage.getItem(REMINDER_PREFS_KEY);
+    if (!value) return { ...DEFAULT_REMINDER_PREFS };
+    const parsed: unknown = JSON.parse(value);
+    if (typeof parsed !== 'object' || parsed === null) {
+      await backupCorrupt(REMINDER_PREFS_KEY, value);
+      return { ...DEFAULT_REMINDER_PREFS };
+    }
+    const raw = parsed as Record<string, unknown>;
+    const hour = Number(raw.hour);
+    const minute = Number(raw.minute);
+    return {
+      enabled: typeof raw.enabled === 'boolean' ? raw.enabled : DEFAULT_REMINDER_PREFS.enabled,
+      hour: Number.isInteger(hour) && hour >= 0 && hour <= 23 ? hour : DEFAULT_REMINDER_PREFS.hour,
+      minute:
+        Number.isInteger(minute) && minute >= 0 && minute <= 59
+          ? minute
+          : DEFAULT_REMINDER_PREFS.minute,
+    };
+  } catch (error) {
+    console.error('Error reading reminder prefs:', error);
+    return { ...DEFAULT_REMINDER_PREFS };
+  }
+}
+
+/** Persist reminder preferences (throws per the write policy above). */
+export async function setReminderPrefs(prefs: ReminderPrefs): Promise<void> {
+  return persist(REMINDER_PREFS_KEY, JSON.stringify(prefs));
 }
 
 /**

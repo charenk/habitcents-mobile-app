@@ -43,6 +43,7 @@
       "expo-router",
       "expo-asset",
       "expo-font",
+      "expo-notifications",
       [
         "expo-splash-screen",
         {

@@ -1505,4 +1505,17 @@ export const strings = {
     stopConfirmCta: 'Stop breaking it',
     stopConfirmKeepGoing: 'Keep going',
   },
+
+  // Bill reminders (Tier 1, ops docs/reminders-spec.md; sanctioned by ADR 0017
+  // decision 1). A notification arrives unbidden, so it claims only what the
+  // schedule knows: the title is the bill's own name (set at the call site),
+  // and the body is the amount plus "due tomorrow", which is always true
+  // because every reminder fires the day before its own occurrence. Amounts
+  // arrive pre-formatted through useCurrency().format; never a hardcoded
+  // currency symbol here.
+  reminders: {
+    // Android 8+ requires a named notification channel; iOS ignores it.
+    channelName: 'Bill reminders',
+    notifBody: (amountLabel: string) => `${amountLabel} due tomorrow.`,
+  },
 } as const;
