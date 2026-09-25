@@ -36,7 +36,12 @@ that.
   capped `beatContent` column reads well against the still full-width
   `beat` page background, and that `BeatMedia`'s frame (capped along with
   the rest of the beat content) is not so narrow it looks like an error
-  state.
+  state. **Changed run 85 (main's own Dynamic Type fix, rebased onto this
+  run):** each beat is now a vertical `ScrollView` with a pair of
+  collapsing spacers around `beatContent`, so the block centers while it
+  fits and scrolls once it does not; on iPad the capped column should
+  still center correctly within that scroller, worth a specific look at an
+  accessibility text size since that is the case the scroller exists for.
 - The Leak Scan flow end to end on iPad: intake's file-picker stage,
   scope's category rows, the deck's swipeable candidate cards, the bills
   offer rows, graceful failure, and the results dashboard, all capped at
@@ -66,6 +71,59 @@ Inspector audit, scheduled for the Phase 4 TestFlight beta. This iPad
 device pass is separate and additional to that one, not a substitute.
 
 ## Status
+
+Run 85 (2026-09-25). `origin/main` moved for the first time since run 33's
+check: `ad091e2` (six commits ahead of the `3890ba1` baseline every run
+29-84 verified against), landing PR #175/#176, the onboarding arc v2
+Dynamic Type fix and its own beat/hook copy pass. Rebased onto it; one real
+conflict, in `components/onboarding/OnboardingCarousel.tsx`, exactly the
+"cap interacts with the pager panes" case item 2's Next instructions
+name: main's 2026-09-17 Dynamic Type fix (see design/decisions/components/
+OnboardingCarousel.md) had, since this branch's own last rebase, replaced
+each beat's fixed `View` with a vertical `ScrollView` plus a pair of
+collapsing `beatSpacer`s that let overflowing text at large accessibility
+sizes stay reachable, which is a different structure than the one this
+branch's `beatContent` cap was written against. Resolved by keeping main's
+scroller-plus-spacers structure whole (including its own conflicting
+`beatSpacer` style block) and re-nesting `beatContent` as the wrapper
+around the actual content, between the two spacers, inside the
+still-window-width outer `ScrollView`; the paging unit (`style={{ width }}`,
+the same value `handleScroll`'s offset math divides by) is untouched by
+either side's change, so the two fixes compose without moving that
+invariant. Two more conflicts, both mechanical (this branch's stale
+`OnboardingCarousel.md` predated the arc v2 rewrite and needed folding
+into main's current one, not replacing it; `design/decisions/README.md`'s
+component index differed only by a `BeatMedia` entry main had and this
+branch's copy did not): resolved keeping main's current content plus this
+branch's own dated decision line for the merge, same-commit as the code
+per the design-records rule. Fresh `npm ci`, `npx tsc --noEmit` clean.
+Re-audited per the Next section's post-move rule rather than trusting the
+clean rebase alone: re-grepped `useWindowDimensions` (7 real call sites,
+unchanged from the last full audit plus `utils/useSegmentPager.ts`, which
+predates this run and already carries the paging-unit-stays-window-width
+pattern correctly, confirmed by reading it, not assumed), re-checked that
+`app/(tabs)/money.tsx` (also touched by main's move, for the new bills-door
+deep link, logic only, no layout) still spreads `contentColumnStyle` into
+its capped surface, and confirmed `app.json` still `"orientation":
+"portrait"`, `"supportsTablet": true` (item 7). Full suite green on the
+first pass: 124 suites / 1356 tests (up from 122/1335, entirely main's own
+growth; this run added no new test file, the merge conflict resolution
+needed no new case since `onboardingCarouselDynamicType.test.tsx` and
+`tabletLayout.test.tsx`'s existing `beatContent` case both already pin the
+invariants the merge had to preserve, and both pass). Force-pushed the
+rebased branch (`fc3ecfe`, base now `ad091e2`). PR #133 still open, not
+draft; `verify` check re-triggered on the new head (`fc3ecfe`), completed
+green (SUCCESS, 20:12-20:13 UTC 2026-09-25) before this write-up closed
+out. Issue #139 re-checked: board's `main has not moved` line is now
+stale (written before this run's rebase), nothing else on the board changed
+that touches this routine; ipad-worker's own section still read "approved,
+nothing owed" as of the last orchestrator pass. No new REVIEW FEEDBACK.
+Blocker unchanged: the device pass, gated on PR #133 merging behind #132's
+payments gate (decision 6). No push notification: a clean rebase and
+re-audit with no regression found and no new decision raised is this
+routine's ordinary bounded work, not news Charen is waiting on; the payments
+gate and cadence items are core-worker's and Charen's threads, not
+duplicated here.
 
 Run 84. Verified per this file's own COMPLETE instruction: plan fully
 checked, nothing new to do. `origin/main` has not moved since run 33's
@@ -2109,6 +2167,39 @@ work for a human with hardware, not this routine). Logged `ok` in
   instructions, since the plan is now fully checked and run 13's own
   stated condition for doing so ("either that decision lands and its
   follow-up test work is done") is met.
+
+- Run 85: rebased onto 6 new main commits (`ad091e2`, PRs #175/#176: the
+  onboarding arc v2 Dynamic Type fix and a primer copy pass), the first
+  main movement since run 33's baseline and the first real conflicts since
+  run 14. One code conflict, in `OnboardingCarousel.tsx`: main's Dynamic
+  Type fix (2026-09-17) had, since this branch's last rebase, rebuilt each
+  beat as a vertical `ScrollView` with a pair of collapsing `beatSpacer`s
+  around the content (so overflowing text at large accessibility sizes
+  stays reachable), replacing the fixed `View` this branch's `beatContent`
+  cap (item 2c) was written against. Resolved by keeping main's scroller
+  structure whole and re-nesting `beatContent` between the two spacers,
+  inside the still-window-width outer `ScrollView`; the paging unit
+  (`style={{ width }}`, what `handleScroll`'s offset math divides by) is
+  untouched by either change, so the two fixes compose. Two more
+  conflicts, both design-record bookkeeping: this branch's own
+  `OnboardingCarousel.md` predated the arc v2 rewrite, so main's current
+  content was kept and this run's own dated decision line (the merge
+  itself) added on top, same-commit per the design-records rule, not a
+  replacement of main's content; `README.md`'s component index differed
+  only by a `BeatMedia` entry, kept from main. Re-audited rather than
+  trusting the clean rebase: re-grepped `useWindowDimensions` (7 real call
+  sites; `utils/useSegmentPager.ts` is the only one not previously named
+  individually in item 5's list, predates this run, and was confirmed by
+  reading it, not assumed, to already follow the paging-unit-stays-window-
+  width pattern correctly), and confirmed `money.tsx`'s own move (the bills
+  door deep link, logic only) left its `contentColumnStyle` spread intact.
+  tsc clean; full suite green, 124 suites / 1356 tests (up from 122/1335,
+  entirely main's own growth plus this run's merge, which needed no new
+  test case since `onboardingCarouselDynamicType.test.tsx` and
+  `tabletLayout.test.tsx`'s `beatContent` case already pin what the merge
+  had to preserve). Re-verified item 7 unchanged. Force-pushed the rebased
+  branch; PR #133 still open, not draft, `verify` re-triggered on the new
+  head and completed green.
 
 ## Next
 
