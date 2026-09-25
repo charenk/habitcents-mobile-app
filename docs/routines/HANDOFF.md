@@ -1,5 +1,45 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 82, 2026-09-25: re-verify, no new work; orchestrator now owns the next alert)
+
+`git rev-list --left-right --count origin/main...origin/routine/core-p3`
+confirmed the branch tip unchanged at `b946700` (run 81's own status
+commit); `origin/main` is still at `3890ba1`, unchanged since 2026-09-12,
+so no rebase needed. PR #132 re-confirmed via the API: `state: open`,
+`draft: false`, `merged: false`, `mergeable_state: clean`, head
+`b94670061d4a33f15347d5ec0afad0193e8e7c99` (matches this branch's tip),
+base `3890ba173bdbe43778cf5501e30cbd7d8b01d320` (matches main's current
+tip), 0 comments, 0 reviews. No new `## REVIEW FEEDBACK` section present
+(grepped the whole file; the one open heading hit is still the
+2026-09-08 orchestrator review of runs 12-14, already closed). Re-checked
+the routines-orchestrator's status board (mobile-app issue #139) directly:
+now the twenty-first orchestrator run, `updated_at` advanced to
+`2026-09-25T12:03:48Z`, 1 comment total (the closed 2026-09-07 item).
+Core-worker's own section still reads "complete since run 8... approved,
+nothing owed," blocked on the payments gate (decisions 2-4). Decision
+queue now 18 days untouched. Item 11's escalation (sent run 52,
+2026-09-18) and run 79's direct phone/email alert (sent 2026-09-24) both
+remain unanswered/unopened, but the board's run-21 post is new since run
+81's read: it explicitly names the orchestrator, not the worker streams,
+as the owner of the next follow-up (one more alert on 2026-09-26 if the
+queue is still untouched then, holding roughly a 48-hour cadence).
+Localization-worker run 84 and ipad-worker run 84 independently read the
+same post and made the same call this window. Re-pulled `habitcents-ops`'s
+PUNCHLIST.md fresh (ops main at `537d958`, that range added only
+sibling-routine/orchestrator `docs/runs.log` lines): RESUME marker
+unchanged in content, none newly core-p3-flagged. Checklist in `PLAN.md`
+unchanged: zero `[ ]` items remaining beyond the legend line.
+
+Fresh `npm install`, `tsc --noEmit` clean, full suite green on the first
+attempt: 125 suites / 1367 tests, zero drift from run 81.
+
+No push notification this run: the board's run-21 post took explicit
+ownership of the next alert (follow-up due 2026-09-26 if the queue is
+still untouched). Sending one from this routine now would stack a third
+notification on the same unresolved blocker, on top of run 79's own alert
+(still unopened) and the orchestrator's already-stated plan; that is
+duplicate signal, not new information for Charen.
+
 ## COMPLETE (run 81, 2026-09-25: re-verify, no new work)
 
 `git rev-list --left-right --count origin/main...origin/routine/core-p3`

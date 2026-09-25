@@ -923,6 +923,41 @@ same board state, same decision queue, same test counts as run 80).
 Sending another now would still be duplicate signal on the one channel not
 yet treated as noise.
 
+## Run 82: closed out again, orchestrator now owns the next alert
+
+Same shape as runs 9-22/24/27/29/30/31-81: no new commits on `origin/main`
+beyond what the branch already contains (`git rev-list --left-right --count
+origin/main...origin/routine/core-p3` returned `0 88` at the start of this
+run, branch tip unchanged at `b946700`, main still at `3890ba1`, unchanged
+since 2026-09-12). PR #132 re-confirmed via the API: `state: open`,
+`draft: false`, `merged: false`, `mergeable_state: clean`, head
+`b94670061d4a33f15347d5ec0afad0193e8e7c99` (matches this branch's tip),
+base `3890ba173bdbe43778cf5501e30cbd7d8b01d320` (matches main's current
+tip), 0 comments, 0 reviews. Routines-orchestrator status board (issue
+#139) re-checked directly: now the twenty-first orchestrator run,
+`updated_at` advanced to `2026-09-25T12:03:48Z`, 1 comment total (still
+the closed 2026-09-07 item). Decision queue now 18 days untouched on the
+board's own text; item 11's original escalation (sent run 52, 2026-09-18)
+and run 79's direct phone/email alert (2026-09-24) both stand unanswered,
+but the board's run-21 post now explicitly states the orchestrator itself
+owns the next follow-up (one more, on 2026-09-26, if the queue is still
+untouched then, at roughly 48-hour cadence), so this run defers rather
+than re-alerting, matching localization-worker run 84's and ipad-worker
+run 84's same-window reads of the same board post. Re-pulled
+`habitcents-ops`'s PUNCHLIST.md fresh (ops main at `537d958`, that range
+added only sibling-routine/orchestrator `docs/runs.log` lines): RESUME
+marker unchanged in content, still no new core-p3-shaped items beyond the
+run-8 leak-finder-promo item already built and closed on this branch.
+Checklist unchanged, still fully `[x]`/`(C)`. Fresh `npm install`,
+`npx tsc --noEmit` clean, `npm test` 125 suites / 1367 tests green on the
+first attempt, exactly matching run 81.
+
+No push notification this run: the status board's run-21 post explicitly
+took ownership of the next alert decision (a follow-up on 2026-09-26 if
+the queue is still untouched), so a fresh one from this routine now would
+be duplicate signal on top of both run 79's still-unopened alert and the
+orchestrator's own stated plan.
+
 ## If this routine fires again
 
 The branch and PR stay open until Charen merges or closes them (routine
