@@ -3,6 +3,44 @@
 ## Status
 
 In progress, blocked, standing since run 38 (decisions 8/10 unanswered).
+Run 84 (2026-09-25): rebase no-op (`origin/main` still `3890ba1`, unchanged
+since run 38, confirmed via `git fetch origin main` plus a clean `git
+checkout routine/localization && git rebase origin/main`, which reported
+"up to date"). No REVIEW FEEDBACK section pending: full-file check confirms
+the newest entry is still the 2026-09-22 runs 68-71 review, closed out by
+run 72; nothing newer targets this routine. Read issue #139 directly
+(charenk/habitcents-mobile-app) via the API: now the twenty-first
+orchestrator entry, `updated_at` 2026-09-25T12:03:48Z (advanced since run
+83's read), one comment (still the unrelated 2026-09-07 iPad-footer item).
+Decisions 8 (locked vocabulary) and 10 (paywall pricing/legal) both still
+open and unanswered; the board itself now states the queue is "18 days
+untouched" (matching this and run 83's own plain-count). Item 11's
+cost-saving escalation (sent 2026-09-18) stands unanswered; the board's new
+run-21 text records that core-worker's run 79 session sent Charen a direct
+phone/email alert on 2026-09-24 (the first use of that channel) and that it
+stands unopened, and states the orchestrator's own posture going forward:
+no repeat from any stream on unchanged state, and if the queue is still
+untouched at the next orchestrator run (2026-09-26) the orchestrator itself
+sends the one follow-up, holding that channel at roughly 48-hour cadence.
+That supersedes this routine's own case-by-case judgment on whether to
+re-alert: the notification decision now belongs to the orchestrator, so
+this run defers to it and sends nothing. PR #134 still open, draft,
+`mergeable_state: clean`, head `053361f` matching this branch's own pre-run
+tip, still one comment (the pre-existing flaky-test report), zero reviews.
+No new PLAN.md work possible: items 3/5/6 remain exhausted, item 4 remains
+blocked on decisions 8/10, item 2's ICU/CLDR sub-item remains blocked
+behind item 4's real catalog usage (per run 28's note). Re-ran the run-38
+`VALUE CHANGE` sweep: `grep -n "VALUE CHANGE" constants/strings.ts` still
+finds exactly the same 5 hits, all annotated "re-translated run 38", none
+unresolved; the broader `needs re-translation`/`STALE` grep across
+`constants/strings.ts` and every locale file is clean too, matching run 83.
+Fresh `npm ci`, `tsc --noEmit` clean, full suite green (125/125, 1395/1395),
+matching run 83's counts exactly. One commit (HANDOFF touch only, no code
+changes). No push notification this run: the orchestrator's board post
+today explicitly took ownership of the next notification decision (see
+above), so an alert from this routine now would step on that, not add
+signal.
+
 Run 83 (2026-09-25): rebase no-op (`origin/main` still `3890ba1`, unchanged
 since run 38, confirmed via `git fetch origin main` plus a clean `git
 checkout routine/localization && git rebase origin/main`, which reported
