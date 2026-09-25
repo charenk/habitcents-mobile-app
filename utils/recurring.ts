@@ -26,8 +26,12 @@ const MS_PER_DAY = 24 * 60 * 60 * 1000;
  * How precisely this bill's date is known. Anything malformed reads as 'day',
  * so a hand-edited or half-written row degrades to today's behaviour rather
  * than to a state no UI can explain.
+ *
+ * Exported for the reminder planner (utils/reminders/plan.ts): its refusal of
+ * month-precision bills must share this exact reading, including the
+ * malformed-reads-as-day degrade, rather than drift on its own `=== 'month'`.
  */
-function precisionOf(expense: Expense): DatePrecision {
+export function precisionOf(expense: Expense): DatePrecision {
   return expense.datePrecision === 'month' ? 'month' : 'day';
 }
 

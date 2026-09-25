@@ -20,11 +20,16 @@ import { ThemeProvider, useIsDark } from '@/contexts/ThemeContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { CategoriesProvider } from '@/contexts/CategoriesContext';
 import { ExpensesProvider } from '@/contexts/ExpensesContext';
+import { RemindersProvider } from '@/contexts/RemindersContext';
 import { HabitsProvider } from '@/contexts/HabitsContext';
 import { ReportsProvider } from '@/contexts/ReportsContext';
 import { OnboardingProvider } from '@/contexts/OnboardingContext';
 import { ToastProvider } from '@/components/ui/Toast';
 import { PrivacyOverlay } from '@/components/PrivacyOverlay';
+// Side-effect import: installs the foreground notification presentation
+// handler at module scope (utils/reminders/setup.ts), the same pattern as
+// the SplashScreen call below.
+import '@/utils/reminders/setup';
 
 // Hold the native splash until fonts are ready so titles and currency numbers
 // never flash a fallback face. Safe to call at module scope (expo-splash-screen).
@@ -90,6 +95,9 @@ export default function RootLayout() {
       <CurrencyProvider>
         <CategoriesProvider>
         <ExpensesProvider>
+          {/* Inside ExpensesProvider (the plan derives from the expense list)
+              and CurrencyProvider (notification bodies format amounts). */}
+          <RemindersProvider>
           <HabitsProvider>
             <ReportsProvider>
               <OnboardingProvider>
@@ -118,6 +126,7 @@ export default function RootLayout() {
               </OnboardingProvider>
             </ReportsProvider>
           </HabitsProvider>
+          </RemindersProvider>
         </ExpensesProvider>
         </CategoriesProvider>
       </CurrencyProvider>
