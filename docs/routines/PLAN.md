@@ -870,6 +870,31 @@ branches; that escalation has only ever been posted where Charen has to
 go looking (issue #139, this file). A direct notification is a different,
 untried channel, not duplicate signal on the board.
 
+## Run 80: closed out again, no repeat notification
+
+Same shape as runs 9-22/24/27/29/30/31-79: no new commits on `origin/main`
+beyond what the branch already contains (`git rev-list --left-right --count
+origin/main...origin/routine/core-p3` returned `0 86` at the start of this
+run, branch tip unchanged at `36be3da`, main still at `3890ba1`).
+`mergeable_state: clean` on PR #132, 0 comments, no new REVIEW FEEDBACK.
+Routines-orchestrator status board (issue #139) unchanged since run 79's
+read: still the twentieth orchestrator run, `updated_at` unchanged at
+`2026-09-24T12:03:43Z`, 1 comment total (the closed 2026-09-07 item).
+Decision queue still 17 days untouched; item 11's escalation (sent run 52,
+2026-09-18) still unanswered, now day 7. Re-pulled `habitcents-ops`'s
+PUNCHLIST.md fresh (ops main at `0c86950`, that range added only
+sibling-routine `docs/runs.log` lines): RESUME marker unchanged, still no
+new core-p3-shaped items. Checklist unchanged, still fully `[x]`/`(C)`.
+Fresh `npm install`, `npx tsc --noEmit` clean, `npm test` 125 suites /
+1367 tests green on the first attempt, exactly matching run 79.
+
+No push notification this run: run 79's direct phone/email notification to
+Charen stands from yesterday and nothing has changed since (same PR state,
+same board state, same decision queue, same test counts). Sending another
+now would be duplicate signal on an unopened notification; the channel has
+been used once for this standing block and repeating it daily without a
+change to report would blunt it.
+
 ## If this routine fires again
 
 The branch and PR stay open until Charen merges or closes them (routine
