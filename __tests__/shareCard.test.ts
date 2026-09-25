@@ -6,7 +6,7 @@ function goal(overrides: Partial<HabitChangeGoal> = {}): HabitChangeGoal {
     id: 'g1',
     habitId: 'h1',
     targetType: 'eliminate',
-    startDate: new Date('2026-08-01'),
+    startDate: new Date('2026-08-01T00:00:00'),
     currentStreak: 0,
     longestStreak: 0,
     savingsGoal: 0,
@@ -17,7 +17,7 @@ function goal(overrides: Partial<HabitChangeGoal> = {}): HabitChangeGoal {
     kept: 0,
     totalSkips: 0,
     highestMilestoneReached: 0,
-    trackingStart: new Date('2026-08-01'),
+    trackingStart: new Date('2026-08-01T00:00:00'),
     dayLogs: [],
     firstRun: false,
     backfillUsed: false,
@@ -25,6 +25,12 @@ function goal(overrides: Partial<HabitChangeGoal> = {}): HabitChangeGoal {
   };
 }
 
+// Every fixture date carries an explicit local time on purpose: a date-only
+// ISO string parses as UTC midnight while a timestamped one parses as local,
+// and mixing the two frames skews the span by a day on any machine west of
+// UTC (found 2026-09-25 on a local run; the routine's UTC environment could
+// never see it). Real app data never mixes frames, so this pins the fixtures
+// to the frame the app actually uses.
 const today = new Date('2026-09-05T12:00:00');
 
 describe('computeShareCardStats', () => {
@@ -39,8 +45,8 @@ describe('computeShareCardStats', () => {
 
   it('sums kept across every goal', () => {
     const goals = [
-      goal({ kept: 500, trackingStart: new Date('2026-09-01') }),
-      goal({ kept: 300, trackingStart: new Date('2026-09-01') }),
+      goal({ kept: 500, trackingStart: new Date('2026-09-01T00:00:00') }),
+      goal({ kept: 300, trackingStart: new Date('2026-09-01T00:00:00') }),
     ];
     const result = computeShareCardStats(goals, today);
     expect(result?.keptCents).toBe(800);
@@ -48,10 +54,10 @@ describe('computeShareCardStats', () => {
 
   it('counts days from the earliest trackingStart across all goals, inclusive', () => {
     const goals = [
-      goal({ kept: 100, trackingStart: new Date('2026-09-01') }),
+      goal({ kept: 100, trackingStart: new Date('2026-09-01T00:00:00') }),
       // A later habit's tracking start does not shorten the span; the card
       // is a lifetime counter from the very first habit.
-      goal({ kept: 200, trackingStart: new Date('2026-09-03') }),
+      goal({ kept: 200, trackingStart: new Date('2026-09-03T00:00:00') }),
     ];
     const result = computeShareCardStats(goals, today);
     // Sep 1 through Sep 5 inclusive = 5 days.
