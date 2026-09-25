@@ -2508,6 +2508,22 @@ work, tracked elsewhere).
       runs now (since run 27); items 3/5/6 clean thirty runs (since run
       32); the VALUE CHANGE sweep angle now re-checked twenty-four times
       with no new hits.
+
+      **Run 85: main moved for the first time since run 38 (two merged
+      onboarding-carousel PRs), and the gated surface grew.** The rebase
+      pulled in a `constants/strings.ts` copy pass that reworded
+      `onboarding.beatTrackHook` and `onboarding.beatBreakHeadline`/
+      `beatBreakHook` (each newly marked `VALUE CHANGE (needs
+      re-translation)`, two of the three rewrites landing directly on
+      locked vocabulary: "patterns" became "leaks", "Break the one that
+      costs most." became "Find your leak.") and added three brand-new
+      keys for a fourth onboarding beat, `beatBillsHeadline`/
+      `beatBillsHook`/`beatBillsCta`. Checked all six against every file
+      in `locales/*.ts`: zero hits anywhere, so nothing is stale, all six
+      simply inherit English same as the rest of this item's blocked
+      surface. No translation attempted (still gated on decision 8); full
+      detail of the rebase conflict this surfaced from is in
+      `HANDOFF.md`'s run 85 entry. Item 4 blocked thirty-six runs now.
 - [ ] leak / skip / kept / slip and the app's quotes are PRODUCT VOICE:
       never finalized by this routine. Provisional entries only, proposal
       table lives in HANDOFF.md's DECISIONS NEEDED until Charen picks.

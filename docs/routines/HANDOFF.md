@@ -2,7 +2,87 @@
 
 ## Status
 
-In progress, blocked, standing since run 38 (decisions 8/10 unanswered).
+In progress, blocked on decisions 8/10 (standing since run 38), but main
+moved for the first time since run 38: run 85 rebased onto two new merged
+onboarding PRs, resolved one real conflict, fixed two rebase-fallout test
+failures, and confirmed the new copy is still gated by the same block. Full
+detail below.
+
+Run 85 (2026-09-25): the first non-no-op rebase since run 38. `git fetch
+origin main` pulled `3890ba1..2cac175` (PRs #174 `design/onboarding` and
+#175 `design/onboarding-arc`, both onboarding-carousel design work, no
+localization-routine involvement). `git rebase origin/main` hit one real
+conflict: `components/onboarding/OnboardingCarousel.tsx`, where main's
+arc-v2 rewrite (hook-first three beats including the new `bills` intent,
+per-beat `ScrollView` with centring spacers for Dynamic Type, the
+`onBeatViewed` funnel callback, `testID="onboarding-pager"`) collided with
+this branch's `useStrings()`/`buildBeats(strings: Catalog)` conversion from
+run 11. Resolved by keeping main's structure in full (three beats, the
+spacer-based ScrollView layout, the mount-time `onBeatViewed` effect, the
+`activeBeats.length`-based scroll clamping) and re-threading the catalog
+onto it exactly the way run 11 did originally: `buildBeats` takes `Catalog`
+and returns all three beats in main's new break/track/bills order, the
+component calls `useStrings()` and falls back to `beats ?? localizedBeats`
+so the `beats` test seam prop still works, and every `beats.length`/`beats.map`
+site in the render became `activeBeats`. `BEATS` (the static English
+fixture some tests import directly) still exports `buildBeats(strings)` at
+module scope, unchanged shape. One commit for the resolved conflict itself
+(rebase preserves the original commit message, `f3e5f9f` become `10e4187`
+after rebase).
+
+After the rebase landed clean, `npm ci` (main's two PRs did not touch
+`package.json`, but the container had no `node_modules` yet this run) then
+`tsc --noEmit` was clean, but the full suite had 2 failing suites, both
+rebase fallout from main's new tests, not from the conflict resolution
+itself: `__tests__/onboardingBillsDoor.test.tsx` and
+`__tests__/onboardingCarouselDynamicType.test.tsx` (both new in the
+`design/onboarding`/`design/onboarding-arc` PRs) render `MoneyScreen`/
+`OnboardingCarousel` without a `LocaleProvider` in their `Providers`
+wrapper, and both components call `useStrings()` (money.tsx already did,
+from this branch's earlier item-6 slice; the carousel now does too, from
+the conflict resolution above), so both threw `useLocale must be used
+within LocaleProvider`. Fixed the same way every prior LocaleProvider
+crossing in this branch's history has been fixed: added the
+`LocaleProvider` import and wrapped it around the existing provider tree
+in each file's `Providers` component (or the one inline `render()` call,
+for the carousel file), no other changes. Re-ran: `tsc --noEmit` clean,
+full suite green, 127/127 suites, 1416/1416 tests (up from 125/125,
+1395/1395 last run; the two new test files plus the new carousel/money
+assertions account for the difference).
+
+While resolving the conflict, `constants/strings.ts` turned out to have
+moved too: main's arc-v2 pass reworded `onboarding.beatTrackHook` and
+`onboarding.beatBreakHeadline`/`beatBreakHook` (each marked `2026-09-18
+VALUE CHANGE (needs re-translation)` in the file, three new hits from the
+run-38 sweep's usual grep) and added three brand-new keys for the bills
+beat (`beatBillsHeadline`/`beatBillsHook`/`beatBillsCta`, no VALUE CHANGE
+marker since they are new rather than changed). Checked `locales/*.ts` for
+all six keys: zero hits in any of the 10 overlay files, so nothing is
+stale to fix, every locale simply inherits English for all six the same
+way it already does for the rest of the carousel and every other
+locked-vocabulary-adjacent surface. Worth flagging precisely because two of
+the three VALUE CHANGE hits are locked-vocabulary rewrites in exactly the
+direction decision 8 is about: `beatTrackHook` swapped "patterns" for
+"leaks", and `beatBreakHeadline` is now "Find your leak." (was "Break the
+one that costs most."). This is more evidence for decision 8 mattering
+sooner rather than later, not new work for item 4: the carousel was already
+on the blocked list, it just grew from 3 gated keys to 6.
+
+Read issue #139 directly (charenk/habitcents-mobile-app) via the API after
+finishing the rebase and fixes: `updated_at` still `2026-09-25T12:03:48Z`,
+same twenty-first orchestrator entry run 84 read, one comment (still the
+unrelated 2026-09-07 iPad-footer item). Decisions 8 and 10 both still open
+and unanswered. The orchestrator's run-21 board post took ownership of the
+next notification (due 2026-09-26 if the queue is still untouched then);
+that stands and this run defers to it, same as run 84. No PLAN.md checkbox
+changes: this run's work was rebase-fallout maintenance (matching the
+class of fix runs 27/30 logged), not progress on any blocked item.
+
+Two commits total: the rebase's own conflict-resolution commit (message
+preserved from the original `f3e5f9f`), and this HANDOFF/PLAN update plus
+the two test-file `LocaleProvider` fixes. Pushed branch tip to
+`routine/localization`; PR #134 stays open, draft.
+
 Run 84 (2026-09-25): rebase no-op (`origin/main` still `3890ba1`, unchanged
 since run 38, confirmed via `git fetch origin main` plus a clean `git
 checkout routine/localization && git rebase origin/main`, which reported
