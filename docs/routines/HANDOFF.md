@@ -3,6 +3,37 @@
 ## Status
 
 In progress, blocked, standing since run 38 (decisions 8/10 unanswered).
+Run 82 (2026-09-25): rebase no-op (`origin/main` still `3890ba1`, unchanged
+since run 38, confirmed via `git fetch` plus a clean `git checkout
+routine/localization && git rebase origin/main`, which reported "up to
+date"). No REVIEW FEEDBACK section pending: full-file check confirms the
+newest entry is still the 2026-09-22 runs 68-71 review, closed out by run
+72; nothing newer targets this routine. Read issue #139 directly
+(charenk/habitcents-mobile-app) via the API: `updated_at` unchanged at
+2026-09-24T12:03:43Z (still the twentieth orchestrator entry, same one run
+81 read), one comment (still the unrelated 2026-09-07 iPad-footer item).
+Decisions 8 (locked vocabulary) and 10 (paywall pricing/legal) both still
+open and unanswered; the board's own text still calls the queue "17 days
+untouched" (unposted since; by plain elapsed days from item 1's 2026-09-07
+close this is now day 18). Item 11's cost-saving escalation (sent
+2026-09-18) stands unanswered, unchanged in substance since run 81's read.
+PR #134 still open, draft, `mergeable_state: clean`, head `91d8f5c`
+matching this branch's own pre-run tip, still one comment (the pre-existing
+flaky-test report), zero reviews. No new PLAN.md work possible: items 3/5/6
+remain exhausted, item 4 remains blocked on decisions 8/10, item 2's
+ICU/CLDR sub-item remains blocked behind item 4's real catalog usage (per
+run 28's note). Re-ran the run-38 `VALUE CHANGE` sweep: `grep -n "VALUE
+CHANGE" constants/strings.ts` still finds exactly the same 5 hits, all
+annotated "re-translated run 38", none unresolved; the broader `needs
+re-translation`/`STALE` grep across `constants/strings.ts` and every locale
+file is clean too, matching run 81. Fresh `npm ci`, `tsc --noEmit` clean,
+full suite green (125/125, 1395/1395), matching run 81's counts exactly.
+One commit (HANDOFF touch only, no code changes). No push notification this
+run: nothing moved since run 76's periodic reminder beyond the day count
+ticking up (same two open gates, item 11's escalation already sent and
+standing unanswered); a repeat alert here would be duplicate signal, not
+new signal, consistent with every run since 76.
+
 Run 81 (2026-09-24): rebase no-op (`origin/main` still `3890ba1`, unchanged
 since run 38, confirmed via `git fetch` plus a clean `git checkout
 routine/localization && git rebase origin/main`, which reported "up to
