@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -20,7 +20,9 @@ import { BeatMedia, type BeatAsset } from './BeatMedia';
 // real workflow is the one thing ADR 0026 forbids. The analytics enum keeps
 // its 'scan' member (utils/analytics.ts) so the funnel stays readable across
 // the change; it simply stops being fired.
-export type BeatIntent = 'track' | 'break';
+// 'bills' joined with arc v2 (2026-09-18): its CTA opens the real add-bill
+// sheet on Money > Upcoming, so it passes the same rule.
+export type BeatIntent = 'track' | 'break' | 'bills';
 
 export type Beat = {
   intent: BeatIntent;
@@ -31,10 +33,13 @@ export type Beat = {
 };
 
 /**
- * The beats, in the order the intent picker used, so the funnel stays
- * comparable across the change. Two since decision 0009 (the scan beat sat
- * between these two); every count in this file reads beats.length, so the
- * dots, the paging and the "step n of total" hint all followed on their own.
+ * The beats, hook-first (arc v2, onboarding story arc canvas, Charen
+ * 2026-09-18): the differentiated promise leads, the mechanism follows, bills
+ * close. This deliberately ends the old order's funnel comparability; the
+ * carousel-level events shipped 2026-09-17 are the new baseline, and
+ * beat-position versus completion is the question they exist to answer.
+ * Every count in this file reads beats.length, so the dots, the paging and
+ * the "step n of total" hint all follow on their own.
  *
  * `asset` is absent until the captures land (see
  * design/captures/onboarding-beats/RUNBOOK.md). BeatMedia renders an honest
@@ -43,16 +48,22 @@ export type Beat = {
  */
 export const BEATS: Beat[] = [
   {
+    intent: 'break',
+    headline: strings.onboarding.beatBreakHeadline,
+    hook: strings.onboarding.beatBreakHook,
+    cta: strings.onboarding.beatBreakCta,
+  },
+  {
     intent: 'track',
     headline: strings.onboarding.beatTrackHeadline,
     hook: strings.onboarding.beatTrackHook,
     cta: strings.onboarding.beatTrackCta,
   },
   {
-    intent: 'break',
-    headline: strings.onboarding.beatBreakHeadline,
-    hook: strings.onboarding.beatBreakHook,
-    cta: strings.onboarding.beatBreakCta,
+    intent: 'bills',
+    headline: strings.onboarding.beatBillsHeadline,
+    hook: strings.onboarding.beatBillsHook,
+    cta: strings.onboarding.beatBillsCta,
   },
 ];
 
@@ -62,6 +73,15 @@ type OnboardingCarouselProps = {
   onSkip: () => void;
   /** Test seam for the beats, including their assets. */
   beats?: Beat[];
+  /**
+   * A beat became the active page, including the first one at mount.
+   *
+   * Fires on every settle, duplicates included: paging is what this component
+   * knows about, and "seen once" is a funnel question. The screen dedupes
+   * (app/onboarding/welcome.tsx), which keeps analytics policy in the one file
+   * that already owns the rest of this flow's events.
+   */
+  onBeatViewed?: (intent: BeatIntent, index: number) => void;
 };
 
 /**
@@ -82,13 +102,29 @@ type OnboardingCarouselProps = {
  * paging and rubber-banding natively, and beats-as-recordings means there are
  * no scenes to animate.
  */
-export function OnboardingCarousel({ onPick, onSkip, beats = BEATS }: OnboardingCarouselProps) {
+export function OnboardingCarousel({
+  onPick,
+  onSkip,
+  beats = BEATS,
+  onBeatViewed,
+}: OnboardingCarouselProps) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [index, setIndex] = useState(0);
   const lastIndexRef = useRef(0);
+
+  // The first beat is viewed by arriving, not by paging, so the scroll handler
+  // below never reports it. Without this the funnel would count everyone who
+  // swiped and nobody who landed.
+  useEffect(() => {
+    const first = beats[0];
+    if (!first) return;
+    onBeatViewed?.(first.intent, 0);
+    // Mount only: a later `beats` change is a test seam, not a new view.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleScroll = useCallback(
     (e: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -98,8 +134,10 @@ export function OnboardingCarousel({ onPick, onSkip, beats = BEATS }: Onboarding
       if (clamped === lastIndexRef.current) return;
       lastIndexRef.current = clamped;
       setIndex(clamped);
+      const beat = beats[clamped];
+      if (beat) onBeatViewed?.(beat.intent, clamped);
     },
-    [width, beats.length]
+    [width, beats, onBeatViewed]
   );
 
   return (
@@ -107,6 +145,9 @@ export function OnboardingCarousel({ onPick, onSkip, beats = BEATS }: Onboarding
       <ScrollView
         horizontal
         pagingEnabled
+        // The beats are scrollers of their own now, so the pager is no longer
+        // findable by type. Named so the funnel tests can page it.
+        testID="onboarding-pager"
         showsHorizontalScrollIndicator={false}
         // Rubber-band at both ends (sect 10) is the platform default; naming it
         // here so a future "tidy up" does not switch it off.
@@ -117,7 +158,26 @@ export function OnboardingCarousel({ onPick, onSkip, beats = BEATS }: Onboarding
         style={styles.pager}
       >
         {beats.map((beat, i) => (
-          <View key={beat.intent} style={[styles.beat, { width }]}>
+          /**
+           * Each beat scrolls vertically inside the horizontal pager.
+           *
+           * It used to be a fixed View that centred its children, which meant
+           * the only element able to absorb larger text was the text: at AX1
+           * the CTA was sliced in half by the footer and from AX3 up it was off
+           * the screen entirely, so the one thing the screen exists to offer
+           * could not be tapped. The two spacers below centre the block while
+           * it fits and collapse to nothing once it does not, which is what
+           * makes the overflow reachable; `justifyContent: 'center'` cannot do
+           * the second half (RN centres overflowing content by pushing the top
+           * out of the scrollable area, where no gesture can reach it).
+           */
+          <ScrollView
+            key={beat.intent}
+            style={{ width }}
+            contentContainerStyle={styles.beat}
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.beatSpacer} />
             <BeatMedia asset={beat.asset} accessibilityLabel={beat.headline} />
             <Text style={styles.headline} accessibilityRole="header">
               {beat.headline}
@@ -129,7 +189,8 @@ export function OnboardingCarousel({ onPick, onSkip, beats = BEATS }: Onboarding
               style={styles.cta}
               accessibilityHint={strings.onboarding.beatProgress(i + 1, beats.length)}
             />
-          </View>
+            <View style={styles.beatSpacer} />
+          </ScrollView>
         ))}
       </ScrollView>
 
@@ -165,10 +226,24 @@ function createStyles(theme: AppTheme) {
       flex: 1,
     },
     beat: {
+      flexGrow: 1,
       paddingHorizontal: spacing.gutter,
       paddingTop: 12,
-      justifyContent: 'center',
+      paddingBottom: 12,
     },
+    // Equal-weight slack above and below the block: the pair centres it when
+    // there is room and collapses to zero when there is not. flexBasis 0 is
+    // what makes the collapse total rather than leaving two stray gaps.
+    beatSpacer: {
+      flexGrow: 1,
+      flexShrink: 1,
+      flexBasis: 0,
+    },
+    // Both line heights stay written at their 1x values on purpose. React
+    // Native scales `lineHeight` by the system font scale alongside `fontSize`
+    // whenever allowFontScaling is on, so multiplying them here applies the
+    // scale twice: at AX1 the hook's leading came out near double its own
+    // text and the copy read as a list rather than a sentence.
     headline: {
       fontSize: typeScale.displayMid,
       fontFamily: theme.fonts.display,

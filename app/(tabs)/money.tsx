@@ -17,10 +17,10 @@
  * The two tabs deliberately show the same rows: Money is where you manage a
  * leak, Insights is where you notice it.
  */
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { AddUpcomingSheet } from '@/components/money/AddUpcomingSheet';
 import { ExpenseSheet } from '@/components/money/ExpenseSheet';
 import { BreakHabitSheet, type BreakHabitStartData } from '@/components/onboarding/BreakHabitSheet';
@@ -41,6 +41,7 @@ import { habitLeakGlyph } from '@/constants/onboardingPresets';
 import { strings } from '@/constants/strings';
 import { layout, spacing, type AppTheme } from '@/constants/theme';
 import { useCategories } from '@/contexts/CategoriesContext';
+import { useOnboarding } from '@/contexts/OnboardingContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
 import { useHabits } from '@/contexts/HabitsContext';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -107,6 +108,42 @@ export default function MoneyScreen() {
   const [breakVisible, setBreakVisible] = useState(false);
   const [addUpcomingVisible, setAddUpcomingVisible] = useState(false);
   const [editingUpcoming, setEditingUpcoming] = useState<Expense | null>(null);
+
+  // Bills door (arc v2, 2026-09-18): the carousel's third beat lands here with
+  // ?view=upcoming&billsEntry=1 and opens the real add-bill sheet, the same
+  // shape as Today's firstLog/breakEntry doors. Refs, not state, because
+  // nothing renders differently while the door is active: the sheet is the
+  // whole experience. Guarded on isOnboardingComplete() so a stale
+  // billsEntry=1 in history can never reopen the door once onboarding is done.
+  const {
+    completeOnboarding,
+    isOnboardingComplete,
+    isLoading: onboardingLoading,
+  } = useOnboarding();
+  const billsDoorActiveRef = useRef(false);
+  const billsDoorHandledRef = useRef(false);
+  const params = useLocalSearchParams<{ view?: string; billsEntry?: string }>();
+
+  // Deep link support, mirroring Today's ?view= handling: an onboarding flow
+  // (or any future link) can land Money on a specific pane. Malformed or
+  // missing values leave the default alone. setView directly, not
+  // handleViewChange: a deep link is not a user switch, so it neither marks
+  // the pager interacted nor fires money_view_switched.
+  useEffect(() => {
+    if (params.view === 'spent' || params.view === 'upcoming' || params.view === 'habits') {
+      setView(params.view);
+    }
+  }, [params.view]);
+
+  useEffect(() => {
+    if (onboardingLoading) return;
+    if (params.billsEntry !== '1') return;
+    if (billsDoorHandledRef.current) return;
+    if (isOnboardingComplete()) return;
+    billsDoorActiveRef.current = true;
+    setAddUpcomingVisible(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onboardingLoading, params.billsEntry]);
   const [pickOneHabitId, setPickOneHabitId] = useState<string | null>(null);
   // The 2 weeks / 1 month / 3 months window (U8), as an explicit choice and a
   // derived default rather than one piece of state that means both.
@@ -273,7 +310,17 @@ export default function MoneyScreen() {
   const closeUpcomingSheet = useCallback(() => {
     setAddUpcomingVisible(false);
     setEditingUpcoming(null);
-  }, []);
+    // The bills door completes on ANY close of the onboarding-opened sheet,
+    // saved or dismissed alike (exactly once, via the ref). Unlike doors 1 and
+    // 3 there is no saved/gentle split here, because the split only ever fed
+    // ribbon copy and Money has no first-run ribbon; the sheet's own toast
+    // already confirms a save. Either way the user is in the app and
+    // onboarding must not trap them.
+    if (!billsDoorActiveRef.current || billsDoorHandledRef.current) return;
+    billsDoorHandledRef.current = true;
+    billsDoorActiveRef.current = false;
+    void completeOnboarding();
+  }, [completeOnboarding]);
 
   // Habits: every leak worth an action, biggest monthly drain first. Built
   // identically to Insights' leakRows (app/(tabs)/insights.tsx) so the two

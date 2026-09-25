@@ -88,8 +88,22 @@ export interface AnalyticsEventMap {
   // Intent picker (design/redesign-handoff/03-onboarding.md screen 2). The
   // picked card is the acquisition metric, so it gets its own event rather than
   // riding on door_chosen (which still fires underneath for downstream logic).
-  onboarding_intent_selected: { intent: 'track' | 'scan' | 'break' };
+  // 'bills' joined 2026-09-18 (arc v2's third door). Contract change, same
+  // human-gate batch as the carousel events above.
+  onboarding_intent_selected: { intent: 'track' | 'scan' | 'break' | 'bills' };
   onboarding_intent_skipped: Record<string, never>;
+  // The top of the funnel, and the reason it exists: `onboarding_started` fires
+  // inside completeStep('welcome'), which only runs once a beat is PICKED, so
+  // it lands at the same instant as onboarding_intent_selected and there was no
+  // event at all for the carousel merely being seen. Without these two, the
+  // carousel's own drop-off is unmeasurable: no denominator for the pick rate,
+  // and no way to tell whether the second beat is ever reached (it sits fully
+  // below the fold behind a swipe nothing prompts).
+  onboarding_carousel_shown: Record<string, never>;
+  // Once per beat per carousel, the first one included; `index` is its position
+  // so a reordered or restored beat list stays readable. Structural only, same
+  // rule as the rest of this block.
+  onboarding_beat_viewed: { intent: 'track' | 'scan' | 'break' | 'bills'; index: number };
   audit_subs_done: { selected: number; edited: number; none: boolean };
   audit_vices_done: { answered: number; skipped: boolean };
   audit_amount_edited: { step: 'subs' | 'vices'; count: number };

@@ -13,6 +13,7 @@ import { track } from '@/utils/analytics';
 const DOOR_FOR_INTENT: Record<BeatIntent, 'fresh' | 'statements'> = {
   track: 'fresh',
   break: 'fresh',
+  bills: 'fresh',
 };
 
 /**
@@ -48,6 +49,25 @@ export default function OnboardingWelcomeScreen() {
   // The ghost exit and Android hardware back share one handler, so the guard
   // has to live on the handler rather than on either affordance.
   const skipInFlightRef = useRef(false);
+  // Which beats have already been counted this mount. The carousel reports
+  // every settle; "seen once" is the funnel question, so the dedupe lives here
+  // with the rest of this flow's analytics rather than inside the component.
+  const seenBeatsRef = useRef<Set<BeatIntent>>(new Set());
+
+  /**
+   * The carousel was shown. Deliberately NOT `onboarding_started`, which fires
+   * from completeStep('welcome') and therefore only when a beat is picked: this
+   * is the denominator that event never was.
+   */
+  useEffect(() => {
+    track('onboarding_carousel_shown', {});
+  }, []);
+
+  const handleBeatViewed = useCallback((intent: BeatIntent, index: number) => {
+    if (seenBeatsRef.current.has(intent)) return;
+    seenBeatsRef.current.add(intent);
+    track('onboarding_beat_viewed', { intent, index });
+  }, []);
 
   const handleSkip = useCallback(async () => {
     // Same guard as handlePick, and needed for the same reason twice over:
@@ -103,6 +123,13 @@ export default function OnboardingWelcomeScreen() {
           router.replace('/(tabs)?view=spent&firstLog=1');
           return;
         }
+        if (intent === 'bills') {
+          // The one door that lands somewhere other than Today: the add-bill
+          // sheet lives on Money > Upcoming, and opening it there keeps the
+          // rule that a beat starts its real workflow in its real home.
+          router.replace('/(tabs)/money?view=upcoming&billsEntry=1');
+          return;
+        }
         router.replace('/(tabs)?view=kept&breakEntry=1');
       } finally {
         // Reset in finally so a thrown navigation can never leave the guard
@@ -113,5 +140,11 @@ export default function OnboardingWelcomeScreen() {
     [chooseDoor, completeStep, router]
   );
 
-  return <OnboardingCarousel onPick={handlePick} onSkip={handleSkip} />;
+  return (
+    <OnboardingCarousel
+      onPick={handlePick}
+      onSkip={handleSkip}
+      onBeatViewed={handleBeatViewed}
+    />
+  );
 }

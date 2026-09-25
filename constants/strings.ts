@@ -460,14 +460,21 @@ export const strings = {
     welcomeSub: 'Everything stays on your phone. No bank login. No account.',
     getStarted: 'Get started',
     // ---------------------------------------------------------------------
-    // Carousel beats (PRD v3.1 sect 4, ADR 0026). One beat per real workflow.
-    // Each shows a RECORDING of the app doing the thing, with a hook below and
-    // a CTA that triggers the real workflow, never a simulation of it. Beat
-    // order matches the intent order the picker used, so the funnel stays
-    // comparable across the change.
+    // Carousel beats (PRD v3.1 sect 4, ADR 0026; arc v2 per the onboarding
+    // story arc canvas, Charen 2026-09-18). One beat per real workflow, each a
+    // RECORDING of the app doing the thing, a hook below, and a CTA that
+    // triggers the real workflow, never a simulation of it. Order is now
+    // hook-first: break, track, bills. The old order's funnel comparability
+    // ended here on purpose; onboarding_carousel_shown / beat_viewed (shipped
+    // 2026-09-17) are the new baseline. Copy rules from the canvas round: one
+    // idea per line, no rule-of-three lists, spoken contractions, concrete
+    // nouns; the app's own words (leak, skip, keep) over generic ones.
     // ---------------------------------------------------------------------
     beatTrackHeadline: 'Log it in ten seconds.',
-    beatTrackHook: 'Amount first, one tap. The patterns show up on their own.',
+    // 2026-09-18 VALUE CHANGE (needs re-translation): the explainer cadence
+    // ("Amount first, one tap. The patterns show up on their own.") became
+    // plain speech, and "patterns" became the locked "leaks".
+    beatTrackHook: "Just the amount. We'll spot your leaks.",
     beatTrackCta: 'Log my first expense',
     // RETIRED FROM RENDERING (decision 0009): the scan beat is out of the
     // carousel while the flow is dormant behind SCAN_FLOW_ENABLED. A beat
@@ -477,10 +484,24 @@ export const strings = {
     beatScanHeadline: 'See where it all goes.',
     beatScanHook: 'Scan a bank statement on your phone. Nothing uploads, ever.',
     beatScanCta: 'Scan my statement',
-    beatBreakHeadline: 'Break the one that costs most.',
-    beatBreakHook: 'Name it, price it, start today.',
+    // 2026-09-18 VALUE CHANGE (needs re-translation): discovery-forward line
+    // from the arc canvas ("Break the one that costs most." retired). "Leak"
+    // is deliberate: it is the app's own discovery word (the Kept pane says
+    // "Leaks found"), where "discovery" was the generic one.
+    beatBreakHeadline: 'Find your leak.',
+    // 2026-09-18 VALUE CHANGE (needs re-translation): the triad ("Name it,
+    // price it, start today.") retired with the copy pass; two imperatives of
+    // locked vocabulary carry the payoff.
+    beatBreakHook: 'Skip it, keep the money.',
     // Ratified CTA wording (PRD sect 13, resolved round 2).
     beatBreakCta: 'Start with my habit',
+    // Bills beat (arc v2, 2026-09-18). Promises Upcoming, deliberately NOT
+    // reminders: delivery does not exist (the spike is undecided), and a beat
+    // whose CTA cannot start its real workflow is what ADR 0026 forbids. The
+    // CTA opens the real add-bill sheet on Money > Upcoming.
+    beatBillsHeadline: "Know what's coming.",
+    beatBillsHook: 'Your bills, a month ahead.',
+    beatBillsCta: 'Add my first bill',
     beatProgress: (n: number, total: number) => `Step ${n} of ${total}`,
     // Shown in the media frame until the real captures land. Says what is
     // missing rather than showing a mock-up of the app, which is the whole
