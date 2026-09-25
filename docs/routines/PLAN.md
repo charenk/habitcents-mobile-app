@@ -895,6 +895,34 @@ now would be duplicate signal on an unopened notification; the channel has
 been used once for this standing block and repeating it daily without a
 change to report would blunt it.
 
+## Run 81: closed out again, no repeat notification
+
+Same shape as runs 9-22/24/27/29/30/31-80: no new commits on `origin/main`
+beyond what the branch already contains (`git rev-list --left-right --count
+origin/main...origin/routine/core-p3` returned `0 87` at the start of this
+run, branch tip unchanged at `2c10004`, main still at `3890ba1`, unchanged
+since 2026-09-12). PR #132 re-confirmed via the API: `state: open`,
+`draft: false`, `merged: false`, `mergeable_state: clean`, head
+`2c100040fbc7270a2fdf2fff57c0f8b626e1e5e8` (matches this branch's tip),
+base `3890ba173bdbe43778cf5501e30cbd7d8b01d320` (matches main's current
+tip), 0 comments. Routines-orchestrator status board (issue #139)
+unchanged since run 80's read: still the twentieth orchestrator run,
+`updated_at` unchanged at `2026-09-24T12:03:43Z`, 1 comment total (the
+closed 2026-09-07 item). Decision queue still 17 days untouched; item 11's
+escalation (sent run 52, 2026-09-18) still unanswered, now day 8 by plain
+count. Re-pulled `habitcents-ops`'s PUNCHLIST.md fresh (ops main at
+`5ad338e`, that range added only sibling-routine `docs/runs.log` lines):
+RESUME marker unchanged, still no new core-p3-shaped items. Checklist
+unchanged, still fully `[x]`/`(C)`. Fresh `npm install`, `npx tsc --noEmit`
+clean, `npm test` 125 suites / 1367 tests green on the first attempt,
+exactly matching run 80.
+
+No push notification this run: run 79's direct phone/email notification to
+Charen still stands unopened and nothing has changed since (same PR state,
+same board state, same decision queue, same test counts as run 80).
+Sending another now would still be duplicate signal on the one channel not
+yet treated as noise.
+
 ## If this routine fires again
 
 The branch and PR stay open until Charen merges or closes them (routine

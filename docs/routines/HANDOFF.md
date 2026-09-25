@@ -1,5 +1,41 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 81, 2026-09-25: re-verify, no new work)
+
+`git rev-list --left-right --count origin/main...origin/routine/core-p3`
+confirmed the branch tip unchanged at `2c10004` (run 80's own status
+commit); `origin/main` is still at `3890ba1`, unchanged since 2026-09-12,
+so no rebase needed. PR #132 re-confirmed via the API: `state: open`,
+`draft: false`, `merged: false`, `mergeable_state: clean`, head
+`2c100040fbc7270a2fdf2fff57c0f8b626e1e5e8` (matches this branch's tip),
+base `3890ba173bdbe43778cf5501e30cbd7d8b01d320` (matches main's current
+tip), 0 comments. No new `## REVIEW FEEDBACK` section present. Re-checked
+the routines-orchestrator's status board (mobile-app issue #139) and its
+one comment via the API: unchanged since run 80's read, still the
+twentieth orchestrator run, `updated_at` unchanged at
+`2026-09-24T12:03:43Z`, 1 comment total (the closed 2026-09-07 item).
+Core-worker's own section still reads "complete since run 8... approved,
+nothing owed," blocked on the payments gate (decisions 2-4). Decision
+queue still 17 days untouched; item 11's escalation (sent run 52,
+2026-09-18) is now unanswered on day 8 by plain count. Re-pulled
+`habitcents-ops`'s PUNCHLIST.md fresh (ops main at `5ad338e`, that range
+added only sibling-routine `docs/runs.log` lines): RESUME marker unchanged
+in content, none newly core-p3-flagged. Checklist in `PLAN.md` unchanged:
+zero `[ ]` items remaining beyond the legend line.
+
+Fresh `npm install`, `tsc --noEmit` clean, full suite green on the first
+attempt: 125 suites / 1367 tests, zero drift from run 80.
+
+No push notification this run: run 79's direct push notification to
+Charen (the decision queue's 17-day idleness, three branches blocked
+purely on decisions 2/8/10, and the run-52 cost escalation unanswered on
+day 6 at the time it was sent) still stands unopened as of this run, and
+nothing about the situation has changed since (same PR state, same board
+state, same test counts as run 80). A same-window repeat on an unanswered
+notification is duplicate signal on the one channel that has not yet been
+treated as noise; it stays held until either Charen responds or a further
+day passes with the first notification apparently unseen.
+
 ## COMPLETE (run 80, 2026-09-25: re-verify, no new work)
 
 `git rev-list --left-right --count origin/main...origin/routine/core-p3`
