@@ -38,6 +38,22 @@ jest.mock('@/utils/storage', () => {
   return { ...actual, clearOnboarding: jest.fn(async () => {}) };
 });
 
+// The Reminders row and its sheet read this context (Tier 2); a hand mock
+// keeps this file free of ExpensesProvider, which the real provider needs.
+// The reconciliation behavior behind the setters is pinned in
+// __tests__/remindersContext.test.tsx.
+let mockReminderPrefs = { enabled: true, hour: 9, minute: 0 };
+let mockReminderPermission: 'granted' | 'denied' | 'undetermined' = 'granted';
+jest.mock('@/contexts/RemindersContext', () => ({
+  useReminders: () => ({
+    prefs: mockReminderPrefs,
+    permission: mockReminderPermission,
+    requestPermission: jest.fn(async () => mockReminderPermission),
+    setGlobalEnabled: jest.fn(async () => {}),
+    setReminderTime: jest.fn(async () => {}),
+  }),
+}));
+
 import React from 'react';
 import { Linking } from 'react-native';
 import { act, cleanup, fireEvent, render } from '@testing-library/react-native';
@@ -47,6 +63,7 @@ import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { OnboardingProvider } from '@/contexts/OnboardingContext';
 import { ToastProvider } from '@/components/ui/Toast';
 import ProfileScreen from '@/app/profile';
+import { reminderTimeLabelFor } from '@/components/settings/RemindersSheet';
 import { clearOnboarding } from '@/utils/storage';
 import { strings } from '@/constants/strings';
 import { settingsRowLabel } from '@/utils/a11y';
@@ -94,6 +111,8 @@ beforeEach(() => {
   mockPush.mockClear();
   mockBack.mockClear();
   (clearOnboarding as jest.Mock).mockClear();
+  mockReminderPrefs = { enabled: true, hour: 9, minute: 0 };
+  mockReminderPermission = 'granted';
   jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
 });
 
@@ -283,5 +302,60 @@ describe('Profile', () => {
   it('renders the app version from Constants in the footer line', async () => {
     const view = await renderProfile();
     expect(view.getByText(strings.settings.versionFooter('1.0.0'))).toBeTruthy();
+  });
+});
+
+/**
+ * The Preferences group (Tier 2, reminders spec section 5). The row's value
+ * carries the state a user needs before opening the sheet: the default time
+ * while live, "Off" when the global switch is off, and the visible denied
+ * state when iOS permission says no.
+ */
+describe('Profile: Reminders row (Tier 2)', () => {
+  it('renders under the Preferences eyebrow with the default time as its value', async () => {
+    const view = await renderProfile();
+
+    expect(view.getByText(strings.settings.preferences)).toBeTruthy();
+    expect(
+      view.getByLabelText(
+        settingsRowLabel(strings.settings.remindersRow, reminderTimeLabelFor(9))
+      )
+    ).toBeTruthy();
+  });
+
+  it('reads Off while the global switch is off', async () => {
+    mockReminderPrefs = { enabled: false, hour: 9, minute: 0 };
+    const view = await renderProfile();
+
+    expect(
+      view.getByLabelText(
+        settingsRowLabel(strings.settings.remindersRow, strings.settings.remindersOffValue)
+      )
+    ).toBeTruthy();
+  });
+
+  it('surfaces the denied state on the row itself, non-blaming', async () => {
+    mockReminderPermission = 'denied';
+    const view = await renderProfile();
+
+    expect(
+      view.getByLabelText(
+        settingsRowLabel(strings.settings.remindersRow, strings.settings.remindersDeniedValue)
+      )
+    ).toBeTruthy();
+  });
+
+  it('opens the reminders sheet on tap', async () => {
+    const view = await renderProfile();
+
+    await act(async () => {
+      fireEvent.press(
+        view.getByLabelText(
+          settingsRowLabel(strings.settings.remindersRow, reminderTimeLabelFor(9))
+        )
+      );
+    });
+
+    expect(view.getByText(strings.settings.remindersSheetTitle)).toBeTruthy();
   });
 });

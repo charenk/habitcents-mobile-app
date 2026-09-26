@@ -30,6 +30,10 @@ import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
 import { DevMenuSection } from '@/components/dev/DevMenuSection';
 import { CurrencySheet } from '@/components/settings/CurrencySheet';
+import {
+  RemindersSheet,
+  reminderTimeLabelFor,
+} from '@/components/settings/RemindersSheet';
 import { SettingsRow } from '@/components/settings/SettingsRow';
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
@@ -40,6 +44,7 @@ import type { AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useOnboarding } from '@/contexts/OnboardingContext';
+import { useReminders } from '@/contexts/RemindersContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { settingsRowLabel } from '@/utils/a11y';
 import { DEV_MENU_ENABLED } from '@/utils/devMenu';
@@ -57,8 +62,19 @@ export default function ProfileScreen(): React.JSX.Element {
   const { show } = useToast();
   const { currency } = useCurrency();
   const { resetOnboarding } = useOnboarding();
+  const { prefs: reminderPrefs, permission: reminderPermission } = useReminders();
   const [currencySheetVisible, setCurrencySheetVisible] = useState(false);
+  const [remindersSheetVisible, setRemindersSheetVisible] = useState(false);
   const [startOverConfirmVisible, setStartOverConfirmVisible] = useState(false);
+  // The row's value is the state a user needs before opening the sheet: the
+  // default time when reminders are live, "Off" when the global switch is
+  // off, and the visible non-blaming denied state (reminders spec section 5)
+  // when the switch is on but iOS permission says no.
+  const remindersValue = !reminderPrefs.enabled
+    ? strings.settings.remindersOffValue
+    : reminderPermission === 'denied'
+      ? strings.settings.remindersDeniedValue
+      : reminderTimeLabelFor(reminderPrefs.hour, reminderPrefs.minute);
   // Gating audit (build 12): the row used to always read Free, even after a
   // completed (mock) purchase. isPremium() reads getEntitlement() directly,
   // the same source every habit gate already trusts.
@@ -165,6 +181,24 @@ export default function ProfileScreen(): React.JSX.Element {
           />
         </View>
 
+        {/* Preferences (Tier 2, reminders spec section 5): its first and only
+            row so far. ADR 0005 deleted the old reminder-time row for being a
+            setting without a feature; it returns only because Tier 1 delivers
+            now, in the same PR wave. */}
+        <Text style={styles.eyebrow}>{strings.settings.preferences}</Text>
+        <View style={styles.group}>
+          <SettingsRow
+            styles={styles}
+            theme={theme}
+            label={strings.settings.remindersRow}
+            value={remindersValue}
+            onPress={() => setRemindersSheetVisible(true)}
+            chevron
+            accessibilityLabel={settingsRowLabel(strings.settings.remindersRow, remindersValue)}
+            last
+          />
+        </View>
+
         <Text style={styles.eyebrow}>{strings.settings.groupMore}</Text>
         <View style={styles.group}>
           {/* SettingsRow applies strings.settings.opensInBrowserHint to every
@@ -214,6 +248,11 @@ export default function ProfileScreen(): React.JSX.Element {
       <CurrencySheet
         visible={currencySheetVisible}
         onClose={() => setCurrencySheetVisible(false)}
+      />
+
+      <RemindersSheet
+        visible={remindersSheetVisible}
+        onClose={() => setRemindersSheetVisible(false)}
       />
 
       <ConfirmSheet

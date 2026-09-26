@@ -353,6 +353,19 @@ export const strings = {
     // (the code, e.g. USD), not the symbol.
     currencySheetTitle: 'Currency.',
     currencyRowLabel: (name: string, code: string) => `${name} (${code})`,
+    // Bill reminders preferences (Tier 2, ops docs/reminders-spec.md). The
+    // row lives under the Preferences eyebrow (the key above finally has a
+    // renderer); the sheet holds the global switch, the default-time chips,
+    // and the denied-permission route to the system setting.
+    remindersRow: 'Reminders',
+    remindersSheetTitle: 'Reminders.',
+    remindersGlobalRow: 'Bill reminders',
+    remindersTimeEyebrow: 'Remind me at',
+    remindersOffValue: 'Off',
+    // The row's value while OS permission is denied but the switch is on:
+    // visible, non-blaming, and pointing at where the state actually lives.
+    remindersDeniedValue: 'Off in device settings',
+    remindersOpenSettings: 'Open device settings',
     // Restore purchases (BET-004, mock mode). No purchases exist to restore yet.
     // The row itself moved off Profile onto the paywall footer (design/
     // profile-restructure U9); these two outcome messages stay here because
