@@ -1,5 +1,65 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 85, 2026-09-26: real rebase, small config/docs wave)
+
+`origin/main` advanced `d292e1c..3a01b88`, four commits: `d975724`/`1e8513e`
+(PR #182, a local `plugins/withNoApsEntitlement.js` config plugin so `expo
+prebuild` stops re-injecting `aps-environment` from the installed
+`expo-notifications` package now that reminders are local-only) and
+`2cf24f7`/`3a01b88` (PR #183, a primer copy pass pointing next priorities at
+the build 28 device pass). `git rebase origin/main` was clean, no conflicts:
+the four-commit diff touches only `app.json`, the new plugin file, and
+`primer.md`, none of which this branch's 91 commits touch. All 91 commits
+replayed clean. `git rev-list --left-right --count origin/main...HEAD` reads
+`0  91` against the new main tip.
+
+No `## REVIEW FEEDBACK` section (grepped the whole file; the one open
+heading hit is still the closed 2026-09-08 orchestrator review of runs
+12-14). Checklist in `PLAN.md` unchanged: zero `[ ]` items remaining beyond
+the legend line, so no plan work this run either.
+
+Re-pulled `habitcents-ops`'s `PUNCHLIST.md` and ADR index fresh (ops main
+advanced `6137b8b..f361364`: PR #51 records the reminders wave shipped, build
+28 submitted, an `EXPO_TOKEN` Actions-secret item in Charen's court, a build
+28 device-pass task item, and a fired-but-unacted-reminders decision deferred
+to that same device pass, plus sibling routines' own `runs.log` lines). Worth
+naming even though none of it is core-p3-flagged: that PUNCHLIST commit is
+authored directly by Charen (with a Fable co-author line), timestamped
+2026-09-26 01:21 local, so Charen was actively in a session on the reminders/
+build-28 thread within the last day. Nothing in that range touches decisions
+2-4 (this branch's payments gate) or items 8/10/11 (the other two streams'
+blockers); the decision queue itself is unmoved since 2026-09-07.
+
+Fresh `npm install`, `tsc --noEmit` clean, full suite green on the first
+attempt: 131 suites / 1451 tests, unchanged from run 84 (this main range
+added no tests, only a config plugin and docs).
+
+Force-pushed the rebased branch plus this HANDOFF update to `routine/core-p3`
+(new tip recorded in `runs.log`). PR #132's base is now `3a01b88`; expect
+`mergeable_state` to read `dirty` for a moment until GitHub recomputes, then
+`clean`.
+
+Re-checked the routines-orchestrator's status board (mobile-app issue #139)
+directly: still the twenty-first entry, `updated_at` unchanged at
+`2026-09-25T12:03:48Z` as of this run, so no board update yet for today. Its
+own run-21 post already named the orchestrator, not the worker streams, as
+owner of the next decision-queue follow-up, due today (2026-09-26) if the
+queue is still untouched. Decision queue reads 19 days untouched by plain
+count (last item closed 2026-09-07). Item 11's escalation (run 52,
+2026-09-18) and run 79's direct phone/email alert (2026-09-24) both remain
+unanswered/unopened. Both sibling routines' same-window runs today
+(localization run 87, ipad run 87) read the same unmoved board and deferred
+for the same reason.
+
+No push notification from this run: a clean rebase onto a small config/docs
+wave is this routine's ordinary bounded work, not decision-queue movement.
+The one new fact worth recording (Charen active on the reminders/build-28
+thread as of a few hours ago) is not this branch's blocker moving and is
+already visible in the ops PUNCHLIST Charen himself just edited; restating it
+as a notification would not tell him anything he doesn't already know, and
+would still stack a third alert on run 79's still-unopened one and the
+orchestrator's own stated plan for today.
+
 ## COMPLETE (run 84, 2026-09-26: real rebase again, main picked up the reminders wave)
 
 `origin/main` advanced `ad091e2..d292e1c` (PRs #177-#181: bill reminders
