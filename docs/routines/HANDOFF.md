@@ -2,11 +2,64 @@
 
 ## Status
 
-In progress, blocked on decisions 8/10 (standing since run 38), but main
-moved for the first time since run 38: run 85 rebased onto two new merged
-onboarding PRs, resolved one real conflict, fixed two rebase-fallout test
-failures, and confirmed the new copy is still gated by the same block. Full
-detail below.
+In progress, blocked on decisions 8/10 (standing since run 38, now day 19).
+Main moved again: run 86 rebased onto PR #176 (docs only) and PR #177 (Bill
+reminders Tier 1 engine), one real conflict (package.json/package-lock.json,
+both branches adding a dependency), rest of the 152-commit replay applied
+clean. Full detail below.
+
+Run 86 (2026-09-26): `git fetch origin main` pulled `bd75989` (two new
+merges since run 85's `2cac175`: PR #176 `docs/primer-reminders-next`,
+one line in `primer.md`, and PR #177 `reminders/bill-reminders-tier-1`, the
+new pure planner/reconciler engine for local bill notifications per
+`../docs/reminders-spec.md`, ADR 0017 decision 1). `git rebase origin/main`
+hit exactly one real conflict, on the very first commit in this branch's
+152-commit history (`af9803c`, run 1's foundation commit): `package.json`
+and `package-lock.json` both added a dependency at the same array position
+(main's PR #177 added `expo-notifications`, this branch's run 1 added
+`expo-localization`). Resolved by keeping both, alphabetized
+(`expo-localization` before `expo-notifications`), then regenerating
+`package-lock.json` with `npm install --package-lock-only` against the
+merged `package.json` rather than hand-resolving its own conflict markers
+(ops CLAUDE.md's lockfile-regeneration rule). All other 151 commits applied
+with no further conflicts.
+
+After the rebase, fresh `npm ci`, `tsc --noEmit` clean, full suite green:
+130 suites / 1459 tests (up from 127/127, 1416/1416 at run 85; the
+difference is PR #177's own 43 new tests for the reminders engine, an
+exact match, confirming nothing from this branch's history was lost or
+duplicated in the replay).
+
+One new find, not a decision-gate item: PR #177 added 13 lines to
+`constants/strings.ts`, a new `reminders` section (`channelName`: 'Bill
+reminders', the Android notification channel name; `notifBody`: a
+function-valued key, `'${amountLabel} due tomorrow.'`). No leak/skip/kept/
+slip content and no pricing/legal exposure (the PR's own commit message
+notes the feature is "behaviorally inert for users" this tier, no shipping
+UI turns it on yet), so this is ordinary UI copy, not a new entry for
+DECISIONS NEEDED. It falls back to English automatically like every other
+untranslated section until item 4 reaches it; noted here so a future run
+does not need to re-discover it from a cold `git log`.
+
+Checked issue #139 directly (`charenk/habitcents-mobile-app`): only comment
+is still the unrelated 2026-09-07 iPad-footer item; decisions 2, 8, 9, 10,
+11, 12 remain unanswered since decision 1 closed 2026-09-07, now 19 days.
+The board's own 2026-09-25 text put the orchestrator on point for the next
+follow-up notification (at its 2026-09-26 run, today), so this run sends
+none, per the run 72/85 no-repeat posture: the decision belongs to the
+orchestrator now, not to case-by-case judgment here.
+
+Re-ran the run-38 `VALUE CHANGE` sweep: `grep -n "VALUE CHANGE"
+constants/strings.ts` finds 6 hits, 3 already marked "re-translated run 38"
+(resolved) and 3 still marked "needs re-translation" in the gated
+`onboarding` section (unchanged since run 85, still blocked on decision 8).
+No new unresolved hits. `items 3/5/6` remain exhausted per runs 30/31's
+findings; item 4 remains blocked; item 2's ICU/CLDR sub-item remains
+blocked behind item 4 per run 28's note.
+
+One commit (the resolved rebase, `package.json`/`package-lock.json` fix
+folded into run 1's original commit per rebase mechanics, HANDOFF touch
+appended separately). Pushed `routine/localization`.
 
 Run 85 (2026-09-25): the first non-no-op rebase since run 38. `git fetch
 origin main` pulled `3890ba1..2cac175` (PRs #174 `design/onboarding` and
@@ -3011,17 +3064,20 @@ REVIEW-FEEDBACK-equivalent priority work per run 52's note above).
 **Standing since run 38: decisions 8 and 10 on issue #139
 (charenk/habitcents-mobile-app) still open and unanswered**, gating all
 remaining translation work (locked vocabulary for `habitLogging`/
-`coachMoments`/etc., and the `paywall` pricing/trial copy). Decision
-queue is 16 days untouched per the board's own 2026-09-23 nineteenth
-orchestrator run; item 11's cost-saving escalation (sent 2026-09-18)
-unanswered as of run 76, now day 5. Run 71's "the status-board channel
-is gone" finding, withdrawn at run 72, remains confirmed closed. The
-board has always lived in charenk/habitcents-mobile-app and is
-confirmed alive and unchanged there (see Notes for the exact address).
-Run 76 sent a periodic reminder notification (see Status): the first
-since run 71's false-alarm correction, flagging item 11's still-open
-two-minute pause/thin decision and the accumulating verify-only run
-cost.
+`coachMoments`/etc., and the `paywall` pricing/trial copy; the new
+`reminders` section from run 86 falls under the same item-4 gate for
+ordinary reasons, not a new decision). Decision queue is 19 days untouched
+(decision 1 closed 2026-09-07, nothing since) per the board's own
+2026-09-25 twenty-first orchestrator run, confirmed independently by this
+run's own read of issue #139. Item 11's cost-saving escalation (sent
+2026-09-18) is unanswered at day 8; core-worker's run 79 sent a direct
+phone/email alert on 2026-09-24, also unanswered, and the board states the
+orchestrator itself now owns the next follow-up (its 2026-09-26 run), so
+no worker routine should send another one until that changes. Run 71's
+"the status-board channel is gone" finding, withdrawn at run 72, remains
+confirmed closed. The board has always lived in charenk/habitcents-mobile-app
+and is confirmed alive and unchanged there (see Notes for the exact
+address).
 
 ## DECISIONS NEEDED
 
