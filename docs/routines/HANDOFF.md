@@ -72,6 +72,46 @@ device pass is separate and additional to that one, not a substitute.
 
 ## Status
 
+Run 86 (2026-09-26). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` moved again since run 85's
+rebase: two commits, `ad091e2..bd75989`, landing PR #177 (bill reminders
+Tier 1: `contexts/RemindersContext.tsx`, `utils/reminders/{permission,plan,
+setup,sync}.ts`, three new test files, `app.json`'s `expo-notifications`
+plugin entry, `app/_layout.tsx` wiring, storage/strings/recurring additions).
+Rebased onto it: clean, no conflicts (confirmed via the rebase's own output,
+95 commits replayed, zero manual resolution needed), unlike run 85's
+onboarding-carousel conflict, because this move touches no file this
+branch's diff shares. Fresh `npm ci`, `npx tsc --noEmit` clean. Re-audited
+per the Next section's post-move rule rather than trusting the clean rebase
+alone: re-grepped `useWindowDimensions` (still 7 real call sites, unchanged;
+`git diff --stat ad091e2..bd75989` confirms the reminders change touched no
+UI/layout file, only the engine, context and storage layer, so there was no
+new surface to check), re-confirmed `app.json` still `"orientation":
+"portrait"`, `"supportsTablet": true` (item 7; the one line the diff added
+there is the unrelated `expo-notifications` plugin entry). Full suite green
+on the first pass: 127 suites / 1399 tests (up from 124/1356, entirely
+main's own growth from the reminders test files; this run added no new test
+file, needed no merge-conflict resolution). Force-pushed the rebased branch
+(`cebc175`, base now `bd75989`). PR #133 still open, not draft; `verify`
+check on the pre-rebase head (`bb73c4d`, run 85's push) had already
+completed green (SUCCESS, 20:14-20:15 UTC 2026-09-25) before this run
+started; re-triggering it on the new head (`cebc175`) is this run's own
+push, result not yet known at write time. No new PR comments since run 66's
+second-occurrence note. Issue #139 re-read: its text is dated to run 83's
+check and already stale on "main has not moved" (matches what run 85 already
+flagged and this run reconfirms independently), otherwise unchanged:
+ipad-worker line still "approved, nothing owed," blocker still the device
+pass gated on PR #133 merging behind #132's payments gate (decision 6). The
+board's own posture note says the orchestrator sends one follow-up on the
+still-unanswered decision queue at its next run (dated 09-26, today); that
+follow-up and the cadence question (item 11) are the orchestrator's and
+Charen's threads, not this routine's to enact or duplicate, consistent with
+every prior run's reading. No push notification: a clean rebase plus
+re-audit with no regression found and no new decision raised is this
+routine's ordinary bounded work; the payments gate, decision queue and
+cadence items are threads already carried by other routines and Charen, not
+duplicated here.
+
 Run 85 (2026-09-25). `origin/main` moved for the first time since run 33's
 check: `ad091e2` (six commits ahead of the `3890ba1` baseline every run
 29-84 verified against), landing PR #175/#176, the onboarding arc v2
