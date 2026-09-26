@@ -3,7 +3,7 @@ import { AccessibilityInfo, View, Text, StyleSheet, ActivityIndicator, ScrollVie
 import { Button, Icon } from '@/components/ui';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { useTheme } from '@/contexts/ThemeContext';
-import { radii, typeScale, type AppTheme } from '@/constants/theme';
+import { contentColumnStyle, radii, typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import { QuestionCard } from './QuestionCard';
 import type { IntakeState } from './useLeakScanIntake';
@@ -140,6 +140,7 @@ function createStyles(theme: AppTheme) {
     container: {
       flexGrow: 1,
       padding: 24,
+      ...contentColumnStyle,
     },
     centered: {
       justifyContent: 'center',
