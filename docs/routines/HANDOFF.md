@@ -1,5 +1,76 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 84, 2026-09-26: real rebase again, main picked up the reminders wave)
+
+`origin/main` advanced `ad091e2..d292e1c` (PRs #177-#181: bill reminders
+Tier 1 engine, the per-bill reminder toggle, Tier 2 Settings reminders row,
+an EAS workflow Node 22 bump, and dropping the `expo-notifications` config
+plugin since local-only reminders need no APS entitlement). `git rebase
+origin/main` hit two conflicts, both additive collisions in the same two
+files run 83 already named as crossings:
+
+1. `constants/strings.ts`: main's new `reminders` string block landed at
+   the same insertion point as this branch's own `shareCard` block (P4-3).
+   Resolved by keeping both as sibling top-level keys; verified with a
+   grep that each key name (`reminders:`, `shareCard:`) appears exactly
+   once after the merge.
+2. `design/decisions/README.md`'s component index: two separate
+   collisions on the same index line, replayed one after another as the
+   rebase walked this branch's own commit history. First, main's
+   `RemindersSheet` entry against this branch's already-landed
+   `ShareCounterCard` entry; then, one commit later, this branch's own
+   `PickOneSheet`/`BreakHabitSheet` entry (entitlement-gate fixes) against
+   the now-merged `RemindersSheet`/`ShareCounterCard` line. Both resolved
+   by keeping every name from both sides on one line, per the
+   design-records rule (nothing here was a real code collision); verified
+   `RemindersSheet.md`, `ShareCounterCard.md`, `PickOneSheet.md`, and
+   `BreakHabitSheet.md` all exist on disk before resolving each one.
+
+All 90 commits on this branch replayed clean after that, zero other
+conflicts. `git rev-list --left-right --count origin/main...HEAD` reads
+`0  90` against the new main tip, confirming nothing behind and nothing
+lost.
+
+No `## REVIEW FEEDBACK` section present (grepped the whole file; the one
+open heading hit is still the 2026-09-08 orchestrator review of runs
+12-14, already closed). Checklist in `PLAN.md` unchanged: zero `[ ]`
+items remaining beyond the legend line, so no plan work this run either.
+Re-pulled `habitcents-ops`'s `PUNCHLIST.md` and ADR index fresh (ops main
+advanced `f55f5c3..6137b8b`: a reminders-spec answers doc plus sibling
+routines' own `runs.log` lines): none of that range is core-p3-flagged.
+
+Fresh `npm install`, `tsc --noEmit` clean, full suite green on the first
+attempt: 131 suites / 1451 tests, up from 127/1388, entirely main's own
+growth (the reminders PRs) plus this run's merge, which needed no new
+test case of its own.
+
+Force-pushed the rebased branch plus this HANDOFF/PLAN update to
+`routine/core-p3` (new tip `16a591a`). PR #132's base is now `d292e1c`;
+expect `mergeable_state` to read `dirty` for a moment until GitHub
+recomputes, then `clean`.
+
+Re-checked the routines-orchestrator's status board (mobile-app issue
+#139) directly: still the twenty-first orchestrator entry, `updated_at`
+unchanged at `2026-09-25T12:03:48Z` as of this run. Core-worker's own
+section still reads "complete since run 8... approved, nothing owed,"
+blocked on the payments gate (decisions 2-4). Decision queue now reads 19
+days untouched by plain count (last item closed 2026-09-07). Item 11's
+escalation (sent run 52, 2026-09-18) and run 79's direct phone/email
+alert (sent 2026-09-24) both remain unanswered/unopened. The board's own
+run-21 post already named the orchestrator, not the worker streams, as
+owner of the next follow-up, due today (2026-09-26) if the queue is still
+untouched; that is the orchestrator's own scheduled routine to run, not
+this one, per the isolation rule (this branch, this checkout, this one
+draft PR are the only things core-worker acts on).
+
+No push notification from this run: this is a real rebase and
+merge-conflict resolution, not decision-queue movement, and the
+orchestrator has already taken explicit ownership of today's alert if the
+queue is still untouched when it runs. Sending one here would be a third
+notification stacked on run 79's still-unopened one and the
+orchestrator's own stated plan, on a situation nothing about which has
+changed since run 83 except the calendar date.
+
 ## COMPLETE (run 83, 2026-09-25: real rebase, not a no-op, for the first time since run 8)
 
 `origin/main` (mobile-app) advanced `3890ba1..ad091e2` (PRs #175/#176,
