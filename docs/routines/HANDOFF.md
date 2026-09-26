@@ -72,6 +72,64 @@ device pass is separate and additional to that one, not a substitute.
 
 ## Status
 
+Run 87 (2026-09-26). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` moved again since run 86's
+rebase: seven commits, `bd75989..3a01b88` (PRs #178-#183: EAS workflow Node
+22 bump, per-bill reminder toggle in `AddUpcomingSheet`, Tier 2 Settings
+reminders row + new `components/settings/RemindersSheet.tsx`, two
+config-plugin fixes dropping and then correctly re-scoping the
+`expo-notifications` APS entitlement, a primer docs update). `git rebase
+origin/main` was clean, no conflicts, all 97 commits replayed. Re-audited
+rather than trusting the clean rebase alone, since two of those PRs add real
+UI: `git diff --stat bd75989..3a01b88 -- '*.tsx' '*.ts'` narrowed to the
+touched app/component files, then read each new surface directly rather than
+assuming from the diffstat. `components/settings/RemindersSheet.tsx` (new,
+209 lines) is built entirely on the shared `Sheet` component (its own
+docstring says so) and reads no `width`/`Dimensions`/`contentColumnStyle` of
+its own, so it inherits item 3's 600pt cap for free, same as every other
+sheet on this branch's audit list. `app/profile.tsx`'s new Preferences row is
+one more `SettingsRow` inside the screen's existing, already-capped
+`ScrollView` (item 2b), not a new content surface. `AddUpcomingSheet.tsx`'s
+new reminder toggle section is inside that same already-capped `Sheet`. Then
+re-ran the full item-5 grep rather than relying on the file list being
+unchanged: `useWindowDimensions` call sites are the same 7 as run 85's audit
+(`CheckInCard.tsx` fontScale-only, `Sheet.tsx` item 3, `OnboardingCarousel.tsx`
+item 2c, `AuroraBackground.tsx` dead code, `utils/keyboard.ts` height-only
+post-run-26 sheet clamp, `utils/useSegmentPager.ts` confirmed run 85,
+`utils/textScale.ts`, new since run 85 but `fontScale`-only per its own
+docstring, same out-of-scope shape as `CheckInCard`, confirmed by reading it
+rather than assumed from the name). No new call site, no regression. Fresh
+`npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass: 128
+suites / 1419 tests (up from 127/1399, entirely main's own growth from the
+reminders-wave test files; this run added no new test file, since the two
+new UI surfaces above needed no new cap of their own to pin). Re-verified
+item 7 (`app.json` still `"orientation": "portrait"`, `"supportsTablet":
+true`; the diff's own `app.json` touches were the `expo-notifications`
+plugin entry being dropped then a config-plugin fix landing separately,
+neither orientation-related). Force-pushed the rebased branch plus this
+HANDOFF.md update, two commits total, to `routine/ipad`. PR #133 re-checked
+via `get`/`get_comments`/`get_reviews`/`get_check_runs`: still open, not
+draft, base now `bd75989` in the API's cache at read time (will read
+`3a01b88` once GitHub recomputes post-push), head matching run 86's push
+(`e465353`) at read time; `verify` check on that head completed green
+(SUCCESS, 02:10-02:11 UTC 2026-09-26) after all, resolving run 86's own
+"still in_progress past the polling ceiling" note without any action needed
+this run. No new comments since run 66's second-occurrence note (the
+`habitDetection.ts` flake, item 12 on issue #139, unchanged, main-owned, not
+this branch's to fix), no reviews. Issue #139 re-read: still the
+twenty-first orchestrator entry (`updated_at` unchanged at
+`2026-09-25T12:03:48Z`), ipad-worker section still "approved, nothing
+owed," blocker still the device pass gated on PR #133 merging behind #132's
+payments gate (decision 6); the board's own posture note names the
+orchestrator, not the worker streams, as owner of the one follow-up due
+2026-09-26 if the queue is still untouched, so this run defers to that
+rather than duplicating it, consistent with every prior run's reading. No
+push notification: a clean rebase plus re-audit with no regression found
+(including on two genuinely new UI surfaces) and no new decision raised is
+this routine's ordinary bounded work; the payments gate, decision queue and
+cadence items are threads already carried by other routines and Charen, not
+duplicated here.
+
 Run 86 (2026-09-26). Verified per this file's own COMPLETE instruction: plan
 fully checked, nothing new to do. `origin/main` moved again since run 85's
 rebase: two commits, `ad091e2..bd75989`, landing PR #177 (bill reminders
