@@ -859,6 +859,80 @@ work, tracked elsewhere).
       Profile/settings sheet will land the same way and should get the same
       one-commit conversion before this checkbox is treated as permanently
       closed.
+
+      **Run 88: swept the whole tree for drift, not just the previously-
+      flagged single file, since run 87's "5th file" find showed the
+      "exactly N files, all by design" claim can go stale silently whenever
+      another stream lands a new component.** `grep -rl "from
+      '@/constants/strings'" app components contexts utils | grep -v
+      __tests__` returned 9 files, not the expected 4: the 4 by-design ones
+      (`utils/i18n.ts`, `OnboardingCarousel.tsx`, the RETIRED `ViewQuote.tsx`/
+      `useViewQuote.ts` pair) plus 5 real gaps. Two were genuinely new
+      (`utils/reminders/setup.ts`, `utils/reminders/plan.ts`, both from PR
+      #177's Tier-1 reminders engine, run 86's rebase); three had been
+      missed entirely since before this branch's own history started
+      (`components/money/MonthDayPicker.tsx`, `components/habit-logging/
+      LeakRow.tsx`, `utils/useBreakHabitStart.ts`, confirmed via `git log
+      --follow` predating every rebase this branch has done). All five
+      converted, same one-commit-per-shape discipline as always:
+
+      `MonthDayPicker.tsx` and `LeakRow.tsx`: ordinary leaves, `const
+      strings = useStrings();` in place of the static import. Only importer
+      of `MonthDayPicker` is `AddUpcomingSheet.tsx` (already converted,
+      already `LocaleProvider`-covered); `LeakRow` (precise `import.*\bLeakRow\b`
+      grep, not a plain-name grep which also matches the unrelated
+      already-converted `HabitLeakRow.tsx`) is imported by `app/(tabs)/
+      index.tsx` (Today, covered) and rendered directly in
+      `renderedA11y.test.tsx` (already carries `LocaleProvider`). No test
+      file changes needed for either.
+
+      `utils/useBreakHabitStart.ts`: a hook (name starts `use`), same shape
+      as `useCheckInFeedback.ts`/`useTrackLeak.tsx` before it: `useStrings()`
+      at the top level, `strings` added to the one `useCallback`'s deps.
+      Both callers (`app/(tabs)/index.tsx`, `app/(tabs)/money.tsx`) already
+      converted and covered; no dedicated test imports the hook directly, so
+      no test file changes needed.
+
+      `utils/reminders/plan.ts` and `utils/reminders/setup.ts`: plain
+      functions, not components or hooks (the `recurring.ts`/`coachMoments.ts`
+      shape from run 19), each took an added `strings: Catalog` parameter
+      (`desiredReminders`, `ensureAndroidChannelAsync`). Threaded from
+      `contexts/RemindersContext.tsx`'s `RemindersProvider`, itself a
+      function component and directly `useStrings()`-eligible (confirmed
+      before assuming so, same check run 19 did for `ReportsContext.tsx`):
+      added `const strings = useStrings();`, threaded into `inputsRef`
+      (the pattern this file already uses for `format`, since `runSync`'s
+      callback closes over ref state rather than reading `strings` from
+      render scope) and into the mount-time `ensureAndroidChannelAsync(strings)`
+      call, left on its intentional `[]` mount-only deps (the effect's own
+      comment says it hydrates once before anything schedules; re-running
+      it on every locale change would re-fetch prefs/permission for no
+      benefit, only the Android channel's own name would ever need a
+      relaunch to update, an acceptable gap matching how a device's own
+      system language change already needs a relaunch for every native
+      string). Two test fixes: `__tests__/remindersPlan.test.ts` unit-tests
+      `desiredReminders` directly (the `describeSchedule`/`cardText`
+      direct-call-test shape from runs 19/28), so its `plan()` helper now
+      imports the static `strings` and passes it as a 6th argument at its
+      one call site. `__tests__/remindersContext.test.tsx` renders
+      `RemindersProvider` directly with no `LocaleProvider` in its harness
+      (`CurrencyProvider > ExpensesProvider > RemindersProvider`, one
+      `render()` call, no earlier run had touched this file since the
+      reminders feature is newer than this branch's last full test-file
+      audit); added `LocaleProvider` outermost, matching `app/_layout.tsx`'s
+      own order, no other change (the AsyncStorage mock `LocaleContext.tsx`
+      needs was already present for its own reasons).
+
+      Confirmed clean afterward: `grep -rl "from '@/constants/strings'" app
+      components contexts utils | grep -v __tests__` now returns exactly the
+      4 by-design files. `tsc --noEmit` clean, full suite green (131/131,
+      1479/1479, unchanged counts since no test was added or removed, only
+      fixed in place). One commit. Lesson for the next run: re-run this
+      exact grep from scratch every run rather than trusting the last
+      recorded count, even when item 4 is fully blocked and item 2's
+      checkbox already reads closed; a closed checkbox only means "true as
+      of the run that closed it," and any other stream's merge can reopen
+      it silently.
 - [ ] Convert function-valued strings (pluralized/interpolated) to ICU
       messages with proper CLDR plural rules, not the current hand-rolled
       `n === 1 ? '' : 's'` ternaries, and add the ICU formatting dependency

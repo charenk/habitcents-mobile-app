@@ -19,7 +19,7 @@
 
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
-import { strings } from '@/constants/strings';
+import type { Catalog } from '@/utils/i18n';
 
 // How a reminder presents while the app is FOREGROUND: banner and list, no
 // sound, no badge. The app being open means the user is already where the
@@ -42,7 +42,7 @@ export const REMINDER_CHANNEL_ID = 'bill-reminders';
  * no-op update). Failures degrade with a log: a channel error must not take
  * down the provider mount, and the next launch retries.
  */
-export async function ensureAndroidChannelAsync(): Promise<void> {
+export async function ensureAndroidChannelAsync(strings: Catalog): Promise<void> {
   if (Platform.OS !== 'android') return;
   try {
     await Notifications.setNotificationChannelAsync(REMINDER_CHANNEL_ID, {

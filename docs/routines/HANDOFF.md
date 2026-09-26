@@ -3,13 +3,83 @@
 ## Status
 
 In progress, blocked on decisions 8/10 (standing since run 38, now day 19,
-unchanged as of run 87's fresh read of issue #139 today). Main moved again:
-run 87 rebased onto 6 new merges (#178 infra, #179 per-bill reminder toggle,
-#180 reminders Settings Tier 2, #181/#182 aps-entitlement fixes, #183 docs),
-3 real conflicts this time (all textual, in files both branches touch:
-constants/strings.ts, app/profile.tsx, and provider-order clashes across 3
-test files), rest of the 153-commit replay applied clean; then converted the
-one new static-strings leaf PR #180 introduced. Full detail below.
+unchanged as of run 88's fresh read of issue #139 today). Main did not move
+since run 87's rebase (still `3a01b88`), so run 88 was a no-rebase pass:
+re-verified (fresh `npm install`, tsc clean, 131/131 suites, 1479/1479 tests
+green), then found and fixed real item-2 drift a fuller grep uncovered (5
+static-strings-import files beyond the expected 4, two new from the
+reminders engine, three older leaves the branch's history had simply never
+caught). Full detail below.
+
+Run 88 (2026-09-26): rebase check: `git fetch origin main` showed no new
+commits since run 87's `3a01b88` (`git merge-base --is-ancestor origin/main
+HEAD` reported already up to date), so no rebase was needed and no conflict
+risk this run. No REVIEW FEEDBACK section pending (full-file check: newest
+entry is still the 2026-09-08 runs 14-16 review, closed out long ago).
+Checked issue #139 directly (`charenk/habitcents-mobile-app`): `updated_at`
+still `2026-09-25T12:03:48Z`, same as run 87's read, one comment (still the
+unrelated 2026-09-07 iPad-footer item). Decisions 8 and 10 both still open
+and unanswered; the board's own text put the orchestrator on point for its
+2026-09-26 follow-up, which has not posted yet as of this read (the issue's
+`updated_at` has not advanced), so this run sends no notification of its
+own, same posture run 87 and every run since 76 has held: the decision
+belongs to the orchestrator, not to case-by-case judgment here.
+
+Since item 4 stays blocked and items 3/5/6 stay exhausted, this run went
+back to item 2's call-site migration, on the theory run 87's "5th file"
+find suggested: a closed checkbox recording "exactly N files import the
+static catalog, all by design" is only ever true as of the run that
+verified it, and any other stream's merge since can reopen it silently.
+Re-ran `grep -rl "from '@/constants/strings'" app components contexts
+utils | grep -v __tests__` from scratch instead of trusting the last
+recorded count (4, per run 19's close-out, matching run 87's "back to the
+same 3 named above" typo for the actual 4). Found 9 hits, 5 more than
+expected: the 4 by-design files (`utils/i18n.ts`, `OnboardingCarousel.tsx`,
+the RETIRED `ViewQuote.tsx`/`useViewQuote.ts` pair) plus `utils/reminders/
+setup.ts` and `utils/reminders/plan.ts` (genuinely new, PR #177's Tier-1
+reminders engine, arrived at run 86's rebase and never picked up since,
+confirmed via `git log --follow`), and `components/money/MonthDayPicker.tsx`,
+`components/habit-logging/LeakRow.tsx`, `utils/useBreakHabitStart.ts`
+(confirmed via `git log --follow` to predate every rebase this branch has
+ever done, meaning the run-11 to run-19 call-site migration sweep simply
+missed all three the first time around, not a rebase-fallout gap).
+
+Converted all five, same per-shape discipline as every prior run:
+`MonthDayPicker.tsx`/`LeakRow.tsx` are ordinary leaves (`const strings =
+useStrings();`); `useBreakHabitStart.ts` is a hook, `useStrings()` at the
+top level plus added to its one `useCallback`'s deps (same shape as
+`useCheckInFeedback.ts`/`useTrackLeak.tsx`); `utils/reminders/plan.ts`'s
+`desiredReminders` and `utils/reminders/setup.ts`'s
+`ensureAndroidChannelAsync` are plain functions (the `recurring.ts`/
+`coachMoments.ts` shape from run 19), each took an added `strings: Catalog`
+parameter, threaded from `contexts/RemindersContext.tsx`'s
+`RemindersProvider` (a function component, directly `useStrings()`-eligible,
+confirmed before assuming so). Blast radius confirmed narrow before
+touching anything: `MonthDayPicker`'s only importer (`AddUpcomingSheet.tsx`)
+and `LeakRow`'s only importer (`app/(tabs)/index.tsx`, via a precise
+`import.*\bLeakRow\b` grep to avoid the unrelated already-converted
+`HabitLeakRow.tsx`) and `useBreakHabitStart`'s two callers (`app/(tabs)/
+index.tsx`, `app/(tabs)/money.tsx`) were all already converted and
+`LocaleProvider`-covered by their screens' own test suites; no test file
+changes needed for any of the three. Two test fixes for the reminders pair:
+`__tests__/remindersPlan.test.ts` unit-tests `desiredReminders` directly (no
+React tree), so its `plan()` helper now imports the static `strings` and
+passes it as a 6th argument, the same direct-call-test shape runs 19/28
+established. `__tests__/remindersContext.test.tsx` renders `RemindersProvider`
+directly (`CurrencyProvider > ExpensesProvider > RemindersProvider`, one
+`render()` call) with no `LocaleProvider` in the tree at all; added it
+outermost, matching `app/_layout.tsx`'s own order (the AsyncStorage mock
+`LocaleContext.tsx` needs was already present for its own reasons, no
+second fix needed).
+
+Confirmed clean afterward: the same grep now returns exactly the 4
+by-design files. Fresh `npm install` (this container had no `node_modules`
+at session start), `tsc --noEmit` clean, full suite green (131/131,
+1479/1479), unchanged counts from run 87 (no test added or removed, only
+fixed in place). Re-ran the run-38 `VALUE CHANGE` sweep too: same 3 hits as
+run 87, all in the gated `onboarding` section, none new. One commit (the
+five-file conversion plus its two test fixes; PLAN.md item 2 touched in the
+same commit). Pushed `routine/localization`. PR #134 stays open, draft.
 
 Run 87 (2026-09-26): `git fetch origin main` pulled `3a01b88` (6 new merges
 since run 86's `bd75989`: #178 `infra/eas-workflow-node-22`, Node 22 for the

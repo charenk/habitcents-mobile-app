@@ -17,7 +17,7 @@
  */
 
 import { nextOccurrence, precisionOf } from '@/utils/recurring';
-import { strings } from '@/constants/strings';
+import type { Catalog } from '@/utils/i18n';
 import type { Expense } from '@/types/expense';
 
 /** One scheduled-notification identifier namespace. The reconciler only ever
@@ -125,7 +125,8 @@ export function desiredReminders(
   prefs: ReminderPrefs,
   permission: ReminderPermission,
   now: Date,
-  format: (cents: number) => string
+  format: (cents: number) => string,
+  strings: Catalog
 ): DesiredReminder[] {
   if (!prefs.enabled || permission !== 'granted') return [];
 
