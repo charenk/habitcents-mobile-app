@@ -86,6 +86,25 @@ describe('toAddExpenseInput', () => {
     expect(input.amount).toBe(1200);
   });
 
+  // The acceptance bullet naming this path (reminders spec section 7): the
+  // scan's toggle is the one write that carries a real reminder value, and
+  // since Tier 1 that value is a delivery input, so the round-trip must hold.
+  it('carries a true reminder intent all the way through the add path', () => {
+    const result = makeScanResult({ recurring: [makeRecurringItem()] });
+    const [exp] = recurringToExpenses(result, { remindBefore: { netflix: true } });
+    expect(exp.reminderEnabled).toBe(true);
+
+    const input = toAddExpenseInput(exp);
+    expect(input.reminderEnabled).toBe(true);
+  });
+
+  it('defaults reminder intent to false when the toggle was never touched', () => {
+    const result = makeScanResult({ recurring: [makeRecurringItem()] });
+    const [exp] = recurringToExpenses(result);
+    expect(exp.reminderEnabled).toBe(false);
+    expect(toAddExpenseInput(exp).reminderEnabled).toBe(false);
+  });
+
   it('carries source and importId through for a recurring (recurringToExpenses) row', () => {
     const result = makeScanResult({ recurring: [makeRecurringItem()] });
     const [exp] = recurringToExpenses(result);

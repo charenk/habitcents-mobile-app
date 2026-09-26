@@ -81,7 +81,9 @@ export function seedLast15Days(result: ScanResult, now: Date = new Date()): Expe
 /**
  * Recurring items saved to the recurring-expense list (results 5.5 "Save to
  * HabitCents"). Each carries source 'import', its cadence, amount, and next date.
- * `remindBefore` captures the reminder intent (no delivery in v1).
+ * `reminderEnabled` carries the reminder intent, which Tier 1 delivers on
+ * (ops docs/reminders-spec.md): the planner schedules from this field once
+ * permission is granted.
  */
 export function recurringToExpenses(
   result: ScanResult,
@@ -116,7 +118,6 @@ export function recurringToExpenses(
       isRecurring: true,
       recurrence: toRecurrence(item.interval),
       reminderEnabled: remind,
-      remindBefore: remind,
       source: 'import',
       importId: result.importId,
       iconVariant: 'yellow',
