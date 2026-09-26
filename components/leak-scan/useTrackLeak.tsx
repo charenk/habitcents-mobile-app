@@ -17,7 +17,7 @@ import { useOnboarding } from '@/contexts/OnboardingContext';
 import { useCompleteScanOnboarding } from './useCompleteScanOnboarding';
 import { habitCandidateToDetectedHabit } from '@/utils/leakScanBridge';
 import { isHabitLimitReached } from '@/utils/habitLogging';
-import { getEntitlement } from '@/utils/purchases';
+import { useEntitlement } from '@/utils/purchases';
 import { track } from '@/utils/analytics';
 import { strings } from '@/constants/strings';
 import type { HabitCandidate } from '@/utils/leakScan/types';
@@ -52,6 +52,9 @@ export function useTrackLeak(
   const { addScanHabit, startBreakingHabit, getActiveHabits } = useHabits();
   const { markHabitStarted } = useOnboarding();
   const completeScanOnboarding = useCompleteScanOnboarding();
+  // Entitlement touchpoint (ADR 0007, BET-004): reactive so this gate reflects
+  // a purchase or the dev menu's toggle without needing a re-navigation.
+  const entitlement = useEntitlement();
 
   const [habit, setHabit] = useState<DetectedHabit | null>(null);
   const [candidate, setCandidate] = useState<HabitCandidate | null>(null);
@@ -160,7 +163,8 @@ export function useTrackLeak(
       occurrences={candidate?.occurrences ?? 0}
       onCancel={close}
       onStart={startBreaking}
-      freeTierBlocked={isHabitLimitReached(getActiveHabits().length, getEntitlement())}
+      freeTierBlocked={isHabitLimitReached(getActiveHabits().length, entitlement)}
+      entitlement={entitlement}
       onStartTrial={() => {
         close();
         router.push('/paywall?placement=habit_gate_scan');
