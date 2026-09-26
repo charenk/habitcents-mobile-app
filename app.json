@@ -43,6 +43,7 @@
       "expo-router",
       "expo-asset",
       "expo-font",
+      "./plugins/withNoApsEntitlement.js",
       [
         "expo-splash-screen",
         {
