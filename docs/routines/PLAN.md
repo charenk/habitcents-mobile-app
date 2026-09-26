@@ -846,6 +846,19 @@ work, tracked elsewhere).
       OnboardingCarousel.tsx` (builds the exported `BEATS` test fixture,
       run 12), and the RETIRED `ViewQuote.tsx`/`useViewQuote.ts` pair
       (this run's decision, above).
+
+      **Run 87: `components/settings/RemindersSheet.tsx` converted**, a new
+      5th static-import file that arrived after this checkbox closed (main's
+      `reminders/settings-tier-2` PR #180, merged via this run's rebase).
+      Same plain-leaf shape as every other Profile-row sheet: `const strings
+      = useStrings();` in place of the static import, no other changes.
+      Blast radius confirmed by `grep -rl "RemindersSheet"`: only
+      `profile.test.tsx` and `remindersSheet.test.tsx` render it, both
+      already carrying `LocaleProvider`. The static-import count is back to
+      the same 3 named above. Any future main PR that adds a new
+      Profile/settings sheet will land the same way and should get the same
+      one-commit conversion before this checkbox is treated as permanently
+      closed.
 - [ ] Convert function-valued strings (pluralized/interpolated) to ICU
       messages with proper CLDR plural rules, not the current hand-rolled
       `n === 1 ? '' : 's'` ternaries, and add the ICU formatting dependency

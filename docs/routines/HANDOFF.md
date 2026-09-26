@@ -2,11 +2,124 @@
 
 ## Status
 
-In progress, blocked on decisions 8/10 (standing since run 38, now day 19).
-Main moved again: run 86 rebased onto PR #176 (docs only) and PR #177 (Bill
-reminders Tier 1 engine), one real conflict (package.json/package-lock.json,
-both branches adding a dependency), rest of the 152-commit replay applied
-clean. Full detail below.
+In progress, blocked on decisions 8/10 (standing since run 38, now day 19,
+unchanged as of run 87's fresh read of issue #139 today). Main moved again:
+run 87 rebased onto 6 new merges (#178 infra, #179 per-bill reminder toggle,
+#180 reminders Settings Tier 2, #181/#182 aps-entitlement fixes, #183 docs),
+3 real conflicts this time (all textual, in files both branches touch:
+constants/strings.ts, app/profile.tsx, and provider-order clashes across 3
+test files), rest of the 153-commit replay applied clean; then converted the
+one new static-strings leaf PR #180 introduced. Full detail below.
+
+Run 87 (2026-09-26): `git fetch origin main` pulled `3a01b88` (6 new merges
+since run 86's `bd75989`: #178 `infra/eas-workflow-node-22`, Node 22 for the
+EAS workflow's dependency chain; #179 `reminders/bill-reminders-toggle`, the
+per-bill Reminder section and permission flow inside the existing
+AddUpcomingSheet/ProjectionSection; #180 `reminders/settings-tier-2`, a new
+`components/settings/RemindersSheet.tsx` plus the Profile Reminders row;
+#181/#182, two follow-up fixes dropping the `aps-environment` entitlement a
+local-only notification feature does not need; #183, one docs-only primer
+update). `git rebase origin/main` hit 3 real conflicts this run, more than
+run 86's one, and on files both branches keep touching, not edge cases:
+
+1. `constants/strings.ts`, on the very first commit in this branch's history
+   (`d748f45`, run 1's foundation commit) again, same as run 86's conflict
+   spot: both sides added a new `settings` section entry at the same point
+   (main's PR #180 added the `reminders*` keys, this branch's run 1 added
+   `language`/`languageSheetTitle`/etc). Resolved by keeping both, main's
+   block first (it was already merged, this branch's foundation commit
+   predates it in wall-clock terms even though it replays first in the
+   rebase).
+2. `app/profile.tsx`, same commit: both sides added an import, a `useState`
+   sheet-visibility flag, and a rendered `<Sheet>` at the same three spots
+   (main's `RemindersSheet`/`remindersSheetVisible`, this branch's
+   `LanguageSheet`/`languageSheetVisible`). The row placements themselves
+   had already merged clean (no textual overlap there); only the
+   import/state/sheet triad conflicted. Kept both, reminders first to match
+   the row order already on the page.
+3. `__tests__/profile.test.tsx`, same commit: both sides added a `jest.mock`
+   block right after the shared `clearOnboarding` mock (main's
+   `RemindersContext` hand-mock, this branch's `expo-localization` fixed-
+   locale mock). Kept both as separate `jest.mock` calls.
+
+The remaining 150 commits applied clean, including two more provider-order
+clashes of the exact shape this file's history has hit before (main adding
+`RemindersProvider` to a test's wrapper, this branch adding `LocaleProvider`
+to the same wrapper, both at the same nesting point):
+`__tests__/moneyPager.test.tsx` (already-applied `d950b91`, an earlier run's
+own rebase-fallout fix, replaying its own historical conflict against the
+now-different main) and `__tests__/onboardingBillsDoor.test.tsx`/
+`__tests__/logInPlace.test.tsx` (two more of the same). Same fix every time:
+keep both providers, `LocaleProvider` outermost (matches `app/_layout.tsx`'s
+own order), `RemindersProvider` in its established slot between
+`ExpensesProvider` and `HabitsProvider`.
+
+After the rebase, this container had no `node_modules` at all (not just
+stale; `npm install` from scratch, ~950 packages, 20s). `tsc --noEmit` was
+clean immediately. The full suite had exactly one failure, not from the
+conflict resolution itself: `__tests__/remindersSheet.test.tsx` (new in
+PR #180) renders `RemindersSheet` without a `LocaleProvider` in its
+`Providers` tree. `RemindersSheet` doesn't call `useStrings()` itself yet at
+that point, but it renders `Sheet` (`components/ui/Sheet.tsx`), which this
+branch converted to `useStrings()` back at item 2's shared-component slice,
+so any test rendering `Sheet` needs `LocaleProvider` in its tree regardless
+of whether the component under test has been converted. Fixed the same way
+every prior `LocaleProvider` crossing has been fixed: added the
+`expo-localization` fixed-locale mock and wrapped `LocaleProvider` around
+the existing tree in the test's `Providers` component. Re-ran: `tsc
+--noEmit` clean, full suite green, 131/131 suites, 1479/1479 tests (up from
+130/1472 at run 86; the difference is PR #180's own new
+`remindersSheet.test.tsx`, 7 tests, plus a handful of new assertions PR
+#179 added to existing suites).
+
+One more piece of real progress this run, not just rebase fallout: PR #180's
+new `components/settings/RemindersSheet.tsx` landed reading the static
+English catalog (`import { strings } from '@/constants/strings'`), because
+it was written after this branch's own item-2 call-site migration checkbox
+had already closed and claimed "exactly 4 files still import the static
+catalog, all by design." That claim needed updating, not just noting: this
+was a genuine 5th file, not a documented exception. Converted it the same
+one-commit way every other Profile-row sheet was converted:
+`const strings = useStrings();` in place of the static import. Blast radius
+confirmed by `grep -rl "RemindersSheet"` before touching anything: only
+`profile.test.tsx` and `remindersSheet.test.tsx` render it, and both already
+carry `LocaleProvider` (the second, from this run's own rebase-fallout fix
+above). `tsc --noEmit` clean, full suite green (131/131, 1479/1479)
+afterward. PLAN.md's item 2 note updated to record the file and the general
+lesson: a new main-owned settings sheet lands unconverted by default and
+needs the same pickup, checkbox or no checkbox.
+
+Checked issue #139 directly (`charenk/habitcents-mobile-app`) via a fresh
+API read, not carried forward from run 86's narrative: `updated_at` still
+`2026-09-25T12:03:48Z` (the twenty-first orchestrator entry, same one run 86
+read), one comment (still the unrelated 2026-09-07 iPad-footer item).
+Decisions 8 (locked vocabulary) and 10 (paywall pricing/legal) both still
+open and unanswered. The board's own text put the orchestrator on point for
+the one follow-up notification at its 2026-09-26 run (today); that has not
+been posted yet as of this read (the issue's `updated_at` has not advanced
+past the 09-25 board), so per the run 72/85/86 no-repeat posture this run
+sends no notification of its own: the decision still belongs to the
+orchestrator, not to case-by-case judgment here, and posting one now could
+land before or duplicate the orchestrator's own.
+
+Re-ran the run-38 `VALUE CHANGE` sweep: `grep -n "needs re-translation"
+constants/strings.ts` finds the same 3 hits as run 86, all in the gated
+`onboarding` section, unchanged since run 85, still blocked on decision 8.
+No new unresolved hits from PR #180's own additions (`settings.reminders*`
+already checked and logged as ordinary UI copy by run 86). Checked the two
+new keys run 86 flagged (`reminders.channelName`/`notifBody`) plus PR #180's
+own new `settings.reminders*` keys against every `locales/*.ts` overlay:
+zero hits anywhere, confirming all of it still falls back to English
+automatically, nothing stale to fix. Items 3/5/6 remain exhausted; item 4
+remains blocked; item 2's ICU/CLDR sub-item remains blocked behind item 4
+per run 28's note (the RemindersSheet conversion above is call-site
+migration, not the CLDR/ICU work that sub-item is waiting on).
+
+Three commits: the resolved rebase (fold-in per rebase mechanics, one commit
+per originally-conflicting historical commit, mechanical), the
+`remindersSheet.test.tsx` `LocaleProvider` fix, and the `RemindersSheet.tsx`
+conversion (PLAN.md touched in the same commit). Pushed `routine/localization`.
+PR #134 stays open, draft.
 
 Run 86 (2026-09-26): `git fetch origin main` pulled `bd75989` (two new
 merges since run 85's `2cac175`: PR #176 `docs/primer-reminders-next`,
