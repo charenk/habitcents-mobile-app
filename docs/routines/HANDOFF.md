@@ -72,6 +72,31 @@ device pass is separate and additional to that one, not a substitute.
 
 ## Status
 
+Run 89 (2026-09-26). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 88's
+check (`git merge-base --is-ancestor origin/main HEAD` true, still `3a01b88`),
+so no rebase and no new regression surface this run. Fresh `npm ci`, `npx tsc
+--noEmit` clean. Full suite green on the first pass, no flake: 128 suites /
+1419 tests, zero drift from run 88. Re-verified item 7 (`app.json` still
+`"orientation": "portrait"`, `"supportsTablet": true`). PR #133 re-checked via
+`get`/`get_comments`/`get_reviews`/`get_check_runs`: still open, not draft,
+`mergeable_state: clean`, base `3a01b88` (main's tip, unchanged), head still
+`321dbab` (run 88's own push, no new commit needed this run), `verify` check
+green (SUCCESS, 14:10-14:12 UTC 2026-09-26, this same head, a re-trigger of
+run 88's own push, not a new one). No new comments since run 66's
+second-occurrence note, no reviews. Issue #139 re-read: same twenty-second
+orchestrator entry run 88 already saw (`updated_at` unchanged at
+`2026-09-26T12:07:28Z`); ipad-worker's own line is unchanged, "approved,
+nothing owed," blocker still the device pass gated on PR #133 merging behind
+#132's payments gate (decision 6). No REVIEW FEEDBACK addressed to this
+routine. Decision queue unchanged from run 88's read (items 2/8/10 still
+open, day 19; item 11's cadence recommendation still pending); none of this
+is new work for ipad-worker to enact, consistent with every prior run's
+reading. No production code, test, or plan content changed this run; this
+HANDOFF update is the only change. No push notification: nothing new for
+Charen beyond what run 88 already covered, and no regression or new decision
+surfaced.
+
 Run 88 (2026-09-26). Verified per this file's own COMPLETE instruction: plan
 fully checked, nothing new to do. `origin/main` has not moved since run 87's
 rebase (`git merge-base --is-ancestor origin/main HEAD` true, still
