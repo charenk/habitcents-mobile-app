@@ -72,6 +72,35 @@ device pass is separate and additional to that one, not a substitute.
 
 ## Status
 
+Run 88 (2026-09-26). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 87's
+rebase (`git merge-base --is-ancestor origin/main HEAD` true, still
+`3a01b88`), so no rebase and no new regression surface this run. Fresh
+`npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass, no
+flake: 128 suites / 1419 tests, zero drift from run 87. Re-verified item 7
+(`app.json` still `"orientation": "portrait"`, `"supportsTablet": true`).
+PR #133 re-checked via `get`/`get_comments`/`get_reviews`/`get_check_runs`:
+still open, not draft, `mergeable_state: clean`, base `3a01b88` (main's tip,
+unchanged), head still `d699be0` (run 87's own push, no new commit needed
+this run), `verify` check green (SUCCESS, 08:11-08:13 UTC 2026-09-26, this
+same head). No new comments since run 66's second-occurrence note, no
+reviews. Issue #139 re-read: twenty-second orchestrator entry landed since
+run 87's check (`updated_at` now `2026-09-26T12:07:28Z`), content mostly
+board bookkeeping (item 9 closed 09-25, both stuck ops ADR PRs merged,
+localization shipped real code again, main moved and all three streams
+absorbed it): ipad-worker's own line is unchanged, "approved, nothing owed,"
+blocker still the device pass gated on PR #133 merging behind #132's
+payments gate (decision 6). No REVIEW FEEDBACK addressed to this routine.
+Decision queue: item 11 (worker cadence) now carries updated context rather
+than a new ask (this week's ten-PR wave showed the 6-hour cadence earning
+its keep, recommendation to thin still stands once the wave settles); items
+2/8/10 (the code-unblocking decisions) still open, day 19; none of this is
+new work for ipad-worker to enact, consistent with every prior run's
+reading. No production code, test, or plan content changed this run; this
+HANDOFF update is the only change. No push notification: nothing new for
+Charen beyond what the board already covers, and no regression or new
+decision surfaced.
+
 Run 87 (2026-09-26). Verified per this file's own COMPLETE instruction: plan
 fully checked, nothing new to do. `origin/main` moved again since run 86's
 rebase: seven commits, `bd75989..3a01b88` (PRs #178-#183: EAS workflow Node
