@@ -30,7 +30,10 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # 22, not 20: eas-cli's dependency chain (@oclif/plugin-autocomplete
+          # 3.3.0+) requires Node >= 22, and the expo-github-action installs
+          # eas-cli with the runner's Node. Broke the 2026-09-25 dispatch.
+          node-version: 22
           cache: npm
 
       - name: Install dependencies
