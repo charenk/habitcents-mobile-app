@@ -4,6 +4,17 @@
  * module-scope setup at the root), plus one mount-time call for the Android
  * channel. One of the three modules allowed to import expo-notifications
  * (see utils/reminders/sync.ts).
+ *
+ * DELIBERATELY NOT in app.json's plugins: the expo-notifications config
+ * plugin unconditionally injects the iOS `aps-environment` entitlement,
+ * which is remote-push (APS) machinery this local-only feature never uses,
+ * and it broke the 2026-09-25 internal build against a provisioning profile
+ * that (rightly) carries no push capability. Local notifications need no
+ * entitlement, the native module is autolinked without the plugin, and the
+ * plugin's other jobs are covered here at runtime (the Android channel) or
+ * unused (custom sounds, a custom Android icon). If remote push is ever
+ * wanted, that is a strategy change with a privacy-label consequence, not a
+ * plugins-array entry.
  */
 
 import { Platform } from 'react-native';
