@@ -78,7 +78,6 @@ function createExpense(input: AddExpenseInput): Expense {
     // normalizes through utils/recurring resolveRule.
     recurrenceRule: input.recurrenceRule,
     reminderEnabled: input.reminderEnabled,
-    reminderTime: input.reminderTime,
     source: input.source ?? 'manual',
     // Leak Scan import undo (importId) and the materializer's own child rows
     // (parentId, ADR 0024 U11) both need to survive the write, not just the

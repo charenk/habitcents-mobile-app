@@ -36,6 +36,7 @@ import { OnboardingProvider } from '@/contexts/OnboardingContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { CategoriesProvider } from '@/contexts/CategoriesContext';
 import { ExpensesProvider } from '@/contexts/ExpensesContext';
+import { RemindersProvider } from '@/contexts/RemindersContext';
 import { HabitsProvider } from '@/contexts/HabitsContext';
 import { ToastProvider } from '@/components/ui/Toast';
 import MoneyScreen from '@/app/(tabs)/money';
@@ -56,9 +57,11 @@ function Providers({ children }: { children: React.ReactNode }) {
         <CurrencyProvider>
           <CategoriesProvider>
             <ExpensesProvider>
+            <RemindersProvider>
               <HabitsProvider>
                 <ToastProvider><OnboardingProvider>{children}</OnboardingProvider></ToastProvider>
               </HabitsProvider>
+            </RemindersProvider>
             </ExpensesProvider>
           </CategoriesProvider>
         </CurrencyProvider>

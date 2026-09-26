@@ -104,7 +104,6 @@ export function createExpense(input: AddExpenseInput): Expense {
     time: formatTime(input.date),
     isRecurring: input.isRecurring,
     reminderEnabled: input.reminderEnabled,
-    reminderTime: input.reminderTime,
     iconVariant: input.category === 'Car' || input.category === 'Entertainment' ? 'yellow' : 'green',
   };
 }

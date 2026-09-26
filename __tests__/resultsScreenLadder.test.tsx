@@ -30,6 +30,7 @@ import { ThemeProvider } from '@/contexts/ThemeContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { ToastProvider } from '@/components/ui/Toast';
 import { ExpensesProvider } from '@/contexts/ExpensesContext';
+import { RemindersProvider } from '@/contexts/RemindersContext';
 import { HabitsProvider } from '@/contexts/HabitsContext';
 import { OnboardingProvider } from '@/contexts/OnboardingContext';
 import { ResultsScreen } from '@/components/leak-scan/ResultsScreen';
@@ -48,11 +49,13 @@ function Providers({ children }: { children: React.ReactNode }) {
         <CurrencyProvider>
           <ToastProvider>
             <ExpensesProvider>
+            <RemindersProvider>
               {/* ResultsScreen calls useCompleteScanOnboarding (PR #59), so the
                   provider joined the wrapper at the merge. */}
               <OnboardingProvider>
                 <HabitsProvider>{children}</HabitsProvider>
               </OnboardingProvider>
+            </RemindersProvider>
             </ExpensesProvider>
           </ToastProvider>
         </CurrencyProvider>

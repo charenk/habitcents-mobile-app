@@ -112,9 +112,13 @@ export type Expense = {
   isRecurring: boolean;
   recurrence?: RecurrenceFrequency; // set when isRecurring is true
   recurrenceRule?: RecurrenceRule;  // step 04 schedule; absent on older rows
+  // Per-bill reminder intent, and since Tier 1 (ops docs/reminders-spec.md)
+  // a real delivery input: utils/reminders/plan.ts schedules from it. The
+  // legacy siblings `reminderTime` ("1h before", never read) and
+  // `remindBefore` (a leak-scan duplicate that never survived the add path)
+  // were removed when delivery landed, so no future reader picks the wrong
+  // field; the default reminder time is global (Tier 2), not per bill.
   reminderEnabled: boolean;
-  reminderTime?: string;    // "1h before"
-  remindBefore?: boolean;   // Leak Scan intent capture: reminder the day before (no delivery in v1)
   source?: ExpenseSource;   // Defaults to 'manual' when absent
   importId?: string;        // Set on rows written by a Leak Scan import, for undo
   // Set on a materialized recurring child (source 'recurring'): the id of the
@@ -151,7 +155,6 @@ export type AddExpenseInput = {
   recurrence?: RecurrenceFrequency;
   recurrenceRule?: RecurrenceRule;
   reminderEnabled: boolean;
-  reminderTime?: string;
   // Defaults to 'manual' when absent (ADR 0006). The onboarding Leak Audit
   // (P2-1) passes 'audit' when seeding a chip as a recurring expense; the
   // materializer (ADR 0024) passes 'recurring' with `parentId` set.

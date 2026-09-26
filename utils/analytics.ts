@@ -304,6 +304,12 @@ export interface AnalyticsEventMap {
   scan_correction: { stage: string; from_tier: 'solid' | 'likely' | 'needs-review' };
   scan_projection_saved: { n_recurring: number };
   scan_reminder_intent_set: Record<string, never>;
+  // Bill reminders (Tier 1, ops docs/reminders-spec.md). Booleans and an
+  // enum source only: no bill names, no amounts.
+  reminder_toggled: { enabled: boolean; source: 'add_sheet' | 'edit_sheet' | 'leak_scan' };
+  // Fired only when the OS prompt actually showed (first enable while
+  // undetermined), so the rate is prompt outcomes, not toggle taps.
+  reminder_permission_result: { granted: boolean };
   // Renamed from scan_seed15_applied (ADR 0020, W4): the CTA's window is no
   // longer fixed at 15 days, so `days` travels with the row count.
   scan_seed_applied: { rows: number; days: number };

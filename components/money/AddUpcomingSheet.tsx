@@ -65,6 +65,7 @@ import type { AppTheme } from '@/constants/theme';
 import { useCategories } from '@/contexts/CategoriesContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
+import { useReminders } from '@/contexts/RemindersContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import type {
   Expense,
@@ -76,8 +77,9 @@ import type {
 } from '@/types/expense';
 import { formatDate } from '@/utils/dates';
 import { toExpenseCategory } from '@/utils/expenseCategory';
+import { track } from '@/utils/analytics';
 import { atMidnight } from '@/utils/habitLogging';
-import { hapticError, hapticSuccess } from '@/utils/motion';
+import { hapticError, hapticSelection, hapticSuccess } from '@/utils/motion';
 import { nextOccurrence, resolveRule, shortDate } from '@/utils/recurring';
 
 export type AddUpcomingSheetMode = 'add' | 'edit';
@@ -399,6 +401,7 @@ export function AddUpcomingSheet({
   const { format } = useCurrency();
   const { getVisibleCategories } = useCategories();
   const { addExpense, updateExpense, deleteExpense, restoreExpense, expenses } = useExpenses();
+  const { permission, requestPermission } = useReminders();
 
   const categories = getVisibleCategories();
 
@@ -421,6 +424,12 @@ export function AddUpcomingSheet({
   // "I know the cadence, not the day." Distinct from monthDay === null, which
   // means "a legacy rule no chip describes": this one is a thing the user said.
   const [dayUnknown, setDayUnknown] = useState(false);
+  // Per-bill reminder intent (Tier 1, ops docs/reminders-spec.md). NOT a
+  // schedule control: toggling it must never flip scheduleTouched, or fixing
+  // a reminder would silently rebuild the bill's anchor date. Add mode
+  // defaults OFF (spec: agrees with every stored row, and it is what makes
+  // the first-enable permission prompt coherent).
+  const [reminderOn, setReminderOn] = useState(false);
   const [emoji, setEmoji] = useState<string | undefined>(undefined);
   const [annualMonth, setAnnualMonth] = useState(() => new Date().getMonth());
   const [annualDay, setAnnualDay] = useState(() => new Date().getDate());
@@ -446,6 +455,7 @@ export function AddUpcomingSheet({
       setCategory(expense.category);
       setEmoji(expense.emoji);
       setDayUnknown(expense.datePrecision === 'month');
+      setReminderOn(expense.reminderEnabled);
       setScheduleType(draft.scheduleType);
       setOnceWhen(draft.onceWhen);
       setFrequency(draft.frequency);
@@ -464,6 +474,7 @@ export function AddUpcomingSheet({
     setCategory('Other');
     setEmoji(undefined);
     setDayUnknown(false);
+    setReminderOn(false);
     setScheduleType('repeats');
     setOnceWhen('tomorrow');
     setFrequency('monthly');
@@ -549,6 +560,28 @@ export function AddUpcomingSheet({
   const handleEveryNDaysChange = (v: number) => {
     if (v !== everyNDays) setScheduleTouched(true);
     setEveryNDays(v);
+  };
+
+  // Deliberately NOT wrapped like the schedule setters above: a reminder is
+  // not a schedule control, so it never flips scheduleTouched. First enable
+  // asks the OS (the prompt fires only while undetermined; the moment the
+  // user turns a reminder on is when the ask explains itself, spec section 4).
+  // Intent is kept even when the answer is denied: the field's whole history
+  // is intent capture, the planner refuses to schedule while denied, and a
+  // later grant then delivers with zero extra taps.
+  const handleReminderToggle = () => {
+    const next = !reminderOn;
+    hapticSelection();
+    setReminderOn(next);
+    track('reminder_toggled', {
+      enabled: next,
+      source: mode === 'edit' ? 'edit_sheet' : 'add_sheet',
+    });
+    if (next && permission === 'undetermined') {
+      void requestPermission().then((result) => {
+        track('reminder_permission_result', { granted: result === 'granted' });
+      });
+    }
   };
 
   // Disabled-until-valid (ops ADR 0028, 2026-08-16): Save is disabled until an
@@ -656,6 +689,12 @@ export function AddUpcomingSheet({
           // Explicit on both branches: updateExpense spread-merges, so an
           // omitted key would preserve a precision the user just cleared.
           datePrecision: dayUnknown ? 'month' : undefined,
+          // Same spread-merge trap as emoji and datePrecision above: omitted
+          // here, an edit-mode toggle change would silently vanish. The
+          // dayUnknown guard also zeroes intent when a day-precision bill is
+          // edited to unknown-day, so stored state always matches the (then
+          // absent) control; the planner refuses month precision regardless.
+          reminderEnabled: dayUnknown ? false : reminderOn,
           date: safeDate,
           isRecurring: rule.type !== 'once',
           recurrence: legacyRecurrence(rule),
@@ -685,7 +724,7 @@ export function AddUpcomingSheet({
         isRecurring: rule.type !== 'once',
         recurrence: legacyRecurrence(rule),
         recurrenceRule: rule,
-        reminderEnabled: false,
+        reminderEnabled: dayUnknown ? false : reminderOn,
       });
     } catch (error) {
       console.error('Error adding upcoming expense:', error);
@@ -1044,6 +1083,29 @@ export function AddUpcomingSheet({
               ) : null}
             </>
           )}
+
+          {/* ABSENT for an unknown-day bill, not disabled (spec section 4,
+              Charen 2026-09-25): a disabled control invites the user to work
+              out what they did wrong; an absent one says this bill is a
+              different kind of thing. The coherent path to a reminder is
+              giving the bill a real day, which this sheet already supports.
+              The label borrows leakScan.remindDayBefore: same wording, one
+              translation. */}
+          {!dayUnknown ? (
+            <>
+              <Text style={styles.eyebrow}>{strings.reminders.reminderEyebrow}</Text>
+              <View style={styles.chipRow}>
+                <Chip
+                  label={strings.leakScan.remindDayBefore}
+                  selected={reminderOn}
+                  onPress={handleReminderToggle}
+                />
+              </View>
+              {reminderOn && permission === 'denied' ? (
+                <Text style={styles.anchorNote}>{strings.reminders.deniedHint}</Text>
+              ) : null}
+            </>
+          ) : null}
     </Sheet>
   );
 }

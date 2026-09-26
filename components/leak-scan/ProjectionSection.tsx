@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Switch } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { formatDate, parseDateOnly } from '@/utils/dates';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import { useReminders } from '@/contexts/RemindersContext';
 import { radii, spacing, typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import { TierBadge } from './TierBadge';
@@ -48,7 +49,9 @@ export function ProjectionSection({ summary, onSave, saving = false }: Projectio
   const { format } = useCurrency();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [remindBefore, setRemindBefore] = useState<Record<string, boolean>>({});
+  const { permission, requestPermission } = useReminders();
   const month = useMemo(() => nextMonthName(), []);
+  const anyRemindOn = Object.values(remindBefore).some(Boolean);
 
   if (!summary.hasFullMonth) {
     return (
@@ -63,6 +66,14 @@ export function ProjectionSection({ summary, onSave, saving = false }: Projectio
     setRemindBefore((prev) => {
       const next = { ...prev, [stem]: !prev[stem] };
       track('scan_reminder_intent_set', {});
+      // This toggle now feeds real delivery (Tier 1), so the first enable
+      // asks the OS here too, same contract as the add-bill sheet: prompt
+      // only while undetermined, keep the intent whatever the answer.
+      if (next[stem] && permission === 'undetermined') {
+        void requestPermission().then((result) => {
+          track('reminder_permission_result', { granted: result === 'granted' });
+        });
+      }
       return next;
     });
   };
@@ -129,6 +140,13 @@ export function ProjectionSection({ summary, onSave, saving = false }: Projectio
           ))}
         </View>
       )}
+
+      {/* Non-blaming denied state (spec section 4): intent stays captured
+          and delivers the moment permission is granted; the Settings row
+          carries the route to the system setting. */}
+      {anyRemindOn && permission === 'denied' ? (
+        <Text style={styles.deniedHint}>{strings.reminders.deniedHint}</Text>
+      ) : null}
 
       <Text style={styles.buffer}>{strings.leakScan.projectionBuffer}</Text>
 
@@ -235,6 +253,13 @@ function createStyles(theme: AppTheme) {
       fontSize: typeScale.eyebrow,
       fontFamily: theme.fonts.ui,
       color: theme.slate,
+    },
+    deniedHint: {
+      // Informational copy, so slate for AA contrast like the labels above.
+      fontSize: typeScale.caption,
+      fontFamily: theme.fonts.ui,
+      color: theme.slate,
+      marginBottom: 8,
     },
     buffer: {
       fontSize: typeScale.caption,

@@ -1517,5 +1517,15 @@ export const strings = {
     // Android 8+ requires a named notification channel; iOS ignores it.
     channelName: 'Bill reminders',
     notifBody: (amountLabel: string) => `${amountLabel} due tomorrow.`,
+    // Section eyebrow above the per-bill toggle in the add/edit bill sheet.
+    // The toggle's own label borrows leakScan.remindDayBefore, the exact
+    // wording already shipped on the scan's intent toggle: one key, one
+    // translation (the categoryEyebrow borrowing precedent).
+    reminderEyebrow: 'Reminder',
+    // Non-blaming denied state under an enabled toggle (spec section 4:
+    // permission is a first-class state, not an error path). Denied is not
+    // recoverable in-app; Settings (Tier 2) carries the route to the system
+    // setting.
+    deniedHint: 'Notifications are off for HabitCents in your device settings.',
   },
 } as const;

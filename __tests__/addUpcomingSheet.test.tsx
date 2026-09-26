@@ -44,6 +44,25 @@ jest.mock('@/contexts/CategoriesContext', () => ({
   useCategories: () => ({ getVisibleCategories: () => mockCategories }),
 }));
 
+// The sheet reads permission and asks for it on first enable; the provider's
+// own reconciliation is covered by __tests__/remindersContext.test.tsx, so a
+// hand mock keeps this file's scope on the sheet.
+let mockPermission: 'granted' | 'denied' | 'undetermined' = 'granted';
+const mockRequestPermission = jest.fn(async () => {
+  if (mockPermission === 'undetermined') mockPermission = 'granted';
+  return mockPermission;
+});
+
+jest.mock('@/contexts/RemindersContext', () => ({
+  useReminders: () => ({
+    prefs: { enabled: true, hour: 9, minute: 0 },
+    permission: mockPermission,
+    requestPermission: mockRequestPermission,
+    setGlobalEnabled: jest.fn(),
+    setReminderTime: jest.fn(),
+  }),
+}));
+
 import React from 'react';
 import { act, cleanup, fireEvent, render } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -155,6 +174,8 @@ beforeEach(() => {
   mockUpdateExpense.mockClear();
   mockDeleteExpense.mockClear();
   mockRestoreExpense.mockClear();
+  mockPermission = 'granted';
+  mockRequestPermission.mockClear();
   onClose.mockClear();
 });
 
@@ -656,5 +677,100 @@ describe('AddUpcomingSheet edit mode: delete with undo', () => {
 
     await tap(view.getByText(strings.toasts.undo));
     expect(mockRestoreExpense).toHaveBeenCalledWith(expense, 0);
+  });
+});
+
+/**
+ * The per-bill reminder toggle (Tier 1, ops docs/reminders-spec.md). Two of
+ * these are acceptance bullets: the control's ABSENCE for an unknown-day bill
+ * (the planner-refusal half lives in __tests__/remindersPlan.test.ts, per the
+ * spec's "assert both"), and the edit-branch explicit write (updateExpense
+ * spread-merges, so an omitted key would silently drop toggle changes).
+ */
+describe('AddUpcomingSheet: per-bill reminder toggle (Tier 1)', () => {
+  const remindLabel = `${strings.leakScan.remindDayBefore}, not selected`;
+  const remindLabelOn = `${strings.leakScan.remindDayBefore}, selected`;
+
+  it('defaults OFF in add mode and persists false without being touched', async () => {
+    const view = await renderAdd();
+
+    expect(view.getByLabelText(remindLabel)).toBeTruthy();
+    await typeAmount(view, '12');
+    await tap(view.getByRole('button', { name: strings.addUpcoming.save }));
+
+    expect(mockAddExpense.mock.calls[0][0].reminderEnabled).toBe(false);
+    expect(mockRequestPermission).not.toHaveBeenCalled();
+  });
+
+  it('saves true once toggled on, and asks the OS only while undetermined', async () => {
+    mockPermission = 'undetermined';
+    const view = await renderAdd();
+
+    await typeAmount(view, '12');
+    await tap(view.getByLabelText(remindLabel));
+    expect(mockRequestPermission).toHaveBeenCalledTimes(1);
+
+    await tap(view.getByRole('button', { name: strings.addUpcoming.save }));
+    expect(mockAddExpense.mock.calls[0][0].reminderEnabled).toBe(true);
+  });
+
+  it('does not re-prompt when permission is already settled', async () => {
+    const view = await renderAdd(); // granted by default
+
+    await tap(view.getByLabelText(remindLabel));
+    expect(mockRequestPermission).not.toHaveBeenCalled();
+  });
+
+  it('shows the non-blaming denied hint under an enabled toggle', async () => {
+    mockPermission = 'denied';
+    const view = await renderAdd();
+
+    expect(view.queryByText(strings.reminders.deniedHint)).toBeNull();
+    await tap(view.getByLabelText(remindLabel));
+    expect(view.getByText(strings.reminders.deniedHint)).toBeTruthy();
+  });
+
+  it('is ABSENT (not disabled) for an unknown-day bill, and the save writes false even after being on', async () => {
+    const view = await renderAdd();
+
+    await typeAmount(view, '12');
+    await tap(view.getByLabelText(remindLabel));
+    await tap(view.getByLabelText(`${strings.addUpcoming.monthDayUnknown}, not selected`));
+
+    expect(view.queryByLabelText(remindLabelOn)).toBeNull();
+    expect(view.queryByLabelText(remindLabel)).toBeNull();
+
+    await tap(view.getByRole('button', { name: strings.addUpcoming.save }));
+    const saved = mockAddExpense.mock.calls[0][0];
+    expect(saved.datePrecision).toBe('month');
+    expect(saved.reminderEnabled).toBe(false);
+  });
+
+  it('edit mode seeds from the row and an OFF toggle actually persists (spread-merge regression)', async () => {
+    const expense = makeExpense({ id: 'e1', reminderEnabled: true });
+    mockExpenses = [expense];
+    const view = await renderEdit(expense);
+
+    await tap(view.getByLabelText(remindLabelOn));
+    await tap(view.getByRole('button', { name: strings.addUpcoming.saveChanges }));
+
+    const [, updates] = mockUpdateExpense.mock.calls[0];
+    expect(updates.reminderEnabled).toBe(false);
+  });
+
+  it('toggling the reminder alone never reschedules the bill', async () => {
+    const expense = makeExpense({ id: 'e1', reminderEnabled: false });
+    mockExpenses = [expense];
+    const view = await renderEdit(expense);
+
+    await tap(view.getByLabelText(remindLabel));
+    await tap(view.getByRole('button', { name: strings.addUpcoming.saveChanges }));
+
+    const [, updates] = mockUpdateExpense.mock.calls[0];
+    expect(updates.reminderEnabled).toBe(true);
+    // scheduleTouched stayed false: the original date and rule went back
+    // unchanged rather than being rebuilt from today.
+    expect(updates.date).toEqual(expense.date);
+    expect(updates.recurrenceRule).toEqual(expense.recurrenceRule);
   });
 });
