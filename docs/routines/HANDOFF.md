@@ -1,5 +1,47 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 87, 2026-09-26: re-verify, no new work)
+
+`git rev-list --left-right --count origin/main...origin/routine/core-p3`
+confirmed the branch tip unchanged at `381e7be` (run 86's own status commit);
+`origin/main` is still at `3a01b88`, unchanged since run 85/86, so no rebase
+needed. PR #132 re-confirmed via the API: `state: open`, `draft: false`,
+`merged: false`, `mergeable_state: clean`, head `381e7be` (matches this
+branch's tip), base `3a01b88` (matches main's current tip), 93 commits. No
+new `## REVIEW FEEDBACK` section present (grepped the whole file; the one
+open heading hit is still the closed 2026-09-08 orchestrator review of runs
+12-14). Checklist in `PLAN.md` unchanged: zero `[ ]` items remaining beyond
+the legend line, so no plan work this run either.
+
+Re-checked the routines-orchestrator's status board (mobile-app issue #139)
+directly: still the twenty-second entry, `updated_at` unchanged at
+`2026-09-26T12:07:28Z` as of this run's read. Core-worker's own section still
+reads "complete since run 8... approved, nothing owed," blocked on the
+payments gate (decisions 2-4). Nothing about the decision queue's content
+changed since run 86's read: still 19 days untouched, item 11's cadence
+recommendation and run 79's direct alert both remain unanswered, and the
+orchestrator's own run 22 already sent this window's follow-up notification
+covering that fact.
+
+Re-pulled `habitcents-ops`'s `PUNCHLIST.md` fresh (ops main advanced past
+run 85's `f361364` read with only sibling-routine/orchestrator `docs/runs.log`
+lines and the orchestrator's run-22 board-update line in between): RESUME
+marker still the bill-reminders build-28 device-pass wave (EXPO_TOKEN Actions
+secret, device pass, fired-but-unacted-reminders decision), none of it
+core-p3-flagged; the one core-p3-flagged line further down (leak finder dated
+entitlement) is still the same item already built and closed on this branch
+at run 8.
+
+Fresh `npm install`, `tsc --noEmit` clean, full suite green on the first
+attempt: 131 suites / 1451 tests, zero drift from run 86.
+
+Only a HANDOFF.md status update this run; force-pushed to `routine/core-p3`.
+
+No push notification this run: nothing changed that is either new to Charen
+or actionable by this routine since the orchestrator's own run-22 follow-up,
+which already covered the same unmoved decision queue. A repeat here would
+be duplicate signal.
+
 ## COMPLETE (run 86, 2026-09-26: re-verify, no new work; orchestrator review 22 already closed)
 
 `git rev-list --left-right --count origin/main...routine/core-p3` confirmed the
