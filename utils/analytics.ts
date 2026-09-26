@@ -310,6 +310,9 @@ export interface AnalyticsEventMap {
   // Fired only when the OS prompt actually showed (first enable while
   // undetermined), so the rate is prompt outcomes, not toggle taps.
   reminder_permission_result: { granted: boolean };
+  // Tier 2 Settings: the global master switch and the default time of day.
+  reminders_global_toggled: { enabled: boolean };
+  reminder_time_changed: { hour: number };
   // Renamed from scan_seed15_applied (ADR 0020, W4): the CTA's window is no
   // longer fixed at 15 days, so `days` travels with the row count.
   scan_seed_applied: { rows: number; days: number };
