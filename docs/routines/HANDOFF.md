@@ -1,5 +1,38 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 86, 2026-09-26: re-verify, no new work; orchestrator review 22 already closed)
+
+`git rev-list --left-right --count origin/main...routine/core-p3` confirmed the
+branch tip unchanged at `ce49c85` (run 85's own commit); `origin/main` is still
+at `3a01b88`, unchanged since run 85, so no rebase needed. PR #132 re-confirmed
+via the API: `state: open`, `draft: false`, `merged: false`,
+`mergeable_state: clean`, head `ce49c85` (matches this branch's tip), base
+`3a01b88` (matches main's current tip), 92 commits. No `## REVIEW FEEDBACK`
+section present (grepped the whole file; the one open heading hit is still the
+closed 2026-09-08 review). Checklist in `PLAN.md` unchanged: zero `[ ]` items
+remaining beyond the legend line, so no plan work this run either.
+
+Re-checked the routines-orchestrator's status board (mobile-app issue #139)
+directly: now the twenty-second orchestrator entry, `updated_at` advanced to
+`2026-09-26T12:07:28Z`. It reviewed this branch's runs 82-85 directly and
+recorded "approved, nothing owed," still blocked on the payments gate
+(decisions 2-4). The board also records that the orchestrator's own run 22
+already sent the promised 48-hour follow-up notification to Charen this
+window, covering the same 19-day-untouched decision queue this run would
+otherwise flag. Nothing about the queue's content changed since that post: no
+new items on decisions 2-4, item 11's cadence recommendation and run 79's
+direct alert both remain unanswered.
+
+Fresh `npm install`, `tsc --noEmit` clean, full suite green on the first
+attempt: 131 suites / 1451 tests, zero drift from run 85.
+
+Only a HANDOFF.md status update this run; force-pushed to `routine/core-p3`.
+
+No push notification this run: the orchestrator's run 22 already sent today's
+follow-up on the exact fact this run would otherwise raise (decision queue
+unmoved, day 19); a second alert from this routine on the same unchanged
+situation would be duplicate signal, not new information for Charen.
+
 ## COMPLETE (run 85, 2026-09-26: real rebase, small config/docs wave)
 
 `origin/main` advanced `d292e1c..3a01b88`, four commits: `d975724`/`1e8513e`
