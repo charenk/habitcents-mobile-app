@@ -19,7 +19,7 @@ import { habitCandidateToDetectedHabit } from '@/utils/leakScanBridge';
 import { isHabitLimitReached } from '@/utils/habitLogging';
 import { getEntitlement } from '@/utils/purchases';
 import { track } from '@/utils/analytics';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
 import type { HabitCandidate } from '@/utils/leakScan/types';
 import type { DetectedHabit } from '@/types/habit';
 
@@ -48,6 +48,7 @@ export function useTrackLeak(
   onStarted?: (habit: DetectedHabit, candidate: HabitCandidate) => void
 ): UseTrackLeak {
   const router = useRouter();
+  const strings = useStrings();
   const { show } = useToast();
   const { addScanHabit, startBreakingHabit, getActiveHabits } = useHabits();
   const { markHabitStarted } = useOnboarding();
@@ -90,7 +91,7 @@ export function useTrackLeak(
       setCandidate(next);
       setHabit(admitted);
     },
-    [addScanHabit, spanDays, show]
+    [addScanHabit, spanDays, show, strings]
   );
 
   const monitorLeak = useCallback(
@@ -149,6 +150,7 @@ export function useTrackLeak(
       close,
       onStarted,
       show,
+      strings,
     ]
   );
 

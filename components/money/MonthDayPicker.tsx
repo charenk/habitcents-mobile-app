@@ -26,11 +26,11 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Chip } from '@/components/ui/Chip';
-import { strings } from '@/constants/strings';
 import { typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
 import { useTheme } from '@/contexts/ThemeContext';
 import { formatDate } from '@/utils/dates';
+import { useStrings } from '@/utils/i18n';
 
 /** Mid-month, so no timezone shift can roll the reference into a neighbour. */
 const MONTH_REFERENCE = new Date(2024, 0, 15);
@@ -85,6 +85,7 @@ export function MonthDayPicker({
   year = new Date().getFullYear(),
 }: MonthDayPickerProps): React.JSX.Element {
   const theme = useTheme();
+  const strings = useStrings();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const railRef = useRef<ScrollView | null>(null);
 

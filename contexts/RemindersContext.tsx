@@ -49,6 +49,7 @@ import { syncReminders } from '@/utils/reminders/sync';
 import { getReminderPermission, requestReminderPermission } from '@/utils/reminders/permission';
 import { ensureAndroidChannelAsync } from '@/utils/reminders/setup';
 import { getReminderPrefs, setReminderPrefs } from '@/utils/storage';
+import { useStrings } from '@/utils/i18n';
 
 type RemindersContextValue = {
   prefs: ReminderPrefs;
@@ -68,6 +69,7 @@ const RemindersContext = createContext<RemindersContextValue | null>(null);
 export function RemindersProvider({ children }: { children: React.ReactNode }) {
   const { expenses, isLoading: expensesLoading } = useExpenses();
   const { format } = useCurrency();
+  const strings = useStrings();
 
   const [prefs, setPrefsState] = useState<ReminderPrefs>(DEFAULT_REMINDER_PREFS);
   const [prefsLoaded, setPrefsLoaded] = useState(false);
@@ -83,8 +85,8 @@ export function RemindersProvider({ children }: { children: React.ReactNode }) {
   // Latest inputs for reconciles started outside the render cycle (the
   // AppState listener); assigned every render so the listener never closes
   // over stale state.
-  const inputsRef = useRef({ expenses, prefs, permission, format });
-  inputsRef.current = { expenses, prefs, permission, format };
+  const inputsRef = useRef({ expenses, prefs, permission, format, strings });
+  inputsRef.current = { expenses, prefs, permission, format, strings };
   const readyRef = useRef(false);
 
   const runSync = useCallback((): Promise<void> => {
@@ -97,7 +99,8 @@ export function RemindersProvider({ children }: { children: React.ReactNode }) {
           inputs.prefs,
           inputs.permission,
           new Date(),
-          inputs.format
+          inputs.format,
+          inputs.strings
         );
         await syncReminders(desired);
       })
@@ -114,7 +117,7 @@ export function RemindersProvider({ children }: { children: React.ReactNode }) {
   // Hydrate prefs and permission; ensure the Android channel exists before
   // anything schedules.
   useEffect(() => {
-    void ensureAndroidChannelAsync();
+    void ensureAndroidChannelAsync(strings);
     getReminderPrefs().then((stored) => {
       setPrefsState(stored);
       setPrefsLoaded(true);

@@ -12,6 +12,13 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 );
 jest.mock('@/utils/analytics', () => ({ track: jest.fn() }));
 
+// LocaleProvider resolves the device locale on mount (routine/localization);
+// this suite does not exercise language selection, so a fixed English
+// device locale keeps it out of the way.
+jest.mock('expo-localization', () => ({
+  getLocales: () => [{ languageCode: 'en', languageScriptCode: null, regionCode: 'US' }],
+}));
+
 let mockPrefs = { enabled: true, hour: 9, minute: 0 };
 let mockPermission: 'granted' | 'denied' | 'undetermined' = 'granted';
 const mockSetGlobalEnabled = jest.fn(async (_on: boolean) => {});
@@ -32,6 +39,7 @@ import { Linking } from 'react-native';
 import { act, cleanup, fireEvent, render } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '@/contexts/ThemeContext';
+import { LocaleProvider } from '@/contexts/LocaleContext';
 import { ToastProvider } from '@/components/ui/Toast';
 import {
   REMINDER_TIME_PRESETS,
@@ -52,9 +60,11 @@ async function renderSheet() {
   const view = await render(
     <SafeAreaProvider initialMetrics={initialMetrics}>
       <ThemeProvider>
-        <ToastProvider>
-          <RemindersSheet visible onClose={onClose} />
-        </ToastProvider>
+        <LocaleProvider>
+          <ToastProvider>
+            <RemindersSheet visible onClose={onClose} />
+          </ToastProvider>
+        </LocaleProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );

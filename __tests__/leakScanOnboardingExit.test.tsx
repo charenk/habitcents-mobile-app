@@ -70,6 +70,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { act, cleanup, fireEvent, render } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '@/contexts/ThemeContext';
+import { LocaleProvider } from '@/contexts/LocaleContext';
 import { OnboardingProvider, useOnboarding } from '@/contexts/OnboardingContext';
 import LeakScanRoute from '@/app/leak-scan';
 import { strings } from '@/constants/strings';
@@ -96,10 +97,12 @@ function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SafeAreaProvider initialMetrics={initialMetrics}>
       <ThemeProvider>
-        <OnboardingProvider>
-          <CompletionCapture />
-          {children}
-        </OnboardingProvider>
+        <LocaleProvider>
+          <OnboardingProvider>
+            <CompletionCapture />
+            {children}
+          </OnboardingProvider>
+        </LocaleProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );

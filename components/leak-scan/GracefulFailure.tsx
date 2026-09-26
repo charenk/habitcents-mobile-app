@@ -4,7 +4,7 @@ import { Button, Icon } from '@/components/ui';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { useTheme } from '@/contexts/ThemeContext';
 import { radii, typeScale, type AppTheme } from '@/constants/theme';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
 
 type GracefulFailureProps = {
   onTryDifferentExport: () => void;
@@ -41,6 +41,7 @@ export function GracefulFailure({
   showAuditExit,
 }: GracefulFailureProps) {
   const theme = useTheme();
+  const strings = useStrings();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   // UX-013: app/leak-scan.tsx swaps IntakeScreen for this screen as a
@@ -49,7 +50,7 @@ export function GracefulFailure({
   // components/ui/Toast.tsx, ~:88).
   useEffect(() => {
     AccessibilityInfo.announceForAccessibility(strings.leakScan.failureTitle);
-  }, []);
+  }, [strings]);
 
   return (
     <View style={styles.screen}>
