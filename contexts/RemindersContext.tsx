@@ -114,16 +114,21 @@ export function RemindersProvider({ children }: { children: React.ReactNode }) {
     return run;
   }, []);
 
-  // Hydrate prefs and permission; ensure the Android channel exists before
-  // anything schedules.
+  // Hydrate prefs and permission.
   useEffect(() => {
-    void ensureAndroidChannelAsync(strings);
     getReminderPrefs().then((stored) => {
       setPrefsState(stored);
       setPrefsLoaded(true);
     });
     void getReminderPermission().then(setPermission);
   }, []);
+
+  // Ensure the Android channel exists (before anything schedules on mount,
+  // and again on a runtime locale change so the channel name stays current;
+  // setNotificationChannelAsync is create-or-update and idempotent).
+  useEffect(() => {
+    void ensureAndroidChannelAsync(strings);
+  }, [strings]);
 
   const ready = !expensesLoading && prefsLoaded && permission !== null;
   readyRef.current = ready;
@@ -136,11 +141,12 @@ export function RemindersProvider({ children }: { children: React.ReactNode }) {
   );
 
   // Reconcile on readiness (cold start) and on every relevant change.
-  // `format` is a dependency because a currency change rewords every body.
+  // `format` is a dependency because a currency change rewords every body;
+  // `strings` for the same reason on a locale change.
   useEffect(() => {
     if (!ready) return;
     void runSync();
-  }, [ready, fingerprint, format, runSync]);
+  }, [ready, fingerprint, format, strings, runSync]);
 
   // Foreground: refresh permission (it can change in iOS Settings while
   // backgrounded), then reconcile unconditionally; time has passed and

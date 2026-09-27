@@ -933,6 +933,31 @@ work, tracked elsewhere).
       checkbox already reads closed; a closed checkbox only means "true as
       of the run that closed it," and any other stream's merge can reopen
       it silently.
+
+      **Run 93: fixed the two locale-reactivity gaps the orchestrator's
+      review flagged in run 88's `RemindersContext.tsx` threading**
+      (REVIEW FEEDBACK, 2026-09-27, runs 88-91 approved with these owed).
+      Run 88 threaded `strings` through `inputsRef` and into
+      `ensureAndroidChannelAsync`, but left two spots not reacting to a
+      runtime locale change, mirroring gaps the review compared directly
+      to the file's own `format` handling: (1) the reconcile effect's deps
+      array (`[ready, fingerprint, format, runSync]`) was missing
+      `strings`, so a locale change would not retrigger the reconcile that
+      rewrites every scheduled notification's title and body (the same
+      reason `format` is a dep, for currency); added `strings` to the
+      array. (2) `ensureAndroidChannelAsync(strings)` ran only inside the
+      mount-once hydrate effect (intentionally `[]` per run 88's own
+      note), so the Android channel name would not update on a runtime
+      locale change until next launch; split it into its own effect keyed
+      on `[strings]`, since `setNotificationChannelAsync` is
+      create-or-update and idempotent (the reviewer's preferred fix over
+      documenting boot-only as accepted behavior). Neither change is
+      observable yet: `getCatalog` still resolves every locale to English,
+      so no runtime locale switch produces different `strings` content
+      today. No test changes: `__tests__/remindersContext.test.tsx` has no
+      existing assertion on either the reconcile effect's dep list or
+      `ensureAndroidChannelAsync`'s call timing. One commit; `tsc --noEmit`
+      clean, full suite green (131/131, 1479/1479, unchanged counts).
 - [ ] Convert function-valued strings (pluralized/interpolated) to ICU
       messages with proper CLDR plural rules, not the current hand-rolled
       `n === 1 ? '' : 's'` ternaries, and add the ICU formatting dependency

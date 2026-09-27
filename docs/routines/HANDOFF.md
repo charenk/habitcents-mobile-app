@@ -3,17 +3,74 @@
 ## Status
 
 In progress, blocked on decisions 8/10 (standing since run 38, still day 21).
-Main still has not moved since run 87's rebase (still `3a01b88`), so run 92
-was another no-rebase, no-op-in-substance pass: issue #139 unchanged since
-run 91's read (`updated_at` still `2026-09-26T12:07:28Z`, the twenty-second
-orchestrator entry; decisions 8 and 10 both still open, unanswered), so this
-run sends no notification of its own, same posture every run since 76 has
-held. Re-verified clean from scratch (fresh `npm install` on a container
-with no `node_modules`, tsc clean, 131/131 suites, 1479/1479 tests, matching
-run 91 exactly), re-ran the item-2 static-import sweep (still exactly the 4
-by-design files) and the item-4 VALUE CHANGE sweep (still exactly the same 3
-unresolved hits, gated `onboarding` section, blocked on decision 8). Full
-detail below.
+Run 93 addressed the orchestrator's REVIEW FEEDBACK entry (posted on top of
+run 92's tip): two small locale-reactivity fixes in
+`contexts/RemindersContext.tsx`, both from run 88's reminders-engine
+conversion, neither observable yet since `getCatalog` still resolves every
+locale to English. Main still has not moved since run 87's rebase (still
+`3a01b88`); the standing sweeps (item-2 static-import, item-4 VALUE CHANGE)
+were re-run and found unchanged (still exactly the 4 by-design files and the
+same 3 unresolved VALUE CHANGE hits, gated `onboarding` section, blocked on
+decision 8), and issue #139 (twenty-third orchestrator run) confirms
+decisions 8 and 10 both still open, unanswered, now day 20 per the board's
+own count. No push notification this run: the two fixes were expected,
+review-approved work, not new information about the blocker, and the
+decision queue itself is unchanged since the board's own 2026-09-26
+follow-up. Full detail below.
+
+Run 93 (2026-09-27): rebase check: `git fetch origin main` showed no new
+commits since run 92's `3a01b88` (`git merge-base --is-ancestor origin/main
+HEAD` reported already up to date), so no rebase was needed and no conflict
+risk this run.
+
+**REVIEW FEEDBACK addressed** (the 2026-09-27 orchestrator entry, runs
+88-91 approved with two fixes owed, both in run 88's reminders threading):
+1. `contexts/RemindersContext.tsx`'s reconcile effect
+   (`[ready, fingerprint, format, runSync]`) was missing `strings` as a
+   dependency, the exact parallel of the documented `format` dep (a
+   currency change rewords every body; a locale change now rewords every
+   title and body for the same reason). Added `strings` to the deps array;
+   the value already flowed through `inputsRef`, only the effect trigger
+   was missing.
+2. `ensureAndroidChannelAsync(strings)` ran only inside the mount-once
+   hydrate effect, so a runtime locale change left the Android channel name
+   stale until next launch. Split it into its own effect keyed on
+   `[strings]` (the reviewer's preferred fix over the fallback of recording
+   boot-only as accepted behavior); `setNotificationChannelAsync` is
+   create-or-update and idempotent, so this is safe to re-run.
+
+Neither fix changes observable behavior today (no locale in this routine's
+scope has a real catalog live yet), and no test needed updating:
+`__tests__/remindersContext.test.tsx` has no existing coverage of
+`ensureAndroidChannelAsync` or of the reconcile effect's dependency list.
+
+Checked issue #139 directly (`charenk/habitcents-mobile-app`): now the
+twenty-third orchestrator run, `updated_at` `2026-09-27T12:12:42Z`. Confirms
+the REVIEW FEEDBACK text this run acted on, and that decisions 8 (locked
+vocabulary) and 10 (paywall pricing/legal) both remain open and unanswered,
+"now 20 days old" per the board's own count. Item 11's cadence
+recommendation (thin the three workers to daily) is a routines-UI change,
+Charen's to make, not a code fix this run can act on. PR #134 was left
+alone this run (no `gh` CLI available in this container; per the routine's
+own contract, skip PR management and note the branch here instead).
+
+Since item 4 stays blocked and items 3/5/6 stay exhausted, re-ran both
+standing sweeps from scratch: `grep -rl "from '@/constants/strings'" app
+components contexts utils | grep -v __tests__` returns the same 4 by-design
+files as run 92 left it (`utils/i18n.ts`, `OnboardingCarousel.tsx`, the
+RETIRED `ViewQuote.tsx`/`useViewQuote.ts` pair). Re-ran the run-38 `VALUE
+CHANGE` sweep too: `grep -n "VALUE CHANGE" constants/strings.ts` finds the
+same 3 unresolved hits as run 92, all in the gated `onboarding` section,
+none new; the broader `needs re-translation`/`STALE` grep across
+`constants/strings.ts` and every locale file is clean too.
+
+Fresh `npm install` (container had no `node_modules` at session start),
+`tsc --noEmit` clean, full suite green (131/131, 1479/1479), same counts as
+run 92 (no test added, removed, or broken by the two-line fix). One commit
+(the RemindersContext fix plus PLAN/HANDOFF), pushed `routine/localization`.
+No push notification this run: the fixes are exactly the review-approved
+work expected, not new information about the standing blocker (decisions
+8/10 unchanged since run 92's read).
 
 Run 92 (2026-09-27): rebase check: `git fetch origin main` showed no new
 commits since run 91's `3a01b88` (`git merge-base --is-ancestor origin/main
