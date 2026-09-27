@@ -2,15 +2,60 @@
 
 ## Status
 
-In progress, blocked on decisions 8/10 (standing since run 38, still day 19).
-Main did not move since run 87/88's rebase (still `3a01b88`), so run 89 was
-another no-rebase pass: the twenty-second orchestrator run posted to issue
-#139 since run 88's read (item 9 closed 09-25, ops ADRs 0043/0044 merged;
-decisions 8 and 10 unchanged and still open), re-verified clean (fresh
-`npm install`, tsc clean, 131/131 suites, 1479/1479 tests, matching run 88
-exactly), and re-ran run 88's item-2 drift grep from scratch: still exactly
-the 4 by-design files, no new drift since nothing landed on main to cause
-any. Full detail below.
+In progress, blocked on decisions 8/10 (standing since run 38, now day 20).
+Main still has not moved since run 87's rebase (still `3a01b88`), so run 90
+was another no-rebase, no-op-in-substance pass: issue #139 unchanged since
+run 89's read (`updated_at` still `2026-09-26T12:07:28Z`, the twenty-second
+orchestrator entry; decisions 8 and 10 both still open, unanswered), so this
+run sends no notification of its own, same posture every run since 76 has
+held. Re-verified clean from scratch (fresh `npm install` on a container
+with no `node_modules`, tsc clean, 131/131 suites, 1479/1479 tests, matching
+run 89 exactly), re-ran the item-2 static-import sweep (still exactly the 4
+by-design files) and the item-4 VALUE CHANGE sweep (still exactly the same 3
+unresolved hits, gated `onboarding` section, blocked on decision 8). Full
+detail below.
+
+Run 90 (2026-09-27): rebase check: `git fetch origin main` showed no new
+commits since run 89's `3a01b88` (`git merge-base --is-ancestor origin/main
+HEAD` reported already up to date), so no rebase was needed and no conflict
+risk this run. No REVIEW FEEDBACK section pending (full-file check: newest
+entry is still the 2026-09-22 runs 68-71 review, closed out at run 72).
+Checked issue #139 directly (`charenk/habitcents-mobile-app`): `updated_at`
+unchanged at `2026-09-26T12:07:28Z`, same twenty-second orchestrator entry
+run 89 read, one comment (still the unrelated 2026-09-07 iPad-footer item).
+Decisions 8 (locked vocabulary) and 10 (paywall pricing/legal) both still
+open and unanswered, now day 20 by plain elapsed count from item 1's
+2026-09-07 close. Item 11's cost-saving escalation (sent 2026-09-18) stands
+unanswered at day 9; the board's own text confirms its promised
+2026-09-26 follow-up already posted, so per the run 72/85/86/88/89 no-repeat
+posture this run sends no notification of its own: the decision and the
+notification cadence both belong to the orchestrator now, not to
+case-by-case judgment here. PR #134 re-confirmed via API: still open,
+draft, head `a5144d1` matching this branch's own pre-run tip, one comment
+(the pre-existing iPad-footer item, unrelated), zero reviews.
+
+Since item 4 stays blocked and items 3/5/6 stay exhausted, re-ran both
+standing sweeps from scratch rather than trusting run 89's recorded counts:
+`grep -rl "from '@/constants/strings'" app components contexts utils | grep
+-v __tests__` returns the same 4 by-design files as run 89 left it
+(`utils/i18n.ts`, `OnboardingCarousel.tsx`, the RETIRED `ViewQuote.tsx`/
+`useViewQuote.ts` pair). Expected: main has not moved since run 88's sweep,
+so no new component could have landed importing the static catalog. Re-ran
+the run-38 `VALUE CHANGE` sweep too: `grep -n "VALUE CHANGE"
+constants/strings.ts` finds the same 3 unresolved hits as run 89, all in the
+gated `onboarding` section, none new; the broader `needs re-translation`/
+`STALE` grep across `constants/strings.ts` and every locale file is clean
+too.
+
+Fresh `npm install` (container had no `node_modules` at session start),
+`tsc --noEmit` clean, full suite green (131/131, 1479/1479), exactly
+matching run 89's counts (no test added, removed, or broken). No code
+change to make this run; PLAN.md checklist unchanged (nothing new closed).
+One commit (HANDOFF touch only), pushed `routine/localization`. PR #134
+stays open, draft, mergeable_state clean. No push notification this run:
+nothing changed in substance since run 89 (same two open gates, the
+orchestrator's own follow-up already sent, no new information), so an alert
+here would be duplicate signal, not new signal.
 
 Run 89 (2026-09-26): rebase check: `git fetch origin main` showed no new
 commits since run 88's `3a01b88` (`git merge-base --is-ancestor origin/main
@@ -3285,21 +3330,21 @@ REVIEW-FEEDBACK-equivalent priority work per run 52's note above).
 remaining translation work (locked vocabulary for `habitLogging`/
 `coachMoments`/etc., and the `paywall` pricing/trial copy; the new
 `reminders` section from run 86 falls under the same item-4 gate for
-ordinary reasons, not a new decision). Decision queue is 19 days untouched
+ordinary reasons, not a new decision). Decision queue is 20 days untouched
 on decisions 8/10 specifically (decision 1 closed 2026-09-07, decision 9
 closed 2026-09-25, nothing else since) per the board's own 2026-09-26
-twenty-second orchestrator run, confirmed independently by this run's own
-read of issue #139; that run also states its own promised follow-up
-notification already went out today, so this run sends none of its own.
-Item 11's cost-saving escalation (sent 2026-09-18) is unanswered at day 8;
-core-worker's run 79 sent a direct phone/email alert on 2026-09-24, also
-unanswered, and the board states the orchestrator itself now owns the next
-follow-up, which posted today per the above, so no worker routine should
-send another one until the board's posture changes again. Run 71's "the
-status-board channel is gone" finding, withdrawn at run 72, remains
-confirmed closed. The board has always lived in charenk/habitcents-mobile-app
-and is confirmed alive and unchanged there (see Notes for the exact
-address).
+twenty-second orchestrator run, confirmed independently by run 90's own
+2026-09-27 read of issue #139 (`updated_at` unchanged since that post); that
+run also states its own promised follow-up notification already went out on
+2026-09-26, so run 90 sends none of its own. Item 11's cost-saving
+escalation (sent 2026-09-18) is unanswered at day 9; core-worker's run 79
+sent a direct phone/email alert on 2026-09-24, also unanswered, and the
+board states the orchestrator itself now owns the next follow-up, so no
+worker routine should send another one until the board's posture changes
+again. Run 71's "the status-board channel is gone" finding, withdrawn at
+run 72, remains confirmed closed. The board has always lived in
+charenk/habitcents-mobile-app and is confirmed alive and unchanged there
+(see Notes for the exact address).
 
 ## DECISIONS NEEDED
 
