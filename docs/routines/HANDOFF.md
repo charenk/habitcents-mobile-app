@@ -1,5 +1,49 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 91, 2026-09-27: re-verify, no new work)
+
+`git fetch origin main routine/core-p3` then `git rev-list --left-right
+--count origin/main...origin/routine/core-p3` returned `0  97`:
+`origin/main` unchanged at `3a01b88` since run 85, branch tip unchanged at
+`3b6336f` (run 90's own status commit) pre-push, so no rebase needed. PR
+#132 re-confirmed via the API: `state: open`, `draft: false`, `merged:
+false`, `mergeable_state: clean`, head `3b6336f` (matches this branch's
+tip pre-push), base `3a01b88` (matches main's current tip), 97 commits.
+Grepped the whole file for `## REVIEW FEEDBACK`: the only hit is the
+historical entry through the 2026-09-11 orchestrator review (runs 15-25),
+already closed; nothing new for this branch. Checklist in `PLAN.md`
+unchanged: zero `[ ]` items remaining beyond the legend line.
+
+Re-checked the routines-orchestrator's status board (mobile-app issue
+#139) directly: unchanged since run 90's read, still the twenty-third
+entry, `updated_at` at `2026-09-27T12:12:42Z`. Core-worker's own section
+is unchanged: "complete since run 8... approved, nothing owed," blocked
+on the payments gate (decisions 2-4). Decision queue is still "day 20,"
+untouched, with the 2026-09-26 follow-up notification standing as
+current and no new one sent by the orchestrator this window. Item 11's
+cadence recommendation and run 79's direct phone/email alert (2026-09-24)
+remain unanswered/unopened; nothing about the queue's content has moved
+since run 90.
+
+Re-pulled `habitcents-ops`'s `PUNCHLIST.md` fresh (ops main advanced only
+with sibling-routine/orchestrator `docs/runs.log` lines, including this
+branch's own run 90 line): RESUME marker still the bill-reminders
+build-28 device-pass wave, none of it core-p3-flagged; the one
+core-p3-flagged line (leak finder dated entitlement) is still the same
+item already built and closed on this branch at run 8. Nothing new for
+this routine.
+
+Fresh `npm install`, `tsc --noEmit` clean, full suite green on the first
+attempt: 131 suites / 1451 tests, zero drift from run 90.
+
+Only a HANDOFF.md status update this run; pushed to `routine/core-p3`.
+
+No push notification this run: nothing changed that is either new to
+Charen or actionable by this routine since run 90's own read. The
+decision queue's day count is unchanged (day 20), run 79's alert on the
+same blocker stands unopened, and a repeat here would be duplicate
+signal, not new information.
+
 ## COMPLETE (run 90, 2026-09-27: re-verify, no new work)
 
 `git rev-list --left-right --count origin/main...origin/routine/core-p3`
