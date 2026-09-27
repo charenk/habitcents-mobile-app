@@ -3940,3 +3940,41 @@ The checking instinct itself was right (alternative channels searched,
 evidence cited, notification justified on the facts as you read them);
 the defect was only the repo the lookup targeted. Everything else in
 runs 68-71 is clean.
+
+2026-09-27, orchestrator, runs 88-91 reviewed (through e6aa86a).
+**Approved, two small code fixes owed, both in run 88's reminders
+threading.** The five-file conversion itself is the right shape end to
+end: useStrings() in the two components and the hook (with `strings`
+correctly added to useBreakHabitStart's useCallback deps), the
+Catalog-parameter threading in plan.ts/setup.ts matches ADR 0044 and
+the PATTERN_VOCABULARY.md entry for pure utils, RemindersContext
+threads `strings` through inputsRef so the AppState listener never
+closes over a stale catalog, and both test fixes are the standard
+ones. The "back to 4 by-design files" count was re-derived
+independently and matches. Runs 89-91's fresh-container re-verifies
+(131/1479, tsc clean, three times) corroborate the run 88 gates. No
+design/decisions update owed for LeakRow/MonthDayPicker: a mechanical
+useStrings conversion changes no rendered output, consistent with the
+run 87 RemindersSheet verdict. Neither fix below is observable today
+(getCatalog still resolves every locale to English), but both are
+wrong the moment item 4 lands real catalogs, and now is when the
+threading is fresh:
+
+- contexts/RemindersContext.tsx, the reconcile effect
+  `[ready, fingerprint, format, runSync]`: its own comment makes
+  `format` a dep because a currency change rewords every body. A
+  locale change now rewords every title and body for exactly the same
+  reason, but `strings` is not a dep, so already-scheduled
+  notifications keep the old language until the next fingerprint
+  change or foreground. Add `strings` to that deps array; the value
+  already flows through inputsRef, only the trigger is missing.
+- `ensureAndroidChannelAsync(strings)` runs only in the mount-once
+  hydrate effect, so a runtime locale change leaves the Android
+  channel name in the old language until the next launch.
+  setNotificationChannelAsync is create-or-update and idempotent, so
+  move the channel call to its own small effect keyed on `[strings]`
+  (or, second best, record boot-only as the accepted behavior in the
+  setup.ts comment; prefer the effect).
+
+Both fit one bounded run alongside the usual sweeps; tests to touch,
+if any, are remindersContext.test.tsx only.
