@@ -2,18 +2,60 @@
 
 ## Status
 
-In progress, blocked on decisions 8/10 (standing since run 38, now day 20).
-Main still has not moved since run 87's rebase (still `3a01b88`), so run 90
+In progress, blocked on decisions 8/10 (standing since run 38, still day 20).
+Main still has not moved since run 87's rebase (still `3a01b88`), so run 91
 was another no-rebase, no-op-in-substance pass: issue #139 unchanged since
-run 89's read (`updated_at` still `2026-09-26T12:07:28Z`, the twenty-second
+run 90's read (`updated_at` still `2026-09-26T12:07:28Z`, the twenty-second
 orchestrator entry; decisions 8 and 10 both still open, unanswered), so this
 run sends no notification of its own, same posture every run since 76 has
 held. Re-verified clean from scratch (fresh `npm install` on a container
 with no `node_modules`, tsc clean, 131/131 suites, 1479/1479 tests, matching
-run 89 exactly), re-ran the item-2 static-import sweep (still exactly the 4
+run 90 exactly), re-ran the item-2 static-import sweep (still exactly the 4
 by-design files) and the item-4 VALUE CHANGE sweep (still exactly the same 3
 unresolved hits, gated `onboarding` section, blocked on decision 8). Full
 detail below.
+
+Run 91 (2026-09-27): rebase check: `git fetch origin main` showed no new
+commits since run 90's `3a01b88` (`git merge-base --is-ancestor origin/main
+HEAD` reported already up to date), so no rebase was needed and no conflict
+risk this run. No REVIEW FEEDBACK section pending (full-file check: newest
+entry is still the 2026-09-22 runs 68-71 review, closed out at run 72).
+Checked issue #139 directly (`charenk/habitcents-mobile-app`): `updated_at`
+unchanged at `2026-09-26T12:07:28Z`, same twenty-second orchestrator entry
+run 90 read, one comment (still the unrelated 2026-09-07 iPad-footer item).
+Decisions 8 (locked vocabulary) and 10 (paywall pricing/legal) both still
+open and unanswered, still day 20 by plain elapsed count from item 1's
+2026-09-07 close (same calendar day as run 90, so the count does not
+advance). Item 11's cost-saving escalation (sent 2026-09-18) stands
+unanswered at day 9, unchanged from run 90; the board's own text confirms
+its promised 2026-09-26 follow-up already posted, so per the run
+72/85/86/88/89/90 no-repeat posture this run sends no notification of its
+own. PR #134 re-confirmed via API: still open, draft, mergeable_state clean,
+head `577e8a0` matching this branch's own pre-run tip, one comment (the
+pre-existing iPad-footer item, unrelated), zero reviews.
+
+Since item 4 stays blocked and items 3/5/6 stay exhausted, re-ran both
+standing sweeps from scratch rather than trusting run 90's recorded counts:
+`grep -rl "from '@/constants/strings'" app components contexts utils | grep
+-v __tests__` returns the same 4 by-design files as run 90 left it
+(`utils/i18n.ts`, `OnboardingCarousel.tsx`, the RETIRED `ViewQuote.tsx`/
+`useViewQuote.ts` pair). Expected: main has not moved since run 88's sweep,
+so no new component could have landed importing the static catalog. Re-ran
+the run-38 `VALUE CHANGE` sweep too: `grep -n "VALUE CHANGE"
+constants/strings.ts` finds the same 3 unresolved hits as run 90, all in the
+gated `onboarding` section, none new; the broader `needs re-translation`/
+`STALE` grep across `constants/strings.ts` and every locale file is clean
+too.
+
+Fresh `npm install` (container had no `node_modules` at session start),
+`tsc --noEmit` clean, full suite green (131/131, 1479/1479), exactly
+matching run 90's counts (no test added, removed, or broken). No code
+change to make this run; PLAN.md checklist unchanged (nothing new closed).
+One commit (HANDOFF touch only), pushed `routine/localization`. PR #134
+stays open, draft, mergeable_state clean. No push notification this run:
+nothing changed in substance since run 90 (same two open gates, the
+orchestrator's own follow-up already sent, no new information), so an alert
+here would be duplicate signal, not new signal.
 
 Run 90 (2026-09-27): rebase check: `git fetch origin main` showed no new
 commits since run 89's `3a01b88` (`git merge-base --is-ancestor origin/main
@@ -3333,10 +3375,11 @@ remaining translation work (locked vocabulary for `habitLogging`/
 ordinary reasons, not a new decision). Decision queue is 20 days untouched
 on decisions 8/10 specifically (decision 1 closed 2026-09-07, decision 9
 closed 2026-09-25, nothing else since) per the board's own 2026-09-26
-twenty-second orchestrator run, confirmed independently by run 90's own
-2026-09-27 read of issue #139 (`updated_at` unchanged since that post); that
-run also states its own promised follow-up notification already went out on
-2026-09-26, so run 90 sends none of its own. Item 11's cost-saving
+twenty-second orchestrator run, confirmed independently by run 90 and
+91's own 2026-09-27 reads of issue #139 (`updated_at` unchanged since that
+post); that run also states its own promised follow-up notification
+already went out on 2026-09-26, so runs 90 and 91 send none of their own.
+Item 11's cost-saving
 escalation (sent 2026-09-18) is unanswered at day 9; core-worker's run 79
 sent a direct phone/email alert on 2026-09-24, also unanswered, and the
 board states the orchestrator itself now owns the next follow-up, so no
