@@ -72,6 +72,49 @@ device pass is separate and additional to that one, not a substitute.
 
 ## Status
 
+Run 96 (2026-09-28). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 95's
+check (`git merge-base --is-ancestor origin/main HEAD` true, still `3a01b88`),
+so no rebase and no new regression surface this run. Fresh `npm ci`, `npx tsc
+--noEmit` clean. Full suite green on the first pass, no flake locally: 128
+suites / 1419 tests, zero drift from run 95. Re-verified item 7 (`app.json`
+still `"orientation": "portrait"`, `"supportsTablet": true`). PR #133
+re-checked via `get`/`get_comments`/`get_check_runs`: still open, not draft,
+`mergeable_state: unstable` (see below), base `3a01b88` (main's tip,
+unchanged), head still `ac124f3` (run 95's own status-only push, no new
+commit needed this run before this status update). **New this run:** the
+`verify` check on that head (`ac124f3`) came back red (job 108841646668,
+completed 08:11 UTC 2026-09-28), the identical `habitDetection.test.ts`
+`spanDays` assertion from run 55 and run 66's comments (`Expected: 0,
+Received: 1.1574074074074074e-8`). Confirmed via `get_files` that neither
+`utils/habitDetection.ts` nor its test is touched by this branch's diff, and
+a fresh local `npm ci` + full suite on this exact head passed clean (same
+128/1419 result as this run's own re-verify), consistent with the same
+CI-runner wall-clock jitter diagnosed twice before. `rerun_failed_jobs`
+returned 403 again, no permission to confirm-and-clear locally. This is the
+third occurrence of the exact same failure; per the run 55/66 protocol (and
+issue #139's own standing instruction), posted one PR comment
+(issuecomment-5871674133) naming it as the third occurrence, and did not push
+a fix: `habitDetection.ts` is outside this PR's scope (layout/width-cap only)
+and is main-owned code already tracked as decision item 12 on issue #139,
+which already carries the proposed one-line patch and a "recommend a quick
+fix/* session" note for Charen. No new comments otherwise since run 66's
+second-occurrence note, no reviews. Issue #139 re-read: twenty-fourth
+orchestrator entry (`updated_at` now `2026-09-28T12:04:14Z`), content is
+confirmation and the run-93 localization fix closing out that stream's
+review feedback, not new work for this routine: ipad-worker section still
+"approved, nothing owed," blocker still the device pass gated on PR #133
+merging behind #132's payments gate (decision 6); item 11's cadence
+recommendation (thin the three workers to daily) still open, next follow-up
+dated 10-03, Charen's and the orchestrator's call, not this routine's to
+enact. No REVIEW FEEDBACK addressed to this routine. No production code,
+test, or plan content changed this run; this HANDOFF update and the one PR
+comment are the only changes. No push notification: the CI flake is a
+known, already-tracked, already-decided-on recurrence (same disposition as
+runs 55 and 66) with no new decision or regression for this routine
+specifically, and the board's own posture already covers the decision-queue
+items untouched this run.
+
 Run 95 (2026-09-28). Verified per this file's own COMPLETE instruction: plan
 fully checked, nothing new to do. `origin/main` has not moved since run 94's
 check (`git merge-base --is-ancestor origin/main HEAD` true, still `3a01b88`),
