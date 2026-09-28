@@ -3,32 +3,59 @@
 ## Status
 
 In progress, blocked on decisions 8/10 (standing since run 38, now day 22 by
-plain elapsed count from item 1's 2026-09-07 close). Run 96: rebase no-op
-(main still `3a01b88`, unchanged since run 87), no REVIEW FEEDBACK section
-pending (newest entry is still the 2026-09-27 runs 88-91 review, closed out
-by run 93's two RemindersContext fixes), and issue #139 re-read directly
-(still the twenty-third orchestrator entry, `updated_at` unchanged at
-2026-09-27T12:12:42Z, one comment, still the unrelated 2026-09-07
-iPad-footer item): decisions 8 and 10 both still open and unanswered,
-content unchanged since run 95's read. Also re-ran, new this run, the
-item-6 `accessibilityLabel={\`...\`}` grep before falling back to
-re-verify: same known spots (`LeakRow.tsx`/`PaceCard.tsx`/
-`WhereItWentCard.tsx`/`ScanSnapshotCard.tsx`/`BillsScreen.tsx`), same
-"name, status" comma pattern already ruled fine, nothing new to convert.
-Both standing sweeps re-run from scratch and found unchanged (same 4
-by-design files, same 3 unresolved VALUE CHANGE hits gated in `onboarding`,
-blocked on decision 8). Fresh `npm ci`, `tsc --noEmit` clean, full suite
-green (131/131, 1479/1479), exactly matching run 95's counts. PR #134
-re-confirmed via API: still open, draft, `mergeable_state` clean, head
-`66e61e7` matching this branch's own pre-run tip, one comment (the
-pre-existing iPad-footer item, unrelated), zero reviews. One commit
+plain elapsed count from item 1's 2026-09-07 close). Run 97: rebase no-op
+(branch head `ddb783e` already equals `origin/main`'s merge base, main still
+`3a01b88`, unchanged since run 87), no REVIEW FEEDBACK section pending
+(newest entry is still the 2026-09-27 runs 88-91 review, closed out by run
+93's two RemindersContext fixes), and issue #139 re-read directly (now the
+twenty-fourth orchestrator entry, dated 2026-09-28, `updated_at`
+2026-09-28T12:04:14Z): decisions 8 and 10 both confirmed still open and
+unanswered, item 11 (cadence) and item 12 (flaky test) both still open too;
+board itself now states day 21 and sets its own next follow-up for 10-03
+"unless something changes." Re-ran the item-6 `accessibilityLabel={\`...\`}`
+grep before falling back to re-verify: same 14 known hits (`LeakRow.tsx`
+x2, `PickOneSheet.tsx`, `HabitLeakRow.tsx` x2, `PartialSlipSheet.tsx`,
+`ScopeScreen.tsx`, `BillsScreen.tsx`, `HowItWorksSheet.tsx`,
+`BreakHabitSheet.tsx`, `PaceCard.tsx`, `WhereItWentCard.tsx`,
+`ScanSnapshotCard.tsx`, `app/habit/[id].tsx`), all catalog-sourced or
+name/value joins already ruled fine, nothing new to convert. Both standing
+sweeps re-run from scratch and found unchanged (same 4 by-design files
+importing the static catalog, same 3 unresolved `VALUE CHANGE (needs
+re-translation)` hits gated in `onboarding`, blocked on decision 8). Fresh
+`npm ci` (container had no `node_modules` at session start), `tsc --noEmit`
+clean, full suite green (131/131, 1479/1479), exactly matching run 96's
+counts. PR #134 re-confirmed via API: still open, draft, `mergeable_state`
+clean, head `ddb783e` matching this branch's own pre-run tip, one comment
+(the pre-existing iPad-footer item, unrelated), zero reviews. One commit
 (HANDOFF touch only, no code change; nothing new to do since items 3/5/6
 stay exhausted, item 4 stays blocked, and no owed review fix is
 outstanding). No push notification this run: nothing changed in substance
-since run 95 (same two open gates, no new board activity), and the
-2026-09-26 board follow-up already covers Charen on the standing blocker;
-per the run 90/91/92/93/94/95 no-repeat posture, an alert here would be
-duplicate signal, not new signal. Full detail below.
+since run 96 (same two open gates, no new board activity, no new REVIEW
+FEEDBACK), and the board's own 2026-09-28 entry already covers Charen on
+the standing blocker with its own 10-03 follow-up date; per the run
+90-96 no-repeat posture, an alert here would be duplicate signal, not new
+signal. Full detail below.
+
+Run 97 (2026-09-28): rebase check: `git fetch origin` showed `routine/localization`
+already at the same commit as `origin/main`'s merge base (`3a01b88`), so no
+rebase was needed. Full-file REVIEW FEEDBACK check confirmed no new entry
+since the 2026-09-27 runs 88-91 review, already closed by run 93. Read
+issue #139 directly (`charenk/habitcents-mobile-app`): the twenty-fourth
+orchestrator entry (2026-09-28), confirms main static at `3a01b88` since
+09-26, all three streams verify-only except run 93's already-closed fix,
+and states plainly "the decision queue is untouched and now day 21... no
+new alert this run (next follow-up 10-03 unless something changes)."
+Decisions 8 (locked vocabulary) and 10 (paywall pricing/legal) both remain
+open, unchanged in content. Re-ran the item-6 grep, the static-catalog-
+import grep, and the `VALUE CHANGE` sweep from scratch (see Status above
+for counts): all three came back identical to run 96, confirming no new
+bounded work exists. Fresh `npm ci`, `tsc --noEmit` clean, full suite green
+(131/131, 1479/1479, unchanged). One commit (HANDOFF touch only), pushed
+`routine/localization`. PR #134 stays open, draft, `mergeable_state`
+clean. No push notification: nothing changed in substance since run 96,
+and the board's own 09-28 entry already covers the standing blocker with a
+10-03 follow-up date of its own; sending one here would be duplicate
+signal.
 
 Run 96 (2026-09-28): rebase check: `git fetch origin main` showed no new
 commits since run 95's `3a01b88` (`git merge-base --is-ancestor origin/main
