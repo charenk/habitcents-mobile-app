@@ -3,26 +3,97 @@
 ## Status
 
 In progress, blocked on decisions 8/10 (standing since run 38, now day 21 by
-plain elapsed count from item 1's 2026-09-07 close). Run 94: rebase no-op
+plain elapsed count from item 1's 2026-09-07 close). Run 95: rebase no-op
 (main still `3a01b88`, unchanged since run 87), no REVIEW FEEDBACK section
 pending (newest entry is still the 2026-09-27 runs 88-91 review, closed out
 by run 93's two RemindersContext fixes), and issue #139 re-read directly
 (still the twenty-third orchestrator entry, `updated_at` unchanged at
 2026-09-27T12:12:42Z, one comment, still the unrelated 2026-09-07
 iPad-footer item): decisions 8 and 10 both still open and unanswered,
-content unchanged since run 93's read. Both standing sweeps re-run from
-scratch and found unchanged (same 4 by-design files, same 3 unresolved
-VALUE CHANGE hits gated in `onboarding`, blocked on decision 8). Fresh `npm
-install`, `tsc --noEmit` clean, full suite green (131/131, 1479/1479),
-exactly matching run 93's counts. PR #134 re-confirmed via API: still open,
-draft, `mergeable_state` clean, head `63ee71b` matching this branch's own
-pre-run tip, one comment (the pre-existing iPad-footer item, unrelated),
-zero reviews. One commit (HANDOFF touch only, no code change; nothing new
-to do since items 3/5/6 stay exhausted, item 4 stays blocked, and run 93
-already closed out the only owed fix). No push notification this run:
-nothing changed in substance since run 93 (same two open gates, no new
-board activity), so an alert here would be duplicate signal, not new
-signal. Full detail below.
+content unchanged since run 94's read. Also checked, new this run, for any
+fresh unblocked work before falling back to re-verify: a full-repo grep for
+hardcoded `accessibilityLabel={\`...\`}` template literals outside the
+catalog (item 6's own "worth a targeted grep elsewhere" note) turned up
+only the already-known `LeakRow.tsx`/`PaceCard.tsx`/`WhereItWentCard.tsx`/
+`ScanSnapshotCard.tsx`/`BillsScreen.tsx` spots, each the same "name, status"
+comma pattern already ruled fine (both halves already catalog-sourced, not
+a hardcoded English sentence a11y.ts composes), so nothing new to convert.
+Both standing sweeps re-run from scratch and found unchanged (same 4
+by-design files, same 3 unresolved VALUE CHANGE hits gated in `onboarding`,
+blocked on decision 8). Fresh `npm install`, `tsc --noEmit` clean, full
+suite green (131/131, 1479/1479), exactly matching run 94's counts. PR #134
+re-confirmed via API: still open, draft, `mergeable_state` clean, head
+`9944405` matching this branch's own pre-run tip, one comment (the
+pre-existing iPad-footer item, unrelated), zero reviews. One commit
+(HANDOFF touch only, no code change; nothing new to do since items 3/5/6
+stay exhausted, item 4 stays blocked, and no owed review fix is
+outstanding). No push notification this run: nothing changed in substance
+since run 94 (same two open gates, no new board activity), and the
+2026-09-26 board follow-up already covers Charen on the standing blocker;
+per the run 90/91/92/93/94 no-repeat posture, an alert here would be
+duplicate signal, not new signal. Full detail below.
+
+Run 95 (2026-09-28): rebase check: `git fetch origin main` showed no new
+commits since run 94's `3a01b88` (`git merge-base --is-ancestor origin/main
+HEAD` reported already up to date), so no rebase was needed and no conflict
+risk this run. No REVIEW FEEDBACK section pending: full-file check confirms
+the newest entry is still the 2026-09-27 runs 88-91 review, fully closed
+out by run 93's two-line RemindersContext fix. Checked issue #139 directly
+(`charenk/habitcents-mobile-app`): `updated_at` unchanged at
+`2026-09-27T12:12:42Z` (still the twenty-third orchestrator entry, same one
+run 94 read), one comment (still the unrelated 2026-09-07 iPad-footer
+item). Decisions 8 (locked vocabulary) and 10 (paywall pricing/legal) both
+still open and unanswered, unchanged in content from run 94's read; by
+plain elapsed days from item 1's 2026-09-07 close this is now day 21 (the
+board's own text still says day 20, posted 2026-09-26 and unrefreshed
+since). Item 11's cost-saving escalation (sent 2026-09-18) stands
+unanswered, unchanged in substance since run 94's read; the board's own
+2026-09-26 follow-up already covers the notification for this stretch, so
+per the run 72/85/86/88/89/90/91/92/94 no-repeat posture this run sends
+none of its own. PR #134 re-confirmed via API: still open, draft,
+`mergeable_state` clean, head `9944405` matching this branch's own pre-run
+tip, one comment (the pre-existing iPad-footer item, unrelated), zero
+reviews.
+
+Before falling back to re-verify, checked for new unblocked work per item
+6's own note ("a fresh a11y-adjacent hardcoded-English spot turning up
+elsewhere in the app"): `grep -rn "accessibilityLabel={\`" --include='*.tsx'
+--include='*.ts' . | grep -v __tests__ | grep -v node_modules` returns six
+hits across `LeakRow.tsx` (two), `BillsScreen.tsx`, `PaceCard.tsx`,
+`WhereItWentCard.tsx`, and `ScanSnapshotCard.tsx`. Read each: every one
+concatenates two already-catalog-sourced or non-translatable values (a
+merchant/category name plus an already-formatted amount or evidence
+sentence built elsewhere with `useStrings()`), the same "name, status"
+comma-join pattern the 2026-09-12 review ruled fine for `selectableLabel`
+(screen-reader convention, not a hardcoded English sentence a11y.ts
+composes). None are the `a11y.ts`-internal word-order problem item 6 is
+actually waiting on (`weekDotLabel`/`calendarCellLabel`/`keptHeroLabel`/
+`arcLabel`, all gated on decision 8's locked-vocabulary pick). No new item-6
+work found.
+
+Since item 4 stays blocked and items 3/5/6 stay exhausted, re-ran both
+standing sweeps from scratch rather than trusting run 94's recorded counts:
+`grep -rl "from '@/constants/strings'" app components contexts utils | grep
+-v __tests__` returns the same 4 by-design files as run 94 left it
+(`utils/i18n.ts`, `OnboardingCarousel.tsx`, the RETIRED `ViewQuote.tsx`/
+`useViewQuote.ts` pair). Expected: main has not moved since run 87's
+rebase, so no new component could have landed importing the static
+catalog. Re-ran the run-38 `VALUE CHANGE` sweep too: `grep -n "VALUE
+CHANGE" constants/strings.ts` finds the same 3 unresolved hits as run 94,
+all in the gated `onboarding` section, none new; the broader `needs
+re-translation`/`STALE` grep across `constants/strings.ts` and every locale
+file is clean too.
+
+Fresh `npm install` (container had no `node_modules` at session start),
+`tsc --noEmit` clean, full suite green (131/131, 1479/1479), exactly
+matching run 94's counts (no test added, removed, or broken). No code
+change to make this run: no REVIEW FEEDBACK is owed, the item-6 grep found
+nothing new, and no new PLAN.md work is possible while item 4 stays blocked
+and items 3/5/6 stay exhausted. One commit (HANDOFF touch only), pushed
+`routine/localization`. PR #134 stays open, draft, `mergeable_state` clean.
+No push notification this run: nothing changed in substance since run 94
+(same two open gates, no new board activity, no new REVIEW FEEDBACK), so an
+alert here would be duplicate signal, not new signal.
 
 Run 94 (2026-09-28): rebase check: `git fetch origin main` showed no new
 commits since run 93's `3a01b88` (`git merge-base --is-ancestor origin/main
@@ -3810,6 +3881,16 @@ only if ADR 0037 is reversed and the quote rotation un-retires.
   has its own register split worth checking: terse noun+됨 for short
   status toasts vs. the conversational -어요/-세요 register for longer
   sentences, also documented in its header now.
+- Run 95 checked item 6's own "worth a targeted grep for other files
+  matching `utils/a11y.ts`'s pattern" note directly:
+  `accessibilityLabel={\`...\`}` template literals outside the catalog,
+  full-repo. Six hits, all pre-existing (`LeakRow.tsx` x2, `BillsScreen.tsx`,
+  `PaceCard.tsx`, `WhereItWentCard.tsx`, `ScanSnapshotCard.tsx`), all the
+  "name, already-catalog-sourced value" comma-join shape, none the
+  `a11y.ts`-internal hardcoded-word-order problem item 6 is actually gated
+  on. Re-running this exact grep again with no other change on main is not
+  worth repeating every run; only re-check it after a rebase actually lands
+  a new component (main has been static at `3a01b88` since run 87).
 
 ## REVIEW FEEDBACK
 
