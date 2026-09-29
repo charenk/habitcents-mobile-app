@@ -1,5 +1,53 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 98, 2026-09-29: re-verify, no new work)
+
+`git fetch origin main routine/core-p3` then `git rev-list --left-right
+--count origin/main...origin/routine/core-p3` returned `0  104`:
+`origin/main` unchanged at `3a01b88` since run 85, branch tip unchanged at
+`0bda991` (run 97's own status commit) pre-push, so no rebase needed. PR
+#132 re-confirmed via the API: `state: open`, `draft: false`, `merged:
+false`, `mergeable_state: clean`, head `0bda991` (matches this branch's
+pre-push tip), base `3a01b88` (matches main's current tip), 104 commits, 0
+comments, 0 reviews. Grepped the whole file for `## REVIEW FEEDBACK`: only
+the historical entry through the 2026-09-08 orchestrator review (runs
+12-14), already closed. Checklist in `PLAN.md` unchanged: zero `[ ]` items
+remaining beyond the legend line.
+
+Re-checked the routines-orchestrator's status board (mobile-app issue
+#139) directly via the API: advanced to the twenty-fifth entry since run
+97's read (`updated_at` now `2026-09-29T12:03:17Z`), a "second fully quiet
+day in a row" report: main still static at `3a01b88`, zero code commits
+anywhere across all three streams since the last board, only the third
+occurrence of the known `habitDetection.ts` spanDays CI flake (ipad-worker's
+stream, handled per the standing protocol, green again next run). Core-worker's
+own section is unchanged: "complete since run 8... approved, nothing owed,"
+blocked on the payments gate (decisions 2-4, plus 7 and 12 elsewhere in the
+queue). Decision queue is now day 22 per the board's own count. The board's
+next follow-up stays 2026-10-03, not yet reached; nothing in this run's read
+would justify moving it up.
+
+Re-pulled `habitcents-ops`'s `PUNCHLIST.md` fresh (local clone's `main` had
+diverged from `origin/main` with no common ancestor, a stale bootstrap
+artifact of this container rather than any of this routine's own work;
+reset to match `origin/main`, which carries the real history, before
+reading): RESUME marker still the bill-reminders build-28 device-pass wave,
+none of it core-p3-flagged; the one core-p3-flagged line (leak finder dated
+entitlement) is still the same item already built and closed on this
+branch at run 8, still open in `PUNCHLIST.md` only because the fix has not
+merged to `main` yet (waits on PR #132). Nothing new for this routine.
+
+Fresh `npm install`, `npx tsc --noEmit` clean, full suite green on the
+first attempt: 131 suites / 1451 tests, zero drift from run 97.
+
+Only a HANDOFF.md status update this run; pushed to `routine/core-p3`.
+
+No push notification this run: nothing changed that is either new to
+Charen or actionable by this routine since run 97's own read. The
+orchestrator's own board post stays the owner of the next alert, dated
+2026-10-03; today is 2026-09-29, four days early, with no new fact to
+report beyond the day count.
+
 ## COMPLETE (run 97, 2026-09-29: re-verify, no new work)
 
 `git fetch origin main routine/core-p3` then `git rev-list --left-right
