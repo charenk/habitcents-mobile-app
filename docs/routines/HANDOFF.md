@@ -3,7 +3,30 @@
 ## Status
 
 In progress, blocked on decisions 8/10 (standing since run 38, now day 22 by
-plain elapsed count from item 1's 2026-09-07 close). Run 100: rebase no-op
+plain elapsed count from item 1's 2026-09-07 close). Run 101: rebase no-op
+(`origin/main` still `3a01b88`, unchanged since run 87), no REVIEW FEEDBACK
+section pending, issue #139 re-read directly (still the twenty-fifth
+orchestrator entry, `updated_at` 2026-09-29T12:03:17Z, unchanged from run
+100's read; decisions 8 and 10 both still open and unanswered, content
+unchanged), and PR #134 re-confirmed via API: open, draft, `mergeable_state`
+clean, head matching this branch's pre-run tip, one comment (pre-existing,
+unrelated), zero reviews. This run's container had a stale partial
+`node_modules` (present but missing `react-native`/`react`/several Expo
+packages, `tsc --noEmit` failed with 20+ "Cannot find module" errors before
+`npm ci`); ran a fresh `npm ci`, then `tsc --noEmit` clean and full suite
+green (131/131, 1479/1479), exactly matching run 100's counts. Re-ran the
+item-6 `accessibilityLabel={\`...\`}` grep (14 hits, same 12 files), the
+static-catalog-import grep (same by-design files), and the `VALUE CHANGE`
+sweep (3 genuinely unresolved hits, all gated in `onboarding`; the other 5
+matches are already-resolved historical comments) from scratch: all
+identical to run 100, no new bounded work. One commit (HANDOFF touch only,
+no code change), pushed `routine/localization`. No push notification: this
+worker routine does not own the decision-queue escalation (the orchestrator
+does, per issue #139's own posture, next follow-up 2026-10-03), nothing
+changed in substance since run 100, and a message here would be duplicate
+signal. Prior detail below.
+
+Run 100: rebase no-op
 (`origin/main` still `3a01b88`, unchanged since run 87), no REVIEW FEEDBACK
 section pending (newest entry is still the 2026-09-27 runs 88-91 review,
 closed out by run 93's two RemindersContext fixes), and issue #139 re-read
