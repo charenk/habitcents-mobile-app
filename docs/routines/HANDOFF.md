@@ -3,37 +3,71 @@
 ## Status
 
 In progress, blocked on decisions 8/10 (standing since run 38, now day 22 by
-plain elapsed count from item 1's 2026-09-07 close). Run 99: rebase no-op
+plain elapsed count from item 1's 2026-09-07 close). Run 100: rebase no-op
 (`origin/main` still `3a01b88`, unchanged since run 87), no REVIEW FEEDBACK
 section pending (newest entry is still the 2026-09-27 runs 88-91 review,
 closed out by run 93's two RemindersContext fixes), and issue #139 re-read
-directly: still the twenty-fourth orchestrator entry, dated 2026-09-28,
-`updated_at` 2026-09-28T12:04:14Z, byte-identical to run 98's read: decisions
-8 and 10 both confirmed still open and unanswered, item 11 (cadence) and
-item 12 (flaky test) both still open too; the board's own next follow-up
-stays 10-03, not yet reached (today is 2026-09-29). Re-ran the item-6
-`accessibilityLabel={\`...\`}` grep, the static-catalog-import grep, and the
-`VALUE CHANGE` sweep before falling back to re-verify: all three identical
-to run 98 (same 14 known accessibility-label hits across the same 12 files:
-`LeakRow.tsx` x2, `PickOneSheet.tsx`, `HabitLeakRow.tsx` x2,
-`PartialSlipSheet.tsx`, `ScopeScreen.tsx`, `BillsScreen.tsx`,
+directly: now the twenty-fifth orchestrator entry, dated 2026-09-29,
+`updated_at` 2026-09-29T12:03:17Z (advanced one entry from run 99's read of
+the twenty-fourth, 2026-09-28), but decisions 8 and 10 both still confirmed
+open and unanswered, unchanged in content. The new entry adds one item not
+on this branch: a third occurrence of the habitDetection spanDays flake on
+PR #133 (ipad-worker's stream, not this one) and a cadence note (item 11)
+recommending the three worker routines thin to daily while the decision
+queue sits idle, both informational, neither actionable from this branch.
+Item 11 (cadence) and item 12 (flaky test) both still open. Board's own
+next follow-up stays 10-03, not yet reached (today is 2026-09-29). Re-ran
+the item-6 `accessibilityLabel={\`...\`}` grep, the static-catalog-import
+grep, and the `VALUE CHANGE` sweep before falling back to re-verify: all
+three identical to run 99 (same 14 known accessibility-label hits across
+the same 12 files: `LeakRow.tsx` x2, `PickOneSheet.tsx`, `HabitLeakRow.tsx`
+x2, `PartialSlipSheet.tsx`, `ScopeScreen.tsx`, `BillsScreen.tsx`,
 `HowItWorksSheet.tsx`, `BreakHabitSheet.tsx`, `PaceCard.tsx`,
 `WhereItWentCard.tsx`, `ScanSnapshotCard.tsx`, `app/habit/[id].tsx`, all
 catalog-sourced or name/value joins already ruled fine; same 4 by-design
 files importing the static catalog; same 3 unresolved `VALUE CHANGE (needs
 re-translation)` hits gated in `onboarding`), nothing new to convert. Fresh
 `npm ci` (container had no `node_modules` at session start), `tsc --noEmit`
-clean, full suite green (131/131, 1479/1479), exactly matching run 98's
+clean, full suite green (131/131, 1479/1479), exactly matching run 99's
 counts. PR #134 re-confirmed via API: still open, draft, `mergeable_state`
-clean, head `2b4be11` matching this branch's own pre-run tip, one comment
+clean, head `b62b9b9` matching this branch's own pre-run tip, one comment
 (the pre-existing iPad-footer item, unrelated), zero reviews. One commit
 (HANDOFF touch only, no code change; nothing new to do since items 3/5/6
 stay exhausted, item 4 stays blocked, and no owed review fix is
 outstanding). No push notification this run: nothing changed in substance
-since run 98 (same two open gates, no new board activity, no new REVIEW
-FEEDBACK, board's own 10-03 follow-up date not yet reached); per the run
-90-98 no-repeat posture, an alert here would be duplicate signal, not new
-signal. Full detail below.
+since run 99 (same two open gates, no new board activity relevant to this
+stream, no new REVIEW FEEDBACK, board's own 10-03 follow-up date not yet
+reached); per the run 90-99 no-repeat posture, an alert here would be
+duplicate signal, not new signal. Full detail below.
+
+Run 100 (2026-09-29): rebase check: `git fetch origin main routine/localization`
+showed `main` still at `3a01b88`, unchanged since run 87, and this branch's
+own remote tip matching the local checkout (`b62b9b9`, run 99's commit), so
+no rebase was needed. Full-file REVIEW FEEDBACK check confirmed no new
+entry since the 2026-09-27 runs 88-91 review, already closed by run 93.
+Read issue #139 directly (`charenk/habitcents-mobile-app`): now the
+twenty-fifth orchestrator entry (2026-09-29, `updated_at`
+2026-09-29T12:03:17Z), one entry newer than run 99's read. The new entry
+is a quiet-day report: zero code commits anywhere since the last board,
+all three streams' runs were verify-only, decisions 8 and 10 both remain
+open and unanswered with no new content, item 11 now recommends thinning
+worker cadence to daily until a code-unblocking decision lands (2, 8, or
+10), and item 12 logged a third occurrence of the habitDetection spanDays
+flake on PR #133 (ipad-worker's stream; a documented one-line fix already
+sits in that PR's comments, not this branch's to apply). Next follow-up
+stays 2026-10-03. Re-ran the item-6 grep, the static-catalog-import grep,
+and the `VALUE CHANGE` sweep from scratch (see Status above for counts):
+all three came back identical to run 99, confirming no new bounded work
+exists. Fresh `npm ci` (container had no `node_modules` at session start),
+`tsc --noEmit` clean, full suite green (131/131, 1479/1479, unchanged). PR
+#134 re-confirmed via API: open, draft, `mergeable_state` clean, head
+`b62b9b9` matching this branch's pre-run tip, one comment (pre-existing,
+unrelated), zero reviews. One commit (HANDOFF touch only), pushed
+`routine/localization`. No push notification: nothing changed in substance
+for this stream since run 99, and the board's next follow-up date (10-03)
+has not arrived; sending one here would be duplicate signal. Cadence note
+(item 11) is the orchestrator's to act on via claude.ai/code/routines, not
+this branch's; recorded here for visibility only.
 
 Run 99 (2026-09-29): rebase check: `git fetch origin main` showed `main`
 still at `3a01b88`, unchanged since run 87, so no rebase was needed.
