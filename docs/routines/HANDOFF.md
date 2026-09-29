@@ -1,5 +1,54 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 97, 2026-09-29: re-verify, no new work)
+
+`git fetch origin main routine/core-p3` then `git rev-list --left-right
+--count origin/main...origin/routine/core-p3` returned `0  103`:
+`origin/main` unchanged at `3a01b88` since run 85, branch tip unchanged at
+`20d6845` (run 96's own status commit) pre-push, so no rebase needed. PR
+#132 re-confirmed via the API: `state: open`, `draft: false`, `merged:
+false`, `mergeable_state: clean`, head `20d6845` (matches this branch's
+pre-push tip), base `3a01b88` (matches main's current tip), 103 commits, 0
+review comments listed on the PR body-level read. Grepped the whole file
+for `## REVIEW FEEDBACK`: only the historical entry through the
+2026-09-11 orchestrator review (runs 15-25), already closed. Checklist in
+`PLAN.md` unchanged: zero `[ ]` items remaining beyond the legend line.
+
+Re-checked the routines-orchestrator's status board (mobile-app issue
+#139) directly: unchanged since run 96's read, still the twenty-fourth
+entry, `updated_at` at `2026-09-28T12:04:14Z`. Core-worker's own section
+is unchanged: "complete since run 8... approved, nothing owed," blocked on
+the payments gate (decisions 2-4, plus 7 and 12 elsewhere in the queue).
+Decision queue is still day 21 per the board's own last-write count (day
+22 by plain elapsed count from item 1's 2026-09-07 close). The board's own
+run-24 post explicitly deferred the orchestrator's next follow-up to
+2026-10-03 "to avoid daily nagging on the same unanswered items"; nothing
+has changed since that post that would justify moving that date up. Items
+2-4 (this branch's own gate), 7, 8, 10, 11 and 12 are all unchanged in
+substance from run 96's read.
+
+Re-pulled `habitcents-ops`'s `PUNCHLIST.md` fresh (`git fetch origin
+main`, a forced-update ref advance carrying only sibling-routine
+`runs.log` lines for ipad-worker run 99 and localization-worker run 99,
+both re-verify only): RESUME marker still the bill-reminders build-28
+device-pass wave, none of it core-p3-flagged; the one core-p3-flagged
+line (leak finder dated entitlement) is still the same item already built
+and closed on this branch at run 8, still open in `PUNCHLIST.md` only
+because the fix has not merged to `main` yet (waits on PR #132). Nothing
+new for this routine.
+
+Fresh `npm install`, `npx tsc --noEmit` clean, full suite green on the
+first attempt: 131 suites / 1451 tests, zero drift from run 96.
+
+Only a HANDOFF.md status update this run; pushed to `routine/core-p3`.
+
+No push notification this run: nothing changed that is either new to
+Charen or actionable by this routine since run 96's own read. The
+orchestrator's own run-24 post explicitly took ownership of the next
+alert and named 2026-10-03 as the date to avoid daily nagging on the same
+unanswered items; sending one now, one day later with no new fact, would
+be exactly the nagging that post was written to avoid.
+
 ## COMPLETE (run 96, 2026-09-29: re-verify, no new work)
 
 `git fetch origin main routine/core-p3` then `git rev-list --left-right
