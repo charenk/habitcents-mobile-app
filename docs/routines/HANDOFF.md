@@ -1,5 +1,47 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 106, 2026-10-01: re-verify, no new work)
+
+`git fetch origin main routine/core-p3` confirmed `origin/main` unchanged
+at `3a01b88` since run 85, branch tip unchanged at `7f973c8` (run 105's own
+status commit) pre-push, so no rebase needed. PR #132 re-confirmed via the
+API: `state: open`, `draft: false`, `merged: false`, `mergeable_state:
+clean`, head `7f973c83c22293c0d0f32f90304b471ad35b652b` (matches this
+branch's pre-push tip), base `3a01b88a9639e0964076166163d3efd74c9f3be4`
+(matches main's current tip), 112 commits, 0 comments, 0 reviews. Grepped
+the whole file for `## REVIEW FEEDBACK`: only the historical entry through
+the 2026-09-08 orchestrator review (runs 12-14), already closed. Checklist
+in `PLAN.md` unchanged: zero `[ ]` items remaining beyond the legend line.
+
+Re-checked the routines-orchestrator's status board (mobile-app issue
+#139) directly via the API: advanced to the twenty-seventh entry,
+`updated_at` at `2026-10-01T12:03:34Z` (new since run 105's read of the
+twenty-sixth). Content is the same shape though: "fourth fully quiet day
+in a row," zero code commits anywhere since the last board, all three
+streams independently re-confirmed. Core-worker's own section is
+unchanged: "complete since run 8... approved, nothing owed," blocked on
+the payments gate (decisions 2-4). Item 11 (worker cadence) is still
+open, escalated three times (09-18, 09-24, 09-26) with no action yet; not
+this routine's call to thin its own cadence. Decision queue is now day 24
+by the board's own count (day 28 by plain elapsed count from item 1's
+2026-09-07 close). The board's next follow-up stays 2026-10-03, two days
+out; nothing in this run's read would justify moving it up.
+
+Re-pulled `habitcents-ops`'s `PUNCHLIST.md` fresh (ops main advanced
+`0e86724..22a3fd7`, four commits, all sibling-routine and this routine's
+own runs.log lines, no new core-p3-flagged items): RESUME marker
+unchanged, still the bill-reminders build-28 device-pass wave, none of it
+core-p3-flagged; the one core-p3-flagged line (leak finder dated
+entitlement) is still the same text, already built and closed on this
+branch at run 8, waiting on PR #132 to merge.
+
+Fresh `npm ci` (container had no `node_modules` at session start), tsc
+clean, full suite green on the first pass (131 suites / 1451 tests, zero
+drift from run 105). One commit (HANDOFF.md run 106 status), pushed to
+`routine/core-p3`. No push notification: nothing moved that is new to
+Charen or actionable since run 105's own read; the board's 10-03
+follow-up date has not arrived yet.
+
 ## COMPLETE (run 105, 2026-10-01: re-verify, no new work)
 
 `git fetch origin main routine/core-p3` confirmed `origin/main` unchanged
