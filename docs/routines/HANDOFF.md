@@ -1,5 +1,24 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 111, 2026-10-02: re-verify, no new work)
+
+Same facts as run 110, re-confirmed: `origin/main` unchanged at `3a01b88`,
+branch tip unchanged pre-push (`44e3cd7`), PR #132 still open, not draft,
+`mergeable_state: clean`, head/base matching, 0 new comments or reviews.
+Fresh `npm ci`, `npx tsc --noEmit` clean, `npm test` green (131 suites /
+1451 tests, identical to run 109-110). PLAN.md checklist unchanged (zero
+`[ ]` items). No REVIEW FEEDBACK pending. Re-read habitcents-ops
+PUNCHLIST.md RESUME marker: unrelated to core-p3 (reminders tier 1+2,
+different stream); the one core-p3-flagged line (leak finder entitlement)
+is unchanged, already built and closed at run 8. Re-read issue #139
+(twenty-eighth orchestrator entry, 2026-10-02): core-worker section
+unchanged, "approved, nothing owed," blocked on decisions 2-4. Per that
+board's own guidance ("tomorrow's board follow-up should not re-ping on
+the same facts unless something new moves"), no push alert sent this run;
+run 109 already delivered the 100-run escalation and nothing has moved
+since. Decisions 2-4 (payments gate) remain open and are not this
+routine's to resolve.
+
 ## COMPLETE (run 110, 2026-10-02: re-verify, no new work)
 
 `git fetch origin main routine/core-p3` then `git rev-list --left-right
