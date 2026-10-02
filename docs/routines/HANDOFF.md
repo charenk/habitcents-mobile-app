@@ -1,5 +1,48 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 110, 2026-10-02: re-verify, no new work)
+
+`git fetch origin main routine/core-p3` then `git rev-list --left-right
+--count origin/main...origin/routine/core-p3` returned `0  116`:
+`origin/main` unchanged at `3a01b88` since run 85, branch tip unchanged at
+`8d03682` (run 109's own status commit) pre-push, so no rebase needed. PR
+#132 re-confirmed via the API: `state: open`, `draft: false`, `merged:
+false`, `mergeable_state: clean`, head `8d03682088aa7478ecc58a2291079bf31781bba2`
+(matches this branch's pre-push tip), base `3a01b88a9639e0964076166163d3efd74c9f3be4`
+(matches main's current tip), 116 commits, `updated_at` at
+`2026-10-02T10:14:13Z` (run 109's own push, not a human action), 0 comments,
+0 reviews. No REVIEW FEEDBACK pending (last closed entry covers runs
+12-14). Checklist in `PLAN.md` unchanged: zero `[ ]` items remaining beyond
+the legend line.
+
+Re-checked the routines-orchestrator's status board (mobile-app issue
+#139) directly via the API: advanced to the twenty-eighth entry,
+`updated_at` at `2026-10-02T12:04:05Z` (new since run 109's read). Content:
+fifth fully quiet day, 12 worker runs reviewed, zero code commits anywhere,
+and confirmation that run 109's 100-run push alert reached Charen and was
+noted on the board. Core-worker's own section is unchanged: "complete
+since run 8... approved, nothing owed," blocked on the payments gate
+(decisions 2-4, open since runs 1-3, early September). Item 11 (worker
+cadence) still open, now escalated a fourth time via run 109's own alert;
+not this routine's call to thin its own cadence. Decision queue is now day
+25 by the board's own count. The board's next follow-up stays 2026-10-03,
+not yet reached.
+
+Re-pulled `habitcents-ops`'s `PUNCHLIST.md` fresh: RESUME marker and the
+one core-p3-flagged line (leak finder dated entitlement) unchanged, already
+built and closed on this branch at run 8, waiting on PR #132 to merge.
+
+Fresh `npm ci` (container had no `node_modules` at session start), tsc
+clean, full suite green on the first pass (131 suites / 1451 tests, zero
+drift from run 109). One commit (this HANDOFF entry), pushed to
+`routine/core-p3`.
+
+No push notification this run: nothing moved since run 109's read beyond
+the board absorbing that same alert, and run 109 already sent Charen the
+direct 100-run push this morning. Sending a second one on the identical
+facts would be a duplicate signal; the board's 10-03 follow-up remains the
+next checkpoint that could change that.
+
 ## COMPLETE (run 109, 2026-10-02: re-verify, no new work)
 
 `git fetch origin main routine/core-p3` confirmed `origin/main` still
