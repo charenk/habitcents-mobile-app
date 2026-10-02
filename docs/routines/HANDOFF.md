@@ -72,6 +72,40 @@ device pass is separate and additional to that one, not a substitute.
 
 ## Status
 
+Run 112 (2026-10-02). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 111's
+check (`git merge-base --is-ancestor origin/main HEAD` true, still `3a01b88`),
+so no rebase and no new regression surface this run. Fresh `npm ci` (this
+container had no `node_modules`), `npx tsc --noEmit` clean. Full suite green
+on the first pass, no flake locally: 128 suites / 1419 tests, zero drift from
+run 111. Re-verified item 7 (`app.json` still `"orientation": "portrait"`,
+`"supportsTablet": true`). PR #133 re-checked via `get`/`get_check_runs`/
+`get_comments`: still open, not draft, `mergeable_state: clean`, base
+`3a01b88` (main's tip, unchanged), head still `b22c371` (run 111's own
+status-only push, no new commit needed this run before this status update).
+The `verify` check on that head (job 110759939463, completed 08:09-08:11 UTC
+2026-10-02) is SUCCESS, no recurrence of the `habitDetection.ts` `spanDays`
+flake this time. Comment count unchanged at 3 since run 96's third-occurrence
+note (issuecomment-5871674133), no reviews. Issue #139 re-read: `updated_at`
+advanced to `2026-10-02T12:04:05Z`, a twenty-eighth orchestrator entry landed
+since run 111's check (fifth fully quiet day in a row, main static since
+09-26). Content is confirmation, not new work for this routine: ipad-worker
+section still "approved, nothing owed," blocker still the device pass gated
+on PR #133 merging behind #132's payments gate (decision 6). One new item on
+the board: core-worker sent Charen a direct push alert this morning (10-02)
+about its own 100 consecutive re-verify-only runs, with item 11's cadence
+recommendation now escalated three times; that alert and the item 11
+decision are core-worker's and the orchestrator's threads, not this
+routine's to duplicate. Decision queue otherwise unchanged and now day 25;
+item 12 (the flake) still tracked with the same proposed one-line patch, not
+this routine's to enact. No REVIEW FEEDBACK addressed to this routine. No
+production code, test, or plan content changed this run; this HANDOFF update
+is the only change. No push notification: nothing new for Charen this run
+specifically (the core-worker alert already reached Charen directly from
+that routine, and the board's own posture note defers the cadence/decision
+follow-up to tomorrow's scheduled board run), and no regression or new
+decision surfaced for ipad-worker.
+
 Run 111 (2026-10-02). Verified per this file's own COMPLETE instruction: plan
 fully checked, nothing new to do. `origin/main` has not moved since run 110's
 check (`git merge-base --is-ancestor origin/main HEAD` true, still `3a01b88`),
