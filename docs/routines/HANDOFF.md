@@ -1,5 +1,44 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 109, 2026-10-02: re-verify, no new work)
+
+`git fetch origin main routine/core-p3` confirmed `origin/main` still
+unchanged at `3a01b88` since run 85; branch tip was `d4df38b` (run 108's
+status commit) pre-push, so no rebase needed. PR #132 re-confirmed via the
+API: `state: open`, `draft: false`, `merged: false`, `mergeable_state:
+clean`, head `d4df38b...` (matches this branch's pre-push tip), base
+`3a01b88...` (matches main's tip), 115 commits now, `updated_at` moved to
+`2026-10-02T04:10:48Z` (run 108's own push, not a human action), no new
+reviews or comments.
+
+Re-checked the routines-orchestrator's status board (mobile-app issue
+#139): byte-identical since run 107/108's read, `updated_at` unchanged at
+`2026-10-01T12:03:34Z`. Core-worker's section unchanged: "complete since
+run 8... approved, nothing owed," blocked on the payments gate (decisions
+2-4, open since runs 1-3, i.e. since early September). Item 11 (worker
+cadence) still open, still the same three escalation dates (09-18, 09-24,
+09-26), no action taken. Next follow-up still 2026-10-03, not yet reached.
+
+Also pulled habitcents-ops `main` fresh: picked up 19 new `runs.log` lines
+(other routines' status-only commits, including the orchestrator's own
+run 27 "quiet day four" and repeated re-verify-only runs from ipad-worker
+and localization-worker), nothing core-p3-flagged. `PUNCHLIST.md` RESUME
+marker unchanged.
+
+Fresh `npm ci`, tsc clean, full suite green (131 suites / 1451 tests, no
+drift from run 108). One commit (this HANDOFF entry), pushed to
+`routine/core-p3`.
+
+**Flagging out of band this run (not waiting for the 10-03 board
+checkpoint):** this routine has now logged 100 consecutive re-verify
+runs with zero new work (run 9 through run 109, since 2026-09-06),
+every one blocked on the same unresolved decisions 2-4. Item 11's
+recommendation to thin this routine's cadence has been escalated three
+times since 09-18 with no action. That pattern, not any single run, is
+the actionable signal, so it is being surfaced directly to Charen now
+rather than silently waiting for the orchestrator's next scheduled
+checkpoint.
+
 ## COMPLETE (run 108, 2026-10-02: re-verify, no new work)
 
 `git fetch origin main routine/core-p3` confirmed `origin/main` unchanged
