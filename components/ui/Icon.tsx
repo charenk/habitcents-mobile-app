@@ -45,6 +45,7 @@ import {
   Plus,
   Repeat,
   Settings2,
+  Share2,
   Shirt,
   ShoppingCart,
   Sprout,
@@ -127,6 +128,8 @@ const GLYPHS = {
   Shirt,
   CreditCard,
   Ellipsis,
+  // Share counter card (P4-3): native share-sheet affordance.
+  Share2,
 } as const;
 
 export type IconName = keyof typeof GLYPHS;
