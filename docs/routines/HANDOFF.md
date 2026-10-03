@@ -2,8 +2,33 @@
 
 ## Status
 
-In progress, blocked on decisions 8/10 (standing since run 38, now day 28
-on the board's own count). Run 116: rebase no-op (already up to date,
+In progress, blocked on decisions 8/10 (standing since run 38, day 26 on
+the board's own count as of its 2026-10-03 29th orchestrator post). Run
+117: rebase no-op (already up to date, `origin/main` still `3a01b88`). No
+REVIEW FEEDBACK pending. Issue #139 re-read directly: a new 29th
+orchestrator entry landed today (`updated_at` now 2026-10-03T12:03:56Z,
+up from run 116's read of 2026-10-02T12:04:05Z): "sixth fully quiet day
+in a row," review verdict for this stream explicitly "approved, nothing
+owed" for runs 112-115, decisions 8/10 still open and unchanged in
+content, next direct re-ping scheduled 2026-10-07 (day 30) unless
+something moves first, item 11's cadence-thinning recommendation still
+open (the orchestrator's and Charen's call, not this worker's). PR #134
+re-confirmed: open, draft, `mergeable_state` clean, head `a6e0d34`
+matching this branch's pre-run tip, zero reviews. Fresh container,
+`npm ci`, `tsc --noEmit` clean, full suite green (131/131, 1479/1479) on
+the first run, no flake, matching run 116's counts. Re-ran the item-6
+`accessibilityLabel={`...`}` grep (14 hits, same by-design files) and the
+static-catalog-import grep (same 4 by-design files, 5 with strings.ts's
+own header): identical to run 116. VALUE CHANGE sweep: same 8 matches (3
+gated in onboarding, 5 already-resolved). No new bounded work: items
+3/5/6 stay exhausted, item 4 stays blocked behind decisions 8/10.
+
+One commit (HANDOFF touch only, no code change), pushed
+`routine/localization`. No push notification: the orchestrator's own
+post today already states "approved, nothing owed" and sets the next
+re-ping for 2026-10-07, so nothing here is new signal for Charen.
+
+Run 116: rebase no-op (already up to date,
 `origin/main` still `3a01b88`). No REVIEW FEEDBACK pending; confirmed the
 two run 88 fixes already applied (RemindersContext's reconcile effect has
 `strings` in its deps, `ensureAndroidChannelAsync` has its own
