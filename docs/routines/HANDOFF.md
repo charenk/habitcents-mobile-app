@@ -1,5 +1,41 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 112, 2026-10-03: re-verify, no new work)
+
+`git fetch origin main routine/core-p3` then `git rev-list --left-right
+--count origin/main...origin/routine/core-p3` returned `0  119`:
+`origin/main` unchanged at `3a01b88` since run 85, branch tip unchanged at
+`457af1a` (run 111's own status commit) pre-push, so no rebase needed. PR
+#132 re-confirmed via the API: `state: open`, `draft: false`, `merged:
+false`, `mergeable_state: clean`, head `457af1a8285acc094af1e2b3236d436526640c14`
+(matches this branch's pre-push tip), base `3a01b88a9639e0964076166163d3efd74c9f3be4`
+(matches main's current tip), 119 commits, `updated_at` at
+`2026-10-02T22:12:57Z` (run 111's own push, not a human action), 0 comments
+(checked directly via the comments endpoint: empty array), 0 reviews. No
+REVIEW FEEDBACK pending. PLAN.md checklist unchanged (zero `[ ]` items).
+
+Re-pulled `habitcents-ops`'s `PUNCHLIST.md` fresh (ops main advanced
+`89a68c2..4a09d2b`, 29 lines, all sibling-routine/orchestrator
+`docs/runs.log` entries, no new core-p3-flagged items): RESUME marker
+unchanged in substance, still the bill-reminders build-28 wave blocked on
+an `EXPO_TOKEN` Actions secret (a different stream's blocker, not this
+routine's). Re-read issue #139 (twenty-eighth orchestrator entry,
+`updated_at` still `2026-10-02T12:04:05Z`, unchanged since run 111's read):
+core-worker's own section unchanged, "complete since run 8... approved,
+nothing owed," blocked on decisions 2-4 (payments gate). Item 11 (worker
+cadence) still open, still unactioned since run 109's direct 100-run push
+alert; that alert's own stated reasoning ("tomorrow's board follow-up
+should not re-ping on the same facts unless something new moves") still
+applies here since nothing has moved. The board's own next follow-up is
+dated 2026-10-03 (today) but is the orchestrator's scheduled run, not
+this routine's to anticipate or substitute for.
+
+Fresh `npm ci`, `npx tsc --noEmit` clean, `npm test` green (131 suites /
+1451 tests, identical to runs 109-111). One commit (this HANDOFF entry),
+pushed to `routine/core-p3`. No push notification: nothing moved since
+run 111/the 100-run alert, and sending another now would be a duplicate
+signal on facts already reported.
+
 ## COMPLETE (run 111, 2026-10-02: re-verify, no new work)
 
 Same facts as run 110, re-confirmed: `origin/main` unchanged at `3a01b88`,
