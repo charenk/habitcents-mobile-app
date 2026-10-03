@@ -27,7 +27,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useReminders } from '@/contexts/RemindersContext';
 import { typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
 import { track } from '@/utils/analytics';
 import { formatTime } from '@/utils/dates';
 import { hapticError, hapticSelection } from '@/utils/motion';
@@ -52,6 +52,7 @@ export function reminderTimeLabelFor(hour: number, minute = 0): string {
 export function RemindersSheet({ visible, onClose }: RemindersSheetProps): React.JSX.Element {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
+  const strings = useStrings();
   const { show } = useToast();
   const { prefs, permission, setGlobalEnabled, setReminderTime } = useReminders();
 

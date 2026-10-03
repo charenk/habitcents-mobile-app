@@ -23,9 +23,17 @@ jest.mock('expo-router', () => ({
   useRouter: () => ({ push: mockPush }),
 }));
 
+// LocaleProvider resolves the device locale on mount (routine/localization);
+// this suite does not exercise language selection, so a fixed English
+// device locale keeps it out of the way.
+jest.mock('expo-localization', () => ({
+  getLocales: () => [{ languageCode: 'en', languageScriptCode: null, regionCode: 'US' }],
+}));
+
 import React from 'react';
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
 import { ThemeProvider } from '@/contexts/ThemeContext';
+import { LocaleProvider } from '@/contexts/LocaleContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { ScanSnapshotCard } from '@/components/insights/ScanSnapshotCard';
 import { strings } from '@/constants/strings';
@@ -65,9 +73,11 @@ afterEach(() => {
 it('offers the re-scan action and the until-replaced caption when the flow is live', async () => {
   const view = await render(
     <ThemeProvider>
-      <CurrencyProvider>
-        <ScanSnapshotCard summary={summary()} />
-      </CurrencyProvider>
+      <LocaleProvider>
+        <CurrencyProvider>
+          <ScanSnapshotCard summary={summary()} />
+        </CurrencyProvider>
+      </LocaleProvider>
     </ThemeProvider>
   );
 

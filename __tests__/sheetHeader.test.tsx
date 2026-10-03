@@ -19,6 +19,7 @@ import React from 'react';
 import { act, cleanup, fireEvent, render, within } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '@/contexts/ThemeContext';
+import { LocaleProvider } from '@/contexts/LocaleContext';
 import { Sheet } from '@/components/ui/Sheet';
 import { SheetHeader } from '@/components/ui/SheetHeader';
 
@@ -30,7 +31,9 @@ const initialMetrics = {
 function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SafeAreaProvider initialMetrics={initialMetrics}>
-      <ThemeProvider>{children}</ThemeProvider>
+      <ThemeProvider>
+        <LocaleProvider>{children}</LocaleProvider>
+      </ThemeProvider>
     </SafeAreaProvider>
   );
 }

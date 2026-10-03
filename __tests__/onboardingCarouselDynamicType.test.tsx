@@ -44,6 +44,7 @@ import { StyleSheet } from 'react-native';
 import { cleanup, render } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '@/contexts/ThemeContext';
+import { LocaleProvider } from '@/contexts/LocaleContext';
 import { OnboardingCarousel, BEATS } from '@/components/onboarding/OnboardingCarousel';
 import { strings } from '@/constants/strings';
 import { CHROME_MAX_FONT_SCALE } from '@/utils/textScale';
@@ -68,7 +69,9 @@ async function renderCarousel() {
   return render(
     <SafeAreaProvider initialMetrics={initialMetrics}>
       <ThemeProvider>
-        <OnboardingCarousel onPick={jest.fn()} onSkip={jest.fn()} />
+        <LocaleProvider>
+          <OnboardingCarousel onPick={jest.fn()} onSkip={jest.fn()} />
+        </LocaleProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );

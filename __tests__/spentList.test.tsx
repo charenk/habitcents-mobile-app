@@ -19,6 +19,7 @@ import React from 'react';
 import { cleanup, render } from '@testing-library/react-native';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
+import { LocaleProvider } from '@/contexts/LocaleContext';
 import { SpentList } from '@/components/money/SpentList';
 import { strings } from '@/constants/strings';
 import { formatDate } from '@/utils/dates';
@@ -55,7 +56,9 @@ function sectionFor(expenses: Expense[]): ExpenseSection {
 function Providers({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider>
-      <CurrencyProvider>{children}</CurrencyProvider>
+      <LocaleProvider>
+        <CurrencyProvider>{children}</CurrencyProvider>
+      </LocaleProvider>
     </ThemeProvider>
   );
 }

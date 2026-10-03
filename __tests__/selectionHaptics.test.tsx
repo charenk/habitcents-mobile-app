@@ -28,10 +28,15 @@ jest.mock('@/utils/motion', () => ({
 import React from 'react';
 import { fireEvent, render } from '@testing-library/react-native';
 import { ThemeProvider } from '@/contexts/ThemeContext';
+import { LocaleProvider } from '@/contexts/LocaleContext';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 
 function Providers({ children }: { children: React.ReactNode }) {
-  return <ThemeProvider>{children}</ThemeProvider>;
+  return (
+    <ThemeProvider>
+      <LocaleProvider>{children}</LocaleProvider>
+    </ThemeProvider>
+  );
 }
 
 const OPTIONS = [

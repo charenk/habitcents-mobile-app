@@ -25,6 +25,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { act, cleanup, fireEvent, render } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '@/contexts/ThemeContext';
+import { LocaleProvider } from '@/contexts/LocaleContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { ToastProvider } from '@/components/ui/Toast';
 import { ExpensesProvider } from '@/contexts/ExpensesContext';
@@ -75,6 +76,7 @@ async function renderDeck(overrides: Partial<React.ComponentProps<typeof DeckScr
   const view = await render(
     <SafeAreaProvider initialMetrics={initialMetrics}>
       <ThemeProvider>
+        <LocaleProvider>
         <CurrencyProvider>
           <ToastProvider>
             <ExpensesProvider>
@@ -86,6 +88,7 @@ async function renderDeck(overrides: Partial<React.ComponentProps<typeof DeckScr
             </ExpensesProvider>
           </ToastProvider>
         </CurrencyProvider>
+        </LocaleProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );
@@ -143,24 +146,26 @@ describe('deck screen', () => {
       view.rerender(
         <SafeAreaProvider initialMetrics={initialMetrics}>
           <ThemeProvider>
-            <CurrencyProvider>
-              <ToastProvider>
-                <ExpensesProvider>
-                  <OnboardingProvider>
-                    <HabitsProvider>
-                      <DeckScreen
-                        candidates={[candidate({ merchantStem: 'a' }), candidate({ merchantStem: 'b' })]}
-                        spanDays={30}
-                        onDismiss={jest.fn()}
-                        onSeeEverything={jest.fn()}
-                        onActivated={jest.fn()}
-                        onBack={jest.fn()}
-                      />
-                    </HabitsProvider>
-                  </OnboardingProvider>
-                </ExpensesProvider>
-              </ToastProvider>
-            </CurrencyProvider>
+            <LocaleProvider>
+              <CurrencyProvider>
+                <ToastProvider>
+                  <ExpensesProvider>
+                    <OnboardingProvider>
+                      <HabitsProvider>
+                        <DeckScreen
+                          candidates={[candidate({ merchantStem: 'a' }), candidate({ merchantStem: 'b' })]}
+                          spanDays={30}
+                          onDismiss={jest.fn()}
+                          onSeeEverything={jest.fn()}
+                          onActivated={jest.fn()}
+                          onBack={jest.fn()}
+                        />
+                      </HabitsProvider>
+                    </OnboardingProvider>
+                  </ExpensesProvider>
+                </ToastProvider>
+              </CurrencyProvider>
+            </LocaleProvider>
           </ThemeProvider>
         </SafeAreaProvider>
       );

@@ -6,7 +6,7 @@ import { KeptHero } from '@/components/habit-logging/KeptHero';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { spacing, typeScale, type AppTheme } from '@/constants/theme';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
 import type { DetectedHabit } from '@/types/habit';
 
 type PayoffScreenProps = {
@@ -40,6 +40,7 @@ type PayoffScreenProps = {
  */
 export function PayoffScreen({ habit, onContinue }: PayoffScreenProps) {
   const theme = useTheme();
+  const strings = useStrings();
   const insets = useSafeAreaInsets();
   const { format } = useCurrency();
   const styles = useMemo(() => createStyles(theme), [theme]);

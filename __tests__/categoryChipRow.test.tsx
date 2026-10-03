@@ -30,11 +30,16 @@
  * tests here. The suite spies once and clears (not re-spies) between
  * tests to sidestep that.
  */
+jest.mock('@react-native-async-storage/async-storage', () =>
+  require('@react-native-async-storage/async-storage/jest/async-storage-mock')
+);
+
 import React from 'react';
 import { ScrollView, View } from 'react-native';
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
 import type { TestInstance } from 'test-renderer';
 import { ThemeProvider } from '@/contexts/ThemeContext';
+import { LocaleProvider } from '@/contexts/LocaleContext';
 import { CategoryChipRow } from '@/components/money/CategoryChipRow';
 import type { Category } from '@/types/category';
 
@@ -69,7 +74,11 @@ const categories: Category[] = [
 ];
 
 function Providers({ children }: { children: React.ReactNode }) {
-  return <ThemeProvider>{children}</ThemeProvider>;
+  return (
+    <ThemeProvider>
+      <LocaleProvider>{children}</LocaleProvider>
+    </ThemeProvider>
+  );
 }
 
 /** Walks from a chip's fiber up to the ancestor ScrollView's class instance. */

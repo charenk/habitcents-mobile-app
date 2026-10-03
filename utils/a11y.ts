@@ -11,6 +11,7 @@
  * re-formatted here), so zero-decimal currencies stay correct.
  */
 
+import type { Catalog } from '@/utils/i18n';
 import type { DayState } from '@/types/habit';
 
 /** Kept hero: one utterance, read on settle only (spec 09 §2, row "Kept hero"). */
@@ -46,60 +47,88 @@ export function arcLabel(totalSkips: number, chapterName: string): string {
 }
 
 /** A selectable chip: "{name}, {selected/not selected}" (spec 09 §2, "Log form", "Onboarding chips"). */
-export function selectableLabel(name: string, selected: boolean): string {
-  return `${name}, ${selected ? 'selected' : 'not selected'}`;
+export function selectableLabel(name: string, selected: boolean, strings: Catalog): string {
+  return `${name}, ${selected ? strings.common.selected : strings.common.notSelected}`;
 }
 
-/** An onboarding preset chip at its preset price (spec 09 §2, "Onboarding chips + bands"). */
+/**
+ * An onboarding preset chip at its preset price (spec 09 §2, "Onboarding
+ * chips + bands"). Confirmed dead (routine/localization, 2026-09-11): no
+ * real call site anywhere outside this file and its own unit test, so left
+ * on the static-English signature rather than threaded through the
+ * catalog, same treatment as the other dead sections this routine has
+ * found (habitDetail, reports, editExpenseModal). Convert if a real render
+ * path returns.
+ */
 export function presetChipLabel(name: string, formattedPreset: string, selected: boolean): string {
   return `${name}, about ${formattedPreset} a month, ${selected ? 'selected' : 'not selected'}`;
 }
 
-/** An onboarding preset chip after the user edits its price (spec 09 §2). */
+/** An onboarding preset chip after the user edits its price (spec 09 §2). Also dead; see presetChipLabel. */
 export function editedChipLabel(name: string, formattedExact: string, selected: boolean): string {
   return `${name}, ${formattedExact}, your price, ${selected ? 'selected' : 'not selected'}`;
 }
 
 /** A Leak Scan habit card header: "rank {n}, {class}, {tier}" (spec 09 §2, "Habit cards"). */
-export function habitCardLabel(rank: number, className: string, tierName: string): string {
-  return `rank ${rank}, ${className}, ${tierName}`;
+export function habitCardLabel(rank: number, className: string, tierName: string, strings: Catalog): string {
+  return strings.leakScan.habitCardSpokenLabel(rank, className, tierName);
 }
 
 /** A SpendPulse cell (spec 09 §2, "SpendPulse"): spent / no spend / outside coverage are distinct. */
 export function pulseCellLabel(
   dateLabel: string,
   kind: 'spend' | 'zero' | 'outside',
+  strings: Catalog,
   formattedAmount?: string
 ): string {
-  if (kind === 'outside') return `${dateLabel}, outside your files`;
-  if (kind === 'zero') return `${dateLabel}, no spend`;
-  return `${dateLabel}, ${formattedAmount ?? ''} spent`.trim();
+  if (kind === 'outside') return `${dateLabel}, ${strings.leakScan.pulseLegendOutOfCoverage}`;
+  if (kind === 'zero') return `${dateLabel}, ${strings.leakScan.pulseLegendZero}`;
+  return strings.leakScan.pulseCellSpentSpokenLabel(dateLabel, formattedAmount ?? '');
 }
 
 /** A reminder toggle row: "remind me the day before, {on/off}" (spec 09 §2, "Projection"). */
-export function remindToggleLabel(on: boolean): string {
-  return `remind me the day before, ${on ? 'on' : 'off'}`;
+export function remindToggleLabel(on: boolean, strings: Catalog): string {
+  return on ? strings.leakScan.remindToggleOn : strings.leakScan.remindToggleOff;
 }
 
-/** Monthly projection trend (ADA-010): direction must be spoken, never carried by color alone. */
+/**
+ * Monthly projection trend (ADA-010): direction must be spoken, never carried by color alone.
+ * Confirmed dead (routine/localization, 2026-09-12): no real call site anywhere outside this
+ * file and its own unit test. Left on the static-English signature, same treatment as
+ * presetChipLabel/editedChipLabel above. Convert if a real render path returns.
+ */
 export function projectionTrendLabel(isUp: boolean, percent: number): string {
   const direction = isUp ? 'up' : 'down';
   return `Spending ${direction} ${percent} percent versus last month`;
 }
 
-/** Hidden amount input on the add-expense form (ADA-009): currency-aware, never "dollars". */
+/**
+ * Hidden amount input on the add-expense form (ADA-009): currency-aware, never "dollars".
+ * Confirmed dead (routine/localization, 2026-09-12): no real call site outside this file
+ * and its own unit test. Same treatment as presetChipLabel/editedChipLabel above.
+ */
 export function amountInputLabel(currencyName: string): string {
   return `Amount in ${currencyName}`;
 }
 
+/**
+ * Confirmed dead (routine/localization, 2026-09-12): no real call site outside this file
+ * and its own unit test. Same treatment as presetChipLabel/editedChipLabel above.
+ */
 export function fillMerchantLabel(merchant: string): string {
   return `Fill merchant, ${merchant}`;
 }
 
-export function deleteCategoryLabel(name: string): string {
-  return `Delete ${name}`;
+export function deleteCategoryLabel(name: string, strings: Catalog): string {
+  return strings.categories.deleteCategorySpokenLabel(name);
 }
 
+/**
+ * Confirmed dead (routine/localization, 2026-09-12): the constants/strings.ts
+ * leakScan.reminderTimeLabel key it echoes is itself unreferenced anywhere; no real call
+ * site outside this file and its own unit test. Same treatment as presetChipLabel/
+ * editedChipLabel above.
+ */
 export function reminderTimeLabel(time: string): string {
   return `Reminder time, ${time}`;
 }

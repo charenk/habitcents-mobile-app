@@ -13,6 +13,8 @@ import { Button } from '@/components/ui';
 import { useTheme } from '@/contexts/ThemeContext';
 import { radii, spacing, typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
+import type { Catalog } from '@/utils/i18n';
+import { useStrings } from '@/utils/i18n';
 import { BeatMedia, type BeatAsset } from './BeatMedia';
 
 // The scan beat was removed 2026-09-05 (decision 0009): the leak scan is
@@ -38,34 +40,39 @@ export type Beat = {
  * close. This deliberately ends the old order's funnel comparability; the
  * carousel-level events shipped 2026-09-17 are the new baseline, and
  * beat-position versus completion is the question they exist to answer.
- * Every count in this file reads beats.length, so the dots, the paging and
- * the "step n of total" hint all follow on their own.
+ * Every count in this file reads activeBeats.length, so the dots, the paging
+ * and the "step n of total" hint all follow on their own.
  *
  * `asset` is absent until the captures land (see
  * design/captures/onboarding-beats/RUNBOOK.md). BeatMedia renders an honest
  * empty frame meanwhile rather than a mock-up, which is the entire point of
  * ADR 0026: beats show the real app or they show nothing.
  */
-export const BEATS: Beat[] = [
-  {
-    intent: 'break',
-    headline: strings.onboarding.beatBreakHeadline,
-    hook: strings.onboarding.beatBreakHook,
-    cta: strings.onboarding.beatBreakCta,
-  },
-  {
-    intent: 'track',
-    headline: strings.onboarding.beatTrackHeadline,
-    hook: strings.onboarding.beatTrackHook,
-    cta: strings.onboarding.beatTrackCta,
-  },
-  {
-    intent: 'bills',
-    headline: strings.onboarding.beatBillsHeadline,
-    hook: strings.onboarding.beatBillsHook,
-    cta: strings.onboarding.beatBillsCta,
-  },
-];
+export function buildBeats(strings: Catalog): Beat[] {
+  return [
+    {
+      intent: 'break',
+      headline: strings.onboarding.beatBreakHeadline,
+      hook: strings.onboarding.beatBreakHook,
+      cta: strings.onboarding.beatBreakCta,
+    },
+    {
+      intent: 'track',
+      headline: strings.onboarding.beatTrackHeadline,
+      hook: strings.onboarding.beatTrackHook,
+      cta: strings.onboarding.beatTrackCta,
+    },
+    {
+      intent: 'bills',
+      headline: strings.onboarding.beatBillsHeadline,
+      hook: strings.onboarding.beatBillsHook,
+      cta: strings.onboarding.beatBillsCta,
+    },
+  ];
+}
+
+/** English fixture, kept for the default prop shape and as a test seam. */
+export const BEATS: Beat[] = buildBeats(strings);
 
 type OnboardingCarouselProps = {
   /** Start the beat's REAL workflow. Never a preview of one. */
@@ -102,16 +109,14 @@ type OnboardingCarouselProps = {
  * paging and rubber-banding natively, and beats-as-recordings means there are
  * no scenes to animate.
  */
-export function OnboardingCarousel({
-  onPick,
-  onSkip,
-  beats = BEATS,
-  onBeatViewed,
-}: OnboardingCarouselProps) {
+export function OnboardingCarousel({ onPick, onSkip, beats, onBeatViewed }: OnboardingCarouselProps) {
   const theme = useTheme();
+  const strings = useStrings();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const styles = useMemo(() => createStyles(theme), [theme]);
+  const localizedBeats = useMemo(() => buildBeats(strings), [strings]);
+  const activeBeats = beats ?? localizedBeats;
   const [index, setIndex] = useState(0);
   const lastIndexRef = useRef(0);
 
@@ -119,7 +124,7 @@ export function OnboardingCarousel({
   // below never reports it. Without this the funnel would count everyone who
   // swiped and nobody who landed.
   useEffect(() => {
-    const first = beats[0];
+    const first = activeBeats[0];
     if (!first) return;
     onBeatViewed?.(first.intent, 0);
     // Mount only: a later `beats` change is a test seam, not a new view.
@@ -130,14 +135,14 @@ export function OnboardingCarousel({
     (e: NativeSyntheticEvent<NativeScrollEvent>) => {
       if (width <= 0) return;
       const next = Math.round(e.nativeEvent.contentOffset.x / width);
-      const clamped = Math.max(0, Math.min(beats.length - 1, next));
+      const clamped = Math.max(0, Math.min(activeBeats.length - 1, next));
       if (clamped === lastIndexRef.current) return;
       lastIndexRef.current = clamped;
       setIndex(clamped);
-      const beat = beats[clamped];
+      const beat = activeBeats[clamped];
       if (beat) onBeatViewed?.(beat.intent, clamped);
     },
-    [width, beats, onBeatViewed]
+    [width, activeBeats, onBeatViewed]
   );
 
   return (
@@ -157,7 +162,7 @@ export function OnboardingCarousel({
         scrollEventThrottle={16}
         style={styles.pager}
       >
-        {beats.map((beat, i) => (
+        {activeBeats.map((beat, i) => (
           /**
            * Each beat scrolls vertically inside the horizontal pager.
            *
@@ -187,7 +192,7 @@ export function OnboardingCarousel({
               label={beat.cta}
               onPress={() => onPick(beat.intent)}
               style={styles.cta}
-              accessibilityHint={strings.onboarding.beatProgress(i + 1, beats.length)}
+              accessibilityHint={strings.onboarding.beatProgress(i + 1, activeBeats.length)}
             />
             <View style={styles.beatSpacer} />
           </ScrollView>
@@ -199,9 +204,9 @@ export function OnboardingCarousel({
           style={styles.dots}
           accessible
           accessibilityRole="progressbar"
-          accessibilityLabel={strings.onboarding.beatProgress(index + 1, beats.length)}
+          accessibilityLabel={strings.onboarding.beatProgress(index + 1, activeBeats.length)}
         >
-          {beats.map((beat, i) => (
+          {activeBeats.map((beat, i) => (
             <View
               key={beat.intent}
               style={[styles.dot, i === index ? styles.dotActive : null]}

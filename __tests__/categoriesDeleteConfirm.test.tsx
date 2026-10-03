@@ -63,6 +63,7 @@ import React from 'react';
 import { act, cleanup, fireEvent, render } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '@/contexts/ThemeContext';
+import { LocaleProvider } from '@/contexts/LocaleContext';
 import { OnboardingProvider } from '@/contexts/OnboardingContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { ToastProvider } from '@/components/ui/Toast';
@@ -79,11 +80,13 @@ function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SafeAreaProvider initialMetrics={initialMetrics}>
       <ThemeProvider>
-        <ToastProvider>
-          <CurrencyProvider>
-            <OnboardingProvider>{children}</OnboardingProvider>
-          </CurrencyProvider>
-        </ToastProvider>
+        <LocaleProvider>
+          <ToastProvider>
+            <CurrencyProvider>
+              <OnboardingProvider>{children}</OnboardingProvider>
+            </CurrencyProvider>
+          </ToastProvider>
+        </LocaleProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );
@@ -110,7 +113,7 @@ describe('Categories delete confirm', () => {
     const view = await renderScreen();
 
     await act(async () => {
-      fireEvent.press(view.getByLabelText(deleteCategoryLabel('Hobbies')));
+      fireEvent.press(view.getByLabelText(deleteCategoryLabel('Hobbies', strings)));
     });
 
     expect(view.getByText(strings.categories.deleteTitle('Hobbies'))).toBeTruthy();
@@ -122,7 +125,7 @@ describe('Categories delete confirm', () => {
     const view = await renderScreen();
 
     await act(async () => {
-      fireEvent.press(view.getByLabelText(deleteCategoryLabel('Hobbies')));
+      fireEvent.press(view.getByLabelText(deleteCategoryLabel('Hobbies', strings)));
     });
     await act(async () => {
       fireEvent.press(view.getByText(strings.categories.deleteCancel));
@@ -135,7 +138,7 @@ describe('Categories delete confirm', () => {
     const view = await renderScreen();
 
     await act(async () => {
-      fireEvent.press(view.getByLabelText(deleteCategoryLabel('Hobbies')));
+      fireEvent.press(view.getByLabelText(deleteCategoryLabel('Hobbies', strings)));
     });
     await act(async () => {
       fireEvent.press(view.getByText(strings.categories.deleteConfirmCta));
