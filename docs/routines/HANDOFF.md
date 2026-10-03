@@ -1,5 +1,26 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 114, 2026-10-03: re-verify, no new work)
+
+Rebase check: `origin/main` unchanged at `3a01b88` (since run 85), branch
+tip unchanged at `25276a9` (run 113's own commit) pre-push, no rebase
+needed. PR #132 re-confirmed via API: `open`, not draft, `mergeable_state:
+clean`, head/base matching, 0 comments, 0 reviews, 121 commits. No REVIEW
+FEEDBACK section open (closed since 2026-09-08). PLAN.md checklist
+unchanged (zero `[ ]` items). Ops PUNCHLIST.md RESUME marker re-read:
+bill-reminders/EXPO_TOKEN stream, not core-p3-flagged; no new
+payments/entitlement debt added. Issue #139 re-read via API: now the
+twenty-ninth orchestrator entry (`updated_at` `2026-10-03T12:03:56Z`,
+new since run 113's read), sixth quiet day, core-worker section
+unchanged ("approved, nothing owed"), decision queue day 26 (items 2-4,
+7 gate this PR), orchestrator already decided no re-ping until
+2026-10-07 unless something moves. Nothing has moved for this stream
+since that read. Fresh `npm ci`, `npx tsc --noEmit` clean, `npm test`
+green (131 suites / 1451 tests, identical to run 113). One commit (this
+entry), pushed to `routine/core-p3`. No push notification: same facts
+already reported via run 109's alert and the orchestrator's run 29;
+nothing new to surface.
+
 ## COMPLETE (run 113, 2026-10-03: re-verify, no new work)
 
 `git rev-list --left-right --count origin/main...origin/routine/core-p3`
