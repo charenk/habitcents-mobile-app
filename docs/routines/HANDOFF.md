@@ -2,8 +2,25 @@
 
 ## Status
 
-In progress, blocked on decisions 8/10 (standing since run 38, now day 27
-on the board's own count). Run 114: rebase no-op (already up to date,
+In progress, blocked on decisions 8/10 (standing since run 38, now day 28
+on the board's own count). Run 115: rebase no-op (already up to date,
+`origin/main` still `3a01b88`). No REVIEW FEEDBACK pending. Issue #139
+re-read directly: unchanged since run 114's read (`updated_at` still
+2026-10-02T12:04:05Z, decisions 8/10 still open). PR #134 re-confirmed:
+open, draft, `mergeable_state` clean, head `4035502` matching this
+branch's pre-run tip, zero reviews. Fresh container, `npm ci`, `tsc
+--noEmit` clean, full suite green (131/131, 1479/1479), matching run
+114's counts. Re-ran the item-6 grep (14 hits, by-design): identical to
+run 114. No new bounded work: items 3/5/6 stay exhausted, item 4 stays
+blocked behind decisions 8/10.
+
+One commit (HANDOFF touch only, no code change), pushed
+`routine/localization`. No push notification: nothing changed in
+substance since run 114 (same two open decisions, same board posture,
+prior direct alerts already cover the cadence point), so a message here
+would be duplicate signal.
+
+Run 114: rebase no-op (already up to date,
 `origin/main` still `3a01b88`). No REVIEW FEEDBACK pending. Issue #139
 re-read directly: unchanged since run 113's read (`updated_at` still
 2026-10-02T12:04:05Z, decisions 8/10 still open). PR #134 re-confirmed:
