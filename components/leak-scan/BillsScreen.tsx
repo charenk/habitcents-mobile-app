@@ -5,7 +5,7 @@ import { Button, Icon } from '@/components/ui';
 import { EmojiTile } from '@/components/ui/EmojiTile';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
-import { radii, spacing, typeScale, type AppTheme } from '@/constants/theme';
+import { contentColumnStyle, radii, spacing, typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import { hapticError } from '@/utils/motion';
 import { categoryEmoji, categoryIdentityColor } from '@/constants/categoryEmoji';
@@ -190,7 +190,7 @@ export function BillsScreen({ offer, result, onDone }: BillsScreenProps) {
         )}
       </ScrollView>
 
-      <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
+      <View testID="bills-footer" style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
         <Button
           label={
             selected.size === 0
@@ -219,6 +219,7 @@ function createStyles(theme: AppTheme) {
     },
     content: {
       paddingHorizontal: spacing.gutter,
+      ...contentColumnStyle,
     },
     title: {
       fontSize: typeScale.screenTitle,
@@ -299,12 +300,18 @@ function createStyles(theme: AppTheme) {
       backgroundColor: theme.primary,
       borderColor: theme.primary,
     },
+    // Decision 1 (issue #139, 2026-09-07, Charen): the fixed footer caps at
+    // 600pt too, matching the scroll column above it, rather than staying
+    // full width. paddingHorizontal (not margin) here, so the direct spread
+    // caps the border and background along with the content, same as
+    // Today's ribbonWrap.
     footer: {
       paddingHorizontal: spacing.gutter,
       paddingTop: 12,
       borderTopWidth: 1,
       borderTopColor: theme.border,
       backgroundColor: theme.background,
+      ...contentColumnStyle,
     },
     skip: {
       alignSelf: 'center',

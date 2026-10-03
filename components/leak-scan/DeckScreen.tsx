@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@/components/ui';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { useTheme } from '@/contexts/ThemeContext';
-import { spacing, typeScale, type AppTheme } from '@/constants/theme';
+import { contentColumnStyle, spacing, typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import { BiggestLeakCard } from './BiggestLeakCard';
 import { useTrackLeak } from './useTrackLeak';
@@ -167,6 +167,7 @@ function createStyles(theme: AppTheme) {
     content: {
       paddingHorizontal: spacing.gutter,
       paddingTop: 8,
+      ...contentColumnStyle,
     },
     title: {
       fontSize: typeScale.screenTitle,

@@ -18,7 +18,13 @@ import { ThemeProvider } from '@/contexts/ThemeContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { PayoffScreen } from '@/components/leak-scan/PayoffScreen';
 import { strings } from '@/constants/strings';
+import { layout } from '@/constants/theme';
 import type { DetectedHabit } from '@/types/habit';
+
+function flattenStyle(style: unknown): Record<string, unknown> {
+  const styles = Array.isArray(style) ? style.flat(Infinity) : [style];
+  return Object.assign({}, ...styles.filter((s): s is Record<string, unknown> => !!s && typeof s === 'object'));
+}
 
 const initialMetrics = {
   frame: { x: 0, y: 0, width: 390, height: 844 },
@@ -121,5 +127,16 @@ describe('payoff screen', () => {
     });
 
     expect(props.onContinue).toHaveBeenCalledTimes(1);
+  });
+
+  it('caps and centers the Continue button at the shared content column width (routine/ipad, decision 1)', async () => {
+    const { view } = await renderPayoff();
+
+    const button = view.getByRole('button', { name: strings.leakScan.payoffContinue });
+    const flat = flattenStyle(button.props.style);
+
+    expect(flat.width).toBe('100%');
+    expect(flat.maxWidth).toBe(layout.contentMaxWidth);
+    expect(flat.alignSelf).toBe('center');
   });
 });
