@@ -2,9 +2,27 @@
 
 ## Status
 
-In progress, blocked on decisions 8/10 (standing since run 38, now day 26
-on the board's own count, day 30 by this file's elapsed-time count from
-item 1's 2026-09-07 close). Run 113: rebase no-op (`origin/main` still
+In progress, blocked on decisions 8/10 (standing since run 38, now day 27
+on the board's own count). Run 114: rebase no-op (already up to date,
+`origin/main` still `3a01b88`). No REVIEW FEEDBACK pending. Issue #139
+re-read directly: unchanged since run 113's read (`updated_at` still
+2026-10-02T12:04:05Z, decisions 8/10 still open). PR #134 re-confirmed:
+open, draft, `mergeable_state` clean, head `ce328a3` matching this
+branch's pre-run tip, zero reviews. Fresh container, `npm ci`, `tsc
+--noEmit` clean, full suite green (131/131, 1479/1479), matching run
+113's counts. Re-ran the item-6 grep (14 hits, by-design), the static
+catalog-import grep (same 4 by-design files + strings.ts header, 5
+total), and the VALUE CHANGE sweep (8 matches): all identical to run 113.
+No new bounded work: items 3/5/6 stay exhausted, item 4 stays blocked
+behind decisions 8/10.
+
+One commit (HANDOFF touch only, no code change), pushed
+`routine/localization`. No push notification: nothing changed in
+substance since run 113 (same two open decisions, same board posture,
+prior direct alerts already cover the cadence point), so a message here
+would be duplicate signal.
+
+Run 113: rebase no-op (`origin/main` still
 `3a01b88`, unchanged since run 87). No REVIEW FEEDBACK pending (newest
 entry still the 2026-09-27 runs 88-91 review, closed by run 93). Re-read
 issue #139 directly via the GitHub API: still open, decisions 8 and 10
@@ -16,28 +34,21 @@ head `39654bf` matching this branch's pre-run tip, one comment
 then `tsc --noEmit` clean and full suite green (131/131, 1479/1479),
 matching run 112's counts exactly. No new bounded work: items 3/5/6 stay
 exhausted and item 4 stays blocked behind decisions 8/10, same as every
-run since 39.
-
-This run's own bounded contribution: this file had grown to 4,637 lines
-(290KB, past what a standard file-read tool will return in one call), almost
-entirely from 74 near-identical verify-only run entries (39-112) repeating
-the same two-decision blocker. Compacted runs 39-104 into one summary
-paragraph below (git history still has the day-by-day text if ever needed);
-kept runs 105-112 in full for the next run's immediate context, and kept
-runs 1-38's real-work narrative untouched. No content was changed, only
-collapsed. Added a standing note under Notes for the next run: while the
-decision queue stays blocked, log a short entry (a few lines: what was
-checked, that it matched last run, nothing more) rather than the full
-paragraph, so this file does not re-grow back to this size before Charen
-answers decisions 8/10.
-
-One commit (HANDOFF compaction + this entry, no app code change), pushed
-`routine/localization`. No push notification: nothing changed in substance
-since run 112's alert-worthy facts (same two open decisions, same board
-posture that the orchestrator owns the next follow-up due 2026-10-03 and
-not yet reached, the three prior direct alerts on 09-18/09-24/09-26 and
-core-worker's 10-02 alert already cover the cadence point), so a message
-here would be duplicate signal. Prior detail below.
+run since 39. This run's own bounded contribution: this file had grown to
+4,637 lines (290KB, past what a standard file-read tool will return in
+one call), almost entirely from 74 near-identical verify-only run entries
+(39-112) repeating the same two-decision blocker. Compacted runs 39-104
+into one summary paragraph below (git history still has the day-by-day
+text if ever needed); kept runs 105-112 in full for the next run's
+immediate context, and kept runs 1-38's real-work narrative untouched. No
+content was changed, only collapsed. Added a standing note under Notes
+for the next run: while the decision queue stays blocked, log a short
+entry (a few lines: what was checked, that it matched last run, nothing
+more) rather than the full paragraph, so this file does not re-grow back
+to this size before Charen answers decisions 8/10. One commit (HANDOFF
+compaction + this entry, no app code change), pushed `routine/localization`.
+No push notification: nothing changed in substance since run 112's
+alert-worthy facts, so a message here would be duplicate signal.
 
 Run 111: rebase no-op
 (`git merge-base --is-ancestor origin/main HEAD` confirmed already up to
