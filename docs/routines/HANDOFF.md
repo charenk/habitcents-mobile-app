@@ -1,5 +1,27 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 113, 2026-10-03: re-verify, no new work)
+
+`git rev-list --left-right --count origin/main...origin/routine/core-p3`
+returned `0  120`: `origin/main` unchanged at `3a01b88` since run 85,
+branch tip unchanged at `0536d63` (run 112's own status commit) pre-push,
+no rebase needed. PR #132 re-confirmed via the API: `open`, not draft,
+`mergeable_state: clean`, head/base matching, 0 comments, 0 reviews,
+`updated_at` unchanged in substance since run 112's own push. No REVIEW
+FEEDBACK pending (still the closed 2026-09-08 entry). PLAN.md checklist
+unchanged (zero `[ ]` items). PUNCHLIST.md re-pulled fresh (ops main
+advanced `89a68c2..6c99be0`, 6 lines, all sibling-routine `docs/runs.log`
+entries, nothing core-p3-flagged). Issue #139 re-read: unchanged since run
+112 (twenty-eighth orchestrator entry, `updated_at` still
+`2026-10-02T12:04:05Z`); core-worker section still "approved, nothing
+owed," blocked on decisions 2-4. Today's (10-03) board follow-up is the
+orchestrator's own scheduled run and has not landed yet; not this
+routine's to pre-empt. Fresh `npm ci`, `npx tsc --noEmit` clean, `npm test`
+green (131 suites / 1451 tests, identical to run 112). One commit (this
+entry), pushed to `routine/core-p3`. No push notification: nothing moved
+since run 112, which ran earlier today; a second alert on identical facts
+would duplicate run 109's 100-run escalation.
+
 ## COMPLETE (run 112, 2026-10-03: re-verify, no new work)
 
 `git fetch origin main routine/core-p3` then `git rev-list --left-right
