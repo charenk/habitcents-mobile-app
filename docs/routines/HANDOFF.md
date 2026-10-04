@@ -1,5 +1,36 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 119, 2026-10-04: re-verify, no new work)
+
+`origin/main` unchanged at `3a01b88` (since run 85; confirmed via a fresh
+`git fetch origin main routine/core-p3`); no rebase needed
+(`git rev-list --left-right --count origin/main...origin/routine/core-p3`
+= `0 126`, branch tip unchanged at `01230bb`, run 118's own commit,
+pre-push). PR #132 re-confirmed via the API: open, not draft, `merged:
+false`, `mergeable_state: clean`, head `01230bb030c66cbfcedc5afca64f4f1398e0bb5a`
+(matches pre-push tip), base `3a01b88a9639e0964076166163d3efd74c9f3be4`
+(matches main's tip), 126 commits (125 + run 118's own commit), 0 comments
+(checked the comments endpoint directly: empty array), 0 reviews. PLAN.md
+checklist unchanged (zero `[ ]` items); `## REVIEW FEEDBACK` still only the
+entry closed 2026-09-08 (grepped the whole file). Issue #139 re-read via
+the API: unchanged since run 118's read (still the thirtieth orchestrator
+entry, `updated_at` still `2026-10-04T12:03:01Z`), seventh fully quiet day,
+main still static since 09-26, core-worker's own section still "approved,
+nothing owed," decision queue still day 27, next direct re-ping still held
+at 2026-10-07 unless something moves first. Nothing in this run's read
+changes that. Ops `PUNCHLIST.md` RESUME marker re-read fresh (ops main
+advanced `3adcbb6..3341ca7`, three lines, all sibling-routine `docs/runs.log`
+status commits): still the bill-reminders/`EXPO_TOKEN` stream, not
+core-p3-flagged; the one core-p3-flagged line (leak finder dated
+entitlement) unchanged, already built and closed on this branch at run 8,
+still waiting on PR #132 to merge. Fresh `npm ci` (container had no
+`node_modules` at session start), `npx tsc --noEmit` clean, `npm test`
+green (131 suites / 1451 tests, identical to run 118). One commit (this
+entry), pushed. No push notification: nothing has moved since run 118's
+facts beyond the board's own re-confirmation pass, already reported via
+run 109's 100-run alert and the orchestrator's own run 29/30 entries; the
+board's next actionable checkpoint stays 2026-10-07.
+
 ## COMPLETE (run 118, 2026-10-04: re-verify, no new work)
 
 `origin/main` unchanged at `3a01b88` (since run 85; confirmed via
