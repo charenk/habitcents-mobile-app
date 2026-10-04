@@ -1,5 +1,30 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 116, 2026-10-04: re-verify, no new work)
+
+Rebase check: `git rev-list --left-right --count origin/main...origin/routine/core-p3`
+returned `0 123`: `origin/main` unchanged at `3a01b88` (since run 85),
+branch tip unchanged at `63830f4` (run 115's own commit) pre-push, no
+rebase needed. PR #132 re-confirmed via the API: `open`, not draft,
+`mergeable_state: clean`, head `63830f41c991eae97b01780fc4f3b5975802bdb1`
+(matches this branch's pre-push tip), base `3a01b88...` (matches main's
+tip), 123 commits (122 + run 115's own commit), 0 comments, 0 reviews.
+PLAN.md checklist unchanged (zero `[ ]` items). No `## REVIEW FEEDBACK`
+pending (grepped the whole file: only the historical entry closed since
+2026-09-08). Issue #139 re-read via the API: unchanged since run 115's
+read (`updated_at` still `2026-10-03T12:03:56Z`, still the twenty-ninth
+orchestrator entry), core-worker section unchanged ("approved, nothing
+owed"), decision queue still day 26 (items 2-4, 7 gate this PR), next
+re-ping still held at 2026-10-07 unless something moves. Ops
+`PUNCHLIST.md` RESUME marker re-read fresh: still the bill-reminders /
+`EXPO_TOKEN` stream, not core-p3-flagged; the one core-p3-flagged line
+(leak finder dated entitlement) unchanged, already built and closed on
+this branch at run 8. Fresh `npm ci`, `npx tsc --noEmit` clean, `npm
+test` green (131 suites / 1451 tests, identical to run 115). One commit
+(this entry), pushed to `routine/core-p3`. No push notification: nothing
+has moved since run 115's facts, which were already reported via run
+109's alert and the orchestrator's run 29.
+
 ## COMPLETE (run 115, 2026-10-03: re-verify, no new work)
 
 Rebase check: `git fetch origin main routine/core-p3` then
