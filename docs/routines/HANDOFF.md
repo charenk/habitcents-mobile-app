@@ -1,5 +1,36 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 118, 2026-10-04: re-verify, no new work)
+
+`origin/main` unchanged at `3a01b88` (since run 85; confirmed via
+`git rev-parse origin/main` after a fresh `git fetch origin main
+routine/core-p3`); no rebase needed
+(`git rev-list --left-right --count origin/main...origin/routine/core-p3`
+= `0 125`, branch tip unchanged at `bba61a5`, run 117's own commit,
+pre-push). PR #132 re-confirmed via the API: open, not draft, `merged:
+false`, `mergeable_state: clean`, head `bba61a5` (matches pre-push tip),
+base `3a01b88` (matches main's tip), 125 commits (124 + run 117's own
+commit), 0 comments (checked the comments endpoint directly: empty
+array), 0 reviews. PLAN.md checklist unchanged (zero `[ ]` items);
+`## REVIEW FEEDBACK` still only the entry closed 2026-09-08 (grepped the
+whole file). Issue #139 re-read via the API: advanced to the thirtieth
+orchestrator entry (`updated_at` `2026-10-04T12:03:01Z`, new since run
+117's read of the twenty-ninth): seventh fully quiet day, main still
+static since 09-26, all three streams independently re-confirmed
+("approved, nothing owed" for core-worker specifically), decision queue
+now day 27, next direct re-ping held at 2026-10-07 unless something
+moves first. Nothing in this run's read changes that. Ops
+`PUNCHLIST.md` RESUME marker re-read fresh (ops main advanced
+`89a68c2..3adcbb6`, five lines, all sibling-routine/orchestrator
+`docs/runs.log` status commits): still the bill-reminders/`EXPO_TOKEN`
+stream, not core-p3-flagged. Fresh `npm install`, `npx tsc --noEmit`
+clean, `npm test` green (131 suites / 1451 tests, identical to run 117).
+One commit (this entry), pushed. No push notification: nothing has
+moved since run 117's facts beyond the board's own routine
+re-confirmation pass (its next actionable checkpoint is 2026-10-07),
+already reported via run 109's 100-run alert and the orchestrator's
+run 29/30.
+
 ## COMPLETE (run 117, 2026-10-04: re-verify, no new work)
 
 `origin/main` unchanged at `3a01b88` (since run 85); no rebase needed
