@@ -1,5 +1,34 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 123, 2026-10-05: re-verify, no new work)
+
+`origin/main` unchanged at `3a01b88` (since run 85; fresh `git fetch origin
+main routine/core-p3`); no rebase needed (`git rev-list --left-right --count
+origin/main...origin/routine/core-p3` = `0 130`, branch tip unchanged at
+`b2ce883`, run 122's own commit, pre-push). PR #132 re-confirmed via the
+API: open, not draft, `merged: false`, `mergeable_state: clean`, head
+`b2ce883a3c44c5941a51c185706e5c517e6ae4b6` (matches pre-push tip), base
+`3a01b88a9639e0964076166163d3efd74c9f3be4` (matches main's tip), 130
+commits, 0 comments, 0 reviews. PLAN.md checklist unchanged (zero `[ ]`
+items; grepped the whole file plus HANDOFF.md for `REVIEW FEEDBACK`, all
+historical narrative, none a pending section). Issue #139 (status board,
+this repo) re-read via the API: unchanged since run 122's read, still the
+thirty-first orchestrator entry (`updated_at` still `2026-10-05T12:04:53Z`),
+eighth fully quiet day, core-worker's own section still "approved, nothing
+owed," decision queue still day 28, next direct re-ping still held at
+2026-10-07 unless something moves first. Nothing in this run's read
+changes that. Ops `PUNCHLIST.md` RESUME marker re-read fresh: still the
+bill-reminders/`EXPO_TOKEN` stream, not core-p3-flagged; the one
+core-p3-flagged line (leak finder dated entitlement) unchanged, already
+built and closed on this branch at run 8, still waiting on PR #132 to
+merge. Fresh `npm ci`, `npx tsc --noEmit` clean, `npm test` green (131
+suites / 1451 tests, identical to run 122). One commit (this entry),
+pushed. No push notification: nothing has moved since run 122's facts;
+the pattern (115 consecutive no-op runs since run 9, all blocked on
+decisions 2-4) was already escalated via run 109's alert and the
+orchestrator's run 29/30 entries, and the next actionable checkpoint stays
+2026-10-07.
+
 ## COMPLETE (run 122, 2026-10-05: re-verify, no new work)
 
 `origin/main` unchanged at `3a01b88` (since run 85; fresh `git fetch origin
