@@ -1,5 +1,36 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 122, 2026-10-05: re-verify, no new work)
+
+`origin/main` unchanged at `3a01b88` (since run 85; fresh `git fetch origin
+main routine/core-p3`); no rebase needed (`git rev-list --left-right --count
+origin/main...origin/routine/core-p3` = `0 129`, branch tip unchanged at
+`c3278c2`, run 121's own commit, pre-push). PR #132 re-confirmed via the
+API: open, not draft, `merged: false`, `mergeable_state: clean`, head
+`c3278c25450b1c2779d01c07b3e36cc8135eff48` (matches pre-push tip), base
+`3a01b88a9639e0964076166163d3efd74c9f3be4` (matches main's tip), 129
+commits, 0 comments (`get_comments`: empty array), 0 reviews
+(`get_reviews`: empty array). PLAN.md checklist unchanged (zero `[ ]`
+items). Issue #139 (status board, this repo) re-read via the API: advanced
+to the thirty-first orchestrator entry (`updated_at` `2026-10-05T12:04:53Z`,
+new since run 121's read of the thirtieth): eighth fully quiet day, main
+still static since 09-26, core-worker's own section still "approved,
+nothing owed," decision queue now day 28, next direct re-ping still held at
+2026-10-07 unless something moves first. Nothing in this run's read
+changes that. Ops `PUNCHLIST.md` RESUME marker re-read fresh (ops main
+advanced to `db9ac2d`, carrying only a sibling-routine `docs/runs.log`
+line, ipad-worker run 124): still the bill-reminders/`EXPO_TOKEN` stream,
+not core-p3-flagged; the one core-p3-flagged line (leak finder dated
+entitlement) unchanged, already built and closed on this branch at run 8,
+still waiting on PR #132 to merge. Fresh `npm ci` (container had no
+`node_modules` at session start), `npx tsc --noEmit` clean, `npm test`
+green (131 suites / 1451 tests, identical to run 121). One commit (this
+entry), pushed. No push notification: nothing has moved since run 121's
+facts beyond the board's own routine re-confirmation pass; the pattern
+(114 consecutive no-op runs since run 9, all blocked on decisions 2-4) was
+already escalated via run 109's alert and the orchestrator's run 29/30
+entries, and the next actionable checkpoint stays 2026-10-07.
+
 ## COMPLETE (run 121, 2026-10-05: re-verify, no new work)
 
 `origin/main` unchanged at `3a01b88` (since run 85; fresh `git fetch origin
