@@ -2,6 +2,23 @@
 
 ## Status
 
+Run 124: rebase no-op (`origin/main` still `3a01b88`, unchanged since
+09-26). No REVIEW FEEDBACK pending. Issue #139 re-read directly: unchanged
+since run 123 (`updated_at` still 2026-10-04T12:03:01Z, same thirtieth
+orchestrator entry, decisions 8/10 still open, next re-ping still
+2026-10-07, not yet due). PR #134 re-confirmed: open, draft,
+`mergeable_state` clean, head `c190ab2` matching this branch's pre-run tip,
+zero reviews. This run's container had a stale/incomplete `node_modules`
+(several packages missing, `tsc` failed with `Cannot find module` across
+many files); removed it and ran a fresh `npm ci`, after which `tsc --noEmit`
+was clean and the full suite green (131/131, 1479/1479), matching run 123's
+counts exactly. Re-ran the item-6 grep (14 hits), the static-catalog-import
+grep (same 4 by-design files), and the VALUE CHANGE sweep (8 matches): all
+identical to run 123. No new bounded work: items 3/5/6 stay exhausted, item
+4 stays blocked behind decisions 8/10. One commit (HANDOFF touch only),
+pushed `routine/localization`. No push notification: nothing changed in
+substance since run 123, next re-ping not due until 2026-10-07.
+
 Run 123: rebase no-op (`origin/main` still `3a01b88`, unchanged since
 09-26). No REVIEW FEEDBACK pending. Issue #139 re-read directly: unchanged
 since run 122 (`updated_at` still 2026-10-04T12:03:01Z, same thirtieth
