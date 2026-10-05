@@ -1,5 +1,37 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 120, 2026-10-05: re-verify, no new work)
+
+`origin/main` unchanged at `3a01b88` (since run 85; confirmed via a fresh
+`git fetch origin main routine/core-p3`); no rebase needed
+(`git rev-list --left-right --count origin/main...origin/routine/core-p3`
+= `0 127`, branch tip unchanged at `dfffb88` (run 119's own commit),
+pre-push). PR #132 re-confirmed via the API: open, not draft, `merged:
+false`, `mergeable_state: clean`, head `dfffb887195734e459f089aa761a902f0a55b372`
+(matches pre-push tip), base `3a01b88a9639e0964076166163d3efd74c9f3be4`
+(matches main's tip), 127 commits (126 + run 119's own commit), 0 comments
+(checked the comments endpoint directly: empty array), 0 reviews. PLAN.md
+checklist unchanged (zero `[ ]` items); `## REVIEW FEEDBACK` still only the
+entry closed 2026-09-08 (grepped the whole file). Issue #139 re-read via
+the API: unchanged since run 119's read, still the thirtieth orchestrator
+entry (`updated_at` still `2026-10-04T12:03:01Z`), decision queue still day
+27, core-worker's own section still "approved, nothing owed," next direct
+re-ping still held at 2026-10-07 unless something moves first. Nothing in
+this run's read changes that. Ops `PUNCHLIST.md` RESUME marker re-read
+fresh (ops main had diverged locally from a prior stale checkout; reset to
+`origin/main` at `9280188`, which carries only sibling-routine `docs/runs.log`
+status lines through run 122): still the bill-reminders/`EXPO_TOKEN`
+stream, not core-p3-flagged; the one core-p3-flagged line (leak finder
+dated entitlement) unchanged, already built and closed on this branch at
+run 8, still waiting on PR #132 to merge. Fresh `npm ci` (container had no
+`node_modules` at session start), `npx tsc --noEmit` clean, `npm test`
+green (131 suites / 1451 tests, identical to run 119). One commit (this
+entry), pushed. No push notification: nothing has moved since run 119's
+facts; the pattern (now 112 consecutive no-op runs since run 9, all
+blocked on decisions 2-4) was already escalated via run 109's alert and
+the orchestrator's own run 29/30 entries, and the next actionable
+checkpoint stays 2026-10-07.
+
 ## COMPLETE (run 119, 2026-10-04: re-verify, no new work)
 
 `origin/main` unchanged at `3a01b88` (since run 85; confirmed via a fresh
