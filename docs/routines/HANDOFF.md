@@ -72,6 +72,31 @@ device pass is separate and additional to that one, not a substitute.
 
 ## Status
 
+Run 129 (2026-10-06). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 128's
+check (still `3a01b88`), so no rebase and no new regression surface this run.
+Fresh `npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass,
+no flake: 128 suites / 1419 tests, zero drift from run 128. Re-verified item 7
+(`app.json` still `"orientation": "portrait"`, `"supportsTablet": true`). PR
+#133 re-checked via `get`/`get_check_runs`/`get_comments`/`get_reviews`: still
+open, not draft, `mergeable_state: clean`, base `3a01b88` (main's tip,
+unchanged), head now `4aa152f` (run 128's own status-only push). The `verify`
+check on that head (started 14:12:04Z, completed 14:13:53Z UTC 2026-10-06) is
+SUCCESS. Comment count unchanged at 3, no reviews. Issue #139 re-read:
+`updated_at` unchanged at `2026-10-06T12:04:07Z`, the same thirty-second
+orchestrator entry run 128 already saw: ipad-worker section still "approved,
+nothing owed," blocker still the device pass gated on PR #133 merging behind
+#132's payments gate. Decision queue unchanged, still day 29; next direct
+re-ping still dated 2026-10-07, the orchestrator's and Charen's call, not this
+routine's to enact. Item 11 (worker cadence thinning) remains an open
+recommendation for the orchestrator and Charen, not this routine's to enact.
+No new "REVIEW FEEDBACK" section addressed to this routine (the file's
+existing section is historical, fully addressed through run 28). No
+production code, test, or plan content changed this run; this HANDOFF update
+is the only change. No push notification: nothing new for Charen this run
+(same steady state runs 92-128 already covered), and no regression or new
+decision surfaced for ipad-worker.
+
 Run 128 (2026-10-06). Verified per this file's own COMPLETE instruction: plan
 fully checked, nothing new to do. `origin/main` has not moved since run 127's
 check (still `3a01b88`), so no rebase and no new regression surface this run.
