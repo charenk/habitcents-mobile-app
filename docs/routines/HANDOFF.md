@@ -2,6 +2,25 @@
 
 ## Status
 
+Run 127: rebase no-op (`origin/main` still `3a01b88`, unchanged since
+09-26). No REVIEW FEEDBACK pending. Issue #139 re-read directly:
+unchanged since run 126 (`updated_at` still 2026-10-05T12:04:53Z, same
+thirty-first orchestrator entry, decisions 8/10 still open, next
+re-ping still 2026-10-07, not yet due). PR #134 re-confirmed: open,
+draft, `mergeable_state` clean, head `4d02e64` matching this branch's
+pre-run tip, zero reviews, zero new comments (the one pre-existing
+`spanDays` flake comment from 2026-09-09 is still the only one), check
+run green. Fresh container (`npm ci`), `tsc --noEmit` clean, full
+suite green (131/131, 1479/1479), matching run 126's counts exactly.
+Re-ran the static-catalog-import grep (same 4 by-design files) and the
+VALUE CHANGE sweep (8 matches, all three "needs re-translation" hits
+still inside the already-gated `onboarding` carousel-beats block, none
+newly actionable): all identical to run 126. No new bounded work:
+items 3/5/6 stay exhausted, item 4 stays blocked behind decisions
+8/10. One commit (HANDOFF touch only), pushed `routine/localization`.
+No push notification: nothing changed in substance since run 126,
+next re-ping not due until 2026-10-07.
+
 Run 126: rebase no-op (`origin/main` still `3a01b88`, unchanged since
 09-26). No REVIEW FEEDBACK pending. Issue #139 re-read directly:
 unchanged since run 125 (`updated_at` still 2026-10-05T12:04:53Z, same
