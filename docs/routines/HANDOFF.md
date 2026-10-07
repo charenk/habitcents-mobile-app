@@ -72,28 +72,32 @@ device pass is separate and additional to that one, not a substitute.
 
 ## Status
 
-Run 132 (2026-10-07). Verified per this file's own COMPLETE instruction: plan
-fully checked, nothing new to do. `origin/main` has not moved since run 131's
-check (still `3a01b88`), so no rebase and no new regression surface this run.
-Fresh `npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass,
-no flake: 128 suites / 1419 tests, zero drift from run 131. Confirmed item 7
-(`app.json` still `"orientation": "portrait"`, `"supportsTablet": true`). PR
-#133 re-checked via `get`/`get_check_runs`: still open, not draft,
-`mergeable_state: clean`, base `3a01b88` (main's tip, unchanged), head still
-`15d6327` (run 131's own status-only push). The `verify` check on that head
-(started 08:12:23Z, completed 08:14:04Z UTC 2026-10-07) is SUCCESS. Comment
-count unchanged at 3, no reviews. Issue #139 re-read: now the thirty-third
-orchestrator entry (`updated_at` 2026-10-07T12:03:43Z): ipad-worker section
+Run 133 (2026-10-07). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 132's
+check (still `3a01b88`, confirmed via `git merge-base --is-ancestor`), so no
+rebase and no new regression surface this run. Fresh `npm ci`, `npx tsc
+--noEmit` clean. Full suite green on the first pass, no flake: 128 suites /
+1419 tests, zero drift from run 132. Confirmed item 7 (`app.json` still
+`"orientation": "portrait"`, `"supportsTablet": true`). PR #133 re-checked via
+`get`/`get_check_runs`/`get_comments`: still open, not draft, `mergeable_state:
+clean`, base `3a01b88` (main's tip, unchanged), head still `765bc6c` (run 132's
+own status-only push, no new commit needed this run before this status
+update). The `verify` check on that head (started 14:11:18Z, completed
+14:13:00Z UTC 2026-10-07) is SUCCESS. Comment count unchanged at 3, no
+reviews. Issue #139 re-read: `updated_at` unchanged at `2026-10-07T12:03:43Z`,
+same thirty-third orchestrator entry run 132 already saw: ipad-worker section
 still "approved, nothing owed," blocker still the device pass gated on PR
 #133 merging behind #132's payments gate. The decision queue's day-30 direct
-re-ping to Charen already fired today from the orchestrator's own run;
-nothing further for this routine to send. Item 11 (cadence thinning) remains
-the orchestrator's and Charen's call, not this routine's to enact. No new
+re-ping to Charen already fired earlier today from the orchestrator's own
+run (per run 132's note); nothing further for this routine to send, and no
+new entry has landed since. Item 11 (cadence thinning) remains the
+orchestrator's and Charen's call, not this routine's to enact. No new
 "REVIEW FEEDBACK" section addressed to this routine. No production code,
 test, or plan content changed this run; this HANDOFF update is the only
-change. No push notification: the day-30 escalation already reached Charen
-via the orchestrator this run, and nothing new or regressed is specific to
-ipad-worker.
+change. No push notification: nothing new for Charen from this routine
+specifically this run (same steady state run 132 already covered, and the
+day-30 escalation already reached Charen via the orchestrator earlier
+today), and no regression or new decision surfaced for ipad-worker.
 
 Run 131 (2026-10-07). Verified per this file's own COMPLETE instruction: plan
 fully checked, nothing new to do. `origin/main` has not moved since run 130's
