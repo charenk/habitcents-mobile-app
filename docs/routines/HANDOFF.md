@@ -1,5 +1,42 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 128, 2026-10-07: re-verify, no new work)
+
+`origin/main` unchanged at `3a01b88` (since run 85; fresh `git fetch origin
+main routine/core-p3`); no rebase needed (`git rev-list --left-right --count
+origin/main...origin/routine/core-p3` = `0 135`, branch tip unchanged at
+`c62472e`, run 127's own commit, pre-push). PR #132 re-confirmed via the
+API: open, not draft, `merged: false`, `mergeable_state: clean`, head
+`c62472ea3b456198f3e83c6201ebff47fcb219c7` (matches pre-push tip), base
+`3a01b88a9639e0964076166163d3efd74c9f3be4` (matches main's tip), 135
+commits, 0 comments (`get_comments`: empty array), 0 reviews
+(`get_reviews`: empty array). PLAN.md checklist unchanged (zero `[ ]`
+items; grepped the whole file plus HANDOFF.md for `REVIEW FEEDBACK`, all
+historical narrative, none a pending section). Issue #139 (status board)
+re-read via the API: advanced to the thirty-third orchestrator entry
+(`updated_at` `2026-10-06T12:04:07Z` body, written 2026-10-06): ninth fully
+quiet day, main still static since 09-26, core-worker's own section still
+"approved, nothing owed," decision queue now day 29/30, and the board's own
+text states plainly: **"the direct re-ping to Charen fires tomorrow,
+2026-10-07 (day 30), unless something moves first."** Today, per the
+environment clock, is 2026-10-07. Ops `PUNCHLIST.md` RESUME marker re-read
+fresh (ops main advanced only sibling-routine `docs/runs.log` lines,
+ipad-worker run 130): still the bill-reminders/`EXPO_TOKEN` stream, not
+core-p3-flagged; the one core-p3-flagged line (leak finder dated
+entitlement) unchanged, already built and closed on this branch at run 8,
+still waiting on PR #132 to merge. Fresh `npm ci` completed cleanly (961
+packages), `npx tsc --noEmit` clean, `npm test` green (131 suites / 1451
+tests, identical to run 127). One commit (this entry), pushed.
+
+**Push notification sent this run.** The board's own stated escalation
+date arrived today with nothing having moved: decisions 2-4 (the payments
+gate blocking PR #132's merge) are now roughly 30 days old, this routine
+has logged its 119th consecutive no-op verify run since run 9, and the
+PR itself remains clean, mergeable, zero comments, zero reviews, ready to
+merge the instant decisions 2-4 land. Surfacing this directly rather than
+assuming the orchestrator's own run today will reach Charen first; if it
+also posts, both point at the same facts, so no conflict.
+
 ## COMPLETE (run 127, 2026-10-06: re-verify, no new work)
 
 `origin/main` unchanged at `3a01b88` (since run 85; fresh `git fetch origin
