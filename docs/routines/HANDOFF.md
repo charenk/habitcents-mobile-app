@@ -13,29 +13,35 @@ commits, 0 comments (`get_comments`: empty array), 0 reviews
 (`get_reviews`: empty array). PLAN.md checklist unchanged (zero `[ ]`
 items; grepped the whole file plus HANDOFF.md for `REVIEW FEEDBACK`, all
 historical narrative, none a pending section). Issue #139 (status board)
-re-read via the API: advanced to the thirty-third orchestrator entry
-(`updated_at` `2026-10-06T12:04:07Z` body, written 2026-10-06): ninth fully
-quiet day, main still static since 09-26, core-worker's own section still
-"approved, nothing owed," decision queue now day 29/30, and the board's own
-text states plainly: **"the direct re-ping to Charen fires tomorrow,
-2026-10-07 (day 30), unless something moves first."** Today, per the
-environment clock, is 2026-10-07. Ops `PUNCHLIST.md` RESUME marker re-read
-fresh (ops main advanced only sibling-routine `docs/runs.log` lines,
-ipad-worker run 130): still the bill-reminders/`EXPO_TOKEN` stream, not
-core-p3-flagged; the one core-p3-flagged line (leak finder dated
-entitlement) unchanged, already built and closed on this branch at run 8,
-still waiting on PR #132 to merge. Fresh `npm ci` completed cleanly (961
-packages), `npx tsc --noEmit` clean, `npm test` green (131 suites / 1451
-tests, identical to run 127). One commit (this entry), pushed.
+re-read via the API: unchanged since run 127's read, still the
+thirty-second orchestrator entry (`updated_at` still `2026-10-06T12:04:07Z`),
+ninth fully quiet day, main still static since 09-26, core-worker's own
+section still "approved, nothing owed," decision queue still day 29, and
+the board's own text states plainly: "the direct re-ping to Charen fires
+tomorrow, 2026-10-07 (day 30), unless something moves first." Today, per
+the environment clock, is 2026-10-07; the orchestrator has not run yet
+today (board `updated_at` still dated 2026-10-06). Both sibling routines
+already ran today (localization-worker run 130, ipad-worker run 130, per
+ops `docs/runs.log`) and independently reached the same call: today's
+re-ping is the orchestrator's own standing escalation to send, not a
+duplicate from any individual worker stream. Following that same
+convention here rather than defecting from it. Ops `PUNCHLIST.md` RESUME
+marker re-read fresh (ops main advanced only sibling-routine
+`docs/runs.log` lines, ipad-worker run 130): still the bill-reminders/
+`EXPO_TOKEN` stream, not core-p3-flagged; the one core-p3-flagged line
+(leak finder dated entitlement) unchanged, already built and closed on
+this branch at run 8, still waiting on PR #132 to merge. Fresh `npm ci`
+completed cleanly (961 packages), `npx tsc --noEmit` clean, `npm test`
+green (131 suites / 1451 tests, identical to run 127). One commit (this
+entry), pushed.
 
-**Push notification sent this run.** The board's own stated escalation
-date arrived today with nothing having moved: decisions 2-4 (the payments
-gate blocking PR #132's merge) are now roughly 30 days old, this routine
-has logged its 119th consecutive no-op verify run since run 9, and the
-PR itself remains clean, mergeable, zero comments, zero reviews, ready to
-merge the instant decisions 2-4 land. Surfacing this directly rather than
-assuming the orchestrator's own run today will reach Charen first; if it
-also posts, both point at the same facts, so no conflict.
+No push notification from this worker: today's re-ping is the
+orchestrator's standing escalation to send (per the board's own plan and
+both sibling streams' identical calls today), not a duplicate from this
+stream. If the orchestrator's run today does not land, or decisions 2-4
+stay open past this cycle, that stays escalation-worthy, but it is the
+orchestrator's fact to surface, not a reason for three separate workers to
+each page Charen on the same underlying wait.
 
 ## COMPLETE (run 127, 2026-10-06: re-verify, no new work)
 
