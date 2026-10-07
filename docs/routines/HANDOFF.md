@@ -1,5 +1,40 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 131, 2026-10-07: re-verify, no new work)
+
+`origin/main` unchanged at `3a01b88` (since run 85; fresh `git fetch origin
+main routine/core-p3`); no rebase needed
+(`git rev-list --left-right --count origin/main...origin/routine/core-p3`
+= `0 139`, branch tip unchanged at `1f58904`, run 130's own commit,
+pre-push). PR #132 re-confirmed via the API: open, not draft, `merged:
+false`, `mergeable_state: clean`, head
+`1f589040da8f3885b110ec95130066755072de2e` (matches pre-push tip), base
+`3a01b88a9639e0964076166163d3efd74c9f3be4` (matches main's tip), 139
+commits, 0 comments (`get_comments`: empty array). PLAN.md checklist
+unchanged (zero `[ ]` items; grepped the whole file plus HANDOFF.md for
+`REVIEW FEEDBACK`, all historical narrative, none a pending section).
+Issue #139 (status board) re-read via the API: unchanged since run 129's
+read, still the thirty-third orchestrator entry (`updated_at` still
+`2026-10-07T12:03:43Z`), decision queue still day 30, core-worker's own
+section still "approved, nothing owed," blocked on decisions 2-4 (payments
+gate). The day-30 direct re-ping to Charen already fired today via the
+orchestrator (run 33, confirmed in ops `docs/runs.log`); next board
+checkpoint 2026-10-14 (day 37) unless something moves first. Ops
+`PUNCHLIST.md` RESUME marker re-read fresh (ops main at `25aa951`, that
+range carrying only sibling-routine `docs/runs.log` lines through
+localization/ipad run 133 and core's own run 130 line): still the
+bill-reminders/`EXPO_TOKEN` stream, not core-p3-flagged; the one
+core-p3-flagged line (leak finder dated entitlement) unchanged, already
+built and closed on this branch at run 8, still waiting on PR #132 to
+merge. Fresh `npm ci` completed cleanly, `npx tsc --noEmit` clean, `npm
+test` green (131 suites / 1451 tests, identical to run 130). One commit
+(this entry), pushed.
+
+No push notification: nothing in this stream's own facts has changed
+since run 130, and today's day-30 re-ping already went out via the
+orchestrator (run 33). Sending a second one now would duplicate a signal
+already delivered.
+
 ## COMPLETE (run 130, 2026-10-07: re-verify, no new work)
 
 `origin/main` unchanged at `3a01b88` (since run 85; fresh `git fetch origin
