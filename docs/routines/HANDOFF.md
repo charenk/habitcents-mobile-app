@@ -2,6 +2,27 @@
 
 ## Status
 
+Run 131: rebase no-op (`origin/main` still `3a01b88`, unchanged since
+09-26). No REVIEW FEEDBACK pending. Issue #139 re-read directly via the
+API: unchanged since run 130 (`updated_at` still 2026-10-06T12:04:07Z,
+same thirty-second orchestrator entry; decisions 8/10 still open; the
+board's own re-ping is scheduled for today, 2026-10-07, but that is the
+orchestrator's escalation to send, not this worker's, per the standing
+"no worker sends a duplicate" posture). PR #134 re-confirmed: open,
+draft, `mergeable_state` clean, head `bb9b1bf` matching this branch's
+pre-run tip, base matches `origin/main`, one pre-existing comment only.
+Fresh container (`npm ci`), `tsc --noEmit` clean, full suite green
+(131/131, 1479/1479), matching run 130's counts exactly. Re-ran the
+item-6 grep (14 hits), the static-catalog-import grep (same 4 by-design
+files), and the VALUE CHANGE sweep (8 matches, same 3 "needs
+re-translation" hits inside the already-gated `onboarding`
+carousel-beats block, none newly actionable): all identical to run 130.
+No new bounded work: items 3/5/6 stay exhausted, item 4 stays blocked
+behind decisions 8/10. One commit (HANDOFF touch only), pushed
+`routine/localization`. No push notification from this worker: nothing
+has changed in this stream's own facts since run 130, and today's
+re-ping is the orchestrator's to send.
+
 Run 130: rebase no-op (`origin/main` still `3a01b88`, unchanged since
 09-26). No REVIEW FEEDBACK pending. Issue #139 re-read directly:
 unchanged since run 129 (`updated_at` still 2026-10-06T12:04:07Z, same
