@@ -1,5 +1,43 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 130, 2026-10-07: re-verify, no new work)
+
+`origin/main` unchanged at `3a01b88` (since run 85; fresh `git fetch origin
+main routine/core-p3`); no rebase needed
+(`git rev-list --left-right --count origin/main...origin/routine/core-p3`
+= `0 138`, branch tip unchanged at `433075b`, run 129's own commit,
+pre-push). PR #132 re-confirmed via the API: open, not draft, `merged:
+false`, `mergeable_state: clean`, head
+`433075be0e0765a99a165bba12d56935260b826a` (matches pre-push tip), base
+`3a01b88a9639e0964076166163d3efd74c9f3be4` (matches main's tip), 138
+commits, 0 comments (`get_comments`: empty array), 0 reviews
+(`get_reviews`: empty array). PLAN.md checklist unchanged (zero `[ ]`
+items; grepped the whole file plus HANDOFF.md for `REVIEW FEEDBACK`, all
+historical narrative, none a pending section). Issue #139 (status board)
+re-read via the API: advanced to the thirty-third orchestrator entry
+(`updated_at` `2026-10-07T12:03:43Z`, new since run 129's read of the
+thirty-second): tenth fully quiet day, main still static since 09-26,
+core-worker's own section still "approved, nothing owed," decision queue
+now day 30, and **the day-30 direct re-ping to Charen fired today as a
+push notification** (confirmed both by the board's own text and by ops
+`docs/runs.log` carrying `routines-orchestrator run 33, ok, day-30 re-ping
+sent`). Ops `PUNCHLIST.md` RESUME marker re-read fresh (ops main advanced
+`08d86ed..09d98b2`, four lines, all sibling-routine/orchestrator
+`docs/runs.log` status commits including this stream's own run 129 line
+and the orchestrator's run 33 line): still the bill-reminders/`EXPO_TOKEN`
+stream, not core-p3-flagged; the one core-p3-flagged line (leak finder
+dated entitlement) unchanged, already built and closed on this branch at
+run 8, still waiting on PR #132 to merge. Fresh `npm ci` completed cleanly
+(961 packages), `npx tsc --noEmit` clean, `npm test` green (131 suites /
+1451 tests, identical to run 129). One commit (this entry), pushed.
+
+No push notification from this worker: the day-30 re-ping already went out
+today as the orchestrator's own direct push to Charen (board text plus the
+ops runs.log line both confirm it fired), and nothing in this stream's own
+facts has changed since run 129. Sending a second one now would duplicate
+a signal already delivered. Next board checkpoint per the board's own text
+is 2026-10-14 (day 37) unless something moves first.
+
 ## COMPLETE (run 129, 2026-10-07: re-verify, no new work)
 
 `origin/main` unchanged at `3a01b88` (since run 85; fresh `git fetch origin
