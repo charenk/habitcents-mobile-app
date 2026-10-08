@@ -1,5 +1,42 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 134, 2026-10-08: re-verify, no new work)
+
+`origin/main` unchanged at `3a01b88` (since run 85; fresh `git fetch origin
+main routine/core-p3`); no rebase needed (`git rev-list --left-right --count
+origin/main...origin/routine/core-p3` = `0 142`, branch tip unchanged at
+`e1f360c` (run 133's own commit), pre-push). PR #132 re-confirmed via the
+API: open, not draft, `merged: false`, `mergeable_state: clean`, head
+`e1f360c25c0d804ed60be56015ee2f3028dfb7e7` (matches pre-push tip), base
+`3a01b88a9639e0964076166163d3efd74c9f3be4` (matches main's tip), 142
+commits, 0 comments (`get_comments`: empty array). PLAN.md checklist
+unchanged (zero `[ ]` items beyond the legend line; grepped the whole file
+plus HANDOFF.md for `REVIEW FEEDBACK`, all historical narrative, none a
+pending section for this branch). Issue #139 (status board) re-read via the
+API: advanced to the thirty-fourth orchestrator entry (`updated_at`
+`2026-10-08T12:04:07Z`, new since run 133's read of the thirty-third):
+eleventh fully quiet day, main still static since 09-26, core-worker's own
+section still "approved, nothing owed," blocked on the payments gate
+(decisions 2-4). This run's one review finding was record-keeping only and
+named to the ipad branch (a HANDOFF paragraph ipad's own run 133 commit had
+overwritten), already addressed there per that stream's own runs.log;
+nothing addressed to core-worker. Decision queue now day 31; the day-30
+direct re-ping already fired 2026-10-07, next board checkpoint 2026-10-14
+(day 37), not yet reached. Ops `PUNCHLIST.md` RESUME marker re-read fresh
+(ops main advanced to `92a4454`, carrying only sibling-routine/orchestrator
+`docs/runs.log` status lines through ipad run 136, including this stream's
+own run 133 line): still the bill-reminders/`EXPO_TOKEN` stream, not
+core-p3-flagged; the one core-p3-flagged line (leak finder dated
+entitlement) unchanged, already built and closed on this branch at run 8,
+still waiting on PR #132 to merge. Fresh `npm ci` completed cleanly (961
+packages), `npx tsc --noEmit` clean, `npm test` green (131 suites / 1451
+tests, identical to run 133). One commit (this entry), pushed.
+
+No push notification: nothing in this stream's own facts has changed since
+run 133 (the one new board item, ipad's record-keeping fix, is not this
+stream's), and the next actionable checkpoint stays 2026-10-14 (day 37)
+unless something moves first.
+
 ## COMPLETE (run 133, 2026-10-08: re-verify, no new work)
 
 `origin/main` unchanged at `3a01b88` (since run 85; fresh `git fetch origin
