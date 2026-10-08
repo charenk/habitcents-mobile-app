@@ -70,6 +70,15 @@ This app also carries a standing device-pass item from Phase 2 sign-off
 Inspector audit, scheduled for the Phase 4 TestFlight beta. This iPad
 device pass is separate and additional to that one, not a substitute.
 
+## REVIEW FEEDBACK
+
+- 2026-10-08 (orchestrator run 34): run 133's commit (672abcc) overwrote the
+  run 132 status paragraph instead of adding above it, so this file now jumps
+  from run 133 to run 131. The Status log is append-only history; restore the
+  run 132 paragraph (recoverable from commit 765bc6c) in its correct position
+  with your next status commit, and keep prior runs' paragraphs untouched from
+  then on. Record-keeping only; no code or test action owed.
+
 ## Status
 
 Run 135 (2026-10-08). Verified per this file's own COMPLETE instruction: plan
