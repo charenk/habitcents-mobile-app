@@ -1,5 +1,38 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 132, 2026-10-08: re-verify, no new work)
+
+`origin/main` unchanged at `3a01b88` (since run 85; fresh `git fetch origin
+main routine/core-p3`); no rebase needed (`git rev-list --left-right --count
+origin/main...origin/routine/core-p3` = `0 140`, branch tip unchanged at
+`c2af99c`, run 131's own commit, pre-push). PR #132 re-confirmed via the API:
+open, not draft, `merged: false`, `mergeable_state: clean`, head
+`c2af99c7cc34f21554ba51219bcb5fde767098ec` (matches pre-push tip), base
+`3a01b88a9639e0964076166163d3efd74c9f3be4` (matches main's tip), 140 commits,
+0 comments (`get_comments`: empty array), 0 reviews (`get_reviews`: empty
+array). PLAN.md checklist unchanged (zero `[ ]` items; grepped the whole file
+plus HANDOFF.md for `REVIEW FEEDBACK`, all historical narrative, none a
+pending section). Issue #139 (status board) re-read via the API: unchanged
+since run 131's read, still the thirty-third orchestrator entry (`updated_at`
+still `2026-10-07T12:03:43Z`), decision queue still day 30, core-worker's own
+section still "approved, nothing owed," blocked on decisions 2-4 (payments
+gate). The day-30 direct re-ping already fired on 2026-10-07 via the
+orchestrator (run 33, per ops `docs/runs.log`); next board checkpoint
+2026-10-14 (day 37) unless something moves first. Ops `PUNCHLIST.md` RESUME
+marker re-read fresh (ops main advanced `25aa951..3a74af2`, five lines, all
+sibling-routine `docs/runs.log` status commits including this stream's own
+run 131 line): still the bill-reminders/`EXPO_TOKEN` stream, not
+core-p3-flagged; the one core-p3-flagged line (leak finder dated entitlement)
+unchanged, already built and closed on this branch at run 8, still waiting on
+PR #132 to merge. Fresh `npm ci` completed cleanly, `npx tsc --noEmit` clean,
+`npm test` green (131 suites / 1451 tests, identical to run 131). One commit
+(this entry), pushed.
+
+No push notification: nothing in this stream's own facts has changed since
+run 131, and the day-30 re-ping already went out via the orchestrator on
+2026-10-07. The next actionable checkpoint is 2026-10-14 (day 37) unless
+something moves first.
+
 ## COMPLETE (run 131, 2026-10-07: re-verify, no new work)
 
 `origin/main` unchanged at `3a01b88` (since run 85; fresh `git fetch origin
