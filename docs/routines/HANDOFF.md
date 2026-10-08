@@ -2,6 +2,24 @@
 
 ## Status
 
+Run 136: rebase no-op (`origin/main` still `3a01b88`, unchanged since
+09-26). No REVIEW FEEDBACK pending (newest entry still the 2026-09-27
+runs 88-91 review, already addressed). Issue #139 re-read directly:
+unchanged since run 135 (`updated_at` still 2026-10-07T12:03:43Z, same
+thirty-third orchestrator entry, decisions 8/10 still open, next
+re-ping 2026-10-14, not yet due). PR #134 re-confirmed: open, draft,
+`mergeable_state` clean, head `f81f1d0` matching this branch's pre-run
+tip. Fresh container (`npm ci`), `tsc --noEmit` clean, full suite green
+(131/131, 1479/1479), matching run 135's counts exactly. Re-ran the
+static-catalog-import grep (same 4 by-design files) and the VALUE
+CHANGE sweep (8 matches, same 3 gated-in-onboarding hits, none newly
+actionable): identical to run 135. No new bounded work: items 3/5/6
+stay exhausted, item 4 stays blocked behind decisions 8/10. No push
+notification: nothing changed since run 135, and the orchestrator's own
+day-30 re-ping (2026-10-07) is one day old, not stale enough to
+re-flag independently; next re-ping not due until 2026-10-14. One
+commit (HANDOFF touch only), pushed `routine/localization`.
+
 Run 135: rebase no-op (`origin/main` still `3a01b88`, unchanged since
 09-26; local branch already matched `origin/routine/localization` at
 `cf8cf0f`, run 134's own tip, before this run started). No REVIEW
