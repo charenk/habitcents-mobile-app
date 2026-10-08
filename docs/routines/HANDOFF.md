@@ -79,7 +79,43 @@ device pass is separate and additional to that one, not a substitute.
   with your next status commit, and keep prior runs' paragraphs untouched from
   then on. Record-keeping only; no code or test action owed.
 
+Addressed run 136 (2026-10-08): restored the run 132 status paragraph
+(verbatim from commit 765bc6c) between run 133 and run 131, where it
+originally sat; diffed the restored text against that commit's version to
+confirm an exact match before committing. No other content in the Status
+log touched.
+
 ## Status
+
+Run 136 (2026-10-08). Addressed the orchestrator's run 34 REVIEW FEEDBACK
+first (see above): restored the run 132 status paragraph that run 133's
+commit had overwritten, verbatim from commit 765bc6c, back in its original
+position between run 133 and run 131; diffed it against that commit before
+committing to confirm an exact match. Otherwise verified per this file's own
+COMPLETE instruction: plan fully checked, nothing new to do. `origin/main`
+has not moved since run 135's check (still `3a01b88`, confirmed via `git
+merge-base --is-ancestor`), so no rebase and no new regression surface this
+run. Fresh `npm ci` (this container had no `node_modules`), `npx tsc
+--noEmit` clean. Full suite green on the first pass, no flake: 128 suites /
+1419 tests, zero drift from run 135. Confirmed item 7 (`app.json` still
+`"orientation": "portrait"`, `"supportsTablet": true`). PR #133 re-checked
+via `get`/`get_check_runs`/`get_comments`/`get_reviews`: still open, not
+draft, `mergeable_state: clean`, base `3a01b88` (main's tip, unchanged),
+head `1e43ad6` (the orchestrator's own feedback commit, already on origin
+pre-push this run). The `verify` check on that head is SUCCESS (started
+12:03:40Z, completed 12:05:07Z UTC 2026-10-08). Comment count unchanged at
+3, no reviews. Issue #139 re-read: now the thirty-fourth orchestrator entry
+(`updated_at` 2026-10-08T12:04:07Z, moved from run 135's thirty-third):
+ipad-worker section verdict is "approved, one record-keeping item owed"
+(the HANDOFF restore just done above), no code or test action owed.
+Decision queue is now day 31; next scheduled re-ping 2026-10-14 (day 37),
+not due yet, not something this routine enacts early. Item 11 (cadence
+thinning) remains the orchestrator's and Charen's call, not this routine's
+to enact. No production code or test content changed this run; this
+HANDOFF update is the only change. No push notification: the record-keeping
+fix is cosmetic (a status-log ordering gap, not a regression or a new
+decision), already visible to Charen via the board issue the orchestrator
+itself updated, so nothing new for this routine to surface on top of that.
 
 Run 135 (2026-10-08). Verified per this file's own COMPLETE instruction: plan
 fully checked, nothing new to do. `origin/main` has not moved since run 134's
@@ -165,6 +201,29 @@ change. No push notification: nothing new for Charen from this routine
 specifically this run (same steady state run 132 already covered, and the
 day-30 escalation already reached Charen via the orchestrator earlier
 today), and no regression or new decision surfaced for ipad-worker.
+
+Run 132 (2026-10-07). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 131's
+check (still `3a01b88`), so no rebase and no new regression surface this run.
+Fresh `npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass,
+no flake: 128 suites / 1419 tests, zero drift from run 131. Confirmed item 7
+(`app.json` still `"orientation": "portrait"`, `"supportsTablet": true`). PR
+#133 re-checked via `get`/`get_check_runs`: still open, not draft,
+`mergeable_state: clean`, base `3a01b88` (main's tip, unchanged), head still
+`15d6327` (run 131's own status-only push). The `verify` check on that head
+(started 08:12:23Z, completed 08:14:04Z UTC 2026-10-07) is SUCCESS. Comment
+count unchanged at 3, no reviews. Issue #139 re-read: now the thirty-third
+orchestrator entry (`updated_at` 2026-10-07T12:03:43Z): ipad-worker section
+still "approved, nothing owed," blocker still the device pass gated on PR
+#133 merging behind #132's payments gate. The decision queue's day-30 direct
+re-ping to Charen already fired today from the orchestrator's own run;
+nothing further for this routine to send. Item 11 (cadence thinning) remains
+the orchestrator's and Charen's call, not this routine's to enact. No new
+"REVIEW FEEDBACK" section addressed to this routine. No production code,
+test, or plan content changed this run; this HANDOFF update is the only
+change. No push notification: the day-30 escalation already reached Charen
+via the orchestrator this run, and nothing new or regressed is specific to
+ipad-worker.
 
 Run 131 (2026-10-07). Verified per this file's own COMPLETE instruction: plan
 fully checked, nothing new to do. `origin/main` has not moved since run 130's
