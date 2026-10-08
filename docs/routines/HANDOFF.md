@@ -87,6 +87,32 @@ log touched.
 
 ## Status
 
+Run 137 (2026-10-08). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 136's
+check (still `3a01b88`, confirmed via `git merge-base --is-ancestor`), so no
+rebase and no new regression surface this run. Fresh `npm ci` (this container
+had no `node_modules`), `npx tsc --noEmit` clean. Full suite green on the
+first pass, no flake: 128 suites / 1419 tests, zero drift from run 136.
+Confirmed item 7 (`app.json` still `"orientation": "portrait"`,
+`"supportsTablet": true`). PR #133 re-checked via `get`/`get_check_runs`/
+`get_comments`/`get_reviews`: still open, not draft, `mergeable_state: clean`,
+base `3a01b88` (main's tip, unchanged), head still `75e3d27` (run 136's own
+status-only push, no new commit needed this run before this status update).
+The `verify` check on that head (started 14:13:17Z, completed 14:14:48Z UTC
+2026-10-08) is SUCCESS. Comment count unchanged at 3, no reviews. Issue #139
+re-read: `updated_at` unchanged at `2026-10-08T12:04:07Z`, same thirty-fourth
+orchestrator entry run 136 already addressed (the HANDOFF restore): ipad-worker
+section still shows "approved, one record-keeping item owed" in its stored
+text, but that is the same run 132 paragraph restore already completed and
+pushed last run (commit 75e3d27); no new REVIEW FEEDBACK section has been
+appended since, so nothing further is owed this run. Decision queue unchanged
+at day 31; next scheduled re-ping 2026-10-14 (day 37), not due yet, not
+something this routine enacts early. Item 11 (cadence thinning) remains the
+orchestrator's and Charen's call, not this routine's to enact. No production
+code or test content changed this run; this HANDOFF update is the only
+change. No push notification: steady state only, same facts run 136 already
+surfaced, nothing new or regressed for ipad-worker specifically.
+
 Run 136 (2026-10-08). Addressed the orchestrator's run 34 REVIEW FEEDBACK
 first (see above): restored the run 132 status paragraph that run 133's
 commit had overwritten, verbatim from commit 765bc6c, back in its original
