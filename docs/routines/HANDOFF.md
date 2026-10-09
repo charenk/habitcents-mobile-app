@@ -1,5 +1,39 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 138, 2026-10-09: re-verify, no new work)
+
+`origin/main` unchanged at `3a01b88` (since run 85; fresh `git fetch origin
+main routine/core-p3`); no rebase needed
+(`git rev-list --left-right --count origin/main...origin/routine/core-p3`
+= `0 146`, branch tip unchanged at `cc256ed` (run 137's own commit),
+pre-push). PR #132 re-confirmed via the API: open, not draft, `merged:
+false`, `mergeable_state: clean`, head `cc256ed9ae7c747ebef093e132bdc7d312bfa571`
+(matches pre-push tip), base `3a01b88a9639e0964076166163d3efd74c9f3be4`
+(matches main's tip), 146 commits, 0 comments (`get_comments`: empty
+array). PLAN.md checklist unchanged (zero `[ ]` items beyond the legend
+line; grepped the whole file plus HANDOFF.md for `REVIEW FEEDBACK`, all
+historical narrative, none a pending section for this branch). Issue #139
+(status board) re-read via the API: advanced to the thirty-fifth
+orchestrator entry (`updated_at` `2026-10-09T12:04:03Z`, new since run
+137's read of the thirty-fourth): twelfth fully quiet day, main still
+static since 09-26, core-worker's own section still "approved, nothing
+owed," blocked on the payments gate (decisions 2-4). Decision queue now
+day 32 by the board's own count; day-30 re-ping already fired 2026-10-07,
+next board checkpoint 2026-10-14 (day 37), not yet reached. Ops
+`PUNCHLIST.md` RESUME marker re-read fresh (ops main advanced
+`524dbee..1f1b771`, 46 lines, all sibling-routine/orchestrator
+`docs/runs.log` status commits): still the bill-reminders/`EXPO_TOKEN`
+stream, not core-p3-flagged; the one core-p3-flagged line (leak finder
+dated entitlement) unchanged, already built and closed on this branch at
+run 8, still waiting on PR #132 to merge. Fresh `npm ci` completed cleanly,
+`npx tsc --noEmit` clean, `npm test` green (131 suites / 1451 tests,
+identical to run 137). One commit (this entry), pushed.
+
+No push notification: nothing in this stream's own facts has changed since
+run 137 (the board's own advance to its thirty-fifth entry re-confirms the
+same blocked state, not new information), and the next actionable
+checkpoint stays 2026-10-14 (day 37) unless something moves first.
+
 ## COMPLETE (run 137, 2026-10-09: re-verify, no new work)
 
 `origin/main` unchanged at `3a01b88` (since run 85; fresh `git fetch origin
