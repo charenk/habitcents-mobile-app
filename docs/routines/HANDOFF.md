@@ -2,6 +2,24 @@
 
 ## Status
 
+Run 140: rebase no-op (`origin/main` still `3a01b88`, unchanged since
+09-26). No REVIEW FEEDBACK pending. Issue #139 re-read directly: the
+board itself advanced (thirty-fifth orchestrator entry, `updated_at`
+now 2026-10-09T12:04:03Z) but neither gate this stream waits on moved:
+decisions 8 and 10 still open, day-30 re-ping already fired 2026-10-07,
+next re-ping still 2026-10-14, not yet due. PR #134 re-confirmed: open,
+draft, `mergeable_state` clean, head `f41fe9d` matching this branch's
+pre-run tip, one pre-existing comment only, zero reviews. Fresh
+container (`npm ci`), `tsc --noEmit` clean, full suite green
+(131/131, 1479/1479), matching run 139's counts exactly. Re-ran the
+static-catalog-import grep (same 4 by-design files) and the VALUE
+CHANGE sweep (8 matches, same gated-in-onboarding hits, none newly
+actionable): identical to run 139. No new bounded work: items 3/5/6
+stay exhausted, item 4 stays blocked behind decisions 8/10. No push
+notification: nothing changed in this stream's own facts since run
+139, and the orchestrator's re-ping is still not due until 2026-10-14.
+One commit (HANDOFF touch only), pushed `routine/localization`.
+
 Run 139: rebase no-op (`origin/main` still `3a01b88`, unchanged since
 09-26). No REVIEW FEEDBACK pending. Issue #139 re-read directly:
 unchanged since run 138 (`updated_at` still 2026-10-08T12:04:07Z, same
