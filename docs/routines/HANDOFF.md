@@ -1,5 +1,37 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 137, 2026-10-09: re-verify, no new work)
+
+`origin/main` unchanged at `3a01b88` (since run 85; fresh `git fetch origin
+main routine/core-p3`); no rebase needed (`git rev-list --left-right --count
+origin/main...origin/routine/core-p3` = `0 145`, branch tip unchanged at
+`c7a06b4` (run 136's own commit), pre-push). PR #132 re-confirmed via the
+API: open, not draft, `merged: false`, `mergeable_state: clean`, head
+`c7a06b4518e39e513ac8e9e9c70ca22f9bd01b72` (matches pre-push tip), base
+`3a01b88a9639e0964076166163d3efd74c9f3be4` (matches main's tip), 145
+commits, 0 comments (`get_comments`: empty array). PLAN.md checklist
+unchanged (zero `[ ]` items beyond the legend line; grepped the whole file
+plus HANDOFF.md for `REVIEW FEEDBACK`, all historical narrative, none a
+pending section for this branch). Issue #139 (status board) re-read via the
+API: unchanged since run 136's read (`updated_at` still `2026-10-08T12:04:07Z`,
+still the thirty-fourth orchestrator entry), core-worker's own section still
+"approved, nothing owed," blocked on the payments gate (decisions 2-4).
+Decision queue unchanged at day 32 by the board's own count (last advanced
+2026-10-08); day-30 re-ping already fired 2026-10-07, next board checkpoint
+2026-10-14 (day 37), not yet reached. Ops `PUNCHLIST.md` RESUME marker
+re-read fresh (ops main advanced to `02a60d3`, carrying only sibling-routine
+`docs/runs.log` status lines through ipad run 139): still the
+bill-reminders/`EXPO_TOKEN` stream, not core-p3-flagged; the one
+core-p3-flagged line (leak finder dated entitlement) unchanged, already
+built and closed on this branch at run 8, still waiting on PR #132 to
+merge. Fresh `npm ci` completed cleanly (961 packages), `npx tsc --noEmit`
+clean, `npm test` green (131 suites / 1451 tests, identical to run 136).
+One commit (this entry), pushed.
+
+No push notification: nothing in this stream's own facts has changed since
+run 136, and the next actionable checkpoint stays 2026-10-14 (day 37)
+unless something moves first.
+
 ## COMPLETE (run 136, 2026-10-09: re-verify, no new work)
 
 `origin/main` unchanged at `3a01b88` (since run 85; fresh `git fetch origin
