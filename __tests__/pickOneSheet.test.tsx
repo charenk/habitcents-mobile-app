@@ -225,3 +225,50 @@ describe('PickOneSheet gated (free tier)', () => {
     expect(view.queryByText(strings.habitLogging.startBreakingIt)).toBeNull();
   });
 });
+
+/**
+ * Gating audit backlog (2026-08-11): a premium user can also hit this gate
+ * (already at the real 5-habit ceiling), and the free-tier upsell pitch above
+ * is wrong for them: they are already paying, and there is nothing left to
+ * sell. `entitlement` picks between the two honest copies.
+ */
+describe('PickOneSheet gated (premium at ceiling)', () => {
+  it('shows the ceiling copy, not the free-tier pitch, and drops the price/upgrade CTA', async () => {
+    const view = await renderSheet({
+      freeTierBlocked: true,
+      entitlement: 'premium',
+      onStartTrial: noop,
+    });
+
+    expect(view.getByText(strings.habitLogging.ceilingTitle)).toBeTruthy();
+    expect(view.getByText(strings.habitLogging.ceilingBody)).toBeTruthy();
+    expect(view.queryByText(strings.habitLogging.gateTitle)).toBeNull();
+    expect(view.queryByText(strings.habitLogging.freeTierNote)).toBeNull();
+    expect(view.queryByText(/\$3\.99 a month/)).toBeNull();
+    expect(view.queryByText(strings.paywall.plannedBanner)).toBeNull();
+    expect(view.queryByRole('button', { name: strings.habitLogging.gateUpgradeCta })).toBeNull();
+  });
+
+  it('dismisses on the single button, never calling onStartTrial', async () => {
+    const onStartTrial = jest.fn();
+    const onCancel = jest.fn();
+    const view = await renderSheet({
+      freeTierBlocked: true,
+      entitlement: 'premium',
+      onStartTrial,
+      onCancel,
+    });
+
+    await act(async () => {
+      fireEvent.press(view.getByRole('button', { name: strings.habitLogging.ceilingDismiss }));
+    });
+    expect(onCancel).toHaveBeenCalledTimes(1);
+    expect(onStartTrial).not.toHaveBeenCalled();
+  });
+
+  it('still shows the free-tier pitch when entitlement is free (or omitted)', async () => {
+    const view = await renderSheet({ freeTierBlocked: true, entitlement: 'free', onStartTrial: noop });
+    expect(view.getByText(strings.habitLogging.gateTitle)).toBeTruthy();
+    expect(view.queryByText(strings.habitLogging.ceilingTitle)).toBeNull();
+  });
+});
