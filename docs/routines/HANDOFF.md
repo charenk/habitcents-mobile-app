@@ -1,5 +1,37 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 140, 2026-10-10: re-verify, no new work)
+
+`origin/main` unchanged at `3a01b88` (since run 85; fresh `git fetch origin
+main routine/core-p3`); no rebase needed
+(`git rev-list --left-right --count origin/main...origin/routine/core-p3`
+= `0 148`, branch tip unchanged at `f556d55` (run 139's own commit),
+pre-push). PR #132 re-confirmed via the API: open, not draft, `merged:
+false`, `mergeable_state: clean`, head `f556d55a80c92a8e34ca7dd3e4cab6f6cf88fc14`
+(matches pre-push tip), base `3a01b88a9639e0964076166163d3efd74c9f3be4`
+(matches main's tip), 148 commits, 0 comments (`get_comments`: empty
+array). PLAN.md checklist unchanged (zero `[ ]` items beyond the legend
+line). Issue #139 (status board) re-read via the API: unchanged since run
+139's read, `updated_at` still `2026-10-09T12:04:03Z`, still the
+thirty-fifth orchestrator entry, core-worker's own section still
+"approved, nothing owed," blocked on the payments gate (decisions 2-4).
+Decision queue unchanged by the board's own last count; day-30 re-ping
+already fired 2026-10-07, next board checkpoint 2026-10-14 (day 37), not
+yet reached. Ops `PUNCHLIST.md` RESUME marker re-read fresh (ops main
+advanced to `ccc7d7a`, carrying only sibling-routine/orchestrator
+`docs/runs.log` status commits through localization run 142 and ipad run
+142, plus this stream's own run 139 line): still the bill-reminders/
+`EXPO_TOKEN` stream, not core-p3-flagged; the one core-p3-flagged line
+(leak finder dated entitlement) unchanged, already built and closed on
+this branch at run 8, still waiting on PR #132 to merge. Fresh `npm ci`
+completed cleanly (961 packages), `npx tsc --noEmit` clean, `npm test`
+green (131 suites / 1451 tests, identical to run 139). One commit (this
+entry), pushed.
+
+No push notification: nothing in this stream's own facts has changed since
+run 139, and the next actionable checkpoint stays 2026-10-14 (day 37)
+unless something moves first.
+
 ## COMPLETE (run 139, 2026-10-09: re-verify, no new work)
 
 `origin/main` unchanged at `3a01b88` (since run 85; fresh `git fetch origin
