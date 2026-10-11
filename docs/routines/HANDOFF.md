@@ -1,5 +1,37 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 147, 2026-10-11: re-verify, no new work)
+
+`origin/main` unchanged at `3a01b88` (since run 85; fresh `git fetch origin
+main routine/core-p3`); no rebase needed
+(`git rev-list --left-right --count origin/main...origin/routine/core-p3`
+= `0 156`, branch tip unchanged at `eb7c833` (run 146's own commit),
+pre-push). PR #132 re-confirmed via the API: open, not draft,
+`merged: false`, `mergeable_state: clean`, head
+`eb7c833a3788f0c4e6339de304a353b6082913d5` (matches pre-push tip), base
+`3a01b88a9639e0964076166163d3efd74c9f3be4` (matches main's tip), 156
+commits, 0 comments, 0 reviews, `verify` check run `success`
+(14514798223, 2026-10-11T16:13:51Z-16:15:27Z). PLAN.md checklist unchanged
+(zero `[ ]` items beyond the legend line). No REVIEW FEEDBACK pending (run
+146's own item, runs.log push hygiene, was record-keeping only and already
+closed). Issue #139 (status board) re-read via the API: still the
+thirty-seventh orchestrator entry (`updated_at` `2026-10-11T12:06:26Z`,
+unchanged since run 146's read), core-worker section still "approved,
+nothing owed," blocked on the payments gate (decisions 2-4), decision
+queue unchanged at day 34, next board checkpoint still 2026-10-14 (day
+37), not yet reached. Ops `PUNCHLIST.md` RESUME marker re-read fresh:
+still the bill-reminders/`EXPO_TOKEN` stream, not core-p3-flagged; the one
+core-p3-flagged line (leak finder dated entitlement) unchanged, already
+built and closed on this branch at run 8, still waiting on PR #132 to
+merge. Fresh `npm ci` completed cleanly, `npx tsc --noEmit` clean, `npm
+test` green on the first pass this run (no repeat of run 146's isolated
+`habitDetection.test.ts` flake): 131 suites / 1451 tests, zero drift from
+run 146. One commit (this entry), pushed to `routine/core-p3`.
+
+No push notification: nothing in this stream's own facts has changed
+since run 146, and the next actionable checkpoint stays 2026-10-14 (day
+37) unless something moves first.
+
 ## COMPLETE (run 146, 2026-10-11: re-verify, no new work)
 
 `origin/main` unchanged at `3a01b88` (since run 85; fresh `git fetch origin
