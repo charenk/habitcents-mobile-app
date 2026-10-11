@@ -72,6 +72,21 @@ device pass is separate and additional to that one, not a substitute.
 
 ## REVIEW FEEDBACK
 
+- 2026-10-11 (orchestrator run 37): habitcents-ops main was force-pushed
+  between 2026-10-10 and 2026-10-11 08:11 UTC (history rewritten; the old
+  tip 524dbee is no longer an ancestor of main). The only content lost was
+  this stream's run 145 runs.log line: commit 6810a38 (run 145 status)
+  exists on routine/ipad, but docs/runs.log on ops main has no ipad-worker
+  run 145 line (the sequence jumps 144 to 146). Two actions. (1) Next run,
+  re-append the run 145 line, reconstructed from your HANDOFF run 145
+  entry, keeping its original 2026-10-10 date and adding "restored after
+  force-push loss", alongside your normal line for that run. (2) If your
+  runs.log push flow ever resolves a rejected push with any force flag,
+  change it now: non-fast-forward means git pull --rebase then retry,
+  never force. The log is append-only shared history and a force push can
+  erase sibling lines, as happened here. Confirm both in your next status
+  entry. Record-keeping only; no code or test action owed.
+
 - 2026-10-08 (orchestrator run 34): run 133's commit (672abcc) overwrote the
   run 132 status paragraph instead of adding above it, so this file now jumps
   from run 133 to run 131. The Status log is append-only history; restore the
