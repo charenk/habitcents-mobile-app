@@ -87,6 +87,17 @@ device pass is separate and additional to that one, not a substitute.
   erase sibling lines, as happened here. Confirm both in your next status
   entry. Record-keeping only; no code or test action owed.
 
+Addressed run 148 (2026-10-11): (1) restored the run 145 runs.log line on
+habitcents-ops main, appended between the existing run 143 (core-worker) and
+run 146 (localization-worker) lines in their original chronological slot,
+content reconstructed verbatim from this file's own run 145 Status entry
+above, kept at its original 2026-10-10 date, with a short note on the restore
+and why; pushed directly (ops repo's one sanctioned direct push), no force
+flag. (2) Confirming the no-force-push policy: this routine's runs.log push
+step has never used a force flag and will not; a rejected non-fast-forward
+push is handled with `git pull --rebase` (or an equivalent fetch+rebase) and
+a plain retry.
+
 - 2026-10-08 (orchestrator run 34): run 133's commit (672abcc) overwrote the
   run 132 status paragraph instead of adding above it, so this file now jumps
   from run 133 to run 131. The Status log is append-only history; restore the
@@ -101,6 +112,35 @@ confirm an exact match before committing. No other content in the Status
 log touched.
 
 ## Status
+
+Run 148 (2026-10-11). Addressed REVIEW FEEDBACK first (see above): restored
+the lost run 145 runs.log line on habitcents-ops main (reconstructed from run
+145's own entry below, original date kept, restore noted) and confirmed the
+no-force-push policy for this routine's runs.log push step. Then verified per
+this file's own COMPLETE instruction: plan fully checked, nothing new to do.
+`origin/main` (mobile-app) has not moved since run 147's check (still
+`3a01b88`), so no rebase and no new regression surface this run. Fresh `npm
+ci`, `npx tsc --noEmit` clean. Full suite green on the first pass, no flake:
+128 suites / 1419 tests, zero drift from run 147. Confirmed item 7 (`app.json`
+still `"orientation": "portrait"`, `"supportsTablet": true`). PR #133
+re-checked via `get`/`get_check_runs`/`get_comments`: still open, not draft,
+`mergeable_state: clean`, base `3a01b88` (main's tip, unchanged), head
+`5699f73` (orchestrator run 37's own feedback commit, pre-push). The `verify`
+check on that head (started 12:05:41Z, completed 12:07:21Z UTC 2026-10-11) is
+SUCCESS. Comment count unchanged at 3, no reviews. Issue #139 re-read: now the
+thirty-seventh orchestrator entry (`updated_at` 2026-10-11T12:06:26Z, new
+since run 147's read): one incident this cycle, the habitcents-ops force-push
+that lost this stream's run 145 line, now addressed above; ipad-worker's
+section reads "approved, two new REVIEW FEEDBACK items" (both this run's
+subject), blocker unchanged (device pass gated behind PR #133 merging behind
+#132's payments gate). Decision queue day 34, next re-ping held at 2026-10-14.
+Item 12 (flaky `habitDetection.ts` spanDays test) and item 11 (worker cadence)
+remain open and not this routine's call to enact. No production code changed
+this run; HANDOFF.md (this file, on routine/ipad) and docs/runs.log (on
+habitcents-ops main) are the only changes. No push notification: the
+force-push incident was already surfaced by the orchestrator's own run 37
+board update; this run's action is the already-expected follow-through, not
+new information.
 
 Run 147 (2026-10-11). Verified per this file's own COMPLETE instruction: plan
 fully checked, nothing new to do. `origin/main` has not moved since run 146's
