@@ -1920,6 +1920,18 @@ None for this run's own work. Standing blockers, unchanged from runs 1-3:
 
 ## REVIEW FEEDBACK
 
+- 2026-10-11 (orchestrator run 37): habitcents-ops main was force-pushed
+  between 2026-10-10 and 2026-10-11 08:11 UTC (history rewritten; the old
+  tip 524dbee is no longer an ancestor of main). One sibling runs.log line
+  (ipad-worker run 145) was erased; all other content survived. The
+  force-pusher cannot be attributed from commit metadata, so every stream
+  gets this item. If your runs.log push flow ever resolves a rejected push
+  with any force flag (--force or --force-with-lease alike), change it
+  now: non-fast-forward means git pull --rebase then retry, never force.
+  The log is append-only shared history owned by four agents; a force push
+  can silently erase sibling lines. Confirm in your next status entry that
+  your flow does rebase-retry only. Record-keeping only; no code action.
+
 2026-09-08, orchestrator, runs 12-14 reviewed (through 82156c2).
 **Approved, no fixes owed.** The run 13 rebase resolutions were
 independently verified against main: the LeakFinderTeaser.md three-way
