@@ -25,7 +25,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/ui/Icon';
 import { useToast } from '@/components/ui/Toast';
 import { useTheme } from '@/contexts/ThemeContext';
-import { radii, typeScale, spacing, type AppTheme } from '@/constants/theme';
+import { contentColumnStyle, radii, typeScale, spacing, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import { hapticSelection } from '@/utils/motion';
 import { track, isPaywallPlacement } from '@/utils/analytics';
@@ -250,7 +250,10 @@ export default function PaywallScreen() {
         <Icon name="X" size={18} color={theme.slate} />
       </TouchableOpacity>
 
-      <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
+      <View
+        testID="paywall-footer"
+        style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}
+      >
         <Text style={styles.trialLine}>{strings.paywall.trialLine}</Text>
         <TouchableOpacity
           style={[styles.primaryButton, purchasing && styles.primaryButtonDisabled]}
@@ -317,6 +320,7 @@ function createStyles(theme: AppTheme) {
       // UX-018: 24 drifted from the ratified 20pt screen gutter.
       paddingHorizontal: spacing.gutter,
       paddingTop: 8,
+      ...contentColumnStyle,
     },
     // Gradient hero: white type on lavender-to-indigo. One of the two
     // decorative gradients the app allows (design/PATTERN_VOCABULARY.md "Color").
@@ -464,6 +468,11 @@ function createStyles(theme: AppTheme) {
       color: theme.textSecondary,
       lineHeight: 17,
     },
+    // Decision 1 (issue #139, 2026-09-07, Charen): the fixed footer caps at
+    // 600pt too, matching the scroll column above it, rather than staying
+    // full width. paddingHorizontal (not margin) here, so the direct spread
+    // caps the border and background along with the content, same as
+    // Today's ribbonWrap.
     footer: {
       // UX-018: 24 drifted from the ratified 20pt screen gutter.
       paddingHorizontal: spacing.gutter,
@@ -471,6 +480,7 @@ function createStyles(theme: AppTheme) {
       borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: theme.border,
       backgroundColor: theme.background,
+      ...contentColumnStyle,
     },
     trialLine: {
       fontSize: typeScale.secondary,

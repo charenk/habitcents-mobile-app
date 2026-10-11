@@ -1,0 +1,4030 @@
+# ipad-worker handoff
+
+## COMPLETE
+
+Run 14 (2026-09-08) checked off the plan's last item and marked PR #133
+ready for review. Every plan item but the standing item 7 re-verification
+line is checked (see PLAN.md); item 7 is by design never checked, since it
+is a re-verify-every-run instruction, not a one-time task. **This branch
+has never been seen on a real iPad or the iPad simulator (none is
+available in this environment).** The device pass below is the one thing
+left before this ships; nothing about the plan being "complete" changes
+that.
+
+## DEVICE PASS NEEDED
+
+- The 600pt capped column reads as intentional on iPad, not cramped or
+  arbitrarily narrow, across Today, Money, Insights, Categories, habit
+  detail, category detail, Profile, Paywall, the onboarding carousel beats,
+  and every Leak Scan screen (intake, scope, deck, bills, graceful failure,
+  results, payoff).
+- Bottom sheets (`components/ui/Sheet.tsx` and everything built on it:
+  ExpenseSheet, AddUpcomingSheet, PickOneSheet, PartialSlipSheet,
+  BreakHabitSheet, ConfirmSheet, ReviewQueueSheet, CategoryTransactionsSheet,
+  the currency and category pickers) look right centered at the capped
+  width, including the keyboard-clamp behavior on forms (ExpenseSheet,
+  AddUpcomingSheet) with the iPad on-screen keyboard, which is shaped
+  differently from the phone one. **Changed run 26 (main, not this
+  branch):** the sheet's old `avoidKeyboard`/KeyboardAvoidingView lift was
+  replaced by a height clamp (`utils/sheetLayout.ts` `sheetMaxHeight`,
+  `utils/keyboard.ts` `useKeyboardHeight`) that shrinks the panel to the
+  visible strip above the keyboard instead of lifting it; the 600pt width
+  cap this branch owns is unaffected (confirmed run 26, see Status), but the
+  clamp's own feel on the iPad keyboard, which is taller and shaped
+  differently from the phone one, is new territory for the device pass.
+- The onboarding carousel: swiping between beats on iPad, confirming the
+  capped `beatContent` column reads well against the still full-width
+  `beat` page background, and that `BeatMedia`'s frame (capped along with
+  the rest of the beat content) is not so narrow it looks like an error
+  state. **Changed run 85 (main's own Dynamic Type fix, rebased onto this
+  run):** each beat is now a vertical `ScrollView` with a pair of
+  collapsing spacers around `beatContent`, so the block centers while it
+  fits and scrolls once it does not; on iPad the capped column should
+  still center correctly within that scroller, worth a specific look at an
+  accessibility text size since that is the case the scroller exists for.
+- The Leak Scan flow end to end on iPad: intake's file-picker stage,
+  scope's category rows, the deck's swipeable candidate cards, the bills
+  offer rows, graceful failure, and the results dashboard, all capped at
+  600pt. **New this run:** `ScopeScreen` and `BillsScreen`'s fixed footer
+  bars (confirm/skip), `app/paywall.tsx`'s footer, and `PayoffScreen`'s
+  Continue button now cap and center at 600pt too (decision 1, issue #139)
+  rather than staying full width; confirm this reads as one consistent
+  bar rather than a strange inset one, especially where the footer's own
+  border-top and background now stop at 600pt instead of spanning the
+  screen.
+- The Today Spent/Kept pager: swiping between Spent and Kept feels right on
+  iPad, in both split-view widths. **Changed this run:** the Kept pane's
+  `KeptHero` band no longer renders at all (main removed it 2026-09-07,
+  unrelated to this branch); only the door3 ribbon is capped and centered
+  above the list now. Confirm there is no leftover visual seam where the
+  capped ribbon meets the still-full-width pane background around it.
+- Split-screen / Slide Over multitasking on iPad, since `supportsTablet`
+  now being true makes iPadOS offer those; the app has never been exercised
+  in a resized window before this branch.
+- One boot on an iPad simulator or device to confirm nothing above (icon,
+  splash) regressed from turning `supportsTablet` on, before this reaches
+  TestFlight.
+
+This app also carries a standing device-pass item from Phase 2 sign-off
+(decision 0008, umbrella repo): the VoiceOver walk + Accessibility
+Inspector audit, scheduled for the Phase 4 TestFlight beta. This iPad
+device pass is separate and additional to that one, not a substitute.
+
+## REVIEW FEEDBACK
+
+- 2026-10-08 (orchestrator run 34): run 133's commit (672abcc) overwrote the
+  run 132 status paragraph instead of adding above it, so this file now jumps
+  from run 133 to run 131. The Status log is append-only history; restore the
+  run 132 paragraph (recoverable from commit 765bc6c) in its correct position
+  with your next status commit, and keep prior runs' paragraphs untouched from
+  then on. Record-keeping only; no code or test action owed.
+
+Addressed run 136 (2026-10-08): restored the run 132 status paragraph
+(verbatim from commit 765bc6c) between run 133 and run 131, where it
+originally sat; diffed the restored text against that commit's version to
+confirm an exact match before committing. No other content in the Status
+log touched.
+
+## Status
+
+Run 146 (2026-10-11). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 145's
+check (still `3a01b88`), so no rebase and no new regression surface this run.
+Fresh `npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass,
+no flake: 128 suites / 1419 tests, zero drift from run 145. Confirmed item 7
+(`app.json` still `"orientation": "portrait"`, `"supportsTablet": true`).
+PR #133 re-checked via `get`/`get_check_runs`/`get_comments`: still open, not
+draft, `mergeable_state: clean`, base `3a01b88` (main's tip, unchanged), head
+`6810a38` (run 145's own status-only push). The `verify` check on that head
+(started 20:10:50Z, completed 20:12:39Z UTC 2026-10-10) is SUCCESS. Comment
+count unchanged at 3, no reviews. Issue #139 re-read: thirty-sixth orchestrator
+entry still current (`updated_at` 2026-10-10T12:03:07Z); ipad-worker's section
+again reads "approved, nothing owed," blocker unchanged (device pass gated
+behind PR #133 merging behind #132's payments gate). Decision item 11
+(thinning worker cadence) and items 2/8/10 remain open and already escalated
+by the orchestrator (re-pings 09-18/09-24/09-26/10-02/10-07, next 10-14); not
+this routine's call to enact, and not new information this run, so no push
+notification sent. No production code or test content changed this run; this
+HANDOFF update is the only change.
+
+Run 145 (2026-10-10). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 144's
+check (still `3a01b88`, confirmed via `git merge-base --is-ancestor`), so no
+rebase and no new regression surface this run. Fresh `npm ci`, `npx tsc
+--noEmit` clean. Full suite green on the first pass, no flake: 128 suites /
+1419 tests, zero drift from run 144. Confirmed item 7 (`app.json` still
+`"orientation": "portrait"`, `"supportsTablet": true`). PR #133 re-checked
+via `get`/`get_check_runs`/`get_comments`: still open, not draft,
+`mergeable_state: clean`, base `3a01b88` (main's tip, unchanged), head still
+`266ec71` (run 144's own status-only push). The `verify` check on that head
+(started 14:11:27Z, completed 14:12:35Z UTC 2026-10-10) is SUCCESS. Comment
+count unchanged at 3, no reviews. Issue #139 re-read: still the
+orchestrator's thirty-sixth board entry (`updated_at` 2026-10-10T12:03:07Z,
+unchanged since run 144 read it); its ipad-worker section again reads
+"approved, nothing owed," blockers unchanged (device pass gated behind PR
+#133 merging behind #132's payments gate). No new REVIEW FEEDBACK section
+appended for this branch, so nothing further is owed this run. The board's
+decision queue is unchanged at 33 days old (day-30 re-ping already fired
+2026-10-07, next scheduled 2026-10-14) and item 11 (thinning worker cadence
+while the three streams sit idle, escalated 09-18, direct alerts 09-24/09-26/
+10-02, re-pinged 10-07) remains the orchestrator's and Charen's call, not
+this routine's to enact on its own authority. No production code or test
+content changed this run; this HANDOFF update is the only change. No push
+notification: steady state only, same facts the board and run 144 already
+surfaced, nothing new or regressed for ipad-worker specifically.
+
+Run 144 (2026-10-10). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 143's
+check (still `3a01b88`, confirmed via `git merge-base --is-ancestor`), so no
+rebase and no new regression surface this run. Fresh `npm ci` (this container
+had no `node_modules`), `npx tsc --noEmit` clean. Full suite green on the
+first pass, no flake: 128 suites / 1419 tests, zero drift from run 143.
+Confirmed item 7 (`app.json` still `"orientation": "portrait"`,
+`"supportsTablet": true`). PR #133 re-checked via `get`: still open, not
+draft, `mergeable_state: clean`, base `3a01b88` (main's tip, unchanged), head
+still `74e5657` (run 143's own status-only push, pre-dating this run's). Comment
+count unchanged at 3, no reviews. Issue #139 re-read: now the orchestrator's
+thirty-sixth board entry (`updated_at` 2026-10-10T12:03:07Z), a thirteenth
+fully quiet day with main static since 2026-09-26; its ipad-worker section
+again reads "approved, nothing owed" and lists this branch's last-reviewed
+SHA as 74e5657 (through run 143, matching head before this run's push). No
+new REVIEW FEEDBACK section appended for this branch, so nothing further is
+owed this run. The board repeats item 11 (thinning worker cadence while all
+three streams sit idle, escalated 09-18, re-pinged 10-07, next re-ping
+2026-10-14) as the orchestrator's and Charen's call, not this routine's to
+enact on its own authority; this run makes no cadence change on its own. No
+production code or test content changed this run; this HANDOFF update is
+the only change. No push notification: steady state only, same facts run
+143 already surfaced, nothing new or regressed for ipad-worker specifically.
+
+Run 143 (2026-10-10). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 142's
+check (still `3a01b88`, confirmed via `git merge-base --is-ancestor`), so no
+rebase and no new regression surface this run. Fresh `npm ci` (this container
+had no `node_modules`), `npx tsc --noEmit` clean. Full suite green on the
+first pass, no flake: 128 suites / 1419 tests, zero drift from run 142.
+Confirmed item 7 (`app.json` still `"orientation": "portrait"`,
+`"supportsTablet": true`). PR #133 re-checked via `get`/`get_comments`: still
+open, not draft, `mergeable_state: clean`, base `3a01b88` (main's tip,
+unchanged), head still `eaa0f7a` (run 142's own status-only push). Comment
+count unchanged at 3, no reviews. Issue #139 re-read: still the
+orchestrator's thirty-fifth board entry (`updated_at` 2026-10-09T12:04:03Z,
+unchanged since run 142 read it); its ipad-worker section again reads
+"approved, nothing owed" and the record-keeping item stays closed. No new
+REVIEW FEEDBACK section appended for this branch, so nothing further is owed
+this run. The board's decision queue is unchanged at 32+ days old (day-30
+re-ping already fired 2026-10-07, next scheduled 2026-10-14) and item 11
+(thinning worker cadence while the three streams sit idle) remains the
+orchestrator's and Charen's call, not this routine's to enact on its own
+authority. No production code or test content changed this run; this
+HANDOFF update is the only change. No push notification: steady state only,
+same facts run 142 already surfaced, nothing new or regressed for
+ipad-worker specifically.
+
+Run 142 (2026-10-10). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 141's
+check (still `3a01b88`, confirmed via `git merge-base --is-ancestor`), so no
+rebase and no new regression surface this run. Fresh `npm ci` (this container
+had no `node_modules`), `npx tsc --noEmit` clean. Full suite green on the
+first pass, no flake: 128 suites / 1419 tests, zero drift from run 141.
+Confirmed item 7 (`app.json` still `"orientation": "portrait"`,
+`"supportsTablet": true`). PR #133 re-checked via `get`/`get_comments`: still
+open, not draft, `mergeable_state: clean`, base `3a01b88` (main's tip,
+unchanged), head still `d63de91` (run 141's own status-only push). Comment
+count unchanged at 3, no reviews. Issue #139 re-read: still the
+orchestrator's thirty-fifth board entry (`updated_at` 2026-10-09T12:04:03Z,
+unchanged since run 141 read it); its ipad-worker section again reads
+"approved, nothing owed" and the record-keeping item stays closed. No new
+REVIEW FEEDBACK section appended for this branch, so nothing further is owed
+this run. The board's decision queue is unchanged at 32+ days old (day-30
+re-ping already fired 2026-10-07, next scheduled 2026-10-14) and item 11
+(thinning worker cadence while the three streams sit idle) remains the
+orchestrator's and Charen's call, not this routine's to enact on its own
+authority. No production code or test content changed this run; this
+HANDOFF update is the only change. No push notification: steady state only,
+same facts run 141 already surfaced, nothing new or regressed for
+ipad-worker specifically.
+
+Run 141 (2026-10-09). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 140's
+check (still `3a01b88`, confirmed via `git merge-base --is-ancestor`), so no
+rebase and no new regression surface this run. Fresh `npm ci` (this container
+had no `node_modules`), `npx tsc --noEmit` clean. Full suite green on the
+first pass, no flake: 128 suites / 1419 tests, zero drift from run 140.
+Confirmed item 7 (`app.json` still `"orientation": "portrait"`,
+`"supportsTablet": true`). PR #133 re-checked via `get`/`get_check_runs`/
+`get_comments`: still open, not draft, `mergeable_state: clean`, base
+`3a01b88` (main's tip, unchanged), head now `c9176f1` (run 140's own
+status-only push). The `verify` check on that head (started 14:11:49Z,
+completed 14:13:26Z UTC 2026-10-09) is SUCCESS. Comment count unchanged at 3,
+no reviews. Issue #139 re-read: still the orchestrator's thirty-fifth board
+entry (`updated_at` 2026-10-09T12:04:03Z, unchanged since run 140 read it);
+its ipad-worker section again reads "approved, nothing owed" and the
+record-keeping item stays closed. No new REVIEW FEEDBACK section appended for
+this branch, so nothing further is owed this run. The board's decision queue
+is unchanged at 32 days old (day-30 re-ping already fired 2026-10-07, next
+scheduled 2026-10-14) and item 11 (thinning worker cadence while the three
+streams sit idle) remains the orchestrator's and Charen's call, not this
+routine's to enact on its own authority. No production code or test content
+changed this run; this HANDOFF update is the only change. No push
+notification: steady state only, same facts run 140 already surfaced, nothing
+new or regressed for ipad-worker specifically.
+
+Run 140 (2026-10-09). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 139's
+check (still `3a01b88`, confirmed via `git merge-base --is-ancestor`), so no
+rebase and no new regression surface this run. Fresh `npm ci` (this container
+had no `node_modules`), `npx tsc --noEmit` clean. Full suite green on the
+first pass, no flake: 128 suites / 1419 tests, zero drift from run 139.
+Confirmed item 7 (`app.json` still `"orientation": "portrait"`,
+`"supportsTablet": true`). PR #133 re-checked via `get`/`get_check_runs`/
+`get_comments`: still open, not draft, `mergeable_state: clean`, base
+`3a01b88` (main's tip, unchanged), head still `78bebcc` (run 139's own
+status-only push, no new commit needed this run before this status update).
+The `verify` check on that head (started 08:11:47Z, completed 08:13:24Z UTC
+2026-10-09) is SUCCESS. Comment count unchanged at 3, no reviews. Issue #139
+re-read: `updated_at` moved to `2026-10-09T12:04:03Z`, the orchestrator's
+thirty-fifth board entry; its ipad-worker section again reads "approved,
+nothing owed" and the record-keeping item from the previous board stays
+closed. No new REVIEW FEEDBACK section appended for this branch, so nothing
+further is owed this run. The board's decision queue is unchanged at 32 days
+old (day-30 re-ping already fired 2026-10-07, next scheduled 2026-10-14) and
+item 11 (thinning worker cadence while the three streams sit idle) remains
+the orchestrator's and Charen's call, not this routine's to enact on its own
+authority. No production code or test content changed this run; this
+HANDOFF update is the only change. No push notification: steady state only,
+same facts run 139 already surfaced, nothing new or regressed for
+ipad-worker specifically.
+
+Run 139 (2026-10-09). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 138's
+check (still `3a01b88`, confirmed via `git merge-base --is-ancestor`), so no
+rebase and no new regression surface this run. Fresh `npm ci` (this container
+had no `node_modules`), `npx tsc --noEmit` clean. Full suite green on the
+first pass, no flake: 128 suites / 1419 tests, zero drift from run 138.
+Confirmed item 7 (`app.json` still `"orientation": "portrait"`,
+`"supportsTablet": true`). PR #133 re-checked via `get`/`get_check_runs`/
+`get_comments`/`get_reviews`: still open, not draft, `mergeable_state: clean`,
+base `3a01b88` (main's tip, unchanged), head still `c55299d` (run 138's own
+status-only push, no new commit needed this run before this status update).
+The `verify` check on that head (started 02:09:38Z, completed 02:11:13Z UTC
+2026-10-09) is SUCCESS. Comment count unchanged at 3, no reviews. Issue #139
+re-read: `updated_at` unchanged at `2026-10-08T12:04:07Z`, same thirty-fourth
+orchestrator entry run 138 already saw: ipad-worker section still shows the
+run 132 restore note in its stored text, already completed and pushed three
+runs ago (commit 75e3d27); no new REVIEW FEEDBACK section has been appended
+since, so nothing further is owed this run. Decision queue unchanged at day
+31; next scheduled re-ping 2026-10-14 (day 37), not due yet, not something
+this routine enacts early. Item 11 (cadence thinning) remains the
+orchestrator's and Charen's call, not this routine's to enact. No production
+code or test content changed this run; this HANDOFF update is the only
+change. No push notification: steady state only, same facts run 138 already
+surfaced, nothing new or regressed for ipad-worker specifically.
+
+Run 138 (2026-10-09). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 137's
+check (still `3a01b88`, confirmed via `git merge-base --is-ancestor`), so no
+rebase and no new regression surface this run. Fresh `npm ci` (this container
+had no `node_modules`), `npx tsc --noEmit` clean. Full suite green on the
+first pass, no flake: 128 suites / 1419 tests, zero drift from run 137.
+Confirmed item 7 (`app.json` still `"orientation": "portrait"`,
+`"supportsTablet": true`). PR #133 re-checked via `get`/`get_check_runs`/
+`get_comments`: still open, not draft, `mergeable_state: clean`, base
+`3a01b88` (main's tip, unchanged), head still `bfb0236` (run 137's own
+status-only push, no new commit needed this run before this status update).
+The `verify` check on that head (started 20:11:43Z, completed 20:13:14Z UTC
+2026-10-08) is SUCCESS. Comment count unchanged at 3, no reviews. Issue #139
+re-read: `updated_at` unchanged at `2026-10-08T12:04:07Z`, same thirty-fourth
+orchestrator entry run 137 already saw: ipad-worker section still shows the
+run 132 restore note in its stored text, already completed and pushed two
+runs ago (commit 75e3d27); no new REVIEW FEEDBACK section has been appended
+since, so nothing further is owed this run. Decision queue unchanged at day
+31; next scheduled re-ping 2026-10-14 (day 37), not due yet, not something
+this routine enacts early. Item 11 (cadence thinning) remains the
+orchestrator's and Charen's call, not this routine's to enact. No production
+code or test content changed this run; this HANDOFF update is the only
+change. No push notification: steady state only, same facts run 137 already
+surfaced, nothing new or regressed for ipad-worker specifically.
+
+Run 137 (2026-10-08). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 136's
+check (still `3a01b88`, confirmed via `git merge-base --is-ancestor`), so no
+rebase and no new regression surface this run. Fresh `npm ci` (this container
+had no `node_modules`), `npx tsc --noEmit` clean. Full suite green on the
+first pass, no flake: 128 suites / 1419 tests, zero drift from run 136.
+Confirmed item 7 (`app.json` still `"orientation": "portrait"`,
+`"supportsTablet": true`). PR #133 re-checked via `get`/`get_check_runs`/
+`get_comments`/`get_reviews`: still open, not draft, `mergeable_state: clean`,
+base `3a01b88` (main's tip, unchanged), head still `75e3d27` (run 136's own
+status-only push, no new commit needed this run before this status update).
+The `verify` check on that head (started 14:13:17Z, completed 14:14:48Z UTC
+2026-10-08) is SUCCESS. Comment count unchanged at 3, no reviews. Issue #139
+re-read: `updated_at` unchanged at `2026-10-08T12:04:07Z`, same thirty-fourth
+orchestrator entry run 136 already addressed (the HANDOFF restore): ipad-worker
+section still shows "approved, one record-keeping item owed" in its stored
+text, but that is the same run 132 paragraph restore already completed and
+pushed last run (commit 75e3d27); no new REVIEW FEEDBACK section has been
+appended since, so nothing further is owed this run. Decision queue unchanged
+at day 31; next scheduled re-ping 2026-10-14 (day 37), not due yet, not
+something this routine enacts early. Item 11 (cadence thinning) remains the
+orchestrator's and Charen's call, not this routine's to enact. No production
+code or test content changed this run; this HANDOFF update is the only
+change. No push notification: steady state only, same facts run 136 already
+surfaced, nothing new or regressed for ipad-worker specifically.
+
+Run 136 (2026-10-08). Addressed the orchestrator's run 34 REVIEW FEEDBACK
+first (see above): restored the run 132 status paragraph that run 133's
+commit had overwritten, verbatim from commit 765bc6c, back in its original
+position between run 133 and run 131; diffed it against that commit before
+committing to confirm an exact match. Otherwise verified per this file's own
+COMPLETE instruction: plan fully checked, nothing new to do. `origin/main`
+has not moved since run 135's check (still `3a01b88`, confirmed via `git
+merge-base --is-ancestor`), so no rebase and no new regression surface this
+run. Fresh `npm ci` (this container had no `node_modules`), `npx tsc
+--noEmit` clean. Full suite green on the first pass, no flake: 128 suites /
+1419 tests, zero drift from run 135. Confirmed item 7 (`app.json` still
+`"orientation": "portrait"`, `"supportsTablet": true`). PR #133 re-checked
+via `get`/`get_check_runs`/`get_comments`/`get_reviews`: still open, not
+draft, `mergeable_state: clean`, base `3a01b88` (main's tip, unchanged),
+head `1e43ad6` (the orchestrator's own feedback commit, already on origin
+pre-push this run). The `verify` check on that head is SUCCESS (started
+12:03:40Z, completed 12:05:07Z UTC 2026-10-08). Comment count unchanged at
+3, no reviews. Issue #139 re-read: now the thirty-fourth orchestrator entry
+(`updated_at` 2026-10-08T12:04:07Z, moved from run 135's thirty-third):
+ipad-worker section verdict is "approved, one record-keeping item owed"
+(the HANDOFF restore just done above), no code or test action owed.
+Decision queue is now day 31; next scheduled re-ping 2026-10-14 (day 37),
+not due yet, not something this routine enacts early. Item 11 (cadence
+thinning) remains the orchestrator's and Charen's call, not this routine's
+to enact. No production code or test content changed this run; this
+HANDOFF update is the only change. No push notification: the record-keeping
+fix is cosmetic (a status-log ordering gap, not a regression or a new
+decision), already visible to Charen via the board issue the orchestrator
+itself updated, so nothing new for this routine to surface on top of that.
+
+Run 135 (2026-10-08). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 134's
+check (still `3a01b88`, confirmed via `git merge-base --is-ancestor`), so no
+rebase and no new regression surface this run. Fresh `npm ci` (this container
+had no `node_modules`), `npx tsc --noEmit` clean. Full suite green on the
+first pass, no flake: 128 suites / 1419 tests, zero drift from run 134.
+Confirmed item 7 (`app.json` still `"orientation": "portrait"`,
+`"supportsTablet": true`). PR #133 re-checked via `get`/`get_check_runs`/
+`get_comments`/`get_reviews`: still open, not draft, `mergeable_state: clean`,
+base `3a01b88` (main's tip, unchanged), head still `c5038b6` (run 134's own
+status-only push, no new commit needed this run before this status update).
+The `verify` check on that head (started 02:10:56Z, completed 02:12:27Z UTC
+2026-10-08) is SUCCESS. Comment count unchanged at 3, no reviews. Issue #139
+re-read: `updated_at` unchanged at `2026-10-07T12:03:43Z`, same thirty-third
+orchestrator entry run 134 already saw: ipad-worker section still "approved,
+nothing owed," blocker still the device pass gated on PR #133 merging behind
+#132's payments gate. The decision queue is unchanged at day 30; the day-30
+direct re-ping to Charen already fired via the orchestrator's own run 33
+(confirmed in the board text and in `habitcents-ops/docs/runs.log`), and the
+board's next re-ping is dated 2026-10-14 (day 37), not something this routine
+enacts early. Item 11 (cadence thinning) remains the orchestrator's and
+Charen's call, not this routine's to enact. No new "REVIEW FEEDBACK" section
+addressed to this routine. No production code, test, or plan content changed
+this run; this HANDOFF update is the only change. No push notification:
+nothing new for Charen from this routine specifically this run (same steady
+state run 134 already covered, and the day-30 escalation already reached
+Charen via the orchestrator), and no regression or new decision surfaced for
+ipad-worker.
+
+Run 134 (2026-10-08). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 133's
+check (still `3a01b88`, confirmed via `git merge-base --is-ancestor`), so no
+rebase and no new regression surface this run. Fresh `npm ci` (this container
+had no `node_modules`), `npx tsc --noEmit` clean. Full suite green on the
+first pass, no flake: 128 suites / 1419 tests, zero drift from run 133.
+Confirmed item 7 (`app.json` still `"orientation": "portrait"`,
+`"supportsTablet": true`). PR #133 re-checked via `get`/`get_check_runs`/
+`get_comments`/`get_reviews`: still open, not draft, `mergeable_state: clean`,
+base `3a01b88` (main's tip, unchanged), head still `672abcc` (run 133's own
+status-only push, no new commit needed this run before this status update).
+The `verify` check on that head (started 20:09:56Z, completed 20:11:14Z UTC
+2026-10-07) is SUCCESS. Comment count unchanged at 3, no reviews. Issue #139
+re-read: `updated_at` unchanged at `2026-10-07T12:03:43Z`, same thirty-third
+orchestrator entry run 133 already saw: ipad-worker section still "approved,
+nothing owed," blocker still the device pass gated on PR #133 merging behind
+#132's payments gate. The decision queue is unchanged at day 30; the day-30
+direct re-ping to Charen already fired via the orchestrator's own run 33
+(confirmed in the board text and in `habitcents-ops/docs/runs.log`), and the
+board's next re-ping is dated 2026-10-14 (day 37), not something this routine
+enacts early. Item 11 (cadence thinning) remains the orchestrator's and
+Charen's call, not this routine's to enact. No new "REVIEW FEEDBACK" section
+addressed to this routine. No production code, test, or plan content changed
+this run; this HANDOFF update is the only change. No push notification:
+nothing new for Charen from this routine specifically this run (same steady
+state run 133 already covered, and the day-30 escalation already reached
+Charen via the orchestrator), and no regression or new decision surfaced for
+ipad-worker.
+
+Run 133 (2026-10-07). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 132's
+check (still `3a01b88`, confirmed via `git merge-base --is-ancestor`), so no
+rebase and no new regression surface this run. Fresh `npm ci`, `npx tsc
+--noEmit` clean. Full suite green on the first pass, no flake: 128 suites /
+1419 tests, zero drift from run 132. Confirmed item 7 (`app.json` still
+`"orientation": "portrait"`, `"supportsTablet": true`). PR #133 re-checked via
+`get`/`get_check_runs`/`get_comments`: still open, not draft, `mergeable_state:
+clean`, base `3a01b88` (main's tip, unchanged), head still `765bc6c` (run 132's
+own status-only push, no new commit needed this run before this status
+update). The `verify` check on that head (started 14:11:18Z, completed
+14:13:00Z UTC 2026-10-07) is SUCCESS. Comment count unchanged at 3, no
+reviews. Issue #139 re-read: `updated_at` unchanged at `2026-10-07T12:03:43Z`,
+same thirty-third orchestrator entry run 132 already saw: ipad-worker section
+still "approved, nothing owed," blocker still the device pass gated on PR
+#133 merging behind #132's payments gate. The decision queue's day-30 direct
+re-ping to Charen already fired earlier today from the orchestrator's own
+run (per run 132's note); nothing further for this routine to send, and no
+new entry has landed since. Item 11 (cadence thinning) remains the
+orchestrator's and Charen's call, not this routine's to enact. No new
+"REVIEW FEEDBACK" section addressed to this routine. No production code,
+test, or plan content changed this run; this HANDOFF update is the only
+change. No push notification: nothing new for Charen from this routine
+specifically this run (same steady state run 132 already covered, and the
+day-30 escalation already reached Charen via the orchestrator earlier
+today), and no regression or new decision surfaced for ipad-worker.
+
+Run 132 (2026-10-07). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 131's
+check (still `3a01b88`), so no rebase and no new regression surface this run.
+Fresh `npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass,
+no flake: 128 suites / 1419 tests, zero drift from run 131. Confirmed item 7
+(`app.json` still `"orientation": "portrait"`, `"supportsTablet": true`). PR
+#133 re-checked via `get`/`get_check_runs`: still open, not draft,
+`mergeable_state: clean`, base `3a01b88` (main's tip, unchanged), head still
+`15d6327` (run 131's own status-only push). The `verify` check on that head
+(started 08:12:23Z, completed 08:14:04Z UTC 2026-10-07) is SUCCESS. Comment
+count unchanged at 3, no reviews. Issue #139 re-read: now the thirty-third
+orchestrator entry (`updated_at` 2026-10-07T12:03:43Z): ipad-worker section
+still "approved, nothing owed," blocker still the device pass gated on PR
+#133 merging behind #132's payments gate. The decision queue's day-30 direct
+re-ping to Charen already fired today from the orchestrator's own run;
+nothing further for this routine to send. Item 11 (cadence thinning) remains
+the orchestrator's and Charen's call, not this routine's to enact. No new
+"REVIEW FEEDBACK" section addressed to this routine. No production code,
+test, or plan content changed this run; this HANDOFF update is the only
+change. No push notification: the day-30 escalation already reached Charen
+via the orchestrator this run, and nothing new or regressed is specific to
+ipad-worker.
+
+Run 131 (2026-10-07). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 130's
+check (still `3a01b88`), so no rebase and no new regression surface this run.
+Fresh `npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass,
+no flake: 128 suites / 1419 tests, zero drift from run 130. Re-verified item 7
+(`app.json` still `"orientation": "portrait"`, `"supportsTablet": true`). PR
+#133 re-checked via `get`/`get_check_runs`/`get_comments`/`get_reviews`: still
+open, not draft, `mergeable_state: clean`, base `3a01b88` (main's tip,
+unchanged), head still `4b4f3d7` (run 130's own status-only push, no new
+commit needed this run before this status update). The `verify` check on that
+head (started 02:10:09Z, completed 02:11:50Z UTC 2026-10-07) is SUCCESS.
+Comment count unchanged at 3, no reviews. PR #132 also re-checked directly:
+still open, not draft, not merged, `mergeable_state: clean`, base unchanged.
+Issue #139 re-read: `updated_at` unchanged at `2026-10-06T12:04:07Z`, same
+thirty-second orchestrator entry run 130 already saw: ipad-worker section
+still "approved, nothing owed," blocker still the device pass gated on PR
+#133 merging behind #132's payments gate. Decision queue unchanged, still day
+29 per the board's own text; the board's own next direct re-ping is dated
+today, 2026-10-07, which is the orchestrator's and Charen's call to make, not
+this routine's to enact or duplicate. Item 11 (worker cadence thinning)
+remains an open recommendation for the orchestrator and Charen, not this
+routine's to enact. No new "REVIEW FEEDBACK" section addressed to this
+routine (the file's existing section is historical, fully addressed through
+run 28). No production code, test, or plan content changed this run; this
+HANDOFF update is the only change. No push notification: nothing new for
+Charen from this routine specifically this run (same steady state runs
+92-130 already covered, and the cadence/decision re-ping due today is the
+orchestrator's thread, already escalated repeatedly through other channels),
+and no regression or new decision surfaced for ipad-worker.
+
+Run 130 (2026-10-07). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 129's
+check (still `3a01b88`), so no rebase and no new regression surface this run.
+Fresh `npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass,
+no flake: 128 suites / 1419 tests, zero drift from run 129. Re-verified item 7
+(`app.json` still `"orientation": "portrait"`, `"supportsTablet": true`). PR
+#133 re-checked via `get`/`get_check_runs`: still open, not draft,
+`mergeable_state: clean`, base `3a01b88` (main's tip, unchanged), head still
+`bde769f` (run 129's own status-only push, no new commit needed this run
+before this status update). The `verify` check on that head (started
+20:11:44Z, completed 20:13:15Z UTC 2026-10-06) is SUCCESS. Comment count
+unchanged at 3, no reviews. Issue #139 re-read: `updated_at` unchanged at
+`2026-10-06T12:04:07Z`, same thirty-second orchestrator entry run 129 already
+saw: ipad-worker section still "approved, nothing owed," blocker still the
+device pass gated on PR #133 merging behind #132's payments gate. Decision
+queue unchanged, still day 29 per the board's own text; the board's own next
+direct re-ping is dated today, 2026-10-07, which is the orchestrator's and
+Charen's call to make, not this routine's to enact or duplicate. Item 11
+(worker cadence thinning) remains an open recommendation for the orchestrator
+and Charen, not this routine's to enact. No new "REVIEW FEEDBACK" section
+addressed to this routine (the file's existing section is historical, fully
+addressed through run 28). No production code, test, or plan content changed
+this run; this HANDOFF update is the only change. No push notification:
+nothing new for Charen from this routine specifically this run (same steady
+state runs 92-129 already covered, and the cadence/decision re-ping due today
+is the orchestrator's thread, already escalated repeatedly through other
+channels), and no regression or new decision surfaced for ipad-worker.
+
+Run 129 (2026-10-06). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 128's
+check (still `3a01b88`), so no rebase and no new regression surface this run.
+Fresh `npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass,
+no flake: 128 suites / 1419 tests, zero drift from run 128. Re-verified item 7
+(`app.json` still `"orientation": "portrait"`, `"supportsTablet": true`). PR
+#133 re-checked via `get`/`get_check_runs`/`get_comments`/`get_reviews`: still
+open, not draft, `mergeable_state: clean`, base `3a01b88` (main's tip,
+unchanged), head now `4aa152f` (run 128's own status-only push). The `verify`
+check on that head (started 14:12:04Z, completed 14:13:53Z UTC 2026-10-06) is
+SUCCESS. Comment count unchanged at 3, no reviews. Issue #139 re-read:
+`updated_at` unchanged at `2026-10-06T12:04:07Z`, the same thirty-second
+orchestrator entry run 128 already saw: ipad-worker section still "approved,
+nothing owed," blocker still the device pass gated on PR #133 merging behind
+#132's payments gate. Decision queue unchanged, still day 29; next direct
+re-ping still dated 2026-10-07, the orchestrator's and Charen's call, not this
+routine's to enact. Item 11 (worker cadence thinning) remains an open
+recommendation for the orchestrator and Charen, not this routine's to enact.
+No new "REVIEW FEEDBACK" section addressed to this routine (the file's
+existing section is historical, fully addressed through run 28). No
+production code, test, or plan content changed this run; this HANDOFF update
+is the only change. No push notification: nothing new for Charen this run
+(same steady state runs 92-128 already covered), and no regression or new
+decision surfaced for ipad-worker.
+
+Run 128 (2026-10-06). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 127's
+check (still `3a01b88`), so no rebase and no new regression surface this run.
+Fresh `npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass,
+no flake: 128 suites / 1419 tests, zero drift from run 127. Re-verified item 7
+(`app.json` still `"orientation": "portrait"`, `"supportsTablet": true`). PR
+#133 re-checked via `get`/`get_check_runs`/`get_comments`/`get_reviews`: still
+open, not draft, `mergeable_state: clean`, base `3a01b88` (main's tip,
+unchanged), head still `82cf197` (run 127's own status-only push, no new
+commit needed this run before this status update). The `verify` check on that
+head (started 08:12:12Z, completed 08:13:35Z UTC 2026-10-06) is SUCCESS.
+Comment count unchanged at 3, no reviews. Issue #139 re-read: `updated_at`
+advanced to `2026-10-06T12:04:07Z`, a thirty-second orchestrator entry landed
+since run 127's check (ninth fully quiet day in a row per the board's own
+text: main static since 09-26, zero code commits anywhere). Content is
+confirmation, not new work for this routine: ipad-worker section still
+"approved, nothing owed," blocker still the device pass gated on PR #133
+merging behind #132's payments gate. Decision queue unchanged, now day 29;
+next direct re-ping still dated 2026-10-07, the orchestrator's and Charen's
+call, not this routine's to enact. Item 11 (worker cadence thinning) remains
+an open recommendation for the orchestrator and Charen, not this routine's to
+enact. No new "REVIEW FEEDBACK" section addressed to this routine (the file's
+existing section is historical, fully addressed through run 28). No
+production code, test, or plan content changed this run; this HANDOFF update
+is the only change. No push notification: nothing new for Charen this run
+(same steady state runs 92-127 already covered), and no regression or new
+decision surfaced for ipad-worker.
+
+Run 127 (2026-10-06). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 126's
+check (still `3a01b88`), so no rebase and no new regression surface this run.
+Fresh `npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass,
+no flake: 128 suites / 1419 tests, zero drift from run 126. Re-verified item 7
+(`app.json` still `"orientation": "portrait"`, `"supportsTablet": true`). PR
+#133 re-checked via `get`/`get_check_runs`/`get_comments`: still open, not
+draft, `mergeable_state: clean`, base `3a01b88` (main's tip, unchanged), head
+still `d4613c5` (run 126's own status-only push, no new commit needed this run
+before this status update). The `verify` check on that head (started
+02:09:30Z, completed 02:10:34Z UTC 2026-10-06) is SUCCESS. Comment count
+unchanged at 3, no reviews. Issue #139 re-read: `updated_at` unchanged at
+`2026-10-05T12:04:53Z`, same thirty-first orchestrator entry run 126 already
+saw: ipad-worker section still "approved, nothing owed," blocker still the
+device pass gated on PR #133 merging behind #132's payments gate. Decision
+queue unchanged, still day 28; next direct re-ping still dated 2026-10-07,
+the orchestrator's and Charen's call, not this routine's to enact. Noted but
+not actioned: decision-queue item 11 (worker cadence) recommends thinning
+this routine to daily until a code-unblocking decision lands; changing this
+routine's own schedule is Charen's and the orchestrator's call via
+claude.ai/code/routines, not something this run can or should do unasked. No
+new "REVIEW FEEDBACK" section addressed to this routine (the file's existing
+section is historical, fully addressed through run 28). No production code,
+test, or plan content changed this run; this HANDOFF update is the only
+change. No push notification: nothing new for Charen this run (same steady
+state runs 92-126 already covered), and no regression or new decision
+surfaced for ipad-worker.
+
+Run 126 (2026-10-06). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 125's
+check (still `3a01b88`), so no rebase and no new regression surface this run.
+Fresh `npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass,
+no flake: 128 suites / 1419 tests, zero drift from run 125. Re-verified item 7
+(`app.json` still `"orientation": "portrait"`, `"supportsTablet": true`). PR
+#133 re-checked via `get`/`get_check_runs`/`get_comments`: still open, not
+draft, `mergeable_state: clean`, base `3a01b88` (main's tip, unchanged), head
+still `86cf65b` (run 125's own status-only push, no new commit needed this run
+before this status update). The `verify` check on that head (started
+20:16:42Z, completed 20:17:43Z UTC 2026-10-05) is SUCCESS. Comment count
+unchanged at 3, no reviews. Issue #139 re-read: `updated_at` unchanged at
+`2026-10-05T12:04:53Z`, same thirty-first orchestrator entry run 125 already
+saw: ipad-worker section still "approved, nothing owed," blocker still the
+device pass gated on PR #133 merging behind #132's payments gate (decision 6).
+Decision queue unchanged, still day 28; next direct re-ping still dated
+2026-10-07, the orchestrator's and Charen's call, not this routine's to enact.
+No new "REVIEW FEEDBACK" section addressed to this routine (the file's
+existing section is historical, fully addressed through run 28). No
+production code, test, or plan content changed this run; this HANDOFF update
+is the only change. No push notification: nothing new for Charen this run
+(same steady state runs 92-125 already covered), and no regression or new
+decision surfaced for ipad-worker.
+
+Run 125 (2026-10-05). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 124's
+check (still `3a01b88`), so no rebase and no new regression surface this run.
+Fresh `npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass,
+no flake: 128 suites / 1419 tests, zero drift from run 124. Re-verified item 7
+(`app.json` still `"orientation": "portrait"`, `"supportsTablet": true`). PR
+#133 re-checked via `get`/`get_check_runs`/`get_comments`/`get_reviews`: still
+open, not draft, `mergeable_state: clean`, base `3a01b88` (main's tip,
+unchanged), head still `ce2b89b` (run 124's own status-only push, no new
+commit needed this run before this status update). The `verify` check on that
+head (started 14:10:46Z, completed 14:12:25Z UTC 2026-10-05) is SUCCESS.
+Comment count unchanged at 3, no reviews. Issue #139 re-read: `updated_at`
+unchanged at `2026-10-05T12:04:53Z`, no new orchestrator entry since run 124's
+check. Content is confirmation, not new work for this routine: ipad-worker
+section still "approved, nothing owed," blocker still the device pass gated
+on PR #133 merging behind #132's payments gate (decision 6). Decision queue
+unchanged, still day 28; next direct re-ping still dated 2026-10-07, the
+orchestrator's and Charen's call, not this routine's to enact. No new "REVIEW
+FEEDBACK" section addressed to this routine (the file's existing section is
+historical, fully addressed through run 28). No production code, test, or
+plan content changed this run; this HANDOFF update is the only change. No
+push notification: nothing new for Charen this run (same steady state runs
+92-124 already covered), and no regression or new decision surfaced for
+ipad-worker.
+
+Run 124 (2026-10-05). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 123's
+check (still `3a01b88`), so no rebase and no new regression surface this run.
+Fresh `npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass,
+no flake: 128 suites / 1419 tests, zero drift from run 123. Re-verified item 7
+(`app.json` still `"orientation": "portrait"`, `"supportsTablet": true`). PR
+#133 re-checked via `get`/`get_check_runs`/`get_comments`/`get_reviews`: still
+open, not draft, `mergeable_state: clean`, base `3a01b88` (main's tip,
+unchanged), head still `0f49ac3` (run 123's own status-only push, no new
+commit needed this run before this status update). The `verify` check on that
+head (started 08:09:51Z, completed 08:11:12Z UTC 2026-10-05) is SUCCESS.
+Comment count unchanged at 3, no reviews. Issue #139 re-read: `updated_at`
+advanced to `2026-10-05T12:04:53Z`, a thirty-first orchestrator entry landed
+since run 123's check (eighth fully quiet day in a row per the board's own
+text: main static since 09-26, zero code commits anywhere). Content is
+confirmation, not new work for this routine: ipad-worker section still
+"approved, nothing owed," blocker still the device pass gated on PR #133
+merging behind #132's payments gate (decision 6). Decision queue unchanged,
+now day 28; next direct re-ping still dated 2026-10-07, the orchestrator's and
+Charen's call, not this routine's to enact. No new "REVIEW FEEDBACK" section
+addressed to this routine (the file's existing section is historical, fully
+addressed through run 28). No production code, test, or plan content changed
+this run; this HANDOFF update is the only change. No push notification:
+nothing new for Charen this run (same steady state runs 92-123 already
+covered), and no regression or new decision surfaced for ipad-worker.
+
+Run 123 (2026-10-05). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 122's
+check (still `3a01b88`), so no rebase and no new regression surface this run.
+Fresh `npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass,
+no flake: 128 suites / 1419 tests, zero drift from run 122. Re-verified item 7
+(`app.json` still `"orientation": "portrait"`, `"supportsTablet": true`). PR
+#133 re-checked via `get`/`get_check_runs`: still open, not draft,
+`mergeable_state: clean`, base `3a01b88` (main's tip, unchanged), head still
+`4fa3289` (run 122's own status-only push, no new commit needed this run
+before this status update). The `verify` check on that head (started
+02:14:54Z, completed 02:16:32Z UTC 2026-10-05) is SUCCESS. Comment count
+unchanged at 3, no reviews. Issue #139 re-read: `updated_at` unchanged at
+`2026-10-04T12:03:01Z`, same thirtieth orchestrator entry run 122 already saw:
+ipad-worker section still "approved, nothing owed," blocker still the device
+pass gated on PR #133 merging behind #132's payments gate (decision 6). Item
+11 (worker cadence thinning) still an open recommendation for the orchestrator
+and Charen, not this routine's to enact. Decision queue unchanged, still day
+27/28; next direct re-ping still dated 2026-10-07, the orchestrator's and
+Charen's call, not this routine's to enact. No new "REVIEW FEEDBACK" section
+addressed to this routine (the file's existing section is historical, fully
+addressed through run 28). No production code, test, or plan content changed
+this run; this HANDOFF update is the only change. No push notification:
+nothing new for Charen this run (same steady state runs 92-122 already
+covered), and no regression or new decision surfaced for ipad-worker.
+
+Run 121 (2026-10-04). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 120's
+check (still `3a01b88`), so no rebase and no new regression surface this run.
+Fresh `npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass,
+no flake: 128 suites / 1419 tests, zero drift from run 120. Re-verified item 7
+(`app.json` still `"orientation": "portrait"`, `"supportsTablet": true`). PR
+#133 re-checked via `get`/`get_check_runs`/`get_comments`: still open, not
+draft, `mergeable_state: clean`, base `3a01b88` (main's tip, unchanged), head
+still `89d6a72` (run 120's own status-only push, no new commit needed this run
+before this status update). The `verify` check on that head (started
+14:09:33Z, completed 14:11:09Z UTC 2026-10-04) is SUCCESS. Comment count
+unchanged at 3, no reviews. Issue #139 re-read: `updated_at` unchanged at
+`2026-10-04T12:03:01Z`, same thirtieth orchestrator entry run 120 already saw:
+ipad-worker section still "approved, nothing owed," blocker still the device
+pass gated on PR #133 merging behind #132's payments gate (decision 6).
+Decision queue unchanged, still day 27; board stood down on re-pinging today,
+next direct re-ping dated 2026-10-07, which is the orchestrator's and Charen's
+call, not this routine's to enact. No new "REVIEW FEEDBACK" section addressed
+to this routine (the file's existing section is historical, fully addressed
+through run 28). No production code, test, or plan content changed this run;
+this HANDOFF update is the only change. No push notification: nothing new for
+Charen this run (same steady state runs 92-120 already covered), and no
+regression or new decision surfaced for ipad-worker.
+
+Run 120 (2026-10-04). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 119's
+check (still `3a01b88`), so no rebase and no new regression surface this run.
+Fresh `npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass,
+no flake: 128 suites / 1419 tests, zero drift from run 119. Re-verified item 7
+(`app.json` still `"orientation": "portrait"`, `"supportsTablet": true`). PR
+#133 re-checked via `get`/`get_check_runs`/`get_comments`: still open, not
+draft, `mergeable_state: clean`, base `3a01b88` (main's tip, unchanged), head
+still `9017849` (run 119's own status-only push, no new commit needed this run
+before this status update). The `verify` check on that head (started
+08:11:05Z, completed 08:12:42Z UTC 2026-10-04) is SUCCESS. Comment count
+unchanged at 3, no reviews. Issue #139 re-read: `updated_at` advanced to
+`2026-10-04T12:03:01Z`, a thirtieth orchestrator entry landed since run 119's
+check (seventh fully quiet day in a row per the board's own text: main static
+since 09-26, zero code commits anywhere). Content is confirmation, not new
+work for this routine: ipad-worker section still "approved, nothing owed,"
+blocker still the device pass gated on PR #133 merging behind #132's payments
+gate (decision 6). Decision queue unchanged, now day 27; board stood down on
+re-pinging today, next direct re-ping dated 2026-10-07, which is the
+orchestrator's and Charen's call, not this routine's to enact. No new
+"REVIEW FEEDBACK" section addressed to this routine (the file's existing
+section is historical, fully addressed through run 28). No production code,
+test, or plan content changed this run; this HANDOFF update is the only
+change. No push notification: nothing new for Charen this run (same steady
+state runs 92-119 already covered), and no regression or new decision
+surfaced for ipad-worker.
+
+Run 119 (2026-10-04). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 118's
+check (still `3a01b88`), so no rebase and no new regression surface this run.
+Fresh `npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass,
+no flake: 128 suites / 1419 tests, zero drift from run 118. Re-verified item 7
+(`app.json` still `"orientation": "portrait"`, `"supportsTablet": true`). PR
+#133 re-checked via `get`/`get_check_runs`/`get_comments`/`get_reviews`: still
+open, not draft, `mergeable_state: clean`, base `3a01b88` (main's tip,
+unchanged), head still `33ccf68` (run 118's own status-only push, no new
+commit needed this run before this status update). The `verify` check on that
+head (started 02:09:44Z, completed 02:11:25Z UTC 2026-10-04) is SUCCESS.
+Comment count unchanged at 3, no reviews. Issue #139 re-read: `updated_at`
+unchanged at `2026-10-03T12:03:56Z`, same twenty-ninth orchestrator entry run
+118 already saw: ipad-worker section still "approved, nothing owed," blocker
+still the device pass gated on PR #133 merging behind #132's payments gate
+(decision 6). PR #132 not re-checked this run (out of scope for this routine;
+its status is the orchestrator's and core-worker's to track). No new "REVIEW
+FEEDBACK" section addressed to this routine (the file's existing section is
+historical, fully addressed through run 28). No production code, test, or
+plan content changed this run; this HANDOFF update is the only change. No
+push notification: nothing new for Charen this run (same steady state runs
+92-118 already covered), and no regression or new decision surfaced for
+ipad-worker.
+
+Run 118 (2026-10-04). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 117's
+check (`git merge-base --is-ancestor origin/main HEAD` true, still `3a01b88`),
+so no rebase and no new regression surface this run. Fresh `npm ci` (this
+container had no `node_modules`), `npx tsc --noEmit` clean. Full suite green
+on the first pass, no flake locally: 128 suites / 1419 tests, zero drift from
+run 117. Re-verified item 7 (`app.json` still `"orientation": "portrait"`,
+`"supportsTablet": true`). PR #133 re-checked via `get`/`get_check_runs`/
+`get_comments`: still open, not draft, `mergeable_state: clean`, base
+`3a01b88` (main's tip, unchanged), head still `a666f5f` (run 117's own
+status-only push, no new commit needed this run before this status update).
+The `verify` check on that head (started 20:11:31Z, completed 20:13:12Z UTC
+2026-10-03) is SUCCESS. Comment count unchanged at 3, no reviews. Issue #139
+re-read: `updated_at` unchanged at `2026-10-03T12:03:56Z`, same twenty-ninth
+orchestrator entry run 117 already saw: ipad-worker section still "approved,
+nothing owed," blocker still the device pass gated on PR #133 merging behind
+#132's payments gate (decision 6). PR #132 itself re-checked directly: still
+open, not draft, not merged, `mergeable_state: clean`, no new comments or
+reviews; it has not merged and the gate is unchanged. No new "REVIEW
+FEEDBACK" section addressed to this routine. Items 11 (cadence) and 12 (the
+flake) remain open and unchanged, also not this routine's to enact. No
+production code, test, or plan content changed this run; this HANDOFF update
+is the only change. No push notification: nothing new for Charen this run
+(same steady state runs 92-117 already covered, PR #132 still the standing
+blocker with no movement), and no regression or new decision surfaced for
+ipad-worker.
+
+Run 117 (2026-10-03). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 116's
+check (`git merge-base --is-ancestor origin/main HEAD` true, still `3a01b88`),
+so no rebase and no new regression surface this run. Fresh `npm ci` (this
+container had no `node_modules`), `npx tsc --noEmit` clean. Full suite green
+on the first pass, no flake locally: 128 suites / 1419 tests, zero drift from
+run 116. Re-verified item 7 (`app.json` still `"orientation": "portrait"`,
+`"supportsTablet": true`). PR #133 re-checked: still open, not draft,
+`mergeable_state: clean`, base `3a01b88` (main's tip, unchanged), head still
+`8402d05` (run 116's own status-only push, no new commit needed this run
+before this status update). The `verify` check on that head (started
+14:10:02Z, completed 14:11:38Z UTC 2026-10-03) is SUCCESS, no recurrence of
+the `habitDetection.ts` `spanDays` flake. Comment count unchanged at 3 since
+run 96's third-occurrence note (issuecomment-5871674133), no reviews. Issue
+#139 re-read: `updated_at` unchanged at `2026-10-03T12:03:56Z`, same
+twenty-ninth orchestrator entry run 116 already saw: ipad-worker section
+still "approved, nothing owed," blocker still the device pass gated on PR
+#133 merging behind #132's payments gate (decision 6). PR #132 itself
+re-checked directly: still open, not draft, not merged, `mergeable_state:
+clean`, no new comments or reviews; it has not merged and the gate is
+unchanged. No new "REVIEW FEEDBACK" section addressed to this routine. Items
+11 (cadence) and 12 (the flake) remain open and unchanged, also not this
+routine's to enact. No production code, test, or plan content changed this
+run; this HANDOFF update is the only change. No push notification: nothing
+new for Charen this run (same steady state runs 92-116 already covered, PR
+#132 still the standing blocker with no movement), and no regression or new
+decision surfaced for ipad-worker.
+
+Run 116 (2026-10-03). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 115's
+check (`git merge-base --is-ancestor origin/main HEAD` true, still `3a01b88`),
+so no rebase and no new regression surface this run. Fresh `npm ci` (this
+container had no `node_modules`), `npx tsc --noEmit` clean. Full suite green
+on the first pass, no flake locally: 128 suites / 1419 tests, zero drift from
+run 115. Re-verified item 7 (`app.json` still `"orientation": "portrait"`,
+`"supportsTablet": true`). PR #133 re-checked via `get`/`get_check_runs`/
+`get_comments`/`get_reviews`: still open, not draft, `mergeable_state: clean`,
+base `3a01b88` (main's tip, unchanged), head still `a0eba23` (run 115's own
+status-only push, no new commit needed this run before this status update).
+The `verify` check on that head (job 111162428056, completed 08:10-08:11 UTC
+2026-10-03) is SUCCESS, no recurrence of the `habitDetection.ts` `spanDays`
+flake. Comment count unchanged at 3 since run 96's third-occurrence note
+(issuecomment-5871674133), no reviews. Issue #139 re-read: `updated_at`
+advanced to `2026-10-03T12:03:56Z`, a twenty-ninth orchestrator entry landed
+since run 115's check (sixth fully quiet day in a row, main static since
+09-26, zero code commits anywhere). Content is confirmation, not new work for
+this routine: ipad-worker section still "approved, nothing owed," blocker
+still the device pass gated on PR #133 merging behind #132's payments gate
+(decision 6). The board explicitly stood down on re-pinging Charen today
+(core-worker's 10-02 alert already covers these facts, nothing has moved
+since) and named the next direct re-ping as 2026-10-07; that cadence call is
+the orchestrator's and Charen's to make, not this routine's to enact or
+duplicate. Items 11 (cadence) and 12 (the flake) remain open and unchanged,
+also not this routine's to enact. No REVIEW FEEDBACK addressed to this
+routine. No production code, test, or plan content changed this run; this
+HANDOFF update is the only change. No push notification: nothing new for
+Charen this run specifically (the board's own twenty-ninth entry is
+confirmation of steady state already covered by core-worker's alert, and the
+board itself stood down on re-pinging today), and no regression or new
+decision surfaced for ipad-worker.
+
+Run 115 (2026-10-03). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 114's
+check (`git merge-base --is-ancestor origin/main HEAD` true, still `3a01b88`),
+so no rebase and no new regression surface this run. Fresh `npm ci` (this
+container had no `node_modules`), `npx tsc --noEmit` clean. Full suite green
+on the first pass, no flake locally: 128 suites / 1419 tests, zero drift from
+run 114. Re-verified item 7 (`app.json` still `"orientation": "portrait"`,
+`"supportsTablet": true`). PR #133 re-checked via `get`/`get_check_runs`/
+`get_comments`: still open, not draft, `mergeable_state: clean`, base
+`3a01b88` (main's tip, unchanged), head still `9088ef7` (run 114's own
+status-only push, no new commit needed this run before this status update).
+The `verify` check on that head (job 111104346928, completed 02:08-02:10 UTC
+2026-10-03) is SUCCESS, no recurrence of the `habitDetection.ts` `spanDays`
+flake. Comment count unchanged at 3 since run 96's third-occurrence note
+(issuecomment-5871674133), no reviews. Issue #139 re-read: `updated_at`
+unchanged at `2026-10-02T12:04:05Z`, same twenty-eighth orchestrator entry run
+114 already saw: ipad-worker section still "approved, nothing owed," blocker
+still the device pass gated on PR #133 merging behind #132's payments gate
+(decision 6). The board's own text named its next follow-up as 10-03 (today);
+no new entry has landed yet (`updated_at` unchanged), so that follow-up
+remains the orchestrator's scheduled run to make, not something this routine
+enacts by reading the issue early. Item 11's cadence recommendation and item
+12 (the flake) remain the orchestrator's and Charen's to enact, not this
+routine's. No REVIEW FEEDBACK addressed to this routine. No production code,
+test, or plan content changed this run; this HANDOFF update is the only
+change. No push notification: nothing new for Charen this run specifically
+(same steady state runs 92-114 already covered), and no regression or new
+decision surfaced for ipad-worker.
+
+Run 114 (2026-10-03). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 113's
+check (`git merge-base --is-ancestor origin/main HEAD` true, still `3a01b88`),
+so no rebase and no new regression surface this run. Fresh `npm ci` (this
+container had no `node_modules`), `npx tsc --noEmit` clean. Full suite green
+on the first pass, no flake locally: 128 suites / 1419 tests, zero drift from
+run 113. Re-verified item 7 (`app.json` still `"orientation": "portrait"`,
+`"supportsTablet": true`). PR #133 re-checked via `get`/`get_check_runs`/
+`get_comments`: still open, not draft, `mergeable_state: clean`, base
+`3a01b88` (main's tip, unchanged), head still `a728fda` (run 113's own
+status-only push, no new commit needed this run before this status update).
+The `verify` check on that head (job 111010113977, completed 20:10-20:11 UTC
+2026-10-02) is SUCCESS, no recurrence of the `habitDetection.ts` `spanDays`
+flake. Comment count unchanged at 3 since run 96's third-occurrence note
+(issuecomment-5871674133), no reviews. Issue #139 re-read: `updated_at`
+unchanged at `2026-10-02T12:04:05Z`, same twenty-eighth orchestrator entry run
+113 already saw: ipad-worker section still "approved, nothing owed," blocker
+still the device pass gated on PR #133 merging behind #132's payments gate
+(decision 6). Item 11's cadence recommendation is unchanged (escalated 09-18,
+direct alerts 09-24, 09-26, and core-worker's own 100-runs alert 10-02); the
+board's own text named its next follow-up as 10-03, which is today, but that
+follow-up is the orchestrator's scheduled run to make, not a thing this
+routine enacts by reading the issue early, and `updated_at` shows no new
+entry has landed yet. That thread and item 12 (the flake) remain the
+orchestrator's and Charen's to enact, not this routine's. No REVIEW FEEDBACK
+addressed to this routine. No production code, test, or plan content changed
+this run; this HANDOFF update is the only change. No push notification:
+nothing new for Charen this run specifically (the board's own cadence/decision
+follow-up is scheduled for the orchestrator today, not something this routine
+duplicates), and no regression or new decision surfaced for ipad-worker.
+
+Run 113 (2026-10-02). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 112's
+check (`git merge-base --is-ancestor origin/main HEAD` true, still `3a01b88`),
+so no rebase and no new regression surface this run. Fresh `npm ci` (this
+container had no `node_modules`), `npx tsc --noEmit` clean. Full suite green
+on the first pass, no flake locally: 128 suites / 1419 tests, zero drift from
+run 112. Re-verified item 7 (`app.json` still `"orientation": "portrait"`,
+`"supportsTablet": true`). PR #133 re-checked via `get`/`get_check_runs`/
+`get_comments`: still open, not draft, `mergeable_state: clean`, base
+`3a01b88` (main's tip, unchanged), head still `6ed1e1f` (run 112's own
+status-only push, no new commit needed this run before this status update).
+The `verify` check on that head (job 110873625163, completed 14:10-14:12 UTC
+2026-10-02) is SUCCESS, no recurrence of the `habitDetection.ts` `spanDays`
+flake. Comment count unchanged at 3 since run 96's third-occurrence note
+(issuecomment-5871674133), no reviews. Issue #139 re-read: `updated_at`
+unchanged at `2026-10-02T12:04:05Z`, same twenty-eighth orchestrator entry run
+112 already saw: ipad-worker section still "approved, nothing owed," blocker
+still the device pass gated on PR #133 merging behind #132's payments gate
+(decision 6). Item 11's cadence recommendation is unchanged (escalated 09-18,
+direct alerts 09-24, 09-26, and core-worker's own 100-runs alert 10-02), next
+board follow-up still dated 10-03 (tomorrow, not yet due); that thread and
+item 12 (the flake) remain the orchestrator's and Charen's to enact, not this
+routine's. No REVIEW FEEDBACK addressed to this routine. No production code,
+test, or plan content changed this run; this HANDOFF update is the only
+change. No push notification: nothing new for Charen this run specifically
+(core-worker's alert already reached Charen directly and the board's own
+posture note defers the cadence/decision follow-up to tomorrow's scheduled
+board run), and no regression or new decision surfaced for ipad-worker.
+
+Run 112 (2026-10-02). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 111's
+check (`git merge-base --is-ancestor origin/main HEAD` true, still `3a01b88`),
+so no rebase and no new regression surface this run. Fresh `npm ci` (this
+container had no `node_modules`), `npx tsc --noEmit` clean. Full suite green
+on the first pass, no flake locally: 128 suites / 1419 tests, zero drift from
+run 111. Re-verified item 7 (`app.json` still `"orientation": "portrait"`,
+`"supportsTablet": true`). PR #133 re-checked via `get`/`get_check_runs`/
+`get_comments`: still open, not draft, `mergeable_state: clean`, base
+`3a01b88` (main's tip, unchanged), head still `b22c371` (run 111's own
+status-only push, no new commit needed this run before this status update).
+The `verify` check on that head (job 110759939463, completed 08:09-08:11 UTC
+2026-10-02) is SUCCESS, no recurrence of the `habitDetection.ts` `spanDays`
+flake this time. Comment count unchanged at 3 since run 96's third-occurrence
+note (issuecomment-5871674133), no reviews. Issue #139 re-read: `updated_at`
+advanced to `2026-10-02T12:04:05Z`, a twenty-eighth orchestrator entry landed
+since run 111's check (fifth fully quiet day in a row, main static since
+09-26). Content is confirmation, not new work for this routine: ipad-worker
+section still "approved, nothing owed," blocker still the device pass gated
+on PR #133 merging behind #132's payments gate (decision 6). One new item on
+the board: core-worker sent Charen a direct push alert this morning (10-02)
+about its own 100 consecutive re-verify-only runs, with item 11's cadence
+recommendation now escalated three times; that alert and the item 11
+decision are core-worker's and the orchestrator's threads, not this
+routine's to duplicate. Decision queue otherwise unchanged and now day 25;
+item 12 (the flake) still tracked with the same proposed one-line patch, not
+this routine's to enact. No REVIEW FEEDBACK addressed to this routine. No
+production code, test, or plan content changed this run; this HANDOFF update
+is the only change. No push notification: nothing new for Charen this run
+specifically (the core-worker alert already reached Charen directly from
+that routine, and the board's own posture note defers the cadence/decision
+follow-up to tomorrow's scheduled board run), and no regression or new
+decision surfaced for ipad-worker.
+
+Run 111 (2026-10-02). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 110's
+check (`git merge-base --is-ancestor origin/main HEAD` true, still `3a01b88`),
+so no rebase and no new regression surface this run. Fresh `npm ci` (this
+container had no `node_modules`), `npx tsc --noEmit` clean. Full suite green
+on the first pass, no flake locally: 128 suites / 1419 tests, zero drift from
+run 110. Re-verified item 7 (`app.json` still `"orientation": "portrait"`,
+`"supportsTablet": true`). PR #133 re-checked via `get`/`get_check_runs`/
+`get_comments`: still open, not draft, `mergeable_state: clean`, base
+`3a01b88` (main's tip, unchanged), head still `5f81db8` (run 110's own
+status-only push, no new commit needed this run before this status update).
+The `verify` check on that head (job 110673827008, completed 02:09-02:11 UTC
+2026-10-02) is SUCCESS, no recurrence of the `habitDetection.ts` `spanDays`
+flake this time. Comment count unchanged at 3 since run 96's third-occurrence
+note (issuecomment-5871674133), no reviews. Issue #139 re-read: `updated_at`
+unchanged at `2026-10-01T12:03:34Z`, same twenty-seventh orchestrator entry
+run 110 already saw: ipad-worker section still "approved, nothing owed,"
+blocker still the device pass gated on PR #133 merging behind #132's payments
+gate (decision 6); item 11's cadence recommendation (thin the three workers
+to daily) still open, next follow-up dated 10-03 (one day out, not yet due),
+Charen's and the orchestrator's call, not this routine's to enact; item 12
+(the flake) still tracked with the same proposed one-line patch, recommending
+a quick fix/* session, also not this routine's to enact. No REVIEW FEEDBACK
+addressed to this routine. No production code, test, or plan content changed
+this run; this HANDOFF update is the only change. No push notification:
+nothing new for Charen this run (same steady state runs 92-110 already
+covered), and no regression or new decision surfaced for this routine
+specifically.
+
+Run 110 (2026-10-02). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 109's
+check (`git merge-base --is-ancestor origin/main HEAD` true, still `3a01b88`),
+so no rebase and no new regression surface this run. Fresh `npm ci` (this
+container had no `node_modules`), `npx tsc --noEmit` clean. Full suite green
+on the first pass, no flake locally: 128 suites / 1419 tests, zero drift from
+run 109. Re-verified item 7 (`app.json` still `"orientation": "portrait"`,
+`"supportsTablet": true`). PR #133 re-checked via `get`/`get_check_runs`/
+`get_comments`: still open, not draft, `mergeable_state: clean`, base
+`3a01b88` (main's tip, unchanged), head still `60a5907` (run 109's own
+status-only push, no new commit needed this run before this status update).
+The `verify` check on that head (job 110561992900, completed 20:10-20:11 UTC
+2026-10-01) is SUCCESS, no recurrence of the `habitDetection.ts` `spanDays`
+flake this time. Comment count unchanged at 3 since run 96's third-occurrence
+note (issuecomment-5871674133), no reviews. Issue #139 re-read: `updated_at`
+unchanged at `2026-10-01T12:03:34Z`, same twenty-seventh orchestrator entry
+run 109 already saw: ipad-worker section still "approved, nothing owed,"
+blocker still the device pass gated on PR #133 merging behind #132's payments
+gate (decision 6); item 11's cadence recommendation (thin the three workers
+to daily) still open and now explicitly dated at roughly 36 idle verify-only
+runs across all three streams since 09-27, next follow-up dated 10-03 (one
+day out, not yet due), Charen's and the orchestrator's call, not this
+routine's to enact; item 12 (the flake) still tracked with the same proposed
+one-line patch, recommending a quick fix/* session, also not this routine's
+to enact. No REVIEW FEEDBACK addressed to this routine. No production code,
+test, or plan content changed this run; this HANDOFF update is the only
+change. No push notification: nothing new for Charen this run (same steady
+state runs 92-109 already covered), and no regression or new decision
+surfaced for this routine specifically.
+
+Run 109 (2026-10-01). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 108's
+check (`git merge-base --is-ancestor origin/main HEAD` true, still `3a01b88`),
+so no rebase and no new regression surface this run. Fresh `npm ci` (this
+container had no `node_modules`), `npx tsc --noEmit` clean. Full suite green
+on the first pass, no flake locally: 128 suites / 1419 tests, zero drift from
+run 108. Re-verified item 7 (`app.json` still `"orientation": "portrait"`,
+`"supportsTablet": true`). PR #133 re-checked via `get`/`get_check_runs`/
+`get_comments`: still open, not draft, `mergeable_state: clean`, base
+`3a01b88` (main's tip, unchanged), head still `6826361` (run 108's own
+status-only push, no new commit needed this run before this status update).
+The `verify` check on that head (job 110409327474) is SUCCESS, no recurrence
+of the `habitDetection.ts` `spanDays` flake this time. Comment count
+unchanged at 3 since run 96's third-occurrence note (issuecomment-5871674133),
+no reviews. Issue #139 re-read: `updated_at` unchanged at
+`2026-10-01T12:03:34Z`, same twenty-seventh orchestrator entry run 108
+already saw: ipad-worker section still "approved, nothing owed," blocker
+still the device pass gated on PR #133 merging behind #132's payments gate
+(decision 6); item 11's cadence recommendation (thin the three workers to
+daily) still open, next follow-up dated 10-03 (two days out, not yet due),
+Charen's and the orchestrator's call, not this routine's to enact; item 12
+(the flake) still tracked with the same proposed one-line patch, recommending
+a quick fix/* session, also not this routine's to enact. No REVIEW FEEDBACK
+addressed to this routine. No production code, test, or plan content changed
+this run; this HANDOFF update is the only change. No push notification:
+nothing new for Charen this run (same steady state runs 92-108 already
+covered), and no regression or new decision surfaced for this routine
+specifically.
+
+Run 107 (2026-10-01). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 106's
+check (`git merge-base --is-ancestor origin/main HEAD` true, still `3a01b88`),
+so no rebase and no new regression surface this run. Fresh `npm ci` (this
+container had no `node_modules`), `npx tsc --noEmit` clean. Full suite green
+on the first pass, no flake locally: 128 suites / 1419 tests, zero drift from
+run 106. Re-verified item 7 (`app.json` still `"orientation": "portrait"`,
+`"supportsTablet": true`). PR #133 re-checked via `get`/`get_check_runs`/
+`get_comments`: still open, not draft, `mergeable_state: clean`, base
+`3a01b88` (main's tip, unchanged), head still `26218d1` (run 106's own
+status-only push, no new commit needed this run before this status update).
+The `verify` check on that head (job 110185857536) is SUCCESS, no recurrence
+of the `habitDetection.ts` `spanDays` flake this time. Comment count
+unchanged at 3 since run 96's third-occurrence note (issuecomment-5871674133),
+no reviews. Issue #139 re-read: still the twenty-sixth orchestrator entry
+(`updated_at` `2026-09-30T12:05:35Z`, unchanged from run 106's read), ipad-
+worker section still "approved, nothing owed," blocker still the device pass
+gated on PR #133 merging behind #132's payments gate (decision 6); item 11's
+cadence recommendation (thin the three workers to daily) still open, next
+follow-up dated 10-03 (two days out, not yet due), Charen's and the
+orchestrator's call, not this routine's to enact; item 12 (the flake) still
+tracked with the same proposed one-line patch, recommending a quick fix/*
+session, also not this routine's to enact. No REVIEW FEEDBACK addressed to
+this routine. No production code, test, or plan content changed this run;
+this HANDOFF update is the only change. No push notification: nothing new
+for Charen this run (same steady state runs 92-106 already covered), and no
+regression or new decision surfaced for this routine specifically.
+
+Run 106 (2026-10-01). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 105's
+check (`git merge-base --is-ancestor origin/main HEAD` true, still `3a01b88`),
+so no rebase and no new regression surface this run. Fresh `npm ci` (this
+container had no `node_modules`), `npx tsc --noEmit` clean. Full suite green
+on the first pass, no flake locally: 128 suites / 1419 tests, zero drift from
+run 105. Re-verified item 7 (`app.json` still `"orientation": "portrait"`,
+`"supportsTablet": true`). PR #133 re-checked via `get`/`get_check_runs`/
+`get_comments`: still open, not draft, `mergeable_state: clean`, base
+`3a01b88` (main's tip, unchanged), head still `d2daeb1` (run 105's own
+status-only push, no new commit needed this run before this status update).
+The `verify` check on that head (job 110076064160) is SUCCESS, no recurrence
+of the `habitDetection.ts` `spanDays` flake this time. Comment count
+unchanged at 3 since run 96's third-occurrence note (issuecomment-5871674133),
+no reviews. Issue #139 re-read: still the twenty-sixth orchestrator entry
+(`updated_at` `2026-09-30T12:05:35Z`, unchanged from run 105's read), ipad-
+worker section still "approved, nothing owed," blocker still the device pass
+gated on PR #133 merging behind #132's payments gate (decision 6); item 11's
+cadence recommendation (thin the three workers to daily) still open, next
+follow-up dated 10-03 (two days out, not yet due), Charen's and the
+orchestrator's call, not this routine's to enact; item 12 (the flake) still
+tracked with the same proposed one-line patch, recommending a quick fix/*
+session, also not this routine's to enact. No REVIEW FEEDBACK addressed to
+this routine. No production code, test, or plan content changed this run;
+this HANDOFF update is the only change. No push notification: nothing new
+for Charen this run (same steady state runs 92-105 already covered), and no
+regression or new decision surfaced for this routine specifically.
+
+Run 104 (2026-09-30). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 103's
+check (`git merge-base --is-ancestor origin/main HEAD` true, still `3a01b88`),
+so no rebase and no new regression surface this run. Fresh `npm ci`, `npx tsc
+--noEmit` clean. Full suite green on the first pass, no flake locally: 128
+suites / 1419 tests, zero drift from run 103. Re-verified item 7 (`app.json`
+still `"orientation": "portrait"`, `"supportsTablet": true`). PR #133
+re-checked via `get`/`get_check_runs`/`get_comments`: still open, not draft,
+`mergeable_state: clean`, base `3a01b88` (main's tip, unchanged), head still
+`e201db3` (run 103's own status-only push, no new commit needed this run
+before this status update). The `verify` check on that head (job
+109799337532) is SUCCESS, no recurrence of the `habitDetection.ts` `spanDays`
+flake this time. Comment count unchanged at 3 since run 96's third-occurrence
+note (issuecomment-5871674133), no reviews. Issue #139 re-read: now the
+twenty-sixth orchestrator entry (`updated_at` `2026-09-30T12:05:35Z`),
+ipad-worker section still "approved, nothing owed," blocker still the device
+pass gated on PR #133 merging behind #132's payments gate (decision 6);
+item 11's cadence recommendation (thin the three workers to daily) still
+open, next follow-up dated 10-03 (three days out, not yet due), Charen's and
+the orchestrator's call, not this routine's to enact; item 12 (the flake)
+still tracked with the same proposed one-line patch, recommending a quick
+fix/* session, also not this routine's to enact. No REVIEW FEEDBACK
+addressed to this routine. No production code, test, or plan content changed
+this run; this HANDOFF update is the only change. No push notification:
+nothing new for Charen this run (same steady state runs 92-103 already
+covered), and no regression or new decision surfaced for this routine
+specifically.
+
+Run 103 (2026-09-30). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 102's
+check (`git merge-base --is-ancestor origin/main HEAD` true, still `3a01b88`),
+so no rebase and no new regression surface this run. Fresh `npm ci`, `npx tsc
+--noEmit` clean. Full suite green on the first pass, no flake locally: 128
+suites / 1419 tests, zero drift from run 102. Re-verified item 7 (`app.json`
+still `"orientation": "portrait"`, `"supportsTablet": true`). PR #133
+re-checked via `get`/`get_status`/`get_check_runs`/`get_comments`: still open,
+not draft, `mergeable_state: clean`, base `3a01b88` (main's tip, unchanged),
+head still `d8ca561` (run 102's own status-only push, no new commit needed
+this run before this status update). The `verify` check on that head (job
+109707913284) is SUCCESS, no recurrence of the `habitDetection.ts` `spanDays`
+flake this time. Comment count unchanged at 3 since run 96's third-occurrence
+note (issuecomment-5871674133), no reviews. Issue #139 re-read: `updated_at`
+unchanged at `2026-09-29T12:03:17Z`, same twenty-fifth orchestrator entry run
+102 already saw: ipad-worker section still "approved, nothing owed," blocker
+still the device pass gated on PR #133 merging behind #132's payments gate
+(decision 6); item 11's cadence recommendation (thin the three workers to
+daily) still open, next follow-up dated 10-03 (three days out, not yet due),
+Charen's and the orchestrator's call, not this routine's to enact; item 12
+(the flake) still tracked with the same proposed one-line patch, recommending
+a quick fix/* session, also not this routine's to enact. No REVIEW FEEDBACK
+addressed to this routine. No production code, test, or plan content changed
+this run; this HANDOFF update is the only change. No push notification:
+nothing new for Charen this run (same steady state runs 92-102 already
+covered), and no regression or new decision surfaced for this routine
+specifically.
+
+Run 102 (2026-09-30). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 101's
+check (`git merge-base --is-ancestor origin/main HEAD` true, still `3a01b88`),
+so no rebase and no new regression surface this run. Fresh `npm ci`, `npx tsc
+--noEmit` clean. Full suite green on the first pass, no flake locally: 128
+suites / 1419 tests, zero drift from run 101. Re-verified item 7 (`app.json`
+still `"orientation": "portrait"`, `"supportsTablet": true`). PR #133
+re-checked via `get`/`get_check_runs`: still open, not draft, `mergeable_state:
+clean`, base `3a01b88` (main's tip, unchanged), head still `fe28bb9` (run
+101's own status-only push, no new commit needed this run before this status
+update). The `verify` check on that head (`fe28bb9`, job 109597896642,
+completed 20:10-20:12 UTC 2026-09-29) is SUCCESS, no recurrence of the
+`habitDetection.ts` `spanDays` flake this time. Comment count unchanged at 3
+since run 96's third-occurrence note (issuecomment-5871674133), no reviews.
+Issue #139 re-read: `updated_at` unchanged at `2026-09-29T12:03:17Z`, same
+twenty-fifth orchestrator entry run 101 already saw: ipad-worker section
+still "approved, nothing owed," blocker still the device pass gated on PR
+#133 merging behind #132's payments gate (decision 6); item 11's cadence
+recommendation (thin the three workers to daily) still open, next follow-up
+dated 10-03, Charen's and the orchestrator's call, not this routine's to
+enact; item 12 (the flake) still tracked with the same proposed one-line
+patch, recommending a quick fix/* session, also not this routine's to enact.
+No REVIEW FEEDBACK addressed to this routine. No production code, test, or
+plan content changed this run; this HANDOFF update is the only change. No
+push notification: nothing new for Charen this run (same steady state runs
+92-101 already covered), and no regression or new decision surfaced for this
+routine specifically.
+
+Run 101 (2026-09-29). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 100's
+check (`git merge-base --is-ancestor origin/main HEAD` true, still `3a01b88`),
+so no rebase and no new regression surface this run. Fresh `npm ci`, `npx tsc
+--noEmit` clean. Full suite green on the first pass, no flake locally: 128
+suites / 1419 tests, zero drift from run 100. Re-verified item 7 (`app.json`
+still `"orientation": "portrait"`, `"supportsTablet": true`). PR #133
+re-checked via `get`/`get_comments`/`get_check_runs`: still open, not draft,
+`mergeable_state: clean`, base `3a01b88` (main's tip, unchanged), head still
+`1953e3f` (run 100's own status-only push, no new commit needed this run
+before this status update). The `verify` check on that head (`1953e3f`, job
+109476600124, completed 15:16-15:18 UTC 2026-09-29) is SUCCESS, no recurrence
+of the `habitDetection.ts` `spanDays` flake this time. No new comments since
+run 96's third-occurrence note (issuecomment-5871674133), no reviews. Issue
+#139 re-read: `updated_at` unchanged at `2026-09-29T12:03:17Z`, same
+twenty-fifth orchestrator entry run 100 already saw: ipad-worker section
+still "approved, nothing owed," blocker still the device pass gated on PR
+#133 merging behind #132's payments gate (decision 6); item 11's cadence
+recommendation (thin the three workers to daily) still open, next follow-up
+dated 10-03, Charen's and the orchestrator's call, not this routine's to
+enact; item 12 (the flake) still tracked with the same proposed one-line
+patch, recommending a quick fix/* session, also not this routine's to enact.
+No REVIEW FEEDBACK addressed to this routine. No production code, test, or
+plan content changed this run; this HANDOFF update is the only change. No
+push notification: nothing new for Charen this run (same steady state runs
+92-100 already covered), and no regression or new decision surfaced for this
+routine specifically.
+
+Run 100 (2026-09-29). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 99's
+check (`git merge-base --is-ancestor origin/main HEAD` true, still `3a01b88`),
+so no rebase and no new regression surface this run. Fresh `npm ci`, `npx tsc
+--noEmit` clean. Full suite green on the first pass, no flake locally: 128
+suites / 1419 tests, zero drift from run 99. Re-verified item 7 (`app.json`
+still `"orientation": "portrait"`, `"supportsTablet": true`). PR #133
+re-checked via `get`/`get_comments`/`get_check_runs`: still open, not draft,
+`mergeable_state: clean`, base `3a01b88` (main's tip, unchanged), head still
+`4189f08` (run 99's own status-only push, no new commit needed this run
+before this status update). The `verify` check on that head (`4189f08`, job
+109316511808, completed 08:11-08:12 UTC 2026-09-29) is SUCCESS, no recurrence
+of the `habitDetection.ts` `spanDays` flake this time. No new comments since
+run 96's third-occurrence note (issuecomment-5871674133), no reviews. Issue
+#139 re-read: `updated_at` advanced to `2026-09-29T12:03:17Z`, a
+twenty-fifth orchestrator entry landed since run 99's check (second fully
+quiet day in a row per the board's own text: main static at `3a01b88`, all
+three streams verify-only, zero code commits since the last board). Content
+is confirmation, not new work: ipad-worker section still "approved, nothing
+owed," blocker still the device pass gated on PR #133 merging behind #132's
+payments gate (decision 6); item 11's cadence recommendation (thin the three
+workers to daily) still open, next follow-up dated 10-03, Charen's and the
+orchestrator's call, not this routine's to enact; item 12 (the flake) still
+tracked with the same proposed one-line patch, recommending a quick fix/*
+session, also not this routine's to enact. No REVIEW FEEDBACK addressed to
+this routine. No production code, test, or plan content changed this run;
+this HANDOFF update is the only change. No push notification: nothing new
+for Charen this run (same steady state runs 92-99 already covered), and no
+regression or new decision surfaced for this routine specifically.
+
+Run 99 (2026-09-29). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 98's
+check (`git merge-base --is-ancestor origin/main HEAD` true, still `3a01b88`),
+so no rebase and no new regression surface this run. Fresh `npm ci`, `npx tsc
+--noEmit` clean. Full suite green on the first pass, no flake locally: 128
+suites / 1419 tests, zero drift from run 98. Re-verified item 7 (`app.json`
+still `"orientation": "portrait"`, `"supportsTablet": true`). PR #133
+re-checked via `get`/`get_comments`/`get_check_runs`: still open, not draft,
+`mergeable_state: clean`, base `3a01b88` (main's tip, unchanged), head still
+`4da4e06` (run 98's own status-only push, no new commit needed this run
+before this status update). The `verify` check on that head (`4da4e06`, job
+109223809978, completed 02:09-02:11 UTC 2026-09-29) is SUCCESS, no recurrence
+of the `habitDetection.ts` `spanDays` flake this time. No new comments since
+run 96's third-occurrence note (issuecomment-5871674133), no reviews. Issue
+#139 re-read: `updated_at` unchanged at `2026-09-28T12:04:14Z`, same
+twenty-fourth orchestrator entry runs 96-98 already saw: ipad-worker section
+still "approved, nothing owed," blocker still the device pass gated on PR
+#133 merging behind #132's payments gate (decision 6); item 11's cadence
+recommendation still open, next follow-up dated 10-03, Charen's and the
+orchestrator's call, not this routine's to enact. No REVIEW FEEDBACK
+addressed to this routine. No production code, test, or plan content changed
+this run; this HANDOFF update is the only change. No push notification:
+nothing new for Charen this run (same steady state runs 92-98 already
+covered), and no regression or new decision surfaced for this routine
+specifically.
+
+Run 98 (2026-09-29). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 97's
+check (`git merge-base --is-ancestor origin/main HEAD` true, still `3a01b88`),
+so no rebase and no new regression surface this run. Fresh `npm ci`, `npx tsc
+--noEmit` clean. Full suite green on the first pass, no flake locally: 128
+suites / 1419 tests, zero drift from run 97. Re-verified item 7 (`app.json`
+still `"orientation": "portrait"`, `"supportsTablet": true`). PR #133
+re-checked via `get`/`get_comments`/`get_check_runs`: still open, not draft,
+`mergeable_state: clean`, base `3a01b88` (main's tip, unchanged), head still
+`9f54f4f` (run 97's own status-only push, no new commit needed this run
+before this status update). The `verify` check on that head (`9f54f4f`, job
+109113832739, completed 20:09-20:10 UTC 2026-09-28) is SUCCESS, no recurrence
+of the `habitDetection.ts` `spanDays` flake this time. No new comments since
+run 96's third-occurrence note (issuecomment-5871674133), no reviews. Issue
+#139 re-read: `updated_at` unchanged at `2026-09-28T12:04:14Z`, same
+twenty-fourth orchestrator entry runs 96-97 already saw: ipad-worker section
+still "approved, nothing owed," blocker still the device pass gated on PR
+#133 merging behind #132's payments gate (decision 6); item 11's cadence
+recommendation still open, next follow-up dated 10-03, Charen's and the
+orchestrator's call, not this routine's to enact. No REVIEW FEEDBACK
+addressed to this routine. No production code, test, or plan content changed
+this run; this HANDOFF update is the only change. No push notification:
+nothing new for Charen this run (same steady state runs 92-97 already
+covered), and no regression or new decision surfaced for this routine
+specifically.
+
+Run 97 (2026-09-28). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 96's
+check (`git merge-base --is-ancestor origin/main HEAD` true, still `3a01b88`),
+so no rebase and no new regression surface this run. Fresh `npm ci`, `npx tsc
+--noEmit` clean. Full suite green on the first pass, no flake locally: 128
+suites / 1419 tests, zero drift from run 96. Re-verified item 7 (`app.json`
+still `"orientation": "portrait"`, `"supportsTablet": true`). PR #133
+re-checked via `get`/`get_comments`/`get_check_runs`: still open, not draft,
+`mergeable_state: clean` (recovered; see below), base `3a01b88` (main's tip,
+unchanged), head still `e8bece7` (run 96's own status-only push, no new
+commit needed this run before this status update). The `verify` check on that
+head (`e8bece7`, job 108967812689, completed 14:13:35 UTC 2026-09-28) is
+SUCCESS: the run 96 `habitDetection.ts` `spanDays` flake did not recur on
+this re-trigger, consistent with every prior occurrence (runs 55, 66, 96)
+clearing on the next check without a fix from this branch. No new comments
+since run 96's third-occurrence note (issuecomment-5871674133), no reviews.
+Issue #139 re-read: `updated_at` unchanged at `2026-09-28T12:04:14Z`, same
+twenty-fourth orchestrator entry run 96 already saw: ipad-worker section
+still "approved, nothing owed," blocker still the device pass gated on PR
+#133 merging behind #132's payments gate (decision 6); item 11's cadence
+recommendation still open, next follow-up dated 10-03, Charen's and the
+orchestrator's call, not this routine's to enact. The board's item 12 text
+("no recurrence since 09-20/21") is now stale against run 96's own third-
+occurrence finding; that is the board's own bookkeeping to catch up, not
+something this routine corrects on the issue. No REVIEW FEEDBACK addressed
+to this routine. No production code, test, or plan content changed this run;
+this HANDOFF update is the only change. No push notification: nothing new
+for Charen beyond what run 96 already covered (the flake clearing on its own
+was already the expected outcome per the established protocol), and no
+regression or new decision surfaced for this routine specifically.
+
+Run 96 (2026-09-28). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 95's
+check (`git merge-base --is-ancestor origin/main HEAD` true, still `3a01b88`),
+so no rebase and no new regression surface this run. Fresh `npm ci`, `npx tsc
+--noEmit` clean. Full suite green on the first pass, no flake locally: 128
+suites / 1419 tests, zero drift from run 95. Re-verified item 7 (`app.json`
+still `"orientation": "portrait"`, `"supportsTablet": true`). PR #133
+re-checked via `get`/`get_comments`/`get_check_runs`: still open, not draft,
+`mergeable_state: unstable` (see below), base `3a01b88` (main's tip,
+unchanged), head still `ac124f3` (run 95's own status-only push, no new
+commit needed this run before this status update). **New this run:** the
+`verify` check on that head (`ac124f3`) came back red (job 108841646668,
+completed 08:11 UTC 2026-09-28), the identical `habitDetection.test.ts`
+`spanDays` assertion from run 55 and run 66's comments (`Expected: 0,
+Received: 1.1574074074074074e-8`). Confirmed via `get_files` that neither
+`utils/habitDetection.ts` nor its test is touched by this branch's diff, and
+a fresh local `npm ci` + full suite on this exact head passed clean (same
+128/1419 result as this run's own re-verify), consistent with the same
+CI-runner wall-clock jitter diagnosed twice before. `rerun_failed_jobs`
+returned 403 again, no permission to confirm-and-clear locally. This is the
+third occurrence of the exact same failure; per the run 55/66 protocol (and
+issue #139's own standing instruction), posted one PR comment
+(issuecomment-5871674133) naming it as the third occurrence, and did not push
+a fix: `habitDetection.ts` is outside this PR's scope (layout/width-cap only)
+and is main-owned code already tracked as decision item 12 on issue #139,
+which already carries the proposed one-line patch and a "recommend a quick
+fix/* session" note for Charen. No new comments otherwise since run 66's
+second-occurrence note, no reviews. Issue #139 re-read: twenty-fourth
+orchestrator entry (`updated_at` now `2026-09-28T12:04:14Z`), content is
+confirmation and the run-93 localization fix closing out that stream's
+review feedback, not new work for this routine: ipad-worker section still
+"approved, nothing owed," blocker still the device pass gated on PR #133
+merging behind #132's payments gate (decision 6); item 11's cadence
+recommendation (thin the three workers to daily) still open, next follow-up
+dated 10-03, Charen's and the orchestrator's call, not this routine's to
+enact. No REVIEW FEEDBACK addressed to this routine. No production code,
+test, or plan content changed this run; this HANDOFF update and the one PR
+comment are the only changes. No push notification: the CI flake is a
+known, already-tracked, already-decided-on recurrence (same disposition as
+runs 55 and 66) with no new decision or regression for this routine
+specifically, and the board's own posture already covers the decision-queue
+items untouched this run.
+
+Run 95 (2026-09-28). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 94's
+check (`git merge-base --is-ancestor origin/main HEAD` true, still `3a01b88`),
+so no rebase and no new regression surface this run. Fresh `npm ci`, `npx tsc
+--noEmit` clean. Full suite green on the first pass, no flake: 128 suites /
+1419 tests, zero drift from run 94. Re-verified item 7 (`app.json` still
+`"orientation": "portrait"`, `"supportsTablet": true`). PR #133 re-checked via
+`get`/`get_comments`/`get_check_runs`: still open, not draft, `mergeable_state:
+clean`, base `3a01b88` (main's tip, unchanged), head still `2e9c254` (run 94's
+own push, no new commit needed this run before this status update), `verify`
+check green (SUCCESS, completed 02:10-02:12 UTC 2026-09-28, this same head, a
+re-trigger of run 94's own push, not a new one). No new comments since run
+66's second-occurrence note, no reviews. Issue #139 re-read: `updated_at`
+unchanged at `2026-09-27T12:12:42Z`, same twenty-third orchestrator entry run
+94 already saw: ipad-worker section still "approved, nothing owed," blocker
+still the device pass gated on PR #133 merging behind #132's payments gate
+(decision 6); decision queue still day 20-21, item 11's cadence
+recommendation ("thin the three workers to daily") still open and unchanged,
+Charen's and the orchestrator's call, not this routine's to enact. No REVIEW
+FEEDBACK addressed to this routine (routine/localization got one this cycle,
+not this branch). No production code, test, or plan content changed this
+run; this HANDOFF update is the only change. No push notification: nothing
+new for Charen beyond what run 94 already covered, and no regression or new
+decision surfaced for this routine specifically.
+
+Run 94 (2026-09-28). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 93's
+check (`git merge-base --is-ancestor origin/main HEAD` true, still `3a01b88`),
+so no rebase and no new regression surface this run. Fresh `npm ci`, `npx tsc
+--noEmit` clean. Full suite green on the first pass, no flake: 128 suites /
+1419 tests, zero drift from run 93. Re-verified item 7 (`app.json` still
+`"orientation": "portrait"`, `"supportsTablet": true`). PR #133 re-checked via
+`get`/`get_comments`/`get_check_runs`: still open, not draft, `mergeable_state:
+clean`, base `3a01b88` (main's tip, unchanged), head still `fe04ed7` (run 93's
+own push, no new commit needed this run before this status update), `verify`
+check green (SUCCESS, completed 20:09-20:11 UTC 2026-09-27, this same head, a
+re-trigger of run 93's own push, not a new one). No new comments since run
+66's second-occurrence note, no reviews. Issue #139 re-read: `updated_at`
+unchanged at `2026-09-27T12:12:42Z`, same twenty-third orchestrator entry run
+93 already saw. No REVIEW FEEDBACK addressed to this routine. No production
+code, test, or plan content changed this run; this HANDOFF update is the only
+change. No push notification: nothing new for Charen beyond what run 93
+already covered, and no regression or new decision surfaced for this routine
+specifically.
+
+Run 93 (2026-09-27). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 92's
+check (`git merge-base --is-ancestor origin/main HEAD` true, still `3a01b88`),
+so no rebase and no new regression surface this run. Fresh `npm ci`, `npx tsc
+--noEmit` clean. Full suite green on the first pass, no flake: 128 suites /
+1419 tests, zero drift from run 92. Re-verified item 7 (`app.json` still
+`"orientation": "portrait"`, `"supportsTablet": true`). PR #133 re-checked via
+`get`/`get_comments`/`get_check_runs`: still open, not draft, `mergeable_state:
+clean`, base `3a01b88` (main's tip, unchanged), head still `5a2a731` (run 92's
+own push, no new commit needed this run before this status update), `verify`
+check green (SUCCESS, completed 14:11-14:12 UTC 2026-09-27, this same head, a
+re-trigger of run 92's own push, not a new one). No new comments since run
+66's second-occurrence note, no reviews. Issue #139 re-read: `updated_at`
+unchanged at `2026-09-27T12:12:42Z`, same twenty-third orchestrator entry run
+92 already saw. ipad-worker's own section is unchanged: "approved, nothing
+owed," blocker still the device pass gated on PR #133 merging behind #132's
+payments gate (decision 6). Item 11's cadence recommendation ("thin the three
+workers to daily") is still open and unchanged from run 92's read; that is
+Charen's and the orchestrator's call on scheduling, not something this
+routine changes about its own cadence. No REVIEW FEEDBACK addressed to this
+routine. No production code, test, or plan content changed this run; this
+HANDOFF update is the only change. No push notification: nothing new for
+Charen beyond what run 92 already covered, and no regression or new decision
+surfaced for this routine specifically.
+
+Run 92 (2026-09-27). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 91's
+check (`git merge-base --is-ancestor origin/main HEAD` true, still `3a01b88`),
+so no rebase and no new regression surface this run. Fresh `npm ci`, `npx tsc
+--noEmit` clean. Full suite green on the first pass, no flake: 128 suites /
+1419 tests, zero drift from run 91. Re-verified item 7 (`app.json` still
+`"orientation": "portrait"`, `"supportsTablet": true`). PR #133 re-checked via
+`get`/`get_comments`/`get_reviews`/`get_check_runs`: still open, not draft,
+`mergeable_state: clean`, base `3a01b88` (main's tip, unchanged), head still
+`26735db` (run 91's own push, no new commit needed this run before this status
+update), `verify` check green (SUCCESS, completed 08:09-08:10 UTC 2026-09-27,
+this same head; a re-trigger of run 91's own push, not a new one, so no
+disposition owed beyond noting it). No new comments since run 66's
+second-occurrence note, no reviews. Issue #139 re-read: `updated_at` advanced
+to `2026-09-27T12:12:42Z`, a twenty-third orchestrator entry landed since run
+91's check. Content: item 9 closed (already known, prior run), REVIEW FEEDBACK
+posted to routine/localization (two small fixes owed there, not this branch),
+and item 11's worker-cadence recommendation now reads "at its strongest: thin
+the three workers to daily" given main is static and most recent runs across
+all three streams were verify-only. That recommendation is Charen's and the
+orchestrator's to enact on scheduling, not something this routine changes
+about its own cadence. ipad-worker's own section is unchanged: "approved,
+nothing owed," blocker still the device pass gated on PR #133 merging behind
+#132's payments gate (decision 6). No REVIEW FEEDBACK addressed to this
+routine. No production code, test, or plan content changed this run; this
+HANDOFF update is the only change. No push notification: nothing new for
+Charen beyond what the board and run 91 already covered, and no regression or
+new decision surfaced for this routine specifically.
+
+Run 91 (2026-09-27). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 90's
+check (`git merge-base --is-ancestor origin/main HEAD` true, still `3a01b88`),
+so no rebase and no new regression surface this run. Fresh `npm ci`, `npx tsc
+--noEmit` clean. Full suite green on the first pass, no flake: 128 suites /
+1419 tests, zero drift from run 90. Re-verified item 7 (`app.json` still
+`"orientation": "portrait"`, `"supportsTablet": true`). PR #133 re-checked via
+`get`/`get_comments`/`get_check_runs`: still open, not draft, `mergeable_state:
+clean`, base `3a01b88` (main's tip, unchanged), head still `38718ed` (run 90's
+own push, no new commit needed this run before this status update), `verify`
+check green (SUCCESS, completed 02:10-02:11 UTC 2026-09-27, this same head).
+No new comments since run 66's second-occurrence note, no reviews. Issue #139
+re-read: `updated_at` unchanged at `2026-09-26T12:07:28Z`, same twenty-second
+orchestrator entry runs 89-90 already saw; ipad-worker's own line unchanged,
+"approved, nothing owed," blocker still the device pass gated on PR #133
+merging behind #132's payments gate (decision 6). No REVIEW FEEDBACK
+addressed to this routine. No production code, test, or plan content changed
+this run; this HANDOFF update is the only change. No push notification:
+nothing new for Charen beyond what run 90 already covered, and no regression
+or new decision surfaced.
+
+Run 90 (2026-09-27). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 89's
+check (`git merge-base --is-ancestor origin/main HEAD` true, still `3a01b88`),
+so no rebase and no new regression surface this run. Fresh `npm ci`, `npx tsc
+--noEmit` clean. Full suite green on the first pass, no flake: 128 suites /
+1419 tests, zero drift from run 89. Re-verified item 7 (`app.json` still
+`"orientation": "portrait"`, `"supportsTablet": true`). PR #133 re-checked via
+`get`/`get_comments`/`get_check_runs`: still open, not draft, `mergeable_state:
+clean`, base `3a01b88` (main's tip, unchanged), head still `ffca9d0` (run 89's
+own push, no new commit needed this run before this status update), `verify`
+check green (SUCCESS, completed 20:10:41 UTC 2026-09-26, this same head). No
+new comments since run 66's second-occurrence note, no reviews. Issue #139
+re-read: `updated_at` unchanged at `2026-09-26T12:07:28Z`, same twenty-second
+orchestrator entry run 89 already saw; ipad-worker's own line unchanged,
+"approved, nothing owed," blocker still the device pass gated on PR #133
+merging behind #132's payments gate (decision 6). No REVIEW FEEDBACK
+addressed to this routine. No production code, test, or plan content changed
+this run; this HANDOFF update is the only change. No push notification:
+nothing new for Charen beyond what run 89 already covered, and no regression
+or new decision surfaced.
+
+Run 89 (2026-09-26). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 88's
+check (`git merge-base --is-ancestor origin/main HEAD` true, still `3a01b88`),
+so no rebase and no new regression surface this run. Fresh `npm ci`, `npx tsc
+--noEmit` clean. Full suite green on the first pass, no flake: 128 suites /
+1419 tests, zero drift from run 88. Re-verified item 7 (`app.json` still
+`"orientation": "portrait"`, `"supportsTablet": true`). PR #133 re-checked via
+`get`/`get_comments`/`get_reviews`/`get_check_runs`: still open, not draft,
+`mergeable_state: clean`, base `3a01b88` (main's tip, unchanged), head still
+`321dbab` (run 88's own push, no new commit needed this run), `verify` check
+green (SUCCESS, 14:10-14:12 UTC 2026-09-26, this same head, a re-trigger of
+run 88's own push, not a new one). No new comments since run 66's
+second-occurrence note, no reviews. Issue #139 re-read: same twenty-second
+orchestrator entry run 88 already saw (`updated_at` unchanged at
+`2026-09-26T12:07:28Z`); ipad-worker's own line is unchanged, "approved,
+nothing owed," blocker still the device pass gated on PR #133 merging behind
+#132's payments gate (decision 6). No REVIEW FEEDBACK addressed to this
+routine. Decision queue unchanged from run 88's read (items 2/8/10 still
+open, day 19; item 11's cadence recommendation still pending); none of this
+is new work for ipad-worker to enact, consistent with every prior run's
+reading. No production code, test, or plan content changed this run; this
+HANDOFF update is the only change. No push notification: nothing new for
+Charen beyond what run 88 already covered, and no regression or new decision
+surfaced.
+
+Run 88 (2026-09-26). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` has not moved since run 87's
+rebase (`git merge-base --is-ancestor origin/main HEAD` true, still
+`3a01b88`), so no rebase and no new regression surface this run. Fresh
+`npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass, no
+flake: 128 suites / 1419 tests, zero drift from run 87. Re-verified item 7
+(`app.json` still `"orientation": "portrait"`, `"supportsTablet": true`).
+PR #133 re-checked via `get`/`get_comments`/`get_reviews`/`get_check_runs`:
+still open, not draft, `mergeable_state: clean`, base `3a01b88` (main's tip,
+unchanged), head still `d699be0` (run 87's own push, no new commit needed
+this run), `verify` check green (SUCCESS, 08:11-08:13 UTC 2026-09-26, this
+same head). No new comments since run 66's second-occurrence note, no
+reviews. Issue #139 re-read: twenty-second orchestrator entry landed since
+run 87's check (`updated_at` now `2026-09-26T12:07:28Z`), content mostly
+board bookkeeping (item 9 closed 09-25, both stuck ops ADR PRs merged,
+localization shipped real code again, main moved and all three streams
+absorbed it): ipad-worker's own line is unchanged, "approved, nothing owed,"
+blocker still the device pass gated on PR #133 merging behind #132's
+payments gate (decision 6). No REVIEW FEEDBACK addressed to this routine.
+Decision queue: item 11 (worker cadence) now carries updated context rather
+than a new ask (this week's ten-PR wave showed the 6-hour cadence earning
+its keep, recommendation to thin still stands once the wave settles); items
+2/8/10 (the code-unblocking decisions) still open, day 19; none of this is
+new work for ipad-worker to enact, consistent with every prior run's
+reading. No production code, test, or plan content changed this run; this
+HANDOFF update is the only change. No push notification: nothing new for
+Charen beyond what the board already covers, and no regression or new
+decision surfaced.
+
+Run 87 (2026-09-26). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` moved again since run 86's
+rebase: seven commits, `bd75989..3a01b88` (PRs #178-#183: EAS workflow Node
+22 bump, per-bill reminder toggle in `AddUpcomingSheet`, Tier 2 Settings
+reminders row + new `components/settings/RemindersSheet.tsx`, two
+config-plugin fixes dropping and then correctly re-scoping the
+`expo-notifications` APS entitlement, a primer docs update). `git rebase
+origin/main` was clean, no conflicts, all 97 commits replayed. Re-audited
+rather than trusting the clean rebase alone, since two of those PRs add real
+UI: `git diff --stat bd75989..3a01b88 -- '*.tsx' '*.ts'` narrowed to the
+touched app/component files, then read each new surface directly rather than
+assuming from the diffstat. `components/settings/RemindersSheet.tsx` (new,
+209 lines) is built entirely on the shared `Sheet` component (its own
+docstring says so) and reads no `width`/`Dimensions`/`contentColumnStyle` of
+its own, so it inherits item 3's 600pt cap for free, same as every other
+sheet on this branch's audit list. `app/profile.tsx`'s new Preferences row is
+one more `SettingsRow` inside the screen's existing, already-capped
+`ScrollView` (item 2b), not a new content surface. `AddUpcomingSheet.tsx`'s
+new reminder toggle section is inside that same already-capped `Sheet`. Then
+re-ran the full item-5 grep rather than relying on the file list being
+unchanged: `useWindowDimensions` call sites are the same 7 as run 85's audit
+(`CheckInCard.tsx` fontScale-only, `Sheet.tsx` item 3, `OnboardingCarousel.tsx`
+item 2c, `AuroraBackground.tsx` dead code, `utils/keyboard.ts` height-only
+post-run-26 sheet clamp, `utils/useSegmentPager.ts` confirmed run 85,
+`utils/textScale.ts`, new since run 85 but `fontScale`-only per its own
+docstring, same out-of-scope shape as `CheckInCard`, confirmed by reading it
+rather than assumed from the name). No new call site, no regression. Fresh
+`npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass: 128
+suites / 1419 tests (up from 127/1399, entirely main's own growth from the
+reminders-wave test files; this run added no new test file, since the two
+new UI surfaces above needed no new cap of their own to pin). Re-verified
+item 7 (`app.json` still `"orientation": "portrait"`, `"supportsTablet":
+true`; the diff's own `app.json` touches were the `expo-notifications`
+plugin entry being dropped then a config-plugin fix landing separately,
+neither orientation-related). Force-pushed the rebased branch plus this
+HANDOFF.md update, two commits total, to `routine/ipad`. PR #133 re-checked
+via `get`/`get_comments`/`get_reviews`/`get_check_runs`: still open, not
+draft, base now `bd75989` in the API's cache at read time (will read
+`3a01b88` once GitHub recomputes post-push), head matching run 86's push
+(`e465353`) at read time; `verify` check on that head completed green
+(SUCCESS, 02:10-02:11 UTC 2026-09-26) after all, resolving run 86's own
+"still in_progress past the polling ceiling" note without any action needed
+this run. No new comments since run 66's second-occurrence note (the
+`habitDetection.ts` flake, item 12 on issue #139, unchanged, main-owned, not
+this branch's to fix), no reviews. Issue #139 re-read: still the
+twenty-first orchestrator entry (`updated_at` unchanged at
+`2026-09-25T12:03:48Z`), ipad-worker section still "approved, nothing
+owed," blocker still the device pass gated on PR #133 merging behind #132's
+payments gate (decision 6); the board's own posture note names the
+orchestrator, not the worker streams, as owner of the one follow-up due
+2026-09-26 if the queue is still untouched, so this run defers to that
+rather than duplicating it, consistent with every prior run's reading. No
+push notification: a clean rebase plus re-audit with no regression found
+(including on two genuinely new UI surfaces) and no new decision raised is
+this routine's ordinary bounded work; the payments gate, decision queue and
+cadence items are threads already carried by other routines and Charen, not
+duplicated here.
+
+Run 86 (2026-09-26). Verified per this file's own COMPLETE instruction: plan
+fully checked, nothing new to do. `origin/main` moved again since run 85's
+rebase: two commits, `ad091e2..bd75989`, landing PR #177 (bill reminders
+Tier 1: `contexts/RemindersContext.tsx`, `utils/reminders/{permission,plan,
+setup,sync}.ts`, three new test files, `app.json`'s `expo-notifications`
+plugin entry, `app/_layout.tsx` wiring, storage/strings/recurring additions).
+Rebased onto it: clean, no conflicts (confirmed via the rebase's own output,
+95 commits replayed, zero manual resolution needed), unlike run 85's
+onboarding-carousel conflict, because this move touches no file this
+branch's diff shares. Fresh `npm ci`, `npx tsc --noEmit` clean. Re-audited
+per the Next section's post-move rule rather than trusting the clean rebase
+alone: re-grepped `useWindowDimensions` (still 7 real call sites, unchanged;
+`git diff --stat ad091e2..bd75989` confirms the reminders change touched no
+UI/layout file, only the engine, context and storage layer, so there was no
+new surface to check), re-confirmed `app.json` still `"orientation":
+"portrait"`, `"supportsTablet": true` (item 7; the one line the diff added
+there is the unrelated `expo-notifications` plugin entry). Full suite green
+on the first pass: 127 suites / 1399 tests (up from 124/1356, entirely
+main's own growth from the reminders test files; this run added no new test
+file, needed no merge-conflict resolution). Force-pushed the rebased branch
+(`cebc175`, base now `bd75989`). PR #133 still open, not draft; `verify`
+check on the pre-rebase head (`bb73c4d`, run 85's push) had already
+completed green (SUCCESS, 20:14-20:15 UTC 2026-09-25) before this run
+started; re-triggering it on the new head (`cebc175`) is this run's own
+push, result not yet known at write time. No new PR comments since run 66's
+second-occurrence note. Issue #139 re-read: its text is dated to run 83's
+check and already stale on "main has not moved" (matches what run 85 already
+flagged and this run reconfirms independently), otherwise unchanged:
+ipad-worker line still "approved, nothing owed," blocker still the device
+pass gated on PR #133 merging behind #132's payments gate (decision 6). The
+board's own posture note says the orchestrator sends one follow-up on the
+still-unanswered decision queue at its next run (dated 09-26, today); that
+follow-up and the cadence question (item 11) are the orchestrator's and
+Charen's threads, not this routine's to enact or duplicate, consistent with
+every prior run's reading. No push notification: a clean rebase plus
+re-audit with no regression found and no new decision raised is this
+routine's ordinary bounded work; the payments gate, decision queue and
+cadence items are threads already carried by other routines and Charen, not
+duplicated here.
+
+Run 85 (2026-09-25). `origin/main` moved for the first time since run 33's
+check: `ad091e2` (six commits ahead of the `3890ba1` baseline every run
+29-84 verified against), landing PR #175/#176, the onboarding arc v2
+Dynamic Type fix and its own beat/hook copy pass. Rebased onto it; one real
+conflict, in `components/onboarding/OnboardingCarousel.tsx`, exactly the
+"cap interacts with the pager panes" case item 2's Next instructions
+name: main's 2026-09-17 Dynamic Type fix (see design/decisions/components/
+OnboardingCarousel.md) had, since this branch's own last rebase, replaced
+each beat's fixed `View` with a vertical `ScrollView` plus a pair of
+collapsing `beatSpacer`s that let overflowing text at large accessibility
+sizes stay reachable, which is a different structure than the one this
+branch's `beatContent` cap was written against. Resolved by keeping main's
+scroller-plus-spacers structure whole (including its own conflicting
+`beatSpacer` style block) and re-nesting `beatContent` as the wrapper
+around the actual content, between the two spacers, inside the
+still-window-width outer `ScrollView`; the paging unit (`style={{ width }}`,
+the same value `handleScroll`'s offset math divides by) is untouched by
+either side's change, so the two fixes compose without moving that
+invariant. Two more conflicts, both mechanical (this branch's stale
+`OnboardingCarousel.md` predated the arc v2 rewrite and needed folding
+into main's current one, not replacing it; `design/decisions/README.md`'s
+component index differed only by a `BeatMedia` entry main had and this
+branch's copy did not): resolved keeping main's current content plus this
+branch's own dated decision line for the merge, same-commit as the code
+per the design-records rule. Fresh `npm ci`, `npx tsc --noEmit` clean.
+Re-audited per the Next section's post-move rule rather than trusting the
+clean rebase alone: re-grepped `useWindowDimensions` (7 real call sites,
+unchanged from the last full audit plus `utils/useSegmentPager.ts`, which
+predates this run and already carries the paging-unit-stays-window-width
+pattern correctly, confirmed by reading it, not assumed), re-checked that
+`app/(tabs)/money.tsx` (also touched by main's move, for the new bills-door
+deep link, logic only, no layout) still spreads `contentColumnStyle` into
+its capped surface, and confirmed `app.json` still `"orientation":
+"portrait"`, `"supportsTablet": true` (item 7). Full suite green on the
+first pass: 124 suites / 1356 tests (up from 122/1335, entirely main's own
+growth; this run added no new test file, the merge conflict resolution
+needed no new case since `onboardingCarouselDynamicType.test.tsx` and
+`tabletLayout.test.tsx`'s existing `beatContent` case both already pin the
+invariants the merge had to preserve, and both pass). Force-pushed the
+rebased branch (`fc3ecfe`, base now `ad091e2`). PR #133 still open, not
+draft; `verify` check re-triggered on the new head (`fc3ecfe`), completed
+green (SUCCESS, 20:12-20:13 UTC 2026-09-25) before this write-up closed
+out. Issue #139 re-checked: board's `main has not moved` line is now
+stale (written before this run's rebase), nothing else on the board changed
+that touches this routine; ipad-worker's own section still read "approved,
+nothing owed" as of the last orchestrator pass. No new REVIEW FEEDBACK.
+Blocker unchanged: the device pass, gated on PR #133 merging behind #132's
+payments gate (decision 6). No push notification: a clean rebase and
+re-audit with no regression found and no new decision raised is this
+routine's ordinary bounded work, not news Charen is waiting on; the payments
+gate and cadence items are core-worker's and Charen's threads, not
+duplicated here.
+
+Run 84. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 33's
+check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`3890ba1`), so no rebase and no new regression surface this run. Fresh
+`npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass, no
+flake: 122 suites / 1335 tests, zero drift from runs 33-83. PR #133
+re-checked via `get`/`get_comments`/`get_reviews`/`get_check_runs`: still
+open, not draft, `mergeable_state: clean`, base SHA `3890ba1` (main's tip,
+unchanged), head still `02c23c8` (run 83's own status commit, no new push
+between), `verify` check green (completed 08:10-08:11 UTC on 2026-09-25,
+this same head, one check run, SUCCESS). No new comments since run 66's
+second-occurrence note, no reviews. Issue #139 (Routine status board)
+re-checked via `get`/`get_comments`: `updated_at` advanced to
+`2026-09-25T12:03:48Z`, a twenty-first orchestrator entry landed since run
+83's check (same-day board refresh, no new comments, all change is to the
+issue body). ipad-worker's own line is unchanged: "approved, nothing
+owed," blocker still the device pass gated on PR #133 merging behind PR
+#132's payments gate (decision 6). Item 11's sanctioned escalation is now
+on its seventh unanswered day, and the board records core-worker's run 79
+sending a first direct phone/email alert on 2026-09-24 about it, also
+still unanswered; that alert and the decision of whether to pause or thin
+routine cadence are core-worker's and Charen's to make, not something this
+routine's own read of item 11 enacts or duplicates with a second
+notification, consistent with the board's own "no further notifications
+until something lands" posture and every prior run's reading of it. Item
+12 (the habitDetection.ts flake) unchanged, did not recur this run (single
+`verify` check, green, no recurrence since 09-20/21, matching the board's
+own note). Re-verified item 7 (`app.json` orientation still `"portrait"`,
+`supportsTablet` still `true`). This HANDOFF update is the only change
+this run; no production code or plan content changed. No push
+notification: nothing new for Charen on this routine's own PR or plan
+beyond what the board already covers and what core-worker already sent;
+this is the fifty-sixth consecutive run (29-84) with the plan at zero
+drift.
+
+Run 83. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 33's
+check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`3890ba1`), so no rebase and no new regression surface this run. Fresh
+`npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass, no
+flake: 122 suites / 1335 tests, zero drift from runs 33-82. PR #133
+re-checked via `get`/`get_comments`/`get_check_runs`: still open, not
+draft, `mergeable_state: clean`, base SHA `3890ba1` (main's tip,
+unchanged), head still `686f5bd` (run 82's own status commit, no new push
+between), `verify` check green (completed 02:09-02:11 UTC on 2026-09-25,
+this same head, one check run). No new comments since run 66's
+second-occurrence note. Issue #139 (Routine status board) re-checked via
+`get`: `updated_at` unchanged at `2026-09-24T12:03:43Z`, same twentieth
+orchestrator entry run 82 already saw: ipad-worker section still
+"approved, nothing owed," blocker still the device pass gated on PR #133
+merging behind PR #132's payments gate (decision 6). Decision queue still
+17 days untouched per the board's own count; item 11's sanctioned
+escalation stands unanswered, still day 7 by this run's own date
+(2026-09-25) against the board's 09-18 escalation and 09-24 read, still
+governed by the board's "no further notifications until something lands"
+posture, which this run follows: pausing or thinning routine cadence is
+Charen's call to make, not this routine's to enact on its own reading of
+item 11, so runs continue as configured. Item 12 (the habitDetection.ts
+flake) unchanged, did not recur this run (single `verify` check, green,
+no recurrence since 09-20/21). Re-verified item 7 (`app.json` orientation
+still `"portrait"`, `supportsTablet` still `true`). This HANDOFF update is
+the only change this run; no production code or plan content changed. No
+push notification: nothing new for Charen beyond what the board already
+covers; this is the fifty-fifth consecutive run (29-83) with the plan at
+zero drift.
+
+Run 82. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 33's
+check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`3890ba1`), so no rebase and no new regression surface this run. Fresh
+`npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass, no
+flake: 122 suites / 1335 tests, zero drift from runs 33-81. PR #133
+re-checked via `get`/`get_comments`/`get_check_runs`: still open, not
+draft, `mergeable_state: clean`, base SHA `3890ba1` (main's tip,
+unchanged), head still `9484039` (run 81's own status commit, no new push
+between), `verify` check green (completed 20:09-20:10 UTC on 2026-09-24,
+this same head, one check run). No new comments since run 66's
+second-occurrence note. Issue #139 (Routine status board) re-checked via
+`get`: `updated_at` unchanged at `2026-09-24T12:03:43Z`, same twentieth
+orchestrator entry run 81 already saw: ipad-worker section still
+"approved, nothing owed," blocker still the device pass gated on PR #133
+merging behind PR #132's payments gate (decision 6). Decision queue still
+17 days untouched per the board's own count; item 11's sanctioned
+escalation stands unanswered, now on day 7 by this run's own date
+(2026-09-25) against the board's 09-18 escalation and 09-24 read, still
+governed by the board's "no further notifications until something lands"
+posture, which this run follows: pausing or thinning routine cadence is
+Charen's call to make, not this routine's to enact on its own reading of
+item 11, so runs continue as configured. Item 12 (the habitDetection.ts
+flake) unchanged, did not recur this run (single `verify` check, green,
+no recurrence since 09-20/21). Re-verified item 7 (`app.json` orientation
+still `"portrait"`, `supportsTablet` still `true`). This HANDOFF update is
+the only change this run; no production code or plan content changed. No
+push notification: nothing new for Charen beyond what the board already
+covers; this is the fifty-fourth consecutive run (29-82) with the plan at
+zero drift.
+
+Run 81. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 33's
+check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`3890ba1`), so no rebase and no new regression surface this run. Fresh
+`npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass, no
+flake: 122 suites / 1335 tests, zero drift from runs 33-80. PR #133
+re-checked via `get`/`get_comments`/`get_check_runs`: still open, not
+draft, `mergeable_state: clean`, base SHA `3890ba1` (main's tip,
+unchanged), head still `80a7390` (run 80's own status commit, no new push
+between), `verify` check green (completed 14:10-14:11 UTC on 2026-09-24,
+this same head, one check run). No new comments since run 66's
+second-occurrence note. Issue #139 (Routine status board) re-checked via
+`get`: `updated_at` unchanged at `2026-09-24T12:03:43Z`, same twentieth
+orchestrator entry run 80 already saw: ipad-worker section still
+"approved, nothing owed," blocker still the device pass gated on PR #133
+merging behind PR #132's payments gate (decision 6). Decision queue still
+17 days untouched per the board's own count; item 11's sanctioned
+escalation stands unanswered, still day 6, still governed by the board's
+"no further notifications until something lands" posture, which this run
+follows: pausing or thinning routine cadence is Charen's call to make,
+not this routine's to enact on its own reading of item 11, so runs
+continue as configured. Item 12 (the habitDetection.ts flake) unchanged,
+did not recur this run (single `verify` check, green, no recurrence since
+09-20/21). Re-verified item 7 (`app.json` orientation still `"portrait"`,
+`supportsTablet` still `true`). This HANDOFF update is the only change
+this run; no production code or plan content changed. No push
+notification: nothing new for Charen beyond what the board already
+covers; this is the fifty-third consecutive run (29-81) with the plan at
+zero drift.
+
+Run 80. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 33's
+check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`3890ba1`), so no rebase and no new regression surface this run. Fresh
+`npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass, no
+flake: 122 suites / 1335 tests, zero drift from runs 33-79. PR #133
+re-checked via `get`/`get_comments`/`get_check_runs`: still open, not
+draft, `mergeable_state: clean`, base SHA `3890ba1` (main's tip,
+unchanged), head still `c006ca9` (run 79's own status commit, no new push
+between), `verify` check green (completed 08:10-08:11 UTC on 2026-09-24,
+this same head, one check run). No new comments since run 66's
+second-occurrence note. Issue #139 (Routine status board) re-checked via
+`get`: `updated_at` now `2026-09-24T12:03:43Z`, twentieth orchestrator
+entry landed since run 79's check, content is confirmation only:
+ipad-worker section still "approved, nothing owed," blocker still the
+device pass gated on PR #133 merging behind PR #132's payments gate
+(decision 6). Decision queue now 17 days untouched per the board's own
+count; item 11's sanctioned escalation stands unanswered on day 6, still
+governed by the board's "no further notifications until something lands"
+posture, which this run follows: pausing or thinning routine cadence is
+Charen's call to make, not this routine's to enact on its own reading of
+item 11, so runs continue as configured. Item 12 (the habitDetection.ts
+flake) unchanged, did not recur this run (single `verify` check, green,
+no recurrence since 09-20/21 per the board's own count). Re-verified item
+7 (`app.json` orientation still `"portrait"`, `supportsTablet` still
+`true`). This HANDOFF update is the only change this run; no production
+code or plan content changed. No push notification: nothing new for
+Charen beyond what the board already covers; this is the fifty-second
+consecutive run (29-80) with the plan at zero drift.
+
+Run 79. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 33's
+check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`3890ba1`), so no rebase and no new regression surface this run. Fresh
+`npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass, no
+flake: 122 suites / 1335 tests, zero drift from runs 33-78. PR #133
+re-checked via `get`/`get_comments`/`get_check_runs`: still open, not
+draft, `mergeable_state: clean`, base SHA `3890ba1` (main's tip,
+unchanged), head still `bfd2522` (run 78's own status commit, no new push
+between), `verify` check green (completed 02:10-02:11 UTC on 2026-09-24,
+this same head, one check run). No new comments since run 66's
+second-occurrence note. Issue #139 (Routine status board) re-checked via
+`get`: `updated_at` unchanged at `2026-09-23T12:03:20Z`, same nineteenth
+orchestrator entry runs 76-78 already saw: ipad-worker section still
+"approved, nothing owed," blocker still the device pass gated on PR #133
+merging behind PR #132's payments gate (decision 6). Decision queue still
+16 days untouched per the board's own count; item 11's sanctioned
+escalation stands unanswered, still governed by the board's "no further
+notifications until something lands" posture, which this run follows:
+pausing or thinning routine cadence is Charen's call to make, not this
+routine's to enact on its own reading of item 11, so runs continue as
+configured. Item 12 (the habitDetection.ts flake) unchanged, did not
+recur this run (single `verify` check, green). Re-verified item 7
+(`app.json` orientation still `"portrait"`, `supportsTablet` still
+`true`). This HANDOFF update is the only change this run; no production
+code or plan content changed. No push notification: nothing new for
+Charen beyond what the board already covers; this is the fifty-first
+consecutive run (29-79) with the plan at zero drift.
+
+Run 78. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 33's
+check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`3890ba1`), so no rebase and no new regression surface this run. Fresh
+`npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass, no
+flake: 122 suites / 1335 tests, zero drift from runs 33-77. PR #133
+re-checked via `get`/`get_comments`/`get_check_runs`: still open, not
+draft, `mergeable_state: clean`, base SHA `3890ba1` (main's tip,
+unchanged), head still `3eb73de` (run 77's own status commit, no new push
+between), `verify` check green (completed 20:09-20:10 UTC on 2026-09-23,
+this same head, one check run). No new comments since run 66's
+second-occurrence note. Issue #139 (Routine status board) re-checked via
+`get`: `updated_at` unchanged at `2026-09-23T12:03:20Z`, same nineteenth
+orchestrator entry runs 76-77 already saw: ipad-worker section still
+"approved, nothing owed," blocker still the device pass gated on PR #133
+merging behind PR #132's payments gate (decision 6). Decision queue still
+16 days untouched per the board's own count; item 11's sanctioned
+escalation stands unanswered, still governed by the board's "no further
+notifications until something lands" posture, which this run follows:
+pausing or thinning routine cadence is Charen's call to make, not this
+routine's to enact on its own reading of item 11, so runs continue as
+configured. Item 12 (the habitDetection.ts flake) unchanged, did not
+recur this run (single `verify` check, green). Re-verified item 7
+(`app.json` orientation still `"portrait"`, `supportsTablet` still
+`true`). This HANDOFF update is the only change this run; no production
+code or plan content changed. No push notification: nothing new for
+Charen beyond what the board already covers; this is the fiftieth
+consecutive run (29-78) with the plan at zero drift.
+
+Run 77. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 33's
+check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`3890ba1`), so no rebase and no new regression surface this run. Fresh
+`npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass, no
+flake: 122 suites / 1335 tests, zero drift from runs 33-76. PR #133
+re-checked via `get`/`get_comments`/`get_check_runs`: still open, not
+draft, `mergeable_state: clean`, base SHA `3890ba1` (main's tip,
+unchanged), head still `8f0ca8f` (run 76's own status commit, no new push
+between), `verify` check green (completed 14:09-14:11 UTC on 2026-09-23,
+this same head, one check run). No new comments since run 66's
+second-occurrence note. Issue #139 (Routine status board) re-checked via
+`get`: `updated_at` unchanged at `2026-09-23T12:03:20Z`, same nineteenth
+orchestrator entry run 76 already saw: ipad-worker section still
+"approved, nothing owed," blocker still the device pass gated on PR #133
+merging behind PR #132's payments gate (decision 6). Decision queue still
+16 days untouched per the board's own count; item 11's sanctioned
+escalation stands unanswered, still governed by the board's "no further
+notifications until something lands" posture, which this run follows:
+pausing or thinning routine cadence is Charen's call to make, not this
+routine's to enact on its own reading of item 11, so runs continue as
+configured. Item 12 (the habitDetection.ts flake) unchanged, did not
+recur this run (single `verify` check, green). Re-verified item 7
+(`app.json` orientation still `"portrait"`, `supportsTablet` still
+`true`). This HANDOFF update is the only change this run; no production
+code or plan content changed. No push notification: nothing new for
+Charen beyond what the board already covers; this is the forty-ninth
+consecutive run (29-77) with the plan at zero drift.
+
+Run 76. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 33's
+check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`3890ba1`), so no rebase and no new regression surface this run. Fresh
+`npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass, no
+flake: 122 suites / 1335 tests, zero drift from runs 33-75. PR #133
+re-checked via `get`/`get_check_runs`: still open, not draft,
+`mergeable_state: clean`, base SHA `3890ba1` (main's tip, unchanged), head
+still `380cae7` (run 75's own status commit, no new push between), `verify`
+check green (completed 08:09-08:10 UTC on 2026-09-23, this same head, one
+check run). Issue #139 (Routine status board) re-checked via `get`:
+nineteenth orchestrator entry landed since run 75's check (`updated_at` now
+`2026-09-23T12:03:20Z`), content is confirmation only: ipad-worker section
+still "approved, nothing owed," blocker still the device pass gated on PR
+#133 merging behind PR #132's payments gate (decision 6), forty-seven
+consecutive zero-drift runs already counted through run 75, this run
+extends that to forty-eight (29-76). Decision queue now 16 days untouched
+per the board's own count; item 11's sanctioned escalation stands
+unanswered on its fifth day per the board's own text, still governed by
+the board's "no further notifications until something lands" posture,
+which this run follows: pausing or thinning routine cadence is Charen's
+call to make, not this routine's to enact on its own reading of item 11,
+so runs continue as configured. Item 12 (the habitDetection.ts flake)
+unchanged, did not recur this run (single `verify` check, green).
+Re-verified item 7 (`app.json` orientation still `"portrait"`,
+`supportsTablet` still `true`). This HANDOFF update is the only change
+this run; no production code or plan content changed. No push
+notification: nothing new for Charen beyond what the board already
+covers; this is the forty-eighth consecutive run (29-76) with the plan at
+zero drift.
+
+Run 75. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 33's
+check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`3890ba1`), so no rebase and no new regression surface this run. Fresh
+`npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass, no
+flake: 122 suites / 1335 tests, zero drift from runs 33-74. PR #133
+re-checked via `get`/`get_comments`/`get_reviews`/`get_check_runs`: still
+open, not draft, `mergeable_state: clean`, base SHA `3890ba1` (main's tip,
+unchanged), head still `e41cf51` (run 74's own status commit, no new push
+between), `verify` checks green (one check run on this head, completed
+02:08-02:10 UTC on 2026-09-23, `success`). No new comments since run 66's
+second-occurrence note (`issuecomment-5754512815`), no reviews. Issue #139
+(Routine status board) re-checked via `get`: `updated_at` unchanged at
+`2026-09-22T12:06:04Z`, still the eighteenth orchestrator entry run 74
+already saw, still purely a re-verification: ipad-worker section still
+"approved, nothing owed," blocker still the device pass gated on PR #133
+merging behind PR #132's payments gate (decision 6). Decision queue still
+15+ days untouched per the board's own last count; item 11's sanctioned
+escalation (09-18) stands unanswered, now on its sixth unanswered day
+count from this run's read of today's date (2026-09-23) against the
+board's 09-22 update, still governed by the board's own "no further
+notifications until something lands" posture, which this run follows:
+pausing or thinning routine cadence is Charen's call to make, not this
+routine's to enact on its own reading of item 11, so runs continue as
+configured. Item 12 (the habitDetection.ts flake) unchanged, did not
+recur this run (single `verify` check, green). Re-verified item 7
+(`app.json` orientation still `"portrait"`, `supportsTablet` still
+`true`). This HANDOFF update is the only change this run; no production
+code or plan content changed. No push notification: nothing new for
+Charen beyond what the board already covers and what run 71 already sent;
+this is the forty-seventh consecutive run (29-75) with the plan at zero
+drift.
+
+Run 74. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 33's
+check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`3890ba1`), so no rebase and no new regression surface this run. Fresh
+`npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass, no
+flake: 122 suites / 1335 tests, zero drift from runs 33-73. PR #133
+re-checked via `get`/`get_comments`/`get_reviews`/`get_check_runs`: still
+open, not draft, `mergeable_state: clean`, base SHA `3890ba1` (main's tip,
+unchanged), head still `edd8ab0` (run 73's own status commit, no new push
+between), `verify` checks green (two check runs on this head, both
+completed 20:08-20:10 UTC on 2026-09-22, both `success`). No new comments
+since run 66's second-occurrence note (`issuecomment-5754512815`), no
+reviews. Issue #139 (Routine status board) re-checked via `get`:
+`updated_at` unchanged at `2026-09-22T12:06:04Z`, still the eighteenth
+orchestrator entry run 73 already saw, still purely a re-verification:
+ipad-worker section still "approved, nothing owed," blocker still the
+device pass gated on PR #133 merging behind PR #132's payments gate
+(decision 6). Decision queue still 15+ days untouched per the board's own
+last count (day 4 as of the board's 2026-09-22 update); item 11's
+sanctioned escalation stands unanswered, per the board's own "no further
+notifications until something lands" posture, which this run follows:
+pausing or thinning routine cadence is Charen's call to make, not this
+routine's to enact on its own reading of item 11, so runs continue as
+configured. Item 12 (the habitDetection.ts flake) unchanged, did not
+recur this run (both `verify` check runs green). Re-verified item 7
+(`app.json` orientation still `"portrait"`, `supportsTablet` still
+`true`). This HANDOFF update is the only change this run; no production
+code or plan content changed. No push notification: nothing new for
+Charen beyond what the board already covers and what run 71 already sent;
+this is the forty-sixth consecutive run (29-74) with the plan at zero
+drift.
+
+Run 73. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 33's
+check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`3890ba1`), so no rebase and no new regression surface this run. Fresh
+`npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass, no
+flake: 122 suites / 1335 tests, zero drift from runs 33-72. PR #133
+re-checked via `get`/`get_comments`/`get_reviews`/`get_check_runs`: still
+open, not draft, `mergeable_state: clean`, base SHA `3890ba1` (main's tip,
+unchanged), head still `d60c069` (run 72's own status commit, no new push
+between), `verify` check green (completed 14:10-14:11 UTC on 2026-09-22 on
+this same head). No new comments since run 66's second-occurrence note
+(`issuecomment-5754512815`), no reviews. Issue #139 (Routine status board)
+re-checked via `get`: `updated_at` unchanged at `2026-09-22T12:06:04Z`,
+still the eighteenth orchestrator entry run 72 already saw, still purely a
+re-verification: ipad-worker section still "approved, nothing owed,"
+blocker still the device pass gated on PR #133 merging behind PR #132's
+payments gate (decision 6). Decision queue still 15+ days untouched per
+the board's own count; item 11's sanctioned escalation stands unanswered a
+fifth day, per the board's own "no further notifications until something
+lands" posture, which this run follows: pausing or thinning routine
+cadence is Charen's call to make, not this routine's to enact on its own
+reading of item 11, so runs continue as configured. Item 12 (the
+habitDetection.ts flake) unchanged, did not recur this run (single
+`verify` check, green). Re-verified item 7 (`app.json` orientation still
+`"portrait"`, `supportsTablet` still `true`). This HANDOFF update is the
+only change this run; no production code or plan content changed. No push
+notification: nothing new for Charen beyond what the board already covers
+and what run 71 already sent; this is the forty-fifth consecutive run
+(29-73) with the plan at zero drift.
+
+Run 72. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 33's
+check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`3890ba1`), so no rebase and no new regression surface this run. Fresh
+`npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass, no
+flake: 122 suites / 1335 tests, zero drift from runs 33-71. PR #133
+re-checked via `get`/`get_comments`/`get_reviews`/`get_check_runs`: still
+open, not draft, `mergeable_state: clean`, base SHA `3890ba1` (main's tip,
+unchanged), head still `45afbc0` (run 71's own status commit, no new push
+between), `verify` check green (completed 08:10-08:12 UTC on 2026-09-22 on
+this same head). No new comments since run 66's second-occurrence note
+(`issuecomment-5754512815`), no reviews. Issue #139 (Routine status board)
+re-checked via `get`: `updated_at` advanced to `2026-09-22T12:06:04Z`, an
+eighteenth orchestrator entry landed since run 71's check. Content is
+confirmation, not new work: it corrects and closes out localization-worker's
+run 71 false alarm about this board being deleted (wrong repo queried,
+`charenk/habitcents-ops`, where no such issue has ever existed; this board
+has always lived at `charenk/habitcents-mobile-app` #139 and was read clean
+by ipad-worker run 71, core-worker run 69, and the orchestrator itself the
+same day), and explicitly commends run 71's handling ("exactly right:
+independent confirmation in both repos, one corrective notification, no
+writes outside its own branch"). ipad-worker's own line is unchanged:
+"approved, nothing owed," blocker still the device pass gated on PR #133
+merging behind PR #132's payments gate (decision 6). Decision queue now
+15+ days untouched per the board's own count; item 11's sanctioned
+escalation (recommending the three worker routines be paused or thinned
+while blocked) stands unanswered a fourth day, per the board's own "no
+further notifications until something lands" posture, which this run
+follows: pausing or thinning routine cadence is Charen's call to make, not
+this routine's to enact on its own reading of item 11, so runs continue as
+configured. Item 12 (the habitDetection.ts flake) unchanged, did not
+recur this run (single `verify` check, green). Re-verified item 7
+(`app.json` orientation still `"portrait"`, `supportsTablet` still
+`true`). This HANDOFF update is the only change this run; no production
+code or plan content changed. No push notification: nothing new for
+Charen beyond what the board already covers and what run 71 already sent;
+this is the forty-fourth consecutive run (29-72) with the plan at zero
+drift.
+
+Run 71. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 33's
+check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`3890ba1`), so no rebase and no new regression surface this run. Fresh
+`npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass, no
+flake: 122 suites / 1335 tests, zero drift from runs 33-70. PR #133
+re-checked via `get`/`get_comments`/`get_reviews`/`get_check_runs`: still
+open, not draft, `mergeable_state: clean`, base SHA `3890ba1` (main's tip,
+unchanged), head still `eb95502` (run 70's own status commit, no new push
+between), `verify` check green (completed 02:10-02:11 UTC on 2026-09-22 on
+this same head). No new comments since run 66's second-occurrence note
+(`issuecomment-5754512815`), no reviews. Issue #139 (Routine status board,
+`charenk/habitcents-mobile-app`) re-checked via `get`: `updated_at`
+unchanged at `2026-09-21T12:12:04Z`, still the seventeenth orchestrator
+entry runs 68-70 already saw, still purely a re-verification: ipad-worker
+section still "approved, nothing owed," blocker still the device pass
+gated on PR #133 merging behind PR #132's payments gate (decision 6).
+Decision queue still 14+ days untouched per the board's own count; item
+11's sanctioned escalation stands unanswered per the board's "no further
+notifications until something lands" posture, and item 12 (the
+habitDetection.ts flake) is unchanged since its cleared second occurrence.
+**Cross-routine note, not this branch's own finding to act on:** the ops
+runs.log shows localization-worker's run 71 reported issue #139 as 404
+and missing, checked against `charenk/habitcents-ops` ("zero issues exist"
+there) and sent a push notification about a disappeared decision channel.
+Independently confirmed this run: issue #139 does not exist in
+`charenk/habitcents-ops` (404, expected, nothing was ever filed there) but
+is alive and unchanged in `charenk/habitcents-mobile-app`, the same repo
+every ipad-worker run including this one has read it from since run 1; the
+`get` above returned the same content and `updated_at` this run saw. Read
+this as localization-worker checking the wrong repo, not the board
+actually disappearing; noted here rather than edited into their file,
+since routine isolation means their branch and its files are not this
+routine's to touch. Re-verified item 7 (`app.json` orientation still
+`"portrait"`, `supportsTablet` still `true`). This HANDOFF update is the
+only change this run; no production code or plan content changed. Sending
+one push notification this run despite the otherwise-zero-drift status:
+Charen may already be acting on localization-worker's false alarm, and
+this is new, corrective information a same-day re-check would not
+otherwise surface; this is the forty-third consecutive run (29-71) with
+the plan at zero drift.
+
+Run 70. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 33's
+check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`3890ba1`), so no rebase and no new regression surface this run. Fresh
+`npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass, no
+flake: 122 suites / 1335 tests, zero drift from runs 33-69. PR #133
+re-checked via `get`/`get_comments`/`get_check_runs`: still open, not
+draft, `mergeable_state: clean`, base SHA `3890ba1` (main's tip,
+unchanged), head still `3184fd0` (run 69's own status commit, no new push
+between), `verify` check green (completed 20:11-20:12 UTC on 2026-09-21 on
+this same head). No new comments since run 66's second-occurrence note
+(`issuecomment-5754512815`), no reviews. Issue #139 (Routine status board)
+re-checked via `get`: `updated_at` unchanged at `2026-09-21T12:12:04Z`,
+still the seventeenth orchestrator entry runs 68-69 already saw, still
+purely a re-verification: ipad-worker section still "approved, nothing
+owed," blocker still the device pass gated on PR #133 merging behind PR
+#132's payments gate (decision 6). Decision queue still 14+ days untouched
+per the board's own count; item 11's sanctioned escalation stands
+unanswered per the board's "no further notifications until something
+lands" posture, and item 12 (the habitDetection.ts flake) is unchanged
+since its cleared second occurrence. Re-verified item 7 (`app.json`
+orientation still `"portrait"`, `supportsTablet` still `true`). This
+HANDOFF update is the only change this run; no production code or plan
+content changed. No push notification: nothing new for Charen beyond what
+the board already covers; this is the forty-second consecutive run
+(29-70) with the plan at zero drift.
+
+Run 69. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 33's
+check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`3890ba1`), so no rebase and no new regression surface this run. Fresh
+`npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass, no
+flake: 122 suites / 1335 tests, zero drift from runs 33-68. PR #133
+re-checked via `get`/`get_comments`/`get_reviews`/`get_check_runs`: still
+open, not draft, `mergeable_state: clean`, base SHA `3890ba1` (main's tip,
+unchanged), head still `3cee893` (run 68's own status commit, no new push
+between), `verify` check green (completed 14:10-14:11 UTC on 2026-09-21 on
+this same head). No new comments since run 66's second-occurrence note
+(`issuecomment-5754512815`), no reviews. Issue #139 (Routine status board)
+re-checked via `get`: `updated_at` unchanged at `2026-09-21T12:12:04Z`,
+still the seventeenth orchestrator entry run 68 already saw, still purely
+a re-verification: ipad-worker section still "approved, nothing owed,"
+blocker still the device pass gated on PR #133 merging behind PR #132's
+payments gate (decision 6). Decision queue still 14+ days untouched per
+the board's own count; item 11's sanctioned escalation stands unanswered
+per the board's "no further notifications until something lands" posture,
+and item 12 (the habitDetection.ts flake) is unchanged since its cleared
+second occurrence. Re-verified item 7 (`app.json` orientation still
+`"portrait"`, `supportsTablet` still `true`). This HANDOFF update is the
+only change this run; no production code or plan content changed. No push
+notification: nothing new for Charen beyond what the board already
+covers; this is the forty-first consecutive run (29-69) with the plan at
+zero drift.
+
+Run 68. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 33's
+check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`3890ba1`), so no rebase and no new regression surface this run. Fresh
+`npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass, no
+flake: 122 suites / 1335 tests, zero drift from runs 33-67. PR #133
+re-checked via `get`/`get_comments`/`get_reviews`/`get_check_runs`: still
+open, not draft, `mergeable_state: clean`, base SHA `3890ba1` (main's tip,
+unchanged), head still `e3c19d2` (run 67's own status commit, no new push
+between), `verify` check green (completed 08:12-08:13 UTC on 2026-09-21 on
+this same head, the run that cleared the item 12 flake's second
+occurrence). No new comments since run 66's second-occurrence note
+(`issuecomment-5754512815`), no reviews. Issue #139 (Routine status board)
+re-checked via `get`: seventeenth orchestrator entry landed since run 67's
+check (`updated_at` now `2026-09-21T12:12:04Z`), still purely a
+re-verification: ipad-worker section still "approved, nothing owed,"
+blocker still the device pass gated on PR #133 merging behind PR #132's
+payments gate (decision 6). Board confirms the item 12 flake's second
+occurrence cleared on its own re-run with no code change, matching run
+67's own read of `mergeable_state: clean`. Decision queue now 14+ days
+untouched per the board's own count; item 11's sanctioned escalation
+stands unanswered per the board's "no further notifications until
+something lands" posture. Re-verified item 7 (`app.json` orientation
+still `"portrait"`, `supportsTablet` still `true`). This HANDOFF update is
+the only change this run; no production code or plan content changed. No
+push notification: nothing new for Charen beyond what the board already
+covers; this is the fortieth consecutive run (29-68) with the plan at
+zero drift.
+
+Run 67. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 33's
+check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`3890ba1`), so no rebase and no new regression surface this run. Fresh
+`npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass, no
+flake: 122 suites / 1335 tests, zero drift from runs 33-66. PR #133
+re-checked via `get`/`get_comments`/`get_reviews`: still open, not draft,
+`mergeable_state` back to `clean` (from run 66's `unstable`) with the head
+sha unchanged at `2bec5ba` (run 66's own status commit, no new push
+between), meaning the flaky `verify` check cleared on its own re-run
+without any code change, consistent with the flake diagnosis from runs 55
+and 66. No new comments since run 66's second-occurrence note
+(`issuecomment-5754512815`), no reviews. Issue #139 (Routine status board)
+re-checked via `get`/`get_comments`: unchanged since run 66's check
+(`updated_at` still `2026-09-20T12:05:18Z`, still the sixteenth
+orchestrator entry, predating run 66's CI comment), ipad-worker section
+still "approved, nothing owed," blocker still the device pass gated on PR
+#133 merging behind PR #132's payments gate (decision 6). Note: the
+board's item 12 text ("no recurrence since 09-18") is now stale relative
+to PR #133, which recorded a second flake occurrence on 2026-09-21 (run
+66); that staleness is the orchestrator's board to refresh on its next
+pass, not this routine's file to edit, and item 12 already sanctions
+"accept occasional red checks" as one disposition, so no new escalation
+from this routine either. Decision queue still 13+ days untouched per the
+board's own last count; item 11's sanctioned escalation stands unanswered
+per the board's "no further notifications until something lands" posture.
+Re-verified item 7 (`app.json` orientation still `"portrait"`,
+`supportsTablet` still `true`). This HANDOFF update is the only change
+this run; no production code or plan content changed. No push
+notification: nothing new for Charen beyond what the board already
+covers and what run 66's PR comment already surfaced; this is the
+thirty-ninth consecutive run (29-67) with the plan at zero drift.
+
+Run 66. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 33's
+check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`3890ba1`), so no rebase and no new regression surface this run. Fresh
+`npm ci`, `npx tsc --noEmit` clean. Full suite green locally on the first
+pass, no flake: 122 suites / 1335 tests, zero drift from runs 33-65.
+**PR #133's `verify` check failed a second time** (job
+[106141608170](https://github.com/charenk/habitcents-mobile-app/actions/runs/35534733993/job/106141608170),
+on run 65's own status-commit push, head `fe38ccf`, completed 20:12 UTC
+2026-09-20): the identical `habitDetection.test.ts` `spanDays` assertion
+from run 55 (`Expected: 0, Received: 1.157e-8`), confirmed via `get_files`
+still untouched by this branch's diff, confirmed green on a fresh local
+full-suite run of the same commit. `rerun_failed_jobs` returned 403 again
+(no permission). Per issue #139's standing instruction ("a second failure
+of the same assertion on a head that is green locally is real, not flake;
+escalate then"), posted one PR comment
+(https://github.com/charenk/habitcents-mobile-app/pull/133#issuecomment-5754512815)
+flagging this explicitly as the second occurrence rather than re-treating
+it as a one-off, alongside the same diagnosis and the same "not this PR's
+code, already queued as decision item 12" disposition as run 55. Not
+pushing a fix: `habitDetection.ts` is outside this PR's scope and
+main-owned per item 12, which already carries the proposed patch and an
+"accept occasional red checks" option; leaving the call to that decision.
+`mergeable_state` is `unstable` for this reason only, base SHA `3890ba1`
+(main's tip, unchanged). No new reviews. Issue #139 (Routine status board)
+re-checked via `get`/`get_comments`: unchanged since run 65's check
+(`updated_at` still `2026-09-20T12:05:18Z`, still the sixteenth
+orchestrator entry, predates this CI event), ipad-worker section still
+"approved, nothing owed," blocker still the device pass gated on PR #133
+merging behind PR #132's payments gate (decision 6). Decision queue still
+13+ days untouched per the board's own count; item 11's sanctioned
+escalation stands unanswered per the board's own "no further
+notifications until something lands" posture; item 12 (the flake itself)
+already anticipates and sanctions occasional recurrences like this one, so
+not re-escalating past the PR comment above. Re-verified item 7
+(`app.json` orientation still `"portrait"`, `supportsTablet` still
+`true`). This HANDOFF update and the PR comment above are the only
+changes this run; no production code or plan content changed. No push
+notification: the recurrence is diagnosed, reported on the PR where the
+next reader (orchestrator or Charen) will see it, matches an outcome
+decision item 12 already anticipated and sanctioned, and the board's
+"no further notifications" posture on the stale decision queue still
+holds; this is the thirty-eighth consecutive run (29-66) with the plan at
+zero drift, though not zero-CI-drift given the flake noted above.
+
+Run 65. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 33's
+check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`3890ba1`), so no rebase and no new regression surface this run. Fresh
+`npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass, no
+flake: 122 suites / 1335 tests, zero drift from runs 33-64. PR #133:
+re-checked via `get`/`get_comments`/`get_reviews`/`get_check_runs`: still
+open, not draft, `mergeable_state: clean`, base SHA `3890ba1` (main's tip,
+unchanged), head still `42d1b13` (run 64's own status commit, unchanged by
+any code this run), `verify` check green (completed 14:10-14:12 UTC on
+2026-09-20 on this same head). No new comments since run 55's flake
+comment, no reviews. Issue #139 (Routine status board) re-checked via
+`get`/`get_comments`: unchanged since run 64's check (`updated_at` still
+`2026-09-20T12:05:18Z`, still the sixteenth orchestrator entry), ipad-
+worker section still "approved, nothing owed," blocker still the device
+pass gated on PR #133 merging behind PR #132's payments gate (decision 6).
+Decision queue still 13 days untouched per the board's own count; item 11's
+sanctioned escalation stands unanswered per the board's own "no further
+notifications until something lands" posture, and item 12 (the
+habitDetection.ts flake) is unchanged; neither is this routine's to act on
+or re-notify. Re-verified item 7 (`app.json` orientation still `"portrait"`,
+`supportsTablet` still `true`). This HANDOFF update is the only change this
+run; no production code or plan content changed. No push notification:
+nothing new for Charen beyond what the board already covers; this is the
+thirty-seventh consecutive run (29-65) at zero drift while the device-pass
+blocker stays outside this routine's reach.
+
+Run 64. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 33's
+check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`3890ba1`), so no rebase and no new regression surface this run. Fresh
+`npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass, no
+flake: 122 suites / 1335 tests, zero drift from runs 33-63. PR #133:
+re-checked via `get`/`get_comments`/`get_reviews`/`get_check_runs`: still
+open, not draft, `mergeable_state: clean`, base SHA `3890ba1` (main's tip,
+unchanged), head still `a5afcef` (run 63's own status commit, unchanged by
+any code this run), `verify` check green (completed 08:10-08:11 UTC on
+2026-09-20 on this same head). No new comments since run 55's flake
+comment, no reviews. Issue #139 (Routine status board) re-checked via
+`get`: sixteenth orchestrator entry landed since run 63's check
+(`updated_at` now `2026-09-20T12:05:18Z`), still purely a re-verification:
+ipad-worker section still "approved, nothing owed," blocker still the
+device pass gated on PR #133 merging behind PR #132's payments gate
+(decision 6). Decision queue now 13 days untouched per the board's own
+count; item 11's sanctioned escalation stands unanswered per the board's
+own "no further notifications until something lands" posture, and item 12
+(the habitDetection.ts flake) is unchanged; neither is this routine's to
+act on or re-notify. Re-verified item 7 (`app.json` orientation still
+`"portrait"`, `supportsTablet` still `true`). This HANDOFF update is the
+only change this run; no production code or plan content changed. No push
+notification: nothing new for Charen beyond what the board already
+covers; this is the thirty-sixth consecutive run (29-64) at zero drift
+while the device-pass blocker stays outside this routine's reach.
+
+Run 63. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 33's
+check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`3890ba1`), so no rebase and no new regression surface this run. Fresh
+`npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass, no
+flake: 122 suites / 1335 tests, zero drift from runs 33-62. PR #133:
+re-checked via `get`/`get_comments`/`get_reviews`/`get_check_runs`: still
+open, not draft, `mergeable_state: clean`, base SHA `3890ba1` (main's tip,
+unchanged), head still `88f4c2e` (run 62's own status commit, unchanged by
+any code this run), `verify` check green (completed 02:10-02:12 UTC on
+2026-09-20 on this same head). No new comments since run 55's flake
+comment, no reviews. Issue #139 (Routine status board) re-checked via
+`get`: `updated_at` unchanged at `2026-09-19T12:04:19Z`, still the
+fifteenth orchestrator entry run 62 already saw, still purely a
+re-verification: ipad-worker section still "approved, nothing owed,"
+blocker still the device pass gated on PR #133 merging behind PR #132's
+payments gate (decision 6). Decision queue still 12 days untouched per the
+board's own count; item 11's sanctioned escalation stands unanswered per
+the board's own "no further notifications until something lands" posture,
+and item 12 (the habitDetection.ts flake) is unchanged; neither is this
+routine's to act on or re-notify. Re-verified item 7 (`app.json` orientation
+still `"portrait"`, `supportsTablet` still `true`). This HANDOFF update is
+the only change this run; no production code or plan content changed. No
+push notification: nothing new for Charen beyond what the board already
+covers; this is the thirty-fifth consecutive run (29-63) at zero drift
+while the device-pass blocker stays outside this routine's reach.
+
+Run 62. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 33's
+check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`3890ba1`), so no rebase and no new regression surface this run. Fresh
+`npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass, no
+flake: 122 suites / 1335 tests, zero drift from runs 33-61. PR #133:
+re-checked via `get`/`get_comments`/`get_reviews`/`get_check_runs`: still
+open, not draft, `mergeable_state: clean`, base SHA `3890ba1` (main's tip,
+unchanged), head still `e741f26` (run 61's own status commit, unchanged by
+any code this run), `verify` check green (completed 20:10-20:11 UTC on
+2026-09-19 on this same head). No new comments since run 55's flake
+comment, no reviews. Issue #139 (Routine status board) re-checked via
+`get`: `updated_at` unchanged at `2026-09-19T12:04:19Z`, still the
+fifteenth orchestrator entry run 61 already saw, still purely a
+re-verification: ipad-worker section still "approved, nothing owed,"
+blocker still the device pass gated on PR #133 merging behind PR #132's
+payments gate (decision 6). Decision queue still 12 days untouched per the
+board's own count; item 11's sanctioned escalation stands unanswered per
+the board's own "no further notifications until something lands" posture,
+and item 12 (the habitDetection.ts flake) is unchanged; neither is this
+routine's to act on or re-notify. Re-verified item 7 (`app.json` orientation
+still `"portrait"`, `supportsTablet` still `true`). This HANDOFF update is
+the only change this run; no production code or plan content changed. No
+push notification: nothing new for Charen beyond what the board already
+covers; this is the thirty-fourth consecutive run (29-62) at zero drift
+while the device-pass blocker stays outside this routine's reach.
+
+Run 61. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 33's
+check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`3890ba1`), so no rebase and no new regression surface this run. Fresh
+`npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass, no
+flake: 122 suites / 1335 tests, zero drift from runs 33-60. PR #133:
+re-checked via `get`/`get_check_runs`/`get_comments`/`get_reviews`: still
+open, not draft, `mergeable_state: clean`, base SHA `3890ba1` (main's tip,
+unchanged), head still `2dd4581` (run 60's own status commit, unchanged by
+any code this run), `verify` check green (completed 14:09-14:11 UTC on
+2026-09-19 on this same head). No new comments since run 55's flake
+comment, no reviews. Issue #139 (Routine status board) re-checked via
+`get`: `updated_at` unchanged at `2026-09-19T12:04:19Z`, still the
+fifteenth orchestrator entry run 60 already saw, still purely a
+re-verification: ipad-worker section still "approved, nothing owed,"
+blocker still the device pass gated on PR #133 merging behind PR #132's
+payments gate (decision 6). Decision queue still 12 days untouched per the
+board's own count; item 11's sanctioned escalation (pause/thin worker
+cadence) stands unanswered per the board's own "no further notifications
+until something lands" posture, and item 12 (the habitDetection.ts flake)
+is unchanged; neither is this routine's to act on or re-notify. Re-verified
+item 7 (`app.json` orientation still `"portrait"`, `supportsTablet` still
+`true`). This HANDOFF update is the only change this run; no production
+code or plan content changed. No push notification: nothing new for Charen
+beyond what the board already covers; this is the thirty-third consecutive
+run (29-61) at zero drift while the device-pass blocker stays outside this
+routine's reach.
+
+Run 59. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 33's
+check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`3890ba1`), so no rebase and no new regression surface this run. Fresh
+`npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass, no
+flake: 122 suites / 1335 tests, zero drift from runs 33-58. PR #133:
+re-checked via `get`/`get_comments`/`get_reviews`/`get_check_runs`: still
+open, not draft, `mergeable_state: clean`, base SHA `3890ba1` (main's tip,
+unchanged), head still `1f5be9c` (run 58's own status commit, unchanged by
+any code this run), `verify` check green (completed 02:11-02:12 UTC on
+2026-09-19 on this same head). No new comments since run 55's flake
+comment, no reviews. Issue #139 (Routine status board) re-checked via
+`get`/`get_comments`: unchanged since run 58's check (`updated_at` still
+`2026-09-18T12:06:23Z`, still the fourteenth orchestrator entry), ipad-
+worker section still "approved, nothing owed," blocker still the device
+pass gated on PR #133 merging behind PR #132's payments gate (decision 6).
+Decision queue still 11+ days untouched per the board's own count; items 11
+(pause/thin worker cadence) and 12 (the habitDetection.ts flake) unchanged,
+neither this routine's to act on or re-notify. Re-verified item 7
+(`app.json` orientation still `"portrait"`, `supportsTablet` still
+`true`). This HANDOFF update is the only change this run; no production
+code or plan content changed. No push notification: nothing new for
+Charen beyond what the board already covers; this is the thirty-first
+consecutive run (29-59) at zero drift while the device-pass blocker stays
+outside this routine's reach.
+
+Run 58. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 33's
+check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`3890ba1`), so no rebase and no new regression surface this run. Fresh
+`npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass, no
+flake: 122 suites / 1335 tests, zero drift from runs 33-57. PR #133:
+re-checked via `get`/`get_comments`/`get_reviews`/`get_check_runs`: still
+open, not draft, `mergeable_state: clean`, base SHA `3890ba1` (main's tip,
+unchanged), head still `2d909d6` (run 57's own status commit, unchanged by
+any code this run), `verify` check green (completed 20:10-20:12 UTC on
+2026-09-18 on this same head). No new comments since run 55's flake
+comment, no reviews. Issue #139 (Routine status board) re-checked via
+`get`/`get_comments`: unchanged since run 57's check (`updated_at` still
+`2026-09-18T12:06:23Z`, still the fourteenth orchestrator entry), ipad-
+worker section still "approved, nothing owed," blocker still the device
+pass gated on PR #133 merging behind PR #132's payments gate (decision 6).
+Decision queue still 11 days untouched per the board's own count; items 11
+(pause/thin worker cadence) and 12 (the habitDetection.ts flake) unchanged,
+neither this routine's to act on or re-notify. Re-verified item 7
+(`app.json` orientation still `"portrait"`, `supportsTablet` still
+`true`). This HANDOFF update is the only change this run; no production
+code or plan content changed. No push notification: nothing new for
+Charen beyond what the board already covers; this is the thirtieth
+consecutive run (29-58) at zero drift while the device-pass blocker stays
+outside this routine's reach.
+
+Run 57. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 33's
+check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`3890ba1`), so no rebase and no new regression surface this run. Fresh
+`npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass, no
+flake: 122 suites / 1335 tests, zero drift from runs 33-56. PR #133:
+re-checked via `get`/`get_comments`/`get_reviews`/`get_check_runs`: still
+open, not draft, `mergeable_state: clean`, base SHA `3890ba1` (main's tip,
+unchanged), head still `a882afa` (run 56's own status commit, unchanged by
+any code this run), `verify` check green (completed 14:11-14:12 UTC on this
+same head, well after run 56's push, confirming the flake stayed resolved).
+No new comments since run 55's flake comment, no reviews. Issue #139
+(Routine status board) re-checked via `get`/`get_comments`: unchanged since
+run 56's check (`updated_at` still `2026-09-18T12:06:23Z`, still the
+fourteenth orchestrator entry), ipad-worker section still "approved,
+nothing owed," blocker still the device pass gated on PR #133 merging
+behind PR #132's payments gate (decision 6). Decision queue still 11 days
+untouched per the board's own count; items 11 (pause/thin worker cadence)
+and 12 (the habitDetection.ts flake) unchanged, neither this routine's to
+act on or re-notify. Re-verified item 7 (`app.json` orientation still
+`"portrait"`, `supportsTablet` still `true`). This HANDOFF update is the
+only change this run; no production code or plan content changed. No push
+notification: nothing new for Charen beyond what the board already covers;
+this is the twenty-ninth consecutive run (29-57) at zero drift while the
+device-pass blocker stays outside this routine's reach.
+
+Run 56. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 33's
+check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`3890ba1`), so no rebase and no new regression surface this run. Fresh
+`npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass, no
+flake: 122 suites / 1335 tests, zero drift from runs 33-55. PR #133:
+re-checked via `get`/`get_comments`/`get_reviews`/`get_check_runs`: still
+open, not draft, `mergeable_state: clean` (back from run 55's `unstable`),
+base SHA `3890ba1` (main's tip, unchanged), head still `e8c1c8f` (run 55's
+own status commit, unchanged by any code this run). The `verify` check that
+failed once on run 55 (job 105455253405, the `habitDetection.ts` `spanDays`
+CI-jitter flake diagnosed and reported there) is now green on a re-run of
+the same head (job 105530162545, completed 08:13:37 UTC, after run 55's PR
+comment at 08:11:49 UTC), confirming the flake diagnosis: no code changed,
+the same commit now passes. No new comments or reviews since run 55's own
+comment. Issue #139 (Routine status board) re-checked via `get`/
+`get_comments`: fourteenth orchestrator entry landed since run 55's check
+(`updated_at` now `2026-09-18T12:06:23Z`), reviewing run 55's flake handling
+explicitly: "approved, nothing owed... The flake handling followed the
+drive-to-green rules exactly," plus a standing instruction for future runs
+("a second failure of the same assertion on a head that is green locally is
+real, not flake; escalate then"), noted here for the next run that sees a
+red `verify` check. Board also logged a new item 12 (the flake itself, as a
+main-owned decision item for Charen: spin a fix session, fold into the next
+`habitDetection.ts` touch, or accept occasional red checks) and repeats item
+11 (pause/thin worker cadence, core-worker's sanctioned escalation already
+sent 2026-09-18); neither is this routine's to act on or re-notify. Blocker
+unchanged: the device pass, gated on PR #133 merging behind PR #132's
+payments gate (decision 6). Decision queue now 11 days untouched per the
+board's own count. Re-verified item 7 (`app.json` orientation still
+`"portrait"`, `supportsTablet` still `true`). This HANDOFF update is the
+only change this run; no production code or plan content changed. No push
+notification: the flake that worried run 55 is confirmed resolved (green
+again, no code owed from this branch), and everything else on the board is
+already known to Charen or not this routine's to escalate; this is the
+twenty-eighth consecutive run (29-56, i.e. runs 29 through 56) at zero
+drift while the device-pass blocker stays outside this routine's reach.
+
+Run 55. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 33's
+check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`3890ba1`), so no rebase and no new regression surface this run. Fresh
+`npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass, no
+flake, locally: 122 suites / 1335 tests, zero drift from runs 33-54.
+**PR #133's `verify` check failed for the first time in 26 runs** (job
+105455253405, commit `d90c96c`, run 54's own pre-push head): one assertion
+in `__tests__/habitDetection.test.ts` (`spanDays` expected `0`, got
+`1.157e-8`, i.e. 1ms of CI-runner jitter between the fixture's five
+separate `new Date()` calls, since `spanDays` at `utils/habitDetection.ts:
+482-484` is a raw millisecond-difference float with no flooring). Confirmed
+via `get_files` that neither `utils/habitDetection.ts` nor its test file
+are touched by this branch's diff (layout/width-cap only): not this PR's
+failure to fix. `rerun_failed_jobs` returned 403 (no permission to re-run
+the job directly); a fresh local full-suite run on the same commit passed
+clean (122/122, including this file), which is the flake evidence available
+without that permission. Per the drive-to-green rules, a fix for code
+outside this PR's scope does not get pushed into it: posted one PR comment
+(https://github.com/charenk/habitcents-mobile-app/pull/133#issuecomment-5727178382)
+naming the failure, the root cause, and a proposed patch (floor `spanDays`
+to whole days, or give `pizzahutCluster()` one shared timestamp instead of
+five wall-clock ones) for whoever owns that file. `mergeable_state` is now
+`unstable` (was `clean`) for the same reason, base SHA still `3890ba1`
+(main's tip, unchanged), head still `d90c96c`. No new comments or reviews
+otherwise. Issue #139 (Routine status board) re-checked via `get`/
+`get_comments`: unchanged since run 54's check (`updated_at` still
+`2026-09-17T12:04:29Z`, still the thirteenth orchestrator entry), ipad-
+worker section still "approved, nothing owed," blocker still the device
+pass gated on PR #133 merging behind PR #132's payments gate (decision 6).
+Decision queue still reads 10 days untouched as of the board's last write;
+today (2026-09-18) is core-worker's own fourth-day escalation threshold,
+which is core-worker's to send, not this routine's, so no push notification
+for that. Re-verified item 7 (`app.json` orientation still `"portrait"`,
+`supportsTablet` still `true`). This HANDOFF update and the PR comment above
+are the only changes this run; no production code or plan content changed.
+No push notification: the CI failure is diagnosed, reported on the PR, and
+not this routine's code to fix; nothing else is new for Charen beyond what
+the board and core-worker's escalation slot already cover.
+
+Run 54. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 33's
+check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`3890ba1`), so no rebase and no new regression surface this run. Fresh
+`npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass, no
+flake: 122 suites / 1335 tests, zero drift from runs 33-53. PR #133:
+re-checked via `get`/`get_comments`/`get_reviews`/`get_check_runs`, still
+open, not draft, `mergeable_state: clean`, base SHA `3890ba1` (main's tip,
+matching exactly), head `b15cb77` (run 53's own status commit, pre-push),
+no new comments or reviews, `verify` check green (completed 20:11-20:12
+UTC on 2026-09-17, this same head). Issue #139 (doubling as the Routine
+status board) re-checked via `get`/`get_comments`: unchanged since run
+53's check (`updated_at` still `2026-09-17T12:04:29Z`, still the thirteenth
+orchestrator entry), ipad-worker section still "approved, nothing owed,"
+blocker still the device pass gated on PR #133 merging behind PR #132's
+payments gate (decision 6). Decision queue still reads 10 days untouched
+as of the board's last write; today (2026-09-18) is the fourth-day
+threshold core-worker itself set for its one sanctioned escalation, which
+is core-worker's to send, not this routine's; the board still asks the
+orchestrator and the other workers, this one included, to stay silent to
+avoid duplicates, so no push notification this run either. Re-verified
+item 7 (`app.json` orientation still `"portrait"`, `supportsTablet` still
+`true`). This HANDOFF update is the only change this run; no production
+code or plan content changed. No push notification: nothing new for
+Charen beyond what the board and core-worker's escalation slot already
+cover; this is the twenty-sixth consecutive run (29-54) at zero drift
+while the device-pass blocker stays outside this routine's reach.
+
+Run 52. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 33's
+check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`3890ba1`), so no rebase and no new regression surface this run. Fresh
+`npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass, no
+flake: 122 suites / 1335 tests, zero drift from runs 33-51. PR #133:
+re-checked via `get`/`get_comments`/`get_reviews`/`get_check_runs`, still
+open, not draft, `mergeable_state: clean`, base SHA `3890ba1` (main's tip,
+matching exactly), head `2447f50` (run 51's own status commit, pre-push),
+no new comments or reviews, `verify` check green (completed 08:09-08:11
+UTC on 2026-09-17, this same head). Issue #139 (doubling as the Routine
+status board) re-checked via `get`/`get_comments`: thirteenth orchestrator
+entry landed since run 51's check (dated 2026-09-17), but the ipad-worker
+section is unchanged in substance: still "approved, nothing owed," blocker
+still the device pass gated on PR #133 merging behind PR #132's payments
+gate (decision 6). Decision queue now 10 days untouched. Item 11 (pause or
+thin worker cadence) is now on day 3 unanswered; core-worker has set a
+fourth-day threshold and will send one fresh escalation notification on
+2026-09-18 if nothing lands by then, and the board explicitly asks the
+orchestrator and the other workers (this one included) to stay silent to
+avoid duplicates, so no push notification this run either. Re-verified
+item 7 (`app.json` orientation still `"portrait"`, `supportsTablet` still
+`true`). This HANDOFF update is the only change this run; no production
+code or plan content changed. No push notification: nothing new for
+Charen beyond what the board and core-worker's escalation slot already
+cover; this is the twenty-fourth consecutive run (29-52) at zero drift
+while the device-pass blocker stays outside this routine's reach.
+
+Run 51. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 33's
+check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`3890ba1`), so no rebase and no new regression surface this run. Fresh
+`npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass, no
+flake: 122 suites / 1335 tests, zero drift from runs 33-50. PR #133:
+re-checked via `get`/`get_comments`/`get_reviews`/`get_check_runs`, still
+open, not draft, `mergeable_state: clean`, base SHA `3890ba1` (main's tip,
+matching exactly), head `39fa07a` (run 50's own status commit, pre-push),
+no new comments or reviews, `verify` check green (completed 02:10-02:11
+UTC on 2026-09-17, this same head). Issue #139 (doubling as the Routine
+status board) re-checked via `get`/`get_comments`: still the same twelfth
+orchestrator entry runs 47-50 already saw (`updated_at` unchanged at
+2026-09-16T12:12:50Z), ipad-worker section still "approved, nothing
+owed," blocker still the device pass gated on PR #133 merging behind PR
+#132's payments gate (decision 6). Item 11 (pause or thin the worker
+routines while all three are blocked or complete) remains pushed to
+Charen directly by core-worker run 42's notification on 2026-09-15 and the
+board says it still awaits action; this routine is not the one that
+raised it and re-notifying here would just be a duplicate, so no push
+notification this run either. Re-verified item 7 (`app.json` orientation
+still `"portrait"`, `supportsTablet` still `true`). This HANDOFF update is
+the only change this run; no production code or plan content changed. No
+push notification: nothing new for Charen; this is the twenty-third
+consecutive run (29-51) at zero drift while the device-pass blocker stays
+outside this routine's reach.
+
+Run 50. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 33's
+check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`3890ba1`), so no rebase and no new regression surface this run. Fresh
+`npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass, no
+flake: 122 suites / 1335 tests, zero drift from runs 33-49. PR #133:
+re-checked via `get`/`get_comments`/`get_reviews`/`get_check_runs`, still
+open, not draft, `mergeable_state: clean`, base SHA `3890ba1` (main's tip,
+matching exactly), head `32b0d79` (run 49's own status commit, pre-push),
+no new comments or reviews, `verify` check green (completed 20:09-20:11
+UTC on 2026-09-16, this same head). Issue #139 (doubling as the Routine
+status board) re-checked via `get`/`get_comments`: still the same twelfth
+orchestrator entry runs 47-49 already saw (`updated_at` unchanged at
+2026-09-16T12:12:50Z), ipad-worker section still "approved, nothing
+owed," blocker still the device pass gated on PR #133 merging behind PR
+#132's payments gate (decision 6). Item 11 (pause or thin the worker
+routines while all three are blocked or complete) was already pushed to
+Charen directly by core-worker run 42's notification on 2026-09-15 and
+the board says it still awaits action; this routine is not the one that
+raised it and re-notifying here would just be a duplicate, so no push
+notification this run either. Re-verified item 7 (`app.json` orientation
+still `"portrait"`, `supportsTablet` still `true`). This HANDOFF update is
+the only change this run; no production code or plan content changed. No
+push notification: nothing new for Charen; this is the twenty-second
+consecutive run (29-50) at zero drift while the device-pass blocker stays
+outside this routine's reach.
+
+Run 49. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 33's
+check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`3890ba1`), so no rebase and no new regression surface this run. Fresh
+`npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass, no
+flake: 122 suites / 1335 tests, zero drift from runs 33-48. PR #133:
+re-checked via `get`/`get_comments`/`get_reviews`/`get_check_runs`, still
+open, not draft, `mergeable_state: clean`, base SHA `3890ba1` (main's tip,
+matching exactly), head `afbcc47` (run 48's own status commit, pre-push),
+no new comments or reviews, `verify` check green (completed 14:10-14:12
+UTC today on this same head). Issue #139 (doubling as the Routine status
+board) re-checked via `get`/`get_comments`: still the same twelfth
+orchestrator entry run 48 already saw (`updated_at` unchanged at
+2026-09-16T12:12:50Z), ipad-worker section still "approved, nothing owed,"
+blocker still the device pass gated on PR #133 merging behind PR #132's
+payments gate (decision 6), decision queue still 9 days untouched. Still
+the single 2026-09-07 decision-1 comment, zero reactions, already
+implemented. Item 11 (pause or thin worker cadence) unchanged, already
+pushed to Charen directly by core-worker's run 42; nothing new to add
+here. Re-verified item 7 (`app.json` orientation still `"portrait"`,
+`supportsTablet` still `true`). This HANDOFF update is the only change
+this run; no production code or plan content changed. No push
+notification: nothing new for Charen since run 11's original one, the
+board's repeated surfacing, and item 11's direct delivery by core-worker.
+This is the twenty-first consecutive run (29-49) at zero drift while the
+device-pass blocker stays outside this routine's reach.
+
+Run 48. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 33's
+check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`3890ba1`), so no rebase and no new regression surface this run. Fresh
+`npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass, no
+flake: 122 suites / 1335 tests, zero drift from runs 33-47. PR #133:
+re-checked via `get`/`get_comments`/`get_reviews`/`get_check_runs`, still
+open, not draft, `mergeable_state: clean`, base SHA `3890ba1` (main's tip,
+matching exactly), head `34d28de` (run 47's own status commit, pre-push),
+no new comments or reviews, `verify` check green (re-ran on this same head
+at 08:10-08:11 UTC today, completed success). Issue #139 (doubling as the
+Routine status board) re-checked via `get`/`get_comments`: twelfth
+orchestrator run landed since run 47's check (dated 2026-09-16), but the
+ipad-worker section is unchanged in substance: still "approved, nothing
+owed," blocker still the device pass gated on PR #133 merging behind PR
+#132's payments gate (decision 6), decision queue now 9 days untouched.
+Still the single 2026-09-07 decision-1 comment, zero reactions, already
+implemented. Item 11 (pause or thin worker cadence) is unchanged and
+already pushed to Charen directly by core-worker's run 42; the board notes
+it still awaits action, nothing new to add here. Re-verified item 7
+(`app.json` orientation still `"portrait"`, `supportsTablet` still
+`true`). This HANDOFF update is the only change this run; no production
+code or plan content changed. No push notification: nothing new for
+Charen since run 11's original one, the board's repeated surfacing, and
+item 11's direct delivery by core-worker. This is the twentieth
+consecutive run (29-48) at zero drift while the device-pass blocker stays
+outside this routine's reach.
+
+Run 47. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 33's
+check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`3890ba1`), so no rebase and no new regression surface this run. Fresh
+`npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass, no
+flake: 122 suites / 1335 tests, zero drift from runs 33-46. PR #133:
+re-checked via `get`/`get_comments`/`get_reviews`/`get_check_runs`, still
+open, not draft, `mergeable_state: clean`, base SHA `3890ba1` (main's tip,
+matching exactly), head `8c2be96` (run 46's own status commit, pre-push),
+no new comments or reviews, `verify` check green. Issue #139 (doubling as
+the Routine status board) re-checked via `get_comments`: unchanged since
+run 46's check, still the single 2026-09-07 decision-1 comment, zero
+reactions, already implemented. Blocker unchanged: the device pass, gated
+on PR #133 merging behind PR #132's payments gate (decision 6), none of
+which this branch owns or can act on. Re-verified item 7 (`app.json`
+orientation still `"portrait"`, `supportsTablet` still `true`). This
+HANDOFF update is the only change this run; no production code or plan
+content changed. No push notification: nothing new for Charen since run
+11's original one and the board's repeated surfacing. This is the
+nineteenth consecutive run (29-47) at zero drift while the device-pass
+blocker stays outside this routine's reach.
+
+Run 46. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 33's
+check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`3890ba1`), so no rebase and no new regression surface this run. Fresh
+`npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass, no
+flake: 122 suites / 1335 tests, zero drift from runs 33-45. PR #133:
+re-checked via `get`/`get_comments`/`get_reviews`/`get_check_runs`, still
+open, not draft, `mergeable_state: clean`, base SHA `3890ba1` (main's tip,
+matching exactly), head `95909dc` (run 45's own status commit, pre-push),
+no new comments or reviews, `verify` check green. Issue #139 (doubling as
+the Routine status board) re-checked via `get`/`get_comments`: unchanged
+since run 45's check (`updated_at` still `2026-09-15T12:24:23Z`, still the
+eleventh orchestrator run), still the single 2026-09-07 decision-1 comment,
+zero reactions, already implemented; the board's own ipad-worker section
+still says "approved, nothing owed," blocker unchanged: the device pass,
+gated on PR #133 merging behind PR #132's payments gate (decision 6, still
+open, 8 days untouched per the board's own count as of its last write).
+Decisions 2, 3, 4, 5, 7, 8, 9, 10 also remain unanswered, none of which
+this branch owns or can act on. Item 11 (the orchestrator's recommendation
+to pause or thin worker cadence while blocked) is unchanged and already
+pushed to Charen directly by core-worker's run 42 (per the ops runs.log);
+nothing new to add here. Re-verified item 7 (`app.json` orientation still
+`"portrait"`, `supportsTablet` still `true`). This HANDOFF update is the
+only change this run; no production code or plan content changed. No push
+notification: nothing new for Charen since run 11's original one, the
+board's repeated surfacing, and item 11's direct delivery by core-worker.
+This is the eighteenth consecutive run (29-46) at zero drift while the
+device-pass blocker stays outside this routine's reach.
+
+Run 45. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 33's
+check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`3890ba1`), so no rebase and no new regression surface this run. Fresh
+`npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass, no
+flake: 122 suites / 1335 tests, zero drift from runs 33-44. PR #133:
+re-checked via `get`/`get_comments`/`get_reviews`/`get_check_runs`, still
+open, not draft, `mergeable_state: clean`, base SHA `3890ba1` (main's tip,
+matching exactly), head `6f1ad1d` (run 44's own status commit) unchanged
+by any code, no new comments or reviews, `verify` check green. Issue #139
+(doubling as the Routine status board) re-checked via `get`/`get_comments`:
+still the single 2026-09-07 decision-1 comment, zero reactions, already
+implemented; the board's own ipad-worker section (last written 2026-09-15,
+eleventh orchestrator run, not yet refreshed since) still says "approved,
+nothing owed," blocker unchanged: the device pass, gated on PR #133
+merging behind PR #132's payments gate (decision 6, still open, 8 days
+untouched per the board's own count). Decisions 2, 3, 4, 5, 7, 8, 9, 10
+also remain unanswered, none of which this branch owns or can act on.
+Item 11 (the orchestrator's recommendation to pause or thin worker
+cadence while blocked) is still open on the board too; still a scheduling
+decision for Charen, not something this routine can act on for itself.
+Re-verified item 7 (`app.json` orientation still `"portrait"`,
+`supportsTablet` still `true`). This HANDOFF update is the only change
+this run; no production code or plan content changed. No push
+notification: nothing new for Charen since run 11's original one and the
+board's repeated surfacing, including item 11 which is already reported.
+This is the seventeenth consecutive run (29-45) at zero drift while the
+device-pass blocker stays outside this routine's reach.
+
+Run 43. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 33's
+check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`3890ba1`), so no rebase and no new regression surface this run. Fresh
+`npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass, no
+flake: 122 suites / 1335 tests, zero drift from runs 33-42. PR #133:
+re-checked via `get`/`get_comments`/`get_reviews`/`get_check_runs`, still
+open, not draft, `mergeable_state: clean`, base SHA `3890ba1` (main's tip,
+matching exactly), head `957c91c` unchanged, no new comments or reviews,
+`verify` check green. Issue #139 (doubling as the Routine status board)
+re-checked via `get`/`get_comments`: still the single 2026-09-07
+decision-1 comment, zero reactions, already implemented; the board's own
+ipad-worker section (last written 2026-09-14, tenth orchestrator run)
+still says "approved, nothing owed, 11 consecutive zero-drift runs." Its
+listed blocker is unchanged: the device pass, gated on PR #133 merging
+behind PR #132's payments gate (decision 6, still open on the board, still
+7 days untouched per the board's own count); decisions 2, 3, 4, 5, 7, 8, 9,
+10 also remain unanswered, none of which this branch owns or can act on.
+Re-verified item 7 (`app.json` orientation still `"portrait"`,
+`supportsTablet` still `true`). This HANDOFF update is the only change
+this run; no production code or plan content changed. No push
+notification: nothing new for Charen since run 11's original one and the
+board's own repeated surfacing; this is the fifteenth consecutive run
+(29-43) at zero drift while the device-pass blocker stays outside this
+routine's reach.
+
+Run 42. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 33's
+check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`3890ba1`), so no rebase and no new regression surface this run. Fresh
+`npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass, no
+flake: 122 suites / 1335 tests, zero drift from runs 33-41. PR #133:
+re-checked via `get`/`get_comments`/`get_reviews`, still open, not draft,
+`mergeable_state: clean`, base SHA `3890ba1` (main's tip, matching
+exactly), head `d6c3d3d` unchanged, no new comments or reviews. Issue #139
+(doubling as the Routine status board) re-checked via `get`/`get_comments`:
+still the single 2026-09-07 decision-1 comment, zero reactions, already
+implemented; the board's own ipad-worker section (last written 2026-09-14)
+still says "approved, nothing owed, 11 consecutive zero-drift runs." Its
+listed blocker is unchanged: the device pass, gated on PR #133 merging
+behind PR #132's payments gate (decision 6, still open on the board, still
+7 days untouched per the board's own count as of its last write; decisions
+2, 3, 4, 5, 7, 8, 9, 10 also remain unanswered, none of which this branch
+owns or can act on). Re-verified item 7 (`app.json` orientation still
+`"portrait"`, `supportsTablet` still `true`). This HANDOFF update is the
+only change this run; no production code or plan content changed. No push
+notification: nothing new for Charen since run 11's original one and the
+board's own repeated surfacing; this is the fourteenth consecutive run
+(29-42) at zero drift while the device-pass blocker stays outside this
+routine's reach.
+
+Run 40. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 33's
+check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`3890ba1`), so no rebase and no new regression surface this run. Fresh
+`npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass, no
+flake: 122 suites / 1335 tests, zero drift from runs 33-39. PR #133:
+re-checked via `get`/`get_comments`/`get_reviews`/`get_check_runs`, still
+open, not draft, `mergeable_state: clean`, base SHA `3890ba1` (main's tip,
+matching exactly), head `054f49c` unchanged, no new comments or reviews,
+`verify` check green. Issue #139 (doubling as the Routine status board)
+re-checked via `get`/`get_comments` and its own 2026-09-14 tenth-orchestrator
+board body: still the single 2026-09-07 decision-1 comment, zero reactions,
+already implemented; the board's own ipad-worker section says "approved,
+nothing owed," no new REVIEW FEEDBACK there or in this file. Its listed
+blocker is unchanged: the device pass, gated on PR #133 merging behind
+PR #132's payments gate (decision 6, still open on the board). Re-verified
+item 7 (`app.json` orientation still `"portrait"`, `supportsTablet` still
+`true`). This HANDOFF update is the only change this run; no production
+code or plan content changed. No push notification: nothing new for
+Charen; this is the twelfth consecutive run (29-40) at zero drift while
+the device-pass blocker stays outside this routine's reach.
+
+Run 39. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 33's
+check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`3890ba1`), so no rebase and no new regression surface this run. Fresh
+`npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass, no
+flake: 122 suites / 1335 tests, zero drift from runs 33-38. PR #133:
+re-checked via `get`/`get_comments`/`get_reviews`/`get_check_runs`, still
+open, not draft, `mergeable_state: clean`, base SHA `3890ba1` (main's tip,
+matching exactly), head `83e790b` unchanged, no new comments or reviews,
+`verify` check green. Issue #139 (doubling as the Routine status board)
+re-checked via `get_comments` and its own 2026-09-13 board body: still the
+single 2026-09-07 decision-1 comment, zero reactions, already implemented;
+the board's own ipad-worker section says "approved, nothing owed," no new
+REVIEW FEEDBACK there or in this file. Its listed blocker is unchanged:
+the device pass, gated on PR #133 merging behind PR #132's payments gate
+(decision 6, still open on the board). Re-verified item 7 (`app.json`
+orientation still `"portrait"`, `supportsTablet` still `true`). This
+HANDOFF update is the only change this run; no production code or plan
+content changed. No push notification: nothing new for Charen; this is
+the eleventh consecutive run (29-39) at zero drift while the device-pass
+blocker stays outside this routine's reach.
+
+Run 38. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 33's
+check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`3890ba1`), so no rebase and no new regression surface this run. Fresh
+`npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass, no
+flake: 122 suites / 1335 tests, zero drift from runs 33-37. PR #133:
+re-checked via `get`/`get_comments`/`get_reviews`/`get_check_runs`, still
+open, not draft, `mergeable_state: clean`, base SHA `3890ba1` (main's tip,
+matching exactly), head `91e5fa3` unchanged, no new comments or reviews,
+`verify` check green. Issue #139 (doubling as the Routine status board)
+re-checked via `get_comments` and its own 2026-09-13 board body: still the
+single 2026-09-07 decision-1 comment, zero reactions, already implemented;
+the board's own ipad-worker section says "approved, nothing owed," no new
+REVIEW FEEDBACK there or in this file. Its listed blocker is unchanged:
+the device pass, gated on PR #133 merging behind PR #132's payments gate
+(decision 6, still open on the board). Re-verified item 7 (`app.json`
+orientation still `"portrait"`, `supportsTablet` still `true`). This
+HANDOFF update is the only change this run; no production code or plan
+content changed. No push notification: nothing new for Charen; this is
+the tenth consecutive run (29-38) at zero drift while the device-pass
+blocker stays outside this routine's reach.
+
+Run 37. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 33's
+check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`3890ba1`), so no rebase and no new regression surface this run. Fresh
+`npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass, no
+flake: 122 suites / 1335 tests, zero drift from runs 33-36. PR #133:
+re-checked via `get`/`get_comments`/`get_reviews`, still open, not draft,
+`mergeable_state: clean`, base SHA `3890ba1` (main's tip, matching
+exactly), head `392e2e2` unchanged, no new comments or reviews. Issue
+#139 re-checked via `get_comments`: still the single 2026-09-07 comment,
+zero reactions, already implemented; no new REVIEW FEEDBACK there or in
+this file. Its listed blocker is unchanged: the device pass, gated on
+PR #133 merging. Re-verified item 7 (`app.json` orientation still
+`"portrait"`, `supportsTablet` still `true`). This HANDOFF update is the
+only change this run; no production code or plan content changed. No push
+notification: nothing new for Charen; this is the ninth consecutive run
+(29-37) at zero drift while the device-pass blocker stays outside this
+routine's reach.
+
+Run 36. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 33's
+check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`3890ba1`), so no rebase and no new regression surface this run. Fresh
+`npm ci`, `npx tsc --noEmit` clean. Full suite green on the first pass, no
+flake: 122 suites / 1335 tests, zero drift from runs 33-35. PR #133:
+re-checked via `get`/`get_comments`/`get_reviews`, still open, not draft,
+`mergeable_state: clean`, base SHA `3890ba1` (main's tip, matching
+exactly), head `a05ede6` unchanged, no new comments or reviews. Issue
+#139 re-checked via `get_comments`: still the single 2026-09-07 comment,
+zero reactions, already implemented; no new REVIEW FEEDBACK there or in
+this file. Its listed blocker is unchanged: the device pass, gated on
+PR #133 merging. Re-verified item 7 (`app.json` orientation still
+`"portrait"`, `supportsTablet` still `true`). This HANDOFF update is the
+only change this run; no production code or plan content changed. No push
+notification: nothing new for Charen; this is the eighth consecutive run
+(29-36) at zero drift while the device-pass blocker stays outside this
+routine's reach.
+
+Run 35. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 33's
+check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`3890ba1`), so no rebase and no new regression surface this run. `npx tsc
+--noEmit` clean from a fresh `npm ci`. Full suite green on the first pass,
+no flake: 122 suites / 1335 tests, zero drift from runs 33-34. PR #133:
+re-checked via `get`/`get_comments`/`get_reviews`, still open, not draft,
+`mergeable_state: clean`, base SHA `3890ba1` (main's tip, matching
+exactly), head `720dea1` unchanged, no new comments or reviews. Issue
+#139 re-checked via `get_comments`: still the single 2026-09-07 comment,
+zero reactions, already implemented; no new REVIEW FEEDBACK there or in
+this file. Its listed blocker is unchanged: the device pass, gated on
+PR #133 merging. Re-verified item 7 (`app.json` orientation still
+`"portrait"`, `supportsTablet` still `true`). This HANDOFF update is the
+only change this run; no production code or plan content changed. No push
+notification: nothing new for Charen.
+
+Run 34. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 33's
+check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`3890ba1`), so no rebase and no new regression surface this run. `npx tsc
+--noEmit` clean from a fresh `npm ci`. Full suite green on the first pass,
+no flake: 122 suites / 1335 tests, zero drift from run 33. PR #133:
+re-checked via `get`/`get_comments`/`get_reviews`, still open, not draft,
+`mergeable_state: clean`, base SHA `3890ba1` (main's tip, matching
+exactly), head `2a55906` unchanged, no new comments or reviews. Issue
+#139 re-checked via `get_comments`: still the single 2026-09-07 comment,
+zero reactions, already implemented; no new REVIEW FEEDBACK there or in
+this file. Its listed blocker is unchanged: the device pass, gated on
+PR #133 merging. Re-verified item 7 (`app.json` orientation still
+`"portrait"`, `supportsTablet` still `true`). This HANDOFF update is the
+only change this run; no production code or plan content changed. No push
+notification: nothing new for Charen.
+
+Run 33. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 32's
+check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`3890ba1`), so no rebase and no new regression surface this run. `npx tsc
+--noEmit` clean from a fresh `npm ci`. Full suite green on the first pass,
+no flake: 122 suites / 1335 tests, zero drift from run 32. PR #133:
+re-checked via `get`/`get_comments`/`get_reviews`, still open, not draft,
+`mergeable_state: clean`, base SHA `3890ba1` (main's tip, matching
+exactly), head `fc0969c` unchanged, no new comments or reviews. Issue
+#139 re-checked via `get_comments`: still the single 2026-09-07 comment,
+zero reactions, already implemented; no new REVIEW FEEDBACK there or in
+this file. Its listed blocker is unchanged: the device pass, gated on
+PR #133 merging. Re-verified item 7 (`app.json` orientation still
+`"portrait"`, `supportsTablet` still `true`). This HANDOFF update is the
+only change this run; no production code or plan content changed. No push
+notification: nothing new for Charen.
+
+Run 32. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 31's
+check (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`3890ba1`), so no rebase and no new regression surface this run. `npx tsc
+--noEmit` clean from a fresh `npm ci`. Full suite green on the first pass,
+no flake: 122 suites / 1335 tests, zero drift from run 31. PR #133:
+re-checked via `get`/`get_comments`/`get_reviews`, still open, not draft,
+`mergeable_state: clean`, base SHA `3890ba1` (main's tip, matching
+exactly), head `bcd5f83` unchanged, no new comments or reviews. Issue
+#139 re-checked via `get_comments`: still the single 2026-09-07 comment,
+zero reactions, already implemented; no new REVIEW FEEDBACK there or in
+this file. Its listed blocker is unchanged: the device pass, gated on
+PR #133 merging. Re-verified item 7 (`app.json` orientation still
+`"portrait"`, `supportsTablet` still `true`). This HANDOFF update is the
+only change this run; no production code or plan content changed.
+
+Run 31. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 30's
+rebase (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`3890ba1`), so no rebase and no new regression surface this run. No
+REVIEW FEEDBACK section addition since run 30's check; issue #139 (last
+updated 2026-09-11, before run 30's rebase and re-audit) still shows no
+new activity, its listed blocker unchanged: the device pass, gated on
+PR #133 merging (which per the board's stated merge order waits behind
+core-p3's payments-gated PR #132). `npx tsc --noEmit` clean from a fresh
+`npm ci`. Full suite green on the first pass, no flake: 122 suites / 1335
+tests, zero drift from run 30. PR #133: re-checked via `get`/`get_comments`,
+still open, not draft, `mergeable_state: clean`, base SHA `3890ba1`
+(main's tip, matching exactly), head `cac3389` unchanged, no new comments.
+Re-verified item 7 (`app.json` orientation still `"portrait"`,
+`supportsTablet` still `true`). This HANDOFF update is the only change
+this run; no production code or plan content changed.
+
+Run 30. `origin/main` moved 27 commits since run 28's rebase point
+(`683ecc3`..`3890ba1`, "the Upcoming wave, eight PRs merged and TestFlight
+build 25": a rewrite of Money's Upcoming pane, `components/money/
+UpcomingList.tsx` and `MonthDayPicker.tsx` new, `AddUpcomingSheet.tsx` and
+`ExpenseRow.tsx` heavily reworked, `Sheet.tsx` and `SpentList.tsx` touched
+again, plus a new `utils/textScale.ts` Dynamic Type policy). Rebased onto
+it; per the run 8/14 "re-audit, not re-run" rule, did not stop at a clean
+replay report. Three conflicts, all mechanical, all resolved keeping both
+sides:
+- `design/decisions/README.md`'s component index: main added four new
+  entries (ExpenseRow, AddUpcomingSheet, MonthDayPicker, UpcomingList),
+  this branch's run-5 commit carries OnboardingCarousel; unioned all five,
+  nothing dropped.
+- `components/money/SpentList.tsx`'s import list: main added
+  `CHROME_MAX_FONT_SCALE` (from the new `utils/textScale.ts`) on the same
+  line this branch's run-8 commit added `contentColumnStyle`; kept both.
+  This landed on run 8's historical commit, so a duplicate `testID` briefly
+  reappeared mid-replay (the exact run-14 shape) and was gone again once
+  run 14's own later commit reapplied cleanly; confirmed only one
+  `testID="spent-list"` remains post-rebase, not assumed from the replay
+  succeeding.
+- `design/decisions/modules/money.md`: both sides appended dated lines;
+  kept both, ordered by date.
+
+Re-audited every surface the incoming wave touched, not just the
+conflicts:
+- `components/ui/Sheet.tsx`: `panel` still carries `maxWidth:
+  layout.contentMaxWidth` and `alignSelf: 'center'` after the wave: no
+  change to Sheet's own shape landed here, unlike run 26.
+- `components/money/SpentList.tsx`: `listContent` still spreads
+  `...contentColumnStyle`; single `testID="spent-list"` confirmed (see
+  above).
+- `app/(tabs)/money.tsx`: the Upcoming and Habits panes both render through
+  the same shared `styles.scrollContent`, which still spreads
+  `...contentColumnStyle`; the new `UpcomingList.tsx` component itself owns
+  no ScrollView of its own (it renders inside that already-capped parent
+  ScrollView, confirmed by direct reading), so it needed no cap of its own.
+- `components/money/MonthDayPicker.tsx`: its one `ScrollView` is a
+  horizontal day-rail inside `AddUpcomingSheet`, which itself renders
+  through the already-capped `<Sheet>` panel; same shape as a paging unit,
+  not a case for its own cap.
+- `components/money/AddUpcomingSheet.tsx`, `ExpenseRow.tsx`: neither reads
+  `useWindowDimensions` directly (confirmed by grep), consistent with run
+  26's finding that per-sheet height clamps live in `Sheet.tsx`/
+  `utils/keyboard.ts` now, not in individual sheet components.
+- Fresh `useWindowDimensions` grep: `CheckInCard.tsx`, `Sheet.tsx`,
+  `OnboardingCarousel.tsx`, `AuroraBackground.tsx` (dead code),
+  `utils/keyboard.ts`, `utils/useSegmentPager.ts` (all already known), plus
+  one new site, `utils/textScale.ts`'s `useAccessibilityTextSize`: reads
+  `fontScale` only, same Dynamic-Type shape as `CheckInCard.tsx`, out of
+  this plan's scope (not a width/tablet concern).
+`npx tsc --noEmit` clean from a fresh `npm ci`. Full suite green on the
+first pass, no flake: 122 suites / 1335 tests (up from run 29's 118/1233,
+entirely main's own Upcoming-wave test growth, net of nothing removed on
+this branch). Re-verified item 7 (`app.json` orientation still
+`"portrait"`, `supportsTablet` still `true`). Pushed (force-with-lease,
+history rewritten). PR #133 and issue #139 both re-checked via
+`get_comments`/`get_reviews`: no new activity on either since run 28/29,
+zero reactions on #139. No REVIEW FEEDBACK found in this file or on the
+status board.
+
+Run 29. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 28's
+rebase (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`683ecc3`), so no rebase and no new regression surface this run. `npx tsc
+--noEmit` clean from a fresh `npm ci`. Full suite green on the first pass,
+no flake: 118 suites / 1233 tests, zero drift from run 28. PR #133: still
+open, not draft, `mergeable_state: clean`, base SHA matches main's tip
+exactly (`683ecc3`), head commit (`2d43522`) unchanged, its `verify` check
+now confirmed green (it was still `in_progress` when run 28 checked
+moments after pushing), `get_comments` and `get_reviews` both empty, no
+new activity. Issue #139 re-checked via `get_comments`: still the single
+2026-09-07 comment, zero reactions, already implemented; no new REVIEW
+FEEDBACK there or in this file. Re-verified item 7 (`app.json` orientation
+still `"portrait"`, `supportsTablet` still `true`). This HANDOFF update is
+the only change this run; no production code or plan content changed.
+
+Run 28. Addressed the review's 2026-09-11 action item first, per this
+file's own "REVIEW FEEDBACK first" instruction. Rebased onto four new main
+commits (`683ecc3`, PRs/QA #161-#164: Insights date-window and
+category-name/amount-parsing fixes, the Kept-dot/FL-1/scan-link QA pass,
+and #163's `app/paywall.tsx` rewrite making all three plans readable at
+rest without scrolling). Two real conflicts landed on this branch's own
+historical commits during replay, both in `app/paywall.tsx`:
+- Run 1's original `scrollContent` cap commit conflicted with #163 on the
+  same `paddingTop` line (main changed 8 to 4, this branch's commit had
+  added `...contentColumnStyle` next to the original 8). Resolved by
+  keeping main's `paddingTop: 8` (the newer, intentional value) and
+  keeping this branch's `...contentColumnStyle` spread; nothing from
+  either side was dropped.
+- Run 14's fixed-footer-cap commit conflicted with #163 on the same
+  region: main moved the close button out of a header row into an
+  absolutely-positioned pill anchored on the hero (Charen, "unused space,
+  lets move the banner to top") and added a `testID="paywall-footer"` to
+  the same `footer` View this branch's commit was capping. Resolved by
+  keeping both: main's repositioned close button and its `testID`, plus
+  this branch's `footer` cap (unaffected, since the `footer` style itself
+  was untouched by #163).
+Per the run 8/14 "re-audit, not re-run" rule, did not stop at a clean
+rebase report; re-checked every surface the review named:
+- `app/paywall.tsx`: both capped surfaces (`scrollContent`,
+  `footer`) still carry `...contentColumnStyle` after the merge (read the
+  full file, not just the diff); `paywallTabletCap.test.tsx` still targets
+  the same `paywall-footer` testID and still passes.
+- `app/(tabs)/index.tsx` (Kept-dot rework, #164) and `app/(tabs)/
+  insights.tsx` (Insights date-window fixes, #161): re-grepped
+  `contentColumnStyle` in both files, confirmed all four Today sites
+  (`spentScrollContent`, `ribbonWrap`, `listContent`, `keptEmptyContent`)
+  and Insights' one site are unchanged and present; neither QA pass
+  touched a scroll container or added a new one.
+- Fresh `useWindowDimensions` grep: same six files as run 26, plus
+  `utils/useSegmentPager.ts` (already known, the shared Today/Money/
+  Insights pager mechanism since PR #143; reads `screenWidth` only for
+  paging math and each pane's width, the same paging-unit-stays-window-width
+  shape as item 4/`OnboardingCarousel`, not a new gap). No new site.
+`npx tsc --noEmit` clean from a fresh `npm ci`. Full suite green on the
+first pass, no flake: 118 suites / 1233 tests (up from run 27's 114/1174,
+entirely main's own four-commit test growth, net of nothing removed on
+this branch), including `paywallTabletCap.test.tsx`, `scopeScreen.test.tsx`,
+`billsScreen.test.tsx`, and `payoffScreen.test.tsx` (the other three
+decision-1 surfaces) all green. Pushed (force-with-lease, history
+rewritten): PR #133 now reads `mergeable_state: clean`, base SHA
+`683ecc3` (main's tip, matching exactly), head `ed18353`. Its `verify`
+check was still `in_progress` moments after the push landed, too soon to
+read a result this run; next run confirms it went green before treating
+that as settled. `get_comments` and `get_reviews` both empty. Issue #139
+re-checked via `get_comments`: still the single 2026-09-07 comment, zero
+reactions, already implemented; no new REVIEW FEEDBACK there. Re-verified
+item 7 (`app.json` orientation still `"portrait"`, `supportsTablet` still
+`true`). This HANDOFF update (committed and pushed separately, after the
+rebase push above) is the only other change this run; no plan content
+changed, since the re-audit found the merge correct rather than
+regressed.
+
+Run 27. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 26's
+rebase (`git merge-base routine/ipad origin/main` equals `origin/main`'s
+own tip, `9376cc2`), so no rebase and no new regression surface this run.
+`npx tsc --noEmit` clean from a fresh `npm ci`. Full suite: 113/114 suites
+green on the first pass; `__tests__/door3BreakSheet.test.tsx` timed out
+(same shape as runs 13/17/23/24's flake), isolated and re-ran standalone
+(19/19 passed), confirming a scheduling flake under parallel load, not a
+real regression, no code change needed. 114 suites / 1174 tests overall,
+zero drift from run 26. PR #133: still open, not draft, `mergeable_state:
+clean`, base SHA matches main's tip exactly (`9376cc2`), head commit
+(`86d92b1`) unchanged, its `verify` check green, `get_comments` and
+`get_reviews` both empty, no new activity. Issue #139 re-checked via
+`get_comments`: still the single 2026-09-07 comment, zero reactions,
+already implemented; no new REVIEW FEEDBACK found there or in this file.
+Re-verified item 7 (`app.json` orientation still `"portrait"`,
+`supportsTablet` still `true`). This HANDOFF update is the only change
+this run; no production code or plan content changed.
+
+Run 26. Heaviest rebase since run 14: `origin/main` moved 16 commits
+(`bdff4c8`..`9376cc2`), a real UI wave, not docs-only like run 25, including
+"sheets: one platform pattern" (`f18ff38`), which rewrote `components/ui/
+Sheet.tsx` around a new 80%-of-window keyboard-aware height clamp
+(`utils/sheetLayout.ts`, `utils/keyboard.ts`) and a pinned `footer` slot, plus
+a Today rewrite (log-in-place, `LeakCard` renamed to `LeakRow`,
+`CheckInCard` reworked). One real conflict, in `app/(tabs)/index.tsx`'s
+import list (main added `shadows`, this branch's run 1 commit added
+`contentColumnStyle`; kept both) and one docs-only conflict in
+`design/decisions/components/Sheet.md` (both sides appended dated decision
+lines; kept both, ordered by date, no content lost). 33 commits replayed.
+Re-audited rather than trusting the clean replay, per the run 8/14 rule,
+with extra care given `Sheet.tsx` itself changed shape this time:
+- `Sheet.tsx`'s `panel` style still carries `maxWidth: layout.contentMaxWidth`
+  and `alignSelf: 'center'` (item 3), and the new `footer` slot renders as a
+  child inside that same `panel` node, so it inherits the cap for free; no
+  new footer-outside-the-cap gap was introduced.
+- The new `utils/sheetLayout.ts` (`sheetMaxHeight`) and `utils/keyboard.ts`
+  only read window height and keyboard height, never width, same
+  orientation-and-cap-independent shape as item 5's existing height-only
+  sites; no change needed.
+- Re-grepped `useWindowDimensions`: the main-side rewrite moved the old
+  per-sheet `height`-only reads (ExpenseSheet, AddUpcomingSheet,
+  PartialSlipSheet, BreakHabitSheet, CategoryTransactionsSheet,
+  ReviewQueueSheet, PickOneSheet, AddCategoryModal) out of those components
+  entirely, into the new shared `Sheet.tsx` clamp; confirmed each of those
+  8 files no longer reads `useWindowDimensions` at all now (checked
+  directly, not inferred), so item 5's site list shrank rather than grew.
+  The two remaining known sites (`CheckInCard.tsx`, `OnboardingCarousel.tsx`)
+  and the one dead one (`AuroraBackground.tsx`) are unchanged; confirmed
+  `CheckInCard.tsx` still reads `fontScale` only despite its own rewrite,
+  still out of this plan's scope.
+- Today's new `ribbonWrapInline` (the door-1 `InfoRibbon`'s new placement,
+  inline inside the logged-today block per main's log-in-place rework) sits
+  inside the already-capped `spentScrollContent` ScrollView, so it inherits
+  the cap from its parent content container and needs none of its own; the
+  door3 ribbon's own wrapper (`ribbonWrap`/`door3-ribbon-wrap`), which sits
+  outside the scroll content in the Kept pane and therefore does carry its
+  own `contentColumnStyle` spread, is untouched and still there.
+- The four fixed-footer caps from decision 1 (`ScopeScreen`, `BillsScreen`,
+  `app/paywall.tsx`, `PayoffScreen`'s `continueButton`) are all untouched;
+  none of those four files were part of this wave's diff.
+`npx tsc --noEmit` clean from a fresh `npm ci`. Full suite green on the
+first pass, no flake: 114 suites / 1174 tests (up from run 25's 110/1152,
+entirely main's own intervening test growth across its 16 commits net of
+nothing removed on this branch). PR #133: still open, not draft,
+`verify` check green at the pre-rebase head, `get_comments` and
+`get_reviews` both empty, no new activity. Issue #139 re-checked via
+`get_comments`: still the single 2026-09-07 comment, already implemented;
+zero reactions, nothing new. Re-verified item 7 (`app.json` orientation
+still `"portrait"`, `supportsTablet` still `true`). Pushed the rebase
+(force-with-lease, history rewritten) plus this HANDOFF update; no plan
+content changed, since the audit above found nothing to fix this time.
+
+Run 25. First real rebase since run 14: `origin/main` moved one merge
+(`b748ca3`..`bdff4c8`, PR #152, "Today docks, Kept Zero link, zero-state
+centring, scroll fade, band removal; build 22"). Checked the diff before
+rebasing (`git diff --stat b748ca3..origin/main`): only `CONTENT_LOG.md`,
+`agent-memory.md`, `memory.sh`, `primer.md` changed, all docs/memory
+housekeeping, zero lines in `app/`, `components/`, `utils/`, or
+`constants/`. Per the run 8/14 "re-audit, not re-run" rule this still
+means confirming, not assuming: re-grepped `useWindowDimensions` (same 7
+real sites, none new) and re-checked that no scroll container or fixed
+footer this branch caps lost `contentColumnStyle` in that commit (moot
+here since no app file was touched, but checked directly rather than
+inferred from the file list alone). Rebase itself was conflict-free (32
+commits replayed clean). `npx tsc --noEmit` clean from a fresh `npm ci`.
+Full suite green on the first pass, no flake this time: 110 suites / 1152
+tests, zero drift from runs 14-24. PR #133: still open, not draft,
+`mergeable_state: clean` at the pre-rebase head, `verify` check green;
+`get_comments` empty, no new reviews. Issue #139 re-checked via
+`get_comments`: still the single 2026-09-07 comment, already implemented
+(run 14); zero reactions, nothing new. Checked the Routine status board (also issue #139; its comment thread is
+where decisions like the one above get posted) for any REVIEW FEEDBACK
+aimed at this branch: the 2026-09-10 board entry for ipad-worker says
+"approved, docs-only commits since the last board," no fixes owed, and
+repeats the same two carried-forward facts already known here (the device
+pass is the one remaining blocker; the guaranteed conflict is at the first
+ipad x localization crossing, not yet happened, main still at the old tip
+when the board was written). Re-verified item 7 (`app.json` orientation
+still `"portrait"`, `supportsTablet` still `true`). Pushing this rebase
+(force-with-lease, history rewritten) plus this HANDOFF update; no
+production code changed this run.
+
+Run 24. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 14's
+rebase (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`b748ca3`), so no rebase and no new regression surface. `npx tsc --noEmit`
+clean from a fresh `npm ci` this run. Full suite: 109/110 suites green on
+the first pass; `__tests__/door3BreakSheet.test.tsx` timed out (same shape
+as runs 13/17's flake), isolated and re-ran standalone (17/17 passed),
+confirming a scheduling flake under parallel load, not a real regression,
+no code change needed. 110 suites / 1152 tests overall, zero drift from
+runs 14-23. PR #133: still open, not draft, `mergeable_state: clean`, base
+SHA matches main's tip exactly (`b748ca3`), head commit unchanged
+(`6fcb6ee`), its `verify` check re-ran today and is green, no new comments
+or reviews since the 2026-09-08 review feedback already addressed in
+`8a7822e`. Issue #139 unchanged via `get_comments` (Charen's run-14 answer
+is still the only comment; already implemented). Re-verified item 7
+(`app.json` orientation still `"portrait"`, `supportsTablet` still
+`true`). This HANDOFF update is the only change this run; no production
+code or plan content changed.
+
+Run 23. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 14's
+rebase (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`b748ca3`), so no rebase and no new regression surface. `npx tsc --noEmit`
+clean from a fresh `npm ci` this run. Full suite green: 110 suites / 1152
+tests, zero drift from runs 14-22. One flake this run,
+`door3BreakSheet.test.tsx`'s auto-open case timing out under full-suite
+parallel load; re-ran that file alone and all 17 of its tests passed,
+confirming it is not a real regression (not touched by this branch; no
+door3/Today changes here). PR #133: still open, not draft,
+`mergeable_state: clean`, base SHA matches main's tip exactly (`b748ca3`),
+head commit's `verify` check green, no new comments or reviews since the
+2026-09-08 review feedback already addressed in `8a7822e`. Issue #139
+unchanged via `get_comments` (Charen's run-14 answer is still the only
+comment; already implemented). Re-verified item 7 (`app.json` orientation
+still `"portrait"`, `supportsTablet` still `true`). This HANDOFF update is
+the only change this run; no production code or plan content changed.
+
+Run 22. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 14's
+rebase (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`b748ca3`), so no rebase and no new regression surface. `npx tsc --noEmit`
+clean from a fresh `npm ci` this run. Full suite green on the first pass,
+no flake: 110 suites / 1152 tests, zero drift from runs 14-21. PR #133:
+still open, not draft, `mergeable_state: clean`, base SHA matches main's
+tip exactly (`b748ca3`), head commit's `verify` check green, no new
+comments or reviews since the 2026-09-08 review feedback already addressed
+in `8a7822e`. Issue #139 unchanged via `get_comments` (Charen's run-14
+answer is still the only comment; already implemented). Re-verified item 7
+(`app.json` orientation still `"portrait"`, `supportsTablet` still
+`true`). This HANDOFF update is the only change this run; no production
+code or plan content changed.
+
+Run 21. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 14's
+rebase (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`b748ca3`), so no rebase and no new regression surface. `npx tsc --noEmit`
+clean from a fresh `npm ci` this run. Full suite green on the first pass,
+no flake: 110 suites / 1152 tests, zero drift from runs 14-20. PR #133:
+still open, not draft, `mergeable_state: clean`, base SHA matches main's
+tip exactly (`b748ca3`), head commit's `verify` check green, no new
+comments or reviews since the 2026-09-08 review feedback already addressed
+in `8a7822e`. Issue #139 unchanged via `get_comments` (Charen's run-14
+answer is still the only comment; already implemented). Re-verified item 7
+(`app.json` orientation still `"portrait"`, `supportsTablet` still
+`true`). This HANDOFF update is the only change this run; no production
+code or plan content changed.
+
+Run 20. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 14's
+rebase (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`b748ca3`), so no rebase and no new regression surface. `npx tsc --noEmit`
+clean from a fresh `npm ci` this run. Full suite green on the first pass,
+no flake: 110 suites / 1152 tests, zero drift from runs 14-19. PR #133:
+still open, not draft, `mergeable_state: clean`, base SHA matches main's
+tip exactly (`b748ca3`), head commit's `verify` check green, no new
+comments or reviews since the 2026-09-08 review feedback already addressed
+in `8a7822e`. Issue #139 unchanged via `get_comments` (Charen's run-14
+answer is still the only comment; already implemented). Re-verified item 7
+(`app.json` orientation still `"portrait"`, `supportsTablet` still
+`true`). This HANDOFF update is the only change this run; no production
+code or plan content changed.
+
+Run 19. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 14's
+rebase (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`b748ca3`), so no rebase and no new regression surface. `npx tsc --noEmit`
+clean from a fresh `npm ci` this run. Full suite green on the first pass,
+no flake: 110 suites / 1152 tests, zero drift from runs 14-18. PR #133:
+still open, not draft, `mergeable_state: clean`, base SHA matches main's
+tip exactly (`b748ca3`), head commit's `verify` check green, no new
+comments or reviews since the 2026-09-08 review feedback already addressed
+in `8a7822e`. Issue #139 unchanged via `get_comments` (Charen's run-14
+answer is still the only comment; already implemented). Re-verified item 7
+(`app.json` orientation still `"portrait"`, `supportsTablet` still
+`true`). This HANDOFF update is the only change this run; no production
+code or plan content changed.
+
+Run 18. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 14's
+rebase (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`b748ca3`), so no rebase and no new regression surface. `npx tsc --noEmit`
+clean from a fresh `npm ci` this run. Full suite green on the first pass
+this time, no flake: 110 suites / 1152 tests, zero drift from runs 14-17.
+PR #133: still open, not draft, `mergeable_state: clean`, base SHA matches
+main's tip exactly, head commit's `verify` check green, no new comments or
+reviews since the 2026-09-08 review feedback already addressed in
+`8a7822e`. Issue #139 unchanged (Charen's run-14 answer is still the only
+comment; already implemented). Re-verified item 7 (`app.json` orientation
+still `"portrait"`, `supportsTablet` still `true`). This HANDOFF update is
+the only change this run; no production code or plan content changed.
+
+Run 17. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 14's
+rebase (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`b748ca3`), so no rebase and no new regression surface. `npx tsc --noEmit`
+clean from a fresh `npm ci` this run. Full suite: 109/110 suites green on
+the first pass; `__tests__/door3BreakSheet.test.tsx` timed out (same shape
+as run 13's flake), isolated and re-ran standalone (17/17 passed), so
+confirmed a scheduling flake under parallel load, not a real regression, no
+code change needed. 110 suites / 1152 tests overall, zero drift from runs
+14-16. PR #133: still open, not draft, `mergeable_state: clean`, base SHA
+matches main's tip exactly, head commit's `verify` check green, no new
+comments or reviews since the 2026-09-08 review feedback already addressed
+in `8a7822e`. Issue #139 unchanged (Charen's run-14 answer is still the
+only comment; already implemented). Re-verified item 7 (`app.json`
+orientation still `"portrait"`, `supportsTablet` still `true`). This
+HANDOFF update is the only change this run; no production code or plan
+content changed.
+
+Run 16. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 14's
+rebase (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`b748ca3`), so no rebase and no new regression surface. `npx tsc --noEmit`
+clean; full suite green with zero drift from runs 14-15 (110 suites / 1152
+tests, from a clean `npm ci` this run). PR #133: still open, not draft,
+`mergeable_state: clean`, base SHA matches main's tip exactly, head
+commit's `verify` check green, no new comments or reviews since the
+2026-09-08 review feedback already addressed in `8a7822e`. Issue #139
+unchanged (Charen's run-14 answer is still the only comment; already
+implemented). Re-verified item 7 (`app.json` orientation still
+`"portrait"`, `supportsTablet` still `true`). This HANDOFF update is the
+only change this run; no production code or plan content changed.
+
+Run 15. Verified per this file's own COMPLETE instruction: plan fully
+checked, nothing new to do. `origin/main` has not moved since run 14's
+rebase (`git merge-base --is-ancestor origin/main routine/ipad`, still at
+`b748ca3`), so no rebase and no new regression surface. `npx tsc --noEmit`
+clean; full suite green with zero drift from run 14 (110 suites / 1152
+tests). PR #133: still open, not draft, `mergeable_state: clean`, base SHA
+matches main's tip exactly, head commit's `verify` check green, no new
+comments or reviews. Issue #139 unchanged (Charen's run-14 answer is still
+the only comment; already implemented). Re-verified item 7 (`app.json`
+orientation still `"portrait"`, `supportsTablet` still `true`). This
+HANDOFF update is the only change this run; no production code or plan
+content changed.
+
+Run 14. Two things changed since run 13, and this run addresses both.
+`origin/main` moved 6 commits (`a51ce4a` to `b748ca3`); rebased onto it (a
+heavier rebase than runs 5-8, more below) and, per the run 7/8 "re-audit,
+not re-run" rule, re-checked every path the incoming commits touched
+rather than trusting a clean replay. **Decision 1 (issue #139, in the
+`habitcents-mobile-app` repo, not the ops repo as earlier runs' shorthand
+implied) landed:** Charen answered on 2026-09-07
+(`#issuecomment-5575881737`, found by re-checking `get_comments`, not the
+cached issue body): fixed footer/CTA bars outside the capped scroll DO cap
+at 600pt too, matching the scroll column. That was the one thing blocking
+item 6 and, with it, the whole plan; item 6 is now fully checked (see
+PLAN.md and Completed below). `npx tsc --noEmit` clean; full suite green,
+110 suites / 1152 tests (up from 106/1130 at run 13; see Completed below
+for the breakdown between main's own intervening test growth and this
+run's own additions). Re-verified item 7 unchanged (`app.json` still
+`"orientation": "portrait"`, `"supportsTablet": true`).
+
+**The plan is now fully checked.** Marked PR #133 ready for review this
+run (it was the last step this routine owns; the device pass above is
+work for a human with hardware, not this routine). Logged `ok` in
+`docs/runs.log` in the ops repo.
+
+## Completed
+
+- Runs 1-4: plan items 1, 2 (all of a-e), 3, 4, and a first pass at 6. See
+  PLAN.md for detail; unchanged this run.
+- Run 5, REVIEW FEEDBACK (addressed first, per this file's own instruction):
+  the orchestrator's 2026-09-05 review of runs 1-4 found the layout work
+  itself sound but flagged that design decision records had not been
+  updated alongside it, per `design/decisions/README.md`'s same-commit
+  rule. Added, in one docs-only commit:
+  - `design/decisions/components/Sheet.md`: dated line for the 600pt panel
+    cap and centering, and why phones are unaffected.
+  - `design/decisions/modules/today.md`: dated line for the pane content
+    caps (all five paths) and the item 4 conclusion that the pager's paging
+    unit stays window width by design.
+  - `design/decisions/components/OnboardingCarousel.md`: new file, first
+    recorded decision for this component (the `beat`/`beatContent` split
+    and why `beat` must stay window width), and added to the
+    `design/decisions/README.md` index.
+  - `design/PATTERN_VOCABULARY.md` Surfaces section: added the readable
+    column rule (cap via `contentColumnStyle` spread at the call site;
+    reach for a wrapping View only when the target style merges margin onto
+    a background-carrying root; paging units are never capped).
+  No code changed in this commit; tsc and the full suite were still run and
+  are green, per the standing rule.
+- Run 5, plan item 5 (the `useWindowDimensions` audit): done, no code
+  change needed anywhere. Re-grepped the repo (19 files matched; docs/plan/
+  test files and the two already-resolved sites, `app/(tabs)/index.tsx`
+  (item 4) and `OnboardingCarousel.tsx` (item 2c), set aside, leaving 7 real
+  sites plus the two already-known non-issues):
+  - `AddCategoryModal`, `PartialSlipSheet`, `AddUpcomingSheet`,
+    `ExpenseSheet`, `BreakHabitSheet`, `CategoryTransactionsSheet`,
+    `ReviewQueueSheet`, `PickOneSheet` all read `height` only (never
+    `width`), for a `maxHeight: height * 0.82` or `* 0.86` keyboard-clearing
+    cap on the sheet body. That is orientation- and device-size-agnostic
+    math; it does not interact with `Sheet`'s width cap (item 3) and needed
+    no change.
+  - `AuroraBackground.tsx` reads `width` to size a full-bleed gradient, but
+    confirmed (grep for its import) that it renders nowhere in the app: it
+    is unreferenced dead code, the retired welcome screen's documented
+    revert path per `PATTERN_VOCABULARY.md`. No live tablet surface to fix.
+  - `CheckInCard.tsx` reads `fontScale`, confirmed out of this plan's scope
+    (Dynamic Type, not window sizing).
+  Did not decide the fixed-footer cap question as part of this audit, per
+  the review feedback below (it is on the status board for Charen now).
+- Run 6: no plan work was actionable. Rebase was a no-op, no new REVIEW
+  FEEDBACK was present, and item 6 (the only unchecked line besides the
+  standing item 7 re-verification) stays blocked on the footer-cap
+  decision, confirmed still unanswered on `#139` (see DECISIONS NEEDED).
+  Re-ran tsc and the full suite to confirm the branch is still green with
+  zero drift; both are unchanged from run 5. Re-verified item 7 (`app.json`
+  orientation still `"portrait"`).
+- Run 7: rebased onto 12 new main commits (zero-state art, ActionDock/dock
+  unification, tab-selection and toast fixes, design record catch-up),
+  resolving a real conflict in `app/(tabs)/index.tsx` (import line plus
+  three `paddingBottom` sites) and two docs files
+  (`design/decisions/README.md`, `design/decisions/modules/today.md`)
+  exactly per the resolution guidance run 5 had left recorded in
+  today.md's Open section; that note is now removed since this run is the
+  merge it was written for. No plan item's code changed (nothing new was
+  unblocked by main's incoming work), but re-audited rather than assumed:
+  re-grepped for `useWindowDimensions` (still the same 7 real sites, none
+  new) and re-checked that every scroll container main touched still
+  carries `contentColumnStyle` where item 2 put it, and that the item 2e
+  wrappers (`door3-ribbon-wrap`, `kept-hero-cap-wrap`) survived the
+  ActionDock/zero-state rework around them. Confirmed item 6 still
+  soft-blocked: `#139` still open, zero comments. Re-verified item 7.
+- Run 8: rebased onto 5 new main commits (PR #143's segment-pager wave,
+  PRs #142/#145's leak-finder gating, the #146 navigation-wave merge).
+  Unlike runs 5-7, the conflicts landed on two of this branch's own
+  historical commits during replay, not just the tip: run 1's original
+  commit (pure import-list conflicts in `index.tsx`/`insights.tsx` from
+  main's new `useSegmentPager`/`hapticError` imports landing on the same
+  line as this branch's `contentColumnStyle` import) and run 5's
+  design-record commit (`README.md`/`today.md` index and Iterations
+  entries, resolved by union as before). Re-audited after the rebase
+  rather than trusting it was clean, per the orchestrator's instruction,
+  and found a real regression this time, not just a clean pass: main's
+  same-day extraction of Money's Spent pane into
+  `components/money/SpentList.tsx` dropped the tablet cap that pane's
+  content had carried since item 2b, because the new file's `listContent`
+  style was rebuilt without carrying `contentColumnStyle` over. Fixed,
+  documented in `design/decisions/modules/money.md` (checked
+  `SegmentPager.md` first; the fix belongs in the per-surface module file,
+  not the pager-mechanism file), and pinned with a new jest case in
+  `__tests__/spentList.test.tsx` (added a `testID` to `SpentList`'s
+  `SectionList` for the query). Today's and Insights' panes were not
+  extracted by that same refactor; confirmed by direct reading, not
+  assumed. Checked `#139` again for the footer-cap decision: still open,
+  zero comments. tsc clean, full suite green (106 suites, 1130 tests, up
+  from 106/1129 from this run's one new test).
+- Run 9: no plan work was actionable beyond bookkeeping. `origin/main` had
+  not moved since run 8 (both branches already at the same tip commit
+  before this run started), so there was nothing to rebase and no new
+  regression surface to re-audit; run 8's `SpentList` fix already covers
+  everything currently on main. Re-ran tsc and the full suite from a clean
+  install to confirm the branch is still green with zero drift from run 8
+  (106 suites / 1130 tests, matching exactly). Re-checked `#139`: still
+  open, zero comments, now idle 4 runs. Re-checked PR #133: still draft,
+  base SHA matches current main's tip exactly, latest commit's CI check
+  green. Re-verified item 7 (`app.json` orientation still `"portrait"`,
+  `supportsTablet` still `true`). Marked PLAN.md's item 2 parent checkbox
+  complete: its five sub-items (2a-2e) have all been done since run 5, and
+  the parent line had simply never been checked off; the fixed-footer gap
+  it might be confused with is item 6's scope, not item 2's, so this is a
+  pure bookkeeping fix with no behavior change.
+- Run 10: no plan work was actionable and no bookkeeping gap remained
+  (run 9 already closed the one that existed). `origin/main` had still not
+  moved since run 8, confirmed the same way as run 9
+  (`git merge-base --is-ancestor origin/main routine/ipad`), so there was
+  nothing to rebase and no new regression surface. Re-ran tsc and the full
+  suite from a clean install: still green, 106 suites / 1130 tests, zero
+  drift from runs 8 and 9. Re-checked `#139` via `get_comments` (not just
+  the cached issue body, to rule out a comment landing without updating
+  the body): still zero comments, now idle 5 runs. Re-checked PR #133:
+  still draft, base SHA matches current main's tip exactly. Re-verified
+  item 7 (`app.json` orientation still `"portrait"`, `supportsTablet`
+  still `true`). This HANDOFF update is the only change this run.
+- Run 11: same shape as run 10, confirmed the same way (`git merge-base
+  --is-ancestor origin/main routine/ipad`; `get_comments` on `#139`; PR
+  #133 base SHA against main's tip). `origin/main` still has not moved
+  since run 8 (four runs now with zero drift: 106 suites / 1130 tests,
+  tsc clean, matching runs 8, 9 and 10 exactly). Issue #139 is still
+  unanswered, zero comments, now idle 6 runs since run 5 first surfaced it
+  on the board. Item 7 re-verified unchanged. Per run 10's own Blockers
+  note, this is the point to stop quietly repeating "ok": named the idle
+  stream explicitly below and sent one push notification to Charen
+  directly from this run, since no prior ipad-worker run has sent one
+  itself (the one prior notification, 2026-09-06, came from the
+  orchestrator's board update, not this routine). This HANDOFF update is
+  the only change this run; no production code or plan content changed.
+- Run 12: same shape as runs 9-11, confirmed the same way (`git merge-base
+  --is-ancestor origin/main routine/ipad`; `get_comments` on `#139`; PR
+  #133 base SHA and check runs against main's tip). `origin/main` still
+  has not moved since run 8 (five runs now with zero drift: 106 suites /
+  1130 tests, tsc clean, matching runs 8-11 exactly). Issue #139 is still
+  unanswered, zero comments, zero reactions, now idle 7 runs since run 5
+  first surfaced it on the board (2026-09-05). Item 7 re-verified
+  unchanged. Per run 11's own instruction, did not send a second push
+  notification this run (already surfaced twice: orchestrator's board
+  update, run 11's direct notification); kept naming the idle count
+  instead. This HANDOFF update is the only change this run; no production
+  code or plan content changed.
+- Run 13: same shape as runs 9-12, confirmed the same way (`git merge-base
+  --is-ancestor origin/main routine/ipad`; `get_comments` on `#139`; PR
+  #133 base SHA and check runs against main's tip). `origin/main` still
+  has not moved since run 8 (six runs now with zero drift once the flake
+  below is set aside: 106 suites / 1130 tests, tsc clean, matching runs
+  8-12 exactly). One test, `__tests__/door3BreakSheet.test.tsx`, timed
+  out on the full suite's first pass this run; isolated it (17/17 passed
+  standalone) and re-ran the full suite clean, confirming a one-off
+  scheduling flake under parallel load rather than a real regression, so
+  no code change was needed and none was made. Issue #139 is still
+  unanswered, zero comments, now idle 8 runs since run 5 first surfaced it
+  on the board (2026-09-05). Item 7 re-verified unchanged. Did not send
+  another push notification this run: only two runs have passed since run
+  11's direct notification, short of the "five-plus runs with zero
+  engagement" bar run 12 itself set for reconsidering; kept naming the
+  idle count instead. This HANDOFF update is the only change this run; no
+  production code or plan content changed.
+- Run 14: rebased onto 6 new main commits (`a51ce4a`..`b748ca3`); heaviest
+  re-audit yet, two real findings, both fixed and tested in this run's
+  commits:
+  1. **`KeptHero` left the Today Kept pane entirely.** Main's 2026-09-07
+     decision (Charen, "no band above the list") removed the whole
+     "Kept so far" band this branch's item 2e had wrapped in
+     `keptHeroCapWrap`. The rebase conflict landed exactly on that code
+     (`app/(tabs)/index.tsx`'s Kept-pane JSX and its style block); resolved
+     by taking main's side (no band renders there at all) and deleting the
+     now-dead `keptHeroCapWrap` style, its wrapping View, and the one jest
+     case in `todayQuoteRibbonPlacement.test.tsx` that asserted on it. The
+     door3 ribbon and its `ribbonWrap`/`door3-ribbon-wrap` cap are
+     untouched, since the ribbon still renders. `design/decisions/modules/
+     today.md` updated in the same commit: the run 5 decision line amended
+     to note `keptHeroCapWrap` is gone with the band, and the Open-section
+     note that used to warn about this exact merge is closed out, both per
+     the same-commit rule. `KeptHero` itself is not dead: it still renders,
+     already capped by `body`'s `contentColumnStyle`, on the Leak Scan
+     payoff screen (`components/leak-scan/PayoffScreen.tsx`), confirmed by
+     direct reading, not assumed.
+  2. **A duplicate `testID` on `SpentList`'s `SectionList`, a real
+     `tsc` error (`TS17001`), not just a style regression.** Main's
+     own PR (commit `5971e09`, the same day as run 8's fix) gave the same
+     element a second, real `testID="spent-list"` for its own
+     `emptyStateGeometry.test.tsx`, landing on top of this branch's
+     `testID="spent-section-list"` from run 8. Neither commit conflicted
+     during the rebase (they touched adjacent, not overlapping, lines), so
+     this only surfaced via `tsc --noEmit`, not the rebase itself; a clean
+     rebase is still not proof of no regression, same lesson as run 8's
+     `contentColumnStyle` drop. Fixed by dropping this branch's redundant
+     `testID` and pointing `spentList.test.tsx`'s query at `spent-list`
+     instead. While in there, also fixed a second, latent bug in that same
+     test: it asserted on `Object.assign({}, list.props.contentContainerStyle)`
+     without flattening the array-valued style first (`contentContainerStyle`
+     is `[styles.listContent, ...]`), so `Object.assign` on the raw array
+     produced numeric keys, not merged properties; the assertion happened
+     to still pass before only because it read a testID whose element
+     resolution differed enough not to expose it. Switched to
+     `StyleSheet.flatten(...)`, matching how `tabletLayout.test.tsx`'s own
+     `flattenStyle` helper already does this correctly elsewhere. Also
+     caught and fixed a matching import-list conflict in `money.tsx`
+     (dropped `spacing` from the merged import by mistake while resolving
+     the rebase, caught immediately by the same `tsc` run, not left for a
+     later run).
+  3. **Decision 1 (issue #139) landed and was implemented.** Charen's
+     comment (2026-09-07, `#issuecomment-5575881737`): fixed footer/CTA
+     bars cap at 600pt too. Applied the same `...contentColumnStyle`
+     spread item 2b/2e already established for `ribbonWrap`
+     (paddingHorizontal-based, no wrapping View needed) to `ScopeScreen`'s
+     `footer`, `BillsScreen`'s `footer`, and `app/paywall.tsx`'s `footer`;
+     `PayoffScreen`'s Continue button, a sibling of the already-capped
+     `body` rather than a child of it, got a new `continueButton` style
+     via its `style` prop instead. Each of the four got a dedicated jest
+     case, matching the items 2c/2e/run 8 precedent of a per-surface
+     structural test: extended `scopeScreen.test.tsx`, `billsScreen.test.tsx`,
+     and `payoffScreen.test.tsx` (all three already had the provider/mock
+     wiring); added `__tests__/paywallTabletCap.test.tsx` as a new,
+     minimal harness, since no prior test rendered `app/paywall.tsx` at
+     all (mocks `expo-router` and `@/utils/analytics`, mirrors
+     `profile.test.tsx`'s provider wiring, scoped to only the one thing
+     this plan item needs). No design/decisions module file exists for the
+     Leak Scan flow or the paywall (that catalog only covers
+     `today`/`drawers`/`money`/`insights`/`categories` and their listed
+     components; item 2d's original cap on these same screens did not add
+     one either), so none was added here, consistent with that precedent.
+     PLAN.md's item 6 marked checked off with the full detail above.
+  tsc clean; full suite green, 110 suites / 1152 tests. Two steps: the
+  rebase alone (before any of this run's own code changes) brought the
+  baseline from run 13's 106 suites / 1130 tests to 109 suites / 1148
+  tests, almost entirely main's own intervening test growth across its 6
+  commits, net of the one `KeptHero` case this run deleted. This run's own
+  decision-1 work then added one new suite (`paywallTabletCap.test.tsx`)
+  and four new cases (one each in `scopeScreen.test.tsx`,
+  `billsScreen.test.tsx`, `payoffScreen.test.tsx`, and the new paywall
+  file), landing at 110 suites / 1152 tests. Re-verified item 7
+  unchanged. **Marked PR #133 ready for review** (`draft: false`) and
+  wrote this file's COMPLETE section, per the routine's own completion
+  instructions, since the plan is now fully checked and run 13's own
+  stated condition for doing so ("either that decision lands and its
+  follow-up test work is done") is met.
+
+- Run 85: rebased onto 6 new main commits (`ad091e2`, PRs #175/#176: the
+  onboarding arc v2 Dynamic Type fix and a primer copy pass), the first
+  main movement since run 33's baseline and the first real conflicts since
+  run 14. One code conflict, in `OnboardingCarousel.tsx`: main's Dynamic
+  Type fix (2026-09-17) had, since this branch's last rebase, rebuilt each
+  beat as a vertical `ScrollView` with a pair of collapsing `beatSpacer`s
+  around the content (so overflowing text at large accessibility sizes
+  stays reachable), replacing the fixed `View` this branch's `beatContent`
+  cap (item 2c) was written against. Resolved by keeping main's scroller
+  structure whole and re-nesting `beatContent` between the two spacers,
+  inside the still-window-width outer `ScrollView`; the paging unit
+  (`style={{ width }}`, what `handleScroll`'s offset math divides by) is
+  untouched by either change, so the two fixes compose. Two more
+  conflicts, both design-record bookkeeping: this branch's own
+  `OnboardingCarousel.md` predated the arc v2 rewrite, so main's current
+  content was kept and this run's own dated decision line (the merge
+  itself) added on top, same-commit per the design-records rule, not a
+  replacement of main's content; `README.md`'s component index differed
+  only by a `BeatMedia` entry, kept from main. Re-audited rather than
+  trusting the clean rebase: re-grepped `useWindowDimensions` (7 real call
+  sites; `utils/useSegmentPager.ts` is the only one not previously named
+  individually in item 5's list, predates this run, and was confirmed by
+  reading it, not assumed, to already follow the paging-unit-stays-window-
+  width pattern correctly), and confirmed `money.tsx`'s own move (the bills
+  door deep link, logic only) left its `contentColumnStyle` spread intact.
+  tsc clean; full suite green, 124 suites / 1356 tests (up from 122/1335,
+  entirely main's own growth plus this run's merge, which needed no new
+  test case since `onboardingCarouselDynamicType.test.tsx` and
+  `tabletLayout.test.tsx`'s `beatContent` case already pin what the merge
+  had to preserve). Re-verified item 7 unchanged. Force-pushed the rebased
+  branch; PR #133 still open, not draft, `verify` re-triggered on the new
+  head and completed green.
+
+## Next
+
+The plan is fully checked; there is no more plan-driven work queued. What
+carries forward:
+
+1. Watch PR #133 for review activity now that it is out of draft (CI,
+   review comments) the way any ready PR is watched, per the routine's own
+   PR-activity rules. This is now the routine's main job on this branch
+   until it merges.
+2. Every run, still check whether `origin/main` has moved before deciding
+   how much re-audit is owed, exactly as items 1-3 below (run 8 and run 14
+   both prove a clean rebase is not proof nothing regressed: run 8 found a
+   dropped cap, run 14 found both a dropped cap AND a duplicate testID from
+   two independent same-day commits). If it has moved, re-audit: grep
+   `useWindowDimensions` fresh, check every scroll container and fixed
+   footer main touched still carries `contentColumnStyle`, and re-run tsc
+   even when the rebase itself reports zero conflicts, since run 14's
+   testID collision proves a clean rebase can still hide a real compile
+   error until tsc actually runs.
+3. Re-verify item 7 (`app.json` orientation) every run regardless of
+   whether anything else changed.
+4. If a device pass lands (see DEVICE PASS NEEDED above) and finds a real
+   visual problem, that becomes new plan work; otherwise this branch's
+   remaining path to ship is PR review, an `eas build` (native fingerprint
+   changed, `ios.supportsTablet: true`, not an OTA-eligible change), and
+   the device pass itself.
+
+## Blockers
+
+None. The one real blocker this branch carried (decision 1 on `#139`) is
+resolved as of this run. The device pass is not logged as a blocker in the
+runs.log sense: it does not stop this routine from doing bounded,
+verifiable work (rebases, re-audits, PR maintenance), it is a precondition
+for shipping, already named explicitly in DEVICE PASS NEEDED above so it
+stays visible without inflating every run's Status into a repeated
+escalation now that the actual decision blocker is gone.
+
+## DECISIONS NEEDED
+
+None open. Decision 1 (fixed footer/CTA bars cap at 600pt too) was the
+only one this branch raised; Charen answered it 2026-09-07
+(`#issuecomment-5575881737`) and this run implemented and tested the
+answer (see Completed, run 14). No new decisions raised this run.
+
+## REVIEW FEEDBACK
+
+2026-09-08, orchestrator, runs 14-15 reviewed (through 506e56b).
+**Approved, no fixes owed.** The decision-1 footer caps follow the
+established contentColumnStyle spread pattern correctly (ScopeScreen,
+BillsScreen, paywall via the spread; PayoffScreen's Continue via its
+style prop, rightly, since it is a sibling of the capped body), each
+with a pinning test, and the new paywallTabletCap.test.tsx harness is
+appropriately minimal. The run 14 post-rebase re-audit is commended:
+both regressions were real (the dropped `spacing` import, the duplicate
+SectionList testID), and catching the latent bare-Object.assign flatten
+bug in spentList.test.tsx's assertion while fixing it is exactly what
+the re-audit rule exists for. Marking PR #133 ready for review was
+right; the plan is complete and only the device pass remains.
+
+One cross-stream note, no action on this branch: paywallTabletCap,
+scopeScreen, billsScreen and payoffScreen test files will need
+LocaleProvider once `routine/localization`'s conversions cross (their
+useStrings() hook throws without a provider). That fix belongs to the
+localization stream's standing sweep and is recorded in its HANDOFF.
+
+2026-09-05, orchestrator, runs 1-4 reviewed (57321e3..963559d). The layout
+work is sound: the wrapper-not-container reasoning on `keptHeroCapWrap` and
+`beatContent` is correct and well documented in code, and pinning the
+pane-stays-window-width invariant in tests was the right call. One
+house-rule gap to fix next run, before or alongside item 5:
+
+- Design decision records were not updated with the code
+  (design/decisions/README.md requires updating them in the same commit
+  that touches a surface). Add, in one commit on this branch:
+  - `design/decisions/components/Sheet.md`: one dated line for the 600pt
+    cap + centering on the sheet panel and why phones are unaffected.
+  - `design/decisions/modules/today.md`: one dated line for the pane
+    content caps (spentScrollContent, listContent, keptEmptyContent,
+    ribbonWrap, keptHeroCapWrap) and the item 4 conclusion that the
+    pager's paging unit stays window width by design.
+  - `design/decisions/components/OnboardingCarousel.md`: new file (first
+    recorded decision about this component): the beat/beatContent split
+    and why the beat itself must stay window width.
+  - `design/PATTERN_VOCABULARY.md` (Surfaces section): add the readable
+    column rule: scroll content caps at `layout.contentMaxWidth` (600pt)
+    via `contentColumnStyle`; use a wrapping View instead of a spread when
+    the target style merges margin onto a background-carrying root; paging
+    units are never capped, only the content inside them. The pattern
+    ships with this branch, so its vocabulary entry belongs in this
+    branch, not on main ahead of it.
+- The fixed-footer cap question (ScopeScreen, BillsScreen, paywall,
+  PayoffScreen Continue) is now on the status board's DECISIONS NEEDED
+  queue for Charen; no need to re-raise it, and do not decide it in the
+  item 5 audit.
+
+Addressed run 5 (2026-09-05): all four doc updates landed in one commit
+before any other run 5 work, per the instruction above. See Completed
+above for detail. The footer question was left alone as instructed.
+
+2026-09-06, orchestrator, runs 5-7 reviewed. **Approved, no code fixes.**
+The design records and the PATTERN_VOCABULARY.md readable-column entry are
+exactly what was owed, the item 5 audit's reasoning (height-only reads,
+AuroraBackground dead code, fontScale out of scope) is sound, and the run 7
+conflict resolution in `app/(tabs)/index.tsx` was verified correct against
+both parents. Two rebase items for next run:
+
+1. Main moved again after your run 7 push: PR #143 extracted the Today
+   pager into `utils/useSegmentPager.ts` and gave Money and Insights the
+   same segment-swipe treatment, rewriting exactly the three tab screens
+   this branch caps (`index.tsx` -141 lines, `insights.tsx`, `money.tsx`)
+   plus `constants/theme.ts`, which both sides touch. Expect a heavier
+   conflict than run 7's. After rebasing, apply your own run 7 "re-audit,
+   not re-run" rule with extra care: each new pager pane on all three
+   screens must still cap its scroll content, and the paging unit must
+   stay window width (the invariant your tests pin). Main also added
+   `design/decisions/components/SegmentPager.md`; if the cap interacts
+   with the pager panes, add the dated line there, same-commit rule.
+2. PRs #142/#145 wrapped the leak finder as coming soon behind a
+   SCAN_FLOW_ENABLED gate. Your Leak Scan caps (item 2d) stay compiled
+   and correct; nothing to do, just do not be surprised that the flow is
+   dormant when re-auditing.
+
+The footer-cap decision remains with Charen on #139; it has now been
+re-surfaced in today's board update and push notification.
+
+Addressed run 8 (2026-09-06): item 1's rebase and re-audit done as
+instructed, with the conflicts landing one commit earlier than expected
+(run 1's own commit, not just the tip) since main's segment-pager wave
+touched the same import lines this branch's very first commit had
+touched. The re-audit found a real gap this time (Money's `SpentList.tsx`
+extraction dropping the cap, see Status/Completed above), fixed and
+tested in one commit. Checked `SegmentPager.md` per item 1's instruction;
+concluded the cap doesn't belong there (it documents the pager mechanism,
+not per-screen content styling) and put the decision line in `money.md`
+instead, matching where Today's own cap decisions already live in
+`today.md`. Item 2 (the leak-finder gate) needed no action, confirmed.
+
+2026-09-07, orchestrator, runs 8 to 11 reviewed (f1061f0..3994950).
+**Approved, no fixes owed.** Run 8's SpentList catch is exactly what the
+post-rebase re-audit discipline exists for: main's pager extraction
+dropped the cap silently and a clean rebase would never have shown it.
+The jest case pinning contentContainerStyle and the same-commit money.md
+record are both right. Runs 9 to 11's idle verification posture is
+correct while the footer-cap decision sits with Charen; it has been
+re-surfaced on #139 again today.
+
+Coordination notes, no action until a merge or rebase makes them live:
+
+- routine/localization has now converted components/money/SpentList.tsx
+  and components/onboarding/OnboardingCarousel.tsx to useStrings() (plus
+  a buildBeats(catalog) refactor of BEATS on the carousel). Whichever
+  branch crosses the other's merge keeps both changes and re-verifies
+  the pair: the 600pt cap survives AND the conversion survives, with the
+  carousel's paging unit still window width. Not yet crossed as of run 14
+  (this branch's SpentList.tsx still has no useStrings() conversion).
+- app/profile.tsx is now touched by all three routine branches (your
+  cap, localization's conversion, core's share card row). Keep the union
+  when its turn comes.
+
+No orchestrator review recorded yet for runs 12-14 as of this writing;
+run 14 marked the PR ready for review on its own authority per the
+routine's own completion instructions once the plan was fully checked, not
+pending a further review round on this branch.
+
+2026-09-11, orchestrator, runs 16-27 reviewed (through 26b3699; runs
+16-25 were docs-only status commits, runs 25-27 also carried the
+rebases). **Approved, no fixes owed.** The run 26 re-audit of main's
+Sheet.tsx rewrite was independently verified: the 600pt cap
+(`width: '100%'`, `maxWidth: layout.contentMaxWidth`,
+`alignSelf: 'center'`) is present on the rewritten panel style in
+`components/ui/Sheet.tsx` with its rationale comment intact, and the
+pinned footer slot renders inside that capped panel, so the audit's
+"footer inherits the cap for free" claim holds. Good discipline
+keeping runs 16-25 to one honest status line each instead of
+manufacturing work.
+
+Action for the next run, a real one: main gained four QA merges after
+run 26's rebase (#161-#164, main now 683ecc3), and #163 rewrote
+`app/paywall.tsx`'s layout (all three plans readable at rest). That is
+one of your four decision-1 fixed-footer cap surfaces, so the next
+rebase must re-audit the paywall cap against the new layout and re-run
+`paywallTabletCap.test.tsx`, not just replay commits. `app/(tabs)/
+index.tsx` (Kept-dot rework) and `app/(tabs)/insights.tsx` (`?view=`
+param) also moved; both are capped surfaces, so include them in the
+re-grep. Expect `logInPlace.test.tsx` and `todayQuoteRibbonPlacement.
+test.tsx` growth from the QA wave in the suite counts.
+
+Also noting for the device pass whenever it happens: TestFlight build
+24 went out 2026-09-11 from main 683ecc3, which does not carry this
+branch, so build 24 cannot serve as the iPad pass build. The pass
+still needs PR #133 merged first and a build after that.
+
+Addressed run 28 (2026-09-11): rebased onto 683ecc3 and re-audited the
+paywall cap against #163's rewrite, plus re-grepped `index.tsx` (Kept-dot,
+#164) and `insights.tsx` (#161) as instructed. All four decision-1 footer
+caps and both paywall scroll/footer caps survive intact; see Status above
+for the two conflicts (both mechanical, both resolved keeping both sides)
+and the full re-audit detail. No new plan work; tsc and the full suite
+(118/1233) are green.

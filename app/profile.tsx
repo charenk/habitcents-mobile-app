@@ -39,7 +39,7 @@ import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { useToast } from '@/components/ui/Toast';
 import { hapticError } from '@/utils/motion';
-import { spacing, typeScale, layout } from '@/constants/theme';
+import { contentColumnStyle, spacing, typeScale, layout } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -282,6 +282,7 @@ function createStyles(theme: AppTheme) {
       // rows below it now that both share the same header component.
       paddingHorizontal: 20,
       paddingBottom: layout.screenBottomClearance,
+      ...contentColumnStyle,
     },
     eyebrow: {
       fontFamily: theme.fonts.uiSemibold,
