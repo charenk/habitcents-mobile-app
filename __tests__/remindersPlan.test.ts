@@ -19,6 +19,7 @@ import {
   reminderFingerprint,
   type ReminderPrefs,
 } from '@/utils/reminders/plan';
+import { strings } from '@/constants/strings';
 import type { Expense } from '@/types/expense';
 
 // Fixed clock: Friday Sep 25 2026, noon. Everything below is relative to it.
@@ -44,7 +45,7 @@ function bill(overrides: Partial<Expense> = {}): Expense {
 }
 
 function plan(expenses: Expense[], prefs = PREFS, permission: 'granted' | 'denied' | 'undetermined' = 'granted', now = NOW) {
-  return desiredReminders(expenses, prefs, permission, now, fmt);
+  return desiredReminders(expenses, prefs, permission, now, fmt, strings);
 }
 
 describe('gates that empty the whole set', () => {

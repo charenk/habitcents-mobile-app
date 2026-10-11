@@ -42,7 +42,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { hapticSelection } from '@/utils/motion';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { radii, shadows, typeScale, type AppTheme } from '@/constants/theme';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
 import { selectableLabel } from '@/utils/a11y';
 
 // Track padding (also the inter-segment gap): the nesting rule this file and
@@ -84,6 +84,7 @@ export function SpentKeptChips({
   keptStarted = true,
 }: SpentKeptChipsProps): React.JSX.Element {
   const theme = useTheme();
+  const strings = useStrings();
   const { format } = useCurrency();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
@@ -119,7 +120,7 @@ export function SpentKeptChips({
         }}
         accessibilityRole="tab"
         accessibilityState={{ selected: spentSelected }}
-        accessibilityLabel={selectableLabel(spentValueLabel, spentSelected)}
+        accessibilityLabel={selectableLabel(spentValueLabel, spentSelected, strings)}
         style={[styles.segment, spentSelected ? styles.segmentSelected : null]}
         // DI-7: a stable non-a11y hook for tests, since both Today panes now
         // stay mounted and can carry their own "Kept"/"Spent"-prefixed a11y
@@ -130,6 +131,9 @@ export function SpentKeptChips({
         <Text
           style={[styles.eyebrow, spentSelected ? styles.eyebrowSpentSelected : null]}
           maxFontSizeMultiplier={1.5}
+          // Overflow hardening: a longer translated eyebrow (German/French)
+          // must not wrap and misalign the amount below it.
+          numberOfLines={1}
         >
           {strings.today.spentChipLabel}
         </Text>
@@ -161,7 +165,7 @@ export function SpentKeptChips({
         }}
         accessibilityRole="tab"
         accessibilityState={{ selected: keptSelected }}
-        accessibilityLabel={selectableLabel(keptValueLabel, keptSelected) + pendingSuffix}
+        accessibilityLabel={selectableLabel(keptValueLabel, keptSelected, strings) + pendingSuffix}
         style={[styles.segment, keptSelected ? styles.segmentSelected : null]}
         testID="kept-chip"
       >
@@ -169,6 +173,7 @@ export function SpentKeptChips({
           <Text
             style={[styles.eyebrow, keptSelected ? styles.eyebrowKeptSelected : null]}
             maxFontSizeMultiplier={1.5}
+            numberOfLines={1}
           >
             {strings.today.keptChipLabel}
           </Text>

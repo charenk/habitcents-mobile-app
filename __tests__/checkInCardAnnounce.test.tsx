@@ -36,6 +36,7 @@ import { AccessibilityInfo } from 'react-native';
 import { cleanup, render } from '@testing-library/react-native';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
+import { LocaleProvider } from '@/contexts/LocaleContext';
 import { CheckInCard } from '@/components/habit-logging/CheckInCard';
 import { formatMoney } from '@/utils/currency';
 import { strings } from '@/constants/strings';
@@ -95,7 +96,9 @@ function makeGoal(overrides: Partial<HabitChangeGoal> = {}): HabitChangeGoal {
 function Providers({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider>
-      <CurrencyProvider>{children}</CurrencyProvider>
+      <LocaleProvider>
+        <CurrencyProvider>{children}</CurrencyProvider>
+      </LocaleProvider>
     </ThemeProvider>
   );
 }

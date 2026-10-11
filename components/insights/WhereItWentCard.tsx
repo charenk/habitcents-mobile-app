@@ -13,8 +13,8 @@ import { useCurrency } from '@/contexts/CurrencyContext';
 import { categoryEmoji, categoryIdentityColor } from '@/constants/categoryEmoji';
 import { radii, spacing, typeScale, type AppTheme } from '@/constants/theme';
 import type { SpendingByCategory } from '@/types/report';
-import { strings } from '@/constants/strings';
 import { useAccessibilityTextSize } from '@/utils/textScale';
+import { useStrings } from '@/utils/i18n';
 
 type WhereItWentCardProps = {
   /** Rows straight from ReportsContext.calculateSpendingByCategory. */
@@ -27,6 +27,7 @@ export function WhereItWentCard({ rows, rangeLabel }: WhereItWentCardProps) {
   const stacked = useAccessibilityTextSize();
   const theme = useTheme();
   const { format } = useCurrency();
+  const strings = useStrings();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   const sorted = useMemo(() => [...rows].sort((a, b) => b.amount - a.amount), [rows]);

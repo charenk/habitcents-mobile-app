@@ -18,6 +18,7 @@ import { act, cleanup, fireEvent, render } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
+import { LocaleProvider } from '@/contexts/LocaleContext';
 import { ToastProvider } from '@/components/ui/Toast';
 import { ExpensesProvider } from '@/contexts/ExpensesContext';
 import { BillsScreen } from '@/components/leak-scan/BillsScreen';
@@ -81,13 +82,15 @@ async function renderBills(result: ScanResult = scanResult()) {
   const view = await render(
     <SafeAreaProvider initialMetrics={initialMetrics}>
       <ThemeProvider>
-        <CurrencyProvider>
-          <ToastProvider>
-            <ExpensesProvider>
-              <BillsScreen offer={buildBillsOffer(result)} result={result} onDone={onDone} />
-            </ExpensesProvider>
-          </ToastProvider>
-        </CurrencyProvider>
+        <LocaleProvider>
+          <CurrencyProvider>
+            <ToastProvider>
+              <ExpensesProvider>
+                <BillsScreen offer={buildBillsOffer(result)} result={result} onDone={onDone} />
+              </ExpensesProvider>
+            </ToastProvider>
+          </CurrencyProvider>
+        </LocaleProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );

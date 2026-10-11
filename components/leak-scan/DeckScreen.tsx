@@ -5,7 +5,7 @@ import { Button } from '@/components/ui';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { useTheme } from '@/contexts/ThemeContext';
 import { spacing, typeScale, type AppTheme } from '@/constants/theme';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
 import { BiggestLeakCard } from './BiggestLeakCard';
 import { useTrackLeak } from './useTrackLeak';
 import { bucketCents, track } from '@/utils/analytics';
@@ -47,6 +47,7 @@ export function DeckScreen({
   onBack,
 }: DeckScreenProps) {
   const theme = useTheme();
+  const strings = useStrings();
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
@@ -80,7 +81,7 @@ export function DeckScreen({
   // the same reason ResultsScreen and IntakeScreen announce themselves).
   useEffect(() => {
     AccessibilityInfo.announceForAccessibility(strings.leakScan.deckTitle);
-  }, []);
+  }, [strings]);
 
   // One impression per card, keyed on the stem alone (not the render index:
   // see dealRef above), at its deal-time position. Without the ref the

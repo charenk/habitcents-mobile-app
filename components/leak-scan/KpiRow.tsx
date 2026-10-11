@@ -3,7 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { radii, spacing, typeScale, type AppTheme } from '@/constants/theme';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
 import { TierBadge } from './TierBadge';
 import type { KpiSummary } from '@/utils/leakScan/resultsSummary';
 
@@ -25,6 +25,7 @@ type KpiRowProps = {
 export function KpiRow({ kpi, evidenceWindow }: KpiRowProps) {
   const theme = useTheme();
   const { format } = useCurrency();
+  const strings = useStrings();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   const purchasesPerDayLabel = strings.leakScan.kpiPurchasesPerDay(kpi.purchasesPerDay.toFixed(1));

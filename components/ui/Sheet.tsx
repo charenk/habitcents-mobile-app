@@ -45,8 +45,8 @@ import type { AppTheme } from '@/constants/theme';
 import { useReducedMotion } from '@/utils/motion';
 import { useKeyboardHeight } from '@/utils/keyboard';
 import { sheetMaxHeight } from '@/utils/sheetLayout';
-import { strings } from '@/constants/strings';
 import { ScrollFade } from '@/components/ui/ScrollFade';
+import { useStrings } from '@/utils/i18n';
 
 /**
  * Shorter than the Today panes' 36: that fade covers a 24pt end padding, this
@@ -102,6 +102,7 @@ export function Sheet({
   const reduceMotion = useReducedMotion();
   const { height: windowHeight } = useWindowDimensions();
   const keyboardHeight = useKeyboardHeight();
+  const strings = useStrings();
   const styles = React.useMemo(() => createStyles(theme), [theme]);
 
   // Keep the Modal mounted through the exit animation before unmounting.

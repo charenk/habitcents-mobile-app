@@ -17,7 +17,7 @@
  */
 
 import type { MilestoneThreshold } from '@/types/habit';
-import { strings } from '@/constants/strings';
+import type { Catalog } from '@/utils/i18n';
 
 export type CoachMomentTrigger = 'first_log' | 'detection' | 'skip' | 'milestone' | 'broken_streak';
 
@@ -242,7 +242,7 @@ export function selectCheckInMoment(
 }
 
 /** Resolves a card id to its copy (verbatim from strings.coachMoments). */
-export function cardText(cardId: CoachMomentCardId): string {
+export function cardText(cardId: CoachMomentCardId, strings: Catalog): string {
   const c = strings.coachMoments;
   switch (cardId) {
     case 'FL-1': return c.fl1;

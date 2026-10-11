@@ -30,7 +30,7 @@ import { Icon } from '@/components/ui/Icon';
 import { CoachMomentSlot } from '@/components/habit-logging/CoachMomentSlot';
 import { useTheme } from '@/contexts/ThemeContext';
 import { spacing, typeScale, type AppTheme } from '@/constants/theme';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
 
 const DOT_SIZE = 20;
 
@@ -67,6 +67,7 @@ export function LeakRow({
   detected,
 }: LeakRowProps): React.JSX.Element {
   const theme = useTheme();
+  const strings = useStrings();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   const buyDays = days7.filter(Boolean).length;

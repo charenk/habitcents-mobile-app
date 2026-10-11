@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { typeScale, type AppTheme } from '@/constants/theme';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
 import type { FileScan } from '@/utils/leakScan/types';
 
@@ -24,6 +24,7 @@ type ResultsFooterProps = {
  */
 export function ResultsFooter({ files, duplicatesMerged, transfersNetted, onUndo }: ResultsFooterProps) {
   const theme = useTheme();
+  const strings = useStrings();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [confirming, setConfirming] = useState(false);
 
