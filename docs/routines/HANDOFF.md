@@ -113,6 +113,28 @@ log touched.
 
 ## Status
 
+Run 152 (2026-10-12). Re-verified per this file's own COMPLETE instruction:
+plan fully checked, nothing new to do. `origin/main` (mobile-app) has not
+moved since run 148's check (still `3a01b88`), so no rebase and no new
+regression surface this run. No unaddressed REVIEW FEEDBACK: run 148's two
+items stand; re-read issue #139 (`charenk/habitcents-mobile-app`, not the
+ops repo), now its thirty-eighth orchestrator entry, updated
+2026-10-12T12:05:18Z. The one new correction in that update is addressed to
+core-worker (a stale-SHA misread), not to this routine; ipad-worker's own
+section is unchanged: **approved, nothing owed**, blocker unchanged (the
+device pass, gated on PR #133 merging behind #132's payments gate), decision
+queue now day 35, next re-ping held at 2026-10-14. Fresh `npm ci`,
+`npx tsc --noEmit` clean. Full suite green on the first pass, no flake: 128
+suites / 1419 tests, zero drift from run 151. Confirmed item 7 (`app.json`
+still `"orientation": "portrait"`, `"supportsTablet": true`). PR #133
+re-checked via `get`/`get_check_runs`: still open, not draft, base `3a01b88`
+(main's tip, unchanged), head `ff976d3` (run 151's own commit, unchanged,
+nothing pushed by this branch since). The `verify` check run on that head
+(job 114720409489, run 38222053702, 2026-10-12T08:11:22Z-08:12:37Z) is
+`success`, and `mergeable_state` reads `clean`. No production code changed
+this run; this file is the only change, plus the routine's usual runs.log
+append on habitcents-ops main.
+
 Run 151 (2026-10-12). Re-verified per this file's own COMPLETE instruction:
 plan fully checked, nothing new to do. No unaddressed REVIEW FEEDBACK (run
 148's two items stand; issue #139's orchestrator run 37 entry, last updated
