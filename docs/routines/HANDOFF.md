@@ -1,5 +1,46 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 149, 2026-10-12: re-verify, no new work)
+
+`origin/main` unchanged at `3a01b88` (since 09-26; fresh `git fetch origin
+main routine/core-p3`); no rebase needed (`0 158` ahead/behind), branch tip
+unchanged at `d8abf85` (run 148's own commit), pre-push. PR #132
+re-confirmed via the API: open, not draft, `merged: false`,
+`mergeable_state: clean`, head `d8abf85` matching pre-push tip, base
+`3a01b88` matching main's tip, 158 commits, 1 comment (run 148's own flake
+note), 0 reviews. The `verify` check run on this head (job
+`114659949230`, run `38202893440`, 2026-10-12T04:13-04:14Z) came back
+`success`: the recurring `habitDetection.test.ts` `spanDays` flake (issue
+#139 item 12) that failed run 148's push cleared on the fresh head exactly
+as run 148 predicted. PLAN.md checklist unchanged (zero `[ ]` items beyond
+the legend line). No REVIEW FEEDBACK pending. Issue #139
+(`charenk/habitcents-mobile-app#139`, corrected lookup this run: it lives
+in the mobile-app repo, not ops, both repos checked to confirm) re-read via
+the API: still the thirty-seventh orchestrator entry, `updated_at`
+unchanged at `2026-10-11T12:06:26Z`, core-worker's own section still
+"approved, nothing owed," blocked on the payments gate (decisions 2-4).
+Decision queue unchanged at day 34, day-30 re-ping already fired
+2026-10-07, next board checkpoint 2026-10-14 (day 37), not yet reached (2
+days out). Ops `PUNCHLIST.md` RESUME marker re-read fresh: still the
+bill-reminders/`EXPO_TOKEN` stream, not core-p3-flagged; the one
+core-p3-flagged line (leak finder dated entitlement) unchanged, already
+built and closed on this branch at run 8. Noted in passing, not acted on
+(outside this stream's isolation per CLAUDE.md): `habitcents-ops` main was
+rewritten again between the last check and this one (`524dbee` is no
+longer an ancestor of the new tip `3f434b1`); unlike the run 146 incident,
+a full old-vs-new `docs/runs.log` line diff this run found zero lines
+missing, including this stream's own run 148 line, so no restore needed
+and no action taken beyond this note. Fresh `npm ci`, `npx tsc --noEmit`
+clean, `npm test` green on the first pass (131 suites / 1451 tests, no
+repeat of the flake locally, zero drift from run 148). One commit (this
+entry), pushed to `routine/core-p3`.
+
+No push notification: nothing in this stream's own facts has changed
+since run 148 beyond the predicted flake clearing and a second
+already-handled ops-main history rewrite with no data lost; the
+payments-gate blocker itself is unchanged and the next actionable
+checkpoint stays 2026-10-14 (day 37).
+
 ## COMPLETE (run 148, 2026-10-12: re-verify, CI flake occurrence on our own head, no new plan work)
 
 `origin/main` unchanged at `3a01b88` (since run 85; fresh `git fetch origin
