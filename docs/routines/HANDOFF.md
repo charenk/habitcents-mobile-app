@@ -1,5 +1,52 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 148, 2026-10-12: re-verify, CI flake occurrence on our own head, no new plan work)
+
+`origin/main` unchanged at `3a01b88` (since run 85; fresh `git fetch origin
+main routine/core-p3`); no rebase needed
+(`git rev-list --left-right --count origin/main...origin/routine/core-p3`
+= `0 157`, branch tip unchanged at `e675b33` (run 147's own commit),
+pre-push). PR #132 re-confirmed via the API: open, not draft, `merged:
+false`, 157 commits, 0 comments beyond this run's own. The one new fact
+this run: `mergeable_state` read `unstable` (not the usual `clean`) because
+the `verify` check run on `e675b33` had failed
+(run `38179455004`/job `114588719036`, 2026-10-11T22:12-22:13Z). Pulled the
+job log: 130/131 suites passed, the sole failure was
+`__tests__/habitDetection.test.ts`'s `spanDays` assertion
+(`Expected: 0`, `Received: 1.1574074074074074e-8`), exactly the recurring
+main-owned float flake tracked as status-board issue #139 item 12 (third+
+occurrence; "no routine branch will fix it," real fix is a one-line patch
+against `utils/habitDetection.ts` already written up in PR #133's
+`issuecomment-5727178382`/`issuecomment-5754512815`). `habitDetection.ts`
+is untouched on this branch. Classified as the known flake, not this PR's:
+tried `rerun_failed_jobs` via the API first (403, resource not accessible
+by this integration, a permissions gap, not something to retry into) then
+posted one PR comment documenting the occurrence per the existing flake
+protocol, no out-of-scope fix attempted. PLAN.md checklist unchanged (zero
+`[ ]` items beyond the legend line). Issue #139 (status board) re-read via
+the API: unchanged since run 147's read, still the thirty-seventh
+orchestrator entry (`updated_at` still `2026-10-11T12:06:26Z`),
+core-worker's own section still "approved, nothing owed," blocked on the
+payments gate (decisions 2-4). Decision queue unchanged at day 34, next
+board checkpoint still 2026-10-14 (day 37), not yet reached. Ops
+`PUNCHLIST.md` RESUME marker re-read fresh: still the
+bill-reminders/`EXPO_TOKEN` stream, not core-p3-flagged; the one
+core-p3-flagged line (leak finder dated entitlement) unchanged, already
+built and closed on this branch at run 8, still waiting on PR #132 to
+merge. Fresh `npm ci` completed cleanly, `npx tsc --noEmit` clean, `npm
+test` green on the first pass this run (131 suites / 1451 tests, no
+repeat of the flake locally), zero drift from run 147. This run's own push
+(this commit) gives the PR a fresh head and a fresh `verify` run, which
+should clear the flake on its own per the documented pattern. One commit
+(this entry plus the PR comment above), pushed.
+
+Push notification: yes, narrowly. The only new fact is the CI flake
+occurrence and the 403 on `rerun_failed_jobs` (a permissions gap worth
+flagging once, though not actionable without Charen since this stream has
+no other way to trigger a re-run), both already surfaced in the PR
+comment; nothing about the payments-gate blocker itself has moved, and the
+next actionable checkpoint stays 2026-10-14 (day 37).
+
 ## COMPLETE (run 147, 2026-10-11: re-verify, no new work)
 
 `origin/main` unchanged at `3a01b88` (since run 85; fresh `git fetch origin
