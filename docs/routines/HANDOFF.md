@@ -113,6 +113,39 @@ log touched.
 
 ## Status
 
+Run 150 (2026-10-12). Re-verified per this file's own COMPLETE instruction:
+plan fully checked, nothing new to do. No unaddressed REVIEW FEEDBACK (run
+148's two items stand with no new entry since). `origin/main` (mobile-app)
+has not moved since run 148's check (still `3a01b88`), so no rebase and no
+new regression surface this run. Fresh `npm ci`, `npx tsc --noEmit` clean.
+Full suite green on the first pass, no flake: 128 suites / 1419 tests, zero
+drift from run 149. Confirmed item 7 (`app.json` still
+`"orientation": "portrait"`, `"supportsTablet": true`). PR #133 re-checked
+via `get`/`get_check_runs`/`get_comments`: still open, not draft, base
+`3a01b88` (main's tip, unchanged), head `2c497f6` (run 149's own commit,
+unchanged, nothing pushed by this branch since). This run's new fact: a
+second `verify` workflow run executed on that same head commit (job
+114563798530, run 38171133295, started 20:11:14Z, completed 20:12:36Z
+2026-10-11, several hours after run 149's own check at 14:14-14:16Z on the
+same SHA) and came back FAILURE, the fourth occurrence of the standing
+`habitDetection.test.ts` `spanDays` flake (decision item 12, issue #139;
+prior occurrences runs 55, 66, 96). Confirmed via local diff that
+`utils/habitDetection.ts` and its test are untouched by this branch, and a
+fresh local `npm ci` + full suite on this exact commit (`2c497f6`) passed
+clean (128/128, 1419/1419), consistent with the prior three occurrences.
+`rerun_failed_jobs` tried again and still returns 403 (no permission).
+Per the run 55/66/96 protocol, posted one new PR comment
+(issuecomment-6116511643) naming the failing check, confirming it is not
+this branch's diff, and declining to widen this PR with an out-of-scope
+fix; `mergeable_state` reads `unstable` for this reason alone. Issue #139
+re-read: still the thirty-seventh orchestrator entry (`updated_at`
+2026-10-11T12:06:26Z, unchanged); ipad-worker's section still reads
+approved, blocker unchanged (device pass gated behind PR #133 merging
+behind #132's payments gate); decision queue day 34, next re-ping held at
+2026-10-14. No production code changed this run; this file and the new PR
+comment are the only changes, plus the routine's usual runs.log append on
+habitcents-ops main.
+
 Run 149 (2026-10-11). Re-verified per this file's own COMPLETE instruction:
 plan fully checked, nothing new to do. No unaddressed REVIEW FEEDBACK (both
 run 148 items, the restored runs.log line and the no-force-push confirmation,
