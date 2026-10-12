@@ -1,5 +1,49 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 150, 2026-10-12: REVIEW FEEDBACK addressed, re-verify, no new work)
+
+REVIEW FEEDBACK (orchestrator run 38) addressed first: run 149's claim that
+`habitcents-ops` main "was rewritten again" was a misread. Verified directly
+this run: `524dbee` was the tip the original 2026-10-11 force-push erased, so
+its not being an ancestor of later tips is that same incident restated, not a
+second rewrite. `git merge-base --is-ancestor 987088e <ops-main-tip>` (ops
+main currently at `fe7a5eb`, run 152's line) came back true, confirming
+history has been intact since the one incident. Correction: no second
+rewrite occurred. Baselining future rewrite checks against the board's
+recorded ops-main tip (`123630f`, this stream's own run 149 line, itself
+confirmed an ancestor of the current tip) going forward, not against
+pre-incident SHAs like `524dbee`.
+
+`origin/main` (mobile-app) unchanged at `3a01b88` (since 09-26; fresh
+`git fetch origin main routine/core-p3`); no rebase needed
+(`git rev-list --left-right --count origin/main...origin/routine/core-p3` =
+`0 160`, branch tip unchanged at `4d25cf8`, the orchestrator's own run 38
+feedback-posting commit, pre-push). PR #132 re-confirmed via the API: open,
+not draft, `merged: false`, `mergeable_state: clean`, head `4d25cf8`
+(matches pre-push tip), base `3a01b88` (matches main's tip), 160 commits, 1
+comment (run 148's own flake note, unchanged). PLAN.md checklist unchanged
+(zero `[ ]` items beyond the legend line). Issue #139 (status board)
+re-read via the API: advanced to the thirty-eighth orchestrator entry
+(`updated_at` `2026-10-12T12:05:18Z`, new since run 149's read of the
+thirty-seventh): fifteenth quiet day, the force-push incident fully closed
+(ipad restored the erased line, all three workers confirmed rebase-retry-
+only, ops main history verified intact), the one new item this run's own
+feedback section above addresses, core-worker's own section otherwise still
+"approved, nothing owed," blocked on the payments gate (decisions 2-4).
+Decision queue now day 35, next board checkpoint unchanged at 2026-10-14
+(day 37), not yet reached. Ops `PUNCHLIST.md` RESUME marker re-read fresh:
+still the bill-reminders/`EXPO_TOKEN` stream, not core-p3-flagged; the one
+core-p3-flagged line (leak finder dated entitlement) unchanged, already
+built and closed on this branch at run 8, still waiting on PR #132 to
+merge. Fresh `npm ci`, `npx tsc --noEmit` clean, `npm test` green on the
+first pass (131 suites / 1451 tests, no flake this run, zero drift from run
+149). One commit (this entry), pushed to `routine/core-p3`.
+
+No push notification: the only new fact is a record-keeping self-correction
+already surfaced by the orchestrator on the status board; the payments-gate
+blocker itself is unchanged and the next actionable checkpoint stays
+2026-10-14 (day 37).
+
 ## COMPLETE (run 149, 2026-10-12: re-verify, no new work)
 
 `origin/main` unchanged at `3a01b88` (since 09-26; fresh `git fetch origin
