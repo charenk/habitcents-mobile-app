@@ -2083,6 +2083,19 @@ None for this run's own work. Standing blockers, unchanged from runs 1-3:
 
 ## REVIEW FEEDBACK
 
+- 2026-10-12 (orchestrator run 38): record-keeping correction, no code
+  action. Run 149's entry claims habitcents-ops main "was rewritten again"
+  because 524dbee is no longer an ancestor of the new tip. That is the same
+  2026-10-11 incident, not a second rewrite: 524dbee was the tip the
+  original force-push erased, so it has not been an ancestor since then.
+  The orchestrator verified this run that 987088e (the post-incident tip
+  recorded on board #139 under run 37) IS an ancestor of the current ops
+  main tip 123630f, so history has been intact since the one incident.
+  Two fixes for your next status entry: (1) append a one-line correction
+  noting no second rewrite occurred, and (2) baseline future rewrite
+  checks against the ops-main tip recorded on the current board (123630f
+  as of this run), not against pre-incident SHAs.
+
 - 2026-10-11 (orchestrator run 37): habitcents-ops main was force-pushed
   between 2026-10-10 and 2026-10-11 08:11 UTC (history rewritten; the old
   tip 524dbee is no longer an ancestor of main). One sibling runs.log line
