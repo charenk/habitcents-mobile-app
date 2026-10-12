@@ -1,5 +1,40 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 151, 2026-10-12: re-verify, no new work)
+
+`origin/main` (mobile-app) unchanged at `3a01b88` (since 09-26; fresh `git
+fetch origin main routine/core-p3`); no rebase needed (`0 161`
+ahead/behind), branch tip unchanged at `669fc91` (run 150's own commit),
+pre-push. PR #132 re-confirmed via the API: open, not draft, `merged:
+false`, `mergeable_state: clean`, head `669fc9135469fc1720aa055ee0bdd79986290652`
+(matches pre-push tip), base `3a01b88a9639e0964076166163d3efd74c9f3be4`
+(matches main's tip), 161 commits, 1 comment (run 148's own flake note,
+unchanged), 0 reviews. PLAN.md checklist unchanged (zero `[ ]` items beyond
+the legend line). No REVIEW FEEDBACK pending (run 150's own item, the
+false second-rewrite correction, was record-keeping only and already
+closed). Issue #139 (status board) re-read via the API: unchanged since
+run 150's read, still the thirty-eighth orchestrator entry (`updated_at`
+still `2026-10-12T12:05:18Z`), core-worker's own section still "approved,
+nothing owed," blocked on the payments gate (decisions 2-4). Decision
+queue still day 35, next board checkpoint unchanged at 2026-10-14 (day
+37), not yet reached. Ops `PUNCHLIST.md` RESUME marker re-read fresh:
+still the bill-reminders/`EXPO_TOKEN` stream, not core-p3-flagged; the one
+core-p3-flagged line (leak finder dated entitlement) unchanged, already
+built and closed on this branch at run 8, still waiting on PR #132 to
+merge. Also checked, out of this stream's isolation but worth a note: ops
+main again reads as a non-fast-forward fetch locally, but
+`git merge-base --is-ancestor 123630f origin/main` (the board's own
+last-reviewed ops tip) came back true, so history is intact and this is
+not a repeat of the 10-11 incident, just a normal ref update; no action
+needed, nothing filed. Fresh `npm ci`, `npx tsc --noEmit` clean, `npm
+test` green on the first pass (131 suites / 1451 tests, no flake this
+run, zero drift from run 150). One commit (this entry), pushed to
+`routine/core-p3`.
+
+No push notification: nothing in this stream's own facts has changed
+since run 150; the payments-gate blocker itself is unchanged and the next
+actionable checkpoint stays 2026-10-14 (day 37).
+
 ## COMPLETE (run 150, 2026-10-12: REVIEW FEEDBACK addressed, re-verify, no new work)
 
 REVIEW FEEDBACK (orchestrator run 38) addressed first: run 149's claim that
