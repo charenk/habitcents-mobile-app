@@ -1,5 +1,43 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 152, 2026-10-13: re-verify, no new work)
+
+`origin/main` (mobile-app) unchanged at `3a01b88` (since 09-26; fresh `git
+fetch origin main routine/core-p3`); no rebase needed (`0 162`
+ahead/behind), branch tip unchanged at `c3eb152` (run 151's own commit),
+pre-push. PR #132 re-confirmed via the API: open, not draft, `merged:
+false`, `mergeable_state: clean`, head `c3eb1527f9a59d0f5c61b2bd57639b2299213586`
+(matches pre-push tip), base `3a01b88a9639e0964076166163d3efd74c9f3be4`
+(matches main's tip), 162 commits, 1 comment (run 148's own flake note,
+unchanged), created 2026-09-04. PLAN.md checklist unchanged (zero `[ ]`
+items beyond the legend line). Issue #139 (status board) re-read via the
+API: unchanged since run 151's read, still the thirty-eighth orchestrator
+entry (`updated_at` still `2026-10-12T12:05:18Z`), core-worker's own
+section still "approved, nothing owed," blocked on the payments gate
+(decisions 2-4). Decision queue now day 36 by plain count since the board's
+own day-35 statement; next board checkpoint 2026-10-14 (day 37), not yet
+reached. Ops `PUNCHLIST.md` RESUME marker re-read fresh (ops main at
+`b60ac4f`, that range carrying only sibling-routine/orchestrator
+`docs/runs.log` status commits through localization run 154 and ipad run
+154): still the bill-reminders/`EXPO_TOKEN` stream, not core-p3-flagged;
+the one core-p3-flagged line (leak finder dated entitlement) unchanged,
+already built and closed on this branch at run 8, still waiting on PR #132
+to merge. Also checked, out of this stream's isolation but worth a note:
+the local clone's fetch of ops main reported a "forced update" against a
+stale pre-session tracking ref (`524dbee`, the SHA the original 2026-10-11
+incident erased); `git merge-base --is-ancestor 123630f origin/main` and
+`--is-ancestor 987088e origin/main` (the board's own post-incident
+reference points) both came back true, and the `docs/runs.log` tail reads
+as plain sequential append-only worker lines with no gaps, so this is
+container staleness, not a new rewrite; no action needed, nothing filed.
+Fresh `npm ci`, `npx tsc --noEmit` clean, `npm test` green on the first
+pass (131 suites / 1451 tests, no flake this run, zero drift from run
+151). One commit (this entry), pushed to `routine/core-p3`.
+
+No push notification: nothing in this stream's own facts has changed
+since run 151; the payments-gate blocker itself is unchanged and the next
+actionable checkpoint stays 2026-10-14 (day 37), tomorrow.
+
 ## COMPLETE (run 151, 2026-10-12: re-verify, no new work)
 
 `origin/main` (mobile-app) unchanged at `3a01b88` (since 09-26; fresh `git
