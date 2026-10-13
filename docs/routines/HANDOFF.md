@@ -1,5 +1,36 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 153, 2026-10-13: re-verify, no new work)
+
+`origin/main` (mobile-app) unchanged at `3a01b88` (since 09-26; fresh `git
+fetch origin main routine/core-p3`); no rebase needed (`0 163`
+ahead/behind), branch tip unchanged at `21ffe0d` (run 152's own commit),
+pre-push, local clone already matched `origin/routine/core-p3` exactly
+(`0 0`). PR #132 re-confirmed via the API: open, not draft, `merged:
+false`, `mergeable_state: clean`, head `21ffe0d4e0bdc032c0f7c936eb5196f4c2df9b4b`
+(matches pre-push tip), base `3a01b88a9639e0964076166163d3efd74c9f3be4`
+(matches main's tip), 163 commits, 1 comment (run 148's own flake note,
+unchanged). PLAN.md checklist unchanged (zero `[ ]` items beyond the
+legend line). No REVIEW FEEDBACK pending (run 150's record-keeping
+correction stays closed; nothing new since). Issue #139 (status board)
+re-read via the API: unchanged since run 152's read, still the
+thirty-eighth orchestrator entry (`updated_at` still
+`2026-10-12T12:05:18Z`), core-worker's own section still "approved,
+nothing owed," blocked on the payments gate (decisions 2-4). Decision
+queue still day 36 by plain count since the board's own day-35 statement;
+next board checkpoint 2026-10-14 (day 37), not yet reached. Ops
+`PUNCHLIST.md` RESUME marker re-read fresh: still the
+bill-reminders/`EXPO_TOKEN` stream, not core-p3-flagged; the one
+core-p3-flagged line (leak finder dated entitlement) unchanged, already
+built and closed on this branch at run 8, still waiting on PR #132 to
+merge. Fresh `npm ci`, `npx tsc --noEmit` clean, `npm test` green on the
+first pass (131 suites / 1451 tests, no flake this run, zero drift from
+run 152). One commit (this entry), pushed to `routine/core-p3`.
+
+No push notification: nothing in this stream's own facts has changed
+since run 152; the payments-gate blocker itself is unchanged and the next
+actionable checkpoint stays 2026-10-14 (day 37), tomorrow.
+
 ## COMPLETE (run 152, 2026-10-13: re-verify, no new work)
 
 `origin/main` (mobile-app) unchanged at `3a01b88` (since 09-26; fresh `git
