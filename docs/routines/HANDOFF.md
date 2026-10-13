@@ -1,5 +1,39 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 154, 2026-10-13: re-verify, no new work)
+
+`origin/main` (mobile-app) unchanged at `3a01b88` (since 09-26; fresh `git
+fetch origin main`); no rebase needed (`0 164` ahead/behind), branch tip
+unchanged at `acfc953` (run 153's own commit), pre-push. PR #132
+re-confirmed via the API: open, not draft, `merged: false`,
+`mergeable_state: clean`, head `acfc953a9b105402e31bf4939b3f6b8afeb4ee68`
+(matches pre-push tip), base `3a01b88a9639e0964076166163d3efd74c9f3be4`
+(matches main's tip), 164 commits, 1 comment (run 148's own flake note,
+unchanged). PLAN.md checklist unchanged (zero `[ ]` items beyond the
+legend line). No REVIEW FEEDBACK pending. Issue #139 (status board)
+re-read via the API: advanced to the thirty-ninth orchestrator entry
+(`updated_at` `2026-10-13T12:03:25Z`, new since run 153's read of the
+thirty-eighth): sixteenth quiet day, 12 worker runs reviewed (all
+HANDOFF-only insertions), core-worker's own run 150 feedback-closure and
+run 152 staleness call both confirmed correct, item 12 flake quiet this
+cycle (zero occurrences), core-worker's own section still "approved,
+nothing owed," blocked on the payments gate (decisions 2-4). Decision
+queue now day 36, next board checkpoint unchanged at 2026-10-14 (day 37),
+not yet reached. Ops `PUNCHLIST.md` RESUME marker re-read fresh (ops main
+fast-forwarded `8c66f33..7aeae14`, that range carrying only sibling-
+routine/orchestrator `docs/runs.log` status commits through localization
+run 156 and ipad run 156): still the bill-reminders/`EXPO_TOKEN` stream,
+not core-p3-flagged; the one core-p3-flagged line (leak finder dated
+entitlement) unchanged, already built and closed on this branch at run 8,
+still waiting on PR #132 to merge. Fresh `npm ci`, `npx tsc --noEmit`
+clean, `npm test` green on the first pass (131 suites / 1451 tests, no
+flake this run, zero drift from run 153). One commit (this entry), pushed
+to `routine/core-p3`.
+
+No push notification: nothing in this stream's own facts has changed
+since run 153; the payments-gate blocker itself is unchanged and the next
+actionable checkpoint stays 2026-10-14 (day 37), tomorrow.
+
 ## COMPLETE (run 153, 2026-10-13: re-verify, no new work)
 
 `origin/main` (mobile-app) unchanged at `3a01b88` (since 09-26; fresh `git
