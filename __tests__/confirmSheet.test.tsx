@@ -9,10 +9,15 @@
  * every press after the first confirm, including cancel, until `visible`
  * flips true again (the sheet reopening) resets it.
  */
+jest.mock('@react-native-async-storage/async-storage', () =>
+  require('@react-native-async-storage/async-storage/jest/async-storage-mock')
+);
+
 import React from 'react';
 import { act, cleanup, fireEvent, render } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '@/contexts/ThemeContext';
+import { LocaleProvider } from '@/contexts/LocaleContext';
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
 
 const initialMetrics = {
@@ -23,7 +28,9 @@ const initialMetrics = {
 function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SafeAreaProvider initialMetrics={initialMetrics}>
-      <ThemeProvider>{children}</ThemeProvider>
+      <ThemeProvider>
+        <LocaleProvider>{children}</LocaleProvider>
+      </ThemeProvider>
     </SafeAreaProvider>
   );
 }

@@ -49,7 +49,7 @@ import { Button } from '@/components/ui/Button';
 import { Sheet } from '@/components/ui/Sheet';
 import { useTheme } from '@/contexts/ThemeContext';
 import { radii, spacing, typeScale, type AppTheme } from '@/constants/theme';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
 
 export type HowItWorksSheetProps = {
   visible: boolean;
@@ -135,6 +135,7 @@ function PhaseRow({
 
 export function HowItWorksSheet({ visible, onClose }: HowItWorksSheetProps) {
   const theme = useTheme();
+  const strings = useStrings();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const breakRows = strings.today.howItWorksBreakRows;
 

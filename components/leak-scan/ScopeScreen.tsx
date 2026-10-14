@@ -6,7 +6,7 @@ import { EmojiTile } from '@/components/ui/EmojiTile';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { useTheme } from '@/contexts/ThemeContext';
 import { radii, spacing, typeScale, type AppTheme } from '@/constants/theme';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
 import { categoryEmoji, categoryIdentityColor } from '@/constants/categoryEmoji';
 import { categoryDisplayLabel } from '@/utils/leakScanBridge';
 import { categoriesInTier, selectedCategories, type ScanScope } from '@/utils/leakScan/scope';
@@ -32,6 +32,7 @@ type ScopeScreenProps = {
  */
 export function ScopeScreen({ scope, onToggle, onConfirm, onBack }: ScopeScreenProps) {
   const theme = useTheme();
+  const strings = useStrings();
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(theme), [theme]);
   // Confirming persists rules AND writes the scan summary, so a double tap
@@ -62,7 +63,7 @@ export function ScopeScreen({ scope, onToggle, onConfirm, onBack }: ScopeScreenP
   // that asks the user for a decision.
   useEffect(() => {
     AccessibilityInfo.announceForAccessibility(strings.leakScan.scopeTitle);
-  }, []);
+  }, [strings]);
 
   return (
     <View style={styles.screen}>

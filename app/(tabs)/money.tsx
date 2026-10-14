@@ -38,7 +38,6 @@ import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { categoryEmoji, categoryIdentityColor } from '@/constants/categoryEmoji';
 import { habitLeakGlyph } from '@/constants/onboardingPresets';
-import { strings } from '@/constants/strings';
 import { layout, spacing, type AppTheme } from '@/constants/theme';
 import { useCategories } from '@/contexts/CategoriesContext';
 import { useOnboarding } from '@/contexts/OnboardingContext';
@@ -59,6 +58,7 @@ import {
 } from '@/utils/upcomingWindow';
 import { track } from '@/utils/analytics';
 import { useSegmentPager } from '@/utils/useSegmentPager';
+import { useStrings } from '@/utils/i18n';
 
 
 type MoneyView = 'spent' | 'upcoming' | 'habits';
@@ -71,6 +71,7 @@ export default function MoneyScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const theme = useTheme();
+  const strings = useStrings();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   const { expenses, isLoading: expensesLoading, addExpense } = useExpenses();
@@ -368,7 +369,7 @@ export default function MoneyScreen() {
         { value: 'upcoming' as const, label: strings.money.segmentUpcoming },
         { value: 'habits' as const, label: strings.money.segmentHabits },
       ] as const,
-    []
+    [strings]
   );
 
   return (

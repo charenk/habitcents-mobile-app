@@ -42,6 +42,7 @@
 import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useStrings } from '@/utils/i18n';
 import { hapticSelection } from '@/utils/motion';
 import type { AppTheme } from '@/constants/theme';
 import { radii, shadows, typeScale } from '@/constants/theme';
@@ -96,6 +97,7 @@ export function SegmentedControl<T extends string | number>({
   tone = 'track',
 }: SegmentedControlProps<T>): React.JSX.Element {
   const theme = useTheme();
+  const strings = useStrings();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   const compact = size === 'compact';
@@ -133,7 +135,7 @@ export function SegmentedControl<T extends string | number>({
               onChange(option.value);
             }}
             accessibilityRole="tab"
-            accessibilityLabel={selectableLabel(spokenLabel, selected)}
+            accessibilityLabel={selectableLabel(spokenLabel, selected, strings)}
             accessibilityState={{ selected }}
             // UX-030: minHeight 38 sits below the 44pt target floor. The
             // track's 3pt padding plus this segment's own edge leaves 3pt of

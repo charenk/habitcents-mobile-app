@@ -27,7 +27,7 @@ import { useCategories } from '@/contexts/CategoriesContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
 import { useHabits } from '@/contexts/HabitsContext';
 import { useToast } from '@/components/ui/Toast';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
 import { VICE_CATEGORIES } from '@/constants/onboardingPresets';
 import type { BreakHabitStartData } from '@/components/onboarding/BreakHabitSheet';
 import type { ExpenseCategory } from '@/types/expense';
@@ -47,6 +47,7 @@ export function useBreakHabitStart() {
   const { addExpense } = useExpenses();
   const { getCategoryByName } = useCategories();
   const { show } = useToast();
+  const strings = useStrings();
 
   // Two things this guards, both from the stack review:
   // 1. A double tap on the async Start button must not create two habits.
@@ -127,7 +128,7 @@ export function useBreakHabitStart() {
         inFlightRef.current = false;
       }
     },
-    [seedDiscoveredHabit, startBreakingHabit, addExpense, getCategoryByName, show]
+    [seedDiscoveredHabit, startBreakingHabit, addExpense, getCategoryByName, show, strings]
   );
 
   return { start };

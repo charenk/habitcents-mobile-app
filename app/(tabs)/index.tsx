@@ -51,7 +51,7 @@ import { hapticError } from '@/utils/motion';
 import { useSegmentPager } from '@/utils/useSegmentPager';
 import { radii, shadows, spacing, typeScale, type AppTheme } from '@/constants/theme';
 import type { DetectedHabit, HabitChangeGoal } from '@/types/habit';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
 import { useToast, useToastLift } from '@/components/ui/Toast';
 
 type BreakingItem = { habit: DetectedHabit; goal: HabitChangeGoal };
@@ -73,15 +73,6 @@ const DOOR1_KEY = 'door1';
 // time; combined into a single render slot below.
 const DOOR3_KEY = 'door3';
 
-// FirstRunRibbon message keys -> copy. The hook only persists the key, so the
-// mapping (and therefore the wording) lives here with the rest of Today's copy.
-const FIRST_RUN_RIBBON_LINES: Record<string, string> = {
-  door1_saved: strings.today.firstRunRibbonSaved,
-  door1_gentle: strings.today.firstRunRibbonGentle,
-  door3_started: strings.today.door3RibbonStarted,
-  door3_gentle: strings.today.door3RibbonGentle,
-};
-
 /**
  * Today (redesign U5, ADR 0019, DI-5). Two in-page views, Spent (default) and
  * Kept, controlled by the SpentKeptChips value chips: the chips ARE the tab
@@ -100,7 +91,20 @@ export default function TodayScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const theme = useTheme();
+  const strings = useStrings();
   const styles = useMemo(() => createStyles(theme), [theme]);
+  // FirstRunRibbon message keys -> copy. The hook only persists the key, so
+  // the mapping (and therefore the wording) lives here with the rest of
+  // Today's copy.
+  const firstRunRibbonLines: Record<string, string> = useMemo(
+    () => ({
+      door1_saved: strings.today.firstRunRibbonSaved,
+      door1_gentle: strings.today.firstRunRibbonGentle,
+      door3_started: strings.today.door3RibbonStarted,
+      door3_gentle: strings.today.door3RibbonGentle,
+    }),
+    [strings]
+  );
   const [refreshing, setRefreshing] = useState(false);
   const [pickOneHabitId, setPickOneHabitId] = useState<string | null>(null);
   const [partialGoalId, setPartialGoalId] = useState<string | null>(null);
@@ -486,8 +490,8 @@ export default function TodayScreen() {
   // (both panes saw whichever door was pending). They now render inside
   // their own pane instead -- door1 in Spent, door3 in Kept -- so each door's
   // line is resolved independently rather than picking one winner.
-  const door1RibbonLine = door1MessageKey ? FIRST_RUN_RIBBON_LINES[door1MessageKey] ?? null : null;
-  const door3RibbonLine = door3MessageKey ? FIRST_RUN_RIBBON_LINES[door3MessageKey] ?? null : null;
+  const door1RibbonLine = door1MessageKey ? firstRunRibbonLines[door1MessageKey] ?? null : null;
+  const door3RibbonLine = door3MessageKey ? firstRunRibbonLines[door3MessageKey] ?? null : null;
 
   // U6's rotating quote was retired from both Today panes (ADR 0037): it did
   // not fit the app, and the zero states now give their single hook the whole
@@ -636,7 +640,7 @@ export default function TodayScreen() {
     }
 
     return result;
-  }, [discoveredHabits, candidates, sortedBreakingItems]);
+  }, [discoveredHabits, candidates, sortedBreakingItems, strings]);
 
   const handleDismissHabit = useCallback(async (habit: DetectedHabit) => {
     try {
@@ -662,7 +666,7 @@ export default function TodayScreen() {
         },
       },
     });
-  }, [dismissHabit, restoreDismissedHabit, show]);
+  }, [dismissHabit, restoreDismissedHabit, show, strings]);
 
   const handleHabitPress = useCallback((habitId: string) => {
     router.push(`/habit/${habitId}`);
@@ -843,7 +847,7 @@ export default function TodayScreen() {
               onDismiss: () => handleDismissHabit(habit),
               coachText:
                 detectionMoment?.habitId === habit.id
-                  ? cardText(detectionMoment.cardId)
+                  ? cardText(detectionMoment.cardId, strings)
                   : undefined,
             }}
           />
@@ -1069,7 +1073,7 @@ export default function TodayScreen() {
                 </View>
                 {firstLogCardId && (
                   <View style={styles.emptyCoachMoment}>
-                    <CoachMomentSlot text={cardText(firstLogCardId)} />
+                    <CoachMomentSlot text={cardText(firstLogCardId, strings)} />
                   </View>
                 )}
               </ScrollView>

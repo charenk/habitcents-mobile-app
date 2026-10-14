@@ -6,7 +6,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { formatDate, parseDateOnly } from '@/utils/dates';
 import { typeScale, type AppTheme } from '@/constants/theme';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
 import type { PulseCell } from '@/utils/leakScan/spendPulse';
 import type { ScanRow } from '@/utils/leakScan/types';
 
@@ -47,6 +47,7 @@ function formatCellDate(key: string): string {
  */
 export function PulseDayDetailSheet({ cell, rows, onClose }: PulseDayDetailSheetProps) {
   const theme = useTheme();
+  const strings = useStrings();
   const { format } = useCurrency();
   const styles = useMemo(() => createStyles(theme), [theme]);
 

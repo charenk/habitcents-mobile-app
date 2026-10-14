@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { radii, typeScale, type AppTheme } from '@/constants/theme';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
 import type { ScanQuestion } from '@/utils/leakScan/types';
 
 type QuestionCardProps = {
@@ -18,6 +18,7 @@ type QuestionCardProps = {
  */
 export function QuestionCard({ question, onAnswer }: QuestionCardProps) {
   const theme = useTheme();
+  const strings = useStrings();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   const isDateOrder = question.type === 'date-order';

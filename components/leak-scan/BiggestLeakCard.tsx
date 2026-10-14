@@ -4,7 +4,7 @@ import { Button } from '@/components/ui';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { radii, shadows, typeScale, type AppTheme } from '@/constants/theme';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
 import { habitCandidateToDetectedHabit } from '@/utils/leakScanBridge';
 import type { HabitCandidate } from '@/utils/leakScan/types';
 
@@ -42,6 +42,7 @@ type BiggestLeakCardProps = {
 export function BiggestLeakCard({ candidate, spanDays, eyebrow, onBreak, onDismiss }: BiggestLeakCardProps) {
   const theme = useTheme();
   const { format } = useCurrency();
+  const strings = useStrings();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   const habit = useMemo(

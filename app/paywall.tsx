@@ -26,9 +26,9 @@ import { Icon } from '@/components/ui/Icon';
 import { useToast } from '@/components/ui/Toast';
 import { useTheme } from '@/contexts/ThemeContext';
 import { radii, typeScale, spacing, type AppTheme } from '@/constants/theme';
-import { strings } from '@/constants/strings';
 import { hapticSelection } from '@/utils/motion';
 import { track, isPaywallPlacement } from '@/utils/analytics';
+import { useStrings } from '@/utils/i18n';
 import {
   purchase,
   restore,
@@ -52,6 +52,7 @@ export default function PaywallScreen() {
   const toast = useToast();
   const router = useRouter();
   const theme = useTheme();
+  const strings = useStrings();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   const params = useLocalSearchParams<{ placement?: string }>();

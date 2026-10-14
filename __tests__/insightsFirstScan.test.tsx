@@ -80,6 +80,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { OnboardingProvider } from '@/contexts/OnboardingContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
+import { LocaleProvider } from '@/contexts/LocaleContext';
 import { ToastProvider } from '@/components/ui/Toast';
 import { CategoriesProvider } from '@/contexts/CategoriesContext';
 import { ExpensesProvider } from '@/contexts/ExpensesContext';
@@ -105,17 +106,19 @@ function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SafeAreaProvider initialMetrics={initialMetrics}>
       <ThemeProvider>
-        <CurrencyProvider>
-          <ToastProvider>
-            <CategoriesProvider>
-              <ExpensesProvider>
-                <HabitsProvider>
-                  <ReportsProvider><OnboardingProvider>{children}</OnboardingProvider></ReportsProvider>
-                </HabitsProvider>
-              </ExpensesProvider>
-            </CategoriesProvider>
-          </ToastProvider>
-        </CurrencyProvider>
+        <LocaleProvider>
+          <CurrencyProvider>
+            <ToastProvider>
+              <CategoriesProvider>
+                <ExpensesProvider>
+                  <HabitsProvider>
+                    <ReportsProvider><OnboardingProvider>{children}</OnboardingProvider></ReportsProvider>
+                  </HabitsProvider>
+                </ExpensesProvider>
+              </CategoriesProvider>
+            </ToastProvider>
+          </CurrencyProvider>
+        </LocaleProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );
@@ -194,7 +197,8 @@ function syntheticSummary(): ScanSummary {
 function scanSegmentLabel(selected: boolean): string {
   return selectableLabel(
     `${strings.insights.scanSegment}, ${strings.insights.scanSegmentBadgeSpoken}`,
-    selected
+    selected,
+    strings
   );
 }
 
@@ -225,7 +229,7 @@ describe('Insights leak finder segment', () => {
     // state unification pass): First scan is a real destination with its own
     // fill empty state, not a segment that only appears once earned.
     expect(view.getByLabelText(strings.insights.scanSegmentControlLabel)).toBeTruthy();
-    expect(view.getByLabelText(selectableLabel(strings.insights.monthSegment, true))).toBeTruthy();
+    expect(view.getByLabelText(selectableLabel(strings.insights.monthSegment, true, strings))).toBeTruthy();
     expect(view.getByLabelText(scanSegmentLabel(false))).toBeTruthy();
 
     expect(view.getByText(strings.insights.leaksTitle)).toBeTruthy();
@@ -331,7 +335,7 @@ describe('Insights leak finder segment', () => {
 
     // Segmented control present, This month selected by default.
     expect(view.getByLabelText(strings.insights.scanSegmentControlLabel)).toBeTruthy();
-    expect(view.getByLabelText(selectableLabel(strings.insights.monthSegment, true))).toBeTruthy();
+    expect(view.getByLabelText(selectableLabel(strings.insights.monthSegment, true, strings))).toBeTruthy();
     expect(view.getByLabelText(scanSegmentLabel(false))).toBeTruthy();
 
     // This month's usual cards still render by default.

@@ -34,6 +34,7 @@ import React from 'react';
 import { act, cleanup, fireEvent, render } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '@/contexts/ThemeContext';
+import { LocaleProvider } from '@/contexts/LocaleContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { ToastProvider } from '@/components/ui/Toast';
 import { ExpensesProvider } from '@/contexts/ExpensesContext';
@@ -56,6 +57,7 @@ function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SafeAreaProvider initialMetrics={initialMetrics}>
       <ThemeProvider>
+        <LocaleProvider>
         <CurrencyProvider>
           <ToastProvider>
             <ExpensesProvider>
@@ -67,6 +69,7 @@ function Providers({ children }: { children: React.ReactNode }) {
             </ExpensesProvider>
           </ToastProvider>
         </CurrencyProvider>
+        </LocaleProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );

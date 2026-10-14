@@ -23,7 +23,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Icon } from '@/components/ui/Icon';
 import { useTheme } from '@/contexts/ThemeContext';
 import { radii, typeScale, type AppTheme } from '@/constants/theme';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
 import { withAlpha } from '@/utils/color';
 
 export type InfoRibbonProps = {
@@ -35,6 +35,7 @@ export type InfoRibbonProps = {
 
 export function InfoRibbon({ line, onDismiss, testID }: InfoRibbonProps): React.JSX.Element {
   const theme = useTheme();
+  const strings = useStrings();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   return (

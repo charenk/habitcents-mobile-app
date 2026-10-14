@@ -25,6 +25,7 @@ import React from 'react';
 import { cleanup, render } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '@/contexts/ThemeContext';
+import { LocaleProvider } from '@/contexts/LocaleContext';
 import { OnboardingCarousel, BEATS, type Beat } from '@/components/onboarding/OnboardingCarousel';
 import { strings } from '@/constants/strings';
 
@@ -43,7 +44,9 @@ async function renderCarousel(beats?: Beat[]) {
   return render(
     <SafeAreaProvider initialMetrics={initialMetrics}>
       <ThemeProvider>
-        <OnboardingCarousel onPick={jest.fn()} onSkip={jest.fn()} beats={beats} />
+        <LocaleProvider>
+          <OnboardingCarousel onPick={jest.fn()} onSkip={jest.fn()} beats={beats} />
+        </LocaleProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );

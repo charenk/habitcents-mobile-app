@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, type StyleProp, type ViewStyle } from 'react-na
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { radii, spacing, typeScale, type AppTheme } from '@/constants/theme';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
 import { keptHeroLabel } from '@/utils/a11y';
 
 type KeptHeroProps = {
@@ -27,6 +27,7 @@ type KeptHeroProps = {
  */
 export function KeptHero({ cents, style }: KeptHeroProps) {
   const theme = useTheme();
+  const strings = useStrings();
   const { format } = useCurrency();
   const styles = useMemo(() => createStyles(theme), [theme]);
 

@@ -42,6 +42,7 @@ import React from 'react';
 import { act, cleanup, fireEvent, render } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '@/contexts/ThemeContext';
+import { LocaleProvider } from '@/contexts/LocaleContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { OnboardingProvider } from '@/contexts/OnboardingContext';
 import { ToastProvider } from '@/components/ui/Toast';
@@ -57,13 +58,15 @@ async function renderScreen() {
   const view = await render(
     <SafeAreaProvider initialMetrics={initialMetrics}>
       <ThemeProvider>
-        <ToastProvider>
-          <CurrencyProvider>
-            <OnboardingProvider>
-              <CategoriesScreen />
-            </OnboardingProvider>
-          </CurrencyProvider>
-        </ToastProvider>
+        <LocaleProvider>
+          <ToastProvider>
+            <CurrencyProvider>
+              <OnboardingProvider>
+                <CategoriesScreen />
+              </OnboardingProvider>
+            </CurrencyProvider>
+          </ToastProvider>
+        </LocaleProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );

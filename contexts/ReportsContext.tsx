@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import { getDashboardConfig, saveDashboardConfig } from '@/utils/storage';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
 import { formatDate } from '@/utils/dates';
 import { resolveExpenseCategory } from '@/utils/expenseCategory';
 import type {
@@ -203,6 +203,7 @@ export function computeMonthlyProjection(
 }
 
 export function ReportsProvider({ children }: { children: React.ReactNode }) {
+  const strings = useStrings();
   const [config, setConfig] = useState<DashboardConfig>(getDefaultConfig());
   const [isLoading, setIsLoading] = useState(true);
 
@@ -375,7 +376,7 @@ export function ReportsProvider({ children }: { children: React.ReactNode }) {
 
     // Sort by date and convert to array
     return Array.from(groups.values()).sort((a, b) => a.date.getTime() - b.date.getTime());
-  }, []);
+  }, [strings]);
 
   const calculateMonthlyProjection = useCallback(
     (expenses: Expense[]): MonthlyProjection => computeMonthlyProjection(expenses),

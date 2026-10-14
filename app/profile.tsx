@@ -34,6 +34,7 @@ import {
   RemindersSheet,
   reminderTimeLabelFor,
 } from '@/components/settings/RemindersSheet';
+import { LanguageSheet } from '@/components/settings/LanguageSheet';
 import { SettingsRow } from '@/components/settings/SettingsRow';
 import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
@@ -41,30 +42,38 @@ import { useToast } from '@/components/ui/Toast';
 import { hapticError } from '@/utils/motion';
 import { spacing, typeScale, layout } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import { useLocale } from '@/contexts/LocaleContext';
 import { useOnboarding } from '@/contexts/OnboardingContext';
 import { useReminders } from '@/contexts/RemindersContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { settingsRowLabel } from '@/utils/a11y';
 import { DEV_MENU_ENABLED } from '@/utils/devMenu';
+import { localeMeta } from '@/utils/locale';
 import { clearOnboarding } from '@/utils/storage';
 import { isPremium } from '@/utils/purchases';
 
 const PRIVACY_POLICY_URL = 'https://habitcents.com/privacy';
 const TERMS_OF_SERVICE_URL = 'https://habitcents.com/terms';
-const SUPPORT_MAILTO_URL = `mailto:${strings.settings.supportEmail}`;
 
 export default function ProfileScreen(): React.JSX.Element {
   const theme = useTheme();
+  const strings = useStrings();
   const styles = useMemo(() => createStyles(theme), [theme]);
+  const supportMailtoUrl = useMemo(
+    () => `mailto:${strings.settings.supportEmail}`,
+    [strings]
+  );
   const router = useRouter();
   const { show } = useToast();
   const { currency } = useCurrency();
+  const { override: languageOverride } = useLocale();
   const { resetOnboarding } = useOnboarding();
   const { prefs: reminderPrefs, permission: reminderPermission } = useReminders();
   const [currencySheetVisible, setCurrencySheetVisible] = useState(false);
   const [remindersSheetVisible, setRemindersSheetVisible] = useState(false);
+  const [languageSheetVisible, setLanguageSheetVisible] = useState(false);
   const [startOverConfirmVisible, setStartOverConfirmVisible] = useState(false);
   // The row's value is the state a user needs before opening the sheet: the
   // default time when reminders are live, "Off" when the global switch is
@@ -87,6 +96,14 @@ export default function ProfileScreen(): React.JSX.Element {
   const handleCurrencyPress = () => {
     setCurrencySheetVisible(true);
   };
+
+  const handleLanguagePress = () => {
+    setLanguageSheetVisible(true);
+  };
+
+  const languageValue = languageOverride
+    ? localeMeta(languageOverride).nativeName
+    : strings.settings.languageSystemDefault;
 
   // Pushing the paywall on top of Profile reads naturally, so this does not
   // back() first. Placement stays 'settings' for funnel continuity even
@@ -159,6 +176,15 @@ export default function ProfileScreen(): React.JSX.Element {
           <SettingsRow
             styles={styles}
             theme={theme}
+            label={strings.settings.language}
+            value={languageValue}
+            onPress={handleLanguagePress}
+            chevron
+            accessibilityLabel={settingsRowLabel(strings.settings.language, languageValue)}
+          />
+          <SettingsRow
+            styles={styles}
+            theme={theme}
             label={strings.settings.subscriptionRow}
             value={subscriptionValue}
             onPress={handleSubscriptionPress}
@@ -171,7 +197,7 @@ export default function ProfileScreen(): React.JSX.Element {
             label={strings.profile.supportRow}
             value={strings.settings.supportEmail}
             onPress={() => {
-              openExternal(SUPPORT_MAILTO_URL, strings.settings.mailOpenFailed);
+              openExternal(supportMailtoUrl, strings.settings.mailOpenFailed);
             }}
             accessibilityLabel={settingsRowLabel(
               strings.profile.supportRow,
@@ -253,6 +279,11 @@ export default function ProfileScreen(): React.JSX.Element {
       <RemindersSheet
         visible={remindersSheetVisible}
         onClose={() => setRemindersSheetVisible(false)}
+      />
+
+      <LanguageSheet
+        visible={languageSheetVisible}
+        onClose={() => setLanguageSheetVisible(false)}
       />
 
       <ConfirmSheet

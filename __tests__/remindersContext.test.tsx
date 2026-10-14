@@ -58,6 +58,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { ExpensesProvider, useExpenses } from '@/contexts/ExpensesContext';
+import { LocaleProvider } from '@/contexts/LocaleContext';
 import { RemindersProvider, useReminders } from '@/contexts/RemindersContext';
 import { REMINDER_ID_PREFIX } from '@/utils/reminders/plan';
 import { formatMoney } from '@/utils/currency';
@@ -211,13 +212,15 @@ async function settle() {
 
 async function renderHarness() {
   const view = await render(
-    <CurrencyProvider>
-      <ExpensesProvider>
-        <RemindersProvider>
-          <Harness />
-        </RemindersProvider>
-      </ExpensesProvider>
-    </CurrencyProvider>
+    <LocaleProvider>
+      <CurrencyProvider>
+        <ExpensesProvider>
+          <RemindersProvider>
+            <Harness />
+          </RemindersProvider>
+        </ExpensesProvider>
+      </CurrencyProvider>
+    </LocaleProvider>
   );
   await settle();
   await waitFor(() => expect(view.getByTestId('loading').props.children).toBe('no'));

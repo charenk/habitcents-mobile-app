@@ -16,7 +16,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { ExpenseRow } from '@/components/money/ExpenseRow';
 import { InfoRibbon } from '@/components/ui/InfoRibbon';
 import { radii, spacing, typeScale, type AppTheme } from '@/constants/theme';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
 import type { Expense } from '@/types/expense';
 
 export type LoggedTodayListProps = {
@@ -45,6 +45,7 @@ const ExpenseRowItem = memo(function ExpenseRowItem({
 
 export function LoggedTodayList({ expenses, onEditExpense, onViewAll }: LoggedTodayListProps): React.JSX.Element {
   const theme = useTheme();
+  const strings = useStrings();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const showViewAll = !!onViewAll && expenses.length > 0;
 

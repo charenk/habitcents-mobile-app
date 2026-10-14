@@ -1,7 +1,7 @@
 import { useCallback, useRef } from 'react';
 import { useToast } from '@/components/ui/Toast';
 import { hapticError, hapticSuccess } from '@/utils/motion';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
 
 /**
  * Feedback for a check-in answer, owned by the screen that owns the write.
@@ -19,6 +19,7 @@ import { strings } from '@/constants/strings';
  */
 export function useCheckInFeedback(): (answer: () => void | Promise<void>) => void {
   const { show } = useToast();
+  const strings = useStrings();
   const inFlightRef = useRef(false);
 
   return useCallback((answer: () => void | Promise<void>) => {
@@ -36,5 +37,5 @@ export function useCheckInFeedback(): (answer: () => void | Promise<void>) => vo
         inFlightRef.current = false;
       }
     })();
-  }, [show]);
+  }, [show, strings]);
 }

@@ -17,6 +17,7 @@ import {
 import { initAnalytics, track, flushAnalytics } from '@/utils/analytics';
 import { hydrateEntitlement } from '@/utils/purchases';
 import { ThemeProvider, useIsDark } from '@/contexts/ThemeContext';
+import { LocaleProvider } from '@/contexts/LocaleContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { CategoriesProvider } from '@/contexts/CategoriesContext';
 import { ExpensesProvider } from '@/contexts/ExpensesContext';
@@ -92,6 +93,7 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider>
+      <LocaleProvider>
       <CurrencyProvider>
         <CategoriesProvider>
         <ExpensesProvider>
@@ -130,6 +132,7 @@ export default function RootLayout() {
         </ExpensesProvider>
         </CategoriesProvider>
       </CurrencyProvider>
+      </LocaleProvider>
     </ThemeProvider>
   );
 }

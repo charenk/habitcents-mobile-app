@@ -3,7 +3,7 @@ import { Platform, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TabBarIcon } from '@/components/ui/TabBarIcon';
 import { useTheme } from '@/contexts/ThemeContext';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
 import { layout, typeScale } from '@/constants/theme';
 import { hapticSelection } from '@/utils/motion';
 
@@ -26,6 +26,7 @@ import { hapticSelection } from '@/utils/motion';
  */
 export default function TabLayout() {
   const theme = useTheme();
+  const strings = useStrings();
   // Tab bar metrics derive from the device's real bottom inset (ADA-022):
   // 8 top padding + 48 content (tabBarHeight 56, back down from 64 now that the
   // selected tab is a filled glyph rather than a pill) + home-indicator inset

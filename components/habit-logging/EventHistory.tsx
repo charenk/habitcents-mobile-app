@@ -15,7 +15,7 @@ import { useCurrency } from '@/contexts/CurrencyContext';
 import { radii, typeScale } from '@/constants/theme';
 import type { AppTheme } from '@/constants/theme';
 import type { HabitLogEntry } from '@/types/habit';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
 import { EmptyState } from '@/components/ui';
 
 type EventHistoryProps = {
@@ -37,6 +37,7 @@ const INITIAL_VISIBLE_COUNT = 10;
 
 export function EventHistory({ dayLogs, skipValue }: EventHistoryProps) {
   const theme = useTheme();
+  const strings = useStrings();
   const { format } = useCurrency();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [showAll, setShowAll] = useState(false);

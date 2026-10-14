@@ -6,7 +6,8 @@ import { EmojiTile } from '@/components/ui/EmojiTile';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { radii, spacing, typeScale, type AppTheme } from '@/constants/theme';
-import { strings } from '@/constants/strings';
+import { useStrings } from '@/utils/i18n';
+import type { Catalog } from '@/utils/i18n';
 import { hapticError } from '@/utils/motion';
 import { categoryEmoji, categoryIdentityColor } from '@/constants/categoryEmoji';
 import { defaultSelection, offerCount, type BillsOffer } from '@/utils/leakScan/bills';
@@ -28,7 +29,7 @@ type BillsScreenProps = {
   onDone: () => void;
 };
 
-function cadenceLabel(interval: RecurrenceInterval): string {
+function cadenceLabel(strings: Catalog, interval: RecurrenceInterval): string {
   if (interval === 'weekly') return strings.leakScan.billsCadenceWeekly;
   if (interval === 'biweekly') return strings.leakScan.billsCadenceBiweekly;
   if (interval === 'annual') return strings.leakScan.billsCadenceAnnual;
@@ -50,6 +51,7 @@ function cadenceLabel(interval: RecurrenceInterval): string {
  */
 export function BillsScreen({ offer, result, onDone }: BillsScreenProps) {
   const theme = useTheme();
+  const strings = useStrings();
   const insets = useSafeAreaInsets();
   const { format } = useCurrency();
   const { addExpenses, expenses } = useExpenses();
@@ -69,7 +71,7 @@ export function BillsScreen({ offer, result, onDone }: BillsScreenProps) {
   // (UX-013, as with every other screen in this flow).
   useEffect(() => {
     AccessibilityInfo.announceForAccessibility(strings.leakScan.billsTitle);
-  }, []);
+  }, [strings]);
 
   /**
    * File the ticked rows through the same importWrite path the in-ladder save
@@ -138,7 +140,7 @@ export function BillsScreen({ offer, result, onDone }: BillsScreenProps) {
         onPress={() => toggle(item.merchantStem)}
         accessibilityRole="switch"
         accessibilityState={{ checked: on }}
-        accessibilityLabel={`${item.merchantDisplay}, ${format(item.amountCents)}, ${cadenceLabel(item.interval)}`}
+        accessibilityLabel={`${item.merchantDisplay}, ${format(item.amountCents)}, ${cadenceLabel(strings, item.interval)}`}
         accessibilityHint={on ? strings.leakScan.billsRowOn : strings.leakScan.billsRowOff}
       >
         <EmojiTile
@@ -148,7 +150,7 @@ export function BillsScreen({ offer, result, onDone }: BillsScreenProps) {
         />
         <View style={styles.rowText}>
           <Text style={styles.rowTitle}>{item.merchantDisplay}</Text>
-          <Text style={styles.rowMeta}>{cadenceLabel(item.interval)}</Text>
+          <Text style={styles.rowMeta}>{cadenceLabel(strings, item.interval)}</Text>
         </View>
         <Text style={styles.rowAmount}>{format(item.amountCents)}</Text>
         <View style={[styles.check, on ? styles.checkOn : null]}>

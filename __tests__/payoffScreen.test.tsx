@@ -16,6 +16,7 @@ import { act, cleanup, fireEvent, render } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
+import { LocaleProvider } from '@/contexts/LocaleContext';
 import { PayoffScreen } from '@/components/leak-scan/PayoffScreen';
 import { strings } from '@/constants/strings';
 import type { DetectedHabit } from '@/types/habit';
@@ -59,9 +60,11 @@ async function renderPayoff(overrides: Partial<React.ComponentProps<typeof Payof
   const view = await render(
     <SafeAreaProvider initialMetrics={initialMetrics}>
       <ThemeProvider>
-        <CurrencyProvider>
-          <PayoffScreen {...props} />
-        </CurrencyProvider>
+        <LocaleProvider>
+          <CurrencyProvider>
+            <PayoffScreen {...props} />
+          </CurrencyProvider>
+        </LocaleProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );
