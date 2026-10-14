@@ -32,7 +32,7 @@ import {
 } from '@/data/devPersonas';
 import { settingsRowLabel } from '@/utils/a11y';
 import { DEV_MENU_ENABLED, devBuildInfo, reloadApp } from '@/utils/devMenu';
-import { getEntitlement, setMockEntitlement, type Entitlement } from '@/utils/purchases';
+import { setMockEntitlement, useEntitlement, type Entitlement } from '@/utils/purchases';
 import { clearOnboarding } from '@/utils/storage';
 
 const copy = {
@@ -76,7 +76,7 @@ export function DevMenuSection({
   const router = useRouter();
   const { show } = useToast();
   const { resetOnboarding } = useOnboarding();
-  const [entitlement, setEntitlement] = useState<Entitlement>(() => getEntitlement());
+  const entitlement = useEntitlement();
   const [busy, setBusy] = useState(false);
 
   // Second gate, so this component is inert even if a caller forgets to check.
@@ -96,7 +96,6 @@ export function DevMenuSection({
   const handleEntitlementPress = run(async () => {
     const next: Entitlement = entitlement === 'premium' ? 'free' : 'premium';
     await setMockEntitlement(next);
-    setEntitlement(next);
     show(
       copy.entitlementToast(
         next === 'premium' ? copy.entitlementPremium : copy.entitlementFree

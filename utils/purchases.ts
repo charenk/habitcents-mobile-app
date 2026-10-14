@@ -1,6 +1,7 @@
 /**
  * Purchases: a thin, env-gated entitlement + purchase layer over RevenueCat
- * (task BET-004, Phase 3 monetization). MOCK MODE ONLY for now.
+ * (task BET-004, Phase 3 monetization / P3-1). Mock mode by default; a live
+ * client behind the same seam (below).
  *
  * Why mock-first (mirrors website/lib/register.ts): the whole purchase and
  * entitlement flow needs to be wired, testable, and demoable before Charen's
@@ -17,28 +18,53 @@
  * really opens. Nothing is charged, the planned-pricing banner stays on the
  * paywall, and every log line still says mock.
  *
- * Zero-native guarantee (mirrors utils/analytics.ts): react-native-purchases is
- * never installed or imported at module scope. The only reference to its type is
- * an `import type` (erased at compile time). This keeps the module pure TS and
- * jest-testable, and means no native prebuild is needed until the live
- * implementation lands. When the key ships, the live branch will dynamically
- * `await import('react-native-purchases')` exactly the way analytics loads
- * PostHog, and this file is where that swap happens.
+ * Live client (this run): `react-native-purchases` is now a real dependency
+ * (package.json), which per ADR 0029 means the next ship of this file needs
+ * `eas build`, not an OTA. Its module is still never imported at module scope
+ * in the compiled JS, only dynamically via `initPurchases()` below, and then
+ * only when a key is configured (mirrors utils/analytics.ts's PostHog import).
+ * Mock mode stays the default: no key is set in this environment or in tests,
+ * so the dynamic import never runs on `main` or in CI. The one reference to
+ * the SDK's types is an `import type`, erased at compile time.
  *
- * Activation (Charen, later): install react-native-purchases, run a dev/device
- * build, put the RevenueCat public SDK key in a local untracked .env
- * (EXPO_PUBLIC_REVENUECAT_API_KEY). See .env.example. Until then, MOCK stands.
+ * Activation (Charen, later): run a dev/device build (this dependency forces
+ * one, per ADR 0029), create the `premium` entitlement in the RevenueCat
+ * dashboard (or point EXPO_PUBLIC_REVENUECAT_ENTITLEMENT_ID at whatever it is
+ * actually named there), and put the RevenueCat public SDK key in a local
+ * untracked .env (EXPO_PUBLIC_REVENUECAT_API_KEY). See .env.example. Until
+ * then, MOCK stands. Sandbox purchase/restore/cancel verification needs that
+ * real device build; this repo cannot do it.
+ *
+ * Timed promotional grant (this run, 2026-09-06): a second, dated layer on
+ * top of the free/mock/live Entitlement above, never replacing it. Exists so
+ * LeakFinderTeaser's receipt ("your six months is saved", decision 0009) can
+ * actually be honored; see the "Timed promotional grants" section below for
+ * the mechanism and why the clock starts at unlock, not at opt-in.
  */
 
-// Type-only import placeholder for the eventual live SDK. Erased at compile
-// time, adds nothing to the bundle, and does not require the package to be
-// installed for typecheck (the reference below is commented until it lands).
-// import type Purchases from 'react-native-purchases';
+// Type-only import: erased at compile time, so it adds nothing to the bundle
+// and does not pull the SDK in when purchases are disabled (mirrors how
+// utils/analytics.ts type-imports posthog-react-native).
+import type { default as RNPurchases, CustomerInfo } from 'react-native-purchases';
 
 // AsyncStorage IS a real dependency and is imported the same way utils/storage.ts
-// imports it. The zero-native rule above is about react-native-purchases, which
-// is not installed; it does not apply here.
+// imports it. The dynamic-import rule above is about react-native-purchases;
+// it does not apply here.
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// React IS a real dependency, imported only for useSyncExternalStore (the
+// useEntitlement() hook below). Every other export in this file stays plain
+// functions so utils/devMenu.ts and __tests__/purchases.test.ts can keep
+// calling them outside a component.
+import { useSyncExternalStore } from 'react';
+
+// Neither of these creates a cycle: utils/storage.ts and utils/scanFlow.ts
+// import nothing from this file. getLeakFinderInterest reads the same local
+// opt-in record app/(tabs)/insights.tsx does; SCAN_FLOW_ENABLED is the one
+// gate that decides whether the feature the promo promises is reachable yet.
+import { getLeakFinderInterest } from '@/utils/storage';
+import { SCAN_FLOW_ENABLED } from '@/utils/scanFlow';
+import { track } from '@/utils/analytics';
 
 // ---------------------------------------------------------------------------
 // Product catalog (PLANNED prices, Phase 3 decisions pending Charen's sign-off).
@@ -85,6 +111,16 @@ function apiKey(): string | undefined {
 }
 
 /**
+ * The RevenueCat entitlement identifier that means "premium" here. Configured
+ * in the RevenueCat dashboard (a Charen action, not code); defaults to the
+ * conventional name so activation needs no env change unless the dashboard
+ * entitlement ends up named something else.
+ */
+function entitlementId(): string {
+  return process.env.EXPO_PUBLIC_REVENUECAT_ENTITLEMENT_ID || 'premium';
+}
+
+/**
  * True only when a RevenueCat key is configured. Until then the module runs in
  * mock mode and this returns false, which is the signal every caller uses to
  * know purchases are not real yet.
@@ -100,8 +136,9 @@ function mode(): 'live' | 'mock' {
 
 // ---------------------------------------------------------------------------
 // Test/live seam. In mock mode `impl` is null and every call takes the mock
-// path. The live implementation (later) sets a real client here through init;
-// unit tests inject a fake to exercise the forwarding path without native code.
+// path. initPurchases() (below) sets a real client here once a key is
+// configured and the live SDK initializes; unit tests inject a fake to
+// exercise the forwarding path without native code.
 // ---------------------------------------------------------------------------
 
 export interface PurchasesClient {
@@ -112,13 +149,66 @@ export interface PurchasesClient {
 
 let impl: PurchasesClient | null = null;
 
+// ---------------------------------------------------------------------------
+// Reactivity (backlog from the gating audit, 2026-08-11): getEntitlement() is
+// a plain synchronous read, so a mounted screen that captured its value on
+// render never learns about a purchase, a restore, or a live renewal that
+// happens after that render. Every place below that actually changes
+// mockEntitlement or liveEntitlement calls notifyEntitlementChanged() so
+// useEntitlement() (bottom of this file) can repaint every mounted gate.
+// getEntitlement() itself is untouched: it stays the synchronous source of
+// truth this subscription mechanism reads from.
+// ---------------------------------------------------------------------------
+
+const entitlementListeners = new Set<() => void>();
+
+function notifyEntitlementChanged(): void {
+  entitlementListeners.forEach((listener) => listener());
+}
+
+/**
+ * Subscribe to entitlement changes. Returns an unsubscribe function. Powers
+ * useEntitlement(); call sites that render a gate should use the hook, not
+ * this directly.
+ */
+export function subscribeToEntitlementChanges(listener: () => void): () => void {
+  entitlementListeners.add(listener);
+  return () => {
+    entitlementListeners.delete(listener);
+  };
+}
+
+// Read through a function rather than the bare module variable wherever a
+// second read follows an `await`: TS narrows a directly-referenced `impl` to
+// `null` for the rest of a branch once an earlier `if (impl)` falls through,
+// and does not know initPurchases() can reassign it in between. A function
+// call return value is a fresh, unnarrowed read each time.
+function currentImpl(): PurchasesClient | null {
+  return impl;
+}
+
 /**
  * @internal test-only seam (mirrors analytics __setClientForTests). Also drops
- * the in-memory mock grant so each test starts from 'free'.
+ * the in-memory mock grant so each test starts from 'free', clears any promo
+ * grant, and marks live init "already done" so no test accidentally kicks off
+ * a real dynamic import of react-native-purchases. __resetPurchasesInitForTests()
+ * below undoes that last part for the one test that needs to exercise
+ * initPurchases() itself.
  */
 export function __setPurchasesForTests(c: PurchasesClient | null): void {
   impl = c;
   mockEntitlement = 'free';
+  liveEntitlement = 'free';
+  purchasesInitialized = true;
+  purchasesInitPromise = null;
+  promoGrant = null;
+}
+
+/** @internal test-only: let a test re-trigger initPurchases() from scratch. */
+export function __resetPurchasesInitForTests(): void {
+  purchasesInitialized = false;
+  purchasesInitPromise = null;
+  liveEntitlement = 'free';
 }
 
 // ---------------------------------------------------------------------------
@@ -146,6 +236,7 @@ let mockEntitlement: Entitlement = 'free';
 
 async function writeMockEntitlement(next: Entitlement): Promise<void> {
   mockEntitlement = next;
+  notifyEntitlementChanged();
   try {
     if (next === 'premium') {
       await AsyncStorage.setItem(MOCK_ENTITLEMENT_KEY, MOCK_ENTITLEMENT_VALUE);
@@ -162,18 +253,274 @@ async function writeMockEntitlement(next: Entitlement): Promise<void> {
 
 /**
  * Read the stored mock grant back into memory. Called once at app start
- * (app/_layout.tsx) so a mock premium survives a relaunch. No-op in live mode.
+ * (app/_layout.tsx) so a mock premium survives a relaunch. In live mode this
+ * instead waits for initPurchases() so the first render sees a real
+ * entitlement rather than the transient 'free' default.
  */
 export async function hydrateEntitlement(): Promise<Entitlement> {
-  if (purchasesEnabled()) return getEntitlement();
+  if (purchasesEnabled()) {
+    await initPurchases();
+    return getEntitlement();
+  }
   try {
     const raw = await AsyncStorage.getItem(MOCK_ENTITLEMENT_KEY);
     mockEntitlement = raw === MOCK_ENTITLEMENT_VALUE ? 'premium' : 'free';
+    notifyEntitlementChanged();
   } catch {
     // Storage unavailable: keep whatever this session already granted rather
     // than silently revoking it.
   }
   return mockEntitlement;
+}
+
+// ---------------------------------------------------------------------------
+// Timed promotional grants (punch list, 2026-09-06: "dated entitlement, owed
+// before the leak finder ships"). LeakFinderTeaser's receipt promises
+// everyone who opts in six months of premium (decision 0009; Charen: no
+// draw, since an anonymous, backend-less app can neither run one nor
+// announce it). Nothing above this could grant that: Entitlement is
+// 'free' | 'premium' with no duration, the only grant path was the dev-menu-
+// only setMockEntitlement, and getEntitlement() is a synchronous read across
+// eight call sites, so an expiry has to resolve inside that same read. This
+// is that mechanism: a separate, dated grant layered on top of the free/
+// mock/live entitlement above, never replacing it. getEntitlement() (below)
+// reports 'premium' when EITHER the base entitlement says so OR an active
+// promo grant exists.
+//
+// When the clock starts is the actual decision, not just the mechanism. The
+// receipt says "your six months is saved... unlocks right here when it's
+// ready", which only stays true if the six months starts counting once the
+// leak finder is actually reachable, not while it sits dormant behind
+// SCAN_FLOW_ENABLED: a long dormancy must never eat into the offer.
+// activateLeakFinderPromoIfEligible() below is the one call site, gated on
+// that flag. Flagged in DECISIONS NEEDED in case Charen wants the clock to
+// start at the opt-in tap instead; that would be a one-line change (drop the
+// flag check).
+// ---------------------------------------------------------------------------
+
+/** The one source this exists for today. A union so a second promo (if one
+ *  is ever needed) is additive, not a rewrite. */
+export type PromoGrantSource = 'leak_finder_interest';
+
+export interface PromoGrantRecord {
+  source: PromoGrantSource;
+  /** When this install actually became eligible and was granted. */
+  activatedAt: string;
+  expiresAt: string;
+}
+
+export const PROMO_GRANT_KEY = '@habitcents_promo_entitlement';
+const LEAK_FINDER_PROMO_MONTHS = 6;
+
+let promoGrant: PromoGrantRecord | null = null;
+
+function isPromoGrantActive(record: PromoGrantRecord | null, now: Date = new Date()): boolean {
+  return record !== null && new Date(record.expiresAt).getTime() > now.getTime();
+}
+
+function isPromoGrantRecord(value: unknown): value is PromoGrantRecord {
+  if (!value || typeof value !== 'object') return false;
+  const v = value as Record<string, unknown>;
+  return (
+    v.source === 'leak_finder_interest' &&
+    typeof v.activatedAt === 'string' &&
+    typeof v.expiresAt === 'string'
+  );
+}
+
+async function writePromoGrant(record: PromoGrantRecord | null): Promise<void> {
+  promoGrant = record;
+  notifyEntitlementChanged();
+  try {
+    if (record) {
+      await AsyncStorage.setItem(PROMO_GRANT_KEY, JSON.stringify(record));
+    } else {
+      await AsyncStorage.removeItem(PROMO_GRANT_KEY);
+    }
+  } catch {
+    // Same posture as writeMockEntitlement: the in-memory grant still holds
+    // for this session even if the write fails.
+  }
+}
+
+/**
+ * Read the stored promo grant back into memory. Called once at app start
+ * (app/_layout.tsx), alongside hydrateEntitlement(), so a warm process's
+ * synchronous getEntitlement() sees an already-granted promo immediately
+ * rather than only after activateLeakFinderPromoIfEligible() re-derives it.
+ */
+export async function hydratePromoGrant(): Promise<void> {
+  try {
+    const raw = await AsyncStorage.getItem(PROMO_GRANT_KEY);
+    const parsed: unknown = raw ? JSON.parse(raw) : null;
+    promoGrant = isPromoGrantRecord(parsed) ? parsed : null;
+  } catch {
+    // Corrupt or unreadable: no grant rather than throwing into the boot path.
+    promoGrant = null;
+  }
+  notifyEntitlementChanged();
+}
+
+/**
+ * Activate the leak finder co-build promo if this install is eligible:
+ * opted in (utils/storage.ts's getLeakFinderInterest) and the feature the
+ * receipt promises is actually live (SCAN_FLOW_ENABLED). Idempotent and safe
+ * to call on every boot and right after a fresh opt-in: a grant already on
+ * file is never re-activated or extended, so this can never restart or
+ * stack the clock. Fires a structural, payload-free analytics event once a
+ * grant actually lands, matching leak_finder_interest_recorded's own D-9
+ * contract: a count of promises actually honored, nothing identifying.
+ */
+export async function activateLeakFinderPromoIfEligible(): Promise<void> {
+  if (!SCAN_FLOW_ENABLED || promoGrant) return;
+  const interest = await getLeakFinderInterest();
+  if (!interest) return;
+  const now = new Date();
+  const expires = new Date(now);
+  expires.setMonth(expires.getMonth() + LEAK_FINDER_PROMO_MONTHS);
+  await writePromoGrant({
+    source: 'leak_finder_interest',
+    activatedAt: now.toISOString(),
+    expiresAt: expires.toISOString(),
+  });
+  track('leak_finder_promo_activated', {});
+}
+
+/** @internal test-only: inject or clear the promo grant directly, bypassing
+ *  activateLeakFinderPromoIfEligible()'s eligibility checks. */
+export function __setPromoGrantForTests(record: PromoGrantRecord | null): void {
+  promoGrant = record;
+}
+
+// ---------------------------------------------------------------------------
+// Live client. Dynamically imports react-native-purchases only when a key is
+// configured (never on `main`'s default env, never in tests), exactly the way
+// utils/analytics.ts's initAnalytics() loads PostHog. Sets `impl` above once
+// ready, which every public function already prefers over the mock path.
+// ---------------------------------------------------------------------------
+
+/** In-memory cache of the live entitlement, since getEntitlement() must stay
+ * synchronous. Starts 'free' and is updated from getCustomerInfo() at init
+ * and from the SDK's customerInfoUpdateListener after every purchase/restore/
+ * renewal/refund RevenueCat reports for the rest of the app session. */
+let liveEntitlement: Entitlement = 'free';
+
+let purchasesInitialized = false;
+let purchasesInitPromise: Promise<void> | null = null;
+
+function entitlementFromCustomerInfo(info: CustomerInfo): Entitlement {
+  return info.entitlements.active[entitlementId()] ? 'premium' : 'free';
+}
+
+/**
+ * Start a real purchase against the store. Not a mock: whatever RevenueCat's
+ * getProducts/purchaseStoreProduct calls do (a real charge, in a sandbox or
+ * production) is what happens. `mod` is the awaited react-native-purchases
+ * module (passed through from initPurchases() so this stays a plain function,
+ * not a closure re-importing the SDK on every call).
+ */
+async function purchaseLive(
+  mod: typeof import('react-native-purchases'),
+  productId: ProductId
+): Promise<PurchaseResult> {
+  try {
+    const products = await mod.default.getProducts([productId]);
+    const product = products[0];
+    if (!product) {
+      return {
+        ok: false,
+        mode: 'live',
+        error: `Product not found in the store: ${productId} (check it is configured in App Store Connect / Play Console and attached to the RevenueCat offering)`,
+      };
+    }
+    const result = await mod.default.purchaseStoreProduct(product);
+    liveEntitlement = entitlementFromCustomerInfo(result.customerInfo);
+    notifyEntitlementChanged();
+    return { ok: true, mode: 'live', entitlement: liveEntitlement, productId };
+  } catch (e) {
+    const err = e as { code?: string; message?: string };
+    if (err.code === mod.PURCHASES_ERROR_CODE.PURCHASE_CANCELLED_ERROR) {
+      return { ok: false, mode: 'live', error: 'cancelled' };
+    }
+    return { ok: false, mode: 'live', error: err.message || 'Purchase failed' };
+  }
+}
+
+async function restoreLive(
+  mod: typeof import('react-native-purchases')
+): Promise<RestoreResult> {
+  try {
+    const info = await mod.default.restorePurchases();
+    liveEntitlement = entitlementFromCustomerInfo(info);
+    notifyEntitlementChanged();
+    return { ok: true, mode: 'live', entitlement: liveEntitlement };
+  } catch (e) {
+    const err = e as { message?: string };
+    return { ok: false, mode: 'live', error: err.message || 'Restore failed' };
+  }
+}
+
+/**
+ * Initialize the live RevenueCat client once, only when a key is configured.
+ * Safe to call repeatedly and from anywhere; never throws. On success it sets
+ * `impl` so every public function below switches from the mock path to the
+ * real SDK. On failure (SDK unavailable, configure() rejects, network down at
+ * boot) it leaves `impl` null: purchase()/restore()/getEntitlement() then
+ * report a live-mode failure instead of falling through to the mock branch,
+ * which would otherwise hand out a free "premium" grant whenever the real
+ * client merely failed to come up. That fallback is deliberate: a broken live
+ * path must fail loudly, never silently comp the user.
+ *
+ * A failed attempt is retryable (review feedback, 2026-09-05): the old code
+ * set `purchasesInitialized = true` in a `finally`, which meant one bad boot
+ * (offline at launch, a transient RevenueCat outage) locked every later
+ * purchase()/restore() into "did not initialize" for the rest of the app
+ * session, even after the network came back. On failure this now leaves
+ * `purchasesInitialized` false and clears `purchasesInitPromise`, so the next
+ * call re-attempts from scratch. `client.isConfigured()` guards the retry
+ * against calling `configure()` a second time on an SDK instance that
+ * actually came up but failed later (e.g. `getCustomerInfo()` threw).
+ */
+export async function initPurchases(): Promise<void> {
+  if (purchasesInitialized) return;
+  if (purchasesInitPromise) return purchasesInitPromise;
+  if (!purchasesEnabled()) {
+    purchasesInitialized = true;
+    return;
+  }
+  purchasesInitPromise = (async () => {
+    try {
+      const mod = await import('react-native-purchases');
+      const client: typeof RNPurchases = mod.default;
+      if (!(await client.isConfigured())) {
+        client.configure({ apiKey: apiKey() as string });
+      }
+      const info = await client.getCustomerInfo();
+      liveEntitlement = entitlementFromCustomerInfo(info);
+      notifyEntitlementChanged();
+      client.addCustomerInfoUpdateListener((updated: CustomerInfo) => {
+        liveEntitlement = entitlementFromCustomerInfo(updated);
+        notifyEntitlementChanged();
+      });
+      impl = {
+        getEntitlement: () => liveEntitlement,
+        purchase: (productId) => purchaseLive(mod, productId),
+        restore: () => restoreLive(mod),
+      };
+      purchasesInitialized = true;
+    } catch {
+      impl = null;
+      purchasesInitialized = false;
+    } finally {
+      purchasesInitPromise = null;
+    }
+  })();
+  return purchasesInitPromise;
+}
+
+/** @internal test-only: expose the retry-relevant flag without a public getter. */
+export function __isPurchasesInitializedForTests(): boolean {
+  return purchasesInitialized;
 }
 
 /**
@@ -207,10 +554,23 @@ export async function resetMockEntitlement(): Promise<void> {
  * The current entitlement. In mock mode this is the local mock grant: 'free'
  * until a mock purchase, 'premium' after one, restored on launch by
  * hydrateEntitlement(). When the live client is present it is the source of
- * truth. Synchronous because every feature gate reads it during render.
+ * truth. An active timed promo grant (leak finder co-build, see above) always
+ * reports 'premium' regardless of the underlying mode, since it is a separate
+ * dated layer on top rather than a replacement. Synchronous because every
+ * feature gate reads it during render.
  */
 export function getEntitlement(): Entitlement {
+  if (isPromoGrantActive(promoGrant)) return 'premium';
   if (impl) return impl.getEntitlement();
+  if (purchasesEnabled()) {
+    // Live mode is configured but not yet initialized (or init failed):
+    // report 'free' rather than falling through to the mock branch below,
+    // which would otherwise hand out a mock premium grant whenever live is
+    // merely still starting up. Kick off init (no-op if already running) so
+    // a render shortly after picks up the real value.
+    void initPurchases();
+    return 'free';
+  }
   return mockEntitlement;
 }
 
@@ -228,6 +588,20 @@ export function isPremium(): boolean {
  */
 export async function purchase(productId: ProductId): Promise<PurchaseResult> {
   if (impl) return impl.purchase(productId);
+  if (purchasesEnabled()) {
+    await initPurchases();
+    const ready = currentImpl();
+    if (ready) return ready.purchase(productId);
+    // Live is configured but never came up (bad key, SDK unavailable, no
+    // network at the moment of purchase): report the real failure. Never
+    // fall through to the mock grant below, which would comp a "purchase"
+    // that charged nobody.
+    return {
+      ok: false,
+      mode: 'live',
+      error: 'RevenueCat did not initialize. Check the configured API key and network connection.',
+    };
+  }
   await writeMockEntitlement('premium');
   logMock(`purchase ${productId} -> ok (mock, no real charge, MOCK premium granted locally)`);
   return { ok: true, mode: 'mock', entitlement: getEntitlement(), productId };
@@ -235,11 +609,21 @@ export async function purchase(productId: ProductId): Promise<PurchaseResult> {
 
 /**
  * Restore prior purchases. In mock mode the only thing that can exist is the
- * local mock grant, so it re-reads that and reports it. The live client will
- * query RevenueCat and return the real entitlement.
+ * local mock grant, so it re-reads that and reports it. In live mode this
+ * queries RevenueCat and returns the real entitlement.
  */
 export async function restore(): Promise<RestoreResult> {
   if (impl) return impl.restore();
+  if (purchasesEnabled()) {
+    await initPurchases();
+    const ready = currentImpl();
+    if (ready) return ready.restore();
+    return {
+      ok: false,
+      mode: 'live',
+      error: 'RevenueCat did not initialize. Check the configured API key and network connection.',
+    };
+  }
   const entitlement = await hydrateEntitlement();
   logMock(`restore -> ok (mock, local grant is ${entitlement})`);
   return { ok: true, mode: 'mock', entitlement };
@@ -248,4 +632,19 @@ export async function restore(): Promise<RestoreResult> {
 /** Current mode, for callers that want to surface "planned" vs real copy. */
 export function purchasesMode(): 'live' | 'mock' {
   return mode();
+}
+
+/**
+ * Reactive entitlement (backlog from the gating audit, 2026-08-11): every gate
+ * site used to call getEntitlement() directly during render, which reads the
+ * right value once but never again, so a purchase or a live renewal never
+ * repainted an already-mounted screen until something else happened to
+ * re-render it. This hook subscribes through useSyncExternalStore, so every
+ * gate that switches to it repaints the moment notifyEntitlementChanged()
+ * fires (a mock purchase/restore, setMockEntitlement, or a live
+ * customerInfoUpdateListener event). getEntitlement() itself is unchanged and
+ * still the right call outside a component (utils/devMenu.ts, one-off reads).
+ */
+export function useEntitlement(): Entitlement {
+  return useSyncExternalStore(subscribeToEntitlementChanges, getEntitlement, getEntitlement);
 }

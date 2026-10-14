@@ -14,8 +14,9 @@ ADR 0028).
 ## States
 Nothing picked; preset picked (amount prefilled, Start live); Impulse buys or
 Something else picked (name field shown, Start held until named); amount
-cleared (yearly line hidden, Start held); free-tier gate variant (gate card in
-the body, See Premium / Maybe later pinned in the footer).
+cleared (yearly line hidden, Start held); gated (habit-limit reached), split
+the same way PickOneSheet's is: free tier (upgrade pitch, pinned footer) vs
+premium at the real ceiling (honest dismiss, no pitch, no upgrade CTA).
 
 ## Decisions
 - 2026-09-10 (Charen, annotation set 1): title "Break a habit." replaces
@@ -32,10 +33,26 @@ the body, See Premium / Maybe later pinned in the footer).
   its analytics meaning (contract untouched, ADR 0035).
 - 2026-09-10: the yearly line hides at $0.00 ("keeps about $0.00 a year" said
   nothing).
+- 2026-09-05 (routine/core-p3 run 4): added the same optional
+  `entitlement?: Entitlement` prop and gated-copy split as PickOneSheet (see
+  that file's Decisions for the full reasoning); kept identical rather than
+  inventing separate ceiling copy, since it is the same gate with the same
+  two states. Carried forward through the 2026-09-10 pinned-footer redesign:
+  the gated footer is now conditional on `entitlement === 'premium'` the same
+  way PickOneSheet's is.
 
 ## Open
 - Placeholder wording "What do you usually buy?" is Claude's call; Charen may
   reword.
+- The full ungated flow (chip pick, amount, cadence, bought-today) has no
+  test coverage yet; that gap is pre-existing and out of scope for the
+  entitlement work. `__tests__/breakHabitSheetGate.test.tsx` covers the gated
+  state only.
 
 ## Iterations
-- 2026-09-10: redesigned per annotation set 1 on the new Sheet platform.
+- 2026-09-05: gated state splits on `entitlement`, mirroring PickOneSheet.
+  First test coverage for this component at all:
+  __tests__/breakHabitSheetGate.test.tsx, scoped to the gated state only.
+- 2026-09-10: redesigned per annotation set 1 on the new Sheet platform; the
+  entitlement-gated footer moved from the scrolling body into the pinned
+  `footer` prop alongside the rest of the redesign.
