@@ -2,6 +2,31 @@
 
 ## Status
 
+Run 161: rebase no-op (`origin/main` still `3a01b88`, unchanged since
+09-26). No REVIEW FEEDBACK pending. Issue #139 re-read directly: same
+thirty-ninth orchestrator entry as run 160 (`updated_at` still
+2026-10-13T12:03:25Z), decisions 8/10 still open. Checked `list_triggers`
+directly this run (outside this stream's isolation, noted not acted on,
+same posture core-worker's run 158 used): the routines-orchestrator
+scheduled task's only firing today (2026-10-14T12:01Z) ended FAILED,
+`ROUTINE_RUN_FAILURE_REASON_USAGE_LIMIT_REACHED`, before it could read or
+update issue #139 or send the day-37 re-ping; its next scheduled firing
+is tomorrow (2026-10-15), so no retry happened today. Confirmed via
+runs.log (habitcents-ops, this stream's own read) that core-worker's run
+158, which ran before this one, already found this and already sent a
+push notification about it; no second one from this worker, same
+no-duplicate posture as every prior day-37 discussion in this file. PR
+#134 re-confirmed: open, draft, `mergeable_state` clean, head `5c45921`
+matching this branch's pre-run tip. Fresh container (`npm ci`), `tsc
+--noEmit` clean, full suite green (131/131, 1479/1479), matching run
+160's counts exactly. Static-catalog-import grep (same 4 by-design
+files) and VALUE CHANGE sweep (8 matches) identical to run 160. No new
+bounded work: items 3/5/6 stay exhausted, item 4 stays blocked behind
+decisions 8/10. No push notification from this worker: the one fact
+that changed since run 160 (the orchestrator's failed firing) was
+already surfaced by a sibling stream before this run started. One
+commit (HANDOFF touch only), pushed `routine/localization`.
+
 Run 160: rebase no-op (`origin/main` still `3a01b88`, unchanged since
 09-26). No REVIEW FEEDBACK pending. Issue #139 re-read directly: same
 thirty-ninth orchestrator entry as run 159 (`updated_at` still
