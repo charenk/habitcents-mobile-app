@@ -47,9 +47,9 @@ import { leakCandidates, merchantDays7, type LeakCandidate } from '@/utils/habit
 import { useBreakHabitStart } from '@/utils/useBreakHabitStart';
 import { formatDate } from '@/utils/dates';
 import { track } from '@/utils/analytics';
-import { hapticError } from '@/utils/motion';
+import { hapticError, useReducedMotion } from '@/utils/motion';
 import { useSegmentPager } from '@/utils/useSegmentPager';
-import { radii, shadows, spacing, typeScale, type AppTheme } from '@/constants/theme';
+import { contentColumnStyle, radii, shadows, spacing, typeScale, type AppTheme } from '@/constants/theme';
 import type { DetectedHabit, HabitChangeGoal } from '@/types/habit';
 import { strings } from '@/constants/strings';
 import { useToast, useToastLift } from '@/components/ui/Toast';
@@ -1028,7 +1028,7 @@ export default function TodayScreen() {
               panes; it renders only here now, at the top of the Kept pane,
               the same spot its old global slot occupied visually. */}
           {door3RibbonPending && door3RibbonLine ? (
-            <View style={styles.ribbonWrap}>
+            <View style={styles.ribbonWrap} testID="door3-ribbon-wrap">
               <InfoRibbon line={door3RibbonLine} onDismiss={dismissDoor3Ribbon} />
             </View>
           ) : null}
@@ -1177,9 +1177,16 @@ function createStyles(theme: AppTheme) {
     // FirstRunRibbon, door3 (U6): the Kept pane's top-level View carries no
     // ambient horizontal padding (nothing else on it carries a gutter), so
     // this style supplies the screen's 20pt gutter directly.
+    // Item 2e (routine/ipad): this sits directly in the pane, above the
+    // capped ScrollView/SectionList below it, so it needs its own cap. Safe
+    // to spread contentColumnStyle straight in here: the inset is
+    // paddingHorizontal, not margin, and InfoRibbon's own card background
+    // lives on InfoRibbon's own root, not this wrapper, so capping the
+    // wrapper's width cannot clip or bleed a background edge.
     ribbonWrap: {
       paddingHorizontal: spacing.gutter,
       marginBottom: spacing.stack,
+      ...contentColumnStyle,
     },
     // InfoRibbon, door1: renders inside the logged-today block under the log
     // card, which already carries the 20pt gutter, so this only adds the
@@ -1215,6 +1222,7 @@ function createStyles(theme: AppTheme) {
       // stacked on the dock's own padding (ADR 0038). This is breathing room
       // between the last row and the dock's top edge, nothing more.
       paddingBottom: spacing.xxl,
+      ...contentColumnStyle,
     },
     // FTE zero state (TodayFteSpent artboard): the hook centered in the
     // scroller, which since ADR 0038 runs from the chips down to the dock
@@ -1273,6 +1281,7 @@ function createStyles(theme: AppTheme) {
       // Was screenBottomClearance (100); the dock below reserves its own
       // height now (ADR 0038), so this is breathing room only.
       paddingBottom: spacing.xxl,
+      ...contentColumnStyle,
     },
     sectionHeader: {
       marginTop: spacing.gutter,
@@ -1310,6 +1319,7 @@ function createStyles(theme: AppTheme) {
       // Was screenBottomClearance (100); the dock below reserves its own
       // height now (ADR 0038), so this is breathing room only.
       paddingBottom: spacing.xxl,
+      ...contentColumnStyle,
     },
     // FTE zero block (TodayFteKept artboard): the progress card or the hook,
     // centered in the pane; mirror of spentZeroWrap above, plus the stretch

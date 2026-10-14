@@ -15,7 +15,7 @@
       "url": "https://u.expo.dev/ea39e317-4798-40fb-919f-30c300aabc27"
     },
     "ios": {
-      "supportsTablet": false,
+      "supportsTablet": true,
       "bundleIdentifier": "com.habitcents.app",
       "icon": {
         "light": "./assets/icon.png",

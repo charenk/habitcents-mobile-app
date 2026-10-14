@@ -11,7 +11,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@/components/ui';
 import { useTheme } from '@/contexts/ThemeContext';
-import { radii, spacing, typeScale, type AppTheme } from '@/constants/theme';
+import { contentColumnStyle, radii, spacing, typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 import { BeatMedia, type BeatAsset } from './BeatMedia';
 
@@ -170,6 +170,11 @@ export function OnboardingCarousel({
            * makes the overflow reachable; `justifyContent: 'center'` cannot do
            * the second half (RN centres overflowing content by pushing the top
            * out of the scrollable area, where no gesture can reach it).
+           *
+           * The outer ScrollView stays window width (`{ width }`): it is the
+           * paging unit, and handleScroll's offset math above divides by that
+           * same width. beatContent caps and centers only the readable
+           * content inside it, same shared column as every other screen.
            */
           <ScrollView
             key={beat.intent}
@@ -178,17 +183,19 @@ export function OnboardingCarousel({
             showsVerticalScrollIndicator={false}
           >
             <View style={styles.beatSpacer} />
-            <BeatMedia asset={beat.asset} accessibilityLabel={beat.headline} />
-            <Text style={styles.headline} accessibilityRole="header">
-              {beat.headline}
-            </Text>
-            <Text style={styles.hook}>{beat.hook}</Text>
-            <Button
-              label={beat.cta}
-              onPress={() => onPick(beat.intent)}
-              style={styles.cta}
-              accessibilityHint={strings.onboarding.beatProgress(i + 1, beats.length)}
-            />
+            <View style={styles.beatContent} testID={`beat-content-${beat.intent}`}>
+              <BeatMedia asset={beat.asset} accessibilityLabel={beat.headline} />
+              <Text style={styles.headline} accessibilityRole="header">
+                {beat.headline}
+              </Text>
+              <Text style={styles.hook}>{beat.hook}</Text>
+              <Button
+                label={beat.cta}
+                onPress={() => onPick(beat.intent)}
+                style={styles.cta}
+                accessibilityHint={strings.onboarding.beatProgress(i + 1, beats.length)}
+              />
+            </View>
             <View style={styles.beatSpacer} />
           </ScrollView>
         ))}
@@ -238,6 +245,9 @@ function createStyles(theme: AppTheme) {
       flexGrow: 1,
       flexShrink: 1,
       flexBasis: 0,
+    },
+    beatContent: {
+      ...contentColumnStyle,
     },
     // Both line heights stay written at their 1x values on purpose. React
     // Native scales `lineHeight` by the system font scale alongside `fontSize`

@@ -3,7 +3,7 @@ import { AccessibilityInfo, View, Text, StyleSheet, ScrollView } from 'react-nat
 import { Button, Icon } from '@/components/ui';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { useTheme } from '@/contexts/ThemeContext';
-import { radii, typeScale, type AppTheme } from '@/constants/theme';
+import { contentColumnStyle, radii, typeScale, type AppTheme } from '@/constants/theme';
 import { strings } from '@/constants/strings';
 
 type GracefulFailureProps = {
@@ -98,6 +98,7 @@ function createStyles(theme: AppTheme) {
       flexGrow: 1,
       padding: 24,
       justifyContent: 'center',
+      ...contentColumnStyle,
     },
     mark: {
       alignSelf: 'center',

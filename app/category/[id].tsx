@@ -16,7 +16,7 @@ import { useCategories } from '@/contexts/CategoriesContext';
 import { useExpenses } from '@/contexts/ExpensesContext';
 import { AddCategoryModal } from '@/components/AddCategoryModal';
 import { withAlpha, compositeOver, mixHex, contrastRatio } from '@/utils/color';
-import { radii, typeScale, layout, type AppTheme } from '@/constants/theme';
+import { contentColumnStyle, radii, typeScale, layout, type AppTheme } from '@/constants/theme';
 import type { CategoryIcon } from '@/types/category';
 import type { Expense } from '@/types/expense';
 import { resolveExpenseCategory } from '@/utils/expenseCategory';
@@ -413,6 +413,7 @@ function createStyles(theme: AppTheme) {
       // content below it now that both share the same header component.
       paddingHorizontal: 20,
       paddingBottom: layout.screenBottomClearance,
+      ...contentColumnStyle,
     },
     emptyContainer: {
       flex: 1,
