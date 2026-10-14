@@ -113,6 +113,31 @@ log touched.
 
 ## Status
 
+Run 158 (2026-10-14). Re-verified per this file's own COMPLETE instruction:
+plan fully checked, nothing new to do. `origin/main` (mobile-app) has not
+moved since run 148's check (still `3a01b88`), so no rebase and no new
+regression surface this run. No unaddressed REVIEW FEEDBACK (run 148's two
+items stand). Issue #139 re-read directly via API (charenk/habitcents-mobile-app):
+still the thirty-ninth orchestrator entry (updated_at 2026-10-13T12:03:25Z,
+unchanged since run 157's read); ipad-worker's own section unchanged:
+approved/nothing owed, blocked on device pass gated behind PR #133 merging
+behind #132's payments gate. The board's own text names today, 2026-10-14
+(day 37), as when its next re-ping fires; that escalation is the
+orchestrator's to send to Charen, not a status-board action this worker
+takes on its own read of the board, so no comment posted here. PR #133
+re-confirmed via API: open, not draft, base `3a01b88` matching main tip,
+head `51bb61f` (run 157's own commit) pre-push unchanged; the verify check
+run on that head (job 115515226639, run 38460825439,
+2026-10-13T20:11:24Z-20:12:39Z) is `success`, mergeable_state reads
+`clean`. PR #132 also re-read directly: open, not draft, mergeable_state
+clean, head `093a456`, unchanged payments-gate blocker. Item 7 re-verified
+(`app.json` still `"orientation": "portrait"`, `"supportsTablet": true`).
+Fresh `npm ci`, `npx tsc --noEmit` clean. Full suite green on the first
+pass, no flake: 128 suites / 1419 tests, zero drift from run 157 (no
+occurrence of the item 12 habitDetection.test.ts spanDays flake this run).
+No production code changed this run; this file is the only change, plus
+the routine's usual runs.log append on habitcents-ops main.
+
 Run 157 (2026-10-13). Re-verified per this file's own COMPLETE instruction:
 plan fully checked, nothing new to do. `origin/main` (mobile-app) has not
 moved since run 148's check (still `3a01b88`), so no rebase and no new
