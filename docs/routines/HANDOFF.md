@@ -1,5 +1,39 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 158, 2026-10-14: re-verify, no new work)
+
+`origin/main` (mobile-app) unchanged at `3a01b88` (since 09-26; fresh `git
+fetch origin main`); no rebase needed (`0 168` ahead/behind), branch tip
+unchanged at `7b98b28` (run 157's own commit), pre-push. PR #132
+re-confirmed via the API: open, not draft, `merged: false`,
+`mergeable_state: clean`, head `7b98b280895b0924bf0b74b0c311e1ea25e2be52`
+(matches pre-push tip), base `3a01b88a9639e0964076166163d3efd74c9f3be4`
+(matches main's tip), 168 commits, 1 comment (run 148's own flake note,
+unchanged). PLAN.md checklist unchanged (zero `[ ]` items beyond the
+legend line). No REVIEW FEEDBACK pending. Issue #139 (status board)
+re-read via the API: unchanged since run 157's read, still the
+thirty-ninth orchestrator entry (`updated_at` still
+`2026-10-13T12:03:25Z`), core-worker's own section still "approved,
+nothing owed," blocked on the payments gate (decisions 2-4). Decision
+queue still day 36 by the board's own text; the board's stated day-37
+re-ping was due today (2026-10-14). Fresh `npm ci`, `npx tsc --noEmit`
+clean, `npm test` green on the first pass (131 suites / 1451 tests, no
+flake this run, zero drift from run 157). One commit (this entry), pushed
+to `routine/core-p3`.
+
+Noted in passing, not acted on (outside this stream's isolation; the
+status board and its decision-queue re-pings belong to the
+routines-orchestrator stream, not core-worker): `list_triggers` on this
+account shows the `routines-orchestrator` scheduled task's most recent
+firing today (2026-10-14T12:01Z) ended `FAILED` with
+`ROUTINE_RUN_FAILURE_REASON_USAGE_LIMIT_REACHED`, before it could read or
+update issue #139. That means today's day-37 decision-queue re-ping (the
+board's own stated commitment for 2026-10-14) most likely did not fire.
+This stream cannot touch issue #139 or retry the orchestrator itself per
+the isolation rule; flagging it here only as a fact noticed, surfaced to
+Charen directly outside this file per the scheduled-routine notification
+policy.
+
 ## COMPLETE (run 157, 2026-10-14: re-verify, no new work)
 
 `origin/main` (mobile-app) unchanged at `3a01b88` (since 09-26; fresh `git
