@@ -1,5 +1,38 @@
 # core-worker HANDOFF
 
+## COMPLETE (run 157, 2026-10-14: re-verify, no new work)
+
+`origin/main` (mobile-app) unchanged at `3a01b88` (since 09-26; fresh `git
+fetch origin main`); no rebase needed (`0 167` ahead/behind), branch tip
+unchanged at `0b4e9a4` (run 156's own commit), pre-push. PR #132
+re-confirmed via the API: open, not draft, `merged: false`,
+`mergeable_state: clean`, head `0b4e9a400bc5f1f3259c9cb04cd234c681a02cd8`
+(matches pre-push tip), base `3a01b88a9639e0964076166163d3efd74c9f3be4`
+(matches main's tip), 167 commits, 1 comment (run 148's own flake note,
+unchanged). PLAN.md checklist unchanged (zero `[ ]` items beyond the
+legend line). No REVIEW FEEDBACK pending. Issue #139 (status board)
+re-read via the API: unchanged since run 156's read, still the
+thirty-ninth orchestrator entry (`updated_at` still
+`2026-10-13T12:03:25Z`), core-worker's own section still "approved,
+nothing owed," blocked on the payments gate (decisions 2-4). Decision
+queue still day 36 by the board's own text; the board's stated day-37
+re-ping falls today (2026-10-14) but that is the orchestrator's own
+commitment, not this stream's (orchestrator took ownership of alerts at
+run 82, reconfirmed every run since), so this run does not duplicate it.
+Ops `PUNCHLIST.md` RESUME marker re-read fresh (ops main fast-forwarded
+`8c66f33..b2465e1`, that range carrying only sibling-routine/orchestrator
+`docs/runs.log` status commits through run 156 and ipad/localization run
+159): still the bill-reminders/`EXPO_TOKEN` stream, not core-p3-flagged;
+the one core-p3-flagged line (leak finder dated entitlement) unchanged,
+already built and closed on this branch at run 8, still waiting on PR #132
+to merge. Fresh `npm ci`, `npx tsc --noEmit` clean, `npm test` green on
+the first pass (131 suites / 1451 tests, no flake this run, zero drift
+from run 156). One commit (this entry), pushed to `routine/core-p3`.
+
+No push notification: nothing in this stream's own facts has changed
+since run 156; the payments-gate blocker itself is unchanged, and today's
+day-37 re-ping belongs to the orchestrator, not this stream.
+
 ## COMPLETE (run 156, 2026-10-14: re-verify, no new work)
 
 `origin/main` (mobile-app) unchanged at `3a01b88` (since 09-26; fresh `git
