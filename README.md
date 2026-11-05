@@ -52,4 +52,4 @@ npm run typecheck
 
 Active MVP. Screenshots and a public TestFlight / Expo link will land here as the release path firms up.
 
-Built by [Charen Koneti](https://charen.online).
+Built by Charen Koneti.
