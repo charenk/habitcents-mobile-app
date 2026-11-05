@@ -1,6 +1,6 @@
 # HabitCents
 
-Mobile app for personal expense tracking and habit building. Designed and engineered end to end — product, UI, and React Native implementation.
+Mobile app for personal expense tracking and habit building. Designed and engineered end to end  -  product, UI, and React Native implementation.
 
 **Stack:** Expo · React Native · Expo Router · TypeScript  
 **Platforms:** iOS, Android, web
@@ -9,7 +9,7 @@ Mobile app for personal expense tracking and habit building. Designed and engine
 
 Most money apps are either too heavy or too vague. HabitCents starts with a simple question: what did you spend, and can you see the pattern early enough to change it?
 
-The product focus today is **expenses-first**: quick logging, an upcoming calendar, light insights (“leaks,” where it went, pace), and habits that sit next to the money — not in a separate silo.
+The product focus today is **expenses-first**: quick logging, an upcoming calendar, light insights (“leaks,” where it went, pace), and habits that sit next to the money  -  not in a separate silo.
 
 ## Design decisions
 
@@ -36,9 +36,9 @@ npm install
 npx expo start
 ```
 
-- `i` — iOS Simulator  
-- `a` — Android emulator  
-- `w` — web  
+- `i`  -  iOS Simulator  
+- `a`  -  Android emulator  
+- `w`  -  web  
 - Or scan the QR code with Expo Go on a phone  
 
 Node 18+. If port 8081 is busy: `npx expo start --port 8082`.
